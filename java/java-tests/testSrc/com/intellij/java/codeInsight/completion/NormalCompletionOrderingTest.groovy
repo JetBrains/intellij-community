@@ -871,6 +871,10 @@ class Foo {
     checkPreferredItems 1, 'Intf', 'IntfImpl'
   }
 
+  void testDispreferAlreadyCalledBuilderMethods() {
+    checkPreferredItems 0, 'c', 'd'
+  }
+
   void testPreferPrintln() {
     myFixture.configureByText 'a.java', 'class Foo { { System.out.pri<caret>x } }'
     myFixture.completeBasic()
