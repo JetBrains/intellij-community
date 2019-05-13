@@ -65,7 +65,7 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
 
   @Nullable
   @Override
-  public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {
+  public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef) {
     PsiFile containingFile = host.getContainingFile();
     boolean compiled = containingFile != null && containingFile.getOriginalFile() instanceof PsiCompiledFile;
     return compiled ? null : super.findCommentInjection(host, commentRef);

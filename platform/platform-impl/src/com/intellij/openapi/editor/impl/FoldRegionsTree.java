@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
@@ -178,7 +177,7 @@ abstract class FoldRegionsTree {
 
   private CachedData ensureAvailableData() {
     CachedData cachedData = myCachedData;
-    if (!cachedData.isAvailable() && ApplicationManager.getApplication().isDispatchThread()) {
+    if (!cachedData.isAvailable()) {
       return rebuild();
     }
     return cachedData;
@@ -276,8 +275,7 @@ abstract class FoldRegionsTree {
     int idx = getLastTopLevelIndexBefore(cachedData, offset);
     if (idx == -1) return 0;
     cachedData.ensureInlayDataAvailable();
-    int[] topFoldedInlaysHeight = cachedData.topFoldedInlaysHeight;
-    return topFoldedInlaysHeight == null ? 0 : topFoldedInlaysHeight[idx];
+    return cachedData.topFoldedInlaysHeight[idx];
   }
 
   int getTotalHeightOfFoldedBlockInlays() {
@@ -285,7 +283,7 @@ abstract class FoldRegionsTree {
     CachedData cachedData = ensureAvailableData();
     cachedData.ensureInlayDataAvailable();
     int[] foldedInlaysHeight = cachedData.topFoldedInlaysHeight;
-    return foldedInlaysHeight == null || foldedInlaysHeight.length == 0 ? 0 : foldedInlaysHeight[foldedInlaysHeight.length - 1];
+    return foldedInlaysHeight.length == 0 ? 0 : foldedInlaysHeight[foldedInlaysHeight.length - 1];
   }
 
   int getLastTopLevelIndexBefore(int offset) {
@@ -356,7 +354,7 @@ abstract class FoldRegionsTree {
     }
 
     private void ensureInlayDataAvailable() {
-      if (topFoldedInlaysHeightValid || !ApplicationManager.getApplication().isDispatchThread()) return;
+      if (topFoldedInlaysHeightValid) return;
       topFoldedInlaysHeightValid = true;
       if (hasBlockInlays()) {
         int count = topLevelRegions.length;

@@ -5,6 +5,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+/**
+ * @author gregsh
+ */
 public interface ListCellBackgroundSupplier<T> {
   @Nullable
   Color getCellBackground(T value, int row);

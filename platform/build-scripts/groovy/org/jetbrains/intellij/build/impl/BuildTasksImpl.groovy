@@ -432,15 +432,6 @@ idea.fatal.error.notification=disabled
     if (buildContext.options.bundledJreBuild != null) {
       args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
     }
-    [
-      'intellij.build.bundle.second.jre',
-      'intellij.build.bundled.second.jre.build',
-      'intellij.build.bundled.second.jre.version'
-    ].each { prop ->
-      System.getProperty(prop)?.with {
-        args += "-D$prop=$it"
-      }
-    }
     buildContext.gradle.run('Setting up JetBrains JREs', args)
     logFreeDiskSpace("after downloading JREs")
   }

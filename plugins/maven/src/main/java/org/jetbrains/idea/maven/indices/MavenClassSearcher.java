@@ -25,7 +25,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   }
 
   protected String preparePattern(String pattern) {
-    pattern = StringUtil.toLowerCase(pattern);
+    pattern = pattern.toLowerCase();
     if (pattern.trim().length() == 0) {
       return pattern;
     }

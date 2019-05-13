@@ -36,9 +36,7 @@ abstract class ServiceView extends JPanel implements Disposable {
     return myModel;
   }
 
-  void saveState(@NotNull ServiceViewState state) {
-    myModel.saveState(state);
-  }
+  abstract void saveState(@NotNull ServiceViewState state);
 
   @NotNull
   abstract List<ServiceViewItem> getSelectedItems();
@@ -49,37 +47,18 @@ abstract class ServiceView extends JPanel implements Disposable {
 
   abstract void onViewUnselected();
 
-  boolean isFlat() {
-    return myModel.isFlat();
-  }
-
-  void setFlat(boolean flat) {
-    myModel.setFlat(flat);
-  }
-
-  boolean isGroupByType() {
-    return myModel.isGroupByType();
-  }
-
-  void setGroupByType(boolean value) {
-    myModel.setGroupByType(value);
-  }
-
-  static ServiceView createView(@NotNull Project project, @NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
-    ServiceView serviceView = viewModel instanceof ServiceViewModel.SingeServiceModel ?
-                              createSingleView(project, viewModel) :
-                              createTreeView(project, viewModel, viewState);
+  static ServiceView createTreeView(@NotNull Project project, @NotNull ServiceViewModel model, @NotNull ServiceViewState state) {
+    ServiceViewUi ui = new ServiceViewTreeUi(state);
+    ServiceView serviceView = new ServiceTreeView(project, model, ui, state);
     setDataProvider(serviceView);
-    setViewModelState(viewModel, viewState);
     return serviceView;
   }
 
-  private static ServiceView createTreeView(@NotNull Project project, @NotNull ServiceViewModel model, @NotNull ServiceViewState state) {
-    return new ServiceTreeView(project, model, new ServiceViewTreeUi(state), state);
-  }
-
-  private static ServiceView createSingleView(@NotNull Project project, @NotNull ServiceViewModel model) {
-    return new ServiceSingleView(project, model, new ServiceViewSingleUi());
+  static ServiceView createSingleView(@NotNull Project project, @NotNull ServiceViewModel model) {
+    ServiceViewUi ui = new ServiceViewSingleUi();
+    ServiceView serviceView = new ServiceSingleView(project, model, ui);
+    setDataProvider(serviceView);
+    return serviceView;
   }
 
   private static void setDataProvider(ServiceView serviceView) {
@@ -99,10 +78,5 @@ abstract class ServiceView extends JPanel implements Disposable {
       }
       return null;
     });
-  }
-
-  private static void setViewModelState(@NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
-    viewModel.setFlat(viewState.flat);
-    viewModel.setGroupByType(viewState.groupByType);
   }
 }

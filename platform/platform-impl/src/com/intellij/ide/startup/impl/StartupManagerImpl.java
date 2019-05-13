@@ -54,23 +54,21 @@ public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
   private static final long EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100);
 
-  private final Object myLock = new Object();
+  private final List<Runnable> myPreStartupActivities = Collections.synchronizedList(new LinkedList<>());
+  private final List<Runnable> myStartupActivities = Collections.synchronizedList(new LinkedList<>());
 
-  private final Deque<Runnable> myPreStartupActivities = new ArrayDeque<>();
-  private final Deque<Runnable> myStartupActivities = new ArrayDeque<>();
-
-  private final Deque<Runnable> myDumbAwarePostStartupActivities = new ArrayDeque<>();
-  private final Deque<Runnable> myNotDumbAwarePostStartupActivities = new ArrayDeque<>();
-  // guarded by this
-  private boolean myPostStartupActivitiesPassed;
+  private final List<Runnable> myDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<>());
+  private final List<Runnable> myNotDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<>());
+  private boolean myPostStartupActivitiesPassed; // guarded by this
 
   private volatile boolean myPreStartupActivitiesPassed;
+  private volatile boolean myStartupActivitiesRunning;
   private volatile boolean myStartupActivitiesPassed;
 
   private final Project myProject;
   private boolean myInitialRefreshScheduled;
 
-  public StartupManagerImpl(@NotNull Project project) {
+  public StartupManagerImpl(Project project) {
     myProject = project;
   }
 
@@ -82,18 +80,14 @@ public class StartupManagerImpl extends StartupManagerEx {
   public void registerPreStartupActivity(@NotNull Runnable runnable) {
     checkNonDefaultProject();
     LOG.assertTrue(!myPreStartupActivitiesPassed, "Registering pre startup activity that will never be run");
-    synchronized (myLock) {
-      myPreStartupActivities.add(runnable);
-    }
+    myPreStartupActivities.add(runnable);
   }
 
   @Override
   public void registerStartupActivity(@NotNull Runnable runnable) {
     checkNonDefaultProject();
     LOG.assertTrue(!myStartupActivitiesPassed, "Registering startup activity that will never be run");
-    synchronized (myLock) {
-      myStartupActivities.add(runnable);
-    }
+    myStartupActivities.add(runnable);
   }
 
   @Override
@@ -104,11 +98,12 @@ public class StartupManagerImpl extends StartupManagerEx {
                 " disposed=" + myProject.isDisposed() + "; open=" + myProject.isOpen() +
                 "; passed=" + myStartupActivitiesPassed);
     }
+    (DumbService.isDumbAware(runnable) ? myDumbAwarePostStartupActivities : myNotDumbAwarePostStartupActivities).add(runnable);
+  }
 
-    Deque<Runnable> list = DumbService.isDumbAware(runnable) ? myDumbAwarePostStartupActivities : myNotDumbAwarePostStartupActivities;
-    synchronized (myLock) {
-      list.add(runnable);
-    }
+  @Override
+  public boolean startupActivityRunning() {
+    return myStartupActivitiesRunning;
   }
 
   @Override
@@ -131,11 +126,13 @@ public class StartupManagerImpl extends StartupManagerEx {
         // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
         synchronized (this) {
           myPreStartupActivitiesPassed = true;
+          myStartupActivitiesRunning = true;
         }
 
         runActivities(myStartupActivities, Phases.PROJECT_STARTUP);
 
         synchronized (this) {
+          myStartupActivitiesRunning = false;
           myStartupActivitiesPassed = true;
         }
       }
@@ -156,18 +153,22 @@ public class StartupManagerImpl extends StartupManagerEx {
     DumbService dumbService = DumbService.getInstance(myProject);
     for (StartupActivity extension : StartupActivity.POST_STARTUP_ACTIVITY.getExtensionList()) {
       if (DumbService.isDumbAware(extension)) {
-        runActivity(uiFreezeWarned, extension);
+        logActivityDuration(uiFreezeWarned, extension);
       }
       else {
-        dumbService.runWhenSmart(() -> runActivity(uiFreezeWarned, extension));
+        dumbService.runWhenSmart(() -> {
+          ProgressManager.checkCanceled();
+          logActivityDuration(uiFreezeWarned, extension);
+        });
       }
     }
     activity.end();
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
   }
 
-  private void runActivity(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension) {
+  private void logActivityDuration(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension) {
     long startTime = StartUpMeasurer.getCurrentTime();
+
     try {
       extension.runActivity(myProject);
     }
@@ -190,6 +191,11 @@ public class StartupManagerImpl extends StartupManagerEx {
           " under modal progress, or just making them faster to speed up project opening.");
       }
     }
+  }
+
+  // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
+  private void queueSmartModeActivity(@NotNull Runnable activity) {
+    DumbService.getInstance(myProject).runWhenSmart(() -> runActivity(activity));
   }
 
   public void runPostStartupActivities() {
@@ -217,14 +223,9 @@ public class StartupManagerImpl extends StartupManagerEx {
 
         while (true) {
           List<Runnable> dumbUnaware = takeDumbUnawareStartupActivities();
-          if (dumbUnaware.isEmpty()) {
-            break;
-          }
+          if (dumbUnaware.isEmpty()) break;
 
-          // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
-          for (Runnable activity : dumbUnaware) {
-            dumbService.runWhenSmart(() -> runActivity(activity));
-          }
+          dumbUnaware.forEach(StartupManagerImpl.this::queueSmartModeActivity);
         }
 
         if (dumbService.isDumb()) {
@@ -241,17 +242,10 @@ public class StartupManagerImpl extends StartupManagerEx {
     });
   }
 
-  @NotNull
-  private List<Runnable> takeDumbUnawareStartupActivities() {
-    synchronized (myLock) {
-      if (myNotDumbAwarePostStartupActivities.isEmpty()) {
-        return Collections.emptyList();
-      }
-
-      List<Runnable> result = new ArrayList<>(myNotDumbAwarePostStartupActivities);
-      myNotDumbAwarePostStartupActivities.clear();
-      return result;
-    }
+  private synchronized List<Runnable> takeDumbUnawareStartupActivities() {
+    List<Runnable> result = new ArrayList<>(myNotDumbAwarePostStartupActivities);
+    myNotDumbAwarePostStartupActivities.clear();
+    return result;
   }
 
   public void scheduleInitialVfsRefresh() {
@@ -386,19 +380,10 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  private void runActivities(@NotNull Deque<? extends Runnable> activities, @NotNull String phaseName) {
+  private static void runActivities(@NotNull List<? extends Runnable> activities, @NotNull String phaseName) {
     Activity activity = StartUpMeasurer.start(phaseName);
-    Runnable runnable;
-    while (true) {
-      synchronized (myLock) {
-        runnable = activities.pollFirst();
-      }
-
-      if (runnable == null) {
-        break;
-      }
-
-      runActivity(runnable);
+    while (!activities.isEmpty()) {
+      runActivity(activities.remove(0));
     }
     activity.end();
   }
@@ -431,7 +416,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       synchronized (this) {
         // in tests which simulate project opening, post-startup activities could have been run already.
         // Then we should act as if the project was initialized
-        boolean initialized = myProject.isInitialized() || myProject.isDefault() || (myPostStartupActivitiesPassed && application.isUnitTestMode());
+        boolean initialized = myProject.isInitialized() || myProject.isDefault() || application.isUnitTestMode() && myPostStartupActivitiesPassed;
         if (!initialized) {
           registerPostStartupActivity(action);
           return;
@@ -445,23 +430,19 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   @TestOnly
   public synchronized void prepareForNextTest() {
-    synchronized (myLock) {
-      myPreStartupActivities.clear();
-      myStartupActivities.clear();
-      myDumbAwarePostStartupActivities.clear();
-      myNotDumbAwarePostStartupActivities.clear();
-    }
+    myPreStartupActivities.clear();
+    myStartupActivities.clear();
+    myDumbAwarePostStartupActivities.clear();
+    myNotDumbAwarePostStartupActivities.clear();
   }
 
   @TestOnly
   public synchronized void checkCleared() {
     try {
-      synchronized (myLock) {
-        assert myStartupActivities.isEmpty() : "Activities: " + myStartupActivities;
-        assert myDumbAwarePostStartupActivities.isEmpty() : "DumbAware Post Activities: " + myDumbAwarePostStartupActivities;
-        assert myNotDumbAwarePostStartupActivities.isEmpty() : "Post Activities: " + myNotDumbAwarePostStartupActivities;
-        assert myPreStartupActivities.isEmpty() : "Pre Activities: " + myPreStartupActivities;
-      }
+      assert myStartupActivities.isEmpty() : "Activities: " + myStartupActivities;
+      assert myDumbAwarePostStartupActivities.isEmpty() : "DumbAware Post Activities: " + myDumbAwarePostStartupActivities;
+      assert myNotDumbAwarePostStartupActivities.isEmpty() : "Post Activities: " + myNotDumbAwarePostStartupActivities;
+      assert myPreStartupActivities.isEmpty() : "Pre Activities: " + myPreStartupActivities;
     }
     finally {
       prepareForNextTest();

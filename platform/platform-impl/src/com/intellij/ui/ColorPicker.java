@@ -11,9 +11,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.colorpicker.ColorPickerBuilder;
-import com.intellij.ui.colorpicker.LightCalloutPopup;
-import com.intellij.ui.colorpicker.MaterialGraphicalColorPipetteProvider;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.picker.ColorPipette;
 import com.intellij.ui.picker.ColorPipetteBase;
@@ -60,7 +57,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private final JTextField myBlue;
   private final JTextField myHex;
   private final Alarm myUpdateQueue;
-  private final List<? extends ColorPickerListener> myExternalListeners;
+  private final List<ColorPickerListener> myExternalListeners;
 
   private RecentColorsComponent myRecentColorsComponent;
   @Nullable
@@ -89,7 +86,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private ColorPicker(@NotNull Disposable parent,
                       @Nullable Color color,
                       boolean restoreColors, boolean enableOpacity,
-                      List<? extends ColorPickerListener> listeners, boolean opacityInPercent) {
+                      List<ColorPickerListener> listeners, boolean opacityInPercent) {
     myUpdateQueue = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parent);
     myRed = createColorField(false);
     myGreen = createColorField(false);
@@ -343,7 +340,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
                                  String caption,
                                  Color preselectedColor,
                                  boolean enableOpacity,
-                                 List<? extends ColorPickerListener> listeners,
+                                 List<ColorPickerListener> listeners,
                                  boolean opacityInPercent) {
     final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
     dialog.show();
@@ -352,24 +349,6 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     return null;
-  }
-
-  public static void showColorPickerPopup(@Nullable Color currentColor, @NotNull ColorListener listener) {
-    LightCalloutPopup dialog = new LightCalloutPopup();
-
-    JPanel panel = new ColorPickerBuilder()
-      .setOriginalColor(currentColor)
-      .addSaturationBrightnessComponent()
-      .addColorAdjustPanel(new MaterialGraphicalColorPipetteProvider())
-      .addColorValuePanel().withFocus()
-      //.addSeparator()
-      //.addCustomComponent(MaterialColorPaletteProvider.INSTANCE)
-      .addColorListener(listener)
-      .focusWhenDisplay(true)
-      .setFocusCycleRoot(true)
-      .build();
-
-    dialog.show(panel, null, MouseInfo.getPointerInfo().getLocation());
   }
 
   private JComponent buildTopPanel(boolean enablePipette) throws ParseException {
@@ -911,13 +890,13 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
   static class ColorPickerDialog extends DialogWrapper {
     private final Color myPreselectedColor;
-    private final List<? extends ColorPickerListener> myListeners;
+    private final List<ColorPickerListener> myListeners;
     private ColorPicker myColorPicker;
     private final boolean myEnableOpacity;
     private final boolean myOpacityInPercent;
 
     ColorPickerDialog(@NotNull Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity,
-                      List<? extends ColorPickerListener> listeners, boolean opacityInPercent) {
+                             List<ColorPickerListener> listeners, boolean opacityInPercent) {
       super(parent, true);
       myListeners = listeners;
       myPreselectedColor = preselectedColor;

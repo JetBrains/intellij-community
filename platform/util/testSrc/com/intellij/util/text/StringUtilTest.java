@@ -776,10 +776,10 @@ public class StringUtilTest {
     CharSequence s = ByteArrayCharSequence.convertToBytesIfPossible("test");
     assertTrue(s instanceof ByteArrayCharSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     CharSequence first = StringUtil.first(s, 1, false);
-    assertTrue(String.valueOf(first.getClass()), first instanceof CharSequenceSubSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+    assertTrue(String.valueOf(first.getClass()), first instanceof CharSequenceSubSequence);
     assertEquals("t", first.toString());
     CharSequence last = StringUtil.last(s, 1, false);
-    assertTrue(String.valueOf(last.getClass()), last instanceof CharSequenceSubSequence|| SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+    assertTrue(String.valueOf(last.getClass()), last instanceof CharSequenceSubSequence);
     assertEquals("t", last.toString());
   }
 

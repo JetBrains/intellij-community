@@ -1,4 +1,0 @@
-<table>
-
-**bold**
-</table>

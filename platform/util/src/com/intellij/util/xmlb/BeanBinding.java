@@ -6,9 +6,7 @@ import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.PropertyCollector;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import gnu.trove.TObjectFloatHashMap;
 import org.jdom.Comment;
@@ -20,7 +18,10 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class BeanBinding extends NotNullDeserializeBinding {
   private static final PropertyCollector PROPERTY_COLLECTOR = new XmlSerializerPropertyCollector();
@@ -300,16 +301,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   private static final class XmlSerializerPropertyCollector extends PropertyCollector {
-    private final Map<Class<?>, List<MutableAccessor>> accessorCache = ContainerUtil.newConcurrentMap();
-
     XmlSerializerPropertyCollector() {
       super(PropertyCollector.COLLECT_ACCESSORS);
-    }
-
-    @Override
-    @NotNull
-    public List<MutableAccessor> collect(@NotNull Class<?> aClass) {
-      return accessorCache.computeIfAbsent(aClass, super::collect);
     }
 
     @Override

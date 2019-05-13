@@ -4,7 +4,6 @@ package com.intellij.tasks.context;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,16 +23,15 @@ public abstract class WorkingContextProvider {
   public abstract String getId();
 
   /**
-   * Short description (for UI).
+   * Short description (for UI)
+   * @return
    */
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   public abstract String getDescription();
 
   /**
    * Saves a component's state.
    * May delegate to {@link com.intellij.openapi.util.JDOMExternalizable#writeExternal(org.jdom.Element)}
-   *
    * @param project
    * @param toElement
    */

@@ -14,8 +14,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 class ServiceModelFilter {
   private final List<ServiceViewFilter> myFilters = new CopyOnWriteArrayList<>();
 
-  List<ServiceViewFilter> getFilters() {
-    return myFilters;
+  void addFilter(@NotNull ServiceViewFilter filter) {
+    myFilters.add(filter);
   }
 
   void removeFilter(@NotNull ServiceViewFilter filter) {

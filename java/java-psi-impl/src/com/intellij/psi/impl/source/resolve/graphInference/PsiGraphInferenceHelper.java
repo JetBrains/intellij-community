@@ -35,7 +35,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
       );
     }
     else {
-      InferenceSession inferenceSession = new InferenceSession(new PsiTypeParameter[]{typeParameter}, partialSubstitutor, myManager, null, policy);
+      final InferenceSession inferenceSession = new InferenceSession(new PsiTypeParameter[]{typeParameter}, partialSubstitutor, myManager, null);
       inferenceSession.initExpressionConstraints(parameters, arguments, null, false);
       substitutor = inferenceSession.infer();
     }

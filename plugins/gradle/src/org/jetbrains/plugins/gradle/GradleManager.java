@@ -70,6 +70,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -213,7 +214,7 @@ public final class GradleManager
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
         result.setUseQualifiedModuleNames(projectLevelSettings.isUseQualifiedModuleNames());
       }
-      boolean delegatedBuildEnabled = GradleProjectSettings.isDelegatedBuildEnabled(project, projectPath);
+      boolean delegatedBuildEnabled = GradleSettingsService.getInstance(project).isDelegatedBuildEnabled(projectPath);
       result.setDelegatedBuild(delegatedBuildEnabled);
 
       configureExecutionWorkspace(projectLevelSettings, settings, result, project, projectPath);

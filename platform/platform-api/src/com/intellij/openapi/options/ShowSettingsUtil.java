@@ -27,7 +27,7 @@ public abstract class ShowSettingsUtil {
 
   public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project,
                                                                    @NotNull Class<T> configurableClass,
-                                                                   @Nullable Consumer<? super T> additionalConfiguration);
+                                                                   @Nullable Consumer<T> additionalConfiguration);
 
   public abstract void showSettingsDialog(@Nullable Project project,
                                           @NotNull Predicate<? super Configurable> predicate,

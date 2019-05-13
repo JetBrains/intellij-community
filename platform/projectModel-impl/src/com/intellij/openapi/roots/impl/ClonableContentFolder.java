@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  *  @author dsl
  */
-interface ClonableContentFolder {
+public interface ClonableContentFolder {
   @NotNull
   ContentFolder cloneFolder(@NotNull ContentEntry contentEntry);
 }

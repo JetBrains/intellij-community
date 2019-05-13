@@ -15,7 +15,6 @@
  */
 package com.intellij.testGuiFramework.fixtures;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testGuiFramework.driver.CheckBoxDriver;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.components.JBCheckBox;
@@ -51,7 +50,7 @@ public class JBCheckBoxFixture extends JComponentFixture<JBCheckBoxFixture, JBCh
     GenericTypeMatcher<JBCheckBox> matcher = new GenericTypeMatcher<JBCheckBox>(JBCheckBox.class) {
       @Override
       protected boolean isMatching(@Nonnull JBCheckBox box) {
-        return (box.getText() != null && StringUtil.toLowerCase(box.getText()).equals(StringUtil.toLowerCase(text)));
+        return (box.getText() != null && box.getText().toLowerCase().equals(text.toLowerCase()));
       }
     };
     return findWithGenericTypeMatcher(matcher, root, robot, waitUntilFound);
@@ -63,7 +62,7 @@ public class JBCheckBoxFixture extends JComponentFixture<JBCheckBoxFixture, JBCh
     GenericTypeMatcher<JBCheckBox> matcher = new GenericTypeMatcher<JBCheckBox>(JBCheckBox.class) {
       @Override
       protected boolean isMatching(@Nonnull JBCheckBox box) {
-        return (box.getText() != null && StringUtil.toLowerCase(box.getText()).contains(StringUtil.toLowerCase(partOfText)));
+        return (box.getText() != null && box.getText().toLowerCase().contains(partOfText.toLowerCase()));
       }
     };
 

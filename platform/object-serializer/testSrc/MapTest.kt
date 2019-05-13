@@ -6,7 +6,6 @@ import gnu.trove.THashMap
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
-import java.io.ByteArrayOutputStream
 import java.util.*
 
 class MapTest {
@@ -14,24 +13,8 @@ class MapTest {
   @JvmField
   val testName = TestName()
 
-  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration = defaultTestWriteConfiguration): T {
+  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration? = null): T {
     return test(bean, testName, writeConfiguration)
-  }
-
-  @Test
-  fun `same map binding for the same type and annotation set`() {
-    val serializer = ObjectSerializer()
-    val bindingProducer = getBindingProducer(serializer)
-
-    @Suppress("unused")
-    class TestBean {
-      @JvmField
-      val a: MutableMap<String, String> = THashMap()
-      val b: MutableMap<String, String> = THashMap()
-    }
-
-    serializer.write(TestBean(), ByteArrayOutputStream())
-    assertThat(getBindingCount(bindingProducer)).isEqualTo(3 /* TestBean/String/Map */)
   }
 
   @Test
@@ -82,7 +65,7 @@ class MapTest {
     value.map.put("some key", "some value")
 
     bean.beanMap.put(key, value)
-    test(bean, WriteConfiguration(binary = false, orderMapEntriesByKeys = true))
+    test(bean, WriteConfiguration(binary = false, filter = FILTER, orderMapEntriesByKeys = true))
   }
 }
 

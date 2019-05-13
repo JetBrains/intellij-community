@@ -58,22 +58,21 @@ public class MvcModuleStructureSynchronizer {
   public MvcModuleStructureSynchronizer(Project project) {
     myProject = project;
 
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-      queue(SyncAction.UpdateProjectStructure, myProject);
-      queue(SyncAction.EnsureRunConfigurationExists, myProject);
-      queue(SyncAction.UpgradeFramework, myProject);
-      queue(SyncAction.CreateAppStructureIfNeeded, myProject);
-
-      addListeners();
-    });
-
+    initComponent();
   }
 
   public SimpleModificationTracker getFileAndRootsModificationTracker() {
     return myModificationTracker;
   }
 
-  private void addListeners() {
+  private void initComponent() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      queue(SyncAction.UpdateProjectStructure, myProject);
+      queue(SyncAction.EnsureRunConfigurationExists, myProject);
+      queue(SyncAction.UpgradeFramework, myProject);
+      queue(SyncAction.CreateAppStructureIfNeeded, myProject);
+    });
+
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override

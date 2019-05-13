@@ -66,13 +66,13 @@ public class EmptyMarkupModel implements MarkupModelEx {
                                                                    TextAttributes textAttributes,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
-                                                                   Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+                                                                   Consumer<RangeHighlighterEx> changeAttributesAction) {
     throw new ProcessCanceledException();
   }
 
   @Override
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
-                                      @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+                                      @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
   }
 
   @Override

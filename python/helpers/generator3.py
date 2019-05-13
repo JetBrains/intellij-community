@@ -250,6 +250,9 @@ def zip_sources(zip_path):
                         split_items = match_two_files.group(1, 2)
                     (path, arcpath) = split_items
                     zip.write(path, arcpath)
+                else:
+                    # busy waiting for input from PyCharm...
+                    time.sleep(0.10)
             say('OK: ' + zip_filename)
             sys.stdout.flush()
         except:

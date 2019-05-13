@@ -44,9 +44,9 @@ public class ReferenceProviderType {
   }
 
   private static class CompositePsiReferenceProvider extends PsiReferenceProvider {
-    private final List<? extends PsiReferenceProvider> children;
+    private final List<PsiReferenceProvider> children;
 
-    private CompositePsiReferenceProvider(@NotNull List<? extends PsiReferenceProvider> children) {
+    private CompositePsiReferenceProvider(@NotNull List<PsiReferenceProvider> children) {
       this.children = children;
     }
 

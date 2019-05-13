@@ -15,6 +15,10 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
+
 /**
  * Allow to reuse equal strings to avoid memory being wasted on them. Strings are cached on weak references
  * and garbage-collected when not needed anymore.
@@ -22,5 +26,23 @@ package com.intellij.util.containers;
  * @see WeakInterner
  * @author peter
  */
-public class WeakStringInterner extends WeakInterner<String> {
+public class WeakStringInterner extends StringInterner {
+  private final WeakInterner<String> myDelegate = new WeakInterner<>();
+  
+  @NotNull
+  @Override
+  public String intern(@NotNull String name) {
+    return myDelegate.intern(name);
+  }
+
+  @Override
+  public void clear() {
+    myDelegate.clear();
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getValues() {
+    return myDelegate.getValues();
+  }
 }

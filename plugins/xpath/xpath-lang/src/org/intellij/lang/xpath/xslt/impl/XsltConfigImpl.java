@@ -20,10 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -40,7 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 
 @State(name = "XSLT-Support.Configuration", storages = {@Storage(StoragePathMacros.NON_ROAMABLE_FILE)})
-class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<XsltConfigImpl> {
+class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<XsltConfigImpl>, BaseComponent {
   public boolean SHOW_LINKED_FILES = true;
 
   @Nullable
@@ -55,7 +52,7 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
   }
 
   @Override
-  public void initializeComponent() {
+  public void initComponent() {
     final Language xmlLang = StdFileTypes.XML.getLanguage();
 
     //            intentionManager.addAction(new DeleteUnusedParameterFix());

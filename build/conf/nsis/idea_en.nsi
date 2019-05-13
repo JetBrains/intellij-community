@@ -28,4 +28,3 @@ LangString uninstaller_relocated ${LANG_ENGLISH} "Uninstall hasn't detected fold
 LangString empty_or_upgrade_folder ${LANG_ENGLISH} "Please select an empty folder."
 LangString application_running ${LANG_ENGLISH} "$INSTDIR is running. Close the application and retry the installation."
 LangString download_jre_32bit_version ${LANG_ENGLISH} "Download and install 32-bit JetBrains Runtime"
-LangString not_supported_32bit_win_version ${LANG_ENGLISH} "This installation contains JetBrains Runtime 11 which does not support Microsoft Windows 32-bit version."

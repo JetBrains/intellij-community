@@ -25,16 +25,15 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     myProject = project;
   }
 
-  @NotNull
   @Override
   @Nls
   public String getActionText() {
     return VcsBundle.message("shelve.changes.action");
   }
 
-  @NotNull
   @Override
-  public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
+  @NotNull
+  public CommitSession createCommitSession() {
     return new ShelveChangesCommitSession();
   }
 
@@ -48,7 +47,11 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     return true;
   }
 
-  private class ShelveChangesCommitSession implements CommitSession {
+  private class ShelveChangesCommitSession implements CommitSession, CommitSessionContextAware {
+    @Override
+    public void setContext(CommitContext context) {
+    }
+
     @Override
     public boolean canExecute(Collection<Change> changes, String commitMessage) {
       return changes.size() > 0;

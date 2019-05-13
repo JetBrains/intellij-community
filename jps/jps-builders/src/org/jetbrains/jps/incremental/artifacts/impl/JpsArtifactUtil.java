@@ -36,13 +36,13 @@ import java.util.Set;
  */
 public class JpsArtifactUtil {
   public static boolean processPackagingElements(@NotNull JpsPackagingElement element,
-                                                 @NotNull Processor<? super JpsPackagingElement> processor) {
+                                                 @NotNull Processor<JpsPackagingElement> processor) {
     return processPackagingElements(element, processor, new HashSet<>());
   }
 
   private static boolean processPackagingElements(@NotNull JpsPackagingElement element,
-                                                 @NotNull Processor<? super JpsPackagingElement> processor,
-                                                 final Set<? super JpsPackagingElement> processed) {
+                                                 @NotNull Processor<JpsPackagingElement> processor,
+                                                 final Set<JpsPackagingElement> processed) {
     if (!processed.add(element)) {
       return false;
     }

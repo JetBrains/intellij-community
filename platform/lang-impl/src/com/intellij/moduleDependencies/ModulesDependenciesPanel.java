@@ -317,7 +317,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     TreeUtil.sortRecursively(root, NODE_COMPARATOR);
     ((DefaultTreeModel)myLeftTree.getModel()).reload();
-    TreeUtil.promiseSelectFirst(myLeftTree);
+    TreeUtil.selectFirstNode(myLeftTree);
   }
 
   private void updateRightTree(Module module) {

@@ -1,13 +1,13 @@
 call text: Object result = new Test(instance).invoke();
 class: 
 static class Test {
-        private Object instance;
+        private WithReflectionAccess instance;
 
-        public Test(Object instance) {
+        public Test(WithReflectionAccess instance) {
             this.instance = instance;
         }
 
-        public static Object callMethod1(Object object, Object arg) {
+        public static Object callMethod1(Object object, WithReflectionAccess arg) {
             try {
                 Class<?> klass = Class.forName("WithReflectionAccess");
                 java.lang.reflect.Method member = null;

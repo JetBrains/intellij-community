@@ -31,7 +31,6 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -123,7 +122,7 @@ public class HtmlUtil {
 
   static {
     for (HTMLControls.Control control : HTMLControls.getControls()) {
-      final String tagName = StringUtil.toLowerCase(control.name);
+      final String tagName = control.name.toLowerCase(Locale.US);
       if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
       AUTO_CLOSE_BY_MAP.put(tagName, new THashSet<>(control.autoClosedBy));
     }
@@ -137,12 +136,12 @@ public class HtmlUtil {
   public static boolean isSingleHtmlTag(@NotNull XmlTag tag, boolean lowerCase) {
     final XmlExtension extension = XmlExtension.getExtensionByElement(tag);
     final String name = tag.getName();
-    boolean result = EMPTY_TAGS_MAP.contains(!lowerCase || (tag instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive()) ? name : StringUtil.toLowerCase(name));
+    boolean result = EMPTY_TAGS_MAP.contains(lowerCase ? name.toLowerCase(Locale.US) : name);
     return result && (extension == null || !extension.isSingleTagException(tag));
   }
 
   public static boolean isSingleHtmlTag(String tagName) {
-    return EMPTY_TAGS_MAP.contains(StringUtil.toLowerCase(tagName));
+    return EMPTY_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isSingleHtmlTagL(String tagName) {
@@ -150,7 +149,7 @@ public class HtmlUtil {
   }
 
   public static boolean isOptionalEndForHtmlTag(String tagName) {
-    return OPTIONAL_END_TAGS_MAP.contains(StringUtil.toLowerCase(tagName));
+    return OPTIONAL_END_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isOptionalEndForHtmlTagL(String tagName) {
@@ -163,7 +162,7 @@ public class HtmlUtil {
   }
 
   public static boolean isHtmlBlockTag(String tagName) {
-    return BLOCK_TAGS_MAP.contains(StringUtil.toLowerCase(tagName));
+    return BLOCK_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isPossiblyInlineTag(String tagName) {
@@ -175,7 +174,7 @@ public class HtmlUtil {
   }
 
   public static boolean isInlineTagContainer(String tagName) {
-    return INLINE_ELEMENTS_CONTAINER_MAP.contains(StringUtil.toLowerCase(tagName));
+    return INLINE_ELEMENTS_CONTAINER_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isInlineTagContainerL(String tagName) {
@@ -522,7 +521,7 @@ public class HtmlUtil {
         @Override
         public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset,
                                         final int headerEndOffset) {
-          @NonNls String name = StringUtil.toLowerCase(localName.toString());
+          @NonNls String name = localName.toString().toLowerCase();
           inTag.add(name);
           if (!inTag.contains("head") && !"html".equals(name)) terminate();
           return ProcessingOrder.TAGS_AND_ATTRIBUTES;
@@ -534,7 +533,7 @@ public class HtmlUtil {
 
         @Override
         public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
-          @NonNls final String name = StringUtil.toLowerCase(localName.toString());
+          @NonNls final String name = localName.toString().toLowerCase();
           if ("meta".equals(name) && (metHttpEquiv || metHttml5Charset) && contentAttributeValue != null) {
             String charsetName;
             if (metHttpEquiv) {
@@ -563,9 +562,9 @@ public class HtmlUtil {
 
         @Override
         public void attribute(final CharSequence localName, final CharSequence v, final int startoffset, final int endoffset) {
-          @NonNls final String name = StringUtil.toLowerCase(localName.toString());
+          @NonNls final String name = localName.toString().toLowerCase();
           if (inTag.contains("meta")) {
-            @NonNls String value = StringUtil.toLowerCase(v.toString());
+            @NonNls String value = v.toString().toLowerCase();
             if (name.equals("http-equiv")) {
               metHttpEquiv |= value.equals("content-type");
             } else if (name.equals(CHARSET)) {

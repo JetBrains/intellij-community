@@ -125,7 +125,6 @@ public class DocumentEventImpl extends DocumentEvent {
     return myOldTimeStamp;
   }
 
-  @Override
   @SuppressWarnings("HardCodedStringLiteral")
   public String toString() {
     return "DocumentEventImpl[myOffset=" + myOffset + ", myOldLength=" + myOldLength + ", myNewLength=" + myNewLength +

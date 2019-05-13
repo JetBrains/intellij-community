@@ -5,11 +5,15 @@ import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.ui.SimpleTextAttributes.STYLE_SMALLER;
 
 public class RunAnythingRunConfigurationItem extends RunAnythingItemBase {
   public static final String RUN_CONFIGURATION_AD_TEXT = RunAnythingUtil.AD_CONTEXT_TEXT + ", " + RunAnythingUtil.AD_DEBUG_TEXT;
@@ -36,7 +40,7 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItemBase {
     }
 
     SimpleColoredComponent descriptionComponent = new SimpleColoredComponent();
-    descriptionComponent.append(description, getDescriptionAttributes(isSelected));
+    descriptionComponent.append(description, new SimpleTextAttributes(STYLE_SMALLER, UIUtil.getListForeground(isSelected, true)));
     component.add(descriptionComponent, BorderLayout.EAST);
 
     return component;

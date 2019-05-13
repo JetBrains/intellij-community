@@ -149,7 +149,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
   }
 
   private <T> SettingsEditor<RunnerAndConfigurationSettings> wrapEditor(SettingsEditor<T> editor,
-                                                                        Convertor<? super RunnerAndConfigurationSettings, ? extends T> convertor,
+                                                                        Convertor<RunnerAndConfigurationSettings, T> convertor,
                                                                         ProgramRunner runner) {
     SettingsEditor<RunnerAndConfigurationSettings> wrappedEditor = new SettingsEditorWrapper<>(editor, convertor);
 

@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -175,7 +176,7 @@ public class VMOptions {
 
   @NotNull
   public static String getCustomVMOptionsFileName() {
-    String fileName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
+    String fileName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     if (SystemInfo.is64Bit && !SystemInfo.isMac) fileName += "64";
     if (SystemInfo.isWindows) fileName += ".exe";
     fileName += ".vmoptions";

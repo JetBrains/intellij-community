@@ -46,11 +46,11 @@ public class CommonActionsPanel extends JPanel {
     }
 
     MyActionButton createButton(final Listener listener, String name, Icon icon) {
-      return new MyActionButton(this, listener, name == null ? StringUtil.capitalize(StringUtil.toLowerCase(name())) : name, icon);
+      return new MyActionButton(this, listener, name == null ? StringUtil.capitalize(name().toLowerCase(Locale.ENGLISH)) : name, icon);
     }
 
     public String getText() {
-      return StringUtil.capitalize(StringUtil.toLowerCase(name()));
+      return StringUtil.capitalize(name().toLowerCase(Locale.ENGLISH));
     }
 
     public void performAction(Listener listener) {

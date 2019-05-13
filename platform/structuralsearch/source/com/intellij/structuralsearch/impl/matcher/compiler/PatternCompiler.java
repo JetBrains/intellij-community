@@ -86,7 +86,7 @@ public class PatternCompiler {
     final CompileContext context = new CompileContext(result, options, project);
 
     try {
-      final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes, checkForErrors);
+      final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
       final CompiledPattern pattern = context.getPattern();
       try {
         checkForUnknownVariables(pattern, elements);
@@ -135,7 +135,7 @@ public class PatternCompiler {
     }
   }
 
-  private static void checkForUnknownVariables(final CompiledPattern pattern, List<? extends PsiElement> elements)
+  private static void checkForUnknownVariables(final CompiledPattern pattern, List<PsiElement> elements)
     throws MalformedPatternException {
 
     for (PsiElement element : elements) {
@@ -199,14 +199,12 @@ public class PatternCompiler {
                                                        MatchOptions options,
                                                        CompiledPattern pattern,
                                                        CompileContext context,
-                                                       String[] applicablePrefixes,
-                                                       boolean checkForErrors) throws MalformedPatternException {
+                                                       String[] applicablePrefixes) throws MalformedPatternException {
     if (applicablePrefixes.length == 0) {
       return Collections.emptyList();
     }
 
-    final List<PsiElement> elements =
-      doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context, checkForErrors);
+    List<PsiElement> elements = doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context);
     if (elements.isEmpty()) {
       return elements;
     }
@@ -238,10 +236,10 @@ public class PatternCompiler {
     }
 
     final List<PsiElement> finalElements =
-      compileByPrefixes(project, options, pattern, context, applicablePrefixes, patterns, prefixSequence, 0, checkForErrors);
+      compileByPrefixes(project, options, pattern, context, applicablePrefixes, patterns, prefixSequence, 0);
     return finalElements != null
            ? finalElements
-           : doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context, checkForErrors);
+           : doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context);
   }
 
   @Nullable
@@ -252,11 +250,9 @@ public class PatternCompiler {
                                                     String[] applicablePrefixes,
                                                     Pattern[] substitutionPatterns,
                                                     String[] prefixSequence,
-                                                    int index,
-                                                    boolean checkForErrors) throws MalformedPatternException {
+                                                    int index) throws MalformedPatternException {
     if (index >= prefixSequence.length) {
-      final List<PsiElement> elements =
-        doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context, checkForErrors);
+      final List<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
       if (elements.isEmpty()) {
         return elements;
       }
@@ -275,8 +271,7 @@ public class PatternCompiler {
     for (String applicablePrefix : applicablePrefixes) {
       prefixSequence[index] = applicablePrefix;
 
-      final List<PsiElement> elements =
-        doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context, checkForErrors);
+      List<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
       if (elements.isEmpty()) {
         return elements;
       }
@@ -298,7 +293,7 @@ public class PatternCompiler {
 
       if (result == Boolean.FALSE || (result == null && alternativeVariant == null)) {
         final List<PsiElement> finalElements =
-          compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, prefixSequence, index + 1, checkForErrors);
+          compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, prefixSequence, index + 1);
         if (finalElements != null) {
           if (result == Boolean.FALSE) {
             return finalElements;
@@ -310,7 +305,7 @@ public class PatternCompiler {
     }
 
     return alternativeVariant != null ?
-           compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, alternativeVariant, index + 1, checkForErrors) :
+           compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, alternativeVariant, index + 1) :
            null;
   }
 
@@ -419,8 +414,7 @@ public class PatternCompiler {
                                             MatchOptions options,
                                             CompiledPattern result,
                                             PrefixProvider prefixProvider,
-                                            CompileContext context,
-                                            boolean checkForErrors) throws MalformedPatternException {
+                                            CompileContext context) throws MalformedPatternException {
     result.clearHandlers();
 
     final StringBuilder buf = new StringBuilder();
@@ -494,15 +488,12 @@ public class PatternCompiler {
         }
 
         if (!StringUtil.isEmptyOrSpaces(constraint.getReferenceConstraint())) {
-          try {
-            MatchPredicate predicate = new ReferencePredicate(constraint.getReferenceConstraint(), options.getFileType(), project);
-            if (constraint.isInvertReference()) {
-              predicate = new NotPredicate(predicate);
-            }
-            addPredicate(handler, predicate);
-          } catch (MalformedPatternException e) {
-            if (checkForErrors) throw e;
+          MatchPredicate predicate = new ReferencePredicate(constraint.getReferenceConstraint(), options.getFileType(), project);
+
+          if (constraint.isInvertReference()) {
+            predicate = new NotPredicate(predicate);
           }
+          addPredicate(handler, predicate);
         }
 
         addExtensionPredicates(options, constraint, handler);

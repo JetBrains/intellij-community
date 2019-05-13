@@ -454,7 +454,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
                                                                PsiElement contextPsiElement,
                                                                SourcePosition contextSourcePosition,
                                                                TextWithImports text,
-                                                               Function<? super PsiElement, ? extends PsiCodeFragment> fragmentFactory)
+                                                               Function<PsiElement, PsiCodeFragment> fragmentFactory)
     throws EvaluateException {
     try {
       return EvaluatorBuilderImpl.build(text, contextPsiElement, contextSourcePosition, project);

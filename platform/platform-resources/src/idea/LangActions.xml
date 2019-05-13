@@ -943,9 +943,9 @@
     </group>
 
     <group id="RunnerLayoutActions">
-      <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
-              icon="AllIcons.Debugger.RestoreLayout"/>
       <group id="Runner.Layout">
+        <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
+                icon="AllIcons.Debugger.RestoreLayout"/>
       </group>
       <group id="Runner.View.Close.Group" popup="false">
         <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="AllIcons.Actions.Close"/>
@@ -954,6 +954,8 @@
         <action id="Runner.CloseAllUnpinnedViews" class="com.intellij.execution.ui.layout.actions.CloseAllUnpinnedViewsAction" icon="AllIcons.Actions.Close"/>
       </group>
       <group id="Runner.View.Popup">
+        <action id="Runner.MinimizeView" class="com.intellij.execution.ui.layout.actions.MinimizeViewAction" icon="AllIcons.General.HideToolWindow"/>
+        <separator/>
         <reference ref="Runner.View.Close.Group"/>
         <separator/>
         <group id="Runner.Focus">
@@ -963,6 +965,7 @@
 
 
       <group id="Runner.View.Toolbar">
+        <reference ref="Runner.MinimizeView"/>
         <reference ref="Runner.CloseView"/>
       </group>
     </group>
@@ -1030,8 +1033,6 @@
     <group>
       <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup"
               text="Import Test Results" icon="AllIcons.ToolbarDecorator.Import" id="ImportTests"/>
-      <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction"
-              text="Import Test From File" id="ImportTestsFromFile"/>
       <add-to-group group-id="RunMenu" anchor="after" relative-to-action="editRunConfigurations"/>
     </group>
 
@@ -1178,19 +1179,9 @@
     </group>
 
     <group id="ServiceViewTreeToolbar">
-      <group id="ServiceView.GroupBy" popup="true" text="Group By" icon="AllIcons.Actions.GroupBy"
-             class="com.intellij.ide.actions.NonEmptyActionGroup">
-        <action id="ServiceView.GroupByType" class="com.intellij.execution.services.GroupByTypeAction"
-                text="Type"/>
-      </group>
-      <separator/>
-      <action id="ServiceView.ShowInNewTab" class="com.intellij.execution.services.ShowInNewTabAction"
-              text="Show in New Tab" icon="AllIcons.Actions.OpenNewTab"/>
-      <action id="ServiceView.FlattenServices" class="com.intellij.execution.services.FlattenServicesAction"
-              text="Flatten Services" icon="AllIcons.Actions.ListFiles"/>
-      <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"
-              text="Split By Type" icon="AllIcons.Modules.Split"/>
-      <group id="ServiceView.TreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
+      <action id="ExtractServiceAction" class="com.intellij.execution.services.ExtractServiceAction"
+              text="Extract" icon="AllIcons.Actions.Forward"/>
+      <group id="ServiceViewTreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
     <group id="ServiceViewNodeToolbar">
@@ -1200,9 +1191,6 @@
     <group id="ServiceViewNodePopup">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup"/>
       <separator/>
-      <reference id="ServiceView.ShowInNewTab"/>
-      <reference id="ServiceView.FlattenServices"/>
-      <reference id="ServiceView.SplitByType"/>
     </group>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">

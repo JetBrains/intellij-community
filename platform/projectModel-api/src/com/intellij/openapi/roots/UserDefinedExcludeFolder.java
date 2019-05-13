@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.roots;
 
-import org.jetbrains.annotations.ApiStatus;
-
-@ApiStatus.Internal
+/**
+ *  @author dsl
+ */
 public interface UserDefinedExcludeFolder extends ExcludeFolder {
 }

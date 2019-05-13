@@ -208,9 +208,6 @@ public class ExceptionUtil {
     List<PsiClassType> result = new ArrayList<>();
     for (PsiType type : referenceTypes) {
       type = PsiClassImplUtil.correctType(substitutor.substitute(type), scope);
-      if (type instanceof PsiCapturedWildcardType) {
-        type = ((PsiCapturedWildcardType)type).getUpperBound();
-      }
       if (type instanceof PsiClassType) {
         result.add((PsiClassType)type);
       }
@@ -653,7 +650,7 @@ public class ExceptionUtil {
   private static List<PsiClassType> getUnhandledExceptions(@NotNull PsiMethod method,
                                                           PsiElement element,
                                                           PsiElement topElement,
-                                                          @NotNull Supplier<? extends PsiSubstitutor> substitutor) {
+                                                          @NotNull Supplier<PsiSubstitutor> substitutor) {
     if (isArrayClone(method, element)) {
       return Collections.emptyList();
     }

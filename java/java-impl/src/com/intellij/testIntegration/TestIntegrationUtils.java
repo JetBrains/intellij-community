@@ -225,7 +225,7 @@ public class TestIntegrationUtils {
 
     String templateText;
     try {
-      Properties properties = FileTemplateManager.getInstance(targetClass.getProject()).getDefaultProperties();
+      Properties properties = new Properties();
       if (sourceClass != null && sourceClass.isValid()) {
         properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, sourceClass.getQualifiedName());
       }

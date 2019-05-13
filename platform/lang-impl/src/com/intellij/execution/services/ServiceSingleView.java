@@ -48,6 +48,10 @@ class ServiceSingleView extends ServiceView {
   }
 
   @Override
+  void saveState(@NotNull ServiceViewState state) {
+  }
+
+  @Override
   void onViewSelected() {
     showContent();
   }

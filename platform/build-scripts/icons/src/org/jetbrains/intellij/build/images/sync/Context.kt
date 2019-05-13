@@ -13,7 +13,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
                        private val devIconsVerifier: Consumer<Collection<File>>? = null) {
   companion object {
     const val iconsCommitHashesToSyncArg = "sync.icons.commits"
-    private const val iconsRepoArg = "icons.repo"
   }
 
   val devRepoDir: File
@@ -46,6 +45,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val devIconsSyncAll: Boolean
 
   init {
+    val iconsRepoArg = "icons.repo"
     val devRepoArg = "dev.repo"
     val iconsRepoNameArg = "icons.repo.name"
     val iconsRepoPathArg = "icons.repo.path"
@@ -80,22 +80,39 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
 
     fun bool(arg: String) = System.getProperty(arg)?.toBoolean() ?: false
 
+    fun ignoreCaseInDirName(path: String) = File(path).parentFile?.listFiles()?.firstOrNull {
+      it.absolutePath.equals(FileUtil.toSystemDependentName(path), ignoreCase = true)
+    }
+
     fun commits(arg: String) = System.getProperty(arg)
                                  ?.takeIf { it.trim() != "*" }
                                  ?.split(",", ";", " ")
                                  ?.filter { it.isNotBlank() }
                                  ?.mapTo(mutableSetOf(), String::trim) ?: mutableSetOf<String>()
 
-    devRepoDir = findDirectoryIgnoringCase(System.getProperty(devRepoArg)) ?: {
+    fun File.isDir() = exists() && isDirectory && !list().isNullOrEmpty()
+
+    devRepoDir = System.getProperty(devRepoArg)?.let(::ignoreCaseInDirName) ?: {
       log("WARNING: $devRepoArg not found")
       File(System.getProperty("user.dir"))
     }()
-    val iconsRepoRelativePath = System.getProperty(iconsRepoPathArg) ?: ""
-    val iconsRepoRootDir = findDirectoryIgnoringCase(System.getProperty(iconsRepoArg)) ?: cloneIconsRepoToTempDir()
-    iconsRepoDir = iconsRepoRootDir.resolve(iconsRepoRelativePath)
-    if (!iconsRepoDir.isDirectory) {
-      doFail("Cannot find $iconsRepoRelativePath under $iconsRepoRootDir")
-    }
+    val iconsRepoPath = System.getProperty(iconsRepoPathArg) ?: ""
+    iconsRepoDir = System.getProperty(iconsRepoArg)?.let { "$it/$iconsRepoPath" }?.let { path ->
+      File(path).takeIf(File::isDir) ?: ignoreCaseInDirName(path)?.takeIf(File::isDir)
+    } ?: {
+      log("WARNING: $iconsRepoArg not found")
+      val tmp = Files.createTempDirectory("icons-sync").toFile()
+      Runtime.getRuntime().addShutdownHook(thread(start = false) {
+        tmp.deleteRecursively()
+      })
+      val uri = "ssh://git@github.com/JetBrains/IntelliJIcons.git"
+      val repo = callWithTimer("Cloning $uri into $tmp") { gitClone(uri, tmp) }
+      System.getProperty(iconsRepoArg)?.let {
+        var file: File? = File(it)
+        while (file != null && file.name != repo.name) file = file.parentFile
+        if (file != null) repo.resolve(File(it).toRelativeString(file)) else null
+      }?.let { ignoreCaseInDirName(it.absolutePath) } ?: repo
+    }()
     iconsRepoName = System.getProperty(iconsRepoNameArg) ?: "icons repo"
     devRepoName = System.getProperty(devRepoNameArg) ?: "dev repo"
     skipDirsPattern = System.getProperty(patternArg)
@@ -130,16 +147,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       }?.toMutableSet() ?: mutableSetOf()
   }
 
-  private fun cloneIconsRepoToTempDir(): File {
-    log("WARNING: $iconsRepoArg not found")
-    val tmp = Files.createTempDirectory("icons-sync").toFile()
-    Runtime.getRuntime().addShutdownHook(thread(start = false) {
-      tmp.deleteRecursively()
-    })
-    val uri = "ssh://git@github.com/JetBrains/IntelliJIcons.git"
-    return callWithTimer("Cloning $uri into $tmp") { gitClone(uri, tmp) }
-  }
-
   val byDesigners = Changes(includeRemoved = doSyncRemovedIconsInDev)
   val devIconsFilter: (File) -> Boolean by lazy {
     val skipDirsRegex = skipDirsPattern?.toRegex()
@@ -167,12 +174,4 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   fun isFail() = (notifySlack || assignInvestigation) &&
                  (iconsSyncRequired() || failIfSyncDevIconsRequired && devSyncRequired())
 
-  private fun findDirectoryIgnoringCase(path: String?): File? {
-    if (path == null) return null
-    val file = File(path)
-    if (file.isDirectory) return file
-    return file.parentFile?.listFiles()?.firstOrNull {
-      it.absolutePath.equals(FileUtil.toSystemDependentName(path), ignoreCase = true)
-    }
-  }
 }

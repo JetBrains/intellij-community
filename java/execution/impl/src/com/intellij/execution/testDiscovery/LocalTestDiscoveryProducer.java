@@ -12,7 +12,7 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
   @NotNull
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                                     @NotNull List<? extends Couple<String>> classesAndMethods,
+                                                     @NotNull List<Couple<String>> classesAndMethods,
                                                      byte frameworkId) {
     MultiMap<String, String> result = new MultiMap<>();
     TestDiscoveryIndex instance = TestDiscoveryIndex.getInstance(project);
@@ -35,7 +35,7 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId) {
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<Couple<String>> testFqns, byte frameworkId) {
     TestDiscoveryIndex instance = TestDiscoveryIndex.getInstance(project);
     Set<String> result = new HashSet<>();
     for (Couple<String> test : testFqns) {

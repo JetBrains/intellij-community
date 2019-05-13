@@ -8,8 +8,8 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.changes.IgnoreSettingsType
-import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider
 import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileConstants.NEWLINE
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguage
@@ -21,8 +21,6 @@ import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.psi.impl.source.DummyHolderFactory
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.vcsUtil.VcsImplUtil
-import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
@@ -30,15 +28,13 @@ fun updateIgnoreBlock(project: Project,
                       ignoreFile: VirtualFile,
                       ignoredGroupDescription: String,
                       vararg newEntries: IgnoredFileDescriptor): PsiFile? {
-  val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return null
-  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, vcs) ?: return null
   val ignoreFilePsi = ignoreFile.findIgnorePsi(project) ?: return null
   val psiFactory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
   val psiParserFacade = PsiParserFacade.SERVICE.getInstance(project)
   invokeAndWaitIfNeeded {
     runUndoTransparentWriteAction {
       updateIgnoreBlock(psiParserFacade, ignoreFilePsi, ignoredGroupDescription,
-                        newEntries.map { it.toPsiElement(ignoredFileContentProvider, psiFactory, ignoreFilePsi) })
+                        newEntries.map { it.toPsiElement(psiFactory, ignoreFilePsi) })
     }
     ignoreFile.save()
   }
@@ -49,8 +45,6 @@ fun addNewElementsToIgnoreBlock(project: Project,
                                 ignoreFile: VirtualFile,
                                 ignoredGroupDescription: String,
                                 vararg newEntries: IgnoredFileDescriptor): PsiFile? {
-  val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return null
-  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, vcs) ?: return null
   val ignoreFilePsi = ignoreFile.findIgnorePsi(project) ?: return null
   val psiFactory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
   val psiParserFacade = PsiParserFacade.SERVICE.getInstance(project)
@@ -58,7 +52,7 @@ fun addNewElementsToIgnoreBlock(project: Project,
     runUndoTransparentWriteAction {
       addNewElementsToIgnoreBlock(ignoredGroupDescription, psiParserFacade, ignoreFilePsi,
                                   newEntries.map {
-                                    it.toPsiElement(ignoredFileContentProvider, psiFactory, ignoreFilePsi)
+                                    it.toPsiElement(psiFactory, ignoreFilePsi)
                                   })
     }
     ignoreFile.save()
@@ -67,15 +61,13 @@ fun addNewElementsToIgnoreBlock(project: Project,
 }
 
 fun addNewElements(project: Project, ignoreFile: VirtualFile, vararg newEntries: IgnoredFileDescriptor): PsiFile? {
-  val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return null
-  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, vcs) ?: return null
   val ignoreFilePsi = ignoreFile.findIgnorePsi(project) ?: return null
   val psiFactory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
   invokeAndWaitIfNeeded {
     runUndoTransparentWriteAction {
       addNewElements(ignoreFilePsi,
                      newEntries.map {
-                       it.toPsiElement(ignoredFileContentProvider, psiFactory, ignoreFilePsi)
+                       it.toPsiElement(psiFactory, ignoreFilePsi)
                      })
     }
     ignoreFile.save()
@@ -140,17 +132,15 @@ private fun addNewElementsToIgnoreBlock(ignoredGroupDescription: String,
   }
 }
 
-private fun IgnoredFileDescriptor.toPsiElement(ignoredFileContentProvider: IgnoredFileContentProvider,
-                                               psiFactory: PsiFileFactoryImpl,
-                                               ignorePsi: PsiFile): PsiElement {
+private fun IgnoredFileDescriptor.toPsiElement(psiFactory: PsiFileFactoryImpl, ignorePsi: PsiFile): PsiElement {
   val ignorePath = path
   val ignoreMask = mask
 
   val text =
     if (ignorePath != null) {
-      val ignoreFileContainingDir = ignorePsi.virtualFile?.parent ?: throw IllegalStateException(
+      val ignoreFileContainingDirPath = ignorePsi.virtualFile?.parent?.path ?: throw IllegalStateException(
         "Cannot determine ignore file path for $ignorePsi")
-      ignoredFileContentProvider.buildIgnoreEntryContent(ignoreFileContainingDir, this)
+      "/${FileUtil.getRelativePath(ignoreFileContainingDirPath, ignorePath, '/')}"
     }
     else ignoreMask ?: throw IllegalStateException("IgnoredFileBean: path and mask cannot be null at the same time")
 

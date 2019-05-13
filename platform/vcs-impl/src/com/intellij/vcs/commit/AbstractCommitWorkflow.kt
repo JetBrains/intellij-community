@@ -9,8 +9,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
@@ -21,8 +23,6 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import java.util.*
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
 
 private val LOG = logger<AbstractCommitWorkflow>()
 
@@ -30,15 +30,12 @@ internal fun CommitOptions.saveState() = allOptions.forEach { it.saveState() }
 internal fun CommitOptions.restoreState() = allOptions.forEach { it.restoreState() }
 internal fun CommitOptions.refresh() = allOptions.forEach { it.refresh() }
 
-private class CommitProperty<T>(private val key: Key<T>, private val defaultValue: T) : ReadWriteProperty<CommitContext, T> {
-  override fun getValue(thisRef: CommitContext, property: KProperty<*>): T = thisRef.getUserData(key) ?: defaultValue
-  override fun setValue(thisRef: CommitContext, property: KProperty<*>, value: T) = thisRef.putUserData(key, value)
-}
-
-fun commitProperty(key: Key<Boolean>): ReadWriteProperty<CommitContext, Boolean> = CommitProperty(key, false)
-
 private val IS_AMEND_COMMIT_MODE_KEY = Key.create<Boolean>("Vcs.Commit.IsAmendCommitMode")
-var CommitContext.isAmendCommitMode: Boolean by commitProperty(IS_AMEND_COMMIT_MODE_KEY)
+var CommitContext.isAmendCommitMode: Boolean
+  get() = getUserData(IS_AMEND_COMMIT_MODE_KEY) == true
+  set(value) {
+    putUserData(IS_AMEND_COMMIT_MODE_KEY, value)
+  }
 
 interface CommitWorkflowListener : EventListener {
   fun vcsesChanged()
@@ -52,16 +49,12 @@ interface CommitWorkflowListener : EventListener {
 abstract class AbstractCommitWorkflow(val project: Project) {
   protected val eventDispatcher = EventDispatcher.create(CommitWorkflowListener::class.java)
 
-  var commitContext: CommitContext = CommitContext()
-    private set
+  val commitContext: CommitContext = CommitContext()
 
   abstract val isDefaultCommitEnabled: Boolean
 
   private val _vcses = mutableSetOf<AbstractVcs<*>>()
   val vcses: Set<AbstractVcs<*>> get() = unmodifiableOrEmptySet(_vcses.toSet())
-
-  private val _commitExecutors = mutableListOf<CommitExecutor>()
-  val commitExecutors: List<CommitExecutor> get() = newUnmodifiableList(_commitExecutors)
 
   private val _commitHandlers = mutableListOf<CheckinHandler>()
   val commitHandlers: List<CheckinHandler> get() = newUnmodifiableList(_commitHandlers)
@@ -78,11 +71,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
   }
 
-  internal fun initCommitExecutors(executors: List<CommitExecutor>) {
-    _commitExecutors.clear()
-    _commitExecutors += executors
-  }
-
   internal fun initCommitHandlers(handlers: List<CheckinHandler>) {
     _commitHandlers.clear()
     _commitHandlers += handlers
@@ -92,10 +80,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   internal fun initCommitOptions(options: CommitOptions) {
     clearCommitOptions()
     _commitOptions.add(options)
-  }
-
-  internal fun clearCommitContext() {
-    commitContext = CommitContext()
   }
 
   fun addListener(listener: CommitWorkflowListener, parent: Disposable) = eventDispatcher.addListener(listener, parent)
@@ -170,12 +154,5 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       getCommitHandlerFactories(commitPanel.project)
         .map { it.createHandler(commitPanel, commitContext) }
         .filter { it != CheckinHandler.DUMMY }
-
-    @JvmStatic
-    fun getCommitExecutors(project: Project, changes: Collection<Change>): List<CommitExecutor> =
-      getCommitExecutors(project, getAffectedVcses(changes, project))
-
-    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs<*>>): List<CommitExecutor> =
-      vcses.flatMap { it.commitExecutors } + ChangeListManager.getInstance(project).registeredExecutors
   }
 }

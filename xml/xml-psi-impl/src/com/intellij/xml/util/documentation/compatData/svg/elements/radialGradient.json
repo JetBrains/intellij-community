@@ -142,7 +142,7 @@
             }
           }
         },
-        "fr": {
+        "r": {
           "__compat": {
             "support": {
               "chrome": {
@@ -283,7 +283,7 @@
             }
           }
         },
-        "gradientTransform": {
+        "fr": {
           "__compat": {
             "support": {
               "chrome": {
@@ -377,7 +377,7 @@
             }
           }
         },
-        "href": {
+        "gradientTransform": {
           "__compat": {
             "support": {
               "chrome": {
@@ -424,7 +424,7 @@
             }
           }
         },
-        "r": {
+        "href": {
           "__compat": {
             "support": {
               "chrome": {

@@ -31,7 +31,6 @@ import java.util.List;
  * @see DocumentationProviderEx
  * @see AbstractDocumentationProvider
  * @see ExternalDocumentationProvider
- * @see ExternalDocumentationHandler
  */
 public interface DocumentationProvider {
 

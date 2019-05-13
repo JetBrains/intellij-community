@@ -25,8 +25,6 @@ public class RestoreLayoutAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    RunnerContentUi runnerContentUi = getRunnerUi(e);
-    e.getPresentation()
-      .setEnabledAndVisible(runnerContentUi != null && (runnerContentUi.isMinimizeActionEnabled() || runnerContentUi.isMoveToGridActionEnabled()));
+    e.getPresentation().setEnabled(getRunnerUi(e) != null);
   }
 }

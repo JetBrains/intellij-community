@@ -4,7 +4,6 @@ package com.intellij.uiDesigner;
 
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -25,7 +24,7 @@ public class ImageFileFilter implements TreeFileChooser.PsiFileFilter {
   public ImageFileFilter(@Nullable Module module) {
     final String[] formatNames = ImageIO.getReaderFormatNames();
     for(int i=0; i<formatNames.length; i++) {
-      formatNames [i] = StringUtil.toLowerCase(formatNames [i]);
+      formatNames [i] = formatNames [i].toLowerCase();
     }
     myExtensions = new HashSet<>(Arrays.asList(formatNames));
     if (module != null) {
@@ -39,7 +38,7 @@ public class ImageFileFilter implements TreeFileChooser.PsiFileFilter {
     if (virtualFile != null) {
       String extension = virtualFile.getExtension();
       return extension != null &&
-             myExtensions.contains(StringUtil.toLowerCase(extension)) &&
+             myExtensions.contains(extension.toLowerCase()) &&
              (myModuleScope == null || myModuleScope.contains(virtualFile));
     }
     return false;

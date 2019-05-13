@@ -219,12 +219,12 @@ public abstract class PluginsTab {
   protected abstract PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener);
 
   @NotNull
-  protected abstract JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
+  protected abstract JComponent createPluginsPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener);
 
-  protected abstract void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
+  protected abstract void updateMainSelection(@NotNull Consumer<PluginsGroupComponent> selectionListener);
 
   @NotNull
-  protected abstract SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
+  protected abstract SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener);
 
   public void showSearchPanel(@NotNull String query) {
     if (mySearchPanel.isEmpty()) {
@@ -232,7 +232,6 @@ public abstract class PluginsTab {
       myDetailsPage.showPlugin(null, false);
     }
     mySearchPanel.setQuery(query);
-    mySearchTextField.addCurrentTextToHistory();
   }
 
   public void hideSearchPanel() {

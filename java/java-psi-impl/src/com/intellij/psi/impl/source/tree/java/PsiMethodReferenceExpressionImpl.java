@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiMethodReferenceExpression>>
   implements PsiMethodReferenceExpression {
@@ -77,7 +78,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   }
 
   @Override
-  public boolean isPotentiallyCompatible(@Nullable PsiType functionalInterfaceType) {
+  public boolean isPotentiallyCompatible(final PsiType functionalInterfaceType) {
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
     if (interfaceMethod == null) return false;
 
@@ -91,8 +92,17 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       }
     };
 
-    ResolveResult[] result = LambdaUtil.performWithTargetType(this, functionalInterfaceType, () ->
-      resolver.resolve(this, getContainingFile(), false));
+    final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
+    final PsiType added = map.put(this, functionalInterfaceType);
+    final ResolveResult[] result;
+    try {
+      result = resolver.resolve(this, getContainingFile(), false);
+    }
+    finally {
+      if (added == null) {
+        map.remove(this);
+      }
+    }
 
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(this);
     final int interfaceArity = interfaceMethod.getParameterList().getParametersCount();
@@ -401,7 +411,17 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
      //        the result of applying capture conversion (5.1.10) to the return type of the invocation type (15.12.2.6) of the chosen declaration is R',
      //        where R is the target type that may be used to infer R'; neither R nor R' is void; and R' is compatible with R in an assignment context.
 
-    JavaResolveResult result = LambdaUtil.performWithTargetType(this, left, () -> advancedResolve(false));
+    Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
+    final JavaResolveResult result;
+    try {
+      if (map.put(this, left) != null) {
+        return false;
+      }
+      result = advancedResolve(false);
+    }
+    finally {
+      map.remove(this);
+    }
 
     if (result instanceof MethodCandidateInfo && !((MethodCandidateInfo)result).isApplicable()) {
       return false;

@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog.validator.persistence;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroup;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
@@ -22,27 +21,13 @@ import java.util.Set;
 public class EventLogTestWhitelistPersistence {
   private static final String TEST_RULE = "{util#fus_test_mode}";
 
-  public static void addGroupWithCustomRules(@NotNull String recorderId, @NotNull String groupId, @NotNull String rules) throws IOException {
-    final String content =
-      "{\"id\":\"" + groupId + "\"," +
-      "\"versions\":[ {\"from\" : \"1\"}]," +
-      "\"rules\":" + rules + "}";
-    final WLGroup newGroup = new GsonBuilder().create().fromJson(content, WLGroup.class);
-    addNewGroup(recorderId, newGroup);
-  }
-
   public static void addTestGroup(@NotNull String recorderId, @NotNull String groupId, @NotNull Set<String> eventData) throws IOException {
-    final WLGroup group = createTestGroup(groupId, eventData);
-    addNewGroup(recorderId, group);
-  }
-
-  private static void addNewGroup(@NotNull String recorderId,
-                                  @NotNull WLGroup group) throws IOException {
     final EventLogWhitelistPersistence persistence = new EventLogWhitelistPersistence(recorderId);
     final WLGroups whitelist = loadTestWhitelist(persistence);
+    final WLGroup group = createTestGroup(groupId, eventData);
 
     whitelist.groups.stream().
-      filter(g -> StringUtil.equals(g.id, group.id)).findFirst().
+      filter(g -> StringUtil.equals(g.id, groupId)).findFirst().
       ifPresent(whitelist.groups::remove);
     whitelist.groups.add(group);
     final File file = persistence.getWhiteListFile();

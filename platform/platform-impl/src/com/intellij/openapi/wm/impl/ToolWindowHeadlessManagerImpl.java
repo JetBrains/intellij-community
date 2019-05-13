@@ -197,11 +197,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public boolean fallbackToEditor() {
-    return false;
-  }
-
-  @Override
   public String getLastActiveToolWindowId() {
     return null;
   }

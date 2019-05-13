@@ -72,7 +72,7 @@ public class JvmDeclarationSearch {
 
   @NotNull
   private static Iterator<JvmElement> iterateDeclarations(@NotNull PsiElement declaringElement,
-                                                          @NotNull Collection<? extends JvmDeclarationSearcher> searchers) {
+                                                          @NotNull Collection<JvmDeclarationSearcher> searchers) {
     return new FlatteningIterator<JvmDeclarationSearcher, JvmElement>(searchers.iterator()) {
       @Override
       public boolean hasNext() {

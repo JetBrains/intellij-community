@@ -23,13 +23,11 @@ public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testImplicitAnonymousClassParameterHighlighting_InsideLambda() {
     configureFromFileText("Test.java",
-                          "class T {" +
-                          "    private T(int i){}\n" +
+                          "class T {\n" +
                           "    public void test() {\n" +
                           "        int xxx = 12;\n" +
                           "        Runnable r = () -> {\n" +
                           "            check(<symbolName type=\"IMPLICIT_ANONYMOUS_CLASS_PARAMETER\">xxx</symbolName>);\n" +
-                          "            new T(<symbolName type=\"IMPLICIT_ANONYMOUS_CLASS_PARAMETER\">xxx</symbolName>){};" +
                           "        };" +
                           "    }\n" +
                           "    public void check(int a) {}\n" +

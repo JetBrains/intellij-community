@@ -37,6 +37,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -47,7 +48,6 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.intellij.util.PlatformUtils.*;
 
@@ -274,9 +274,16 @@ public class ExternalSystemApiUtil {
     return getChildren(parent, key);
   }
 
-  public static void visit(@Nullable DataNode<?> originalNode, @NotNull Consumer<? super DataNode<?>> consumer) {
-    if (originalNode != null) {
-      originalNode.visit(consumer);
+  public static void visit(@Nullable DataNode node, @NotNull Consumer<? super DataNode<?>> consumer) {
+    if (node == null) return;
+
+    Stack<DataNode> toProcess = new Stack<>(node);
+    while (!toProcess.isEmpty()) {
+      DataNode<?> node0 = toProcess.pop();
+      consumer.consume(node0);
+      for (DataNode<?> child : node0.getChildren()) {
+        toProcess.push(child);
+      }
     }
   }
 

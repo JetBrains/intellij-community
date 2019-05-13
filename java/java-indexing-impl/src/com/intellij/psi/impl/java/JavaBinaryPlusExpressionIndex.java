@@ -44,7 +44,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
       int[] offsets = new StringSearcher("+", true, true).findAllOccurrences(text);
       if (offsets.length == 0) return Collections.emptyMap();
 
-      LighterAST tree = ((PsiDependentFileContent)inputData).getLighterAST();
+      LighterAST tree = ((FileContentImpl)inputData).getLighterASTForPsiDependentIndex();
       TIntArrayList result = new TIntArrayList(offsets.length);
       Map<LighterASTNode, Boolean> stringConcatenations = new HashMap<>();
       LightTreeUtil.processLeavesAtOffsets(offsets, tree, (leaf, offset) -> {

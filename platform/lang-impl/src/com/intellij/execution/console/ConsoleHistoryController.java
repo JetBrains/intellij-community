@@ -33,15 +33,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -136,12 +134,13 @@ public class ConsoleHistoryController {
 
   public void install() {
     MessageBusConnection busConnection = myConsole.getProject().getMessageBus().connect(myConsole);
-    busConnection.subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
-      @Override
-      public void duringSave(@NotNull Project project) {
-        ApplicationManager.getApplication().invokeAndWait(() -> saveHistory());
-      }
-    });
+    busConnection
+      .subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
+        @Override
+        public void duringSave(@NotNull Project project) {
+          ApplicationManager.getApplication().invokeAndWait(() -> saveHistory());
+        }
+      });
     busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void beforeDocumentSaving(@NotNull Document document) {
@@ -194,9 +193,9 @@ public class ConsoleHistoryController {
    * @return true if some text has been loaded; otherwise false
    */
   public boolean loadHistory(String id) {
-    CharSequence prev = myHelper.getContent();
+    String prev = myHelper.getContent();
     boolean result = myHelper.loadHistory(id);
-    CharSequence userValue = myHelper.getContent();
+    String userValue = myHelper.getContent();
     if (prev != userValue && userValue != null) {
       setConsoleText(new Entry(userValue, -1), false, false);
     }
@@ -236,7 +235,7 @@ public class ConsoleHistoryController {
         myHelper.setContent(text);
         myHelper.getModel().setContent(text);
       }
-      CharSequence text = ObjectUtils.chooseNotNull(command.getText(), "");
+      String text = StringUtil.notNullize(command.getText());
       int offset;
       if (regularMode) {
         if (myMultiline) {
@@ -262,7 +261,7 @@ public class ConsoleHistoryController {
     });
   }
 
-  protected int insertTextMultiline(CharSequence text, Editor editor, Document document) {
+  protected int insertTextMultiline(String text, Editor editor, Document document) {
     TextRange selection = EditorUtil.getSelectionInAnyMode(editor);
 
     int start = document.getLineStartOffset(document.getLineNumber(selection.getStartOffset()));
@@ -400,11 +399,11 @@ public class ConsoleHistoryController {
     }
   }
 
-  public static final class ModelHelper implements SafeWriteRequestor {
+  public static class ModelHelper {
     private final ConsoleRootType myRootType;
     private final String myId;
     private final ConsoleHistoryModel myModel;
-    private CharSequence myContent;
+    private String myContent;
 
     public ModelHelper(ConsoleRootType rootType, String id, ConsoleHistoryModel model) {
       myRootType = rootType;
@@ -424,7 +423,7 @@ public class ConsoleHistoryController {
       return myId;
     }
 
-    public CharSequence getContent() {
+    public String getContent() {
       return myContent;
     }
 
@@ -449,7 +448,7 @@ public class ConsoleHistoryController {
         if (getModel().isEmpty()) return;
         WriteAction.run(() -> {
           VirtualFile file = HistoryRootType.getInstance().findFile(null, getHistoryName(myRootType, myId), ScratchFileService.Option.create_if_missing);
-          try (Writer out = new BufferedWriter(new OutputStreamWriter(file.getOutputStream(this), file.getCharset()))) {
+          try (Writer out = new OutputStreamWriter(new SafeFileOutputStream(VfsUtilCore.virtualToIoFile(file)), file.getCharset())) {
             boolean first = true;
             for (String entry : getModel().getEntries()) {
               if (first) first = false;

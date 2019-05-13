@@ -3,7 +3,6 @@ package com.intellij.util.io
 
 import com.intellij.util.SmartList
 import com.intellij.util.text.CharArrayCharSequence
-import java.io.InputStreamReader
 import java.io.Reader
 import java.net.URLEncoder
 import java.nio.ByteBuffer
@@ -24,10 +23,6 @@ fun Reader.readCharSequence(length: Int): CharSequence {
     return CharSequenceBackedByChars(chars, 0, count)
   }
 }
-
-@Suppress("unused")
-@Deprecated(message = "For Java code only (Reader is accepted now instead of InputStreamReader and it breaks compatibility)", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("reader.readCharSequence()"))
-fun readCharSequence(reader: InputStreamReader) = reader.readCharSequence()
 
 /**
  * Think twice before use - consider to to specify length.

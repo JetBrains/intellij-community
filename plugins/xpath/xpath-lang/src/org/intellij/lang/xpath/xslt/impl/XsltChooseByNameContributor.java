@@ -17,7 +17,6 @@ package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
@@ -57,7 +56,7 @@ class XsltChooseByNameContributor implements ChooseByNameContributorEx {
           .append(root.findSubTags("variable", XsltSupport.XSLT_NS))
           .append(root.findSubTags("param", XsltSupport.XSLT_NS))
           .append(root.findSubTags("template", XsltSupport.XSLT_NS))
-        : JBIterable.of(root.findSubTags(StringUtil.toLowerCase(kind.name()), XsltSupport.XSLT_NS));
+        : JBIterable.of(root.findSubTags(kind.name().toLowerCase(), XsltSupport.XSLT_NS));
 
       return tags.processEach(tag -> {
         XsltElement el = kind.wrap(tag);

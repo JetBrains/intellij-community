@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.serialization.Property;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,10 +36,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable private String targetCompatibility;
   @Nullable private String sdkName;
   @Nullable private String productionModuleId;
-
-  @Nullable
-  @Property(allowedTypes = {LibraryData.class, ProjectId.class})
-  private ProjectCoordinate publication;
+  @Nullable private ProjectCoordinate publication;
 
   private boolean inheritProjectCompileOutputPath = true;
   private boolean useExternalCompilerOutput;

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 
@@ -45,36 +46,38 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
     return classpathEntries;
   }
 
-  public static final class ClasspathEntry {
-    @NotNull
-    private final Set<String> classesFile;
+  public static class ClasspathEntry implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @NotNull
-    private final Set<String> sourcesFile;
+    private final Set<String> myClassesFile;
 
     @NotNull
-    private final Set<String> javadocFile;
+    private final Set<String> mySourcesFile;
 
-    @PropertyMapping({"classesFile", "sourcesFile", "javadocFile"})
+    @NotNull
+    private final Set<String> myJavadocFile;
+
     public ClasspathEntry(@NotNull Set<String> classesFile, @NotNull Set<String> sourcesFile, @NotNull Set<String> javadocFile) {
-      this.classesFile = classesFile;
-      this.sourcesFile = sourcesFile;
-      this.javadocFile = javadocFile;
+      myClassesFile = classesFile;
+      mySourcesFile = sourcesFile;
+      myJavadocFile = javadocFile;
     }
 
     @NotNull
     public Set<String> getClassesFile() {
-      return classesFile;
+      return myClassesFile;
     }
 
     @NotNull
     public Set<String> getSourcesFile() {
-      return sourcesFile;
+      return mySourcesFile;
     }
 
     @NotNull
     public Set<String> getJavadocFile() {
-      return javadocFile;
+      return myJavadocFile;
     }
 
     @Override
@@ -84,18 +87,18 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
 
       ClasspathEntry entry = (ClasspathEntry)o;
 
-      if (!classesFile.equals(entry.classesFile)) return false;
-      if (!javadocFile.equals(entry.javadocFile)) return false;
-      if (!sourcesFile.equals(entry.sourcesFile)) return false;
+      if (!myClassesFile.equals(entry.myClassesFile)) return false;
+      if (!myJavadocFile.equals(entry.myJavadocFile)) return false;
+      if (!mySourcesFile.equals(entry.mySourcesFile)) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = classesFile.hashCode();
-      result = 31 * result + sourcesFile.hashCode();
-      result = 31 * result + javadocFile.hashCode();
+      int result = myClassesFile.hashCode();
+      result = 31 * result + mySourcesFile.hashCode();
+      result = 31 * result + myJavadocFile.hashCode();
       return result;
     }
   }

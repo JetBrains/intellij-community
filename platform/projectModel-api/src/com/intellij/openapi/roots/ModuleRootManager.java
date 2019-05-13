@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  * @see CompilerModuleExtension
  */
-@ApiStatus.NonExtendable
 public abstract class ModuleRootManager implements ModuleRootModel, ProjectModelElement {
   /**
    * Returns the module root manager instance for the specified module.

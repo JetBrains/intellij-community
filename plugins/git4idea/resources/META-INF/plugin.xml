@@ -275,9 +275,6 @@
      <!--END Git ignore lang-->
 
     <postStartupActivity implementation="git4idea.conflicts.GitConflictsToolWindowManager$Starter"/>
-
-    <registryKey key="git.update.incoming.info.time" defaultValue="20"
-                 description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
   </extensions>
 
   <extensionPoints>

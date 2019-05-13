@@ -1,4 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
@@ -12,7 +14,9 @@ internal fun generateIconsClasses() {
   val home = File(homePath)
   val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
 
-  val generator = IconsClassGenerator(home, project.modules)
+  val util = project.modules.find { it.name == "intellij.platform.util" } ?: throw IllegalStateException("Can't load module 'util'")
+
+  val generator = IconsClassGenerator(home, util)
   project.modules.parallelStream().forEach(generator::processModule)
   generator.printStats()
 

@@ -65,7 +65,7 @@
     },
     {
       "key": "DebuggerTabs.selectedBackground",
-      "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground."
+      "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.selectedForeground."
     },
     {
     "key": "DefaultTabs.background"
@@ -581,12 +581,6 @@
     },
     {
       "key": "TitlePane.background"
-    },
-    {
-      "key": "TitlePane.infoForeground"
-    },
-    {
-      "key": "TitlePane.inactiveInfoForeground"
     },
     {
       "key": "ToggleButton.borderColor"

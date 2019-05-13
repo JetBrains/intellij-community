@@ -122,11 +122,11 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
       if (profile == null || !profile.acceptsContentForIndexing(inputData)) return Collections.emptyMap();
 
       try {
-        PsiDependentFileContent fileContent = (PsiDependentFileContent)inputData;
+        FileContentImpl fileContent = (FileContentImpl)inputData;
 
         if (profile instanceof LightDuplicateProfile && ourEnabledLightProfiles) {
           final THashMap<Integer, TIntArrayList> result = new THashMap<>();
-          LighterAST ast = fileContent.getLighterAST();
+          LighterAST ast = fileContent.getLighterASTForPsiDependentIndex();
 
           ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
             @Override
@@ -144,7 +144,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
         MyFragmentsCollector collector = new MyFragmentsCollector(profile, ((LanguageFileType)type).getLanguage());
         DuplocateVisitor visitor = profile.createVisitor(collector, true);
 
-        visitor.visitNode(fileContent.getPsiFile());
+        visitor.visitNode(fileContent.getPsiFileForPsiDependentIndex());
 
         return collector.getMap();
       } catch (StackOverflowError ae) {

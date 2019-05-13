@@ -12,6 +12,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -108,7 +109,8 @@ public class InspectionApplication {
   }
 
   public void execute() throws Exception {
-    ApplicationManager.getApplication().runReadAction((ThrowableComputable<Object, Exception>)() -> {
+    final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    application.runReadAction((ThrowableComputable<Object, Exception>)() -> {
       final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
       logMessage(1, InspectionsBundle.message("inspection.application.starting.up",
                                               appInfo.getFullApplicationName() + " (build " + appInfo.getBuild().asString() + ")"));
@@ -245,7 +247,7 @@ public class InspectionApplication {
                                 @NotNull GlobalInspectionContextImpl context,
                                 @NotNull AnalysisScope scope,
                                 @NotNull Path resultsDataPath,
-                                @NotNull List<? super Path> inspectionsResults) {
+                                @NotNull List<Path> inspectionsResults) {
     ProgressManager.getInstance().runProcess(() -> {
       if (!GlobalInspectionContextUtil.canRunInspections(project, false)) {
         gracefulExit();

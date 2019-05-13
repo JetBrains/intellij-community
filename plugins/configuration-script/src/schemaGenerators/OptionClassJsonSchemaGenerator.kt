@@ -2,10 +2,10 @@ package com.intellij.configurationScript.schemaGenerators
 
 import com.intellij.configurationScript.JsonObjectBuilder
 import com.intellij.configurationStore.Property
+import com.intellij.configurationStore.properties.CollectionStoredProperty
+import com.intellij.configurationStore.properties.EnumStoredProperty
+import com.intellij.configurationStore.properties.MapStoredProperty
 import com.intellij.openapi.components.BaseState
-import com.intellij.serialization.stateProperties.CollectionStoredProperty
-import com.intellij.serialization.stateProperties.EnumStoredProperty
-import com.intellij.serialization.stateProperties.MapStoredProperty
 import gnu.trove.THashMap
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties

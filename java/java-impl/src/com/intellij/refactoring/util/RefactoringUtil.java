@@ -381,8 +381,7 @@ public class RefactoringUtil {
       if (infos.length > 0) {
         type = infos[0].getType();
         if (type instanceof PsiPrimitiveType) {
-          type = infos.length > 1 && !(infos[1].getType() instanceof PsiPrimitiveType) ? infos[1].getType() 
-                                                                                       : ((PsiPrimitiveType)type).getBoxedType(expr);
+          type = ((PsiPrimitiveType)type).getBoxedType(expr);
         }
       }
       else {

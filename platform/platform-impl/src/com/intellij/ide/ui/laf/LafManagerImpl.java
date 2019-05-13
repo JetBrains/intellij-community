@@ -13,10 +13,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -28,7 +25,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -65,7 +61,7 @@ import java.util.List;
 import java.util.*;
 
 @State(name = "LafManager", storages = @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS))
-public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
+public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
   @NonNls private static final String ELEMENT_LAF = "laf";
@@ -168,7 +164,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public void initializeComponent() {
+  public void initComponent() {
     if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
@@ -479,7 +475,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     patchLafFonts(uiDefaults);
 
-    patchListUI(uiDefaults);
     patchTreeUI(uiDefaults);
 
     patchHiDPI(uiDefaults);
@@ -539,18 +534,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
   }
 
-  private static void patchBorder(UIDefaults defaults, String key) {
-    if (defaults.getBorder(key) == null) {
-      defaults.put(key, JBUI.Borders.empty(1, 0).asUIResource());
-    }
-  }
-
-  private static void patchListUI(UIDefaults defaults) {
-    patchBorder(defaults, "List.border");
-  }
-
   private static void patchTreeUI(UIDefaults defaults) {
-    patchBorder(defaults, "Tree.border");
     if (Registry.is("ide.tree.ui.experimental")) {
       defaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
       defaults.put("Tree.repaintWholeRow", true);
@@ -666,7 +650,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static void fixPopupWeight() {
     int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
     String property = System.getProperty("idea.popup.weight");
-    if (property != null) property = StringUtil.toLowerCase(property).trim();
+    if (property != null) property = property.toLowerCase(Locale.ENGLISH).trim();
     if (SystemInfo.isMacOSLeopard) {
       // force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
       popupWeight = OurPopupFactory.WEIGHT_HEAVY;
@@ -874,7 +858,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != UIUtil.getWindow(owner);
       if (isHeavyWeightPopup) {
         UIUtil.markAsTypeAheadAware(window);
-        window.setMinimumSize(null); // clear min-size from prev invocations on JBR11
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
         final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();

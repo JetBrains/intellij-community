@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -21,26 +20,16 @@ import java.util.Set;
 public class WrapWithCustomTemplateAction extends AnAction {
   private final CustomLiveTemplate myTemplate;
   private final Editor myEditor;
-  @Nullable private final Runnable myAfterExecutionCallback;
   private final PsiFile myFile;
 
   public WrapWithCustomTemplateAction(CustomLiveTemplate template,
                                       final Editor editor,
                                       final PsiFile file,
                                       final Set<Character> usedMnemonicsSet) {
-    this(template, editor, file, usedMnemonicsSet, null);
-  }
-
-  public WrapWithCustomTemplateAction(CustomLiveTemplate template,
-                                      final Editor editor,
-                                      final PsiFile file,
-                                      final Set<Character> usedMnemonicsSet,
-                                      @Nullable Runnable afterExecutionCallback) {
     super(InvokeTemplateAction.extractMnemonic(template.getTitle(), usedMnemonicsSet));
     myTemplate = template;
     myFile = file;
     myEditor = editor;
-    myAfterExecutionCallback = afterExecutionCallback;
   }
 
 
@@ -62,9 +51,6 @@ public class WrapWithCustomTemplateAction extends AnAction {
       selection = selection.trim();
       PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
       myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile));
-      if (myAfterExecutionCallback != null) {
-        myAfterExecutionCallback.run();
-      }
     }
   }
 }

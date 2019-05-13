@@ -17,7 +17,6 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolIndex.Kind> {
@@ -146,14 +146,14 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
     public XsltElement wrap(XmlTag tag) {
       final Class<? extends XsltElement> clazz;
       if (myClazz != null) {
-        if (!StringUtil.toLowerCase(name()).equals(tag.getLocalName())) {
+        if (!name().toLowerCase(Locale.ENGLISH).equals(tag.getLocalName())) {
           return null;
         }
         clazz = myClazz;
       }
       else {
         try {
-          clazz = valueOf(StringUtil.toUpperCase(tag.getLocalName())).myClazz;
+          clazz = valueOf(tag.getLocalName().toUpperCase()).myClazz;
         }
         catch (IllegalArgumentException e) {
           return null;

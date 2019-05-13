@@ -9,7 +9,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -28,7 +27,7 @@ import java.util.Set;
  * @author peter
  */
 public class DynamicGenericInfo extends DomGenericInfoEx {
-  private static final Key<SoftReference<Interner<ChildrenDescriptionsHolder>>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
+  private static final Key<SoftReference<WeakInterner<ChildrenDescriptionsHolder>>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
   private final StaticGenericInfo myStaticGenericInfo;
   @NotNull private final DomInvocationHandler myInvocationHandler;
   private volatile boolean myInitialized;
@@ -107,8 +106,8 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   private static <T extends DomChildDescriptionImpl> ChildrenDescriptionsHolder<T> internChildrenHolder(XmlFile file, ChildrenDescriptionsHolder<T> holder) {
-    SoftReference<Interner<ChildrenDescriptionsHolder>> ref = file.getUserData(HOLDERS_CACHE);
-    Interner<ChildrenDescriptionsHolder> cache = SoftReference.dereference(ref);
+    SoftReference<WeakInterner<ChildrenDescriptionsHolder>> ref = file.getUserData(HOLDERS_CACHE);
+    WeakInterner<ChildrenDescriptionsHolder> cache = SoftReference.dereference(ref);
     if (cache == null) {
       cache = new WeakInterner<>();
       file.putUserData(HOLDERS_CACHE, new SoftReference<>(cache));

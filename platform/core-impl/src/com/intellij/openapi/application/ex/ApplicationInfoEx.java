@@ -2,7 +2,6 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -32,11 +31,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @Deprecated
   public abstract String getIconUrl();
 
-  /**
-   * @deprecated use {@link #getSmallApplicationSvgIconUrl()} instead
-   */
-  @Deprecated
-  @NotNull
   public abstract String getSmallIconUrl();
 
   /**
@@ -52,12 +46,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    */
   @Nullable
   public abstract String getApplicationSvgIconUrl();
-
-  /**
-   * Return path to an svg file containing a variant of {@link #getApplicationSvgIconUrl() the product icon} which is suitable for 16x16 images.
-   */
-  @Nullable
-  public abstract String getSmallApplicationSvgIconUrl();
 
   /**
    * Return an svg file containing icon of the current version of the product. It may return special icon for EAP builds.

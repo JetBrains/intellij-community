@@ -157,7 +157,7 @@ class FindInProjectTask {
 
   private static void logStats(@NotNull Collection<? extends VirtualFile> otherFiles, long time) {
     Map<String, Long> extensionToCount = otherFiles.stream()
-      .collect(Collectors.groupingBy(file -> StringUtil.toLowerCase(StringUtil.notNullize(file.getExtension())), Collectors.counting()));
+      .collect(Collectors.groupingBy(file -> StringUtil.notNullize(file.getExtension()).toLowerCase(Locale.ENGLISH), Collectors.counting()));
     String topExtensions = extensionToCount
       .entrySet().stream()
       .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -170,7 +170,7 @@ class FindInProjectTask {
              "Most frequent non-indexed file extensions: " + topExtensions);
   }
 
-  private void searchInFiles(@NotNull Collection<? extends VirtualFile> virtualFiles,
+  private void searchInFiles(@NotNull Collection<VirtualFile> virtualFiles,
                              @NotNull FindUsagesProcessPresentation processPresentation,
                              @NotNull final Processor<? super UsageInfo> consumer) {
     AtomicInteger occurrenceCount = new AtomicInteger();

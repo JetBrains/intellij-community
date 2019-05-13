@@ -67,8 +67,7 @@ public class GitMerger {
       final String branchName = branch != null ? branch.getName() : "";
       handler.addParameters("-m", "Merge branch '" + branchName + "' of " + root.getPresentableUrl() + " with conflicts.");
     } else {
-      handler.addParameters("-F");
-      handler.addAbsoluteFile(messageFile);
+      handler.addParameters("-F", messageFile.getAbsolutePath());
     }
     handler.endOptions();
     Git.getInstance().runCommand(handler).throwOnError();

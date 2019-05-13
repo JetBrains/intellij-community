@@ -367,7 +367,7 @@ public class MavenUtil {
     Matcher matcher = pattern.matcher(text);
     StringBuffer builder = new StringBuffer();
     while (matcher.find()) {
-      matcher.appendReplacement(builder, "\\$" + toUpperCase(matcher.group(1)) + "\\$");
+      matcher.appendReplacement(builder, "\\$" + matcher.group(1).toUpperCase() + "\\$");
     }
     matcher.appendTail(builder);
     text = builder.toString();

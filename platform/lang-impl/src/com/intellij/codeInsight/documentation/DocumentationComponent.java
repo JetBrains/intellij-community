@@ -812,14 +812,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsEmpty = false;
     if (myManager == null) return;
 
-    myText = text;
-    myDecoratedText = decorate(text);
-    setElement(element);
-
-    showHint(viewRect, ref);
-  }
-
-  protected void showHint(@NotNull Rectangle viewRect, @Nullable String ref) {
     String refToUse;
     Rectangle viewRectToUse;
     if (DocumentationManagerProtocol.KEEP_SCROLLING_POSITION_REF.equals(ref)) {
@@ -833,12 +825,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     updateControlState();
 
+    setElement(element);
+
     highlightLink(-1);
 
+    myDecoratedText = decorate(text);
     myEditorPane.setText(myDecoratedText);
     applyFontProps();
 
     showHint();
+
+    myText = text;
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
@@ -923,7 +920,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     JBPopup popup = PopupUtil.getPopupContainerFor(focusOwner);
-    if (popup != null && popup != myHint && !popup.isDisposed()) {
+    if (popup != null && popup != myHint) {
       return popup.getContent();
     }
     return null;
@@ -1017,7 +1014,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       return null;
     }
 
-    String title = StringUtil.escapeXmlEntities(manager.getTitle(element));
+    String title = manager.getTitle(element);
     if (externalUrl == null) {
       List<String> urls = provider.getUrlFor(element, originalElement);
       if (urls != null) {
@@ -1488,10 +1485,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   public String getText() {
     return myText;
-  }
-
-  public String getDecoratedText() {
-    return myDecoratedText;
   }
 
   @Override

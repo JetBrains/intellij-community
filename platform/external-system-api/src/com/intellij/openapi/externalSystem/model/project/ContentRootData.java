@@ -82,7 +82,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
   public String toString() {
     StringBuilder buffer = new StringBuilder("content root:");
     for (Map.Entry<ExternalSystemSourceType, Collection<SourceRoot>> entry : data.entrySet()) {
-      buffer.append(StringUtil.toLowerCase(entry.getKey().toString())).append("=").append(entry.getValue()).append("|");
+      buffer.append(entry.getKey().toString().toLowerCase(Locale.ENGLISH)).append("=").append(entry.getValue()).append("|");
     }
     if (!data.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
@@ -92,30 +92,24 @@ public final class ContentRootData extends AbstractExternalEntityData {
 
   public static class SourceRoot implements Serializable {
     @NotNull
-    private final String path;
+    private final String myPath;
 
     @Nullable
-    private final String packagePrefix;
+    private final String myPackagePrefix;
 
     public SourceRoot(@NotNull String path, @Nullable String prefix) {
-      this.path = path;
-      packagePrefix = prefix;
-    }
-
-    @SuppressWarnings("unused")
-    private SourceRoot() {
-      path = "";
-      packagePrefix = "";
+      myPath = path;
+      myPackagePrefix = prefix;
     }
 
     @NotNull
     public String getPath() {
-      return path;
+      return myPath;
     }
 
     @Nullable
     public String getPackagePrefix() {
-      return packagePrefix;
+      return myPackagePrefix;
     }
 
     @Override
@@ -123,24 +117,24 @@ public final class ContentRootData extends AbstractExternalEntityData {
       if (this == o) return true;
       if (!(o instanceof SourceRoot)) return false;
       SourceRoot root = (SourceRoot)o;
-      if (packagePrefix != null ? !packagePrefix.equals(root.packagePrefix) : root.packagePrefix != null) return false;
-      if (!path.equals(root.path)) return false;
+      if (myPackagePrefix != null ? !myPackagePrefix.equals(root.myPackagePrefix) : root.myPackagePrefix != null) return false;
+      if (!myPath.equals(root.myPath)) return false;
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = path.hashCode();
-      result = 31 * result + (packagePrefix != null ? packagePrefix.hashCode() : 0);
+      int result = myPath.hashCode();
+      result = 31 * result + (myPackagePrefix != null ? myPackagePrefix.hashCode() : 0);
       return result;
     }
 
     @Override
     public String toString() {
       StringBuilder buffer = new StringBuilder("source_root(");
-      buffer.append(path);
-      if (packagePrefix != null) {
-        buffer.append(", ").append(packagePrefix);
+      buffer.append(myPath);
+      if (myPackagePrefix != null) {
+        buffer.append(", ").append(myPackagePrefix);
       }
       buffer.append(")");
       return buffer.toString();
@@ -152,7 +146,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
 
     @Override
     public int compare(@NotNull SourceRoot o1, @NotNull SourceRoot o2) {
-      return StringUtil.naturalCompare(o1.path, o2.path);
+      return StringUtil.naturalCompare(o1.myPath, o2.myPath);
     }
   }
 }

@@ -5,7 +5,7 @@ import java.lang.reflect.Constructor
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
-open class BaseBeanBinding(internal val beanClass: Class<*>) {
+open class BaseBeanBinding(protected val beanClass: Class<*>) {
   // kotlin data class constructor is never cached, because we have (and it is good) very limited number of such classes
   @Volatile
   private var constructor: Constructor<*>? = null

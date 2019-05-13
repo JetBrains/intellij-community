@@ -25,7 +25,7 @@ open class SameHeightTabs(project: Project?, actionManager: ActionManager, focus
       insets.top += layoutInsets.top
       insets.bottom += layoutInsets.bottom
 
-      return Dimension(size.width, TabsHeightController.toolWindowHeight - insets.top - insets.bottom)
+      return Dimension(size.width, TabsHeightController.toolWindowHeight.value - insets.top - insets.bottom)
     }
   }
 }

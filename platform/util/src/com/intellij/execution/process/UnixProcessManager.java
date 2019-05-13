@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
-import com.intellij.execution.ExecutableFileFormatUtil;
-import com.intellij.execution.MachineType;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
@@ -254,20 +252,6 @@ public class UnixProcessManager {
     }
     else {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported.");
-    }
-  }
-
-  @NotNull
-  public static MachineType getProcessMachineType(int pid) {
-    if (!SystemInfo.isLinux) {
-      throw new IllegalStateException(System.getProperty("os.name") + " is not supported");
-    }
-    try {
-      return ExecutableFileFormatUtil.readElfMachineType("/proc/" + pid + "/exe");
-    }
-    catch (IOException e) {
-      LOG.warn("Couldn't get executable information of process: pid=" + pid, e);
-      return MachineType.UNKNOWN;
     }
   }
 

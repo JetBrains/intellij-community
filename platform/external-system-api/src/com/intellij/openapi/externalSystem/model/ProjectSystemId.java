@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -24,7 +25,7 @@ public final class ProjectSystemId {
   @NotNull private final String readableName;
 
   public ProjectSystemId(@NotNull String id) {
-    this(id, StringUtil.capitalize(StringUtil.toLowerCase(id)));
+    this(id, StringUtil.capitalize(id.toLowerCase(Locale.ENGLISH)));
   }
 
   @PropertyMapping({"id", "readableName"})

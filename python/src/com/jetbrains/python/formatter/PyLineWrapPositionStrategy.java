@@ -24,7 +24,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.jetbrains.python.psi.PyFStringFragment;
 import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,9 +78,17 @@ public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy 
                                   isSoftWrap);
     if (wrapPosition < 0) return wrapPosition;
     final CharSequence text = document.getImmutableCharSequence();
-    if (wrapPosition >= text.length()) return wrapPosition;
 
-    if (project == null) {
+    if (wrapPosition > 0) {
+      char charBefore = text.charAt(wrapPosition - 1);
+      if (charBefore == '\'' || charBefore == '"') {
+        //don't wrap the first char of string literal
+        return wrapPosition + 1;
+      }
+    }
+    if (wrapPosition >= text.length()) return wrapPosition;
+    char c = text.charAt(wrapPosition);
+    if (!StringUtil.isWhiteSpace(c) || project == null) {
       return wrapPosition;
     }
 
@@ -91,24 +98,9 @@ public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy 
       if (psiFile != null) {
         final PsiElement element = psiFile.findElementAt(wrapPosition);
         final StringLiteralExpression string = PsiTreeUtil.getParentOfType(element, StringLiteralExpression.class);
+
         if (string != null) {
-          final PyFStringFragment fragment = PsiTreeUtil.getTopmostParentOfType(element, PyFStringFragment.class);
-          if (fragment != null) {
-            return Math.max(fragment.getTextOffset(), startOffset);
-          }
-
-          if (wrapPosition > 0) {
-            char charBefore = text.charAt(wrapPosition - 1);
-            if (charBefore == '\'' || charBefore == '"') {
-              //don't wrap the first char of string literal
-              return wrapPosition + 1;
-            }
-          }
-
-          char c = text.charAt(wrapPosition);
-          if (StringUtil.isWhiteSpace(c)) {
-            return wrapPosition + 1;
-          }
+          return wrapPosition + 1;
         }
       }
     }

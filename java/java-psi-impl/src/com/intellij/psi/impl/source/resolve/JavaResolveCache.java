@@ -20,8 +20,6 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
@@ -48,7 +46,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class JavaResolveCache {
-  private static final Logger LOG = Logger.getInstance(JavaResolveCache.class);
   private static final NotNullLazyKey<JavaResolveCache, Project> INSTANCE_KEY = ServiceManager.createLazyKey(JavaResolveCache.class);
 
   public static JavaResolveCache getInstance(Project project) {
@@ -81,7 +78,7 @@ public class JavaResolveCache {
   }
 
   @Nullable
-  public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<? super T, ? extends PsiType> f) {
+  public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
     final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck();
     final boolean polyExpression = PsiPolyExpressionUtil.isPolyExpression(expr);
 
@@ -102,10 +99,7 @@ public class JavaResolveCache {
       }
 
       if (type == null) type = TypeConversionUtil.NULL_TYPE;
-      PsiType alreadyCached = map.put(expr, type);
-      if (alreadyCached != null && !type.equals(alreadyCached)) {
-        reportUnstableType(expr, type, alreadyCached);
-      }
+      map.put(expr, type);
 
       if (type instanceof PsiClassReferenceType) {
         // convert reference-based class type to the PsiImmediateClassType, since the reference may become invalid
@@ -119,13 +113,6 @@ public class JavaResolveCache {
     }
 
     return type == TypeConversionUtil.NULL_TYPE ? null : type;
-  }
-
-  private static <T extends PsiExpression> void reportUnstableType(@NotNull PsiExpression expr, @NotNull PsiType type, @NotNull PsiType alreadyCached) {
-    PsiFile file = expr.getContainingFile();
-    LOG.error("Different types returned for the same PSI " + expr.getTextRange() + " on different threads: "
-              + type + " != " + alreadyCached,
-              new Attachment(file.getName(), file.getText()));
   }
 
   @Nullable

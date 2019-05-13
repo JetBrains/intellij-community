@@ -11,8 +11,6 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import static java.util.Collections.singletonList;
-
 /**
  * @author yole
  */
@@ -33,11 +31,13 @@ public class PlatformVcsDetector implements ProjectComponent {
         if (myVcsManager.needAutodetectMappings()) {
           AbstractVcs vcs = myVcsManager.findVersioningVcs(file);
           if (vcs != null && vcs != myVcsManager.getVcsFor(file)) {
-            myVcsManager.setAutoDirectoryMappings(singletonList(new VcsDirectoryMapping(file.getPath(), vcs.getName())));
+            myVcsManager.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
+            myVcsManager.setAutoDirectoryMapping(file.getPath(), vcs.getName());
+            myVcsManager.cleanupMappings();
           }
         }
       };
-      ApplicationManager.getApplication().invokeLater(runnable, o -> (!myProject.isOpen()) || myProject.isDisposed());
+      ApplicationManager.getApplication().invokeLater(runnable, o -> (! myProject.isOpen()) || myProject.isDisposed());
     });
   }
 }

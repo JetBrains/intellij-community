@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -18,16 +17,15 @@ public class CompositeBuildData implements Serializable {
   @NotNull
   public static final Key<CompositeBuildData> KEY = Key.create(CompositeBuildData.class, ProjectKeys.PROJECT.getProcessingWeight() + 1);
 
-  private final String rootProjectPath;
+  private final String myRootProjectPath;
   @NotNull private final List<BuildParticipant> myCompositeParticipants = new ArrayList<>();
 
-  @PropertyMapping({"rootProjectPath"})
   public CompositeBuildData(String rootProjectPath) {
-    this.rootProjectPath = rootProjectPath;
+    myRootProjectPath = rootProjectPath;
   }
 
   public String getRootProjectPath() {
-    return rootProjectPath;
+    return myRootProjectPath;
   }
 
   @NotNull

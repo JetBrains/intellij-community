@@ -206,7 +206,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private SearchEverywhereUI createView(Project project,
-                                        List<? extends SearchEverywhereContributor<?>> contributors) {
+                                        List<SearchEverywhereContributor<?>> contributors) {
     SearchEverywhereUI view = new SearchEverywhereUI(project, contributors);
 
     view.setSearchFinishedHandler(() -> {
@@ -221,7 +221,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       }
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (myBalloon == null || myBalloon.isDisposed()) return;
+        if (myBalloon == null || myBalloon.getContent() == null) return;
 
         Dimension minSize = view.getMinimumSize();
         JBInsets.addTo(minSize, myBalloon.getContent().getInsets());
@@ -357,7 +357,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     }
 
     @NotNull
-    private List<String> filteredHistory(Predicate<? super HistoryItem> predicate) {
+    private List<String> filteredHistory(Predicate<HistoryItem> predicate) {
       return historyList.stream()
         .filter(predicate)
         .map(item -> item.getSearchText())

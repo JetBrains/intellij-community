@@ -24,7 +24,6 @@ import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
 import org.jetbrains.git4idea.ssh.GitXmlRpcHandlerService;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -53,7 +52,6 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
   @NotNull
   public abstract GitHttpAuthenticator createAuthenticator(@NotNull Project project,
                                                            @NotNull Collection<String> urls,
-                                                           @NotNull File workingDirectory,
                                                            @NotNull GitAuthenticationGate authenticationGate,
                                                            @NotNull GitAuthenticationMode authenticationMode);
 

@@ -63,7 +63,7 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
   }
 
   @Override
-  public void reset(@NotNull List<? extends T> items) {
+  public void reset(@NotNull List<T> items) {
     super.reset(items);
 
     // todo should we really do this?

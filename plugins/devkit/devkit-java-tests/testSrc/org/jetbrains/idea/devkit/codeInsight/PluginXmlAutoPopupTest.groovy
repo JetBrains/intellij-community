@@ -34,8 +34,8 @@ class PluginXmlAutoPopupTest extends CompletionAutoPopupTestCase {
 </idea-plugin>
 '''
     type 'o'
-    assertNotNull(lookup)
-    assertSameElements(myFixture.lookupElementStrings,['FooFooFooFooFoo'])
+    assert lookup
+    assert myFixture.lookupElementStrings == ['FooFooFooFooFoo']
   }
 
   void "test no autopopup when only word completion is available"() {
@@ -47,7 +47,7 @@ class PluginXmlAutoPopupTest extends CompletionAutoPopupTestCase {
 </idea-plugin>
 '''
     type 'e'
-    assertNull(lookup)
+    assert !lookup
   }
 
 }

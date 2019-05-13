@@ -19,7 +19,6 @@ package org.intellij.plugins.relaxNG.convert;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.thaiopensource.relaxng.edit.SchemaCollection;
@@ -77,7 +76,7 @@ public class IdeaDriver {
 
       final VirtualFile inputFile = inputFiles[0];
       final SchemaType type = settings.getOutputType();
-      final String outputType = StringUtil.toLowerCase(type.toString());
+      final String outputType = type.toString().toLowerCase();
 
       final ArrayList<String> inputParams = new ArrayList<>();
 
@@ -150,7 +149,7 @@ public class IdeaDriver {
 
         final OutputFormat of = getOutputFormat(settings.getOutputType());
 
-        of.output(sc, od, ArrayUtil.toStringArray(outputParams), StringUtil.toLowerCase(inputType.toString()), errorHandler);
+        of.output(sc, od, ArrayUtil.toStringArray(outputParams), inputType.toString().toLowerCase(), errorHandler);
       } catch (IOException e) {
         errorHandler.fatalError(new SAXParseException(e.getMessage(), null, UriOrFile.fileToUri(outputFile), -1, -1, e));
       }

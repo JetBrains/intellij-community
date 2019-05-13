@@ -232,11 +232,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       float arc = COMPONENT_ARC.getFloat();
 
       boolean editable = comboBox.isEnabled() && editor != null && comboBox.isEditable();
-      Color background0 = comboBox.getBackground();
-      Color background = editable ? editor.getBackground() :
-                         comboBox.isBackgroundSet() && !(background0 instanceof UIResource) ? background0 :
-                         comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground();
-      g2.setColor(background);
+      g2.setColor(editable ? editor.getBackground() : comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground());
 
       g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
     }
@@ -265,10 +261,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
 
     c.setFont(comboBox.getFont());
-    Color background0 = comboBox.getBackground();
-    Color background = comboBox.isBackgroundSet() && !(background0 instanceof UIResource) ? background0 :
-                       comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground();
-    c.setBackground(background);
+    c.setBackground(comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground());
 
     if (hasFocus && !isPopupVisible(comboBox)) {
       c.setForeground(listBox.getForeground());
@@ -312,18 +305,15 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       icon = cc.getIcon();
       cc.setIcon(OffsetIcon.getOriginalIcon(icon));
 
-      // the following trimMiddle approach is not good for smooth resizing:
-      // the text jumps as more or less space becomes available.
-      // a proper text layout algorithm on painting in DarculaLabelUI can fix that.
       String text = cc.getText();
-      int maxWidth = bounds.width - (padding == null || UIUtil.isUnderDarcula() ? 0 : padding.right);
+      int maxWidth = bounds.width - (padding == null ? 0 : padding.right);
       if (StringUtil.isNotEmpty(text) && cc.getPreferredSize().width > maxWidth) {
-        int max0 = ObjectUtils.binarySearch(7, text.length() - 1, idx -> {
+        int max0 = ObjectUtils.binarySearch(1, text.length() - 1, idx -> {
           cc.setText(StringUtil.trimMiddle(text, idx));
           return Comparing.compare(cc.getPreferredSize().width, maxWidth);
         });
         int max = max0 < 0 ? -max0 - 2 : max0;
-        if (max > 7 && max < text.length()) {
+        if (max > 2 && max < text.length()) {
           cc.setText(StringUtil.trimMiddle(text, max));
         }
       }
@@ -368,6 +358,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       tf.setColumns(0);
     }
 
+    installEditorKeyListener(comboBoxEditor);
     return comboBoxEditor;
   }
 
@@ -518,7 +509,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected void configureEditor() {
     super.configureEditor();
 
-    installEditorKeyListener(comboBox.getEditor());
     if (editor instanceof JComponent) {
       JComponent jEditor = (JComponent)editor;
       jEditor.setOpaque(false);
@@ -692,8 +682,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     @Override
     protected void configureList() {
       super.configureList();
-      //list.setBackground(comboBox.isEditable() ? UIManager.getColor("TextField.background")
-      //                                         : UIManager.getColor("Label.background"));
+      list.setBackground(comboBox.isEditable() ? UIManager.getColor("TextField.background")
+                                               : UIManager.getColor("Label.background"));
       //noinspection unchecked
       list.setCellRenderer(new MyDelegateRenderer());
     }

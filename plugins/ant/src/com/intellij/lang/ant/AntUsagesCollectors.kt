@@ -3,9 +3,11 @@ package com.intellij.lang.ant
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getBooleanUsage
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.ant.config.AntConfiguration
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -38,7 +40,13 @@ class AntActionsUsagesCollector {
   companion object {
     @JvmStatic
     fun trigger(project: Project?, action: AnAction, event: AnActionEvent?) {
-      ActionsCollectorImpl.record("build.ant.actions", project, action, event, null)
+      if (project == null) return
+
+      val data = FeatureUsageData()
+      event?.let { data.addInputEvent(it).addPlace(it.place).addData("context_menu", it.isFromContextMenu) }
+
+      val toReport = ActionsCollectorImpl.toReportedId(getPluginInfo(action.javaClass), action, data)
+      FUCounterUsageLogger.getInstance().logEvent("build.ant.actions", toReport, data)
     }
 
     @JvmStatic

@@ -18,7 +18,6 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.util.ArrayUtil;
@@ -73,7 +72,7 @@ public class JBPopupMenuFixture extends JComponentFixture<JBPopupMenuFixture, JB
 
     for (MenuElement element : elements) {
       if (element instanceof ActionMenuItem) {
-        if (StringUtil.toLowerCase(((ActionMenuItem)element).getText()).contains(StringUtil.toLowerCase(actionName))) assertion = true;
+        if (((ActionMenuItem)element).getText().toLowerCase().contains(actionName.toLowerCase())) assertion = true;
       }
     }
     if (!assertion) System.err.println("Unable to find action \"" + actionName + "\" in popupMenu");
@@ -88,7 +87,7 @@ public class JBPopupMenuFixture extends JComponentFixture<JBPopupMenuFixture, JB
       for (MenuElement element : elements) {
         if (element instanceof ActionMenu) {
           final ActionMenu actionMenu = (ActionMenu)element;
-          if (StringUtil.toLowerCase(actionMenu.getText()).contains(StringUtil.toLowerCase(actionPath[0]))) {
+          if (actionMenu.getText().toLowerCase().contains(actionPath[0].toLowerCase())) {
             final Point locationOnScreen = myContextMenu.getLocationOnScreen();
             final Rectangle bounds = actionMenu.getBounds();
             final Point point =
@@ -108,7 +107,7 @@ public class JBPopupMenuFixture extends JComponentFixture<JBPopupMenuFixture, JB
       for (MenuElement element : elements) {
         if (element instanceof ActionMenuItem) {
           final ActionMenuItem actionMenuItem = (ActionMenuItem)element;
-          if (StringUtil.toLowerCase(actionMenuItem.getText()).contains(StringUtil.toLowerCase(actionPath[0]))) {
+          if (actionMenuItem.getText().toLowerCase().contains(actionPath[0].toLowerCase())) {
             pause(new Condition("Waiting to showing JBPopupMenu on screen") {
               @Override
               public boolean test() {
@@ -139,12 +138,12 @@ public class JBPopupMenuFixture extends JComponentFixture<JBPopupMenuFixture, JB
         boolean found = false;
         for (MenuElement menuElement : menu.getSubElements()) {
           if (menuElement instanceof ActionMenu) {
-            if (StringUtil.toLowerCase(((ActionMenu)menuElement).getText()).equals(StringUtil.toLowerCase(actionName))) {
+            if (((ActionMenu)menuElement).getText().toLowerCase().equals(actionName.toLowerCase())) {
               found = true;
             }
           }
           else if (menuElement instanceof ActionMenuItem) {
-            if (StringUtil.toLowerCase(((ActionMenuItem)menuElement).getText()).equals(StringUtil.toLowerCase(actionName))) {
+            if (((ActionMenuItem)menuElement).getText().toLowerCase().equals(actionName.toLowerCase())) {
               found = true;
             }
           }

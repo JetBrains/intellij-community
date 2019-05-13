@@ -84,7 +84,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
 
   @Override
   public void setUI(final TreeUI ui) {
-    super.setUI(ui instanceof DefaultTreeUI ? ui : DefaultTreeUI.createUI(this));
+    super.setUI(ui instanceof DefaultTreeUI ? ui : new DefaultTreeUI());
     setLargeModel(true);
   }
 

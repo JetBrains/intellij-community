@@ -92,7 +92,7 @@ object UpdateChecker {
     val fromSettings = customSettings != null
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
-      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), !fromSettings, true, settings, indicator, null)
+      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), fromSettings, true, settings, indicator, null)
       override fun isConditionalModal(): Boolean = fromSettings
       override fun shouldStartInBackground(): Boolean = !fromSettings
     })
@@ -106,8 +106,8 @@ object UpdateChecker {
     checkPluginsUpdate(EmptyProgressIndicator(), null, ApplicationInfo.getInstance().build)
 
   private fun doUpdateAndShowResult(project: Project?,
-                                    showSettingsLink: Boolean,
-                                    showDialog: Boolean,
+                                    fromSettings: Boolean,
+                                    manualCheck: Boolean,
                                     updateSettings: UpdateSettings,
                                     indicator: ProgressIndicator?,
                                     callback: ActionCallback?) {
@@ -119,7 +119,7 @@ object UpdateChecker {
     if (result.state == UpdateStrategy.State.CONNECTION_ERROR) {
       val e = result.error
       if (e != null) LOG.debug(e)
-      showErrorMessage(showDialog, IdeBundle.message("updates.error.connection.failed", e?.message ?: "internal error"))
+      showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e?.message ?: "internal error"))
       callback?.setRejected()
       return
     }
@@ -135,10 +135,10 @@ object UpdateChecker {
     val externalUpdates: Collection<ExternalUpdate>?
     try {
       updatedPlugins = checkPluginsUpdate(indicator, incompatiblePlugins, buildNumber)
-      externalUpdates = checkExternalUpdates(showDialog, updateSettings, indicator)
+      externalUpdates = checkExternalUpdates(manualCheck, updateSettings, indicator)
     }
     catch (e: IOException) {
-      showErrorMessage(showDialog, IdeBundle.message("updates.error.connection.failed", e.message))
+      showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.message))
       callback?.setRejected()
       return
     }
@@ -147,10 +147,10 @@ object UpdateChecker {
 
     UpdateSettings.getInstance().saveLastCheckedInfo()
 
-    ApplicationManager.getApplication().invokeLater {
-      showUpdateResult(project, result, updatedPlugins, incompatiblePlugins, externalUpdates, showSettingsLink, showDialog)
+    ApplicationManager.getApplication().invokeLater({
+      showUpdateResult(project, result, updatedPlugins, incompatiblePlugins, externalUpdates, !fromSettings, manualCheck)
       callback?.setDone()
-    }
+    }, if (fromSettings) ModalityState.any() else ModalityState.NON_MODAL)
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
@@ -357,19 +357,19 @@ object UpdateChecker {
                                updatedPlugins: Collection<PluginDownloader>?,
                                incompatiblePlugins: Collection<IdeaPluginDescriptor>?,
                                externalUpdates: Collection<ExternalUpdate>?,
-                               showSettingsLink: Boolean,
-                               showDialog: Boolean) {
+                               enableLink: Boolean,
+                               alwaysShowResults: Boolean) {
     val updatedChannel = checkForUpdateResult.updatedChannel
     val newBuild = checkForUpdateResult.newBuild
 
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
-        UpdateInfoDialog(updatedChannel, newBuild, checkForUpdateResult.patches, showSettingsLink, updatedPlugins, incompatiblePlugins).show()
+        UpdateInfoDialog(updatedChannel, newBuild, checkForUpdateResult.patches, enableLink, updatedPlugins, incompatiblePlugins).show()
       }
 
       ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
 
-      if (showDialog) {
+      if (alwaysShowResults) {
         runnable.invoke()
       }
       else {
@@ -387,11 +387,11 @@ object UpdateChecker {
 
     if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
       updateFound = true
-      val runnable = { PluginUpdateInfoDialog(updatedPlugins, showSettingsLink).show() }
+      val runnable = { PluginUpdateInfoDialog(updatedPlugins, enableLink).show() }
 
       ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
 
-      if (showDialog) {
+      if (alwaysShowResults) {
         runnable.invoke()
       }
       else {
@@ -409,7 +409,7 @@ object UpdateChecker {
       for (update in externalUpdates) {
         val runnable = { update.source.installUpdates(update.components) }
 
-        if (showDialog) {
+        if (alwaysShowResults) {
           runnable.invoke()
         }
         else {
@@ -420,8 +420,8 @@ object UpdateChecker {
       }
     }
 
-    if (!updateFound && showDialog) {
-      NoUpdatesDialog(showSettingsLink).show()
+    if (!updateFound && alwaysShowResults) {
+      NoUpdatesDialog(enableLink).show()
     }
   }
 

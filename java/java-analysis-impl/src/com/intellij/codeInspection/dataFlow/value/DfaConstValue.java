@@ -152,18 +152,9 @@ public class DfaConstValue extends DfaValue {
   }
 
   public String toString() {
-    return renderValue(myValue);
-  }
-
-  public static String renderValue(Object value) {
-    if (value == null) return "null";
-    if (value instanceof String) return '"' + StringUtil.escapeStringCharacters((String)value) + '"';
-    if (value instanceof PsiField) {
-      PsiField field = (PsiField)value;
-      PsiClass containingClass = field.getContainingClass();
-      return containingClass == null ? field.getName() : containingClass.getName() + "." + field.getName();
-    }
-    return value.toString();
+    if (myValue == null) return "null";
+    if (myValue instanceof String) return '"' + StringUtil.escapeStringCharacters((String)myValue) + '"';
+    return myValue.toString();
   }
 
   @Override

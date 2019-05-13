@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.html.dtd;
 import com.intellij.html.RelaxedHtmlNSDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SimpleFieldCache;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -130,7 +129,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   }
 
   private XmlElementDescriptor getElementDescriptorByName(String name) {
-    if (!myCaseSensitive) name = StringUtil.toLowerCase(name);
+    if (!myCaseSensitive) name = name.toLowerCase();
 
     return buildDeclarationMap().get(name);
   }

@@ -64,6 +64,7 @@ class CommunityRepositoryModules {
     "intellij.platform.lang.impl",
     "intellij.platform.lvcs.impl",
     "intellij.platform.ide.impl",
+    "intellij.platform.objectSerializer",
     "intellij.platform.projectModel.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
@@ -84,6 +85,7 @@ class CommunityRepositoryModules {
     "intellij.xml.psi.impl",
     "intellij.xml.structureView.impl",
     "intellij.xml.impl",
+    "intellij.platform.configurationStore.impl",
   ]
 
   /**
@@ -184,7 +186,6 @@ class CommunityRepositoryModules {
       withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
     },
-    plugin("intellij.gradle.java.maven"),
     plugin("intellij.platform.testGuiFramework") {
       //the plugin is for internal use for now so it shouldn't be published
       defaultPublishingSpec = PluginPublishingSpec.DO_NOT_UPLOAD_AUTOMATICALLY
@@ -292,6 +293,7 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
 
+      withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.deployer", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
@@ -335,7 +337,6 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.lint:lint-api")
       withProjectLibrary("com.android.tools.lint:lint-checks")
       withProjectLibrary("com.android.tools:sdk-common")
-      withProjectLibrary("com.android.tools:dvlib")
       withProjectLibrary("com.android.tools:sdklib")
       withProjectLibrary("com.android.tools:common")
       withProjectLibrary("com.android.tools:repository")

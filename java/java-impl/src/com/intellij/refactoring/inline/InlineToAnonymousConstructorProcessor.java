@@ -372,7 +372,7 @@ class InlineToAnonymousConstructorProcessor {
   }
 
   private PsiElement replaceParameterReferences(PsiElement argument,
-                                                @Nullable final List<? super PsiReferenceExpression> localVarRefs,
+                                                @Nullable final List<PsiReferenceExpression> localVarRefs,
                                                 final boolean replaceFieldsWithInitializers) throws IncorrectOperationException {
     if (argument instanceof PsiReferenceExpression) {
       PsiElement element = ((PsiReferenceExpression)argument).resolve();

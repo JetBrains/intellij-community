@@ -27,7 +27,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Set;
-import java.util.function.Consumer;
 
 /**
  * @author Konstantin Bulenkov
@@ -46,10 +45,6 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     "Reload Classes", "Progress Paused", "Progress Resumed", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
 
-  public static boolean isCustomAllowedAction(@NotNull String actionId) {
-    return DEFAULT_ID.equals(actionId) || ourCustomActionWhitelist.contains(actionId);
-  }
-
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     final String recorded = StringUtil.isNotEmpty(actionId) && ourCustomActionWhitelist.contains(actionId) ? actionId : DEFAULT_ID;
@@ -65,16 +60,6 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   @Override
   public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang) {
-    record(GROUP, project, action, event, data -> {
-      if (lang != null) data.addCurrentFile(lang);
-    });
-  }
-
-  public static void record(@NotNull String groupId,
-                            @Nullable Project project,
-                            @Nullable AnAction action,
-                            @Nullable AnActionEvent event,
-                            @Nullable Consumer<FeatureUsageData> configurator) {
     if (action == null) return;
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
@@ -86,11 +71,10 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
         addData("context_menu", event.isFromContextMenu());
     }
 
-    if (configurator != null) {
-      configurator.accept(data);
+    if (lang != null) {
+      data.addCurrentFile(lang);
     }
-
-    FUCounterUsageLogger.getInstance().logEvent(groupId, toReportedId(info, action, data), data);
+    FUCounterUsageLogger.getInstance().logEvent(GROUP, toReportedId(info, action, data), data);
   }
 
   @NotNull

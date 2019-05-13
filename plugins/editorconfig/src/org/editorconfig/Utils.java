@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -40,8 +39,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class Utils {
-
-  public static final String EDITOR_CONFIG_FILE_NAME = ".editorconfig";
 
   public static final  String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
 
@@ -162,7 +159,7 @@ public class Utils {
   public static String getLineSeparatorString(@NotNull String separator) {
     for (LineSeparator s : LineSeparator.values()) {
       if (separator.equals(s.getSeparatorString())) {
-        return StringUtil.toLowerCase(s.name());
+        return s.name().toLowerCase(Locale.US);
       }
     }
     return null;

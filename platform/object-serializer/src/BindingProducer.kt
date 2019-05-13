@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
-import com.intellij.util.SystemProperties
 import gnu.trove.THashMap
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Type
@@ -9,57 +8,34 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-internal abstract class BindingProducer : BindingInitializationContext {
-  private val cache: MutableMap<Type, Binding> = THashMap()
+abstract class BindingProducer<ROOT_BINDING> {
+  private val cache: MutableMap<Type, ROOT_BINDING> = THashMap()
   private val cacheLock = ReentrantReadWriteLock()
 
   @get:TestOnly
   internal val bindingCount: Int
     get() = cacheLock.read { cache.size }
 
-  override val bindingProducer: BindingProducer
-    get() = this
+  abstract fun getNestedBinding(accessor: MutableAccessor): NestedBinding
 
-  override val isResolveConstructorOnInit = SystemProperties.`is`("idea.serializer.resolve.ctor.on.init")
-
-  abstract fun getNestedBinding(accessor: MutableAccessor): Binding
-
-  fun getRootBinding(aClass: Class<*>, type: Type = aClass): Binding {
-    fun getByTypeOrByClass(): Binding? {
-      var result = cache.get(type)
-      if (result == null && aClass !== type) {
-        result = cache.get(aClass)
-      }
-      return result
-    }
-
-    cacheLock.read {
-      getByTypeOrByClass()?.let {
-        return it
-      }
-    }
-
-    cacheLock.write {
-      getByTypeOrByClass()?.let {
+  fun getRootBinding(aClass: Class<*>, originalType: Type = aClass): ROOT_BINDING {
+    val cacheKey = createCacheKey(aClass, originalType)
+    return cacheLock.read {
+      // create cache only under write lock
+      cache.get(cacheKey)
+    } ?: cacheLock.write {
+      cache.get(cacheKey)?.let {
         return it
       }
 
-      val binding = createRootBinding(aClass, type)
-      cache.put(binding.createCacheKey(aClass, type), binding)
-      try {
-        binding.init(type, this)
-      }
-      catch (e: Throwable) {
-        cache.remove(type)
-        throw e
-      }
-      return binding
+      createRootBinding(aClass, originalType, cacheKey, cache)
     }
   }
 
-  protected abstract fun createRootBinding(aClass: Class<*>, type: Type): Binding
+  protected open fun createCacheKey(aClass: Class<*>, originalType: Type) = originalType
 
-  @Suppress("unused")
+  protected abstract fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, ROOT_BINDING>): ROOT_BINDING
+
   fun clearBindingCache() {
     cacheLock.write {
       cache.clear()

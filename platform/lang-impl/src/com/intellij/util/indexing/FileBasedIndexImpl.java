@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.indexing;
 
@@ -15,6 +15,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.EditorHighlighterCache;
@@ -99,7 +100,7 @@ import java.util.stream.Stream;
 /**
  * @author Eugene Zhuravlev
  */
-public final class FileBasedIndexImpl extends FileBasedIndex implements Disposable {
+public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent, Disposable {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexImpl");
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
@@ -262,9 +263,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     myChangedFilesCollector = new ChangedFilesCollector();
     myConnection = connection;
 
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, myChangedFilesCollector);
-
-    initComponent();
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, myChangedFilesCollector);
   }
 
   @VisibleForTesting
@@ -315,9 +314,10 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     if (myInitialized) myChangedFilesCollector.ensureUpToDateAsync();
   }
 
-  private void initComponent() {
+  @Override
+  public void initComponent() {
     myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization());
-
+    
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
       waitUntilIndicesAreInitialized();
     }
@@ -425,7 +425,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     }
   }
 
-  private static void saveRegisteredIndicesAndDropUnregisteredOnes(@NotNull Collection<? extends ID<?, ?>> ids) {
+  private static void saveRegisteredIndicesAndDropUnregisteredOnes(@NotNull Collection<ID<?, ?>> ids) {
     if (ApplicationManager.getApplication().isDisposed() || !IndexInfrastructure.hasIndices()) {
       return;
     }
@@ -541,7 +541,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     }
   }
 
-  private void removeFileDataFromIndices(@NotNull Collection<? extends ID<?, ?>> affectedIndices, int inputId, VirtualFile file) {
+  private void removeFileDataFromIndices(@NotNull Collection<ID<?, ?>> affectedIndices, int inputId, VirtualFile file) {
     // document diff can depend on previous value that will be removed
     removeTransientFileDataFromIndices(affectedIndices, inputId, file);
 
@@ -567,7 +567,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     }
   }
 
-  private void removeTransientFileDataFromIndices(Collection<? extends ID<?, ?>> indices, int inputId, VirtualFile file) {
+  private void removeTransientFileDataFromIndices(Collection<ID<?, ?>> indices, int inputId, VirtualFile file) {
     for (ID<?, ?> indexId : indices) {
       final MapReduceIndex index = (MapReduceIndex)myState.getIndex(indexId);
       assert index != null;
@@ -1355,9 +1355,6 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
           }
           else {
             newFc = new FileContentImpl(vFile, contentText, currentDocStamp);
-            if (IdIndex.ourSnapshotMappingsEnabled) {
-              newFc.putUserData(UpdatableSnapshotInputMappingIndex.FORCE_IGNORE_MAPPING_INDEX_UPDATE, Boolean.TRUE);
-            }
             document.putUserData(ourFileContentKey, new WeakReference<>(newFc));
           }
 
@@ -1447,7 +1444,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
   public void requestRebuild(@NotNull final ID<?, ?> indexId, final Throwable throwable) {
     cleanupProcessedFlag();
     if (!myExtensionsRelatedDataWasLoaded) reportUnexpectedAsyncInitState();
-
+    
     if (RebuildStatus.requestRebuild(indexId)) {
       String message = "Rebuild requested for index " + indexId;
       Application app = ApplicationManager.getApplication();
@@ -2129,7 +2126,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
         int fileId = ((VirtualFileWithId)file).getId();
         if (usedFileIds.get(fileId)) continue;
         usedFileIds.set(fileId);
-
+        
         if (file.getFileSystem() instanceof LocalFileSystem) localFileSystemFiles.add(file);
         else archiveFiles.add(file);
       }
@@ -2261,12 +2258,11 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
       int fileId = ((VirtualFileWithId)virtualFile).getId();
       boolean wasIndexed = false;
       List<ID<?, ?>> candidates = getAffectedIndexCandidates(virtualFile);
-      for (ID<?, ?> candidate : candidates) {
-        if (myPsiDependentIndices.contains(candidate)) {
-          if(getInputFilter(candidate).acceptInput(virtualFile)) {
-            getIndex(candidate).resetIndexedStateForFile(fileId);
-            wasIndexed = true;
-          }
+      for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
+        if (!candidates.contains(psiBackedIndex)) continue;
+        if(getInputFilter(psiBackedIndex).acceptInput(virtualFile)) {
+          getIndex(psiBackedIndex).resetIndexedStateForFile(fileId);
+          wasIndexed = true;
         }
       }
       if (wasIndexed) {
@@ -2367,7 +2363,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
 
     private void initAssociatedDataForExtensions() {
       long started = System.nanoTime();
-      Iterator<FileBasedIndexExtension> extensions =
+      Iterator<FileBasedIndexExtension> extensions = 
         IndexInfrastructure.hasIndices() ?
         ((ExtensionPointImpl<FileBasedIndexExtension>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint(null)).iterator() :
         Collections.emptyIterator();
@@ -2389,7 +2385,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
           myRequiringContentIndices.add(name);
         }
 
-        if (isPsiDependentIndex(extension)) myPsiDependentIndices.add(name);
+        if (extension instanceof PsiDependentIndex) myPsiDependentIndices.add(name);
         myNoLimitCheckTypes.addAll(extension.getFileTypesWithSizeLimitNotApplicable());
 
         addNestedInitializationTask(() -> {
@@ -2412,7 +2408,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     @Override
     protected void prepare() {
       initAssociatedDataForExtensions();
-
+      
       mySerializationManagerEx = SerializationManagerEx.getInstanceEx();
       File indexRoot = PathManager.getIndexRoot();
 
@@ -2524,17 +2520,6 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
       catch (TimeoutException e) {
         UIUtil.dispatchAllInvocationEvents();
       }
-    }
-  }
-
-  private static final boolean INDICES_ARE_PSI_DEPENDENT_BY_DEFAULT = SystemProperties.getBooleanProperty("idea.indices.psi.dependent.default", true);
-  public static boolean isPsiDependentIndex(@NotNull IndexExtension<?, ?, ?> extension) {
-    if (INDICES_ARE_PSI_DEPENDENT_BY_DEFAULT) {
-      return extension instanceof FileBasedIndexExtension &&
-             ((FileBasedIndexExtension<?, ?>)extension).dependsOnFileContent() &&
-             !(extension instanceof DocumentChangeDependentIndex);
-    } else {
-      return extension instanceof PsiDependentIndex;
     }
   }
 }

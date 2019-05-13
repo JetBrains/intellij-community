@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -34,16 +33,11 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
   public void handleInsert(@NotNull final InsertionContext context, @NotNull final JavaPsiClassReferenceElement item) {
     int offset = context.getTailOffset() - 1;
     final PsiFile file = context.getFile();
-    PsiImportStatementBase importStatement = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiImportStatementBase.class, false);
-    if (importStatement != null) {
+    if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiImportStatementBase.class, false) != null) {
       PsiJavaCodeReferenceElement ref = findJavaReference(file, offset);
       String qname = item.getQualifiedName();
       if (qname != null && (ref == null || !qname.equals(ref.getCanonicalText()))) {
         AllClassesGetter.INSERT_FQN.handleInsert(context, item);
-      }
-      if (importStatement instanceof PsiImportStaticStatement) {
-        context.setAddCompletionChar(false);
-        EditorModificationUtil.insertStringAtCaret(context.getEditor(), ".");
       }
       return;
     }

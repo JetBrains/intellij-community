@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -33,8 +34,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.junit.Assert.*;
 
 public class VfsUtilTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
@@ -98,22 +97,26 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testDirAttributeRefreshes() throws IOException {
-    File file = myTempDir.newFile("test");
+    File tempDir = myTempDir.newFolder();
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
+    assertNotNull(vDir);
+    assertTrue(vDir.isDirectory());
+
+    File file = FileUtil.createTempFile(tempDir, "xxx", "yyy", true);
+    assertNotNull(file);
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile);
     assertFalse(vFile.isDirectory());
 
-    assertTrue(file.delete());
-    assertTrue(file.mkdir());
+    boolean deleted = file.delete();
+    assertTrue(deleted);
+    boolean created = file.mkdir();
+    assertTrue(created);
+    assertTrue(file.exists());
+
     VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile2);
     assertTrue(vFile2.isDirectory());
-
-    assertTrue(file.delete());
-    assertTrue(file.createNewFile());
-    VirtualFile vFile3 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    assertNotNull(vFile3);
-    assertFalse(vFile3.isDirectory());
   }
 
   @Test
@@ -298,9 +301,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertSame(test, ProjectManager.getInstance());
     try {
       File temp = myTempDir.newFolder();
-      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
-      assertNotNull(vTemp);
-      vTemp.getChildren(); //to force full dir refresh?!
+      VirtualDirectoryImpl vtemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+      assertNotNull(vtemp);
+      vtemp.getChildren(); //to force full dir refresh?!
 
       File d = new File(temp, "d");
       assertTrue(d.mkdir());
@@ -310,9 +313,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       assertTrue(x.createNewFile());
 
       assertFalse(ApplicationManager.getApplication().isDispatchThread());
-      VfsUtil.markDirty(true, false, vTemp);
+      VfsUtil.markDirty(true, false, vtemp);
       CountDownLatch refreshed = new CountDownLatch(1);
-      LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(vTemp), false, true, refreshed::countDown);
+      LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(vtemp), false, true, refreshed::countDown);
 
       while (refreshed.getCount() != 0) {
         UIUtil.pump();

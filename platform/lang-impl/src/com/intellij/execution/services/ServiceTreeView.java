@@ -27,7 +27,7 @@ class ServiceTreeView extends ServiceView {
   private final ServiceViewTree myTree;
   private final ServiceViewTreeModel myTreeModel;
 
-  private volatile ServiceViewItem myLastSelection;
+  private ServiceViewItem myLastSelection;
   private boolean mySelected;
 
   ServiceTreeView(@NotNull Project project, @NotNull ServiceViewModel model, @NotNull ServiceViewUi ui, @NotNull ServiceViewState state) {
@@ -35,8 +35,6 @@ class ServiceTreeView extends ServiceView {
 
     myTreeModel = new ServiceViewTreeModel(model);
     myTree = new ServiceViewTree(myTreeModel, this);
-    myTree.setShowsRootHandles(!model.isFlat());
-
     ServiceViewActionProvider actionProvider = ServiceViewActionProvider.getInstance();
     ui.setServiceToolbar(actionProvider);
     ui.setMasterPanel(myTree, actionProvider);
@@ -44,14 +42,18 @@ class ServiceTreeView extends ServiceView {
     add(myUi.getComponent(), BorderLayout.CENTER);
 
     myTree.addTreeSelectionListener(e -> onSelectionChanged());
-    model.addModelListener(this::rootsChanged);
+    model.addModelListener(() -> AppUIUtil.invokeOnEdt(() -> {
+      if (mySelected && myLastSelection != null) {
+        ServiceViewDescriptor descriptor = myLastSelection.getViewDescriptor();
+        myUi.setDetailsComponent(descriptor.getContentComponent());
+      }
+    }, myProject.getDisposed()));
 
     state.treeState.applyTo(myTree, myTreeModel.getRoot());
   }
 
   @Override
   void saveState(@NotNull ServiceViewState state) {
-    super.saveState(state);
     myUi.saveState(state);
     state.treeState = TreeState.createOn(myTree);
   }
@@ -106,12 +108,6 @@ class ServiceTreeView extends ServiceView {
     }
   }
 
-  @Override
-  void setFlat(boolean flat) {
-    super.setFlat(flat);
-    myTree.setShowsRootHandles(!flat);
-  }
-
   private void onSelectionChanged() {
     List<ServiceViewItem> selected = getSelectedItems();
     ServiceViewItem newSelection = ContainerUtil.getOnlyItem(selected);
@@ -134,21 +130,6 @@ class ServiceTreeView extends ServiceView {
     }
 
     myUi.setDetailsComponent(newDescriptor == null ? null : newDescriptor.getContentComponent());
-  }
-
-  private void rootsChanged() {
-    ServiceViewItem lastSelection = myLastSelection;
-    if (lastSelection == null) return;
-
-    ServiceViewItem updatedItem = getModel().findItem(lastSelection);
-    myLastSelection = updatedItem;
-
-    AppUIUtil.invokeOnEdt(() -> {
-      if (mySelected && updatedItem == myLastSelection) {
-        ServiceViewDescriptor descriptor = updatedItem == null ? null : updatedItem.getViewDescriptor();
-        myUi.setDetailsComponent(descriptor == null ? null : descriptor.getContentComponent());
-      }
-    }, myProject.getDisposed());
   }
 
   private static class PathSelectionVisitor implements TreeVisitor {

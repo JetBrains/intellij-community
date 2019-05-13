@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors;
 
-import com.intellij.Patches;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
@@ -10,6 +9,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FontComboBox;
 import com.intellij.ui.FontInfoRenderer;
@@ -33,6 +33,12 @@ import java.util.Locale;
 import java.util.Set;
 
 public abstract class AbstractFontOptionsPanel extends JPanel implements OptionsPanel {
+  private static final FontInfoRenderer RENDERER = new FontInfoRenderer() {
+    @Override
+    protected boolean isEditorFont() {
+      return true;
+    }
+  };
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
@@ -125,7 +131,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
                                                ApplicationBundle.message("ligatures.jre.warning",
                                                                          ApplicationNamesInfo.getInstance().getFullProductName())));
     warningIcon.setBorder(JBUI.Borders.emptyLeft(5));
-    warningIcon.setVisible(!areLigaturesAllowed());
+    warningIcon.setVisible(!SystemInfo.isJetBrainsJvm);
     panel.add(warningIcon);
     c.gridx = 0;
     c.gridy = 4;
@@ -144,16 +150,10 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
       mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
     });
     myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-    FontInfoRenderer renderer = new FontInfoRenderer() {
-      @Override
-      protected boolean isEditorFont() {
-        return true;
-      }
-    };
-    myPrimaryCombo.setRenderer(renderer);
+    myPrimaryCombo.setRenderer(RENDERER);
 
     mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-    mySecondaryCombo.setRenderer(renderer);
+    mySecondaryCombo.setRenderer(RENDERER);
 
     ItemListener itemListener = this::syncFontFamilies;
     myPrimaryCombo.addItemListener(itemListener);
@@ -322,14 +322,10 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     myEditorFontSizeField.setEnabled(!readOnly);
     mySizeLabel.setEnabled(!readOnly);
 
-    myEnableLigaturesCheckbox.setEnabled(!readOnly && areLigaturesAllowed());
+    myEnableLigaturesCheckbox.setEnabled(!readOnly && SystemInfo.isJetBrainsJvm);
     myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());
 
     myIsInSchemeChange = false;
-  }
-
-  private static boolean areLigaturesAllowed() {
-    return !Patches.TEXT_LAYOUT_IS_SLOW;
   }
 
   protected void updateCustomOptions() {

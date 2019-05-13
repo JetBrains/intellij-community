@@ -106,7 +106,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   @NotNull
   private static Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
                                                                         @NotNull Editor editor,
-                                                                        @NotNull Set<? extends ExpressionTypeProvider> handlers) {
+                                                                        @NotNull Set<ExpressionTypeProvider> handlers) {
     if (handlers.isEmpty()) return Collections.emptyMap();
     boolean exactRange = false;
     TextRange range = EditorUtil.getSelectionInAnyMode(editor);

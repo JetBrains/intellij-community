@@ -47,7 +47,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                       filters: VcsLogFilterCollection,
                       commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
     val filePath = getFilePath(filters)
-    if (filePath == null || filePath.isDirectory) {
+    if (filePath == null || (filePath.isDirectory && logProviders.keys.contains(filePath.virtualFile))) {
       return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
     }
     val root = VcsLogUtil.getActualRoot(project, filePath)!!
@@ -68,12 +68,16 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
       val start = System.currentTimeMillis()
 
-      if (index.isIndexed(root) && dataPack.isFull) {
+      if (index.isIndexed(root) && (dataPack.isFull || filePath.isDirectory)) {
         val visiblePack = filterWithIndex(dataPack, sortType, filters)
         LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
         if (checkNotEmpty(dataPack, visiblePack, true)) {
           return Pair(visiblePack, commitCount)
         }
+      }
+
+      if (filePath.isDirectory) {
+        return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
       }
 
       ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.let { vcs ->
@@ -176,7 +180,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       val historyBuilder = FileHistoryBuilder(commit, filePath, data)
       val visibleGraph = permanentGraph.createVisibleGraph(sortType, matchingHeads, data.getCommits(), historyBuilder)
 
-      reindexFirstCommitsIfNeeded(visibleGraph)
+      if (!filePath.isDirectory) reindexFirstCommitsIfNeeded(visibleGraph)
       return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, historyBuilder.pathsMap)
     }
 

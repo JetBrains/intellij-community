@@ -414,11 +414,6 @@ public final class LookupElementBuilder extends LookupElement {
   public InsertHandler<LookupElement> getInsertHandler() {
     return myInsertHandler;
   }
-  
-  @Nullable
-  public LookupElementRenderer<LookupElement> getRenderer() {
-    return myRenderer;
-  }
 
   @NotNull
   @Override

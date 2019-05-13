@@ -98,8 +98,16 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     myBigRepositoriesList = VcsLogBigRepositoriesList.getInstance();
     myIndexCollector = VcsLogIndexCollector.getInstance(myProject);
 
-    myIndexers = getAvailableIndexers(providers);
-    myRoots = new LinkedHashSet<>(myIndexers.keySet());
+    myIndexers = new HashMap<>();
+    myRoots = new LinkedHashSet<>();
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
+      VirtualFile root = entry.getKey();
+      VcsLogProvider provider = entry.getValue();
+      if (VcsLogProperties.get(provider, VcsLogProperties.SUPPORTS_INDEXING) && provider instanceof VcsIndexableLogProvider) {
+        myIndexers.put(root, ((VcsIndexableLogProvider)provider).getIndexer());
+        myRoots.add(root);
+      }
+    }
 
     VcsUserRegistry userRegistry = ServiceManager.getService(myProject, VcsUserRegistry.class);
 
@@ -297,24 +305,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
   @Override
   public void dispose() {
-  }
-
-  @NotNull
-  private static Map<VirtualFile, VcsLogIndexer> getAvailableIndexers(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    Map<VirtualFile, VcsLogIndexer> indexers = new LinkedHashMap<>();
-    for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
-      VirtualFile root = entry.getKey();
-      VcsLogProvider provider = entry.getValue();
-      if (VcsLogProperties.get(provider, VcsLogProperties.SUPPORTS_INDEXING) && provider instanceof VcsIndexableLogProvider) {
-        indexers.put(root, ((VcsIndexableLogProvider)provider).getIndexer());
-      }
-    }
-    return indexers;
-  }
-
-  @NotNull
-  public static Set<VirtualFile> getRootsForIndexing(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    return getAvailableIndexers(providers).keySet();
   }
 
   static class IndexStorage implements Disposable {
@@ -644,11 +634,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       if (time >= Math.max(limit, 1L) * 60 * 1000 && !myBigRepositoriesList.isBig(myRoot)) {
         LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));
         myBigRepositoriesList.addRepository(myRoot);
-        myIndexingLimit.get(myRoot).compareAndSet(limit,
-                                                  Math.max(limit + getIndexingLimit(),
-                                                           (int)((time / (getIndexingLimit() * 60000) + 1) * getIndexingLimit())));
         indicator.cancel();
-        showIndexingNotification(limit);
+        showIndexingNotification(time, limit);
       }
     }
 
@@ -661,7 +648,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       return "IndexingRequest of " + myCommits.size() + " commits in " + myRoot.getName() + (myFull ? " (full)" : "");
     }
 
-    private void showIndexingNotification(int limitMinutes) {
+    private void showIndexingNotification(long timeMillis, int limitMinutes) {
       myIndexCollector.reportIndexingTooLongNotification();
       AbstractVcs vcs = VcsUtil.findVcsByKey(myProject, myIndexers.get(myRoot).getSupportedVcs());
       String vcsName = vcs != null ? vcs.getDisplayName() : "Vcs";
@@ -672,8 +659,16 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                                                  NotificationType.INFORMATION, null);
       notification.addAction(NotificationAction.createSimple("Resume", () -> {
         myIndexCollector.reportResumeClick();
-        LOG.info("Resuming indexing for " + myRoot.getName());
-        if (myBigRepositoriesList.removeRepository(myRoot)) scheduleIndex(false);
+        if (myBigRepositoriesList.isBig(myRoot)) {
+          LOG.info("Resuming indexing " + myRoot.getName());
+          myIndexingLimit.get(myRoot).updateAndGet(l -> {
+            return Math.max(l + getIndexingLimit(),
+                            (int)((timeMillis / (getIndexingLimit() * 60000) + 1) * getIndexingLimit()));
+          });
+          myBigRepositoriesList.removeRepository(myRoot);
+          scheduleIndex(false);
+        }
+        notification.expire();
       }));
       notification.setContextHelpAction(new DumbAwareAction("Why is it helpful?",
                                                             "Indexing speeds up search and other operations in " +
@@ -684,15 +679,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         public void actionPerformed(@NotNull AnActionEvent e) {
         }
       });
-      Disposable disposable = Disposer.newDisposable();
-      Disposer.register(VcsLogPersistentIndex.this, disposable);
-      myBigRepositoriesList.addListener(() -> {
-        if (!myBigRepositoriesList.isBig(myRoot)) {
-          notification.expire();
-          Disposer.dispose(disposable);
-        }
-      }, disposable);
-      notification.whenExpired(() -> Disposer.dispose(disposable));
       // if our bg thread is cancelled, calling VcsNotifier.getInstance in it will throw PCE
       // so using invokeLater here
       ApplicationManager.getApplication().invokeLater(() -> VcsNotifier.getInstance(myProject).notify(notification));

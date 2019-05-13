@@ -5,7 +5,6 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteMultiCatchFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -21,10 +20,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.psi.CommonClassNames.*;
@@ -117,14 +113,14 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
         charsetExpression = PsiUtil.skipParenthesizedExprDown(charsetExpression);
         String charsetString = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(charsetExpression), String.class);
         if (charsetString == null) return null;
-        charsetString = StringUtil.toUpperCase(charsetString);
+        charsetString = charsetString.toUpperCase(Locale.ENGLISH);
         if (!SUPPORTED_CHARSETS.containsKey(charsetString)) return null;
         if (charsetExpression instanceof PsiLiteralExpression) return charsetString;
         if (charsetExpression instanceof PsiReferenceExpression) {
           String name = ((PsiReferenceExpression)charsetExpression).getReferenceName();
           if (name == null) return null;
-          String baseName = StringUtil.toLowerCase(name.replaceAll("[^A-Z0-9]", ""));
-          String baseCharset = StringUtil.toLowerCase(charsetString.replaceAll("[^A-Z0-9]", ""));
+          String baseName = name.replaceAll("[^A-Z0-9]", "").toLowerCase(Locale.ENGLISH);
+          String baseCharset = charsetString.replaceAll("[^A-Z0-9]", "").toLowerCase(Locale.ENGLISH);
           // Do not report constants which name is not based on charset name (like "ENCODING", "DEFAULT_ENCODING", etc.)
           // because replacement might not be well-suitable
           if (!baseName.contains(baseCharset)) return null;

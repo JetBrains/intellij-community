@@ -49,7 +49,6 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.vcs.commit.ChangesViewCommitPanel;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflow;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -227,15 +226,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       public List<AnAction> getActions(boolean originalProvider) {
         return changesToolbar.getActions();
       }
-
-      @Nullable
-      @Override
-      public Object getData(@NotNull String dataId) {
-        Object data = super.getData(dataId);
-        if (data != null) return data;
-        // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
-        return myCommitPanel != null ? myCommitPanel.getDataFromProviders(dataId) : null;
-      }
     };
     myProgressLabel = simplePanel();
     panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
@@ -336,18 +326,16 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
 
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-      List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
-      List<VirtualFile> unversionedFiles = changeListManager.getUnversionedFiles();
 
       TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-        .setChangeLists(changeLists, Registry.is("vcs.skip.single.default.changelist"))
+        .setChangeLists(changeListManager.getChangeListsCopy(), Registry.is("vcs.skip.single.default.changelist"))
         .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
         .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
         .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
         .setSwitchedRoots(changeListManager.getSwitchedRoots())
         .setLockedFolders(changeListManager.getLockedFolders())
         .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
-        .setUnversioned(unversionedFiles);
+        .setUnversioned(changeListManager.getUnversionedFiles());
       if (myState.myShowIgnored) {
         treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.isIgnoredInUpdateMode());
       }
@@ -360,7 +348,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         myModelUpdateInProgress = true;
         try {
           myView.updateModel(newModel);
-          synchronizeInclusion(changeLists, unversionedFiles);
         }
         finally {
           myModelUpdateInProgress = false;
@@ -368,16 +355,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         updatePreview(true);
       }, ModalityState.NON_MODAL);
     }, indicator);
-  }
-
-  private void synchronizeInclusion(@NotNull List<LocalChangeList> changeLists, @NotNull List<VirtualFile> unversionedFiles) {
-    if (myView.isShowCheckboxes() && !myView.isInclusionEmpty()) {
-      THashSet<Object> possibleInclusion = new THashSet<>(ChangeListChange.HASHING_STRATEGY);
-      changeLists.forEach(changeList -> possibleInclusion.addAll(changeList.getChanges()));
-      possibleInclusion.addAll(unversionedFiles);
-
-      myView.retainInclusion(possibleInclusion);
-    }
   }
 
   private void updatePreview(boolean fromModelRefresh) {

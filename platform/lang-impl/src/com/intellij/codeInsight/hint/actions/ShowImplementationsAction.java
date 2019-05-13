@@ -13,9 +13,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -40,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ShowImplementationsAction extends DumbAwareAction implements PopupAction {
+public class ShowImplementationsAction extends AnAction implements PopupAction {
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE = "codeassists.quickdefinition.lookup";
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_FEATURE = "codeassists.quickdefinition";
 
@@ -81,16 +78,11 @@ public class ShowImplementationsAction extends DumbAwareAction implements PopupA
 
     boolean isInvokedFromEditor = CommonDataKeys.EDITOR.getData(dataContext) != null;
 
-    try {
-      for (ImplementationViewSessionFactory factory: ImplementationViewSessionFactory.EP_NAME.getExtensionList() ) {
-        ImplementationViewSession session = factory.createSession(dataContext, project, isSearchDeep(), isIncludeAlwaysSelf());
-        if (session != null) {
-          showImplementations(session, isInvokedFromEditor, invokedByShortcut);
-        }
+    for (ImplementationViewSessionFactory factory: ImplementationViewSessionFactory.EP_NAME.getExtensionList() ) {
+      ImplementationViewSession session = factory.createSession(dataContext, project, isSearchDeep(), isIncludeAlwaysSelf());
+      if (session != null) {
+        showImplementations(session, isInvokedFromEditor, invokedByShortcut);
       }
-    }
-    catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification("Quick Definition can't be found without index");
     }
   }
 
@@ -190,7 +182,7 @@ public class ShowImplementationsAction extends DumbAwareAction implements PopupA
                                   @NotNull ImplementationViewComponent component,
                                   String title,
                                   @NotNull AbstractPopup popup,
-                                  @NotNull Ref<? extends UsageView> usageView) {
+                                  @NotNull Ref<UsageView> usageView) {
     final ImplementationsUpdaterTask updaterTask = SoftReference.dereference(myTaskRef);
     if (updaterTask != null) {
       updaterTask.cancelTask();

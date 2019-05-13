@@ -135,7 +135,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
-    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() || myHandler.isTestingCompletionQualityMode() ? new SyncCompletion() : new AsyncCompletion();
+    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() || handler.isTestingMode() ? new SyncCompletion() : new AsyncCompletion();
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
@@ -497,7 +497,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     CompletionPhase oldPhase = CompletionServiceImpl.getCompletionPhase();
     if (oldPhase instanceof CompletionPhase.CommittingDocuments) {
-      LOG.assertTrue(((CompletionPhase.CommittingDocuments)oldPhase).indicator != null, oldPhase);
+      LOG.assertTrue(((CompletionPhase.CommittingDocuments)oldPhase).isRestartingCompletion(), oldPhase);
       ((CompletionPhase.CommittingDocuments)oldPhase).replaced = true;
     }
     CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
@@ -513,7 +513,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   @Override
-  public void registerChildDisposable(@NotNull Supplier<? extends Disposable> child) {
+  public void registerChildDisposable(@NotNull Supplier<Disposable> child) {
     synchronized (myLock) {
       // avoid registering stuff on an indicator being disposed concurrently
       checkCanceled();

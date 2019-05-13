@@ -187,7 +187,7 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     val validator = createTestSensitiveDataValidator(loadContent("test_validate_event_data.json"))
     val elg = EventLogGroup("system.keys.group", 1)
 
-    val platformDataKeys: MutableList<String> = Arrays.asList("plugin", "project", "os", "plugin_type",
+    val platformDataKeys: MutableList<String> = Arrays.asList("plugin", "project", "version", "os", "plugin_type",
                                                               "lang", "current_file", "input_event", "place")
     for (platformDataKey in platformDataKeys) {
       assertEventDataAccepted(validator, elg, platformDataKey, "<validated>")

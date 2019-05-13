@@ -32,7 +32,7 @@ public class PyPySdkFlavor extends PythonSdkFlavor {
 
   @Override
   public boolean isValidSdkPath(@NotNull File file) {
-    return StringUtil.toLowerCase(FileUtil.getNameWithoutExtension(file)).startsWith("pypy");
+    return FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("pypy");
   }
 
   @Nullable

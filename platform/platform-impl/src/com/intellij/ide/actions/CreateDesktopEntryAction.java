@@ -35,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -53,7 +54,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
       String execPath = binPath + '/' + names.getProductName() + ".sh";
       if (new File(execPath).canExecute()) return execPath;
 
-      execPath = binPath + '/' + StringUtil.toLowerCase(names.getProductName()) + ".sh";
+      execPath = binPath + '/' + names.getProductName().toLowerCase(Locale.US) + ".sh";
       if (new File(execPath).canExecute()) return execPath;
 
       execPath = binPath + '/' + names.getScriptName() + ".sh";

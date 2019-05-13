@@ -78,8 +78,8 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
   public String toString() {
     return String.format(
       "[%d; %d): %s %s %s",
-      getStartOffset(), getEndOffset(), StringUtil.toLowerCase(StringUtil.join(myModifiers, " ")),
-      StringUtil.toLowerCase(myTypes.iterator().next().toString()), myName == null ? "<no name>" : myName
+      getStartOffset(), getEndOffset(), StringUtil.join(myModifiers, " ").toLowerCase(),
+      myTypes.iterator().next().toString().toLowerCase(), myName == null ? "<no name>" : myName
     );
   }
 }

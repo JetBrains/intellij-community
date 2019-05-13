@@ -33,14 +33,15 @@ abstract class ConstructorCallHighlighter(reference: GroovyCallReference,
     }
   }
 
-  override fun buildFix(argument: Argument, expectedType: PsiType): ParameterCastFix? {
-    if (argument !is ExpressionArgument) return null
+  override fun buildFix(argument: Argument, applicabilityData: ApplicabilityData): ParameterCastFix? {
+    if (argument !is ExpressionArgument || applicabilityData.applicability != Applicability.inapplicable) return null
     val arguments = reference.arguments ?: return null
     val list = getArgumentList() ?: return null
     if (argument !in arguments) return null
+    val type = applicabilityData.expectedType ?: return null
 
     val position = list.getExpressionArgumentIndex(argument.expression)
-    return ParameterCastFix(position, expectedType)
+    return ParameterCastFix(position, type)
   }
 
   fun highlight(): Boolean = highlightMethodApplicability()

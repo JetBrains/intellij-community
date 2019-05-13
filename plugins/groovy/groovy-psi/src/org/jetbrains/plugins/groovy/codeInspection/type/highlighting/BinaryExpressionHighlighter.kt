@@ -30,13 +30,14 @@ class BinaryExpressionHighlighter(val expression: GrBinaryExpression,
 
   override fun getHighlightElement(): PsiElement = expression.operationToken
 
-  override fun buildFix(argument: Argument, expectedType: PsiType): GrCastFix? {
-    if (argument !is ExpressionArgument) return null
+  override fun buildFix(argument: Argument, applicabilityData: ApplicabilityData): GrCastFix? {
+    if (argument !is ExpressionArgument || applicabilityData.applicability != Applicability.inapplicable) return null
     val arguments = reference.arguments ?: return null
     if (argument !in arguments) return null
+    val type = applicabilityData.expectedType ?: return null
 
-    val name = "Cast operand to " + expectedType.presentableText
-    return GrCastFix(expectedType, argument.expression, true, name)
+    val name = "Cast operand to " + type.presentableText
+    return GrCastFix(type, argument.expression, true, name)
   }
 
   fun highlight() {

@@ -170,7 +170,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Override
-  public void initializeComponent() {
+  public void initComponent() {
     if (!isNormalProject()) return;
 
     StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
@@ -368,7 +368,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       new MavenProjectsManagerWatcher(myProject, this, myProjectsTree, getGeneralSettings(), myReadingProcessor, myEmbeddersManager);
 
     myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), myProject);
-    myImportingQueue.setPassThrough(false);
+    myImportingQueue.setPassThrough(ApplicationManager.getApplication().isUnitTestMode());
 
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeDumbAware(myProject);

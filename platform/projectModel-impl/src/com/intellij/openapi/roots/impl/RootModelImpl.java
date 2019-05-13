@@ -26,7 +26,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +34,6 @@ import java.util.*;
 /**
  * @author dsl
  */
-@ApiStatus.Internal
 public class RootModelImpl extends RootModelBase implements ModifiableRootModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
 
@@ -613,8 +611,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     }
     if (orderEntry1 instanceof ModuleOrderEntry) {
       LOG.assertTrue(orderEntry2 instanceof ModuleOrderEntry);
-      ModuleOrderEntry entry1 = (ModuleOrderEntry)orderEntry1;
-      ModuleOrderEntry entry2 = (ModuleOrderEntry)orderEntry2;
+      ModuleOrderEntryImpl entry1 = (ModuleOrderEntryImpl)orderEntry1;
+      ModuleOrderEntryImpl entry2 = (ModuleOrderEntryImpl)orderEntry2;
       return entry1.isProductionOnTestDependency() == entry2.isProductionOnTestDependency()
              && Comparing.equal(entry1.getModuleName(), entry2.getModuleName());
     }

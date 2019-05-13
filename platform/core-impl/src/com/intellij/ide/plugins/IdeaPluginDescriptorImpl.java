@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.BeanBinding;
@@ -92,6 +91,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private @Nullable MultiMap<String, Element> myExtensionsPoints;
   private List<String> myModules;
   private ClassLoader myLoader;
+  private HelpSetPath[] myHelpSets;
   private String myDescriptionChildText;
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
@@ -223,13 +223,25 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myOptionalDependencies = ContainerUtil.filter(dependentPlugins, id -> !nonOptionalDependentPlugins.contains(id)).toArray(PluginId.EMPTY_ARRAY);
     }
 
+    if (pluginBean.helpSets == null || pluginBean.helpSets.length == 0) {
+      myHelpSets = HelpSetPath.EMPTY;
+    }
+    else {
+      myHelpSets = new HelpSetPath[pluginBean.helpSets.length];
+      PluginHelpSet[] sets = pluginBean.helpSets;
+      for (int i = 0, n = sets.length; i < n; i++) {
+        PluginHelpSet pluginHelpSet = sets[i];
+        myHelpSets[i] = new HelpSetPath(pluginHelpSet.file, pluginHelpSet.path);
+      }
+    }
+
     // we cannot use our new kotlin-aware XmlSerializer, so, will be used different bean cache,
     // but it is not a problem because in any case new XmlSerializer is not used for our core classes (plugin bean, component config and so on).
     Ref<BeanBinding> oldComponentConfigBeanBinding = new Ref<>();
 
     // only for CoreApplicationEnvironment
     if (stringInterner == null) {
-      stringInterner = new HashSetInterner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
+      stringInterner = new Interner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
     }
 
     MultiMap<String, Element> extensions = myExtensions;
@@ -357,7 +369,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return descriptor;
   }
 
-  private static void readComponents(@NotNull Element parent, @NotNull Ref<BeanBinding> oldComponentConfigBean, @NotNull ArrayList<? super ComponentConfig> result) {
+  private static void readComponents(@NotNull Element parent, @NotNull Ref<BeanBinding> oldComponentConfigBean, @NotNull ArrayList<ComponentConfig> result) {
     List<Content> content = parent.getContent();
     int contentSize = content.size();
     if (contentSize == 0) {
@@ -643,6 +655,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public void setLoader(ClassLoader loader) {
     myLoader = loader;
+  }
+
+  @Override
+  @NotNull
+  public HelpSetPath[] getHelpSets() {
+    return myHelpSets;
   }
 
   @Override

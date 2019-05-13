@@ -54,8 +54,6 @@ abstract class Timed<T> implements Disposable {
   protected final void remove() {
     ourReferences.remove(this);
     myPolled = false;
-    myLastCheckedAccessCount = 0;
-    myAccessCount = 0;
   }
 
   protected synchronized boolean isLocked() {

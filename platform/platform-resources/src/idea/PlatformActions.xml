@@ -1272,13 +1272,5 @@
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
-
-    <group id="Internal.HeapAnalysis" text="Heap Analysis" popup="true" internal="true">
-      <action class="com.intellij.diagnostic.hprof.action.InternalUserInvokedFullAnalysisAction" id="UserInvokedFullAnalysis"
-              text="Create And Immediately Analyze Heap Dump" internal="true"/>
-      <action class="com.intellij.diagnostic.hprof.action.InternalNonuserInvokedHeapDumpSnapshotAction" id="SilentHeapDumpSnapshot"
-              text="Create And Schedule Heap Dump Analysis (Non-user invoked)" internal="true"/>
-      <add-to-group group-id="Internal"/>
-    </group>
   </actions>
 </idea-plugin>

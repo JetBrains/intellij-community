@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.editorconfig.Utils;
-import org.editorconfig.configmanagement.editor.EditorConfigPreviewUtil;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.language.util.EditorConfigPresentationUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,7 @@ public class EditorConfigNavigationActionsFactory {
   }
 
   @NotNull
-  public List<AnAction> getNavigationActions(@NotNull Project project, @NotNull VirtualFile sourceFile) {
+  public List<AnAction> getNavigationActions(@NotNull Project project) {
     final List<AnAction> actions = new ArrayList<>();
     synchronized (myEditorConfigFilePaths) {
       List<VirtualFile> editorConfigFiles = Utils.pathsToFiles(myEditorConfigFilePaths);
@@ -39,16 +38,11 @@ public class EditorConfigNavigationActionsFactory {
         if (editorConfigFile != null) {
           actions.add(DumbAwareAction.create(
             getActionName(editorConfigFile, editorConfigFiles.size() > 1),
-            event -> openEditorConfig(project, sourceFile, editorConfigFile)));
+            event -> OpenFileAction.openFile(editorConfigFile, project)));
         }
       }
     }
     return actions.size() <= 1 ? actions : Collections.singletonList(new NavigationActionGroup(actions.toArray(AnAction.EMPTY_ARRAY)));
-  }
-
-  private static void openEditorConfig(@NotNull Project project, @NotNull VirtualFile sourceFile, @NotNull VirtualFile editorConfigFile) {
-    EditorConfigPreviewUtil.associateWithPreviewFile(editorConfigFile, sourceFile);
-    OpenFileAction.openFile(editorConfigFile, project);
   }
 
   public void updateEditorConfigFilePaths(@NotNull List<String> editorConfigFilePaths) {

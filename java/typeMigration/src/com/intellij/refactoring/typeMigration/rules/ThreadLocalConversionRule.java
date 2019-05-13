@@ -262,12 +262,12 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
   }
 
   private static class WrappingWithInnerClassOrLambdaDescriptor extends ArrayInitializerAwareConversionDescriptor {
-    private final List<? extends PsiVariable> myVariablesToMakeFinal;
+    private final List<PsiVariable> myVariablesToMakeFinal;
 
     private WrappingWithInnerClassOrLambdaDescriptor(@NonNls final String stringToReplace,
                                                      @NonNls final String replaceByString,
                                                      final PsiExpression expression,
-                                                     @NotNull List<? extends PsiVariable> toMakeFinal) {
+                                                     @NotNull List<PsiVariable> toMakeFinal) {
       super(stringToReplace, replaceByString, expression);
       myVariablesToMakeFinal = toMakeFinal;
     }

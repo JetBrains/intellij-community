@@ -24,7 +24,6 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
@@ -135,9 +134,8 @@ public class GraphTableController {
       return;
     }
 
-    Cursor cursorToSet = answer.getCursorToSet();
-    if (cursorToSet != null) {
-      myTable.setCursor(UIUtil.cursorIfNotDefault(cursorToSet));
+    if (answer.getCursorToSet() != null) {
+      myTable.setCursor(answer.getCursorToSet());
     }
     if (answer.getCommitToJump() != null) {
       Integer row = myTable.getModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
@@ -348,8 +346,8 @@ public class GraphTableController {
     }
 
     private void restoreCursor(int newCursorType) {
-      if (myTable.getCursor().getType() == newCursorType) {
-        myTable.setCursor(UIUtil.cursorIfNotDefault(myLastCursor));
+      if (myLastCursor != null && myTable.getCursor().getType() == newCursorType) {
+        myTable.setCursor(myLastCursor);
         myLastCursor = null;
       }
     }

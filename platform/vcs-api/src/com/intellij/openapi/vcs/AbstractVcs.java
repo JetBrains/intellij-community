@@ -22,7 +22,10 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -204,9 +207,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    *
    * @param filePath the path to check.
    * @return true if the path is managed by this VCS, false otherwise.
-   * @deprecated Use {@link VcsRootChecker} instead.
    */
-  @Deprecated
   public boolean fileIsUnderVcs(FilePath filePath) {
     return true;
   }
@@ -236,7 +237,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   public void enableIntegration() {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (vcsManager != null) {
-      vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(getName())));
+      vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", getName())));
     }
   }
 
@@ -389,9 +390,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    *
    * @param dir the directory to check.
    * @return {@code true} if directory is managed by this VCS
-   * @deprecated Use {@link VcsRootChecker} instead.
    */
-  @Deprecated
   public boolean isVersionedDirectory(VirtualFile dir) {
     return false;
   }
@@ -425,11 +424,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result);
   }
 
-  @ApiStatus.Internal
-  public boolean needsLegacyDefaultMappings() {
-    return false;
-  }
-
   /**
    * Returns the implementation of the merge provider which is used to load the revisions to be merged
    * for a particular file.
@@ -446,11 +440,16 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   @NotNull
-  @Deprecated
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
-    if (!allowsNestedRoots()) {
-      new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
-    }
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+    new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
+    return in;
+  }
+
+  @NotNull
+  public static <S> List<S> filterUniqueRootsDefault(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+    FilterDescendantVirtualFileConvertible<S> convertible =
+      new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance());
+    convertible.doFilter(in);
     return in;
   }
 

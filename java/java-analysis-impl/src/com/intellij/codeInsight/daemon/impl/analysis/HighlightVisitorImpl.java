@@ -1126,17 +1126,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (resolved instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)resolved;
 
-      if (!(variable instanceof PsiField)) {
-        PsiElement containingClass = PsiTreeUtil.getNonStrictParentOfType(ref, PsiClass.class, PsiLambdaExpression.class);
-        while ((containingClass instanceof PsiAnonymousClass || containingClass instanceof PsiLambdaExpression) &&
-               !PsiTreeUtil.isAncestor(containingClass, variable, false)) {
-          if (containingClass instanceof PsiLambdaExpression ||
-              !PsiTreeUtil.isAncestor(((PsiAnonymousClass)containingClass).getArgumentList(), ref, false)) {
-            myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.IMPLICIT_ANONYMOUS_CLASS_PARAMETER).range(ref).create());
-            break;
-          }
-          containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, PsiLambdaExpression.class);
-        }
+      PsiElement containingClass = PsiTreeUtil.getNonStrictParentOfType(ref, PsiClass.class, PsiLambdaExpression.class);
+      if ((containingClass instanceof PsiAnonymousClass || containingClass instanceof PsiLambdaExpression) &&
+          !PsiTreeUtil.isAncestor(containingClass, variable, false) &&
+          !(variable instanceof PsiField) &&
+          (containingClass instanceof PsiLambdaExpression ||
+           !PsiTreeUtil.isAncestor(((PsiAnonymousClass)containingClass).getArgumentList(), ref, false))) {
+        myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.IMPLICIT_ANONYMOUS_CLASS_PARAMETER).range(ref).create());
       }
 
       if (variable instanceof PsiParameter && ref instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)ref)) {
@@ -1332,8 +1328,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder.add(checkFeature(expression, Feature.METHOD_REFERENCES));
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (toReportFunctionalExpressionProblemOnParent(parent)) return;
-    PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-    if (functionalInterfaceType != null && !PsiTypesUtil.allTypeParametersResolved(expression, functionalInterfaceType)) return;
 
     final JavaResolveResult result;
     final JavaResolveResult[] results;
@@ -1348,11 +1342,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myRefCountHolder.registerReference(expression, result);
     }
     final PsiElement method = result.getElement();
-    if (method instanceof PsiMethod && myRefCountHolder != null) {
-      for (PsiParameter parameter : ((PsiMethod)method).getParameterList().getParameters()) {
-        myRefCountHolder.registerLocallyReferenced(parameter);
-      }
-    }
     if (method != null && !result.isAccessible()) {
       String accessProblem = HighlightUtil.accessProblemDescription(expression, method, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
@@ -1387,6 +1376,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
+    PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
     if (functionalInterfaceType != null) {
       if (!myHolder.hasErrorResults()) {
         boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);

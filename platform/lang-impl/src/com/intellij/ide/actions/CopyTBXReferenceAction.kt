@@ -22,7 +22,6 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
@@ -39,11 +38,6 @@ class CopyTBXReferenceAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    if (!Registry.`is`("copy.tbx.reference.enabled")) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
     var plural = false
     var enabled: Boolean
     var paths = false

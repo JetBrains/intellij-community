@@ -127,7 +127,7 @@ open class MultipleFileMergeDialog(
       table.selectionModel.setSelectionInterval(0, 0)
     }
     else {
-      TreeUtil.promiseSelectFirstLeaf(table.tree)
+      table.tree.selectionPath = TreeUtil.getFirstLeafNodePath(table.tree)
     }
   }
 
@@ -395,9 +395,7 @@ open class MultipleFileMergeDialog(
         checkMarkModifiedProject(file)
 
         if (result != MergeResult.CANCEL) {
-          ProgressManager.getInstance().runProcessWithProgressSynchronously({
-            markFileProcessed(file, getSessionResolution(result))
-          }, "Resolving Conflicts...", true, project, contentPanel)
+          markFileProcessed(file, getSessionResolution(result))
         }
       }
 

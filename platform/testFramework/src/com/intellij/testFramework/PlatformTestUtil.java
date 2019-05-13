@@ -908,14 +908,14 @@ public class PlatformTestUtil {
 
   public static void captureMemorySnapshot() {
     try {
-      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.profilers.YourKitProfilerHandler"), "captureMemorySnapshot");
+      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.utils.ProfilingUtil"), "captureMemorySnapshot");
       if (snapshot != null) {
         Object path = snapshot.invoke(null);
         System.out.println("Memory snapshot captured to '" + path + "'");
       }
     }
     catch (ClassNotFoundException e) {
-      // YourKitProfilerHandler is missing from the classpath, ignore
+      // ProfilingUtil is missing from the classpath, ignore
     }
     catch (Exception e) {
       e.printStackTrace(System.err);

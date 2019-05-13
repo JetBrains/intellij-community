@@ -55,7 +55,7 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
     AnnotatedApiUsageProcessorBridge processorBridge = new AnnotatedApiUsageProcessorBridge(
       myIgnoreInsideImports, getAnnotations(), annotatedApiProcessor
     );
-    return ApiUsageUastVisitor.createPsiElementVisitor(processorBridge);
+    return new UastVisitorAdapter(new ApiUsageUastVisitor(processorBridge), true);
   }
 
   private boolean isApplicable(@Nullable PsiFile file, @Nullable Project project) {
@@ -116,17 +116,18 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
                                                    @NotNull PsiClass instantiatedClass,
                                                    @Nullable PsiMethod constructor,
                                                    @Nullable UClass subclassDeclaration) {
-      if (constructor != null) {
-        maybeProcessAnnotatedTarget(sourceNode, constructor);
+      if (constructor == null || !maybeProcessAnnotatedTarget(sourceNode, constructor)) {
+        maybeProcessAnnotatedTarget(sourceNode, instantiatedClass);
       }
     }
 
-    private void maybeProcessAnnotatedTarget(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target) {
+    private boolean maybeProcessAnnotatedTarget(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target) {
       List<PsiAnnotation> annotations = AnnotationUtil.findAllAnnotations(target, myAnnotations, false);
       if (annotations.isEmpty()) {
-        return;
+        return false;
       }
       myAnnotatedApiProcessor.processAnnotatedTarget(sourceNode, target, annotations);
+      return true;
     }
   }
 }

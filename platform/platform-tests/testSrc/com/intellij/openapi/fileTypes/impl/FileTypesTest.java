@@ -70,7 +70,7 @@ public class FileTypesTest extends PlatformTestCase {
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
-      myFileTypeManager.initializeComponent();
+      myFileTypeManager.initComponent();
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -358,7 +358,7 @@ public class FileTypesTest extends PlatformTestCase {
 
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initializeComponent();
+      myFileTypeManager.initComponent();
 
       assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + extension));
     }
@@ -384,7 +384,7 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.getRemovedMappings().clear();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(state);
-    myFileTypeManager.initializeComponent();
+    myFileTypeManager.initComponent();
 
     Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
     Pair<FileType, Boolean> pair = mappings.get(matcher);
@@ -410,7 +410,7 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.getRemovedMappings().clear();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(state);
-    myFileTypeManager.initializeComponent();
+    myFileTypeManager.initComponent();
 
     Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
     Pair<FileType, Boolean> pair = mappings.get(matcher);
@@ -491,7 +491,7 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(element);
 
-    myFileTypeManager.initializeComponent();
+    myFileTypeManager.initComponent();
     Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
     assertEquals(1, mappings.size());
     assertEquals(typeFromPlugin, mappings.values().iterator().next().first);
@@ -512,7 +512,7 @@ public class FileTypesTest extends PlatformTestCase {
       FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(factory, disposable);
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initializeComponent();
+      myFileTypeManager.initComponent();
 
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(typeFromPlugin, "*.foo"));
 
@@ -525,7 +525,7 @@ public class FileTypesTest extends PlatformTestCase {
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initializeComponent();
+      myFileTypeManager.initComponent();
 
       element = myFileTypeManager.getState();
       //log(JDOMUtil.writeElement(element));
@@ -535,7 +535,7 @@ public class FileTypesTest extends PlatformTestCase {
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initializeComponent();
+      myFileTypeManager.initComponent();
 
       //element = myFileTypeManager.getState();
       //log(JDOMUtil.writeElement(element));
@@ -551,7 +551,7 @@ public class FileTypesTest extends PlatformTestCase {
   public void testReassign() throws Exception {
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
-    myFileTypeManager.initializeComponent();
+    myFileTypeManager.initComponent();
 
     Element element = JDOMUtil.load(
       "<component name=\"FileTypeManager\" version=\"13\">\n" +
@@ -561,7 +561,7 @@ public class FileTypesTest extends PlatformTestCase {
       "</component>");
 
     myFileTypeManager.loadState(element);
-    myFileTypeManager.initializeComponent();
+    myFileTypeManager.initComponent();
     Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
     assertEquals(1, mappings.size());
     assertEquals(ArchiveFileType.INSTANCE, mappings.values().iterator().next().first);
@@ -586,7 +586,7 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(element);
-    myFileTypeManager.initializeComponent();
+    myFileTypeManager.initComponent();
     FileType extensions = myFileTypeManager.getFileTypeByExtension(extension);
     assertEquals("IDL", extensions.getName());
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(idl, extension));

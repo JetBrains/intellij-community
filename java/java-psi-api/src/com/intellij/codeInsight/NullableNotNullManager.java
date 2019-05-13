@@ -295,7 +295,7 @@ public abstract class NullableNotNullManager {
     return null;
   }
 
-  private PsiAnnotation takeAnnotationFromSuperParameters(@NotNull PsiParameter owner, @NotNull List<? extends PsiParameter> superOwners) {
+  private PsiAnnotation takeAnnotationFromSuperParameters(@NotNull PsiParameter owner, @NotNull List<PsiParameter> superOwners) {
     return RecursionManager.doPreventingRecursion(owner, true, () -> {
       for (PsiParameter superOwner : superOwners) {
         PsiAnnotation anno = findNullityAnnotationWithDefault(superOwner, false, false);
@@ -308,17 +308,6 @@ public abstract class NullableNotNullManager {
   private PsiAnnotation findPlainNullityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     Set<String> qNames = getAllNullabilityAnnotationsWithNickNames();
     return findPlainAnnotation(owner, checkBases, qNames);
-  }
-
-  /**
-   * @return an annotation (if any) with the given nullability semantics on the given declaration or its type. In case of conflicts,
-   * type annotations are preferred.
-   */
-  @Nullable
-  public PsiAnnotation findExplicitNullabilityAnnotation(@NotNull PsiModifierListOwner owner, @NotNull Nullability nullability) {
-    if (nullability == Nullability.UNKNOWN) return null;
-    List<String> names = nullability == Nullability.NULLABLE ? getNullablesWithNickNames() : getNotNullsWithNickNames();
-    return findPlainAnnotation(owner, false, new HashSet<>(names));
   }
 
   @Nullable

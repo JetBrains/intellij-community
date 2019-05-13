@@ -35,7 +35,7 @@ import java.util.List;
 /**
  *  @author dsl
  */
-class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSourceOrderEntry, WritableOrderEntry, ClonableOrderEntry {
+public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSourceOrderEntry, WritableOrderEntry, ClonableOrderEntry {
   @NonNls static final String ENTRY_TYPE = JpsModuleRootModelSerializer.SOURCE_FOLDER_TYPE;
   @NonNls private static final String ATTRIBUTE_FOR_TESTS = "forTests";
 

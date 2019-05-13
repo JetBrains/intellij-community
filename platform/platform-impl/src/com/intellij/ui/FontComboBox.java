@@ -66,7 +66,6 @@ public final class FontComboBox extends ComboBox {
 
       @Override
       public void contentsChanged(ListDataEvent e) {
-        if (e.getIndex0() != -42 || e.getIndex1() != -42) return;
         ComboPopup popup = FontComboBox.this.getPopup();
         if (popup != null && popup.isVisible()) {
           popup.hide();
@@ -87,7 +86,10 @@ public final class FontComboBox extends ComboBox {
   }
 
   public void setMonospacedOnly(boolean monospaced) {
-    myModel.setMonospacedOnly(monospaced);
+    if (myModel.myMonospacedOnly != monospaced) {
+      myModel.myMonospacedOnly = monospaced;
+      myModel.updateSelectedItem();
+    }
   }
 
   public String getFontName() {
@@ -132,7 +134,7 @@ public final class FontComboBox extends ComboBox {
           List<FontInfo> all = FontInfo.getAll(withAllStyles);
           application.invokeLater(() -> {
             setFonts(all, filterNonLatin);
-            onModelToggled();
+            updateSelectedItem();
           }, application.getAnyModalityState());
         });
       }
@@ -153,18 +155,10 @@ public final class FontComboBox extends ComboBox {
       myMonoFonts = monoFonts;
     }
 
-    public void setMonospacedOnly(boolean monospaced) {
-      if (myMonospacedOnly != monospaced) {
-        myMonospacedOnly = monospaced;
-        onModelToggled();
-      }
-    }
-
-    void onModelToggled() {
+    private void updateSelectedItem() {
       Object item = getSelectedItem();
       setSelectedItem(null);
       setSelectedItem(item);
-      fireContentsChanged(this, -42, -42);
     }
 
     @Override

@@ -17,7 +17,7 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
     doTestEscape(null);
   }
 
-  protected void doTestEscape(@Nullable Consumer<? super AbstractInplaceIntroducer> pass) {
+  protected void doTestEscape(@Nullable Consumer<AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
@@ -41,7 +41,7 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
 
   protected abstract String getExtension();
 
-  protected void doTest(@Nullable Consumer<? super AbstractInplaceIntroducer> pass) {
+  protected void doTest(@Nullable Consumer<AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();

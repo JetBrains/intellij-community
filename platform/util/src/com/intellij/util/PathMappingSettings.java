@@ -51,7 +51,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   @NotNull
   private static String normLocal(@NotNull String path) {
     if (SystemInfo.isWindows) {
-      path = StringUtil.toLowerCase(path);
+      path = path.toLowerCase();
     }
 
     return norm(path);
@@ -179,7 +179,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     myPathMappings.addAll(settings.getPathMappings());
   }
 
-  public void addAll(@NotNull List<? extends PathMapping> mappings) {
+  public void addAll(@NotNull List<PathMapping> mappings) {
     myPathMappings.addAll(mappings);
   }
 

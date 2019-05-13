@@ -54,7 +54,7 @@ public class SubstitutionHandler extends MatchingHandler {
         return false;
       }
 
-      return profile.canBeVarDelimiter(element);
+      return profile.canBeVarDelimeter(element);
     }
   };
 
@@ -106,7 +106,7 @@ public class SubstitutionHandler extends MatchingHandler {
     if (start instanceof RegExpPredicate) return (RegExpPredicate)start;
 
     if(start instanceof AndPredicate) {
-      final AndPredicate binary = (AndPredicate)start;
+      AndPredicate binary = (AndPredicate)start;
       final RegExpPredicate result = findRegExpPredicate(binary.getFirst());
       if (result!=null) return result;
 

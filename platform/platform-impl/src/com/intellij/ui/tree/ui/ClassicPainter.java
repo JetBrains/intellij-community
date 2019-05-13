@@ -15,7 +15,8 @@ import java.awt.RenderingHints;
 import javax.swing.UIManager;
 
 final class ClassicPainter implements Control.Painter {
-  private static final int GAP = 2; // minimal space between a control icon and a renderer component
+  static final Control.Painter DEFAULT = new ClassicPainter(null, null, null, null);
+  static final Control.Painter COMPACT = new ClassicPainter(true, 0, 0, 0);
   private final Boolean myPaintLines;
   private final Integer myLeftIndent;
   private final Integer myRightIndent;
@@ -36,7 +37,7 @@ final class ClassicPainter implements Control.Painter {
     int left = getLeftIndent(controlWidth / 2);
     int right = getRightIndent();
     int offset = getLeafIndent(leaf);
-    if (offset < 0) offset = Math.max(controlWidth + left - controlWidth / 2 + JBUI.scale(GAP), left + right);
+    if (offset < 0) offset = Math.max(controlWidth, left + right);
     return depth > 1 ? (depth - 1) * (left + right) + offset : offset;
   }
 

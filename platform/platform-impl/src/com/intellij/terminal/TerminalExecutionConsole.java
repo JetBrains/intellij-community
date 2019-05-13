@@ -25,7 +25,10 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +39,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.jediterm.terminal.*;
@@ -71,7 +73,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
   private boolean myEnableConsoleActions = true;
 
-  private boolean myEnterKeyDefaultCodeEnabled = true;
+  private boolean myEnterKeyDefaultCodeEnabled = false; // TODO turn on by default in 2019.2
+  private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
+
+  {
+    myKeyEncoder.setAutoNewLine(true);
+  }
 
   public TerminalExecutionConsole(@NotNull Project project, @Nullable ProcessHandler processHandler) {
     myProject = project;
@@ -113,11 +120,17 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
            color.getBlue() + "m";
   }
 
+  public void setAutoNewLineMode(boolean enabled) {
+    myKeyEncoder.setAutoNewLine(enabled);
+  }
+
   /**
-   * @deprecated use {@link #withEnterKeyDefaultCodeEnabled(boolean)}
+   * @deprecated use
    */
   @Deprecated
-  public void setAutoNewLineMode(@SuppressWarnings("unused") boolean enabled) {
+  @NotNull
+  public TerminalExecutionConsole withEnterKeyLineSeparator(@NotNull LineSeparator lineSeparator) {
+    return this;
   }
 
   @NotNull
@@ -280,14 +293,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return false;
   }
 
-  @NotNull
-  public AnAction[] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
-    AnAction[] actions = createConsoleActions();
-    myEnableConsoleActions = false;
-    if (prependSeparatorIfNonEmpty && actions.length > 0) {
-      actions = ArrayUtil.mergeArrays(new AnAction[] {Separator.create()}, actions);
-    }
-    return actions;
+  public void enableConsoleActions(boolean enableConsoleActions) {
+    myEnableConsoleActions = enableConsoleActions;
   }
 
   @NotNull
@@ -356,10 +363,13 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       return new TerminalStarter(terminal, connector, myDataStream) {
         @Override
         public byte[] getCode(int key, int modifiers) {
-          if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
-            // pty4j expects \r on Windows and \n on Unix as Enter key code
-            // https://github.com/JetBrains/pty4j/commit/3166f860354c24740729999df51e9b8a46fb417c
-            return SystemInfo.isWindows ? LineSeparator.CR.getSeparatorBytes() : LineSeparator.LF.getSeparatorBytes();
+          if (key == KeyEvent.VK_ENTER) {
+            if (modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
+              // pty4j expects \r on Windows and \n on Unix as Enter key code
+              // https://github.com/JetBrains/pty4j/commit/3166f860354c24740729999df51e9b8a46fb417c
+              return SystemInfo.isWindows ? LineSeparator.CR.getSeparatorBytes() : LineSeparator.LF.getSeparatorBytes();
+            }
+            return myKeyEncoder.getCode(key, modifiers);
           }
           return super.getCode(key, modifiers);
         }
@@ -401,21 +411,14 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      BoundedRangeModel model = getBoundedRangeModel();
-      e.getPresentation().setEnabled(model != null && model.getValue() != 0);
+      BoundedRangeModel model = myTerminalWidget.getTerminalPanel().getBoundedRangeModel();
+      e.getPresentation().setEnabled(model.getValue() != 0);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      BoundedRangeModel model = getBoundedRangeModel();
-      if (model != null) {
-        model.setValue(0);
-      }
-    }
-
-    @Nullable
-    private BoundedRangeModel getBoundedRangeModel() {
-      return myTerminalWidget != null ? myTerminalWidget.getTerminalPanel().getBoundedRangeModel() : null;
+      BoundedRangeModel model = myTerminalWidget.getTerminalPanel().getBoundedRangeModel();
+      model.setValue(0);
     }
   }
 }

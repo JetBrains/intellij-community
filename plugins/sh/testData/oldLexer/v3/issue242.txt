@@ -1,8 +1,0 @@
-eval ('eval')
-WHITE_SPACE (' ')
-OPEN_QUOTE ('"')
-var ('$1')
-STRING_CONTENT ('=\$(printf 'a' \"')
-var ('$1')
-STRING_CONTENT ('\")')
-CLOSE_QUOTE ('"')

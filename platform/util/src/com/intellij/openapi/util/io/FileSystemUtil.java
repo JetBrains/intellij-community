@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
@@ -23,10 +22,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -517,7 +513,7 @@ public class FileSystemUtil {
       }
       catch (IOException e) {
         String message = e.getMessage();
-        if (message != null && StringUtil.toLowerCase(message).contains("too many levels of symbolic links")) {
+        if (message != null && message.toLowerCase(Locale.US).contains("too many levels of symbolic links")) {
           LOG.debug(e);
           return null;
         }

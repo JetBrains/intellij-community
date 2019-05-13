@@ -32,7 +32,7 @@ public class JsonBuilderContributor extends BuilderMethodsContributor {
                                 @NotNull PsiClass clazz,
                                 @NotNull String name,
                                 @NotNull PsiElement place,
-                                @NotNull Processor<? super PsiElement> processor) {
+                                @NotNull Processor<PsiElement> processor) {
     GrLightMethodBuilder method;
 
     // ()

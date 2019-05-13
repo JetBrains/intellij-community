@@ -68,6 +68,7 @@ import java.util.List;
 import java.util.*;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
+    private final OptionsChangeListener optionsListener = new OptionsChangeListener();
 
     private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[]{};
 
@@ -118,7 +119,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             imageComponent.setFileNameVisible(editorOptions.isFileNameVisible());
             imageComponent.setFileSizeVisible(editorOptions.isFileSizeVisible());
 
-            options.addPropertyChangeListener(new OptionsChangeListener(), this);
+            options.addPropertyChangeListener(optionsListener);
 
             list = new JBList();
             list.setModel(new DefaultListModel());
@@ -618,6 +619,9 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     @Override
     public void dispose() {
         removeAll();
+
+        Options options = OptionsManager.getInstance().getOptions();
+        options.removePropertyChangeListener(optionsListener);
 
         list = null;
         cellRenderer = null;

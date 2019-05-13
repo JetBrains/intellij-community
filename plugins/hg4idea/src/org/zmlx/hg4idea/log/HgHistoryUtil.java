@@ -392,14 +392,8 @@ public class HgHistoryUtil {
 
   @NotNull
   public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root,
-                                                   @NotNull Consumer<? super VcsUser> userRegistry, @NotNull List<String> params) {
-    return readHashes(project, root, userRegistry, -1, params);
-  }
+                                                   @NotNull final Consumer<? super VcsUser> userRegistry, @NotNull List<String> params) {
 
-  @NotNull
-  public static List<TimedVcsCommit> readHashes(@NotNull Project project, @NotNull VirtualFile root,
-                                                @NotNull Consumer<? super VcsUser> userRegistry, int limit,
-                                                @NotNull List<String> params) {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -408,7 +402,7 @@ public class HgHistoryUtil {
     assert hgvcs != null;
     HgVersion version = hgvcs.getVersion();
     String[] templates = ArrayUtil.toStringArray(HgBaseLogParser.constructDefaultTemplate(version));
-    HgCommandResult result = getLogResult(project, root, version, limit, params, HgChangesetUtil.makeTemplate(templates));
+    HgCommandResult result = getLogResult(project, root, version, -1, params, HgChangesetUtil.makeTemplate(templates));
     return getCommitRecords(project, result, new HgBaseLogParser<TimedVcsCommit>() {
 
       @Override

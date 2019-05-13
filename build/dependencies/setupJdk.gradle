@@ -12,8 +12,7 @@ project.ext.jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
 project.ext.jdkVersion = System.getProperty('intellij.build.jdk.version', '8').toInteger()
 def isModular = jdkVersion > 8
 project.ext.build = isModular ? secondJreBuild : jdkBuild
-def setupJbrSdk = System.getProperty('intellij.build.jbr.setupSdk', 'false').toBoolean()
-project.ext.jdkArtifactPrefix = isModular && !setupJbrSdk ? 'jbr-' : 'jbrsdk-'
+project.ext.jdkArtifactPrefix = isModular ? 'jbr-' : 'jbrsdk-'
 
 def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
   new File(it).mkdirs()
@@ -138,7 +137,7 @@ def jdkUrl() {
   def (update, buildNumber) = splitJdkBuild(build.toString(), jdkVersion.toString())
   // base url of TeamCity build to download JDK from
   def teamCityBuild = System.getProperty('intellij.jdk.teamcity.build.url')
-  "${teamCityBuild ?: jdkRepo}/${jdkArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
+  "${teamCityBuild != null ? teamCityBuild : jdkRepo}/${jdkArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
 }
 
 static def currentPlatformName() {

@@ -59,7 +59,7 @@ public class GrAnnotationCollector {
    * @return set of used arguments of alias annotation
    */
   @NotNull
-  public static Set<String> collectAnnotations(@NotNull List<? super GrAnnotation> list,
+  public static Set<String> collectAnnotations(@NotNull List<GrAnnotation> list,
                                                @NotNull GrAnnotation alias,
                                                @NotNull PsiAnnotation annotationCollector) {
 
@@ -210,7 +210,7 @@ public class GrAnnotationCollector {
     });
   }
 
-  private static boolean collectHardcoded(@NotNull List<? super GrAnnotation> list, @NotNull GrAnnotation alias) {
+  private static boolean collectHardcoded(@NotNull List<GrAnnotation> list, @NotNull GrAnnotation alias) {
     String fqn = alias.getQualifiedName();
     if (GROOVY_TRANSFORM_IMMUTABLE.equals(fqn)) {
       GrImmutableUtils.collectImmutableAnnotations(alias, list);
@@ -219,7 +219,7 @@ public class GrAnnotationCollector {
     return collectCompileDynamic(list, alias);
   }
 
-  private static boolean collectCompileDynamic(@NotNull List<? super GrAnnotation> list, @NotNull GrAnnotation alias) {
+  private static boolean collectCompileDynamic(@NotNull List<GrAnnotation> list, @NotNull GrAnnotation alias) {
     if (GROOVY_TRANSFORM_COMPILE_DYNAMIC.equals(alias.getQualifiedName())) {
       PsiAnnotationOwner owner = alias.getOwner();
       if (owner != null) {

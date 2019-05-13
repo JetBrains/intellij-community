@@ -79,17 +79,16 @@ public final class BundledFileTemplate extends FileTemplateBase {
     return getText().equals(getDefaultText());
   }
 
-  @NotNull
   @Override
   public BundledFileTemplate clone() {
     return (BundledFileTemplate)super.clone();
   }
 
-  boolean isEnabled() {
+  public boolean isEnabled() {
     return myInternal || myEnabled;
   }
 
-  void setEnabled(boolean enabled) {
+  public void setEnabled(boolean enabled) {
     if (enabled != myEnabled) {
       myEnabled = enabled;
       if (!enabled) {
@@ -98,13 +97,13 @@ public final class BundledFileTemplate extends FileTemplateBase {
     }
   }
 
-  void revertToDefaults() {
+  public void revertToDefaults() {
     setText(null);
     setReformatCode(DEFAULT_REFORMAT_CODE_VALUE);
     setLiveTemplateEnabled(isLiveTemplateEnabledByDefault());
   }
 
-  boolean isTextModified() {
+  public boolean isTextModified() {
     return !getText().equals(getDefaultText());
   }
 

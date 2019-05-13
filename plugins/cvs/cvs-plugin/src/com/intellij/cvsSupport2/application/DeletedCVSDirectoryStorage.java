@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
@@ -14,7 +13,7 @@ import java.util.HashSet;
 
 public class DeletedCVSDirectoryStorage {
   private final File myRoot;
-  private static final String CVS_ADMIN_DIR = CvsUtil.CVS;
+  public static final String CVS_ADMIN_DIR = CvsUtil.CVS;
 
   private final Collection<VirtualFile> myFilesToDelete = new HashSet<>();
 
@@ -31,7 +30,7 @@ public class DeletedCVSDirectoryStorage {
     return file.getName().equals(CVS_ADMIN_DIR);
   }
 
-  void checkNeedForPurge(File file) {
+  public void checkNeedForPurge(File file) {
     if (!file.isDirectory()) return;
 
     File[] subdirectories = file.listFiles(FileUtilRt.ALL_DIRECTORIES);
@@ -43,7 +42,7 @@ public class DeletedCVSDirectoryStorage {
     if (canDeleteSavedCopy(file, savedCopy)) FileUtil.delete(savedCopy);
   }
 
-  private File translatePath(File file) {
+  public File translatePath(File file) {
     return translatePath(file.getAbsolutePath());
   }
 
@@ -64,7 +63,7 @@ public class DeletedCVSDirectoryStorage {
   }
 
   private boolean containsCvsDirFor(File file) {
-    return translatePath(new File(file.getParentFile(), CVS_ADMIN_DIR)).exists();
+    return (translatePath(new File(file.getParentFile(), CVS_ADMIN_DIR)).exists());
   }
 
 
@@ -77,7 +76,7 @@ public class DeletedCVSDirectoryStorage {
     return true;
   }
 
-  synchronized void deleteIfAdminDirCreated(@NotNull VirtualFile file) {
+  public synchronized void deleteIfAdminDirCreated(final VirtualFile file) {
     if (isAdminDir(file)) {
       myFilesToDelete.add(file);
     }
@@ -89,8 +88,7 @@ public class DeletedCVSDirectoryStorage {
     }
   }
 
-  @NotNull
-  DeleteHandler createDeleteHandler(Project project, CvsStorageSupportingDeletionComponent cvsStorageComponent) {
+  public DeleteHandler createDeleteHandler(Project project, CvsStorageSupportingDeletionComponent cvsStorageComponent) {
     return new DeleteHandler(project, cvsStorageComponent);
   }
 }

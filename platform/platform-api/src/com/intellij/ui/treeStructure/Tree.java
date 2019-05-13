@@ -119,7 +119,16 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public boolean isEmpty() {
-    return 0 >= getRowCount();
+    TreeModel model = getModel();
+    if (model == null) return true;
+    if (model.getRoot() == null) return true;
+    if (!isRootVisible()) {
+      int childCount = model.getChildCount(model.getRoot());
+      if (childCount == 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected boolean isCustomUI() {

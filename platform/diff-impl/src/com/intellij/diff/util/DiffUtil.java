@@ -41,7 +41,6 @@ import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
@@ -49,7 +48,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -382,26 +380,9 @@ public class DiffUtil {
         return size;
       }
     }.setCopyable(true);
+    label.setForeground(UIUtil.getInactiveTextColor());
 
-    return createMessagePanel(label);
-  }
-
-  @NotNull
-  public static JPanel createMessagePanel(@NotNull JComponent label) {
-    CenteredPanel panel = new CenteredPanel(label, JBUI.Borders.empty(5));
-
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    TextAttributes commentAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
-    if (commentAttributes.getForegroundColor() != null && commentAttributes.getBackgroundColor() == null) {
-      label.setForeground(commentAttributes.getForegroundColor());
-    }
-    else {
-      label.setForeground(scheme.getDefaultForeground());
-    }
-    label.setBackground(scheme.getDefaultBackground());
-    panel.setBackground(scheme.getDefaultBackground());
-
-    return panel;
+    return new CenteredPanel(label, JBUI.Borders.empty(5));
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
@@ -1664,9 +1645,9 @@ public class DiffUtil {
 
 
   private static class SyncHeightComponent extends JPanel {
-    @NotNull private final List<? extends JComponent> myComponents;
+    @NotNull private final List<JComponent> myComponents;
 
-    SyncHeightComponent(@NotNull List<? extends JComponent> components, int index) {
+    SyncHeightComponent(@NotNull List<JComponent> components, int index) {
       super(new BorderLayout());
       myComponents = components;
       JComponent delegate = components.get(index);

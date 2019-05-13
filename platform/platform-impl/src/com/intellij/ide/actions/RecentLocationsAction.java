@@ -307,7 +307,7 @@ public class RecentLocationsAction extends DumbAwareAction {
                                         @NotNull JBList<RecentLocationItem> list,
                                         @NotNull JBCheckBox checkBox,
                                         @NotNull JBPopup popup,
-                                        @NotNull Ref<? super Boolean> navigationRef) {
+                                        @NotNull Ref<Boolean> navigationRef) {
     listWithFilter.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
@@ -358,7 +358,7 @@ public class RecentLocationsAction extends DumbAwareAction {
   private static void navigateToSelected(@NotNull Project project,
                                          @NotNull JBList<RecentLocationItem> list,
                                          @NotNull JBPopup popup,
-                                         @NotNull Ref<? super Boolean> navigationRef) {
+                                         @NotNull Ref<Boolean> navigationRef) {
     ContainerUtil.reverse(list.getSelectedValuesList())
       .forEach(item -> IdeDocumentHistory.getInstance(project).gotoPlaceInfo(item.getInfo()));
 

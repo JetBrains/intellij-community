@@ -383,7 +383,7 @@ public abstract class KeymapsTestCaseBase extends LightPlatformTestCase {
     String text = KeyStrokeAdapter.toString(fst);
     int offset = text.lastIndexOf(' ');
     if (offset == -1) offset = 0;
-    return text.substring(0, offset) + StringUtil.toUpperCase(text.substring(offset));
+    return text.substring(0, offset) + text.substring(offset).toUpperCase(Locale.ENGLISH);
   }
 
   private static Shortcut convertShortcutForParent(Shortcut key, @NotNull Keymap keymap) {

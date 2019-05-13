@@ -17,7 +17,7 @@ package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SimpleColoredRenderer;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -30,33 +30,38 @@ import java.awt.*;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_ROOT_NAMES;
 
-class RootCellRenderer extends SimpleColoredRenderer implements TableCellRenderer {
+class RootCellRenderer extends JBLabel implements TableCellRenderer {
   @NotNull private final VcsLogUiProperties myProperties;
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private Color myColor = UIUtil.getTableBackground();
   @NotNull private Color myBorderColor = UIUtil.getTableBackground();
   private boolean isNarrow = true;
+  private int myRowHeight;
 
   RootCellRenderer(@NotNull VcsLogUiProperties properties, @NotNull VcsLogColorManager colorManager) {
+    super("", CENTER);
     myProperties = properties;
     myColorManager = colorManager;
-    setTextAlign(SwingConstants.CENTER);
   }
 
   @Override
-  protected void paintBackground(Graphics2D g, int x, int width, int height) {
+  protected void paintComponent(Graphics g) {
     g.setColor(myColor);
 
+    int width = getWidth();
+
     if (isNarrow) {
-      g.fillRect(x, 0, width - JBUI.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH), height);
+      g.fillRect(0, 0, width - JBUI.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH), myRowHeight);
       g.setColor(myBorderColor);
-      g.fillRect(x + width - JBUI.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH), 0,
+      g.fillRect(width - JBUI.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH), 0,
                  JBUI.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH),
-                 height);
+                 myRowHeight);
     }
     else {
-      g.fillRect(x, 0, width, height);
+      g.fillRect(0, 0, width, myRowHeight);
     }
+
+    super.paintComponent(g);
   }
 
   @Override
@@ -79,11 +84,10 @@ class RootCellRenderer extends SimpleColoredRenderer implements TableCellRendere
       color = VcsLogGraphTable.getRootBackgroundColor(root, myColorManager);
     }
     else {
-      text = "";
+      text = null;
       color = UIUtil.getTableBackground(isSelected);
     }
 
-    clear();
     myColor = color;
     Color background = ((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected).getBackground();
     assert background != null;
@@ -91,13 +95,15 @@ class RootCellRenderer extends SimpleColoredRenderer implements TableCellRendere
     setForeground(UIUtil.getTableForeground(false));
 
     if (myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES)) {
-      append(text);
+      setText(text);
       isNarrow = false;
     }
     else {
-      append("");
+      setText("");
       isNarrow = true;
     }
+
+    myRowHeight = table.getRowHeight();
 
     return this;
   }

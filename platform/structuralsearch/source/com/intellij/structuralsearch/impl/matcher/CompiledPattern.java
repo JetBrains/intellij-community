@@ -65,7 +65,7 @@ public abstract class CompiledPattern {
     return nodes;
   }
 
-  public void setNodes(List<? extends PsiElement> elements) {
+  public void setNodes(List<PsiElement> elements) {
     this.nodes = new ArrayBackedNodeIterator(PsiUtilCore.toPsiElementArray(elements));
     this.nodeCount = elements.size();
   }

@@ -12,18 +12,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.InvocationEvent;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static com.intellij.util.ReflectionUtil.getField;
 
 /**
  * @author peter
@@ -67,7 +63,6 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   private void runSyncTransaction(@NotNull Transaction transaction) {
-    long startedAt = System.currentTimeMillis();
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (Disposer.isDisposed(transaction.parentDisposable)) return;
 
@@ -88,7 +83,6 @@ public class TransactionGuardImpl extends TransactionGuard {
       myWritingAllowed = wasWritingAllowed;
       myCurrentTransaction.myFinished = true;
       myCurrentTransaction = myCurrentTransaction.myParent;
-      logTimeMillis(startedAt, transaction.runnable);
     }
   }
 
@@ -153,7 +147,6 @@ public class TransactionGuardImpl extends TransactionGuard {
     semaphore.down();
     final Throwable[] exception = {null};
     submitTransaction(Disposer.newDisposable("never disposed"), getContextTransaction(), () -> {
-      long startedAt = System.currentTimeMillis();
       try {
         runnable.run();
       }
@@ -162,7 +155,6 @@ public class TransactionGuardImpl extends TransactionGuard {
       }
       finally {
         semaphore.up();
-        logTimeMillis(startedAt, runnable);
       }
     });
     semaphore.waitFor();
@@ -357,23 +349,5 @@ public class TransactionGuardImpl extends TransactionGuard {
     public String toString() {
       return "Transaction " + myStartCounter + (myFinished ? "(finished)" : "");
     }
-  }
-
-  @Experimental
-  public static void logTimeMillis(long startedAt, @NotNull Object processId) {
-    if (!SwingUtilities.isEventDispatchThread()) return; // do not measure a time of a background task
-    int threshold = Registry.intValue("ide.event.queue.dispatch.threshold", 0);
-    if (threshold <= 10) return; // do not measure a time if a threshold is too small
-    long time = System.currentTimeMillis() - startedAt;
-    if (time <= threshold) return; // processed fast enough
-    if (processId instanceof InvocationEvent) {
-      Runnable runnable = getField(InvocationEvent.class, processId, Runnable.class, "runnable");
-      if (runnable != null) {
-        // joined sub-tasks are measured and logged in the LaterInvocator separately
-        if (runnable.getClass().getName().equals("com.intellij.openapi.application.impl.LaterInvocator$FlushQueue")) return;
-        processId = runnable;
-      }
-    }
-    LOG.warn(time + "ms to process " + processId);
   }
 }

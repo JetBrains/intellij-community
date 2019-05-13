@@ -10,19 +10,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @author Eugene.Kudelevsky
@@ -83,8 +78,7 @@ public class StructuralSearchUtil {
            : StructuralSearchProfile.EP_NAME.getExtensions();
   }
 
-  @NotNull
-  public static LanguageFileType getDefaultFileType() {
+  public static FileType getDefaultFileType() {
     if (ourDefaultFileType == null) {
       for (StructuralSearchProfile profile : getProfiles()) {
         ourDefaultFileType = profile.getDefaultFileType(ourDefaultFileType);
@@ -114,27 +108,38 @@ public class StructuralSearchUtil {
     return null;
   }
 
-  public static boolean isTypedVariable(@NotNull String name) {
-    return name.length() > 1 && name.charAt(0) == '$' && name.charAt(name.length() - 1) == '$';
+  public static boolean isTypedVariable(@NotNull final String name) {
+    return name.length() > 1 && name.charAt(0)=='$' && name.charAt(name.length()-1)=='$';
   }
 
   @Nullable
-  public static StructuralSearchProfile getProfileByFileType(LanguageFileType fileType) {
-    return getProfileByLanguage(fileType.getLanguage());
+  public static StructuralSearchProfile getProfileByFileType(FileType fileType) {
+    if (!(fileType instanceof LanguageFileType)) {
+      return null;
+    }
+    final LanguageFileType languageFileType = (LanguageFileType)fileType;
+    return getProfileByLanguage(languageFileType.getLanguage());
   }
 
   @NotNull
-  public static LanguageFileType[] getSuitableFileTypes() {
-    final FileType[] types = FileTypeManager.getInstance().getRegisteredFileTypes();
-    final Set<LanguageFileType> fileTypes = StreamEx.of(types).select(LanguageFileType.class).collect(Collectors.toSet());
+  public static FileType[] getSuitableFileTypes() {
+    Set<FileType> allFileTypes = new HashSet<>();
+    Collections.addAll(allFileTypes, FileTypeManager.getInstance().getRegisteredFileTypes());
     for (Language language : Language.getRegisteredLanguages()) {
-      final LanguageFileType fileType = language.getAssociatedFileType();
+      FileType fileType = language.getAssociatedFileType();
       if (fileType != null) {
-        fileTypes.add(fileType);
+        allFileTypes.add(fileType);
       }
     }
 
-    return fileTypes.toArray(new LanguageFileType[0]);
+    List<FileType> result = new ArrayList<>();
+    for (FileType fileType : allFileTypes) {
+      if (fileType instanceof LanguageFileType) {
+        result.add(fileType);
+      }
+    }
+
+    return result.toArray(FileType.EMPTY_ARRAY);
   }
 
   public static boolean containsRegExpMetaChar(String s) {
@@ -159,16 +164,6 @@ public class StructuralSearchUtil {
     }
 
     return out;
-  }
-
-  public static Pattern[] createPatterns(String[] prefixes) {
-    final Pattern[] patterns = new Pattern[prefixes.length];
-
-    for (int i = 0; i < prefixes.length; i++) {
-      final String s = shieldRegExpMetaChars(prefixes[i]);
-      patterns[i] = Pattern.compile("\\b(" + s + "\\w+)\\b");
-    }
-    return patterns;
   }
 
   public static List<Configuration> getPredefinedTemplates() {
@@ -203,7 +198,7 @@ public class StructuralSearchUtil {
     final StringBuilder result = new StringBuilder();
     boolean white = false;
     for (int i = 0, length = text.length(); i < length; i++) {
-      final char c = text.charAt(i);
+      char c = text.charAt(i);
       if (StringUtil.isWhiteSpace(c)) {
         if (!white) {
           result.append(' ');

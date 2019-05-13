@@ -52,7 +52,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private JButton myUpdateButton;
   private JButton myEnableDisableButton;
   private JBOptionButton myEnableDisableUninstallButton;
-  private JButton myUninstallButton;
   private JComponent myErrorComponent;
   private JTextField myVersion;
   private JLabel myVersionSize;
@@ -124,7 +123,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     int offset = PluginManagerConfigurableNew.offset5();
     JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
 
-    myNameAndButtons.setYOffset(JBUI.scale(3));
     myNameAndButtons.add(myNameComponent);
     createButtons();
     centerPanel.add(myNameAndButtons, VerticalLayout.FILL_HORIZONTAL);
@@ -192,11 +190,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     };
     myNameAndButtons.addButtonComponent(myEnableDisableUninstallButton = new MyOptionButton(enableDisableAction, uninstallAction));
 
-    myUninstallButton = new JButton("Uninstall");
-    myUninstallButton.addActionListener(e -> doUninstall());
-    ColorButton.setWidth72(myUninstallButton);
-    myNameAndButtons.addButtonComponent(myUninstallButton);
-
     for (Component component : myNameAndButtons.getButtonComponents()) {
       component.setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
     }
@@ -229,28 +222,15 @@ public class PluginDetailsPageComponent extends MultiPanel {
     JPanel panel1 = new NonOpaquePanel(new TextHorizontalLayout(offset));
     centerPanel.add(panel1);
     if (myMarketplace) {
-      myDownloads =
-        GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, CellPluginComponent.GRAY_COLOR, false);
-
       myRating =
         GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, CellPluginComponent.GRAY_COLOR, false);
+
+      myDownloads =
+        GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, CellPluginComponent.GRAY_COLOR, false);
     }
     myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
 
-    JPanel panel2 = new NonOpaquePanel(new HorizontalLayout(myMarketplace ? offset : JBUI.scale(7)) {
-      @Override
-      public void layoutContainer(Container parent) {
-        super.layoutContainer(parent);
-        if (myTagPanel != null && myTagPanel.isVisible()) {
-          int baseline = myTagPanel.getBaseline(-1, -1);
-          if (baseline != -1) {
-            Rectangle bounds = myVersion.getBounds();
-            int newY = myTagPanel.getY() + baseline - myVersion.getBaseline(bounds.width, bounds.height);
-            myVersion.setBounds(bounds.x, newY, bounds.width, bounds.height);
-          }
-        }
-      }
-    });
+    JPanel panel2 = new NonOpaquePanel(new HorizontalLayout(myMarketplace ? offset : JBUI.scale(7)));
     if (myMarketplace) {
       panel2.add(myTagPanel = new TagPanel(mySearchListener));
     }
@@ -268,9 +248,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
     myPanel.add(scrollPane);
-
-    myHomePage = new LinkPanel(bottomPanel, true, null, null);
-    bottomPanel.add(new JLabel());
 
     myDescriptionComponent = new JEditorPane();
     HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
@@ -293,6 +270,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (myMarketplace) {
       bottomPanel.add(mySize = new JLabel());
     }
+
+    myHomePage = new LinkPanel(bottomPanel, true, null, null);
   }
 
   public void showPlugin(@Nullable CellPluginComponent component, boolean multiSelection) {
@@ -307,7 +286,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       setEmptyState(multiSelection);
     }
     else {
-      myPlugin = component.myPlugin;
+      myPlugin = component.getPluginDescriptor();
       myUpdateDescriptor = ((NewListPluginComponent)component).myUpdateDescriptor;
       showPlugin();
       select(0, true);
@@ -340,7 +319,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myUpdateButton.setVisible(false);
       myEnableDisableButton.setVisible(false);
       myEnableDisableUninstallButton.setVisible(false);
-      myUninstallButton.setVisible(false);
     }
     else {
       myInstallButton.setVisible(false);
@@ -357,24 +335,20 @@ public class PluginDetailsPageComponent extends MultiPanel {
         myUpdateButton.setVisible(false);
         myEnableDisableButton.setVisible(false);
         myEnableDisableUninstallButton.setVisible(false);
-        myUninstallButton.setVisible(false);
       }
       else {
         myRestartButton.setVisible(false);
 
+        myUpdateButton.setVisible(myUpdateDescriptor != null);
+
         boolean bundled = myPlugin.isBundled();
         String title = myPluginModel.getEnabledTitle(myPlugin);
-        boolean errors = myPluginModel.hasErrors(myPlugin);
 
-        myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
-
-        myEnableDisableButton.setVisible(bundled && !errors);
+        myEnableDisableButton.setVisible(bundled);
         myEnableDisableButton.setText(title);
 
-        myEnableDisableUninstallButton.setVisible(!bundled && !errors);
+        myEnableDisableUninstallButton.setVisible(!bundled);
         myEnableDisableUninstallButton.setText(title);
-
-        myUninstallButton.setVisible(!bundled && errors);
       }
 
       updateEnableForNameAndIcon();
@@ -426,7 +400,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
                                                                   URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
     }
 
-    String description = getDescription();
+    String description = getDescriptionAndChangeNotes();
     if (description != null) {
       myDescriptionComponent.setText(XmlStringUtil.wrapInHtml(description));
       if (myDescriptionComponent.getCaret() != null) {
@@ -521,16 +495,13 @@ public class PluginDetailsPageComponent extends MultiPanel {
     updateEnableForNameAndIcon();
     updateErrors();
 
-    boolean bundled = myPlugin.isBundled();
-    boolean errors = myPluginModel.hasErrors(myPlugin);
     String title = myPluginModel.getEnabledTitle(myPlugin);
-
-    myEnableDisableButton.setText(title);
-    myEnableDisableUninstallButton.setText(title);
-    myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
-    myEnableDisableButton.setVisible(bundled && !errors);
-    myEnableDisableUninstallButton.setVisible(!bundled && !errors);
-    myUninstallButton.setVisible(!bundled && errors);
+    if (myEnableDisableButton != null) {
+      myEnableDisableButton.setText(title);
+    }
+    if (myEnableDisableUninstallButton != null) {
+      myEnableDisableUninstallButton.setText(title);
+    }
 
     fullRepaint();
   }
@@ -546,13 +517,23 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myUpdateButton.setVisible(false);
     myEnableDisableButton.setVisible(false);
     myEnableDisableUninstallButton.setVisible(false);
-    myUninstallButton.setVisible(false);
     myRestartButton.setVisible(true);
   }
 
   @Nullable
-  private String getDescription() {
+  private String getDescriptionAndChangeNotes() {
+    StringBuilder result = new StringBuilder();
+
     String description = myPlugin.getDescription();
-    return StringUtil.isEmptyOrSpaces(description) ? null : description;
+    if (!StringUtil.isEmptyOrSpaces(description)) {
+      result.append(description);
+    }
+
+    String notes = myPlugin.getChangeNotes();
+    if (!StringUtil.isEmptyOrSpaces(notes)) {
+      result.append("<h4>Change Notes</h4>").append(notes);
+    }
+
+    return result.length() > 0 ? result.toString() : null;
   }
 }

@@ -238,7 +238,6 @@ public abstract class ProjectLevelVcsManager {
   /**
    * This method can be used only when initially loading the project configuration!
    */
-  @Deprecated
   public abstract void setDirectoryMapping(final String path, final String activeVcsName);
 
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
@@ -250,9 +249,6 @@ public abstract class ProjectLevelVcsManager {
 
   @Nullable
   public abstract AbstractVcs findVersioningVcs(VirtualFile file);
-
-  @NotNull
-  public abstract VcsRootChecker getRootChecker(@NotNull AbstractVcs vcs);
 
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
 

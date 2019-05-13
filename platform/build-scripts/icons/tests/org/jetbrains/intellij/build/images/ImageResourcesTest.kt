@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
@@ -25,7 +25,7 @@ class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
-      return collectBadIcons(TestRoot.COMMUNITY)
+      return ImageResourcesTestBase.collectBadIcons(TestRoot.COMMUNITY)
     }
   }
 }
@@ -35,7 +35,7 @@ class CommunityImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
-      return collectIconsWithNonOptimumSize(TestRoot.COMMUNITY)
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(TestRoot.COMMUNITY)
     }
   }
 }
@@ -45,7 +45,7 @@ class CommunityIconClassesTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
-      return collectNonRegeneratedIconClasses(TestRoot.COMMUNITY)
+      return ImageResourcesTestBase.collectNonRegeneratedIconClasses(TestRoot.COMMUNITY)
     }
   }
 }
@@ -56,7 +56,7 @@ class AllImageResourcesSanityTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
-      return collectBadIcons(TestRoot.ALL, true)
+      return ImageResourcesTestBase.collectBadIcons(TestRoot.ALL, true)
     }
   }
 }
@@ -67,7 +67,7 @@ class AllImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
-      return collectIconsWithNonOptimumSize(TestRoot.ALL, false, true)
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(TestRoot.ALL, false, true)
     }
   }
 }
@@ -116,8 +116,10 @@ abstract class ImageResourcesTestBase {
     @JvmStatic
     fun collectNonRegeneratedIconClasses(root: TestRoot): List<Array<Any?>> {
       val model = loadProjectModel(root)
+      val util = model.project.modules.find { it.name == "intellij.platform.util" } ?: throw IllegalStateException("Can't load module 'util'")
       val modules = collectModules(root, model)
-      val checker = MyIconClassFileChecker(File(PathManager.getHomePath()), model.project.modules)
+
+      val checker = MyIconClassFileChecker(File(PathManager.getHomePath()), util)
       modules.forEach {
         checker.checkIconClasses(it)
       }
@@ -169,7 +171,7 @@ abstract class ImageResourcesTestBase {
 private class MySanityChecker(projectHome: File, ignoreSkipTag: Boolean) : ImageSanityCheckerBase(projectHome, ignoreSkipTag) {
   val failures = ArrayList<FailedTest>()
 
-  override fun log(severity: Severity,
+  override fun log(severity: ImageSanityCheckerBase.Severity,
                    message: String,
                    module: JpsModule,
                    images: Collection<ImagePaths>) {
@@ -195,11 +197,11 @@ private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean
   }
 }
 
-private class MyIconClassFileChecker(val projectHome: File, val modules: List<JpsModule>) {
+private class MyIconClassFileChecker(val projectHome: File, val util: JpsModule) {
   val failures = ArrayList<FailedTest>()
 
   fun checkIconClasses(module: JpsModule) {
-    val generator = IconsClassGenerator(projectHome, modules, false)
+    val generator = IconsClassGenerator(projectHome, util, false)
     generator.processModule(module)
 
     generator.getModifiedClasses().forEach { (module, file, details) ->

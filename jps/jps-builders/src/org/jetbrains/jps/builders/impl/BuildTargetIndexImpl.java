@@ -89,7 +89,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     }
   }
 
-  private static Collection<BuildTarget<?>> includeTransitiveDependenciesOfDummyTargets(Collection<? extends BuildTarget<?>> dependencies,
+  private static Collection<BuildTarget<?>> includeTransitiveDependenciesOfDummyTargets(Collection<BuildTarget<?>> dependencies,
                                                                                         Map<BuildTarget<?>, Collection<BuildTarget<?>>> dummyTargetDependencies) {
     ArrayList<BuildTarget<?>> realDependencies = new ArrayList<>(dependencies.size());
     Set<BuildTarget<?>> processed = new HashSet<>(dependencies);
@@ -125,7 +125,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     return result;
   }
 
-  private void collectDependenciesRecursively(BuildTarget<?> target, LinkedHashSet<? super BuildTarget<?>> result, CompileContext context) {
+  private void collectDependenciesRecursively(BuildTarget<?> target, LinkedHashSet<BuildTarget<?>> result, CompileContext context) {
     if (result.add(target)) {
       for (BuildTarget<?> dep : getDependencies(target,context)) {
         collectDependenciesRecursively(dep, result, context);

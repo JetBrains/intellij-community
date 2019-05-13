@@ -18,7 +18,6 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,8 +94,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                 @NotNull
                 @Override
                 public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
-                  return includeReturnConstraint ? inferTypeArguments(true) 
-                                                 : ObjectUtils.assertNotNull(MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(reference, false, () -> inferTypeArguments(false)));
+                  return inferTypeArguments(includeReturnConstraint);
                 }
 
                 private PsiSubstitutor inferTypeArguments(boolean includeReturnConstraint) {
@@ -290,7 +288,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       }
 
       if ((varargs || functionalInterfaceParamTypes.length == parameterTypes.length) &&
-          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, varargs, conflict, 0)) {
+          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, varargs, referenceExpression, conflict, 0)) {
         //reject static interface methods called on something else but interface class
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
           PsiClass containingClass = psiMethod.getContainingClass();
@@ -306,7 +304,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
       if (hasReceiver &&
           (varargs || functionalInterfaceParamTypes.length == parameterTypes.length + 1) &&
-          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, varargs, conflict, 1)) {
+          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, varargs, referenceExpression, conflict, 1)) {
         return false;
       }
       return null;
@@ -316,6 +314,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                                                PsiType[] functionalInterfaceParamTypes,
                                                PsiMethod interfaceMethod,
                                                boolean varargs,
+                                               PsiMethodReferenceExpression referenceExpression,
                                                CandidateInfo conflict,
                                                int offset) {
       final int min = Math.min(parameterTypes.length, functionalInterfaceParamTypes.length - offset);
@@ -325,21 +324,26 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         if (varargs && i == parameterTypes.length - 1) {
           if (!TypeConversionUtil.isAssignable(parameterType, argType) &&
               !TypeConversionUtil.isAssignable(((PsiArrayType)parameterType).getComponentType(), argType)) {
-            markNotApplicable(conflict);
+            reportParameterConflict(referenceExpression, conflict, argType, parameterType);
             return false;
           }
         }
         else if (!TypeConversionUtil.isAssignable(parameterType, argType)) {
-          markNotApplicable(conflict);
+          reportParameterConflict(referenceExpression, conflict, argType, parameterType);
           return false;
         }
       }
       return !varargs || parameterTypes.length - 1 <= functionalInterfaceParamTypes.length - offset;
     }
 
-    private static void markNotApplicable(CandidateInfo conflict) {
+    private static void reportParameterConflict(PsiMethodReferenceExpression referenceExpression,
+                                                CandidateInfo conflict,
+                                                PsiType argType, 
+                                                PsiType parameterType) {
       if (conflict instanceof MethodCandidateInfo) {
-        ((MethodCandidateInfo)conflict).markNotApplicable();
+        ((MethodCandidateInfo)conflict).setApplicabilityError("Invalid " +
+                                                              (referenceExpression.isConstructor() ? "constructor" :"method") +
+                                                              " reference: " + argType.getPresentableText() + " cannot be converted to " + parameterType.getPresentableText());
       }
     }
 

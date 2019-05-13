@@ -30,7 +30,7 @@ internal class VisibleTreeState : BaseState() {
     traverseNodes(tree.model.root as DefaultMutableTreeNode, pathsToExpand, toSelect)
     TreeUtil.restoreExpandedPaths(tree, pathsToExpand)
     if (toSelect.isEmpty()) {
-      TreeUtil.promiseSelectFirst(tree)
+      TreeUtil.selectFirstNode(tree)
     }
     else {
       toSelect.forEach { TreeUtil.selectPath(tree, it) }

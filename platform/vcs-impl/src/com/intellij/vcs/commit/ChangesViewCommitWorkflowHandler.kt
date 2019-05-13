@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitSession
-import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 
 class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
@@ -49,19 +48,11 @@ class ChangesViewCommitWorkflowHandler(
     updateDefaultCommitAction()
 
     initCommitHandlers()
-    workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses))
   }
 
   private fun updateDefaultCommitAction() {
     ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
-  }
-
-  fun setCommitState(items: Collection<*>, forceIfNotEmpty: Boolean) {
-    if (forceIfNotEmpty || ui.isInclusionEmpty()) {
-      ui.clearInclusion()
-      ui.includeIntoCommit(items)
-    }
   }
 
   fun activate(): Boolean = ui.activate()

@@ -60,7 +60,10 @@ class EditBookmarkDescriptionAction extends DumbAwareAction {
 
     if (myPopup != null && !myPopup.isDisposed()) {
       myPopup.setUiVisible(true);
-      myPopup.setSize(myPopup.getContent().getPreferredSize());
+      final JComponent content = myPopup.getContent();
+      if (content != null) {
+        myPopup.setSize(content.getPreferredSize());
+      }
     }
   }
 

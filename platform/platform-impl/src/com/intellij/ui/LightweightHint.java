@@ -456,7 +456,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   public void setSize(final Dimension size) {
-    if (myIsRealPopup && myPopup != null && !myPopup.isDisposed()) {
+    if (myIsRealPopup && myPopup != null) {
       // There is a possible case that a popup wraps target content component into other components which might have borders.
       // That's why we can't just apply component's size to the whole popup. It needs to be adjusted before that.
       JComponent popupContent = myPopup.getContent();

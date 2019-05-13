@@ -183,7 +183,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     myDocumentWasChanged = true;
   }
 
-  private static Configurable findConfigurable(Set<? extends Configurable> configurables, Set<? extends Configurable> hits) {
+  private static Configurable findConfigurable(Set<Configurable> configurables, Set<Configurable> hits) {
     Configurable candidate = null;
     for (Configurable configurable : configurables) {
       if (hits != null && hits.contains(configurable)) {

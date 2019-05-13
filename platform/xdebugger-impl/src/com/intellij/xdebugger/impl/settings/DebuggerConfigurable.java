@@ -18,6 +18,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public static final String DISPLAY_NAME = XDebuggerBundle.message("debugger.configurable.display.name");
@@ -92,11 +93,11 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     }
   }
 
-  private static void computeMergedConfigurables(@NotNull DebuggerConfigurableProvider[] providers, @NotNull List<? super Configurable> result) {
+  private static void computeMergedConfigurables(@NotNull DebuggerConfigurableProvider[] providers, @NotNull List<Configurable> result) {
     for (DebuggerSettingsCategory category : MERGED_CATEGORIES) {
       List<Configurable> configurables = getConfigurables(category, providers);
       if (!configurables.isEmpty()) {
-        String id = StringUtil.toLowerCase(category.name());
+        String id = category.name().toLowerCase(Locale.ENGLISH);
         result.add(new MergedCompositeConfigurable("debugger." + id, XDebuggerBundle.message("debugger." + id + ".display.name"),
                                                    getDefaultCategoryHelpTopic(category), configurables.toArray(new Configurable[0])));
       }

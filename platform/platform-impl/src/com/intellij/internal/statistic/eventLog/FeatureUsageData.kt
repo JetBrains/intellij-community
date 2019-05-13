@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.utils.PluginInfo
-import com.intellij.internal.statistic.utils.addPluginInfoTo
 import com.intellij.internal.statistic.utils.getPluginType
 import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.lang.Language
@@ -35,13 +34,10 @@ import java.util.*
  * </p>
  */
 class FeatureUsageData {
-  private var data: MutableMap<String, Any> = HashMap()
-
+  private var data: MutableMap<String, Any> = HashMap<String, Any>()
   companion object {
-    // don't list "version" as "platformDataKeys" because it format depends a lot on the tool
-    val platformDataKeys: MutableList<String> = Arrays.asList(
-      "plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place"
-    )
+    val platformDataKeys: MutableList<String> = Arrays.asList("plugin", "project", "version", "os", "plugin_type",
+                                                              "lang", "current_file", "input_event", "place")
   }
 
   fun addFeatureContext(context: FUSUsageContext?): FeatureUsageData {
@@ -85,27 +81,25 @@ class FeatureUsageData {
   }
 
   fun addPluginInfo(info: PluginInfo): FeatureUsageData {
-    addPluginInfoTo(info, data)
+    data["plugin_type"] = info.type.name
+    if (info.type.isSafeToReport() && info.id != null && StringUtil.isNotEmpty(info.id)) {
+      data["plugin"] = info.id
+    }
     return this
   }
 
-  fun addLanguage(language: Language?): FeatureUsageData {
-    return addLanguageInternal("lang", language)
+  fun addLanguage(language: Language): FeatureUsageData {
+    val type = getPluginType(language.javaClass)
+    if (type.isSafeToReport()) {
+      data["lang"] = language.id
+    }
+    return this
   }
 
-  fun addCurrentFile(language: Language?): FeatureUsageData {
-    return addLanguageInternal("current_file", language)
-  }
-
-  private fun addLanguageInternal(fieldName: String, language: Language?): FeatureUsageData {
-    language?.let {
-      val type = getPluginType(language.javaClass)
-      if (type.isSafeToReport()) {
-        data[fieldName] = language.id
-      }
-      else {
-        data[fieldName] = "third.party"
-      }
+  fun addCurrentFile(language: Language): FeatureUsageData {
+    val type = getPluginType(language.javaClass)
+    if (type.isSafeToReport()) {
+      data["current_file"] = language.id
     }
     return this
   }
@@ -184,7 +178,7 @@ class FeatureUsageData {
   fun merge(next: FeatureUsageData, prefix: String): FeatureUsageData {
     for ((key, value) in next.build()) {
       val newKey = if (key.startsWith("data_")) "$prefix$key" else key
-      data[newKey] = value
+      addDataInternal(newKey, value)
     }
     return this
   }
@@ -192,7 +186,7 @@ class FeatureUsageData {
   fun copy(): FeatureUsageData {
     val result = FeatureUsageData()
     for ((key, value) in data) {
-      result.data[key] = value
+      result.addDataInternal(key, value)
     }
     return result
   }

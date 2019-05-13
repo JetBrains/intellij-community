@@ -4,7 +4,6 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -24,9 +23,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
@@ -50,8 +46,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -422,7 +416,7 @@ public class AboutPopup {
     }
 
     public String getText() {
-      return myInfo.toString() + getExtraInfo();
+      return myInfo.toString() + SystemInfo.getOsNameAndVersion();
     }
 
     private class TextRenderer {
@@ -453,7 +447,7 @@ public class AboutPopup {
         }
       }
 
-      public void render(int indentX, int indentY, List<? extends AboutBoxLine> lines) throws OverflowException {
+      public void render(int indentX, int indentY, List<AboutBoxLine> lines) throws OverflowException {
         x = indentX;
         y = indentY;
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
@@ -622,24 +616,6 @@ public class AboutPopup {
         return AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(text);
       }
     }
-  }
-
-  @NotNull
-  private static String getExtraInfo() {
-    return SystemInfo.getOsNameAndVersion() + "\n" +
-
-           "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
-             .map(GarbageCollectorMXBean::getName).collect(StringUtil.joining()) + "\n" +
-
-           "Memory: " + (Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE) + "M" + "\n" +
-
-           "Cores: " + Runtime.getRuntime().availableProcessors() + "\n" +
-
-           "Registry: " + Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
-             .map(v -> v.getKey() + "=" + v.asString()).collect(StringUtil.joining()) + "\n" +
-
-           "Non-Bundled Plugins: " + Arrays.stream(PluginManagerCore.getPlugins()).filter(p -> !p.isBundled() && p.isEnabled())
-             .map(p -> p.getPluginId().getIdString()).collect(StringUtil.joining());
   }
 
   public static class PopupPanel extends JPanel {

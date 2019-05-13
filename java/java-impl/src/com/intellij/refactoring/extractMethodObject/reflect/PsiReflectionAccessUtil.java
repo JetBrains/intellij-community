@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -31,13 +32,6 @@ class PsiReflectionAccessUtil {
 
     // currently, we use dummy psi class "_Array_" to represent arrays which is an inner of package-private _Dummy_ class.
     if (PsiUtil.isArrayClass(psiClass)) return true;
-    PsiFile containingFile = psiClass.getContainingFile();
-    if (containingFile instanceof PsiJavaFile) {
-      if (((PsiJavaFile)containingFile).getPackageName().isEmpty()) {
-        // consider classes in the default package as inaccessible
-        return false;
-      }
-    }
     while (psiClass != null) {
       if (!psiClass.hasModifierProperty(PsiModifier.PUBLIC)) {
         return false;
@@ -47,18 +41,6 @@ class PsiReflectionAccessUtil {
     }
 
     return true;
-  }
-
-  public static boolean isAccessibleMethodReference(@NotNull PsiMethodReferenceExpression methodReference) {
-    PsiElement method = methodReference.resolve();
-    if (!(method instanceof PsiMethod)) {
-      return true; // referent is accessible by default
-    }
-    else {
-      PsiTypeElement qualifierType = methodReference.getQualifierType();
-      boolean qualifierAccessible = qualifierType == null || isAccessibleType(qualifierType.getType());
-      return qualifierAccessible && isAccessibleMember((PsiMember)method);
-    }
   }
 
   @Nullable
@@ -81,7 +63,10 @@ class PsiReflectionAccessUtil {
     String expectedType = tryGetWeakestAccessibleExpectedType(expression);
     if (expectedType != null) return expectedType;
 
-    return type != null ? nearestAccessibleType(type).getCanonicalText() : null;
+    PsiType nearestAccessibleBaseType = nearestAccessedType(type);
+    if (nearestAccessibleBaseType != null) return nearestAccessibleBaseType.getCanonicalText();
+
+    return nearestAccessibleBaseClass(PsiTypesUtil.getPsiClass(type));
   }
 
   @Nullable
@@ -89,7 +74,7 @@ class PsiReflectionAccessUtil {
     String expectedType = tryGetWeakestAccessibleExpectedType(expression);
     if (expectedType != null) return expectedType;
 
-    return nearestAccessibleBaseClassName(psiClass);
+    return nearestAccessibleBaseClass(psiClass);
   }
 
   @Nullable
@@ -98,7 +83,7 @@ class PsiReflectionAccessUtil {
     PsiType realType = expression.getType();
     if (expectedType != null && realType != null) {
       for (PsiType type: getAllAssignableSupertypes(realType, expectedType)) {
-        if (isAccessibleType(type)) {
+        if (isAccessible(type)) {
           return type.getCanonicalText();
         }
       }
@@ -145,18 +130,18 @@ class PsiReflectionAccessUtil {
     return name;
   }
 
-  public static boolean isAccessibleType(@NotNull PsiType type) {
+  private static boolean isAccessible(@NotNull PsiType type) {
     if (type instanceof PsiArrayType) {
-      return isAccessibleType(type.getDeepComponentType());
+      return isAccessible(type.getDeepComponentType());
     }
 
     return TypeConversionUtil.isPrimitiveAndNotNull(type) || isAccessible(PsiTypesUtil.getPsiClass(type));
   }
 
-  @NotNull
-  public static PsiType nearestAccessibleType(@NotNull PsiType type) {
-    while (!isAccessibleType(type)) {
-      type = type.getSuperTypes()[0];
+  @Nullable
+  private static PsiType nearestAccessedType(@Nullable PsiType type) {
+    while (type != null && !isAccessible(type)) {
+      type = ArrayUtil.getFirstElement(type.getSuperTypes());
     }
 
     return type;
@@ -164,8 +149,8 @@ class PsiReflectionAccessUtil {
 
   @Contract("null -> null")
   @Nullable
-  private static String nearestAccessibleBaseClassName(@Nullable PsiClass psiClass) {
-    while (psiClass != null && !isAccessible(psiClass)) {
+  private static String nearestAccessibleBaseClass(@Nullable PsiClass psiClass) {
+    while (psiClass != null && !psiClass.hasModifierProperty(PsiModifier.PUBLIC)) {
       psiClass = psiClass.getSuperClass();
     }
 

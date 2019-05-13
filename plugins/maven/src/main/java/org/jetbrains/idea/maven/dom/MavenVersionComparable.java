@@ -1,7 +1,5 @@
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.openapi.util.text.StringUtil;
-
 import java.math.BigInteger;
 import java.util.*;
 
@@ -272,7 +270,7 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
 
     items = new ListItem();
 
-    version = StringUtil.toLowerCase(version);
+    version = version.toLowerCase(Locale.ENGLISH);
 
     ListItem list = items;
 

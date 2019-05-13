@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -417,7 +416,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     private String allocateLabel() {
       if(!myHasNestedLoops) return null;
       if(myLabel == null) {
-        String base = StringUtil.toUpperCase(mySuffix);
+        String base = mySuffix.toUpperCase(Locale.ENGLISH);
         myLabel = IntStreamEx.ints().mapToObj(i -> i == 0 ? base : base + i)
           .remove(myUsedLabels::contains).findFirst().orElseThrow(IllegalArgumentException::new);
         myUsedLabels.add(myLabel);

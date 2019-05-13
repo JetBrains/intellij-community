@@ -76,7 +76,7 @@ public class SphinxConfigurationProducer extends RuntimeConfigurationProducer im
   @Nullable
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull List<? extends RunnerAndConfigurationSettings> existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     PsiElement element = location.getPsiElement();
     if (!(element instanceof PsiDirectory)) return null;

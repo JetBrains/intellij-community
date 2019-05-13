@@ -14,8 +14,6 @@ public abstract class ModuleRootManagerEx extends ModuleRootManager {
   @TestOnly
   public abstract long getModificationCountForTests();
 
-  public abstract void dropCaches();
-
   public static ModuleRootManagerEx getInstanceEx(@NotNull Module module) {
     return (ModuleRootManagerEx) module.getComponent(ModuleRootManager.class);
   }

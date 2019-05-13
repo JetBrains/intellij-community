@@ -78,7 +78,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     ApplicationManager.getApplication().runWriteAction(() -> addFieldInitialization(constructors, myField, project, editor));
   }
 
-  private static void addFieldInitialization(@NotNull List<? extends PsiMethod> constructors,
+  private static void addFieldInitialization(@NotNull List<PsiMethod> constructors,
                                              @NotNull PsiField field,
                                              @NotNull Project project,
                                              @Nullable Editor editor) {
@@ -166,7 +166,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
   }
 
   @NotNull
-  private static PsiMethod[] toPsiMethodArray(@NotNull List<? extends PsiMethodMember> methodMembers) {
+  private static PsiMethod[] toPsiMethodArray(@NotNull List<PsiMethodMember> methodMembers) {
     final PsiMethod[] result = new PsiMethod[methodMembers.size()];
     int i = 0;
     for (PsiMethodMember methodMember : methodMembers) {

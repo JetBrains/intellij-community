@@ -33,7 +33,7 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public boolean isValidSdkPath(@NotNull File file) {
-    return StringUtil.toLowerCase(FileUtil.getNameWithoutExtension(file)).startsWith("jython");
+    return FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("jython");
   }
 
   @Nullable

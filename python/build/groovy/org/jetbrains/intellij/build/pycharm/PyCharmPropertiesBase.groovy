@@ -18,8 +18,6 @@ package org.jetbrains.intellij.build.pycharm
 import groovy.io.FileType
 import org.jetbrains.intellij.build.*
 
-import static org.jetbrains.intellij.build.pycharm.PyCharmBuildOptions.GENERATE_INDICES_AND_STUBS_STEP
-
 /**
  * @author nik
  */
@@ -53,22 +51,53 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
       }
     }
 
-    // Don't generate indices and stubs when building pycharm only from sources
-    context.executeStep("Generate indices and stubs", GENERATE_INDICES_AND_STUBS_STEP) {
-      File indicesFolder = PyCharmBuildOptions.getFolderForIndicesAndStubs(context)
-      if (!indicesFolder.exists()) {
-        indicesFolder.mkdirs()
-        generateStubsAndIndices(context, indicesFolder)
-      }
+    File folderWithUnzipContent = new File(context.paths.temp, "unzips")
+    folderWithUnzipContent.mkdirs()
+    unzipArchives(context, folderWithUnzipContent)
 
-      context.messages.block("Copy indices and stubs") {
-        context.ant.copy(todir: "$targetDirectory/index", failonerror: !context.options.isInDevelopmentMode) {
-          fileset(dir: indicesFolder.absolutePath, erroronmissingdir: !context.options.isInDevelopmentMode) {
-            include(name: "**")
-          }
-        }
+    File temporaryIndexFolder = new File(context.paths.temp, "index")
+    temporaryIndexFolder.deleteDir()
+    temporaryIndexFolder.mkdirs()
+
+    boolean forceGenerate = false
+    if (PyCharmBuildOptions.usePrebuiltStubs) {
+      File stubsArchive = new File(context.paths.projectHome, PyCharmBuildOptions.prebuiltStubsArchive)
+      context.ant.echo("Unzip prebuilt stubs ${stubsArchive.absolutePath}")
+      context.ant.unzip(src: stubsArchive.absolutePath, dest: "${temporaryIndexFolder.absolutePath}")
+
+      try {
+        String stubsVersionPath = new FileNameFinder()
+          .getFileNames("${temporaryIndexFolder.absolutePath}/Python", "sdk-stubs.version").
+          first()
+        int stubsFromArchiveVersion = new File(stubsVersionPath).readLines()[0].toInteger()
+        context.ant.echo("Stubs version $stubsFromArchiveVersion")
+        int stubVersion = getStubVersion(context)
+        context.ant.echo("But should be $stubVersion")
+
+        forceGenerate = stubsFromArchiveVersion != stubVersion
+      }
+      catch (ignored) {
+        forceGenerate = true
       }
     }
+
+    if (forceGenerate || !PyCharmBuildOptions.usePrebuiltStubs) {
+      temporaryIndexFolder.deleteDir()
+      temporaryIndexFolder.mkdir()
+      generateUniversalStubs(context, folderWithUnzipContent, temporaryIndexFolder)
+    }
+
+    context.ant.echo("Generate indices")
+    generateIndices(context, folderWithUnzipContent, temporaryIndexFolder)
+    context.ant.echo("Copy indices")
+    context.ant.copy(todir: "$targetDirectory/index", failonerror: !context.options.isInDevelopmentMode) {
+      fileset(dir: temporaryIndexFolder.absolutePath, erroronmissingdir: !context.options.isInDevelopmentMode) {
+        include(name: "**")
+      }
+    }
+
+    folderWithUnzipContent.deleteDir()
+    temporaryIndexFolder.deleteDir()
   }
 
   @Override
@@ -76,7 +105,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     "PYCHARM"
   }
 
-  protected void unzipArchives(BuildContext context, File destination) {
+  private void unzipArchives(BuildContext context, File destination) {
     File tempFolder = new File(context.paths.temp, "zips")
     tempFolder.mkdirs()
     tempFolder.deleteOnExit()
@@ -96,14 +125,11 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     }
   }
 
-  protected int getStubVersion(BuildContext context) {
+  private int getStubVersion(BuildContext context) {
     CompilationTasks.create(context).compileModules(["intellij.python.tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
 
-    context.ant.java(classname: "com.jetbrains.python.tools.GetPyStubsVersionKt",
-                     fork: true,
-                     failonerror: !context.options.isInDevelopmentMode,
-                     outputproperty: "stubsVersion") {
+    context.ant.java(classname: "com.jetbrains.python.tools.GetPyStubsVersionKt", fork: true, outputproperty: "stubsVersion") {
       classpath {
         buildClasspath.each {
           pathelement(location: it)
@@ -113,14 +139,12 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     return context.ant.project.properties.stubsVersion as int
   }
 
-  protected void generateUniversalStubs(BuildContext context, File from, File to) {
+  private void generateUniversalStubs(BuildContext context, File from, File to) {
     CompilationTasks.create(context).compileModules(["intellij.python.tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
 
     context.messages.block("Generate universal stubs") {
-      context.ant.java(classname: "com.jetbrains.python.tools.PythonUniversalStubsBuilderKt",
-                       fork: true,
-                       failonerror: !context.options.isInDevelopmentMode) {
+      context.ant.java(classname: "com.jetbrains.python.tools.PythonUniversalStubsBuilderKt", fork: true) {
         jvmarg(line: "-ea -Xmx1000m")
         arg(value: from.absolutePath)
         arg(value: to.absolutePath)
@@ -133,13 +157,11 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     }
   }
 
-  protected void generateIndices(BuildContext context, File from, File to) {
+  private void generateIndices(BuildContext context, File from, File to) {
     CompilationTasks.create(context).compileModules(["intellij.python.tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
 
-    context.ant.java(classname: "com.jetbrains.python.tools.IndicesBuilderKt",
-                     fork: true,
-                     failonerror: !context.options.isInDevelopmentMode) {
+    context.ant.java(classname: "com.jetbrains.python.tools.IndicesBuilderKt", fork: true) {
       jvmarg(line: "-ea -Xmx1000m")
       arg(value: from.absolutePath)
       arg(value: to.absolutePath)
@@ -149,46 +171,5 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
         }
       }
     }
-  }
-
-  protected void generateStubsAndIndices(BuildContext context, File temporaryIndexFolder) {
-    File folderWithUnzipContent = PyCharmBuildOptions.getTemporaryFolderForUnzip(context)
-    folderWithUnzipContent.mkdirs()
-    unzipArchives(context, folderWithUnzipContent)
-
-    boolean forceGenerate = false
-    if (PyCharmBuildOptions.usePrebuiltStubs) {
-      File stubsArchive = new File(context.paths.projectHome, PyCharmBuildOptions.prebuiltStubsArchive)
-      context.messages.block("Unzip prebuilt stubs ${stubsArchive.absolutePath}") {
-        context.ant.unzip(src: stubsArchive.absolutePath, dest: "${temporaryIndexFolder.absolutePath}")
-
-        try {
-          String stubsVersionPath = new FileNameFinder()
-            .getFileNames("${temporaryIndexFolder.absolutePath}/Python", "sdk-stubs.version").
-            first()
-          int stubsFromArchiveVersion = new File(stubsVersionPath).readLines()[0].toInteger()
-          context.messages.info("Stubs version $stubsFromArchiveVersion")
-          int stubVersion = getStubVersion(context)
-          context.messages.info("But should be $stubVersion")
-
-          forceGenerate = stubsFromArchiveVersion != stubVersion
-        }
-        catch (ignored) {
-          forceGenerate = true
-        }
-      }
-    }
-
-    if (forceGenerate || !PyCharmBuildOptions.usePrebuiltStubs) {
-      temporaryIndexFolder.deleteDir()
-      temporaryIndexFolder.mkdir()
-      generateUniversalStubs(context, folderWithUnzipContent, temporaryIndexFolder)
-    }
-
-    context.messages.block("Generate indices") {
-      generateIndices(context, folderWithUnzipContent, temporaryIndexFolder)
-    }
-
-    folderWithUnzipContent.deleteDir()
   }
 }

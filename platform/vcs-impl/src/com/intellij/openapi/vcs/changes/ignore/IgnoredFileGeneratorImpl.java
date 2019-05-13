@@ -161,7 +161,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
       return false;
     }
 
-    boolean needGenerateRegistryFlag = ApplicationManager.getApplication().isInternal() || Registry.is("vcs.ignorefile.generation", true);
+    boolean needGenerateRegistryFlag = Registry.is("vcs.ignorefile.generation", true);
     if (!needGenerateRegistryFlag) {
       return false;
     }

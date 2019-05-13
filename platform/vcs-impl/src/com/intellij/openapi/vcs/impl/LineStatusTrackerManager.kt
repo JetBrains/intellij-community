@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
 import com.google.common.collect.HashMultiset
@@ -14,6 +14,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -65,7 +66,7 @@ class LineStatusTrackerManager(
   private val fileDocumentManager: FileDocumentManager,
   private val fileEditorManager: FileEditorManagerEx,
   @Suppress("UNUSED_PARAMETER") makeSureIndexIsInitializedFirst: DirectoryIndex
-) : LineStatusTrackerManagerI, Disposable {
+) : BaseComponent, LineStatusTrackerManagerI, Disposable {
 
   private val LOCK = Any()
   private var isDisposed = false
@@ -98,18 +99,18 @@ class LineStatusTrackerManager(
     }
   }
 
-  init {
-    val busConnection = project.messageBus.connect(this)
-    busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
-    busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
-    busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
-
+  override fun initComponent() {
     StartupManager.getInstance(project).registerPreStartupActivity {
       if (isDisposed) return@registerPreStartupActivity
 
       application.addApplicationListener(MyApplicationListener(), this)
 
-      FileStatusManager.getInstance(project).addFileStatusListener(MyFileStatusListener(), this)
+      val busConnection = project.messageBus.connect(this)
+      busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
+      busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
+
+      val fsManager = FileStatusManager.getInstance(project)
+      fsManager.addFileStatusListener(MyFileStatusListener(), this)
 
       val editorFactory = EditorFactory.getInstance()
       editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), this)
@@ -117,7 +118,10 @@ class LineStatusTrackerManager(
 
       changeListManager.addChangeListListener(MyChangeListListener())
 
-      VirtualFileManager.getInstance().addVirtualFileListener(MyVirtualFileListener(), this)
+      val virtualFileManager = VirtualFileManager.getInstance()
+      virtualFileManager.addVirtualFileListener(MyVirtualFileListener(), this)
+
+      busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
     }
   }
 

@@ -158,7 +158,7 @@ public abstract class SyntheticLibrary {
   }
 
   @NotNull
-  private static <T extends VirtualFile> Set<T> asSet(@NotNull Collection<? extends T> collection) {
+  private static <T extends VirtualFile> Set<T> asSet(@NotNull Collection<T> collection) {
     return collection instanceof Set ? (Set<T>)collection : new THashSet<>(collection);
   }
 }

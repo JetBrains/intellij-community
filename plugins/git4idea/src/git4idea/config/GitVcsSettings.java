@@ -8,6 +8,7 @@ import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -19,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static git4idea.config.GitIncomingCheckStrategy.Never;
 
 /**
  * Git VCS settings
@@ -101,15 +100,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsOptions>, 
   @Override
   public void loadState(@NotNull GitVcsOptions state) {
     myState = state;
-    migrateUpdateIncomingBranchInfo(state);
-  }
-
-  private void migrateUpdateIncomingBranchInfo(@NotNull GitVcsOptions state) {
-    if (!state.isUpdateBranchesInfo()) {
-      myState.setIncomingCheckStrategy(Never);
-      //set default value
-      myState.setUpdateBranchesInfo(true);
-    }
   }
 
   @Nullable
@@ -225,13 +215,20 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsOptions>, 
     myState.setSignOffCommit(value);
   }
 
-  @NotNull
-  public GitIncomingCheckStrategy getIncomingCheckStrategy() {
-    return myState.getIncomingCheckStrategy();
+  public boolean shouldUpdateBranchInfo() {
+    return Registry.is("git.update.incoming.outgoing.info") && myState.isUpdateBranchesInfo();
   }
 
-  public void setIncomingCheckStrategy(@NotNull GitIncomingCheckStrategy strategy) {
-    myState.setIncomingCheckStrategy(strategy);
+  public void setUpdateBranchInfo(boolean value) {
+    myState.setUpdateBranchesInfo(value);
+  }
+
+  public int getBranchInfoUpdateTime() {
+    return myState.getBranchInfoUpdateTime();
+  }
+
+  public void setBranchInfoUpdateTime(int value) {
+    myState.setBranchInfoUpdateTime(value);
   }
 
   public boolean shouldPreviewPushOnCommitAndPush() {

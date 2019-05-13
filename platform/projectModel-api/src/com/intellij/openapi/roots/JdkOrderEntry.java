@@ -16,9 +16,8 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.projectRoots.Sdk;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.openapi.vfs.VirtualFile;
 
-@ApiStatus.NonExtendable
 public interface JdkOrderEntry extends LibraryOrSdkOrderEntry {
   Sdk getJdk();
   String getJdkName();

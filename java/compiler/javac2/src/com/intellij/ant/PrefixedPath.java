@@ -19,7 +19,6 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.types.Path;
 
 import java.io.File;
-import java.util.Locale;
 
 /**
  * Allows to specify relative output prefix for Path.
@@ -51,7 +50,7 @@ public class PrefixedPath extends Path {
     String prefix = myPrefix;
     if (prefix != null) {
       prefix = trimStartSlash(ensureEndsWithSlash(prefix));
-      if (!relativePath.toLowerCase(Locale.ENGLISH).startsWith(prefix.toLowerCase(Locale.ENGLISH))) {
+      if (!relativePath.toLowerCase().startsWith(prefix.toLowerCase())) {
         return null;
       }
       relativePath = relativePath.substring(prefix.length());

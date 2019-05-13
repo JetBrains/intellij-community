@@ -42,7 +42,7 @@ public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTo
 
     final StringTokenizer tokenizer = new StringTokenizer(properties, ",");
     while (tokenizer.hasMoreTokens()) {
-      result.add(StringUtil.toLowerCase(tokenizer.nextToken()).trim());
+      result.add(tokenizer.nextToken().toLowerCase().trim());
     }
 
     return result;
@@ -63,12 +63,12 @@ public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTo
   }
 
   protected boolean isCustomValue(@NotNull final String value) {
-    return myValues.contains(StringUtil.toLowerCase(value));
+    return myValues.contains(value.toLowerCase());
   }
 
   @Override
   public void addEntry(@NotNull final String text) {
-    final String s = StringUtil.toLowerCase(text.trim());
+    final String s = text.trim().toLowerCase();
     if (!isCustomValue(s)) {
       myValues.add(s);
     }

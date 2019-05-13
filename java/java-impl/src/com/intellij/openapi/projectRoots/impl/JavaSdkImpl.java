@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
@@ -279,13 +278,12 @@ public class JavaSdkImpl extends JavaSdk {
     VirtualFile root = internalJdkAnnotationsPath(pathsChecked);
 
     if (root == null) {
-      String msg = "Paths checked:\n";
+      StringBuilder msg = new StringBuilder("Paths checked:\n");
       for (String p : pathsChecked) {
         File f = new File(p);
-        //noinspection StringConcatenationInLoop yeah I know, it's more readable this way
-        msg += p + "; exists: " + f.exists() + "; siblings: " + Arrays.toString(f.getParentFile().list()) + "\n";
+        msg.append(p).append("; ").append(f.exists()).append("; ").append(Arrays.toString(f.getParentFile().list())).append('\n');
       }
-      LOG.error("JDK annotations not found", msg);
+      LOG.error("JDK annotations not found", msg.toString());
       return false;
     }
 
@@ -307,14 +305,6 @@ public class JavaSdkImpl extends JavaSdk {
       root = VirtualFileManager.getInstance().findFileByUrl("jar://" + annotationsJarPath + "!/");
       pathsChecked.add(annotationsJarPath);
     }
-    else {
-      // when run against IDEA plugin JDK, something like this comes up: "$IDEA_HOME$/out/classes/production/intellij.java.impl"
-      File projectRoot = JBIterable.generate(javaPluginClassesRoot, File::getParentFile).get(4);
-      File root1 = new File(projectRoot, "community/java/jdkAnnotations");
-      File root2 = new File(projectRoot, "java/jdkAnnotations");
-      root = root1.exists() && root1.isDirectory() ? LocalFileSystem.getInstance().findFileByIoFile(root1) :
-      root2.exists() && root2.isDirectory() ? LocalFileSystem.getInstance().findFileByIoFile(root2) : null;
-    }
     if (root == null) {
       String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
       root = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -331,8 +321,8 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public final String getVersionString(String sdkHome) {
-    return myCachedSdkHomeToVersionString.computeIfAbsent(sdkHome, homePath -> {
-      JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(homePath);
+    return myCachedSdkHomeToVersionString.computeIfAbsent(sdkHome, k -> {
+      JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(k);
       return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
     });
   }

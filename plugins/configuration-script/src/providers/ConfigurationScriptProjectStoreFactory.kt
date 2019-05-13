@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import org.snakeyaml.engine.v1.nodes.MappingNode
+import org.yaml.snakeyaml.nodes.MappingNode
 
 internal class ConfigurationScriptProjectStoreFactory : ProjectStoreFactory {
   override fun createStore(project: Project): IComponentStore {

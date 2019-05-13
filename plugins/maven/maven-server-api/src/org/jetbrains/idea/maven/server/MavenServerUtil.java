@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
@@ -45,7 +44,7 @@ public class MavenServerUtil {
       if (isMagicalProperty(key)) continue;
 
       if (SystemInfoRt.isWindows) {
-        key = key.toUpperCase(Locale.ENGLISH);
+        key = key.toUpperCase();
       }
 
       res.setProperty("env." + key, entry.getValue());

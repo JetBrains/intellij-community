@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Iconable;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiFunctionalExpression extends PsiExpression, Iconable, NavigatablePsiElement {
@@ -54,8 +53,7 @@ public interface PsiFunctionalExpression extends PsiExpression, Iconable, Naviga
    *   with the type of the i'th parameter of the method.
    *  If the member is a variable arity method with arity n, etc
    */
-  @Contract("null -> false")
-  boolean isPotentiallyCompatible(@Nullable PsiType left);
+  boolean isPotentiallyCompatible(PsiType left);
 
   /**
    * JLS 9.9. Function Types:

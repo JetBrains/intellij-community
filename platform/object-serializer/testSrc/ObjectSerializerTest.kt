@@ -1,15 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import gnu.trove.THashMap
-import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
-import java.io.File
-import java.nio.file.Paths
 import java.util.*
 
 class ObjectSerializerTest {
@@ -17,15 +12,13 @@ class ObjectSerializerTest {
   @JvmField
   val testName = TestName()
 
-  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration = defaultTestWriteConfiguration): T {
-    return test(bean, testName, writeConfiguration)
-  }
+  private fun test(bean: Any) = test(bean, testName)
 
   @Test
   fun `same bean binding regardless of type parameters`() {
-    val serializer = ObjectSerializer()
-    getBinding(TestGenericBean::class.java, serializer)
-    assertThat(getBindingCount(getBindingProducer(serializer))).isEqualTo(1)
+    val bindingProducer = getBindingProducer(ObjectSerializer())
+    bindingProducer.getRootBinding(TestGenericBean::class.java)
+    assertThat(getBindingCount(bindingProducer)).isEqualTo(1)
   }
 
   @Test
@@ -88,9 +81,7 @@ class ObjectSerializerTest {
     val bean2 = TestObjectBean()
     bean.bean = bean2
     bean2.bean = bean
-
-    // test SkipNullAndEmptySerializationFilter
-    test(bean, defaultTestWriteConfiguration.copy(filter = SkipNullAndEmptySerializationFilter))
+    test(bean)
   }
 
   @Test
@@ -114,72 +105,7 @@ class ObjectSerializerTest {
     bean.color = TestEnum.RED
     test(bean)
   }
-
-  @Test
-  fun `file and path`() {
-    assumeTrue(!SystemInfoRt.isWindows)
-
-    class TestBean {
-      @JvmField
-      var f = File("/foo")
-
-      @JvmField
-      var p = Paths.get("/bar")
-    }
-
-    test(TestBean())
-  }
-
-  @Test
-  fun `interface type for field`() {
-    class TestInterfaceBean {
-      @JvmField
-      @field:Property(allowedTypes = [Circle::class, Rectangle::class])
-      var shape: Shape? = null
-    }
-
-    val bean = TestInterfaceBean()
-    bean.shape = Circle()
-    test(bean)
-  }
-
-  @Test
-  fun `interface type for map value - allowSubTypes`() {
-    class TestInterfaceBean {
-      @JvmField
-      val shape: MutableMap<String, Shape> = THashMap()
-    }
-
-    val bean = TestInterfaceBean()
-    bean.shape.put("first", Circle())
-    test(bean, defaultTestWriteConfiguration.copy(allowAnySubTypes = true))
-  }
-
-  @Test
-  fun `interface type for field - allowSubTypes`() {
-    class TestInterfaceBean {
-      @JvmField
-      var shape: Shape? = null
-    }
-
-    val bean = TestInterfaceBean()
-    bean.shape = Circle()
-    test(bean, defaultTestWriteConfiguration.copy(allowAnySubTypes = true))
-  }
 }
-
-private interface Shape
-
-private class Circle : Shape {
-  @JvmField
-  var name: String? = null
-}
-
-private class Rectangle : Shape {
-  @JvmField
-  var length: Int = -1
-}
-
 
 internal enum class TestEnum {
   RED, GREEN, BLUE

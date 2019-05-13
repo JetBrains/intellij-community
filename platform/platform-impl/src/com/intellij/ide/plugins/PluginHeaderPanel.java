@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Locale;
 
 /**
  * @author Konstantin Bulenkov
@@ -76,7 +77,7 @@ public class PluginHeaderPanel {
 
     //data
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
-    myCategory.setText(plugin.getCategory() == null ? "UNKNOWN" : StringUtil.toUpperCase(plugin.getCategory()));
+    myCategory.setText(plugin.getCategory() == null ? "UNKNOWN" : plugin.getCategory().toUpperCase(Locale.US));
     final boolean hasNewerVersion = ourState.hasNewerVersion(plugin.getPluginId());
     String versionText;
     boolean showVersion = !plugin.isBundled() || plugin.allowBundledUpdate();

@@ -171,7 +171,7 @@ public abstract class PythonSdkFlavor {
   }
 
   public boolean isValidSdkPath(@NotNull File file) {
-    return StringUtil.toLowerCase(FileUtil.getNameWithoutExtension(file)).startsWith("python");
+    return FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("python");
   }
 
   @Nullable

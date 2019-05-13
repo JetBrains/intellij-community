@@ -24,7 +24,6 @@ import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.text.CharArrayUtil;
@@ -412,11 +411,12 @@ public class EditorPainter implements TextDrawingCallback {
     if (separatorColor == null && lineSeparatorRenderer == null) {
       return;
     }
-    boolean isTop = marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP;
-    int edgeOffset = isTop ? myDocument.getLineStartOffset(myDocument.getLineNumber(marker.getStartOffset()))
-                           : myDocument.getLineEndOffset(myDocument.getLineNumber(marker.getEndOffset()));
-    int visualLine = myView.offsetToVisualLine(edgeOffset, !isTop);
-    int y = myView.visualLineToY(visualLine) + (isTop ? 0 : myView.getLineHeight()) - 1 + yShift;
+    int line = myDocument.getLineNumber(marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP
+                                        ? marker.getStartOffset()
+                                        : marker.getEndOffset());
+    int visualLine = myView.offsetToVisualLine(myDocument.getLineStartOffset(line), false);
+    int y = myView.visualLineToY(visualLine) + (marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP ? 0 : myView.getLineHeight())
+            - 1 + yShift;
     int startX = myCorrector.lineSeparatorStart(clip.x);
     int endX = myCorrector.lineSeparatorEnd(clip.x + clip.width);
     g.setColor(separatorColor);
@@ -1028,8 +1028,11 @@ public class EditorPainter implements TextDrawingCallback {
       List<Inlay> inlaysAbove = visLinesIterator.getBlockInlaysAbove();
       if (!inlaysAbove.isEmpty()) {
         if (lineEndAttributes == null) {
-          int lineStartOffset = visLinesIterator.getVisualLineStartOffset();
-          lineEndAttributes = getBetweenLinesAttributes(visualLine, lineStartOffset, caretIterator);
+          int lineEndOffset = visLinesIterator.getVisualLineStartOffset();
+          if (!visLinesIterator.startsWithSoftWrap()) {
+            lineEndOffset = myEditor.getDocument().getLineEndOffset(visLinesIterator.getStartLogicalLine() - 1);
+          }
+          lineEndAttributes = getLineBreakAttributes(visualLine - 1, lineEndOffset, caretIterator);
         }
         for (Inlay inlay : inlaysAbove) {
           int height = inlay.getHeightInPixels();
@@ -1043,8 +1046,8 @@ public class EditorPainter implements TextDrawingCallback {
       curY = y + myEditor.getLineHeight();
       List<Inlay> inlaysBelow = visLinesIterator.getBlockInlaysBelow();
       if (!inlaysBelow.isEmpty()) {
-        int lineStartOffset = getNextVisualLineStartOffset(visLinesIterator);
-        lineEndAttributes = getBetweenLinesAttributes(visualLine + 1, lineStartOffset, caretIterator);
+        int lineEndOffset = visLinesIterator.getVisualLineEndOffset();
+        lineEndAttributes = getLineBreakAttributes(visualLine, lineEndOffset, caretIterator);
         for (Inlay inlay : inlaysBelow) {
           int height = inlay.getHeightInPixels();
           paintBackground(g, lineEndAttributes.getBackgroundColor(), clip.x, curY, clip.width, height);
@@ -1056,64 +1059,18 @@ public class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private int getNextVisualLineStartOffset(@NotNull VisualLinesIterator iterator) {
-    if (iterator.endsWithSoftWrap()) {
-      return iterator.getVisualLineEndOffset();
-    }
-    else {
-      int nextLogicalLine = iterator.getEndLogicalLine() + 1;
-      return nextLogicalLine < myDocument.getLineCount() ? myDocument.getLineStartOffset(nextLogicalLine) : myDocument.getTextLength();
-    }
-  }
-
   @NotNull
-  private TextAttributes getBetweenLinesAttributes(int bottomVisualLine,
-                                                   int bottomVisualLineStartOffset,
-                                                   PeekableIterator<Caret> caretIterator) {
-    boolean selection = false;
-    while (caretIterator.hasNext() && caretIterator.peek().getSelectionEnd() < bottomVisualLineStartOffset) caretIterator.next();
+  private static TextAttributes getLineBreakAttributes(int visualLine, int lineEndOffset, PeekableIterator<Caret> caretIterator) {
+    while (caretIterator.hasNext() && caretIterator.peek().getSelectionEnd() < lineEndOffset) caretIterator.next();
     while (caretIterator.hasNext()) {
       Caret caret = caretIterator.peek();
-      if (caret.getSelectionStart() > bottomVisualLineStartOffset) break;
-      if (caret.getSelectionStartPosition().line < bottomVisualLine && bottomVisualLine <= caret.getSelectionEndPosition().line) {
-        selection = true;
-        break;
+      if (caret.getSelectionStart() > lineEndOffset) return TextAttributes.ERASE_MARKER;
+      if (caret.getSelectionStartPosition().line <= visualLine && visualLine < caret.getSelectionEndPosition().line) {
+        return caret.getEditor().getSelectionModel().getTextAttributes();
       }
       caretIterator.next();
     }
-
-    class MyProcessor implements Processor<RangeHighlighterEx> {
-      private int layer;
-      private Color backgroundColor;
-
-      private MyProcessor(boolean selection) {
-        backgroundColor = selection ? myEditor.getSelectionModel().getTextAttributes().getBackgroundColor() : null;
-        layer = backgroundColor == null ? Integer.MIN_VALUE : HighlighterLayer.SELECTION;
-      }
-
-      @Override
-      public boolean process(RangeHighlighterEx highlighterEx) {
-        int layer = highlighterEx.getLayer();
-        if (layer > this.layer &&
-            highlighterEx.getAffectedAreaStartOffset() < bottomVisualLineStartOffset &&
-            highlighterEx.getAffectedAreaEndOffset() > bottomVisualLineStartOffset) {
-          TextAttributes attributes = highlighterEx.getTextAttributes();
-          Color backgroundColor = attributes == null ? null : attributes.getBackgroundColor();
-          if (backgroundColor != null) {
-            this.layer = layer;
-            this.backgroundColor = backgroundColor;
-          }
-        }
-        return true;
-      }
-    }
-    MyProcessor processor = new MyProcessor(selection);
-    myEditor.getFilteredDocumentMarkupModel()
-      .processRangeHighlightersOverlappingWith(bottomVisualLineStartOffset, bottomVisualLineStartOffset, processor);
-    myEditor.getMarkupModel().processRangeHighlightersOverlappingWith(bottomVisualLineStartOffset, bottomVisualLineStartOffset, processor);
-    TextAttributes attributes = new TextAttributes();
-    attributes.setBackgroundColor(processor.backgroundColor);
-    return attributes;
+    return TextAttributes.ERASE_MARKER;
   }
 
   private void paintCaret(Graphics2D g_, int yShift) {

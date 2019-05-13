@@ -244,10 +244,6 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     }
     fail("Should not be able to perform refactoring");
   }
-  
-  public void testTernaryBothBranches() {
-    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
-  }
 
   public void testIfConditionAndChain() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));

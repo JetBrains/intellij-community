@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +95,7 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
 
   @Override
   public String toString() {
-    return String.format("%s project '%s'", StringUtil.toLowerCase(getOwner().toString()), getExternalName());
+    return String.format("%s project '%s'", getOwner().toString().toLowerCase(), getExternalName());
   }
 
   @NotNull

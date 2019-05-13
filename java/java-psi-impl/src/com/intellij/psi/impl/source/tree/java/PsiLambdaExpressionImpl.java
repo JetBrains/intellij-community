@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Map;
 
 public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiLambdaExpression>>
   implements PsiLambdaExpression {
@@ -220,8 +221,16 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
 
     PsiType methodReturnType = interfaceMethod.getReturnType();
     if (methodReturnType != null && !PsiType.VOID.equals(methodReturnType)) {
-      return LambdaUtil.performWithTargetType(this, leftType, () ->
-               LambdaUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null);
+      Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
+      try {
+        if (map.put(this, leftType) != null) {
+          return false;
+        }
+        return LambdaUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null;
+      }
+      finally {
+        map.remove(this);
+      }
     }
     return true;
   }

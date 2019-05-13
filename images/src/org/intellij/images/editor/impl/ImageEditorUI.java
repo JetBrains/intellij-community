@@ -69,6 +69,7 @@ import java.beans.PropertyChangeListener;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.URL;
+import java.util.Locale;
 
 /**
  * Image editor UI
@@ -95,6 +96,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private final JPanel contentPanel;
   private final JLabel infoLabel;
 
+  private final PropertyChangeListener optionsChangeListener = new OptionsChangeListener();
   private final JScrollPane myScrollPane;
 
   ImageEditorUI(@Nullable ImageEditor editor) {
@@ -103,7 +105,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     imageComponent.addPropertyChangeListener(ZOOM_FACTOR_PROP, e -> imageComponent.setZoomFactor(getZoomModel().getZoomFactor()));
     Options options = OptionsManager.getInstance().getOptions();
     EditorOptions editorOptions = options.getEditorOptions();
-    options.addPropertyChangeListener(new OptionsChangeListener(), this);
+    options.addPropertyChangeListener(optionsChangeListener);
 
     copyPasteSupport = editor != null ? new CopyPasteDelegator(editor.getProject(), this) : null;
     deleteProvider = new DeleteHandler.DefaultDeleteProvider();
@@ -191,7 +193,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       if (format == null) {
         format = editor != null ? ImagesBundle.message("unknown.format") : "";
       } else {
-        format = StringUtil.toUpperCase(format);
+        format = format.toUpperCase(Locale.ENGLISH);
       }
       VirtualFile file = editor != null ? editor.getFile() : null;
       infoLabel.setText(
@@ -214,6 +216,9 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   @Override
   public void dispose() {
+    Options options = OptionsManager.getInstance().getOptions();
+    options.removePropertyChangeListener(optionsChangeListener);
+
     imageComponent.removeMouseWheelListener(wheelAdapter);
     imageComponent.getDocument().removeChangeListener(changeListener);
 

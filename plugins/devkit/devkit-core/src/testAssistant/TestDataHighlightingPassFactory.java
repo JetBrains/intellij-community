@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 final class TestDataHighlightingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   public static final List<String> SUPPORTED_FILE_TYPES = Collections.singletonList(StdFileTypes.JAVA.getDefaultExtension());
@@ -59,7 +59,7 @@ final class TestDataHighlightingPassFactory implements TextEditorHighlightingPas
       int i = 0;
       VirtualFile parent = file.getParent();
       while (parent != null && i < MAX_HOPES) {
-        if (StringUtil.toLowerCase(parent.getName()).contains(TEST_DATA)) {
+        if (parent.getName().toLowerCase(Locale.ENGLISH).contains(TEST_DATA)) {
           return true;
         }
         i++;

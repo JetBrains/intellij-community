@@ -21,7 +21,7 @@
               "version_added": true
             },
             "firefox_android": {
-              "version_added": true
+              "version_added": null
             },
             "ie": {
               "version_added": null
@@ -67,7 +67,7 @@
                 "version_added": true
               },
               "firefox_android": {
-                "version_added": true
+                "version_added": null
               },
               "ie": {
                 "version_added": null
@@ -114,7 +114,7 @@
                 "version_added": true
               },
               "firefox_android": {
-                "version_added": true
+                "version_added": null
               },
               "ie": {
                 "version_added": null
@@ -350,7 +350,7 @@
                 "version_added": true
               },
               "firefox_android": {
-                "version_added": true
+                "version_added": null
               },
               "ie": {
                 "version_added": null
@@ -368,7 +368,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": false
+                "version_added": null
               }
             },
             "status": {
@@ -397,7 +397,7 @@
                 "version_added": true
               },
               "firefox_android": {
-                "version_added": true
+                "version_added": null
               },
               "ie": {
                 "version_added": null

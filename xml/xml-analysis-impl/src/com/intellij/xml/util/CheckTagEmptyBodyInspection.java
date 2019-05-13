@@ -23,7 +23,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
@@ -69,7 +68,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
   }
 
   static boolean isCollapsibleTag(final XmlTag tag) {
-    final String name = StringUtil.toLowerCase(tag.getName());
+    final String name = tag.getName().toLowerCase();
     return tag.getLanguage() == XMLLanguage.INSTANCE ||
            "link".equals(name) || "br".equals(name) || "meta".equals(name) || "img".equals(name) || "input".equals(name) || "hr".equals(name) ||
            XmlExtension.isCollapsible(tag);

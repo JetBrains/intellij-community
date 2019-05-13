@@ -48,6 +48,7 @@ object UpdateInstaller {
       val from = chain[i - 1].withoutProductCode().asString()
       val to = chain[i].withoutProductCode().asString()
       val patchName = "${product}-${from}-${to}-patch${jdk}-${PatchInfo.OS_SUFFIX}.jar"
+      System.out.println( "  patchName: $patchName" )
       val patchFile = File(getTempDir(), patchName)
       val url = URL(patchesUrl, patchName).toString()
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
@@ -186,8 +187,7 @@ object UpdateInstaller {
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 
   private fun getJdkSuffix(): String {
-    var jreHome = File(PathManager.getHomePath(), "jbr")
-    if (!jreHome.exists()) jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "jdk" else "jre64")
+    val jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "jdk" else "jre64")
     if (!jreHome.exists()) return "-no-jbr"
     val releaseFile = File(jreHome, if (SystemInfo.isMac) "Contents/Home/release" else "release")
     val version = try {

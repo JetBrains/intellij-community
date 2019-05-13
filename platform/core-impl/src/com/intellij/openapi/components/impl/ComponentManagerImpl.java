@@ -15,6 +15,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
+import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -48,7 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManager, Disposable {
+public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
   private volatile MutablePicoContainer myPicoContainer;

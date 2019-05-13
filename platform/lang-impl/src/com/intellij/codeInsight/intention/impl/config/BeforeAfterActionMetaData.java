@@ -17,7 +17,9 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
@@ -55,7 +57,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   @NotNull
   private static TextDescriptor[] retrieveURLs(@NotNull URL descriptionDirectory, @NotNull String prefix, @NotNull String suffix)
     throws MalformedURLException {
-    Set<TextDescriptor> urls = new LinkedHashSet<>();
+    List<TextDescriptor> urls = new ArrayList<>();
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
       final List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
@@ -106,7 +108,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
     return urls.toArray(new TextDescriptor[0]);
   }
 
-  private static boolean checkUrl(URL url, Set<? super TextDescriptor> urls) {
+  private static boolean checkUrl(URL url, List<TextDescriptor> urls) {
     try (InputStream ignored = url.openStream()) {
       urls.add(new ResourceTextDescriptor(url));
       return true;

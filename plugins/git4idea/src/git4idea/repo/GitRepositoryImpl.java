@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
-import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
 import com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
@@ -31,6 +30,7 @@ import java.util.LinkedHashSet;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @NotNull private final GitVcs myVcs;
@@ -63,8 +63,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
       myIgnoredRepositoryFilesHolder =
         new GitRepositoryIgnoredFilesHolder(project, this, GitRepositoryManager.getInstance(project), Git.getInstance());
       Disposer.register(this, myIgnoredRepositoryFilesHolder);
-      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateListener(project));
-      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new IgnoredToExcludedSynchronizer(project));
+      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateListener(getProject()));
 
       myConflictsHolder = new GitConflictsHolder(this);
       Disposer.register(this, myConflictsHolder);

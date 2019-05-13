@@ -33,7 +33,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     }
 
     changeListener = ChangeListener {
-      updateCustomDecorationHitTestSpots()
+      setCustomDecorationHitTestSpots()
     }
 
     mySelectedEditorFilePath = CustomDecorationPath()
@@ -54,11 +54,6 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     mySelectedEditorFilePath.setProject(project)
   }
 
-  override fun updateActive() {
-    super.updateActive()
-    mySelectedEditorFilePath.setActive(myActive)
-  }
-
   override fun installListeners() {
     myIdeMenu.selectionModel.addChangeListener(changeListener)
     super.installListeners()
@@ -69,20 +64,24 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     super.uninstallListeners()
   }
 
-  override fun getHitTestSpots(): ArrayList<RelativeRectangle> {
+  override fun getHitTestSpots(): ArrayList<Rectangle> {
     val hitTestSpots = super.getHitTestSpots()
-    val menuRect = Rectangle(myIdeMenu.size)
+    val menuRect = RelativeRectangle(myIdeMenu).getRectangleOn(this)
+
 
     val state = frame.extendedState
     if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
+
+      if (menuRect != null /*&& !myIdeMenu.isSelected*/) {
         val topGap = Math.round((menuRect.height / 3).toFloat())
         menuRect.y += topGap
         menuRect.height -=topGap
+      }
     }
 
-    hitTestSpots.add(RelativeRectangle(myIdeMenu, menuRect))
-    hitTestSpots.addAll(mySelectedEditorFilePath.getListenerBounds())
+    hitTestSpots.add(menuRect)
 
+    hitTestSpots.addAll(mySelectedEditorFilePath.getListenerBounds())
     return hitTestSpots
   }
 }

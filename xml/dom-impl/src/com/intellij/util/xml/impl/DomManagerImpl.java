@@ -213,7 +213,7 @@ public final class DomManagerImpl extends DomManager {
     myListeners.getMulticaster().eventOccured(event);
   }
 
-  private void fireEvents(@NotNull Collection<? extends DomEvent> events) {
+  private void fireEvents(@NotNull Collection<DomEvent> events) {
     for (DomEvent event : events) {
       fireEvent(event);
     }

@@ -72,7 +72,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   protected VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                    @NotNull IndexStorage<Key, Value> storage,
                                    @Nullable ForwardIndex forwardIndexMap,
-                                   @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
+                                   @Nullable ForwardIndexAccessor<Key, Value, ?, Input> forwardIndexAccessor,
                                    @Nullable SnapshotInputMappingIndex<Key, Value, Input> snapshotInputMappings) {
     super(extension, storage, forwardIndexMap, forwardIndexAccessor, null);
     SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
@@ -89,10 +89,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   @NotNull
   @Override
-  protected InputData<Key, Value> mapInput(@Nullable Input content) {
-    InputData<Key, Value> data;
+  protected Map<Key, Value> mapInput(@Nullable Input content) {
+    Map<Key, Value> data;
     boolean containsSnapshotData = true;
-    if (mySnapshotInputMappings != null && content != null) {
+    if (mySnapshotInputMappings != null && !myInMemoryMode.get() && content != null) {
       try {
         data = mySnapshotInputMappings.readData(content);
         if (data != null) {
@@ -106,9 +106,9 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       }
     }
     data = super.mapInput(content);
-    if (!containsSnapshotData && !UpdatableSnapshotInputMappingIndex.ignoreMappingIndexUpdate(content)) {
+    if (!containsSnapshotData) {
       try {
-        return ((UpdatableSnapshotInputMappingIndex)mySnapshotInputMappings).putData(content, data);
+        ((UpdatableSnapshotInputMappingIndex)mySnapshotInputMappings).putData(content, data);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -140,13 +140,13 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Override
-  protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
+  protected void updateForwardIndex(int inputId, @NotNull Map<Key, Value> data, @Nullable Object forwardIndexData) throws IOException {
     if (myInMemoryMode.get()) {
       synchronized (myInMemoryKeysAndValues) {
-        myInMemoryKeysAndValues.put(inputId, data.getKeyValues());
+        myInMemoryKeysAndValues.put(inputId, data);
       }
     } else {
-      super.updateForwardIndex(inputId, data);
+      super.updateForwardIndex(inputId, data, forwardIndexData);
     }
   }
 
@@ -248,7 +248,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     }
     if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor) {
       ByteArraySequence serializedInputData = getForwardIndexMap().get(fileId);
-      AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor = (AbstractMapForwardIndexAccessor<Key, Value, ?>)getForwardIndexAccessor();
+      AbstractMapForwardIndexAccessor<Key, Value, ?, Input> forwardIndexAccessor = (AbstractMapForwardIndexAccessor<Key, Value, ?, Input>)getForwardIndexAccessor();
       return forwardIndexAccessor.convertToInputDataMap(serializedInputData);
     }
     // in future we will get rid of forward index for SingleEntryFileBasedIndexExtension
@@ -319,7 +319,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Nullable
-  private static <Key, Value> ForwardIndexAccessor<Key, Value> getForwardIndexAccessor(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
+  private static <Key, Value, Input> ForwardIndexAccessor<Key, Value, ?, Input> getForwardIndexAccessor(@NotNull IndexExtension<Key, Value, Input> indexExtension) {
     if (!shouldCreateForwardIndex(indexExtension)) return null;
     return new MapForwardIndexAccessor<>(new InputMapExternalizer<>(indexExtension));
   }

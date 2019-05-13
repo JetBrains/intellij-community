@@ -35,7 +35,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +74,6 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     fixers.add(new MethodCallFixer());
     fixers.add(new IfConditionFixer());
     fixers.add(new ForStatementFixer());
-    fixers.add(new TernaryColonFixer());
     fixers.add(new WhileConditionFixer());
     fixers.add(new CatchDeclarationFixer());
     fixers.add(new SwitchExpressionFixer());
@@ -109,7 +107,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   private static final Key<Long> SMART_ENTER_TIMESTAMP = Key.create("smartEnterOriginalTimestamp");
 
   public static class TooManyAttemptsException extends Exception {}
-
+  
   private final JavadocFixer myJavadocFixer = new JavadocFixer();
 
   @Override
@@ -288,25 +286,31 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
       }
     }
 
-    for (PsiElement each : SyntaxTraverser.psiApi().parents(atCaret).skip(1)) {
-      if (each instanceof PsiMember ||
-          each instanceof PsiImportStatementBase ||
-          each instanceof PsiPackageStatement ||
-          each instanceof PsiAnnotation && PsiTreeUtil.hasErrorElements(each)) {
-        return each;
-      }
-      if (each instanceof PsiCodeBlock || each instanceof PsiComment) {
-        return null;
-      }
-      if (each instanceof PsiStatement) {
-        return each.getParent() instanceof PsiForStatement && !PsiTreeUtil.hasErrorElements(each) ? each.getParent() : each;
-      }
-      if (each instanceof PsiConditionalExpression && PsiUtilCore.hasErrorElementChild(each)) {
-        return each;
+    PsiElement statementAtCaret = PsiTreeUtil.getParentOfType(atCaret,
+                                                              PsiStatement.class,
+                                                              PsiCodeBlock.class,
+                                                              PsiMember.class,
+                                                              PsiAnnotation.class,
+                                                              PsiComment.class,
+                                                              PsiImportStatementBase.class,
+                                                              PsiPackageStatement.class
+    );
+
+    if (statementAtCaret instanceof PsiBlockStatement) return null;
+
+    if (statementAtCaret != null && statementAtCaret.getParent() instanceof PsiForStatement) {
+      if (!PsiTreeUtil.hasErrorElements(statementAtCaret)) {
+        statementAtCaret = statementAtCaret.getParent();
       }
     }
 
-    return null;
+    return statementAtCaret instanceof PsiStatement ||
+           statementAtCaret instanceof PsiMember ||
+           statementAtCaret instanceof PsiAnnotation ||
+           statementAtCaret instanceof PsiImportStatementBase ||
+           statementAtCaret instanceof PsiPackageStatement
+           ? statementAtCaret
+           : null;
   }
 
   protected void moveCaretInsideBracesIfAny(@NotNull final Editor editor, @NotNull final PsiFile file) throws IncorrectOperationException {

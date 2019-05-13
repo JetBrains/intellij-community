@@ -18,7 +18,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakStringInterner;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -160,7 +159,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return descriptor != null && getPresentation().isExcluded(descriptor);
   }
 
-  private static final Interner<String> NAME_INTERNER = new WeakStringInterner();
+  private static final WeakStringInterner NAME_INTERNER = new WeakStringInterner();
 
   @NotNull
   @Override

@@ -131,7 +131,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private void initCopyFromMenu() {
     if (myCopyFromMenu == null) {
       myCopyFromMenu = new JBPopupMenu();
-      myCopyFromMenu.setFocusable(false);
       setupCopyFromMenu(myCopyFromMenu);
     }
   }

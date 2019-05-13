@@ -27,11 +27,6 @@ public class TemporaryRunConfigurationTypeUsagesCollector extends AbstractRunCon
   }
 
   @Override
-  public int getVersion() {
-    return 3;
-  }
-
-  @Override
   protected boolean isApplicable(@NotNull RunManager runManager, @NotNull RunnerAndConfigurationSettings settings) {
     return settings.isTemporary();
   }

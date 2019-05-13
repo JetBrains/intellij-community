@@ -228,7 +228,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     TaskType taskType = TaskType.OTHER;
     if (type != null) {
       try {
-        taskType = TaskType.valueOf(StringUtil.toUpperCase(type));
+        taskType = TaskType.valueOf(type.toUpperCase());
       }
       catch (IllegalArgumentException e) {
         // do nothing

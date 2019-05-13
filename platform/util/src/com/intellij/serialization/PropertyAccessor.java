@@ -60,11 +60,6 @@ public final class PropertyAccessor implements MutableAccessor {
   }
 
   @Override
-  public Object readUnsafe(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
-    return myReadMethod.invoke(o);
-  }
-
-  @Override
   public int readInt(@NotNull Object o) throws IllegalAccessException, InvocationTargetException {
     return (int)myReadMethod.invoke(o);
   }
@@ -182,6 +177,6 @@ public final class PropertyAccessor implements MutableAccessor {
 
   @NonNls
   public String toString() {
-    return "PropertyAccessor(name=" + myName + ", class=" + myReadMethod.getDeclaringClass().getName() + ")";
+    return "PropertyAccessor[" + myReadMethod.getDeclaringClass().getName() + "." + getName() +"]";
   }
 }

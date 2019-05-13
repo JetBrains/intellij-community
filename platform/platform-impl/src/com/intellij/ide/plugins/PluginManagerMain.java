@@ -269,10 +269,10 @@ public abstract class PluginManagerMain implements Disposable {
     return pluginsModel.dependent(pluginDescriptor);
   }
 
-  void modifyPluginsList(@NotNull List<? extends IdeaPluginDescriptor> list) {
+  void modifyPluginsList(@NotNull List<IdeaPluginDescriptor> list) {
     IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
     pluginsModel.updatePluginsList(list);
-    pluginsModel.filter(StringUtil.toLowerCase(myFilter.getFilter()));
+    pluginsModel.filter(myFilter.getFilter().toLowerCase());
     if (selected != null) {
       select(selected);
     }
@@ -356,7 +356,7 @@ public abstract class PluginManagerMain implements Disposable {
     });
   }
 
-  protected abstract void propagateUpdates(List<? extends IdeaPluginDescriptor> list);
+  protected abstract void propagateUpdates(List<IdeaPluginDescriptor> list);
 
   private void setDownloadStatus(boolean status) {
     pluginTable.setPaintBusy(status);
@@ -787,7 +787,7 @@ public abstract class PluginManagerMain implements Disposable {
     @Override
     public void filter() {
       getPluginTable().putClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY, getFilter());
-      pluginsModel.filter(StringUtil.toLowerCase(getFilter()));
+      pluginsModel.filter(getFilter().toLowerCase());
       TableUtil.ensureSelectionExists(getPluginTable());
     }
   }

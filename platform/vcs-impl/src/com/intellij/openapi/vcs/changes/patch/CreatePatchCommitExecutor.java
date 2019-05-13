@@ -50,7 +50,6 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     myChangeListManager = changeListManager;
   }
 
-  @NotNull
   @Override
   @Nls
   public String getActionText() {
@@ -67,10 +66,10 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     return true;
   }
 
-  @NotNull
   @Override
-  public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
-    return new CreatePatchCommitSession(commitContext);
+  @NotNull
+  public CommitSession createCommitSession() {
+    return new CreatePatchCommitSession();
   }
 
   @Override
@@ -78,12 +77,22 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     myChangeListManager.registerCommitExecutor(this);
   }
 
-  private class CreatePatchCommitSession implements CommitSession {
+  private class CreatePatchCommitSession implements CommitSession, CommitSessionContextAware {
     private final CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel(myProject);
-    @NotNull private final CommitContext myCommitContext;
+    private CommitContext myCommitContext;
 
-    CreatePatchCommitSession(@NotNull CommitContext commitContext) {
-      myCommitContext = commitContext;
+    CreatePatchCommitSession() {
+    }
+
+    @Override
+    public void setContext(CommitContext context) {
+      myCommitContext = context;
+    }
+
+    @Override
+    @Nullable
+    public JComponent getAdditionalConfigurationUI() {
+      return myPanel.getPanel();
     }
 
     @Override

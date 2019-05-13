@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -118,7 +119,7 @@ public class AbstractPopup implements JBPopup {
 
   private Runnable myFinalRunnable;
   private Runnable myOkHandler;
-  @Nullable private BooleanFunction<? super KeyEvent> myKeyEventHandler;
+  @Nullable private BooleanFunction<KeyEvent> myKeyEventHandler;
 
   protected boolean myOk;
   private final List<Runnable> myResizeListeners = new ArrayList<>();
@@ -161,13 +162,13 @@ public class AbstractPopup implements JBPopup {
 
   private volatile State myState = State.NEW;
 
-  void setNormalWindowLevel(boolean normalWindowLevel) {
+  public void setNormalWindowLevel(boolean normalWindowLevel) {
     myNormalWindowLevel = normalWindowLevel;
   }
 
   private enum State {NEW, INIT, SHOWING, SHOWN, CANCEL, DISPOSE}
 
-  private void debugState(@NotNull String message, @NotNull State... states) {
+  private void debugState(String message, State... states) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(hashCode() + " - " + message);
       if (!ApplicationManager.getApplication().isDispatchThread()) {
@@ -184,7 +185,6 @@ public class AbstractPopup implements JBPopup {
 
   protected AbstractPopup() { }
 
-  @NotNull
   protected AbstractPopup init(Project project,
                      @NotNull JComponent component,
                      @Nullable JComponent preferredFocusedComponent,
@@ -223,7 +223,7 @@ public class AbstractPopup implements JBPopup {
                      boolean showBorder,
                      Color borderColor,
                      boolean cancelOnWindowDeactivation,
-                     @Nullable BooleanFunction<? super KeyEvent> keyEventHandler) {
+                     @Nullable BooleanFunction<KeyEvent> keyEventHandler) {
     assert !requestFocus || focusable : "Incorrect argument combination: requestFocus=true focusable=false";
 
     all.add(this);
@@ -348,6 +348,11 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
+  @Deprecated
+  public static void suppressMacCornerFor(JComponent popupComponent) {
+  }
+
+
   public String getDimensionServiceKey() {
     return myDimensionServiceKey;
   }
@@ -374,8 +379,7 @@ public class AbstractPopup implements JBPopup {
       wrapper.add(myAdComponent, BorderLayout.CENTER);
       myContent.add(wrapper, BorderLayout.SOUTH);
       pack(false, true);
-    }
-    else {
+    } else {
       myAdComponent.setText(s);
       myAdComponent.setHorizontalAlignment(alignment);
     }
@@ -385,7 +389,7 @@ public class AbstractPopup implements JBPopup {
     return getCenterOf(aContainer, content.getPreferredSize());
   }
 
-  private static Point getCenterOf(@NotNull Component aContainer, @NotNull Dimension contentSize) {
+  private static Point getCenterOf(final Component aContainer, final Dimension contentSize) {
     final JComponent component = getTargetComponent(aContainer);
 
     Rectangle visibleBounds = component != null
@@ -445,14 +449,15 @@ public class AbstractPopup implements JBPopup {
     show(owner, point.x, point.y, false);
   }
 
-  @NotNull
   @Override
   public Point getBestPositionFor(@NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null && editor.getComponent().isShowing()) {
       return getBestPositionFor(editor).getScreenPoint();
     }
-    return relativePointByQuickSearch(dataContext).getScreenPoint();
+    else {
+      return relativePointByQuickSearch(dataContext).getScreenPoint();
+    }
   }
 
   @Override
@@ -479,8 +484,7 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
-  @NotNull
-  private RelativePoint relativePointByQuickSearch(@NotNull DataContext dataContext) {
+  private RelativePoint relativePointByQuickSearch(final DataContext dataContext) {
     Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
 
     if (dominantArea != null) {
@@ -646,7 +650,6 @@ public class AbstractPopup implements JBPopup {
     return rectangle.getLocation();
   }
 
-  @NotNull
   private Dimension getPreferredContentSize() {
     if (myForcedSize != null) {
       return myForcedSize;
@@ -708,7 +711,7 @@ public class AbstractPopup implements JBPopup {
 
       myPopup.hide(false);
 
-      if (ApplicationManager.getApplication() != null) {
+      if (ApplicationManagerEx.getApplicationEx() != null) {
         StackingPopupDispatcher.getInstance().onPopupHidden(this);
       }
 
@@ -751,13 +754,13 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public void show(@NotNull final Component owner) {
+  public void show(final Component owner) {
     show(owner, -1, -1, true);
   }
 
-  public void show(@NotNull Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
+  public void show(Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
     if (UiInterceptors.tryIntercept(this)) return;
-    if (ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    if (ApplicationManagerEx.getApplicationEx() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
     }
@@ -1211,7 +1214,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private static WindowManagerEx getWndManager() {
-    return ApplicationManager.getApplication() != null ? WindowManagerEx.getInstanceEx() : null;
+    return ApplicationManagerEx.getApplicationEx() != null ? WindowManagerEx.getInstanceEx() : null;
   }
 
   @Override
@@ -1220,7 +1223,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   protected boolean beforeShow() {
-    if (ApplicationManager.getApplication() == null) return true;
+    if (ApplicationManagerEx.getApplicationEx() == null) return true;
     StackingPopupDispatcher.getInstance().onPopupShown(this, myInStack);
     return true;
   }
@@ -1285,7 +1288,6 @@ public class AbstractPopup implements JBPopup {
     return new PopupComponent.Factory.AwtDefault();
   }
 
-  @NotNull
   @Override
   public JComponent getContent() {
     return myContent;
@@ -1593,7 +1595,6 @@ public class AbstractPopup implements JBPopup {
     return window;
   }
 
-  @NotNull
   @Override
   public Point getLocationOnScreen() {
     Window window = getContentWindow(myContent);
@@ -1612,7 +1613,7 @@ public class AbstractPopup implements JBPopup {
     setSize(size, true);
   }
 
-  private void setSize(@NotNull Dimension size, boolean adjustByContent) {
+  private void setSize(Dimension size, boolean adjustByContent) {
     if (isBusy()) return;
 
     Dimension toSet = new Dimension(size);
@@ -1666,7 +1667,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public void setCaption(@NotNull String title) {
+  public void setCaption(String title) {
     if (myCaption instanceof TitlePanel) {
       ((TitlePanel)myCaption).setText(title);
     }
@@ -1726,7 +1727,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public <T> T getUserData(@NotNull final Class<T> userDataClass) {
+  public <T> T getUserData(final Class<T> userDataClass) {
     if (myUserData != null) {
       for (Object o : myUserData) {
         if (userDataClass.isInstance(o)) {
@@ -1885,7 +1886,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public boolean dispatchKeyEvent(@NotNull KeyEvent e) {
-    BooleanFunction<? super KeyEvent> handler = myKeyEventHandler;
+    BooleanFunction<KeyEvent> handler = myKeyEventHandler;
     if (handler != null && handler.fun(e)) {
       return true;
     }

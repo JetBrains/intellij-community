@@ -1,8 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -13,8 +11,8 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Segment;
@@ -28,49 +26,51 @@ import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.usageView.UsageInfo;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Navigates through the search results
+ */
 public final class ReplacementPreviewDialog extends DialogWrapper {
-  private final LanguageFileType myFileType;
+  private final FileType myFileType;
   private Editor replacement;
 
   private final Project project;
-  private RangeHighlighter myHighlighter;
+  private RangeHighlighter hilighter;
   private Editor editor;
 
 
-  public ReplacementPreviewDialog(@NotNull Project project, @NotNull UsageInfo info, String replacementString) {
-    super(project, true);
+  public ReplacementPreviewDialog(final Project project, UsageInfo info, String replacementString) {
+    super(project,true);
 
     setTitle(SSRBundle.message("structural.replace.preview.dialog.title"));
     setOKButtonText(SSRBundle.message("replace.preview.oktext"));
     this.project = project;
     final PsiElement element = info.getElement();
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-    myFileType = virtualFile != null ? (LanguageFileType)virtualFile.getFileType() : FileTypes.PLAIN_TEXT;
+    myFileType = virtualFile != null ? virtualFile.getFileType() : FileTypes.PLAIN_TEXT;
     init();
 
     Segment range = info.getSegment();
-    highlight(virtualFile, range.getStartOffset(), range.getEndOffset());
+    hilight(virtualFile, range.getStartOffset(), range.getEndOffset());
     UIUtil.setContent(replacement, replacementString);
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
     if (profile != null) {
-      TemplateEditorUtil.setHighlighter(replacement, UIUtil.getTemplateContextType(profile));
+      UIUtil.updateHighlighter(replacement, profile);
     }
   }
 
-  private void highlight(VirtualFile file, int start, int end) {
-    removeHighlighter();
+  private void hilight(VirtualFile file,int start, int end) {
+    removeHilighter();
 
     editor = FileEditorManager.getInstance(project).openTextEditor(
       new OpenFileDescriptor(project, file),
       false
     );
-    myHighlighter = editor.getMarkupModel().addRangeHighlighter(
+    hilighter = editor.getMarkupModel().addRangeHighlighter(
       start,
       end,
       HighlighterLayer.SELECTION - 100,
@@ -79,10 +79,10 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     );
   }
 
-  private void removeHighlighter() {
-    if (myHighlighter != null && myHighlighter.isValid()) {
-      myHighlighter.dispose();
-      myHighlighter = null;
+  private void removeHilighter() {
+    if (hilighter!=null && hilighter.isValid()) {
+      hilighter.dispose();
+      hilighter = null;
       editor = null;
     }
   }
@@ -94,18 +94,18 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final JComponent centerPanel = new JPanel(new BorderLayout() );
+    JComponent centerPanel = new JPanel( new BorderLayout() );
 
     PsiFile file = null;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     if (profile != null) {
-      file = profile.createCodeFragment(project, "");
+      file = profile.createCodeFragment(project, "", null);
     }
 
     if (file != null) {
       final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       replacement = UIUtil.createEditor(document, project, true, null);
-      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file,false);
     } else {
       final EditorFactory factory = EditorFactory.getInstance();
       final Document document = factory.createDocument("");
@@ -127,7 +127,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     }
 
     EditorFactory.getInstance().releaseEditor(replacement);
-    removeHighlighter();
+    removeHilighter();
 
     super.dispose();
   }

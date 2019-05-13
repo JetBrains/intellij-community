@@ -131,14 +131,14 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     BaseTreeBuilder(JTree tree,
                            DefaultTreeModel treeModel,
                            AbstractTreeStructure treeStructure,
-                           @Nullable Comparator<? super NodeDescriptor> comparator) {
+                           @Nullable Comparator<NodeDescriptor> comparator) {
       super(tree, treeModel, treeStructure, comparator);
     }
 
     BaseTreeBuilder(JTree tree,
                            DefaultTreeModel treeModel,
                            AbstractTreeStructure treeStructure,
-                           @Nullable Comparator<? super NodeDescriptor> comparator,
+                           @Nullable Comparator<NodeDescriptor> comparator,
                            boolean updateIfInactive) {
       super(tree, treeModel, treeStructure, comparator, updateIfInactive);
     }

@@ -167,7 +167,7 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
     if (!(template instanceof SearchConfiguration)) fail();
     final SearchConfiguration searchConfiguration = (SearchConfiguration)template;
     options = searchConfiguration.getMatchOptions();
-    final List<MatchResult> matches = testMatcher.testFindMatches(source, options, true, StdFileTypes.JAVA, false);
+    final List<MatchResult> matches = testMatcher.testFindMatches(source, options, true, StdFileTypes.JAVA, null, false);
     assertEquals(template.getName(), expectedResults.length, matches.size());
     String[] actualResults = matches.stream().map(MatchResult::getMatch).map(resultConverter).toArray(String[]::new);
     for (int i = 0; i < actualResults.length; i++) {

@@ -13,7 +13,5 @@
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" scope="TEST" />
-    <orderEntry type="library" name="ion" level="project" />
   </component>
 </module>

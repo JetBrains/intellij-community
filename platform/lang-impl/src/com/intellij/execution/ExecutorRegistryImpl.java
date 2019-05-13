@@ -19,6 +19,7 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.IconLoader;
@@ -34,8 +35,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public final class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable {
+public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
 
   public static final String RUNNERS_GROUP = "RunnerActions";
@@ -51,7 +53,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry implements Disp
   private final Set<Trinity<Project, String, String>> myInProgress = Collections.synchronizedSet(new THashSet<>());
 
   public ExecutorRegistryImpl() {
-    initComponent();
   }
 
   synchronized void initExecutor(@NotNull Executor executor) {
@@ -133,7 +134,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry implements Disp
     return myId2Executor.get(executorId);
   }
 
-  private void initComponent() {
+  @Override
+  public void initComponent() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
@@ -361,10 +363,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry implements Disp
   // TODO: make private as soon as IDEA-207986 will be fixed
   // RunExecutorSettings configurations can be modified, so we request current childExecutors on each AnAction#update call
   public static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware {
-    private final ExecutorGroup<?> myExecutorGroup;
-    private final Function<? super Executor, ? extends AnAction> myChildConverter;
+    private final ExecutorGroup myExecutorGroup;
+    private final Function<Executor, AnAction> myChildConverter;
 
-    private ExecutorGroupActionGroup(ExecutorGroup executorGroup, Function<? super Executor, ? extends AnAction> childConverter) {
+    private ExecutorGroupActionGroup(ExecutorGroup executorGroup, Function<Executor, AnAction> childConverter) {
       myExecutorGroup = executorGroup;
       myChildConverter = childConverter;
     }
@@ -372,12 +374,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry implements Disp
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      List<Executor> childExecutors = myExecutorGroup.childExecutors();
-      AnAction[] result = new AnAction[childExecutors.size()];
-      for (int i = 0; i < childExecutors.size(); i++) {
-        result[i] = myChildConverter.apply(childExecutors.get(i));
-      }
-      return result;
+      return ((List<Executor>)myExecutorGroup.childExecutors()).stream().map(myChildConverter).collect(Collectors.toList())
+        .toArray(AnAction.EMPTY_ARRAY);
     }
 
     @Override

@@ -137,7 +137,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
 
     WindowEvent we = (WindowEvent)event;
     for (JBPopup each : jbPopupFactory.getChildPopups(this)) {
-      if (!each.isDisposed() && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
+      if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
         super.setPopupVisible(false);
       }
     }

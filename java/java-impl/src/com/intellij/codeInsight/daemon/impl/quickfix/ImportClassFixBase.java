@@ -214,7 +214,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return classList;
   }
 
-  private void filterAlreadyImportedButUnresolved(@NotNull List<? extends PsiClass> list) {
+  private void filterAlreadyImportedButUnresolved(@NotNull List<PsiClass> list) {
     PsiElement element = myRef.getElement();
     PsiFile containingFile = element.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) return;

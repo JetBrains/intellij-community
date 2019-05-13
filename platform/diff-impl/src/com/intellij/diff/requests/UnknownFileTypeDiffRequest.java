@@ -18,9 +18,6 @@ package com.intellij.diff.requests;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -30,13 +27,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
   @Nullable private final String myFileName;
@@ -57,18 +52,16 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
   public JComponent getComponent(@NotNull final DiffContext context) {
     final SimpleColoredComponent label = new SimpleColoredComponent();
     label.setTextAlign(SwingConstants.CENTER);
-    label.append("Can't show diff for unknown file type. ");
+    label.append("Can't show diff for unknown file type. ",
+                 new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getInactiveTextColor()));
     if (myFileName != null) {
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      Color linkColor = chooseNotNull(scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getForegroundColor(),
-                                      JBUI.CurrentTheme.Link.linkColor());
-      label.append("Associate", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, linkColor), (Runnable)() -> {
+      label.append("Associate", SimpleTextAttributes.LINK_ATTRIBUTES, (Runnable)() -> {
         FileType type = FileTypeChooser.associateFileType(myFileName);
         if (type != null) onSuccess(context);
       });
       LinkMouseListenerBase.installSingleTagOn(label);
     }
-    return DiffUtil.createMessagePanel(label);
+    return new DiffUtil.CenteredPanel(label, JBUI.Borders.empty(5));
   }
 
   @Nullable

@@ -50,11 +50,10 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
                   "<version>1</version>");
     List<MavenIndex> indices = myIndicesFixture.getProjectIndicesManager().getIndices();
 
-    assertEquals(2, indices.size());
+    assertEquals(1, indices.size());
 
-    assertEquals(MavenSearchIndex.Kind.REMOTE, indices.get(0).getKind());
-    assertEquals(MavenSearchIndex.Kind.LOCAL, indices.get(1).getKind());
-    assertTrue(indices.get(1).getRepositoryPathOrUrl().endsWith("local1"));
+    assertEquals(MavenSearchIndex.Kind.LOCAL, indices.get(0).getKind());
+    assertTrue(indices.get(0).getRepositoryPathOrUrl().endsWith("local1"));
     assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
   }
 
@@ -64,10 +63,9 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
                   "<version>1</version>");
 
     DependencySearchService service = myIndicesFixture.getProjectIndicesManager().getSearchService();
-    assertEquals(3, service.getProviders().size());
+    assertEquals(2, service.getProviders().size());
 
     assertTrue(service.getProviders().get(0) instanceof IndexBasedCompletionProvider);
-    assertTrue(service.getProviders().get(1) instanceof IndexBasedCompletionProvider);
-    assertTrue(service.getProviders().get(2) instanceof ProjectModulesCompletionProvider);
+    assertTrue(service.getProviders().get(1) instanceof ProjectModulesCompletionProvider);
   }
 }

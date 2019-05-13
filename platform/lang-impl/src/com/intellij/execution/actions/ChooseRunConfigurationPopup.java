@@ -864,9 +864,9 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
   private static class FolderWrapper extends ItemWrapper<String> {
     private final Project myProject;
     private final ExecutorProvider myExecutorProvider;
-    private final List<? extends RunnerAndConfigurationSettings> myConfigurations;
+    private final List<RunnerAndConfigurationSettings> myConfigurations;
 
-    private FolderWrapper(Project project, ExecutorProvider executorProvider, @Nullable String value, List<? extends RunnerAndConfigurationSettings> configurations) {
+    private FolderWrapper(Project project, ExecutorProvider executorProvider, @Nullable String value, List<RunnerAndConfigurationSettings> configurations) {
       super(value);
       myProject = project;
       myExecutorProvider = executorProvider;
@@ -1066,7 +1066,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
                                                 @NotNull ExecutorProvider executorProvider,
                                                 @Nullable RunnerAndConfigurationSettings selectedConfiguration,
                                                 @NotNull String folderName,
-                                                @NotNull List<? extends RunnerAndConfigurationSettings> configurations) {
+                                                @NotNull List<RunnerAndConfigurationSettings> configurations) {
     boolean isSelected = selectedConfiguration != null && configurations.contains(selectedConfiguration);
     String value = folderName;
     if (isSelected) {
@@ -1079,7 +1079,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     return result;
   }
 
-  private static void addActionsForSelected(@NotNull RunnerAndConfigurationSettings selectedConfiguration, @NotNull Project project, @NotNull List<? super ItemWrapper> result) {
+  private static void addActionsForSelected(@NotNull RunnerAndConfigurationSettings selectedConfiguration, @NotNull Project project, @NotNull List<ItemWrapper> result) {
     boolean isFirst = true;
     final ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
     for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration.getConfiguration())) {
@@ -1130,6 +1130,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           @Override
           protected void init() {
             setOKButtonText(executor.getActionName());
+            setOKButtonIcon(executor.getIcon());
             myExecutor = executor;
             super.init();
           }

@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -186,14 +185,18 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public VcsFullCommitDetails getFullDetails(int row) {
-    Integer id = getIdAtRow(row);
-    return myLogData.getCommitDetailsGetter().getCommitData(id, Collections.singleton(id));
+    return getDetails(row, myLogData.getCommitDetailsGetter());
   }
 
   @NotNull
   public VcsCommitMetadata getCommitMetadata(int row) {
+    return getDetails(row, myLogData.getMiniDetailsGetter());
+  }
+
+  @NotNull
+  private <T extends VcsShortCommitDetails> T getDetails(int row, @NotNull DataGetter<T> dataGetter) {
     Iterable<Integer> iterable = createRowsIterable(row, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT, getRowCount());
-    return myLogData.getMiniDetailsGetter().getCommitData(getIdAtRow(row), iterable);
+    return dataGetter.getCommitData(getIdAtRow(row), iterable);
   }
 
   @NotNull

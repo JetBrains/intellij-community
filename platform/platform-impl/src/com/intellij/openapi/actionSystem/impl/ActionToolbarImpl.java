@@ -1310,7 +1310,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
 
   private boolean isPopupShowing() {
-    return myPopup != null && !myPopup.isDisposed();
+    if (myPopup != null) {
+      return myPopup.getContent() != null;
+    }
+    return false;
   }
 
   private void hidePopup() {

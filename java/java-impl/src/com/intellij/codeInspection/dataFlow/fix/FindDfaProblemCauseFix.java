@@ -69,26 +69,27 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    ThrowableComputable<TrackingRunner.CauseItem, RuntimeException> causeFinder = () -> {
+    ThrowableComputable<List<TrackingRunner.CauseItem>, RuntimeException> causeFinder = () -> {
       PsiExpression element = myAnchor.getElement();
-      if (element == null) return null;
+      if (element == null) return Collections.emptyList();
       return TrackingRunner.findProblemCause(myUnknownMembersAsNullable, myIgnoreAssertStatements, element, myProblemType);
     };
-    TrackingRunner.CauseItem item = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+    List<TrackingRunner.CauseItem> items = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReadAction.compute(causeFinder), "Finding Cause", true, project);
     PsiFile file = myAnchor.getContainingFile();
-    if (item != null && file != null) {
-      displayProblemCause(file, item);
+    if (!items.isEmpty() && file != null) {
+      displayProblemCause(file, items);
     }
   }
 
-  private static void displayProblemCause(PsiFile file, TrackingRunner.CauseItem root) {
+  private static void displayProblemCause(PsiFile file, List<TrackingRunner.CauseItem> items) {
     Project project = file.getProject();
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return;
     Document document = editor.getDocument();
     PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
     if (topLevelFile == null || document != topLevelFile.getViewProvider().getDocument()) return;
+    TrackingRunner.CauseItem root = ContainerUtil.getOnlyItem(items);
     class CauseWithDepth {
       final int myDepth;
       final TrackingRunner.CauseItem myCauseItem;

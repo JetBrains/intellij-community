@@ -1,1 +1,0 @@
-[click ..](multipleHeaders.md#<caret>)

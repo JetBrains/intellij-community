@@ -194,7 +194,6 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testPreferErrorOnTopLevelToFailedSubstitutorOnNestedLevel() { doTest(); }
   public void testDontIgnoreIncompatibilitiesDuringFirstApplicabilityCheck() { doTest(); }
   public void testCaptureOnDedicatedParameterOfSecondSearch() { doTest(); }
-  public void testErrorMessageOnTopCallWhenFunctionalInterfaceIsNotInferred() { doTest(); }
 
   private void doTest() {
     doTest(false);

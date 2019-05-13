@@ -43,7 +43,7 @@ public class QuickFixActionRegistrarImpl implements QuickFixActionRegistrar {
   }
 
   @Override
-  public void unregister(@NotNull Condition<? super IntentionAction> condition) {
+  public void unregister(@NotNull Condition<IntentionAction> condition) {
     if (myInfo != null) {
       myInfo.unregisterQuickFix(condition);
     }

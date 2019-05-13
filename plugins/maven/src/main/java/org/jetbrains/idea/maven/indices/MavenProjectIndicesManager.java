@@ -20,6 +20,7 @@ import org.jetbrains.idea.maven.onlinecompletion.DependencyCompletionProvider;
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
 import org.jetbrains.idea.maven.onlinecompletion.ProjectModulesCompletionProvider;
+import org.jetbrains.idea.maven.onlinecompletion.central.MavenCentralOnlineSearch;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -104,6 +105,19 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         providers.add(new IndexBasedCompletionProvider(localIndex));
         providers.add(new ProjectModulesCompletionProvider(myProject));
 
+
+        Iterator<Pair<String, String>> iterator = remoteRepositoriesIdsAndUrls.iterator();
+
+        while (iterator.hasNext()) {
+          Pair<String, String> pair = iterator.next();
+          //todo - need stub server
+          if (pair.second.contains("repo.maven.apache.org/maven2") || "central".equals(pair.first)) {
+            if (!ApplicationManager.getApplication().isUnitTestMode()) {
+              providers.add(new MavenCentralOnlineSearch());
+            }
+            iterator.remove();
+          }
+        }
 
         List<MavenIndex> offlineIndices =
           MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);

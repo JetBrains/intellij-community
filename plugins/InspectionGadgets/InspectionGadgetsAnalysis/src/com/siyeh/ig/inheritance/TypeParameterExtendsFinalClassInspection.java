@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2019s Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,18 +45,11 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
   @NotNull
   protected String buildErrorString(Object... infos) {
     final Integer problemType = (Integer)infos[1];
-    final PsiClass aClass = (PsiClass)infos[0];
-    final String name = aClass.getName();
-    if (problemType.intValue() == 1) {
-      return InspectionGadgetsBundle.message(aClass.isEnum()
-                                             ? "type.parameter.extends.enum.type.parameter.problem.descriptor"
-                                             : "type.parameter.extends.final.class.type.parameter.problem.descriptor", name);
-    }
-    else {
-      return InspectionGadgetsBundle.message(aClass.isEnum()
-                                             ? "type.parameter.extends.enum.wildcard.problem.descriptor"
-                                             : "type.parameter.extends.final.class.wildcard.problem.descriptor", name);
-    }
+    final PsiNamedElement namedElement = (PsiNamedElement)infos[0];
+    final String name = namedElement.getName();
+    return problemType.intValue() == 1
+           ? InspectionGadgetsBundle.message("type.parameter.extends.final.class.problem.descriptor1", name)
+           : InspectionGadgetsBundle.message("type.parameter.extends.final.class.problem.descriptor2", name);
   }
 
   @Override
@@ -127,10 +120,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       }
       final PsiClassType extendsType = extendsListTypes[0];
       final PsiClass aClass = extendsType.resolve();
-      if (aClass == null) {
-        return;
-      }
-      if (!aClass.hasModifierProperty(PsiModifier.FINAL) && !aClass.isEnum()) {
+      if (aClass == null || !aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       final PsiIdentifier nameIdentifier = classParameter.getNameIdentifier();
@@ -159,10 +149,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
         }
       }
       final PsiClass aClass = classType.resolve();
-      if (aClass == null) {
-        return;
-      }
-      if (!aClass.hasModifierProperty(PsiModifier.FINAL) && !aClass.isEnum()) {
+      if (aClass == null || !aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       if (aClass.hasTypeParameters() && !PsiUtil.isLanguageLevel8OrHigher(typeElement)) {

@@ -25,7 +25,6 @@ object ExecUtil {
   private val hasUrxvt = PathExecLazyValue("urxvt")
   private val hasXTerm = PathExecLazyValue("xterm")
   private val hasSetsid = PathExecLazyValue("setsid")
-  private val hasEnv = PathExecLazyValue("env")
 
   private const val nicePath = "/usr/bin/nice"
   private val hasNice by lazy { File(nicePath).exists() }
@@ -142,26 +141,23 @@ object ExecUtil {
         GeneralCommandLine(osascriptPath, "-e", escapedScript)
       }
       hasGkSudo.value -> {
-        GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + envCommand(commandLine) + command)
+        GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + command)
       }
       hasKdeSudo.value -> {
-        GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + envCommand(commandLine) + command)
+        GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + command)
       }
       hasPkExec.value -> {
-        GeneralCommandLine(listOf("pkexec") + envCommand(commandLine) + command)
+        command.add(0, "pkexec")
+        GeneralCommandLine(command)
       }
       SystemInfo.isUnix && hasTerminalApp() -> {
         val escapedCommandLine = StringUtil.join(command, { escapeUnixShellArgument(it) }, " ")
-        val escapedEnvCommand = when (val args = envCommandArgs(commandLine)) {
-          emptyList<String>() -> ""
-          else -> "env " + StringUtil.join(args, { escapeUnixShellArgument(it) }, " ") + " "
-        }
         val script = createTempExecutableScript(
           "sudo", ".sh",
           "#!/bin/sh\n" +
           "echo " + escapeUnixShellArgument(prompt) + "\n" +
           "echo\n" +
-          "sudo -- " + escapedEnvCommand + escapedCommandLine + "\n" +
+          "sudo -- " + escapedCommandLine + "\n" +
           "STATUS=$?\n" +
           "echo\n" +
           "read -p \"Press Enter to close this window...\" TEMP\n" +
@@ -179,20 +175,6 @@ object ExecUtil {
       .withParentEnvironmentType(commandLine.parentEnvironmentType)
       .withRedirectErrorStream(commandLine.isRedirectErrorStream)
   }
-
-  private fun envCommand(commandLine: GeneralCommandLine): List<String> =
-    when (val args = envCommandArgs(commandLine)) {
-      emptyList<String>() -> emptyList()
-      else -> listOf("env") + args
-    }
-
-  private fun envCommandArgs(commandLine: GeneralCommandLine): List<String> =
-    // sudo doesn't pass parent process environment for security reasons,
-    // for the same reasons we pass only explicitly configured env variables
-    when (val env = commandLine.environment) {
-      emptyMap<String, String>() -> emptyList()
-      else -> env.map { entry -> "${entry.key}=${entry.value}" }
-    }
 
   @JvmStatic
   @Throws(IOException::class, ExecutionException::class)

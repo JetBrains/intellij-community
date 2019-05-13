@@ -61,7 +61,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
         -1
       }
       else {
-        fileContent.psiFile.textLength
+        fileContent.psiFileForPsiDependentIndex.textLength
       }
 
     return SerializedStubTree(bytes.internalBuffer, bytes.size(), stub, file.length, contentLength)

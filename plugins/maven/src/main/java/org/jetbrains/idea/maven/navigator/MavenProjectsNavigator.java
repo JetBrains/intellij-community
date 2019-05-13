@@ -45,7 +45,8 @@ import java.util.Collections;
 import java.util.List;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public final class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>, Disposable {
+public final class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>,
+                                                                                   Disposable, BaseComponent {
   public static final String TOOL_WINDOW_ID = "Maven";
   public static final String TOOL_WINDOW_PLACE_ID = "Maven tool window";
 
@@ -140,7 +141,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
   }
 
   @Override
-  public void initializeComponent() {
+  public void initComponent() {
     if (!isNormalProject()) return;
     doInit();
   }

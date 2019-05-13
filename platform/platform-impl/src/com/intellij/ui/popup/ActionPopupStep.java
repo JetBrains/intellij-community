@@ -20,21 +20,21 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                         SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
   private final List<PopupFactoryImpl.ActionItem> myItems;
   private final String myTitle;
-  private final Supplier<? extends DataContext> myContext;
+  private final Supplier<DataContext> myContext;
   private final String myActionPlace;
   private final boolean myEnableMnemonics;
   private final int myDefaultOptionIndex;
   private final boolean myAutoSelectionEnabled;
   private final boolean myShowDisabledActions;
   private Runnable myFinalRunnable;
-  private final Condition<? super AnAction> myPreselectActionCondition;
+  private final Condition<AnAction> myPreselectActionCondition;
 
   public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
                          String title,
-                         @NotNull Supplier<? extends DataContext> context,
+                         @NotNull Supplier<DataContext> context,
                          @Nullable String actionPlace,
                          boolean enableMnemonics,
-                         @Nullable Condition<? super AnAction> preselectActionCondition,
+                         @Nullable Condition<AnAction> preselectActionCondition,
                          boolean autoSelection,
                          boolean showDisabledActions) {
     myItems = items;
@@ -71,9 +71,9 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                 String title,
                                                 boolean honorActionMnemonics,
                                                 boolean autoSelectionEnabled,
-                                                Supplier<? extends DataContext> contextSupplier,
+                                                Supplier<DataContext> contextSupplier,
                                                 @Nullable String actionPlace,
-                                                Condition<? super AnAction> preselectCondition,
+                                                Condition<AnAction> preselectCondition,
                                                 int defaultOptionIndex) {
     final ActionStepBuilder builder =
       new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);

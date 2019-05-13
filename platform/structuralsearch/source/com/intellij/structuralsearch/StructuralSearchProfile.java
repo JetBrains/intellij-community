@@ -1,9 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -22,6 +27,8 @@ import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,55 +64,97 @@ public abstract class StructuralSearchProfile {
   @NotNull
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
-                                        @NotNull LanguageFileType fileType,
-                                        @NotNull Language language,
-                                        @Nullable String contextName,
-                                        @NotNull Project project,
-                                        boolean physical) {
-    final String name = "__dummy." + fileType.getDefaultExtension();
-    final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(name, language, text, physical, true);
-
-    return file != null ? file.getChildren() : PsiElement.EMPTY_ARRAY;
-  }
-
-  /**
-   * @deprecated Use
-   * {@link StructuralSearchProfile#createPatternTree(String, PatternTreeContext, LanguageFileType, Language, String, Project, boolean)}
-   * instead.
-   */
-  @Deprecated
-  @NotNull
-  public PsiElement[] createPatternTree(@NotNull String text,
-                                        @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
-                                        @NotNull Language language,
+                                        @Nullable Language language,
                                         @Nullable String contextName,
                                         @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
-    if (!(fileType instanceof LanguageFileType)) {
-      return PsiElement.EMPTY_ARRAY;
+    final String ext = extension != null ? extension : fileType.getDefaultExtension();
+    final String name = "__dummy." + ext;
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+
+    final PsiFile file = language == null
+                         ? factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), physical, true)
+                         : factory.createFileFromText(name, language, text, physical, true);
+
+    return file != null ? file.getChildren() : PsiElement.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public PsiElement[] createPatternTree(@NotNull String text,
+                                        @NotNull PatternTreeContext context,
+                                        @NotNull FileType fileType,
+                                        @NotNull Project project,
+                                        boolean physical) {
+    return createPatternTree(text, context, fileType, null, null, null, project, physical);
+  }
+
+  @NotNull
+  public Document createDocument(@NotNull Project project, @NotNull FileType fileType, Language dialect, String text) {
+    PsiFile codeFragment = createCodeFragment(project, text, null);
+    if (codeFragment == null) {
+      codeFragment = createFileFragment(project, fileType, dialect, text);
     }
-    return createPatternTree(text, context, (LanguageFileType)fileType, language, contextName, project, physical);
+
+    if (codeFragment != null) {
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+      assert doc != null : "code fragment element should be physical";
+      //DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
+      return doc;
+    }
+
+    return EditorFactory.getInstance().createDocument(text);
+  }
+
+  @NotNull
+  public Editor createEditor(@NotNull Project project,
+                             @NotNull FileType fileType,
+                             Language dialect,
+                             String text) {
+    PsiFile codeFragment = createCodeFragment(project, text, null);
+    if (codeFragment == null) {
+      codeFragment = createFileFragment(project, fileType, dialect, text);
+    }
+
+    if (codeFragment != null) {
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+      assert doc != null : "code fragment element should be physical";
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
+      return UIUtil.createEditor(doc, project, true, true, getTemplateContextType());
+    }
+
+    final EditorFactory factory = EditorFactory.getInstance();
+    final Document document = factory.createDocument(text);
+    final EditorEx editor = (EditorEx)factory.createEditor(document, project);
+    editor.getSettings().setFoldingOutlineShown(false);
+    return editor;
+  }
+
+  private static PsiFile createFileFragment(Project project, FileType fileType, Language dialect, String text) {
+    final String name = "__dummy." + fileType.getDefaultExtension();
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+
+    return dialect == null ?
+           factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), true, true) :
+           factory.createFileFromText(name, dialect, text, true, true);
   }
 
   @Nullable
-  public PsiCodeFragment createCodeFragment(Project project, String text) {
+  public PsiCodeFragment createCodeFragment(Project project, String text, @Nullable PsiElement context) {
     return null;
-  }
-
-  /**
-   * This method is called while holding a read action.
-   */
-  public String getCodeFragmentText(PsiFile fragment) {
-    return fragment.getText();
   }
 
   @NotNull
   public abstract Class<? extends TemplateContextType> getTemplateContextTypeClass();
 
+  public final TemplateContextType getTemplateContextType() {
+    final Class<? extends TemplateContextType> clazz = getTemplateContextTypeClass();
+    return ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz);
+  }
+
   @Nullable
-  public LanguageFileType detectFileType(@NotNull PsiElement context) {
+  public FileType detectFileType(@NotNull PsiElement context) {
     return null;
   }
 
@@ -118,12 +167,12 @@ public abstract class StructuralSearchProfile {
   }
 
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
-    final String fileType = StringUtil.toLowerCase(options.getMatchOptions().getFileType().getName());
+    String fileType = options.getMatchOptions().getFileType().getName().toLowerCase();
     throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
   }
 
   // only for nodes not filtered by lexical-nodes filter; they can be by default
-  public boolean canBeVarDelimiter(@NotNull PsiElement element) {
+  public boolean canBeVarDelimeter(@NotNull PsiElement element) {
     return false;
   }
 
@@ -184,7 +233,7 @@ public abstract class StructuralSearchProfile {
       boolean removeSemicolon = false;
       if (match.hasChildren() && !match.isScopeMatch()) {
         // compound matches
-        final StringBuilder buf = new StringBuilder();
+        StringBuilder buf = new StringBuilder();
 
         for (final MatchResult matchResult : match.getChildren()) {
           final PsiElement currentElement = matchResult.getMatch();
@@ -255,7 +304,7 @@ public abstract class StructuralSearchProfile {
    * Override this method to influence which UI controls are shown when editing the constraints of the specified variable.
    *
    * @param constraintName  the name of the constraint controls for which applicability is considered.
-   * See {@link UIUtil} for predefined constraint names
+   *  See {@link com.intellij.structuralsearch.plugin.ui.UIUtil} for predefined constraint names
    * @param variableNode  the psi element corresponding to the current variable
    * @param completePattern  true, if the current variableNode encompasses the complete pattern. The variableNode can also be null in this case.
    * @param target  true, if the current variableNode is the target of the search

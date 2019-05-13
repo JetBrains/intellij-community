@@ -254,7 +254,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       DefaultGradleExtensions extensions = new DefaultGradleExtensions(gradleExtensions);
       ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
       if (externalProject != null) {
-        extensions.addTasks(externalProject.getTasks().values());
+        extensions.getTasks().addAll(externalProject.getTasks().values());
       }
       ideModule.createChild(GradleExtensionsDataService.KEY, extensions);
     }
@@ -856,7 +856,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     return "";
   }
 
-  public void setupDebugForAllJvmForkedTasks(@NotNull Consumer<? super String> initScriptConsumer, int debugPort) {
+  public void setupDebugForAllJvmForkedTasks(@NotNull Consumer<String> initScriptConsumer, int debugPort) {
     // external-system-rt.jar
     String esRtJarPath = PathUtil.getCanonicalPath(PathManager.getJarPathForClass(ExternalSystemSourceType.class));
     final String[] lines = {

@@ -489,10 +489,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(getProject());
     vcsManager.registerVcs(myVcs);
+    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", myVcs.getName())));
     vcsManager.waitForInitialized();
-
-    String tempDirPath = myFixture.getTempDirFixture().getTempDirPath();
-    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(tempDirPath, myVcs.getName())));
     assertTrue(vcsManager.hasActiveVcss());
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());

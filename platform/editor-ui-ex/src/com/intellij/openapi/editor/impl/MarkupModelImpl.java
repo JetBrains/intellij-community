@@ -110,7 +110,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                                    TextAttributes textAttributes,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
-                                                                   @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+                                                                   @Nullable Consumer<RangeHighlighterEx> changeAttributesAction) {
     return addRangeHighlighter(isPersistent
                                ? PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea, textAttributes, true)
                                : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes, false,
@@ -131,7 +131,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
-                                      @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+                                      @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     byte changeStatus = ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
     if (BitUtil.isSet(changeStatus, RangeHighlighterImpl.CHANGED_MASK)) {

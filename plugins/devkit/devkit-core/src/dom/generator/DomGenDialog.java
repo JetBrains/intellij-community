@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.dom.generator;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 import java.io.File;
@@ -48,7 +47,7 @@ public class DomGenDialog extends DialogWrapper{
   protected void doOKAction() {
     if (!panel.validate()) return;
     final String location = panel.getLocation();
-    ModelLoader loader = StringUtil.toLowerCase(location).endsWith(".xsd") ? new XSDModelLoader() : new DTDModelLoader();
+    ModelLoader loader = location.toLowerCase().endsWith(".xsd") ? new XSDModelLoader() : new DTDModelLoader();
     final JetBrainsEmitter emitter = new JetBrainsEmitter();
     final MergingFileManager fileManager = new MergingFileManager();
     if (panel.getAuthor().trim().length() > 0) {

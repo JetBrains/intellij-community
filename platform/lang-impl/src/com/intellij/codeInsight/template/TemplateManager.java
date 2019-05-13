@@ -49,7 +49,7 @@ public abstract class TemplateManager {
   public abstract void startTemplate(@NotNull Editor editor,
                                      @NotNull Template template,
                                      TemplateEditingListener listener,
-                                     final PairProcessor<? super String, ? super String> callback);
+                                     final PairProcessor<String, String> callback);
 
   public abstract boolean startTemplate(@NotNull Editor editor, char shortcutChar);
 

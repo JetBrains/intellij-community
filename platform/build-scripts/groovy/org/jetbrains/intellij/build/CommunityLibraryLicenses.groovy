@@ -53,7 +53,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Android DEX library", libraryName: "dexlib2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android draw9patch library", libraryName: "com.android.tools:draw9patch", license: "Apache 2.0",
                        url: "http://source.android.com/"),
-    new LibraryLicense(name: "Android dvlib library", libraryName: "com.android.tools:dvlib", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Gradle model", attachedTo: "intellij.android.core", version: "0.4-SNAPSHOT", license: "Apache 2.0",
                        url: "https://android.googlesource.com/platform/tools/build/+/master/gradle-model/"),
     new LibraryLicense(name: "Android IDE Extensions", libraryName: "android-extensions-ide.jar", license: "Apache 2.0",
@@ -107,10 +106,8 @@ class CommunityLibraryLicenses {
                        url: "http://commons.apache.org/proper/commons-compress/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Apache Commons Discovery", libraryName: "commons-discovery", version: "0.4", license: "Apache 2.0",
                        url: "http://jakarta.apache.org/commons/discovery/", licenseUrl: "http://www.apache.org/licenses/"),
-
     new LibraryLicense(name: "Apache Commons HTTPClient", libraryName: "http-client-3.1", version: "3.1&nbsp; (with patch by JetBrains)",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpclient-3.x"),
-
     new LibraryLicense(name: "Apache Commons Imaging (JetBrains's fork)", libraryName: "commons-imaging", version: "1.0-RC",
                        license: "Apache 2.0", url: "https://github.com/JetBrains/intellij-deps-commons-imaging"),
     new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io", version: "2.6", license: "Apache 2.0",
@@ -132,10 +129,8 @@ class CommunityLibraryLicenses {
                        url: "http://joel-costigliola.github.io/assertj/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Automaton", libraryName: "automaton", version: "1.12-1", license: "BSD",
                        url: "http://www.brics.dk/automaton/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php"),
-
-    new LibraryLicense(name: "batik", libraryName: "batik-transcoder", version: "1.11", license: "Apache 2.0",
+    new LibraryLicense(name: "batik", libraryName: "batik", version: "1.9.1", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/batik/"),
-
     new LibraryLicense(name: "bouncy-castle", version: "1.59", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "bouncy-castle-provider", version: "1.59", license: "MIT License", url: "http://bouncycastle.org",
@@ -223,12 +218,10 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://ant.apache.org/license.html"),
     new LibraryLicense(name: "hamcrest", version: "1.3", license: "BSD", url: "http://hamcrest.org/",
                        licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
-
-    new LibraryLicense(name: "HttpComponents HttpClient", libraryName: "http-client", version: "4.5.8", license: "Apache 2.0",
+    new LibraryLicense(name: "HttpComponents HttpClient", libraryName: "http-client", version: "4.5.5", license: "Apache 2.0",
                        url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
     new LibraryLicense(name: "HttpComponents HttpClient Fluent API", libraryName: "fluent-hc", version: "4.5.2",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
-
     new LibraryLicense(name: "ImageIO", libraryName: "imageio-tiff", version: "3.4.1", license: "BSD",
                        url: "https://github.com/haraldk/TwelveMonkeys", licenseUrl: "https://github.com/haraldk/TwelveMonkeys#license"),
     new LibraryLicense(name: "imgscalr", libraryName: "imgscalr", version: "4.2", license: "Apache 2.0",
@@ -246,12 +239,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "ISO RELAX", libraryName: "isorelax", license: "MIT License",
                        url: "http://sourceforge.net/projects/iso-relax/",
                        licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
-
-    new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.9.9", license: "Apache 2.0",
+    new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.9.5", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson"),
-    new LibraryLicense(name: "Jackson Databind", libraryName: "jackson-databind", version: "2.9.9", license: "Apache 2.0",
-                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson-databind"),
-
     new LibraryLicense(name: "Jakarta ORO", libraryName: "OroMatcher", version: "2.0.8", license: "Apache",
                        url: "http://jakarta.apache.org/oro/", licenseUrl: "http://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE"),
     new LibraryLicense(name: "Java Compatibility", version: "1.0.1", license: "GPL 2.0 + Classpath",
@@ -264,6 +253,8 @@ class CommunityLibraryLicenses {
                        version: "no version number available (with patches by JetBrains)", license: "Sun Public License",
                        url: "https://versioncontrol.netbeans.org/javacvs/library/",
                        licenseUrl: "https://netbeans.org/about/legal/license.html"),
+    new LibraryLicense(name: "JavaHelp", version: "2.0_02", license: "CDDL 1.1", licenseUrl: "https://javaee.github.io/javahelp/LICENSE",
+                       url: "https://javaee.github.io/javahelp/"),
     new LibraryLicense(name: "Javassist", libraryName: "javassist", version: "3.21.0-GA", license: "Apache 2.0",
                        url: "https://github.com/jboss-javassist/javassist", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "javawriter", attachedTo: "intellij.android.core", license: "Apache 2.0", url: "https://github.com/square/javawriter"),
@@ -275,10 +266,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JAXB (JSR 222) Reference Implementation", libraryName: "jaxb-runtime", version: "2.3.1",
                        url: "https://github.com/javaee/jaxb-v2",
                        license: "CDDL 1.1 / GPL 2.0 + Classpath", licenseUrl: "https://oss.oracle.com/licenses/CDDL+GPL-1.1"),
-
-    new LibraryLicense(name: "Jaxen", version: "1.2.0", license: "modified Apache", url: "https://github.com/jaxen-xpath/jaxen",
+    new LibraryLicense(name: "Jaxen", version: "", license: "modified Apache", url: "https://github.com/jaxen-xpath/jaxen",
                        licenseUrl: "https://github.com/jaxen-xpath/jaxen/blob/master/LICENSE.txt"),
-
     new LibraryLicense(name: "JBcrypt", libraryName: "trilead-ssh2", version: "1.0.0", license: "ISC License",
                        licenseUrl: "https://github.com/jeremyh/jBCrypt/blob/master/LICENSE", url: "https://github.com/jeremyh/jBCrypt"),
     new LibraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License",
@@ -351,7 +340,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "kXML2", libraryName: "kxml2", version: "2.3.0", license: "BSD", url: "http://sourceforge.net/projects/kxml/"),
     new LibraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2.17", license: "Apache 2.0",
                        url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "lz4-java", libraryName: "lz4-java", version: "1.6.0", license: "Apache 2.0",
+    new LibraryLicense(name: "lz4-java", libraryName: "lz4-java", version: "1.3", license: "Apache 2.0",
                        url: "https://github.com/lz4/lz4-java", licenseUrl: "https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
     new LibraryLicense(name: "markdown4j", libraryName: "markdown4j", version: "2.2", license: "New BSD",
                        url: "https://code.google.com/p/markdown4j/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
@@ -395,12 +384,10 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.opensource.org/licenses/zlib-license.html"),
     new LibraryLicense(name: "nekohtml", libraryName: "nekohtml", version: "1.9.14", license: "Apache 2.0",
                        url: "http://nekohtml.sourceforge.net/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0.txt"),
-
-    new LibraryLicense(name: "netty-codec-http", libraryName: "netty-codec-http", version: "4.1.36", license: "Apache 2.0",
+    new LibraryLicense(name: "netty-codec-http", libraryName: "netty-codec-http", version: "4.1.34", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "netty-handler-proxy", libraryName: "netty-handler-proxy", version: "4.1.36", license: "Apache 2.0",
+    new LibraryLicense(name: "netty-handler-proxy", libraryName: "netty-handler-proxy", version: "4.1.34", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-
     new LibraryLicense(name: "nosyncbuilder-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", version: "2.5.1", license: "Apache 2.0", url: "http://objenesis.org/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),

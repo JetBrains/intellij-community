@@ -25,8 +25,5 @@ public interface IgnoredFileContentProvider {
   String buildUnignoreContent(@NotNull String ignorePattern);
 
   @NotNull
-  String buildIgnoreEntryContent(@NotNull VirtualFile ignoreFileRoot, @NotNull IgnoredFileDescriptor ignoredFileDescriptor);
-
-  @NotNull
   String buildIgnoreGroupDescription(@NotNull IgnoredFileProvider ignoredFileProvider);
 }

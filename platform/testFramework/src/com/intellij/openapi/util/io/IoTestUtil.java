@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
@@ -122,7 +123,7 @@ public class IoTestUtil {
   }
 
   private static char getFirstFreeDriveLetter() {
-    Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> StringUtil.toUpperCase(root.getPath()).charAt(0));
+    Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> root.getPath().toUpperCase(Locale.US).charAt(0));
     for (char c = 'E'; c <= 'Z'; c++) {
       if (!roots.contains(c)) {
         return c;

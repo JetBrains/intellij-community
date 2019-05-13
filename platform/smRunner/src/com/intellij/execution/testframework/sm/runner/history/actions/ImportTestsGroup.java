@@ -22,6 +22,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 public class ImportTestsGroup extends ActionGroup {
   private SMTRunnerConsoleProperties myProperties;
   public ImportTestsGroup() {
-    super("Test History", "Import tests from history", AllIcons.ToolbarDecorator.Import);
+    super("Import Test Results", "Import Test Results", AllIcons.Vcs.History);
     setPopup(true);
   }
 
@@ -57,10 +58,12 @@ public class ImportTestsGroup extends ActionGroup {
       .sorted((f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()))
       .collect(Collectors.toList());
     final int historySize = fileNames.size();
-    final AnAction[] actions = new AnAction[historySize];
+    final AnAction[] actions = new AnAction[historySize + 2];
     for (int i = 0; i < historySize; i++) {
       actions[i] = new ImportTestsFromHistoryAction(myProperties, project, fileNames.get(i).getName());
     }
+    actions[historySize] = Separator.getInstance();
+    actions[historySize + 1] = new ImportTestsFromFileAction(myProperties); 
     return actions;
   }
 }

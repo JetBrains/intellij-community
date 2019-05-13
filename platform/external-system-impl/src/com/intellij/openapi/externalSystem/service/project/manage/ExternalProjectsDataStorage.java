@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
-import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,8 +24,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.serialization.SerializationException;
-import com.intellij.serialization.VersionedFile;
+import com.intellij.serialization.ObjectSerializer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.PathKt;
@@ -34,16 +32,12 @@ import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -57,8 +51,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaAdapter, PersistentStateComponent<ExternalProjectsDataStorage.State> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
-  // exposed for tests
-  public static final int STORAGE_VERSION = 6;
+  private static final String STORAGE_VERSION = ExternalProjectsDataStorage.class.getSimpleName() + ".2";
 
   @NotNull
   private final Project myProject;
@@ -80,18 +73,15 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
   public synchronized void load() {
     myExternalRootProjects.clear();
     long startTs = System.currentTimeMillis();
-    long readEnd = startTs;
     try {
       List<InternalExternalProjectInfo> projectInfos = load(myProject);
-      readEnd = System.currentTimeMillis();
-
-      if (projectInfos == null || (projectInfos.isEmpty() &&
-                                   myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE &&
-                                   hasLinkedExternalProjects())) {
+      if (projectInfos.isEmpty() &&
+          myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE &&
+          hasLinkedExternalProjects()) {
         markDirtyAllExternalProjects();
       }
 
-      for (InternalExternalProjectInfo projectInfo : ContainerUtil.notNullize(projectInfos)) {
+      for (InternalExternalProjectInfo projectInfo : projectInfos) {
         if (validate(projectInfo)) {
           myExternalRootProjects.put(
             Pair.create(projectInfo.getProjectSystemId(), new File(projectInfo.getExternalProjectPath())), projectInfo);
@@ -117,7 +107,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
 
     mergeLocalSettings();
     long finishTs = System.currentTimeMillis();
-    LOG.info("Load external projects data in " + (finishTs - startTs) + " millis (read time: " + (readEnd - startTs) + ")");
+    LOG.info("Loaded external projects data in " + (finishTs - startTs) + " millis");
   }
 
   private boolean hasLinkedExternalProjects() {
@@ -151,22 +141,15 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
   }
 
   @Override
-  public void doSave() {
+  public synchronized void doSave() {
     if (!changed.compareAndSet(true, false)) {
       return;
     }
-
     try {
-      //noinspection SynchronizeOnThis
-      synchronized (this) {
-        long start = System.currentTimeMillis();
-        doSave(myProject, myExternalRootProjects.values());
-        long duration = System.currentTimeMillis() - start;
-        LOG.info("Save external projects data in " + duration + " ms");
-      }
+      doSave(myProject, myExternalRootProjects.values());
     }
-    catch (IOException | SerializationException e) {
-      LOG.error(e);
+    catch (IOException e) {
+      LOG.debug(e);
     }
   }
 
@@ -206,21 +189,16 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     merged.setLastSuccessfulImportTimestamp(lastSuccessfulImportTimestamp);
     myExternalRootProjects.put(key, merged);
 
-    markAsChangedAndScheduleSave();
+    changed.set(true);
   }
 
   synchronized void restoreInclusionSettings(@Nullable DataNode<ProjectData> projectDataNode) {
-    if (projectDataNode == null) {
-      return;
-    }
+    if (projectDataNode == null) return;
+    final String rootProjectPath = projectDataNode.getData().getLinkedExternalProjectPath();
+    final ProjectState projectState = myState.map.get(rootProjectPath);
+    if (projectState == null) return;
 
-    String rootProjectPath = projectDataNode.getData().getLinkedExternalProjectPath();
-    ProjectState projectState = myState.map.get(rootProjectPath);
-    if (projectState == null) {
-      return;
-    }
-
-    projectDataNode.visit(node -> {
+    ExternalSystemApiUtil.visit(projectDataNode, node -> {
       final DataNode<ExternalConfigPathAware> projectOrModuleNode = resolveProjectNode(node);
       assert projectOrModuleNode != null;
       final ModuleState moduleState = projectState.map.get(projectOrModuleNode.getData().getLinkedExternalProjectPath());
@@ -231,9 +209,9 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
   synchronized void saveInclusionSettings(@Nullable DataNode<ProjectData> projectDataNode) {
     if (projectDataNode == null) return;
 
-    final MultiMap<String, String> inclusionMap = MultiMap.createSmart();
-    final MultiMap<String, String> exclusionMap = MultiMap.createSmart();
-    projectDataNode.visit(dataNode -> {
+    final MultiMap<String, String> inclusionMap = MultiMap.create();
+    final MultiMap<String, String> exclusionMap = MultiMap.create();
+    ExternalSystemApiUtil.visit(projectDataNode, dataNode -> {
       DataNode<ExternalConfigPathAware> projectNode = resolveProjectNode(dataNode);
       if (projectNode != null) {
         final String projectPath = projectNode.getData().getLinkedExternalProjectPath();
@@ -261,13 +239,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     }
 
     myState.map.put(projectDataNode.getData().getLinkedExternalProjectPath(), projectState);
-    markAsChangedAndScheduleSave();
-  }
-
-  private void markAsChangedAndScheduleSave() {
-    if (changed.compareAndSet(false, true)) {
-      SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask.projectIncludingAllSettings(myProject), false);
-    }
+    changed.set(true);
   }
 
   @Nullable
@@ -278,7 +250,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
   synchronized void remove(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
     final InternalExternalProjectInfo removed = myExternalRootProjects.remove(Pair.create(projectSystemId, new File(externalProjectPath)));
     if (removed != null) {
-      markAsChangedAndScheduleSave();
+      changed.set(true);
     }
   }
 
@@ -306,7 +278,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
           myExternalRootProjects.put(key, externalProjectInfo);
           ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirty(externalProjectPath);
 
-          markAsChangedAndScheduleSave();
+          changed.set(true);
         }
 
         // restore linked project sub-modules
@@ -339,8 +311,9 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     return projectDataNode;
   }
 
-  private static void doSave(@NotNull Project project, @NotNull Collection<InternalExternalProjectInfo> externalProjects)
+  private static void doSave(@NotNull final Project project, @NotNull Collection<InternalExternalProjectInfo> externalProjects)
     throws IOException {
+
     for (Iterator<InternalExternalProjectInfo> iterator = externalProjects.iterator(); iterator.hasNext(); ) {
       InternalExternalProjectInfo externalProject = iterator.next();
       if (!validate(externalProject)) {
@@ -348,10 +321,9 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
         continue;
       }
 
-      WriteAndCompressSession buffer = new WriteAndCompressSession();
       ExternalSystemApiUtil.visit(externalProject.getExternalProjectStructure(), dataNode -> {
         try {
-          dataNode.serializeData(buffer);
+          dataNode.serializeData();
         }
         catch (Exception e) {
           LOG.warn(e);
@@ -360,7 +332,15 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
       });
     }
 
-    getCacheFile(project).writeList(externalProjects, InternalExternalProjectInfo.class);
+    try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(PathKt.outputStream(getProjectConfigurationFile(project))))) {
+      out.writeUTF(STORAGE_VERSION);
+      out.writeInt(externalProjects.size());
+      if (externalProjects.isEmpty()) {
+        return;
+      }
+
+      ObjectSerializer.getInstance().writeList(externalProjects, InternalExternalProjectInfo.class, out);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -376,25 +356,36 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     return parent;
   }
 
-  @Nullable("null indicates that cache was invalid")
+  @NotNull
   private static List<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
-    VersionedFile cacheFile = getCacheFile(project);
-    BasicFileAttributes fileAttributes = PathKt.basicAttributesIfExists(cacheFile.getFile());
-    if (fileAttributes == null || !fileAttributes.isRegularFile()) {
+    final Path configurationFile = getProjectConfigurationFile(project);
+    //noinspection SSBasedInspection
+    if (!Files.isRegularFile(configurationFile)) {
       return Collections.emptyList();
     }
 
-    if (isInvalidated(cacheFile.getFile(), fileAttributes)) {
-      LOG.debug("External projects data storage was invalidated");
-      return null;
+    if (isInvalidated(configurationFile)) {
+      throw new IOException("External projects data storage was invalidated");
     }
-    return cacheFile.readList(InternalExternalProjectInfo.class, SerializationKt.getExternalSystemBeanConstructed());
+
+    try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)))) {
+      String storage_version = in.readUTF();
+      if (!STORAGE_VERSION.equals(storage_version)) {
+        return Collections.emptyList();
+      }
+
+      int size = in.readInt();
+      if (size == 0) {
+        return Collections.emptyList();
+      }
+      return ObjectSerializer.getInstance().readList(InternalExternalProjectInfo.class, in, SerializationKt.getExternalSystemBeanConstructed());
+    }
   }
 
-  private static boolean isInvalidated(@NotNull Path configurationFile, @NotNull BasicFileAttributes fileAttributes) throws IOException {
+  private static boolean isInvalidated(@NotNull Path configurationFile) throws IOException {
     if (!Registry.is("external.system.invalidate.storage", true)) return false;
 
-    long lastModified = fileAttributes.lastModifiedTime().toMillis();
+    long lastModified = Files.getLastModifiedTime(configurationFile).toMillis();
     if (lastModified == 0) {
       return true;
     }
@@ -408,8 +399,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
   }
 
   @NotNull
-  private static VersionedFile getCacheFile(@NotNull Project project) {
-    return new VersionedFile(getProjectConfigurationDir(project).resolve("project.dat"), STORAGE_VERSION);
+  private static Path getProjectConfigurationFile(@NotNull Project project) {
+    return getProjectConfigurationDir(project).resolve("project.dat");
   }
 
   @NotNull
@@ -428,7 +419,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     myState = state;
   }
 
-  synchronized void setIgnored(@NotNull DataNode<?> dataNode, boolean isIgnored) {
+  synchronized void setIgnored(@NotNull final DataNode<?> dataNode, final boolean isIgnored) {
     //noinspection unchecked
     final DataNode<ProjectData> projectDataNode =
       PROJECT.equals(dataNode.getKey()) ? (DataNode<ProjectData>)dataNode : ExternalSystemApiUtil.findParent(dataNode, PROJECT);
@@ -436,7 +427,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
       return;
     }
 
-    dataNode.visit(node -> node.setIgnored(isIgnored));
+    ExternalSystemApiUtil.visit(dataNode, node -> node.setIgnored(isIgnored));
 
     saveInclusionSettings(projectDataNode);
   }
@@ -470,31 +461,31 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
     return PathManagerEx.getAppSystemDir().resolve("external_build_system").resolve(".broken").toFile();
   }
 
-  static final class State {
+  static class State {
     @Property(surroundWithTag = false)
-    @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false, keyAttributeName = "path", entryTagName = "projectState")
-    public final Map<String, ProjectState> map = new THashMap<>();
+    @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,
+      keyAttributeName = "path", entryTagName = "projectState")
+    public final Map<String, ProjectState> map = ContainerUtil.newConcurrentMap();
   }
 
   static class ProjectState {
     @Property(surroundWithTag = false)
     @XMap(keyAttributeName = "path", entryTagName = "dataType")
-    public final Map<String, ModuleState> map = new THashMap<>();
+    public final Map<String, ModuleState> map = ContainerUtil.newConcurrentMap();
     public boolean isInclusion;
   }
 
   static class ModuleState {
     @Property(surroundWithTag = false)
     @XCollection(elementName = "id")
-    public final Set<String> set;
+    public final Set<String> set = ContainerUtil.newConcurrentSet();
 
     @SuppressWarnings("unused")
     ModuleState() {
-      set = new THashSet<>();
     }
 
-    ModuleState(@NotNull Collection<String> values) {
-      set = new THashSet<>(values);
+    ModuleState(Collection<String> values) {
+      set.addAll(values);
     }
   }
 }

@@ -16,43 +16,50 @@
 
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.execution.ui.layout.impl.RunnerContentUi;
+import com.intellij.execution.ui.layout.CellTransform;
+import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAwareToggleAction;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
-public class RestoreViewAction extends DumbAwareToggleAction {
+import javax.swing.*;
 
-  private final RunnerContentUi myUi;
+public class RestoreViewAction extends DumbAwareAction {
+
   private final Content myContent;
+  private final CellTransform.Restore myRestoreAction;
 
-  public RestoreViewAction(@NotNull RunnerContentUi ui, @NotNull Content content) {
-    myUi = ui;
+  private boolean myAlert;
+
+  public RestoreViewAction(final Content content, CellTransform.Restore restore) {
     myContent = content;
-  }
-
-  @Override
-  public boolean isSelected(@NotNull AnActionEvent e) {
-    return myContent.isValid() && myContent.getManager().getIndexOfContent(myContent) != -1;
-  }
-
-  @Override
-  public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    if (state) {
-      myUi.restore(myContent);
-    } else {
-      myUi.minimize(myContent, null);
-    }
+    myRestoreAction = restore;
+    myContent.addPropertyChangeListener(l -> {
+      if (Content.PROP_ALERT.equals(l.getPropertyName())) {
+        myAlert = true;
+      }
+    });
   }
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    super.update(e);
-    e.getPresentation().setText(myContent.getDisplayName());
-    if (isSelected(e)) {
-      e.getPresentation().setEnabled(myUi.getContentManager().getContents().length > 1);
+    Presentation p = e.getPresentation();
+    p.setText(ActionsBundle.message("action.Runner.RestoreView.text", myContent.getDisplayName()));
+    p.setDescription(ActionsBundle.message("action.Runner.RestoreView.description"));
+    Icon icon = myContent.getIcon();
+    if (myAlert) {
+      icon = new LayeredIcon(icon, AllIcons.Nodes.TabAlert);
     }
+    p.setIcon(icon == null ? AllIcons.Debugger.RestoreLayout : icon);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
+    myRestoreAction.restoreInGrid();
   }
 
   public Content getContent() {

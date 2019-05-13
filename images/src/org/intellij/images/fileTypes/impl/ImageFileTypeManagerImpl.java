@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -67,9 +68,9 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     final Set<String> processed = new THashSet<>();
     for (String format : ImageIO.getReaderFormatNames()) {
-      processed.add(StringUtil.toLowerCase(format));
+      processed.add(format.toLowerCase(Locale.ENGLISH));
     }
-    processed.add(StringUtil.toLowerCase(IfsUtil.ICO_FORMAT));
+    processed.add(IfsUtil.ICO_FORMAT.toLowerCase(Locale.ENGLISH));
 
     consumer.consume(IMAGE_FILE_TYPE, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
     consumer.consume(SvgFileType.INSTANCE, "svg");

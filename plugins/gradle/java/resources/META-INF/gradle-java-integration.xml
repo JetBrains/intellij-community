@@ -1,9 +1,11 @@
 <idea-plugin>
+
   <module value="org.jetbrains.plugins.gradle.java"/>
   <module value="com.intellij.modules.gradle.java"/>
 
   <depends>com.intellij.modules.java</depends>
 
+  <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
   <depends optional="true" config-file="gradle-coverage-integration.xml">Coverage</depends>
   <depends optional="true" config-file="gradle-groovy-integration.xml">org.intellij.groovy</depends>
 
@@ -43,8 +45,10 @@
         implementation="org.jetbrains.plugins.gradle.execution.build.GradleUpdateResourcesBuildContributor"/>
 
     <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider"/>
+    <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder"/>
-    <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.JavaGradleProjectImportProvider"/>
+    <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
+    <projectOpenProcessor id="java" order="before gradle" implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaProjectOpenProcessor"/>
 
     <!--Gradle Test Runner-->
     <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>

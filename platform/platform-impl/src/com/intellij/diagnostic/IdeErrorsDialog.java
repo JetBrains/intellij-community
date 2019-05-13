@@ -279,7 +279,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           selectedMessage().setAssigneeId(developer == null ? null : developer.getId());
         }
       });
-      myAssigneeCombo.setSwingPopup(false);
+      new ComboboxSpeedSearch(myAssigneeCombo) {
+        @Override
+        protected String getElementText(Object element) {
+          return element == null ? "" : ((Developer)element).getDisplayText();
+        }
+      };
+
       myAssigneePanel = new JPanel();
       myAssigneePanel.add(new JBLabel("Assignee:"));
       myAssigneePanel.add(myAssigneeCombo);

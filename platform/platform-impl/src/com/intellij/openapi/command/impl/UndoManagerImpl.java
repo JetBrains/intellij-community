@@ -405,7 +405,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     return isUndoOrRedoAvailable(refs, true) || isUndoOrRedoAvailable(refs, false);
   }
 
-  private boolean isUndoOrRedoAvailable(@NotNull Collection<? extends DocumentReference> refs, boolean isUndo) {
+  private boolean isUndoOrRedoAvailable(@NotNull Collection<DocumentReference> refs, boolean isUndo) {
     if (isUndo && myMerger.isUndoAvailable(refs)) return true;
     UndoRedoStacksHolder stackHolder = getStackHolder(isUndo);
     return stackHolder.canBeUndoneOrRedone(refs);

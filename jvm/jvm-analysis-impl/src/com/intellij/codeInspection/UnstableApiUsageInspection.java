@@ -42,7 +42,7 @@ public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
       @Override
       public void processAnnotatedTarget(@NotNull UElement sourceNode,
                                          @NotNull PsiModifierListOwner annotatedTarget,
-                                         @NotNull List<? extends PsiAnnotation> annotations) {
+                                         @NotNull List<PsiAnnotation> annotations) {
         if (!AnnotatedElementInspectionBase.isLibraryElement(annotatedTarget)) {
           return;
         }

@@ -633,7 +633,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
 
     @Override
-    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<? extends RepositoryLocation> in) {
+    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in) {
       return myVcsZipper.groupLocations(in);
     }
 

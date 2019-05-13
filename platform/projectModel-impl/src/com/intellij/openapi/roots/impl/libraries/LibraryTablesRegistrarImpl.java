@@ -15,19 +15,18 @@
  */
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.SmartList;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
+public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
   private static final Map<String, LibraryTable> myLibraryTables = new HashMap<>();
 
   @Override
@@ -39,7 +38,7 @@ class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Dispo
   @Override
   @NotNull
   public LibraryTable getLibraryTable(@NotNull Project project) {
-    return ServiceManager.getService(project, ProjectLibraryTable.class);
+    return ProjectLibraryTable.getInstance(project);
   }
 
   @Override

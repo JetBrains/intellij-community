@@ -323,7 +323,6 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
     return myRootModel.getSourceRoots(rootTypes);
   }
 
-  @Override
   public void dropCaches() {
     myOrderRootsCache.clearCache();
   }

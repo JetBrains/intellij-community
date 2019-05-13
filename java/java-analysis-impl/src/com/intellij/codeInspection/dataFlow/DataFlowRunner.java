@@ -159,7 +159,9 @@ public class DataFlowRunner {
       stats.endFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
 
-      new LiveVariablesAnalyzer(flow, myValueFactory).flushDeadVariablesOnStatementFinish();
+      if (Registry.is("idea.dfa.live.variables.analysis")) {
+        new LiveVariablesAnalyzer(flow, myValueFactory).flushDeadVariablesOnStatementFinish();
+      }
       stats.endLVA();
 
       int[] loopNumber = LoopAnalyzer.calcInLoop(flow);

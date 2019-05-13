@@ -55,7 +55,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
-import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY;
 import static com.intellij.util.concurrency.EdtExecutorService.getScheduledExecutorInstance;
 import static com.intellij.util.ui.UIUtil.invokeLaterIfNeeded;
@@ -138,7 +137,10 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       @Override
       public void changeListsChanged() {
         if (myTreeModel == null) return; // not initialized yet
-        myTreeModel.updateScopeIf(ChangeListScope.class);
+        NamedScopeFilter filter = myTreeModel.getFilter();
+        if (filter != null && filter.getScope() instanceof ChangeListScope) {
+          myTreeModel.setFilter(filter);
+        }
       }
     }, this);
     installComparator();
@@ -211,14 +213,6 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
       new TreeSpeedSearch(myTree);
       enableDnD();
-      myTree.getEmptyText()
-        .setText(IdeBundle.message("scope.view.empty.text"))
-        .appendSecondaryText(IdeBundle.message("scope.view.empty.link"), LINK_PLAIN_ATTRIBUTES, event -> {
-          for (NamedScopeFilter filter : getFilters()) {
-            selectScopeView(filter.toString());
-            return;
-          }
-        });
     }
     if (myScrollPane == null) {
       myScrollPane = createScrollPane(myTree, true);
@@ -251,7 +245,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Override
   public void select(Object object, VirtualFile file, boolean requestFocus) {
-    if (myTreeModel == null) return; // not initialized yet
+    if (myTreeModel == null) return; // not initialized yeta
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     NamedScopeFilter current = myTreeModel.getFilter();
     if (select(element, file, requestFocus, current)) return;
@@ -260,17 +254,12 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     }
   }
 
-  private void selectScopeView(String subId) {
-    ProjectView view = myProject.isDisposed() ? null : ProjectView.getInstance(myProject);
-    if (view != null) view.changeView(getId(), subId);
-  }
-
   private boolean select(PsiElement element, VirtualFile file, boolean requestFocus, NamedScopeFilter filter) {
     if (filter == null || !filter.accept(file)) return false;
     String subId = filter.toString();
     if (!Objects.equals(subId, getSubId())) {
       if (!requestFocus) return true;
-      selectScopeView(subId);
+      ProjectView.getInstance(myProject).changeView(getId(), subId);
     }
     LOG.debug("select element: ", element, " in file: ", file);
     TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file);

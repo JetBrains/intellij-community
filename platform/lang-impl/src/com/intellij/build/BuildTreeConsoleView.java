@@ -30,12 +30,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -57,12 +57,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
@@ -101,7 +102,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final AtomicBoolean myFinishedBuildEventReceived = new AtomicBoolean();
   private final AtomicBoolean myDisposed = new AtomicBoolean();
   private final AtomicBoolean myShownFirstError = new AtomicBoolean();
-  private final boolean myFocusFirstError;
   private final StructureTreeModel<SimpleTreeStructure> myTreeModel;
   private final Tree myTree;
   private final ExecutionNode myRootNode;
@@ -117,8 +117,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myNodeFilters = ContainerUtil.newConcurrentSet();
     myProject = project;
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
-    myFocusFirstError = !(buildDescriptor instanceof DefaultBuildDescriptor) ||
-                        ((DefaultBuildDescriptor)buildDescriptor).isActivateToolWindowWhenFailed();
 
     myRootNode = new ExecutionNode(myProject, null);
     myRootNode.setAutoExpandNode(true);
@@ -127,7 +125,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myRootNode.add(myBuildProgressRootNode);
 
     SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRootNode);
-    myTreeModel = new StructureTreeModel<>(treeStructure, this);
+    myTreeModel = new StructureTreeModel<>(treeStructure);
     myTree = initTree(new AsyncTreeModel(myTreeModel, this));
 
     JPanel myContentPanel = new JPanel();
@@ -365,19 +363,16 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     final MessageEvent.Kind eventKind = messageEvent.getKind();
     if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING || eventKind == MessageEvent.Kind.INFO) {
       SimpleNode p = parentNode;
-      Ref<ExecutionNode> child = new Ref<>();
       do {
         ExecutionNode executionNode = (ExecutionNode)p;
-        executionNode.reportChildMessageKind(eventKind);
-
-        boolean isUpdateNeeded =
+        boolean warningOrInfoUpdate =
           (eventKind == MessageEvent.Kind.WARNING && !executionNode.hasWarnings()) ||
-          (eventKind == MessageEvent.Kind.INFO && !executionNode.hasInfos()) ||
-          (!child.isNull() && Arrays.stream(executionNode.getChildren()).noneMatch(node -> child.get() == node));
-        if (isUpdateNeeded) {
+          (eventKind == MessageEvent.Kind.INFO && !executionNode.hasInfos());
+        executionNode.reportChildMessageKind(eventKind);
+        if (warningOrInfoUpdate) {
+          executionNode.cleanUpCache();
           scheduleUpdate(executionNode);
         }
-        child.set(executionNode);
       }
       while ((p = p.getParent()) instanceof ExecutionNode);
       scheduleUpdate(getRootElement());
@@ -386,9 +381,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   private void showErrorIfFirst(@NotNull ExecutionNode node, @Nullable Navigatable navigatable) {
     if (myShownFirstError.compareAndSet(false, true)) {
-      if (myFocusFirstError && navigatable != null && navigatable != NonNavigatable.INSTANCE) {
+      if (navigatable != null && navigatable != NonNavigatable.INSTANCE) {
         ApplicationManager.getApplication()
-          .invokeLater(() -> navigatable.navigate(true), ModalityState.defaultModalityState(), myProject.getDisposed());
+          .invokeLater(() -> navigatable.navigate(false), ModalityState.defaultModalityState(), myProject.getDisposed());
       }
       SimpleNode parentOrNode = node.getParent() == null ? node : node.getParent();
       myTreeModel.invalidate(parentOrNode, true).onProcessed(p -> TreeUtil.promiseSelect(myTree, visitor(node)));
@@ -661,7 +656,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return result;
   }
 
-  @ApiStatus.Internal
+  @TestOnly
   JTree getTree() {
     return myTree;
   }
@@ -964,15 +959,12 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     @Override
     public void setUI(final TreeUI ui) {
-      super.setUI(ui instanceof DefaultTreeUI ? ui : DefaultTreeUI.createUI(this));
+      super.setUI(ui instanceof DefaultTreeUI ? ui : new DefaultTreeUI());
       setLargeModel(true);
     }
   }
 
   private static class MyNodeRenderer extends NodeRenderer {
-    {
-      putClientProperty(DefaultTreeUI.SHRINK_LONG_RENDERER, true);
-    }
     private String myDurationText;
     private Color myDurationColor;
     private int myDurationWidth;

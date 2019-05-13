@@ -167,11 +167,7 @@ public class MavenIndicesManager implements Disposable {
     MavenIndices indicesObjectCache = getIndicesObject();
 
     try {
-      MavenIndex localIndex = indicesObjectCache.add(LOCAL_REPOSITORY_ID, localRepository.getPath(), MavenIndex.Kind.LOCAL);
-      if (localIndex.getUpdateTimestamp() == -1) {
-        scheduleUpdate(project, Collections.singletonList(localIndex));
-      }
-      return localIndex;
+      return indicesObjectCache.add(LOCAL_REPOSITORY_ID, localRepository.getPath(), MavenIndex.Kind.LOCAL);
     }
     catch (MavenIndexException e) {
       MavenLog.LOG.warn(e);

@@ -21,7 +21,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
  * @author dsl
  * @see ModuleRootManager#getModifiableModel()
  */
-@ApiStatus.NonExtendable
 public interface ModifiableRootModel extends ModuleRootModel {
   @NotNull
   Project getProject();

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -18,22 +18,23 @@ import java.util.List;
 @SuppressWarnings("ALL")
 public class StructuralSearchTest extends StructuralSearchTestCase {
   @Override
-  protected int findMatchesCount(@Language("JAVA") String in, String pattern, LanguageFileType fileType) {
+  protected int findMatchesCount(@Language("JAVA") String in, String pattern, FileType fileType) {
     return super.findMatchesCount(in, pattern, fileType);
   }
 
   @Override
   protected List<MatchResult> findMatches(@Language("JAVA") String in,
                                           String pattern,
-                                          LanguageFileType patternFileType,
+                                          FileType patternFileType,
                                           com.intellij.lang.Language patternLanguage,
-                                          LanguageFileType sourceFileType,
+                                          FileType sourceFileType,
+                                          String sourceExtension,
                                           boolean physicalSourceFile) {
-    return super.findMatches(in, pattern, patternFileType, patternLanguage, sourceFileType, physicalSourceFile);
+    return super.findMatches(in, pattern, patternFileType, patternLanguage, sourceFileType, sourceExtension, physicalSourceFile);
   }
 
   @Override
-  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern, LanguageFileType patternFileType) {
+  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern, FileType patternFileType) {
     return super.findMatches(in, pattern, patternFileType);
   }
 

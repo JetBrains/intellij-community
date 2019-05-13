@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.options.SchemeManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +81,7 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
   @NotNull
   private static String getKnownSchemeName(@NonNls @NotNull String schemeName) {
     for (@NonNls String knownName : KNOWN_NAMES) {
-      if (StringUtil.toUpperCase(schemeName).contains(StringUtil.toUpperCase(knownName))) {
+      if (schemeName.toUpperCase().contains(knownName.toUpperCase())) {
         return knownName;
       }
     }

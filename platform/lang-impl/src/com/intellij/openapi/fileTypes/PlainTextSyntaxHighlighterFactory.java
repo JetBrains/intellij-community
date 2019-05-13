@@ -50,7 +50,7 @@ public class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory 
       @NotNull
       @Override
       public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-        return TextAttributesKey.EMPTY_ARRAY;
+        return EMPTY;
       }
     };
   }

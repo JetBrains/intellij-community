@@ -17,7 +17,6 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author dsl
  */
-@ApiStatus.NonExtendable
 public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
   /**
    * The empty array of order entries which can be reused to avoid unnecessary allocations.

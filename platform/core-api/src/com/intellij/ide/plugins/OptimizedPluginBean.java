@@ -42,6 +42,10 @@ public class OptimizedPluginBean {
   @XCollection
   public PluginDependency[] dependencies;
 
+  @Property(surroundWithTag = false)
+  @XCollection
+  public PluginHelpSet[] helpSets;
+
   @Tag("category")
   public String category;
 

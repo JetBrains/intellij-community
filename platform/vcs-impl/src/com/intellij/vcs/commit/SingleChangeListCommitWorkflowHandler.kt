@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitExecutorBase
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
@@ -67,6 +68,11 @@ class SingleChangeListCommitWorkflowHandler(
     updateCommitMessage()
     updateCommitOptions()
   }
+
+  override fun getExecutor(executorId: String): CommitExecutor? = workflow.executors.find { it.id == executorId }
+
+  override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
+    !isCommitEmpty() || (executor is CommitExecutorBase && !executor.areChangesRequired())
 
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
     super.beforeCommitChecksEnded(isDefaultCommit, result)

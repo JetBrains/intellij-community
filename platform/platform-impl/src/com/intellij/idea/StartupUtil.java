@@ -66,6 +66,7 @@ public class StartupUtil {
   public static final String NO_SPLASH = "nosplash";
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
+  public static final String IDEA_STARTUP_LISTENER_PROPERTY = "idea.startup.listener";
 
   @SuppressWarnings("SpellCheckingInspection") private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
@@ -108,6 +109,31 @@ public class StartupUtil {
     }
   }
 
+  @NotNull
+  private static StartupListener createStartupListener() {
+    String className = System.getProperty(IDEA_STARTUP_LISTENER_PROPERTY);
+    return className != null ? createStartupListener(className) : phase -> {};
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static StartupListener createStartupListener(String className) {
+    try {
+      return (StartupListener)Class.forName(className).newInstance();
+    }
+    catch (ClassNotFoundException e) {
+      System.err.println(IDEA_STARTUP_LISTENER_PROPERTY + " class not found: " + className);
+    }
+    catch (IllegalAccessException e) {
+      System.err.println("Cannot access " + IDEA_STARTUP_LISTENER_PROPERTY + " class: " + className);
+    }
+    catch (InstantiationException e) {
+      System.err.println("Cannot instantiate " + IDEA_STARTUP_LISTENER_PROPERTY + " class: " + className);
+    }
+
+    System.exit(Main.INSTALLATION_CORRUPTED);
+    throw new RuntimeException(); // returns Nothing
+  }
+
   private static void runPreAppClass(Logger log) {
     String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
     if (classBeforeAppProperty != null) {
@@ -124,6 +150,8 @@ public class StartupUtil {
 
   static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter)
     throws InvocationTargetException, InterruptedException, ExecutionException {
+    StartupListener startupListener = createStartupListener();
+
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     checkHiDPISettings();
 
@@ -158,6 +186,7 @@ public class StartupUtil {
     // this check must be performed before system directories are locked
     boolean newConfigFolder = !Main.isHeadless() && !new File(PathManager.getConfigPath()).exists();
 
+    startupListener.before(StartupPhase.FOLDERS_CHECK);
     Logger log = lockDirsAndConfigureLogger(args);
 
     boolean isParallelExecution = SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", true);
@@ -198,6 +227,7 @@ public class StartupUtil {
     }
 
     if (!Main.isHeadless()) {
+      startupListener.before(StartupPhase.USER_AGREEMENT);
       AppUIUtil.showUserAgreementAndConsentsIfNeeded(log);
     }
 
@@ -239,7 +269,7 @@ public class StartupUtil {
     return log;
   }
 
-  private static void addInitUiTasks(@NotNull List<? super Future<?>> futures,
+  private static void addInitUiTasks(@NotNull List<Future<?>> futures,
                                      @NotNull ExecutorService executorService,
                                      @NotNull Logger log,
                                      @NotNull Future<?> initLafTask) {

@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.UIUtil;
 import com.sun.javafx.application.PlatformImpl;
@@ -419,7 +418,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     return _findMenuItem(myRoots, uid);
   }
 
-  private static MenuItemInternal _findMenuItem(List<? extends MenuItemInternal> kids, int uid) {
+  private static MenuItemInternal _findMenuItem(List<MenuItemInternal> kids, int uid) {
     if (kids == null || kids.isEmpty())
       return null;
 
@@ -700,7 +699,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         Registry.is("linux.native.menu.force.disable") ||
         !Experiments.isFeatureEnabled("linux.native.menu") ||
         !JnaLoader.isLoaded() ||
-        isUnderVMWithSwiftPluginInstalled()) {
+        isSwiftPluginInstalled()) {
       return null;
     }
 
@@ -719,20 +718,9 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     return null;
   }
 
-  private static boolean isUnderVMWithSwiftPluginInstalled() {
-    // Workaround OC-18001 OC-18634 CLion crashes after opening Swift project on Linux
-    if (PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"))) {
-      try {
-        String stdout = StringUtil.toLowerCase(
-          ExecUtil.execAndGetOutput(new GeneralCommandLine("lspci")).getStdout());
-        return stdout.contains("vmware") || stdout.contains("virtualbox");
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-
-    return false;
+  private static boolean isSwiftPluginInstalled() {
+    // SourceKit in CLion crashes after opening Swift project on Linux (OC-18001, OC-18634)
+    return PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"));
   }
 
   private static class MenuItemInternal {

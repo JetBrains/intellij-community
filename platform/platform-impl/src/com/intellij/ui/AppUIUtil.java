@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
@@ -17,15 +16,19 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
@@ -36,7 +39,6 @@ import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.SwingHelper;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -55,6 +57,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -89,14 +92,14 @@ public class AppUIUtil {
 
       if (SystemInfo.isUnix) {
         @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
-        ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 128, fallback));
+        ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 128, fallback));
       }
 
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
-      ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 32, fallback));
+      ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 32, fallback));
 
       if (SystemInfo.isWindows) {
-        ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx));
+        ContainerUtil.addIfNotNull(images, ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
       }
 
       for (int i = 0; i < images.size(); i++) {
@@ -118,22 +121,14 @@ public class AppUIUtil {
     }
   }
 
-  @NotNull
-  private static Image loadSmallApplicationIconImage(@NotNull ScaleContext ctx) {
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
-    return loadApplicationIconImage(appInfo.getSmallApplicationSvgIconUrl(), ctx, 16, fallbackSmallIconUrl);
-  }
-
-  @NotNull
-  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
-    Image image = loadSmallApplicationIconImage(ctx);
-    return new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx));
-  }
-
-  @Contract("_, _, _, !null -> !null")
   @Nullable
-  private static Image loadApplicationIconImage(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
+  public static Icon loadHiDPIApplicationIcon(@NotNull ScaleContext ctx, int size) {
+    Image image = loadApplicationIcon(ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl(), ctx, size, null);
+    return image != null ? new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx)) : null;
+  }
+
+  @Nullable
+  private static Image loadApplicationIcon(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
     if (svgPath != null) {
       try (InputStream stream = AppUIUtil.class.getResourceAsStream(svgPath)) {
         return SVGLoader.load(null, stream, ctx, size, size);
@@ -197,7 +192,8 @@ public class AppUIUtil {
 
   // keep in sync with LinuxDistributionBuilder#getFrameClass
   public static String getFrameClass() {
-    String name = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getFullProductNameWithEdition())
+    String name = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+      .toLowerCase(Locale.US)
       .replace(' ', '-')
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
@@ -302,7 +298,6 @@ public class AppUIUtil {
 
   public static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log) {
     if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
-      EndUserAgreement.updateCachedContentToLatestBundledVersion();
       EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
       if (!agreement.isAccepted()) {
         try {
@@ -346,6 +341,16 @@ public class AppUIUtil {
    * @param isPrivacyPolicy  true if this document is a privacy policy
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
+    final String title = isPrivacyPolicy
+                         ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
+                         : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement";
+    showEndUserAgreementText(title, htmlText);
+  }
+
+  /**
+   * Used by {@link com.intellij.idea.StartupListener}
+   */
+  public static void showEndUserAgreementText(String title, @NotNull String htmlText) {
       DialogWrapper dialog = new DialogWrapper(true) {
 
       private JEditorPane myViewer;
@@ -383,29 +388,9 @@ public class AppUIUtil {
           new JLabel("Please read and accept these terms and conditions. Scroll down for full text:")), BorderLayout.NORTH);
         JBScrollPane scrollPane = new JBScrollPane(myViewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
         centerPanel.add(scrollPane, BorderLayout.CENTER);
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
-          JPanel eapPanel = new JPanel(new BorderLayout(8, 8));
-          eapPanel.setBorder(JBUI.Borders.empty(8));
-          //noinspection UseJBColor
-          eapPanel.setBackground(new Color(0xDCE4E8));
-          IconLoader.activate();
-          JLabel label = new JLabel(AllIcons.General.BalloonInformation);
-          label.setVerticalAlignment(SwingConstants.TOP);
-          eapPanel.add(label, BorderLayout.WEST);
-          JEditorPane html = SwingHelper.createHtmlLabel(
-            "EAP builds report usage statistics by default per "+
-            (isPrivacyPolicy? "this Privacy Policy." : "the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>.") +
-            "\nNo personal or sensitive data are sent. You may disable this in the settings.", null, null
-          );
-          eapPanel.add(html, BorderLayout.CENTER);
-          bottomPanel.add(eapPanel, BorderLayout.NORTH);
-        }
         JCheckBox checkBox = new JCheckBox("I confirm that I have read and accept the terms of this User Agreement");
-        bottomPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.CENTER);
-        centerPanel.add(JBUI.Borders.emptyTop(8).wrap(bottomPanel), BorderLayout.SOUTH);
+        centerPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.SOUTH);
         checkBox.addActionListener(e -> setOKActionEnabled(checkBox.isSelected()));
-        centerPanel.setPreferredSize(JBUI.size(500, 450));
         return centerPanel;
       }
 
@@ -428,7 +413,7 @@ public class AppUIUtil {
       @Override
       public void doCancelAction() {
         super.doCancelAction();
-        Application application = ApplicationManager.getApplication();
+        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
         if (application == null) {
           System.exit(Main.PRIVACY_POLICY_REJECTION);
         }
@@ -438,12 +423,8 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(
-      isPrivacyPolicy
-      ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
-      : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement"
-    );
-    dialog.pack();
+    dialog.setTitle(title);
+    dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }
 

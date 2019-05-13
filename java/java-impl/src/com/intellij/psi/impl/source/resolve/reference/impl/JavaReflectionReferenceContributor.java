@@ -111,11 +111,6 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
       }
       return new JavaClassReferenceSet(str, position, offsetInPosition, true, this) {
         @Override
-        public boolean isAllowSpaces() {
-          return false;
-        }
-
-        @Override
         public boolean isAllowDollarInNames() {
           return true;
         }

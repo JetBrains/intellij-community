@@ -29,9 +29,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.LanguageSubstitutors;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -44,7 +45,7 @@ import java.nio.charset.Charset;
  *
  * Class is not final since it is overridden in Upsource
  */
-public class FileContentImpl extends UserDataHolderBase implements PsiDependentFileContent {
+public class FileContentImpl extends UserDataHolderBase implements FileContent {
   private final VirtualFile myFile;
   private final String myFileName;
   private final FileType myFileType;
@@ -90,14 +91,12 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
 
   private static final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
 
+  /**
+   * @return psiFile associated with the content. If the file was not set on FileContentCreation, it will be created on the spot
+   */
   @NotNull
   @Override
   public PsiFile getPsiFile() {
-    return getPsiFileForPsiDependentIndex();
-  }
-
-  @NotNull
-  private PsiFile getFileFromText() {
     PsiFile psi = getUserData(IndexingDataKeys.PSI_FILE);
 
     if (psi == null) {
@@ -112,12 +111,11 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
     return psi;
   }
 
-  @Override
   @NotNull
-  public LighterAST getLighterAST() {
+  public LighterAST getLighterASTForPsiDependentIndex() {
     LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
-      FileASTNode node = getPsiFile().getNode();
+      FileASTNode node = getPsiFileForPsiDependentIndex().getNode();
       lighterAST = myLighterASTShouldBeThreadSafe ? new TreeBackedLighterAST(node) : node.getLighterAST();
       putUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY, lighterAST);
     }
@@ -251,11 +249,6 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
     myHash = hash;
   }
 
-  /**
-   * @deprecated use {@link FileContent#getPsiFile()}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
   @NotNull
   public PsiFile getPsiFileForPsiDependentIndex() {
     PsiFile psi = null;
@@ -273,8 +266,12 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
       }
     }
     if (psi == null) {
-      psi = getFileFromText();
+      psi = getPsiFile();
     }
     return psi;
+  }
+
+  public boolean isPhysicalContent() {
+    return myPhysicalContent;
   }
 }

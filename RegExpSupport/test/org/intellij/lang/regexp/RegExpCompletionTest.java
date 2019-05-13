@@ -41,19 +41,11 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
       myFixture.configureByText(RegExpFileType.INSTANCE, "\\N{SMILE<caret>}");
       final LookupElement[] elements = myFixture.completeBasic();
       final List<String> strings = ContainerUtil.map(elements, LookupElement::getLookupString);
-      List<String> alwaysPresent = Arrays.asList("SMILE", "SMILING FACE WITH SMILING EYES", "SMILING FACE WITH HEART-SHAPED EYES",
-                                                 "SMILING CAT FACE WITH HEART-SHAPED EYES", "SMILING FACE WITH OPEN MOUTH AND SMILING EYES",
-                                                 "SMILING FACE WITH OPEN MOUTH AND TIGHTLY-CLOSED EYES", "CAT FACE WITH WRY SMILE",
-                                                 "GRINNING CAT FACE WITH SMILING EYES", "GRINNING FACE WITH SMILING EYES",
-                                                 "KISSING FACE WITH SMILING EYES");
-      String message = strings.toString();
-      assertTrue(message, strings.containsAll(alwaysPresent));
-      List<String> other = new ArrayList<>(strings);
-      other.removeAll(alwaysPresent);
-      // Unicode 10.0
-      List<String> maybePresent = Arrays.asList("SMILING FACE WITH SMILING EYES AND HAND COVERING MOUTH", "SIGNWRITING MOUTH SMILE",
-                                                "SIGNWRITING MOUTH SMILE OPEN", "SIGNWRITING MOUTH SMILE WRINKLED");
-      assertTrue(message, maybePresent.containsAll(other));
+      assertEquals(Arrays.asList("SMILE", "SMILING FACE WITH SMILING EYES", "SMILING FACE WITH HEART-SHAPED EYES",
+                                 "SMILING CAT FACE WITH HEART-SHAPED EYES", "SMILING FACE WITH OPEN MOUTH AND SMILING EYES",
+                                 "SMILING FACE WITH OPEN MOUTH AND TIGHTLY-CLOSED EYES", "CAT FACE WITH WRY SMILE",
+                                 "GRINNING CAT FACE WITH SMILING EYES", "GRINNING FACE WITH SMILING EYES",
+                                 "KISSING FACE WITH SMILING EYES"), strings);
     }
 
     public void testBackSlashVariants() {

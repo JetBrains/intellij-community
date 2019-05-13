@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.testing.pytest;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -51,7 +50,7 @@ public class PyTestUtil {
     }
     final String className = pyClass.getName();
     if (className == null) return false;
-    final String name = StringUtil.toLowerCase(className);
+    final String name = className.toLowerCase();
     if (name.startsWith("test")) {
       for (PyFunction cls : pyClass.getMethods()) {
         if (isPyTestFunction(cls)) {

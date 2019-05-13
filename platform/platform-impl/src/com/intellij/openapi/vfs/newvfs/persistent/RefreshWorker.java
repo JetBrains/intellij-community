@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.Queue;
@@ -31,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
@@ -216,7 +216,7 @@ public class RefreshWorker {
       }
 
       for (ChildInfo record : newKids) {
-        myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, () -> checkCancelled(dir));
+        myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, ()->checkCancelled(dir));
       }
 
       for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
@@ -260,10 +260,10 @@ public class RefreshWorker {
                                  @NotNull VirtualDirectoryImpl dir) {
     while (true) {
       checkCancelled(dir);
-
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
         ReadAction.compute(() -> pair(dir.getCachedChildren(), dir.getSuspiciousNames()));
+
       List<VirtualFile> cached = result.getFirst();
       List<String> wanted = result.getSecond();
 
@@ -271,7 +271,8 @@ public class RefreshWorker {
         fs.isCaseSensitive() || cached.isEmpty() ? null : new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
 
       if (LOG.isTraceEnabled()) {
-        LOG.trace("cached=" + cached + " actual=" + actualNames + " suspicious=" + wanted);
+        LOG.trace("cached=" + cached + " actual=" + actualNames);
+        LOG.trace("suspicious=" + wanted);
       }
 
       // reading children attributes
@@ -312,7 +313,7 @@ public class RefreshWorker {
         }
 
         for (ChildInfo record : newKids) {
-          myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, () -> checkCancelled(dir));
+          myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, ()->checkCancelled(dir));
         }
 
         return true;
@@ -332,18 +333,11 @@ public class RefreshWorker {
     return new ChildInfo(ChildInfo.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
-  static class RefreshCancelledException extends RuntimeException {
-    @Override
-    public synchronized Throwable fillInStackTrace() {
-      return this;
-    }
-  }
+  static class RefreshCancelledException extends RuntimeException { }
 
   private void checkCancelled(@NotNull NewVirtualFile stopAt) throws RefreshCancelledException {
-    if (ourTestListener != null) {
-      ourTestListener.accept(stopAt);
-    }
-    if (myCancelled) {
+    Function<? super VirtualFile, Boolean> cancellingCondition;
+    if (myCancelled || (cancellingCondition = ourCancellingCondition) != null && cancellingCondition.fun(stopAt)) {
       if (LOG.isTraceEnabled()) LOG.trace("cancelled at: " + stopAt);
       forceMarkDirty(stopAt);
       while (!myRefreshQueue.isEmpty()) {
@@ -385,7 +379,7 @@ public class RefreshWorker {
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
       String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
-      myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, () -> checkCancelled(parent));
+      myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, ()->checkCancelled(parent));
       return true;
     }
 
@@ -402,12 +396,12 @@ public class RefreshWorker {
     }
   }
 
-  private static Consumer<? super VirtualFile> ourTestListener;
+  private static Function<? super VirtualFile, Boolean> ourCancellingCondition;
 
   @TestOnly
-  public static void setTestListener(@Nullable Consumer<? super VirtualFile> testListener) {
+  public static void setCancellingCondition(@Nullable Function<? super VirtualFile, Boolean> condition) {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    ourTestListener = testListener;
-    LocalFileSystemRefreshWorker.setTestListener(testListener);
+    LocalFileSystemRefreshWorker.setCancellingCondition(condition);
+    ourCancellingCondition = condition;
   }
 }

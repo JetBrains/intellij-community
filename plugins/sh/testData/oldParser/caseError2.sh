@@ -1,2 +1,0 @@
-case esac
-echo "Example"

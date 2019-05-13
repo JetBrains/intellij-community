@@ -65,6 +65,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,6 +136,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private EditorEx myEditor;
 
   private final Object LOCK = new Object();
+
+  private final TIntObjectHashMap<ConsoleFolding> myFolding = new TIntObjectHashMap<>();
 
   private String myHelpId;
 
@@ -260,6 +263,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         model.removeFoldRegion(region);
       }
     });
+    myFolding.clear();
 
     updateFoldings(0, myEditor.getDocument().getLineCount() - 1);
   }
@@ -294,6 +298,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     synchronized (LOCK) {
       // real document content will be cleared on next flush;
       myDeferredBuffer.clear();
+      myFolding.clear();
     }
     if (!myFlushAlarm.isDisposed()) {
       cancelAllFlushRequests();
@@ -857,6 +862,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
 
+    myFolding.clear();
     myEditor.getFoldingModel().runBatchFoldingOperation(() -> myEditor.getFoldingModel().clearFoldRegions());
 
     cancelHeavyAlarm();
@@ -994,7 +1000,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     ApplicationManager.getApplication().assertIsDispatchThread();
     boolean canHighlightHyperlinks = !myFilters.isEmpty();
 
-    if (!canHighlightHyperlinks && !myUpdateFoldingsEnabled) {
+    if (!canHighlightHyperlinks && myUpdateFoldingsEnabled) {
       return;
     }
     DocumentEx document = myEditor.getDocument();
@@ -1064,16 +1070,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private void updateFoldings(final int startLine, final int endLine) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
-      Document document = myEditor.getDocument();
-
-      FoldRegion existingRegion =
-        startLine > 0 ? myEditor.getFoldingModel().getCollapsedRegionAtOffset(document.getLineStartOffset(startLine - 1)) : null;
-      ConsoleFolding lastFolding = USED_FOLDING_KEY.get(existingRegion);
-      int lastStartLine = lastFolding == null ? Integer.MAX_VALUE :
-                          existingRegion.getStartOffset() == 0 ? 0 :
-                          document.getLineNumber(existingRegion.getStartOffset()) + 1;
-
-      for (int line = startLine; line <= endLine; line++) {
+      if (myEditor == null || myEditor.isDisposed()) {
+        return;
+      }
+      final Document document = myEditor.getDocument();
+      final CharSequence chars = document.getCharsSequence();
+      for (int line = Math.max(0, startLine); line <= endLine; line++) {
+        boolean flushOnly = line == endLine;
         /*
         Grep Console plugin allows to fold empty lines. We need to handle this case in a special way.
 
@@ -1086,50 +1089,65 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         So therefore the condition, the last line(empty string) should still flush, but not be processed by
         com.intellij.execution.ConsoleFolding.
          */
-        ConsoleFolding next = line < endLine ? foldingForLine(line, document) : null;
-        if (next != lastFolding) {
-          if (lastFolding != null) {
-            if (line > startLine && existingRegion != null && lastStartLine < startLine) {
-              myEditor.getFoldingModel().removeFoldRegion(existingRegion);
-            }
-            addFoldRegion(document, lastFolding, lastStartLine, line - 1);
-          }
-          lastFolding = next;
-          lastStartLine = line;
-        }
+        addFolding(document, chars, line, flushOnly);
       }
     });
   }
 
-  private static final Key<ConsoleFolding> USED_FOLDING_KEY = Key.create("USED_FOLDING_KEY");
-
-  private void addFoldRegion(@NotNull Document document, @NotNull ConsoleFolding folding, int startLine, int endLine) {
-    List<String> toFold = new ArrayList<>(endLine - startLine + 1);
-    for (int i = startLine; i <= endLine; i++) {
-      toFold.add(EditorHyperlinkSupport.getLineText(document, i, false));
+  private void addFolding(@NotNull Document document,
+                          @NotNull CharSequence chars,
+                          int line,
+                          boolean flushOnly) {
+    ConsoleFolding current = null;
+    if (!flushOnly) {
+      String commandLinePlaceholder = myCommandLineFolding.getPlaceholder(line);
+      if (commandLinePlaceholder != null) {
+        FoldRegion region = myEditor.getFoldingModel().addFoldRegion(document.getLineStartOffset(line), document.getLineEndOffset(line), commandLinePlaceholder);
+        if (region != null) {
+          region.setExpanded(false);
+        }
+        return;
+      }
+      String lineText = EditorHyperlinkSupport.getLineText(document, line, false);
+      current = foldingForLine(lineText, getProject());
+      if (current != null) {
+        myFolding.put(line, current);
+      }
     }
 
-    int oStart = document.getLineStartOffset(startLine);
-    if (oStart > 0) oStart--;
-    int oEnd = CharArrayUtil.shiftBackward(document.getImmutableCharSequence(), document.getLineEndOffset(endLine) - 1, " \t") + 1;
+    // group equal foldings for previous lines into one huge folding
+    final ConsoleFolding prevFolding = myFolding.get(line - 1);
+    if (prevFolding != null && !prevFolding.equals(current)) {
+      final int lEnd = line - 1;
+      int lStart = lEnd;
+      while (prevFolding.equals(myFolding.get(lStart - 1))) lStart--;
 
-    String placeholder = folding.getPlaceholderText(getProject(), toFold);
-    FoldRegion region = placeholder == null ? null : myEditor.getFoldingModel().addFoldRegion(oStart, oEnd, placeholder);
-    if (region != null) {
-      region.setExpanded(false);
-      region.putUserData(USED_FOLDING_KEY, folding);
+      for (int i = lStart; i <= lEnd; i++) {
+        myFolding.remove(i);
+      }
+
+      List<String> toFold = new ArrayList<>(lEnd - lStart + 1);
+      for (int i = lStart; i <= lEnd; i++) {
+        toFold.add(EditorHyperlinkSupport.getLineText(document, i, false));
+      }
+
+      int oStart = document.getLineStartOffset(lStart);
+      if (oStart > 0) oStart--;
+      int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
+
+      String placeholder = prevFolding.getPlaceholderText(getProject(), toFold);
+      FoldRegion region = placeholder == null ? null : myEditor.getFoldingModel().addFoldRegion(oStart, oEnd, placeholder);
+      if (region != null) {
+        region.setExpanded(false);
+      }
     }
   }
 
   @Nullable
-  private ConsoleFolding foldingForLine(int line, @NotNull Document document) {
-    String lineText = EditorHyperlinkSupport.getLineText(document, line, false);
-    if (line == 0 && myCommandLineFolding.shouldFoldLine(myProject, lineText)) {
-      return myCommandLineFolding;
-    }
-
-    for (ConsoleFolding extension : ConsoleFolding.EP_NAME.getExtensions()) {
-      if (extension.shouldFoldLine(myProject, lineText)) {
+  private static ConsoleFolding foldingForLine(@NotNull String lineText, @NotNull Project project) {
+    ConsoleFolding[] extensions = ConsoleFolding.EP_NAME.getExtensions();
+    for (ConsoleFolding extension : extensions) {
+      if (extension.shouldFoldLine(project, lineText)) {
         return extension;
       }
     }
@@ -1546,15 +1564,27 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    * Our point is to fold such long command line and represent it as a single visual line by default.
    */
   private class CommandLineFolding extends ConsoleFolding {
+    /**
+     * Checks if target line should be folded and returns its placeholder if the examination succeeds.
+     *
+     * @param line index of line to check
+     * @return placeholder text if given line should be folded; {@code null} otherwise
+     */
+    @Nullable
+    private String getPlaceholder(int line) {
+      if (myEditor == null || line != 0) {
+        return null;
+      }
 
-    @Override
-    public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
-      return line.length() >= 1000 && myState.isCommandLine(line);
-    }
+      String text = EditorHyperlinkSupport.getLineText(myEditor.getDocument(), 0, false);
+      // Don't fold the first line if the line is not that big.
+      if (text.length() < 1000) {
+        return null;
+      }
 
-    @Override
-    public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
-      String text = lines.get(0);
+      if (!myState.isCommandLine(text)) {
+        return null;
+      }
 
       int index = 0;
       if (text.charAt(0) == '"') {
@@ -1574,6 +1604,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       assert index <= text.length();
       return text.substring(0, index) + " ...";
+    }
+
+    @Override
+    public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
+      return false;
+    }
+
+    @Override
+    public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
+      // Is not expected to be called.
+      return "<...>";
     }
   }
 
@@ -1598,9 +1639,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     @Override
     public final void run() {
-      if (isDisposed()) return;
       // flush requires UndoManger/CommandProcessor properly initialized
-      if (!StartupManagerEx.getInstanceEx(myProject).startupActivityPassed()) {
+      if (!isDisposed() && !StartupManagerEx.getInstanceEx(myProject).startupActivityPassed()) {
         addFlushRequest(DEFAULT_FLUSH_DELAY, FLUSH);
       }
 

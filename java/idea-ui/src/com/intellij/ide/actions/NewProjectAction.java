@@ -9,6 +9,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -26,7 +27,7 @@ public class NewProjectAction extends AnAction implements DumbAware, NewProjectO
   public void actionPerformed(@NotNull AnActionEvent e) {
     NewProjectWizard wizard = new NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null);
     Project eventProject = getEventProject(e);
-    NewProjectUtil.createNewProject(eventProject, wizard);
+    ApplicationManager.getApplication().invokeLater(() -> NewProjectUtil.createNewProject(eventProject, wizard));
   }
 
   @Override

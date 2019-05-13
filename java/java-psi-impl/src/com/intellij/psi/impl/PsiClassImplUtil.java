@@ -987,7 +987,7 @@ public class PsiClassImplUtil {
     }
     PsiType upperBound = psiClass instanceof PsiTypeParameter ? TypeConversionUtil.getInferredUpperBoundForSynthetic((PsiTypeParameter)psiClass) : null;
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
-      upperBound = ThreadLocalTypes.getElementType(psiClass);
+      upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
     if (upperBound instanceof PsiIntersectionType) {
       final PsiType[] conjuncts = ((PsiIntersectionType)upperBound).getConjuncts();
@@ -1030,7 +1030,7 @@ public class PsiClassImplUtil {
     }
     PsiType upperBound = psiClass instanceof PsiTypeParameter ? TypeConversionUtil.getInferredUpperBoundForSynthetic((PsiTypeParameter)psiClass) : null;
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
-      upperBound = ThreadLocalTypes.getElementType(psiClass);
+      upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
     if (upperBound instanceof PsiIntersectionType) {
       final PsiType[] conjuncts = ((PsiIntersectionType)upperBound).getConjuncts();

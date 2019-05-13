@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -186,7 +187,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
     //15.9.3 Choosing the Constructor and its Arguments
     //The return type and throws clause of cj are the same as the return type and throws clause determined for mj (p15.12.2.6)
-    if (errorMessage == null && ((MethodCandidateInfo)staticFactoryCandidateInfo).isErased()) {
+    if (errorMessage == null && InferenceSession.wasUncheckedConversionPerformed(context)) {
       return DiamondInferenceResult.RAW_RESULT;
     }
 
@@ -248,14 +249,14 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         return JavaResolveResult.EMPTY;
       }
 
-      final MethodCandidateInfo staticFactoryCandidateInfo = createMethodCandidate((MethodCandidateInfo)result, context, false, argumentList);
+      final MethodCandidateInfo staticFactoryCandidateInfo = createMethodCandidate(staticFactory, context, false, argumentList);
       if (!staticFactory.isVarArgs()) {
         return staticFactoryCandidateInfo;
       }
 
       final ArrayList<CandidateInfo> conflicts = new ArrayList<>();
       conflicts.add(staticFactoryCandidateInfo);
-      conflicts.add(createMethodCandidate((MethodCandidateInfo)result, context, true, argumentList));
+      conflicts.add(createMethodCandidate(staticFactory, context, true, argumentList));
       return resolver.resolveConflict(conflicts);
     });
   }
@@ -437,11 +438,11 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
 
-  private static MethodCandidateInfo createMethodCandidate(@NotNull final MethodCandidateInfo staticFactoryMethod,
+  private static MethodCandidateInfo createMethodCandidate(@NotNull final PsiMethod staticFactoryMethod,
                                                            final PsiElement parent,
                                                            final boolean varargs,
                                                            final PsiExpressionList argumentList) {
-    return new MethodCandidateInfo(staticFactoryMethod.getElement(), PsiSubstitutor.EMPTY, !staticFactoryMethod.isAccessible(), false, argumentList, parent, null, null) {
+    return new MethodCandidateInfo(staticFactoryMethod, PsiSubstitutor.EMPTY, false, false, argumentList, parent, null, null) {
       private PsiType[] myExpressionTypes;
 
       @Override

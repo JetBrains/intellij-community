@@ -8,7 +8,7 @@ import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
@@ -16,8 +16,8 @@ class GroovyInferenceSession(
   typeParams: Array<PsiTypeParameter>,
   val contextSubstitutor: PsiSubstitutor,
   context: PsiElement,
-  val skipClosureBlock: Boolean = true,
-  private val expressionPredicates: Set<ExpressionPredicate> = emptySet()
+  val closureSkipList: List<GrMethodCall> = emptyList(),
+  val skipClosureBlock: Boolean = true
 ) : InferenceSession(typeParams, contextSubstitutor, context.manager, context) {
 
   private val nestedSessions = mutableMapOf<GroovyResolveResult, GroovyInferenceSession>()
@@ -70,7 +70,7 @@ class GroovyInferenceSession(
                          context: PsiElement,
                          result: GroovyResolveResult,
                          f: (GroovyInferenceSession) -> Unit) {
-    val nestedSession = GroovyInferenceSession(params, siteSubstitutor, context, skipClosureBlock, expressionPredicates)
+    val nestedSession = GroovyInferenceSession(params, siteSubstitutor, context, emptyList(), skipClosureBlock)
     nestedSession.propagateVariables(this)
     f(nestedSession)
     nestedSessions[result] = nestedSession
@@ -78,9 +78,5 @@ class GroovyInferenceSession(
     for ((vars, rightType) in nestedSession.myIncorporationPhase.captures) {
       this.myIncorporationPhase.addCapture(vars, rightType)
     }
-  }
-
-  fun checkPredicates(expression: GrExpression) : Boolean {
-    return expressionPredicates.all { it.invoke(expression) }
   }
 }

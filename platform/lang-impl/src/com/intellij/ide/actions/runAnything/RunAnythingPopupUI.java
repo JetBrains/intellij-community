@@ -695,6 +695,12 @@ public class RunAnythingPopupUI extends BigPopupUI {
       });
     }
 
+    private void runReadAction(@NotNull Runnable action) {
+      if (!DumbService.getInstance(myProject).isDumb()) {
+        ApplicationManager.getApplication().runReadAction(action);
+      }
+    }
+
     protected void check() {
       myProgressIndicator.checkCanceled();
       if (myDone.isRejected()) throw new ProcessCanceledException();
@@ -713,18 +719,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private void buildCompletionGroups(@NotNull String pattern, @NotNull Runnable checkCancellation) {
       LOG.assertTrue(myListModel instanceof RunAnythingSearchListModel.RunAnythingMainListModel);
 
-      if (DumbService.getInstance(myProject).isDumb()) {
-        return;
-      }
-
       StreamEx.of(RunAnythingRecentGroup.INSTANCE)
         .select(RunAnythingGroup.class)
         .append(myListModel.getGroups().stream()
                   .filter(group -> group instanceof RunAnythingCompletionGroup || group instanceof RunAnythingGeneralGroup)
                   .filter(group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group.getTitle())))
         .forEach(group -> {
-          ApplicationManager.getApplication().runReadAction(
-            () -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
+          runReadAction(() -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
           checkCancellation.run();
         });
     }
@@ -751,7 +752,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     public ActionCallback insert(final int index, @NotNull RunAnythingGroup group) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> runReadAction(() -> {
         try {
           RunAnythingGroup.SearchResult result = group.getItems(myDataContext, myListModel, trimHelpPattern(), true, this::check);
 

@@ -22,6 +22,9 @@ fun getPluginInfo(className: String): PluginInfo {
   }
 
   val pluginId = PluginManagerCore.getPluginOrPlatformByClassName(className) ?: return unknownPlugin
+  if (PluginManagerCore.CORE_PLUGIN_ID == pluginId.idString) {
+    return platformPlugin
+  }
   return getPluginInfoById(pluginId)
 }
 
@@ -32,9 +35,6 @@ fun getPluginInfo(className: String): PluginInfo {
 fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
   if (pluginId == null) return unknownPlugin
 
-  if (PluginManagerCore.CORE_PLUGIN_ID == pluginId.idString) {
-    return platformPlugin
-  }
   return getPluginInfoByDescriptor(PluginManager.getPlugin(pluginId))
 }
 

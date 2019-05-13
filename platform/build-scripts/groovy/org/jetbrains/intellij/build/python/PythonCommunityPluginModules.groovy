@@ -45,7 +45,6 @@ class PythonCommunityPluginModules {
       modules.each { module ->
         withModule(module, mainJarName, null)
       }
-      withModule(mainModuleName, mainJarName)
       withModule(buildPatchesModule, mainJarName, null)
       withResourceFromModule("intellij.python.helpers", "", "helpers")
       withCustomVersion { BuildContext context ->

@@ -324,6 +324,12 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
+  @NotNull
+  public HelpSetPath[] getHelpSets() {
+    throw new IllegalStateException();
+  }
+
+  @Override
   @Nullable
   public String getVendorLogoPath() {
     return null;

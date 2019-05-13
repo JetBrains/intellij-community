@@ -255,8 +255,7 @@ public class GitVFSListener extends VcsVFSListener {
     for (FilePath file : files) {
       MovedFileInfo info = filesToMove.get(file);
       GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MV);
-      h.addParameters("-f");
-      h.addRelativePaths(VcsUtil.getFilePath(info.myOldPath), VcsUtil.getFilePath(info.myNewPath));
+      h.addParameters("-f", info.myOldPath, info.myNewPath);
       myGit.runCommand(h);
       toRefresh.add(new File(info.myOldPath));
       toRefresh.add(new File(info.myNewPath));

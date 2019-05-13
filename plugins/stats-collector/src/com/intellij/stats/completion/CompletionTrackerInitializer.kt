@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupManager
@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -20,7 +21,7 @@ import com.intellij.stats.personalization.UserFactorsManager
 import java.beans.PropertyChangeListener
 import kotlin.random.Random
 
-class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable {
+class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable, BaseComponent {
   companion object {
     var isEnabledInTests: Boolean = false
     private const val LOGGED_SESSIONS_RATIO: Double = 0.1
@@ -48,10 +49,6 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
         lookup.setPrefixChangeListener(tracker)
       }
     }
-  }
-
-  init {
-    initComponent()
   }
 
   private fun actionsTracker(lookup: LookupImpl, experimentHelper: WebServiceStatus): CompletionActionsTracker {
@@ -96,7 +93,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     lookup.addLookupListener(LookupStartedTracker())
   }
 
-  private fun initComponent() {
+  override fun initComponent() {
     if (!shouldInitialize()) return
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(this)

@@ -174,14 +174,13 @@ public class SegmentArray {
   }
 
   protected void insert(@NotNull SegmentArray segmentArray, int startIndex) {
-    myStarts = insert(myStarts, segmentArray.myStarts, startIndex, segmentArray.getSegmentCount(), mySegmentCount);
-    myEnds = insert(myEnds, segmentArray.myEnds, startIndex, segmentArray.getSegmentCount(), mySegmentCount);
+    myStarts = insert(myStarts, segmentArray.myStarts, startIndex, segmentArray.getSegmentCount());
+    myEnds = insert(myEnds, segmentArray.myEnds, startIndex, segmentArray.getSegmentCount());
     mySegmentCount += segmentArray.getSegmentCount();
   }
 
   @NotNull
-  protected static int[] insert(@NotNull int[] array,
-                                @NotNull int[] insertArray, int startIndex, int insertLength, int mySegmentCount) {
+  protected int[] insert(@NotNull int[] array, @NotNull int[] insertArray, int startIndex, int insertLength) {
     int[] newArray = reallocateArray(array, mySegmentCount + insertLength);
     if (startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);

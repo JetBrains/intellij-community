@@ -10,8 +10,6 @@ import java.lang.reflect.Type;
 public interface Accessor {
   Object read(@NotNull Object o);
 
-  Object readUnsafe(@NotNull Object o) throws IllegalAccessException, InvocationTargetException;
-
   int readInt(@NotNull Object o) throws IllegalAccessException, InvocationTargetException;
 
   long readLong(@NotNull Object o) throws IllegalAccessException, InvocationTargetException;

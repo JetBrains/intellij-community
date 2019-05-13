@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -14,7 +13,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,12 +29,10 @@ import java.util.stream.Collectors;
 public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery.labs.intellij.net";
 
-  private static final NotNullLazyValue<ObjectReader> JSON_READER = NotNullLazyValue.createValue(() -> new ObjectMapper().readerFor(TestsSearchResult.class));
-
   @NotNull
   @Override
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                                     @NotNull List<? extends Couple<String>> classesAndMethods,
+                                                     @NotNull List<Couple<String>> classesAndMethods,
                                                      byte frameworkId) {
     if (!ApplicationManager.getApplication().isInternal()) {
       return MultiMap.empty();
@@ -71,7 +67,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     LOG.debug(url);
     return HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(r -> {
       r.write(collection.stream().map(toString).collect(Collectors.joining(",", "[", "]")));
-      TestsSearchResult search = JSON_READER.getValue().readValue(r.getInputStream());
+      TestsSearchResult search = new ObjectMapper().readValue(r.getInputStream(), TestsSearchResult.class);
       MultiMap<String, String> result = new MultiMap<>();
       search.getTests().forEach((classFqn, testMethodName) -> result.putValues(classFqn, testMethodName));
       return result;
@@ -97,7 +93,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId) {
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<Couple<String>> testFqns, byte frameworkId) throws IOException {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/test/details";
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
@@ -112,7 +108,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassName, byte frameworkId) {
+  public List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassName, byte frameworkId) throws IOException {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/files/affected/by-test-classes";
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
@@ -262,25 +258,20 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   }
 
   @NotNull
-  private static List<String> executeQuery(@NotNull ThrowableComputable<? extends List<String>, IOException> query, @NotNull Project project) {
-    try {
-      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-        List<String> result = ProgressManager.getInstance().run(
-          new Task.WithResult<List<String>, IOException>(project,
-                                                         "Searching for Affected File Paths...",
-                                                         true) {
-            @Override
-            protected List<String> compute(@NotNull ProgressIndicator indicator) throws IOException {
-              return query.compute();
-            }
-          });
-        return result == null ? Collections.emptyList() : result;
-      }
-      return query.compute();
+  private static List<String> executeQuery(@NotNull ThrowableComputable<List<String>, IOException> query, @NotNull Project project) throws IOException {
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      List<String> result = ProgressManager.getInstance().run(
+        new Task.WithResult<List<String>, IOException>(project,
+                                                       "Searching for Affected File Paths...",
+                                                       true) {
+          @Override
+          protected List<String> compute(@NotNull ProgressIndicator indicator) throws IOException {
+            return query.compute();
+          }
+        });
+      return result == null ? Collections.emptyList() : result;
     }
-    catch (IOException e) {
-      LOG.error("Can't execute remote query", e);
-      return Collections.emptyList();
-    }
+    return query.compute();
   }
+
 }

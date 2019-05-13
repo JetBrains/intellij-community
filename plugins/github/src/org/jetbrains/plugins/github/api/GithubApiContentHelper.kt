@@ -1,18 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.*
-import com.fasterxml.jackson.databind.introspect.VisibilityChecker
+import com.google.gson.*
+import com.google.gson.reflect.TypeToken
+import org.jetbrains.io.mandatory.NullCheckingFactory
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
 import java.awt.Image
 import java.io.IOException
 import java.io.InputStream
 import java.io.Reader
-import java.text.SimpleDateFormat
 import javax.imageio.ImageIO
 
 object GithubApiContentHelper {
@@ -20,18 +16,11 @@ object GithubApiContentHelper {
   const val V3_JSON_MIME_TYPE = "application/vnd.github.v3+json"
   const val V3_HTML_JSON_MIME_TYPE = "application/vnd.github.v3.html+json"
 
-  val jackson: ObjectMapper = ObjectMapper()
-    .setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"))
-    .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
-    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-    .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-    .setVisibility(VisibilityChecker.Std(JsonAutoDetect.Visibility.NONE,
-                                         JsonAutoDetect.Visibility.NONE,
-                                         JsonAutoDetect.Visibility.NONE,
-                                         JsonAutoDetect.Visibility.NONE,
-                                         JsonAutoDetect.Visibility.ANY))
-
+  val gson: Gson = GsonBuilder()
+    .setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+    .registerTypeAdapterFactory(NullCheckingFactory.INSTANCE)
+    .create()
 
   @Throws(GithubJsonException::class)
   inline fun <reified T> fromJson(string: String): T = fromJson(string, T::class.java)
@@ -40,7 +29,7 @@ object GithubApiContentHelper {
   @Throws(GithubJsonException::class)
   fun <T> fromJson(string: String, clazz: Class<T>): T {
     try {
-      return jackson.readValue(string, clazz)
+      return gson.fromJson(string, TypeToken.get(clazz).type)
     }
     catch (e: JsonParseException) {
       throw GithubJsonException("Can't parse GitHub response", e)
@@ -49,13 +38,11 @@ object GithubApiContentHelper {
 
   @JvmStatic
   @Throws(GithubJsonException::class)
-  fun <T> readJson(reader: Reader, type: JavaType): T {
+  fun <T> readJson(reader: Reader, typeToken: TypeToken<T>): T {
     try {
-      @Suppress("UNCHECKED_CAST")
-      if (type.isTypeOrSubTypeOf(Unit::class.java) || type.isTypeOrSubTypeOf(Void::class.java)) return Unit as T
-      return jackson.readValue(reader, type)
+      return gson.fromJson(reader, typeToken.type)
     }
-    catch (e: JsonProcessingException) {
+    catch (e: JsonParseException) {
       throw GithubJsonException("Can't parse GitHub response", e)
     }
   }
@@ -64,9 +51,9 @@ object GithubApiContentHelper {
   @Throws(GithubJsonException::class)
   fun toJson(content: Any): String {
     try {
-      return jackson.writeValueAsString(content)
+      return gson.toJson(content)
     }
-    catch (e: JsonProcessingException) {
+    catch (e: JsonIOException) {
       throw GithubJsonException("Can't serialize GitHub request body", e)
     }
   }

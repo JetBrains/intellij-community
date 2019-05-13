@@ -4,7 +4,6 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -23,7 +22,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
  * @see JpsModuleSourceRootType#isForTests()
  * @author zolotov
  */
-@ApiStatus.OverrideOnly
 public abstract class TestSourcesFilter {
   private static final ExtensionPointName<TestSourcesFilter> EP_NAME = ExtensionPointName.create("com.intellij.testSourcesFilter");
 

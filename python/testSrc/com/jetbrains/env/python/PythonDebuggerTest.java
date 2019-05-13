@@ -2,7 +2,6 @@ package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -36,10 +35,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-
-import java.nio.file.Paths;
 
 import static org.junit.Assert.*;
 
@@ -1958,7 +1954,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testExecutableScriptDebug() {
-
+    
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_executable_script_debug.py") {
@@ -2007,63 +2003,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return Sets.newHashSet("pytest");
-      }
-    });
-  }
-
-  @Test
-  public void testExecAndSpawnWithBytesArgs() {
-
-    class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTask {
-
-      private final static String BYTES_ARGS_WARNING = "pydev debugger: bytes arguments were passed to a new process creation function. " +
-                                                       "Breakpoints may not work correctly.\n";
-      private final static String PYTHON2_TAG = "python2";
-
-      private Map<String, Set<String>> myEnvTags = Maps.newHashMap();
-
-      ExecAndSpawnWithBytesArgsTask(@Nullable String relativeTestDataPath, String scriptName) {
-        super(relativeTestDataPath, scriptName);
-        loadEnvTags();
-      }
-
-      private void loadEnvTags() {
-        List<String> roots = PythonDebuggerTest.getPythonRoots();
-
-        roots.forEach((root) -> {
-          Set<String> tags = Sets.newHashSet();
-          tags.addAll(PythonDebuggerTest.loadEnvTags(root));
-          myEnvTags.put(root, tags);
-        });
-      }
-
-      private boolean hasPython2Tag(){
-        String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
-        return myEnvTags.get(env).stream().anyMatch((tag) -> tag.startsWith(PYTHON2_TAG));
-      }
-
-      @Override
-      public void testing() throws Exception {
-        if (hasPython2Tag()) {
-          waitForTerminate();
-          assertFalse(output().contains(BYTES_ARGS_WARNING));
-        }
-        else
-          waitForOutput(BYTES_ARGS_WARNING);
-      }
-    }
-
-    runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", "test_call_exec_with_bytes_args.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
-    });
-
-    runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", "test_call_spawn_with_bytes_args.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
       }
     });
   }

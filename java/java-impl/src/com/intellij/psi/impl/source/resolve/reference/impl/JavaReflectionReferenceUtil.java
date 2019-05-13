@@ -468,32 +468,26 @@ public class JavaReflectionReferenceUtil {
     return MethodCallUtils.isCallToMethod(methodCall, className, null, methodName, (PsiType[])null);
   }
 
-  /**
-   * Tries to unwrap array and find its components
-   * @param maybeArray an array to unwrap
-   * @return list of unwrapped array components, some or all of them could be null if unknown (but the length is known);
-   * returns null if nothing is known.
-   */
   @Nullable
-  public static List<PsiExpression> getVarargs(@Nullable PsiExpression maybeArray) {
+  public static PsiExpression[] getVarargAsArray(@Nullable PsiExpression maybeArray) {
     if (ExpressionUtils.isNullLiteral(maybeArray)) {
-      return Collections.emptyList();
+      return PsiExpression.EMPTY_ARRAY;
     }
     if (isVarargAsArray(maybeArray)) {
       final PsiExpression argumentsDefinition = findDefinition(maybeArray);
       if (argumentsDefinition instanceof PsiArrayInitializerExpression) {
-        return Arrays.asList(((PsiArrayInitializerExpression)argumentsDefinition).getInitializers());
+        return ((PsiArrayInitializerExpression)argumentsDefinition).getInitializers();
       }
       if (argumentsDefinition instanceof PsiNewExpression) {
         final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)argumentsDefinition).getArrayInitializer();
         if (arrayInitializer != null) {
-          return Arrays.asList(arrayInitializer.getInitializers());
+          return arrayInitializer.getInitializers();
         }
         final PsiExpression[] dimensions = ((PsiNewExpression)argumentsDefinition).getArrayDimensions();
-        if (dimensions.length == 1) { // new Object[length] or new Class<?>[length]
+        if (dimensions.length == 1) { // special case: new Object[0]
           final Integer itemCount = computeConstantExpression(findDefinition(dimensions[0]), Integer.class);
-          if (itemCount != null && itemCount >= 0 && itemCount < 256) {
-            return Collections.nCopies(itemCount, null);
+          if (itemCount != null && itemCount == 0) {
+            return PsiExpression.EMPTY_ARRAY;
           }
         }
       }

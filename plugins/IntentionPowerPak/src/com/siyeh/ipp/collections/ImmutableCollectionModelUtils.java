@@ -4,7 +4,6 @@ package com.siyeh.ipp.collections;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -16,9 +15,10 @@ import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -27,42 +27,24 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.*;
 
-import static com.intellij.psi.CommonClassNames.*;
-import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
-import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
-
 class ImmutableCollectionModelUtils {
 
-  private static final CallMatcher MAP_ENTRY_CALL = staticCall(JAVA_UTIL_MAP, "entry").parameterCount(2);
+  private static final CallMatcher MAP_ENTRY_CALL = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "entry").parameterCount(2);
 
   @Nullable
   static ImmutableCollectionModel createModel(@NotNull PsiMethodCallExpression call) {
     CollectionType type = CollectionType.create(call);
     if (type == null) return null;
     if (!ControlFlowUtils.canExtractStatement(call)) return null;
-    String assignedVariable = getAssignedVariable(call);
+    PsiVariable assignedVariable = getAssignedVariable(call);
     PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
-    PsiClassType classType = ObjectUtils.tryCast(call.getType(), PsiClassType.class);
-    if (classType == null) return null;
-    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(call.getProject()).getResolveHelper();
-    boolean hasNonResolvedTypeParams = Arrays.stream(classType.getParameters())
-      .map(PsiUtil::resolveClassInClassTypeOnly)
-      .anyMatch(aClass -> isNonResolvedTypeParameter(aClass, call, resolveHelper));
-    if (hasNonResolvedTypeParams) return null;
+    if (method.isVarArgs() && !MethodCallUtils.isVarArgCall(call)) {
+      return args.length == 1 ? new ImmutableCollectionModel(call, type, true, args, assignedVariable) : null;
+    }
     if ("ofEntries".equals(method.getName()) && Arrays.stream(args).anyMatch(arg -> extractPutArgs(arg) == null)) return null;
-    return new ImmutableCollectionModel(call, type, method, assignedVariable);
-  }
-
-  @Contract("null, _, _ -> false")
-  private static boolean isNonResolvedTypeParameter(@Nullable PsiClass parameter,
-                                                    @NotNull PsiElement context,
-                                                    @NotNull PsiResolveHelper resolveHelper) {
-    if (!(parameter instanceof PsiTypeParameter)) return false;
-    PsiTypeParameter typeParameter = (PsiTypeParameter)parameter;
-    String name = typeParameter.getName();
-    return name == null || resolveHelper.resolveReferencedClass(name, context) != parameter;
+    return new ImmutableCollectionModel(call, type, false, args, assignedVariable);
   }
 
   static void replaceWithMutable(@NotNull ImmutableCollectionModel model, @Nullable Editor editor) {
@@ -70,12 +52,12 @@ class ImmutableCollectionModelUtils {
   }
 
   @Nullable
-  private static String getAssignedVariable(@NotNull PsiMethodCallExpression call) {
+  private static PsiVariable getAssignedVariable(@NotNull PsiMethodCallExpression call) {
     PsiElement parent = PsiTreeUtil.getParentOfType(call, PsiVariable.class, PsiAssignmentExpression.class);
     if (parent == null) return null;
     if (parent instanceof PsiVariable) {
       PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiVariable)parent).getInitializer());
-      return initializer == call ? ((PsiVariable)parent).getName() : null;
+      return initializer == call ? (PsiVariable)parent : null;
     }
     PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
     PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
@@ -83,11 +65,7 @@ class ImmutableCollectionModelUtils {
     PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
     PsiReferenceExpression ref = ObjectUtils.tryCast(lhs, PsiReferenceExpression.class);
     if (ref == null) return null;
-    PsiExpression qualifier = ref.getQualifierExpression();
-    if (qualifier != null && SideEffectChecker.mayHaveSideEffects(qualifier)) return null;
-    PsiVariable variable = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
-    if (variable == null || variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.VOLATILE)) return null;
-    return ref.getText();
+    return ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
   }
 
   @Nullable
@@ -108,49 +86,37 @@ class ImmutableCollectionModelUtils {
   private static boolean isEntryConstruction(@NotNull PsiCallExpression call) {
     if (MAP_ENTRY_CALL.matches(call)) return true;
     PsiNewExpression newExpression = ObjectUtils.tryCast(call, PsiNewExpression.class);
-    return newExpression != null && InheritanceUtil.isInheritor(newExpression.getType(), JAVA_UTIL_MAP_ENTRY);
+    return newExpression != null && InheritanceUtil.isInheritor(newExpression.getType(), CommonClassNames.JAVA_UTIL_MAP_ENTRY);
   }
 
   private enum CollectionType {
-    MAP(JAVA_UTIL_HASH_MAP), LIST(JAVA_UTIL_ARRAY_LIST), SET(JAVA_UTIL_HASH_SET);
 
-    private final String myMutableClass;
+    MAP(CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyMap").parameterCount(0),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonMap").parameterCount(2),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "of")
+        .withContextFilter(
+          e -> e instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)e).getArgumentList().getExpressionCount() % 2 == 0),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "ofEntries"))),
+    LIST(CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyList").parameterCount(0),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonList").parameterCount(1),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_LIST, "of"))),
+    SET(CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptySet").parameterCount(0),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of")));
 
-    private static final CallMapper<CollectionType> MAPPER = new CallMapper<CollectionType>()
-      .register(anyOf(
-        staticCall(JAVA_UTIL_COLLECTIONS, "emptyMap").parameterCount(0),
-        staticCall(JAVA_UTIL_COLLECTIONS, "singletonMap").parameterCount(2),
-        staticCall(JAVA_UTIL_MAP, "of"),
-        staticCall(JAVA_UTIL_MAP, "ofEntries"),
-        staticCall("com.google.common.collect.ImmutableMap", "of")), MAP)
-      .register(anyOf(
-        staticCall(JAVA_UTIL_COLLECTIONS, "emptyList").parameterCount(0),
-        staticCall(JAVA_UTIL_COLLECTIONS, "singletonList").parameterCount(1),
-        staticCall(JAVA_UTIL_LIST, "of"),
-        staticCall("com.google.common.collect.ImmutableList", "of")), LIST)
-      .register(anyOf(
-        staticCall(JAVA_UTIL_COLLECTIONS, "emptySet").parameterCount(0),
-        staticCall(JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1),
-        staticCall(JAVA_UTIL_SET, "of"),
-        staticCall("com.google.common.collect.ImmutableSet", "of")), SET);
+    private final CallMatcher myMatcher;
 
-    CollectionType(String className) {
-      myMutableClass = className;
-    }
-
-    @NotNull
-    String getInitializerText(@Nullable String copyFrom) {
-      return String.format("new " + myMutableClass + "<>(%s)", StringUtil.notNullize(copyFrom));
+    @Contract(pure = true)
+    CollectionType(@NotNull CallMatcher matcher) {
+      myMatcher = matcher;
     }
 
     @Nullable
     static CollectionType create(@NotNull PsiMethodCallExpression call) {
-      CollectionType type = MAPPER.mapFirst(call);
-      if (type == null) return null;
-      PsiType expectedType = ExpectedTypeUtils.findExpectedType(call, false);
-      if (expectedType == null) return null;
-      PsiClassType newType = TypeUtils.getType(type.myMutableClass, call);
-      return expectedType.isAssignableFrom(newType) ? type : null;
+      return Arrays.stream(CollectionType.values()).filter(type -> type.myMatcher.test(call)).findFirst().orElse(null);
     }
   }
 
@@ -158,6 +124,14 @@ class ImmutableCollectionModelUtils {
    * Replaces immutable collection creation with mutable one.
    */
   private static class ToMutableCollectionConverter {
+
+    private static final Map<CollectionType, String> INITIALIZERS = new EnumMap<>(CollectionType.class);
+
+    static {
+      INITIALIZERS.put(CollectionType.SET, "new " + CommonClassNames.JAVA_UTIL_HASH_SET + "<>(%s)");
+      INITIALIZERS.put(CollectionType.MAP, "new " + CommonClassNames.JAVA_UTIL_HASH_MAP + "<>(%s)");
+      INITIALIZERS.put(CollectionType.LIST, "new " + CommonClassNames.JAVA_UTIL_ARRAY_LIST + "<>(%s)");
+    }
 
     private final PsiElementFactory myElementFactory;
     private final JavaCodeStyleManager myCodeStyleManager;
@@ -175,9 +149,10 @@ class ImmutableCollectionModelUtils {
       PsiStatement statement = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(call, false), PsiStatement.class);
       if (statement == null) return;
 
-      String assignedVariable = model.myAssignedVariable;
+      PsiVariable assignedVariable = model.myAssignedVariable;
       if (assignedVariable != null) {
-        String initializerText = model.myType.getInitializerText(model.myIsVarArgCall ? null : model.myCall.getText());
+        String initializerText = getInitializerText(model);
+        if (initializerText == null) return;
         PsiReplacementUtil.replaceExpressionAndShorten(call, initializerText, new CommentTracker());
         PsiElement anchor = addUpdates(assignedVariable, model, statement);
         if (myEditor != null) myEditor.getCaretModel().moveToOffset(anchor.getTextRange().getEndOffset());
@@ -198,7 +173,7 @@ class ImmutableCollectionModelUtils {
       PsiDeclarationStatement declaration = createDeclaration(name, type, model, statement);
       if (declaration == null) return;
       PsiVariable declaredVariable = (PsiVariable)declaration.getDeclaredElements()[0];
-      PsiElement anchor = addUpdates(name, model, declaration);
+      PsiElement anchor = addUpdates(declaredVariable, model, declaration);
       if (call.getParent() instanceof PsiExpressionStatement) {
         new CommentTracker().deleteAndRestoreComments(statement);
       }
@@ -213,7 +188,8 @@ class ImmutableCollectionModelUtils {
                                                       @NotNull PsiType type,
                                                       @NotNull ImmutableCollectionModel model,
                                                       @NotNull PsiStatement usage) {
-      String initializerText = model.myType.getInitializerText(model.myIsVarArgCall ? null : model.myCall.getText());
+      String initializerText = getInitializerText(model);
+      if (initializerText == null) return null;
       PsiExpression initializer = myElementFactory.createExpressionFromText(initializerText, null);
       PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(name, type, initializer);
       return ObjectUtils.tryCast(BlockUtils.addBefore(usage, declaration), PsiDeclarationStatement.class);
@@ -234,11 +210,22 @@ class ImmutableCollectionModelUtils {
     }
 
     @NotNull
-    private PsiStatement addUpdates(@NotNull String variable, @NotNull ImmutableCollectionModel model, @NotNull PsiStatement anchor) {
-      if (!model.myIsVarArgCall) return anchor;
-      return StreamEx.of(createUpdates(variable, model))
+    private PsiStatement addUpdates(@NotNull PsiVariable variable, @NotNull ImmutableCollectionModel model, @NotNull PsiStatement anchor) {
+      if (model.myIsNonVarArgCall) return anchor;
+      String name = variable.getName();
+      if (name == null) return anchor;
+      return StreamEx.of(createUpdates(name, model))
         .map(update -> myElementFactory.createStatementFromText(update, null))
         .foldLeft(anchor, (acc, update) -> BlockUtils.addAfter(acc, update));
+    }
+
+    @Nullable
+    private static String getInitializerText(@NotNull ImmutableCollectionModel model) {
+      String initializerText = INITIALIZERS.get(model.myType);
+      if (initializerText == null) return null;
+      if (!model.myIsNonVarArgCall) return String.format(initializerText, "");
+      if (model.myArgs.length != 1) return null;
+      return String.format(initializerText, model.myCall.getText());
     }
 
     @NotNull
@@ -291,19 +278,20 @@ class ImmutableCollectionModelUtils {
 
     private final PsiMethodCallExpression myCall;
     private final CollectionType myType;
-    private final boolean myIsVarArgCall;
+    private final boolean myIsNonVarArgCall;
     private final PsiExpression[] myArgs;
-    private final String myAssignedVariable;
+    private final PsiVariable myAssignedVariable;
 
     @Contract(pure = true)
     ImmutableCollectionModel(@NotNull PsiMethodCallExpression call,
                              @NotNull CollectionType type,
-                             @NotNull PsiMethod method,
-                             @Nullable String assignedVariable) {
+                             boolean isNonVarArgCall,
+                             @NotNull PsiExpression[] args,
+                             @Nullable PsiVariable assignedVariable) {
       myCall = call;
       myType = type;
-      myIsVarArgCall = !method.isVarArgs() || MethodCallUtils.isVarArgCall(call);
-      myArgs = call.getArgumentList().getExpressions();
+      myIsNonVarArgCall = isNonVarArgCall;
+      myArgs = args;
       myAssignedVariable = assignedVariable;
     }
   }

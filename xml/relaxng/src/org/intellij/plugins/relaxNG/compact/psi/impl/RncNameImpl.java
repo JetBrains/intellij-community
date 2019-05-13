@@ -33,7 +33,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
@@ -213,7 +212,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     @Override
     @NotNull
     public String getName() {
-      return "Create " + StringUtil.toLowerCase(myReference.getKind().name()) + " declaration '" + myReference.getPrefix() + "'";
+      return "Create " + myReference.getKind().name().toLowerCase() + " declaration '" + myReference.getPrefix() + "'";
     }
 
     @Override
@@ -228,7 +227,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
       final PsiFileFactory factory = PsiFileFactory.getInstance(myReference.getProject());
       final RncFile psiFile = (RncFile)factory.createFileFromText("dummy.rnc",
                                                                   RncFileType.getInstance(),
-                                                                   StringUtil.toLowerCase(myReference.getKind().name()) + " " + prefix + " = \"###\"");
+                                                                   myReference.getKind().name().toLowerCase() + " " + prefix + " = \"###\"");
       final RncFile rncFile = (RncFile)myReference.getContainingFile();
       final RncDecl[] declarations = rncFile.getDeclarations();
       final RncDecl decl = psiFile.getDeclarations()[0];

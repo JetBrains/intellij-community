@@ -67,8 +67,6 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.application.TransactionGuardImpl.logTimeMillis;
-
 /**
  * This class is automaton with finite number of state.
  *
@@ -626,7 +624,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
     List<AnActionEvent> nonDumbAwareAction = new ArrayList<>();
     List<AnAction> actions = myContext.getActions();
     for (final AnAction action : actions.toArray(AnAction.EMPTY_ARRAY)) {
-      long startedAt = System.currentTimeMillis();
       Presentation presentation = myPresentationFactory.getPresentation(action);
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
@@ -641,12 +638,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
         if (!Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
           nonDumbAwareAction.add(actionEvent);
         }
-        logTimeMillis(startedAt, action);
         continue;
       }
 
       if (!presentation.isEnabled()) {
-        logTimeMillis(startedAt, action);
         continue;
       }
 
@@ -658,14 +653,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
       Component component = actionEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
       if (component != null && !component.isShowing()) {
-        logTimeMillis(startedAt, action);
         return true;
       }
 
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(
         () -> processor.performAction(e, action, actionEvent));
       actionManager.fireAfterActionPerformed(action, actionEvent.getDataContext(), actionEvent);
-      logTimeMillis(startedAt, action);
       return true;
     }
 
@@ -856,12 +849,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static class SecondaryKeystrokePopup extends ListPopupImpl {
 
-    SecondaryKeystrokePopup(@NotNull KeyStroke firstKeystroke, @NotNull List<? extends Pair<AnAction, KeyStroke>> actions, DataContext context) {
+    SecondaryKeystrokePopup(@NotNull KeyStroke firstKeystroke, @NotNull List<Pair<AnAction, KeyStroke>> actions, DataContext context) {
       super(CommonDataKeys.PROJECT.getData(context), buildStep(actions, context));
       registerActions(firstKeystroke, actions, context);
     }
 
-    private void registerActions(@NotNull final KeyStroke firstKeyStroke, @NotNull final List<? extends Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
+    private void registerActions(@NotNull final KeyStroke firstKeyStroke, @NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
       ContainerUtil.process(actions, pair -> {
         final String actionText = pair.getFirst().getTemplatePresentation().getText();
         final AbstractAction a = new AbstractAction() {
@@ -906,7 +899,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return new ActionListCellRenderer();
     }
 
-    private static ListPopupStep buildStep(@NotNull final List<? extends Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
+    private static ListPopupStep buildStep(@NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
       return new BaseListPopupStep<Pair<AnAction, KeyStroke>>("Choose an action", ContainerUtil.findAll(actions, pair -> {
         final AnAction action = pair.getFirst();
         final Presentation presentation = action.getTemplatePresentation().clone();

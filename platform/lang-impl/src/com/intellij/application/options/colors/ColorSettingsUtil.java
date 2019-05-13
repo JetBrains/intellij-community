@@ -74,8 +74,9 @@ public class ColorSettingsUtil {
 
   @NotNull
   private static String toDisplayName(@NotNull TextAttributesKey attributesKey) {
+    //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
     return OptionsBundle.message(
       "options.java.attribute.descriptor.errors.group",
-      StringUtil.capitalize(StringUtil.toLowerCase(attributesKey.getExternalName()).replaceAll("_", " ")));
+      StringUtil.capitalize(attributesKey.getExternalName().toLowerCase().replaceAll("_", " ")));
   }
 }

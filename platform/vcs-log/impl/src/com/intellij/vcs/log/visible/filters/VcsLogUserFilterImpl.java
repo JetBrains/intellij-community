@@ -13,7 +13,10 @@ import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public class VcsLogUserFilterImpl implements VcsLogUserFilter {
@@ -120,21 +123,5 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   @Override
   public String toString() {
     return "author: " + StringUtil.join(myUsers, ", ");
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    VcsLogUserFilterImpl filter = (VcsLogUserFilterImpl)o;
-    return myUsers.equals(filter.myUsers) &&
-           myData.equals(filter.myData) &&
-           myAllUsersByNames.equals(filter.myAllUsersByNames) &&
-           myAllUsersByEmails.equals(filter.myAllUsersByEmails);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(myUsers, myData, myAllUsersByNames, myAllUsersByEmails);
   }
 }

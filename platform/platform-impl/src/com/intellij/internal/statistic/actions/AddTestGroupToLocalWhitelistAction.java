@@ -41,12 +41,7 @@ public class AddTestGroupToLocalWhitelistAction extends AnAction {
 
         validator.update();
         try {
-          if (dialog.isCustomRules()) {
-            EventLogTestWhitelistPersistence.addGroupWithCustomRules(recorderId, dialog.getGroupId(), dialog.getCustomRules());
-          }
-          else {
-            EventLogTestWhitelistPersistence.addTestGroup(recorderId, dialog.getGroupId(), dialog.getEventData());
-          }
+          EventLogTestWhitelistPersistence.addTestGroup(recorderId, dialog.getGroupId(), dialog.getEventData());
           validator.reload();
           showNotification(project, e, MessageType.INFO, "Group '" + dialog.getGroupId() + "' was added to local whitelist");
         }

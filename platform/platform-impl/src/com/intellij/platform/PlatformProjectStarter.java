@@ -16,7 +16,7 @@ final class PlatformProjectStarter {
   PlatformProjectStarter() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
-      public void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull Ref<? super Boolean> willOpenProject) {
+      public void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         if (!commandLineArgs.isEmpty()) {
           willOpenProject.set(Boolean.TRUE);
         }

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -69,7 +70,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
-public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
+public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
@@ -474,7 +475,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public void initializeComponent() {
+  public void initComponent() {
     if (!myUnresolvedMappings.isEmpty()) {
       for (StandardFileType pair : myStandardFileTypes.values()) {
         registerReDetectedMappings(pair);

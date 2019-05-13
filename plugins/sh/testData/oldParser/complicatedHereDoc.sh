@@ -1,3 +1,0 @@
-a <<-"END"
- "TEST
-END

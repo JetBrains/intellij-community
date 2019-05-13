@@ -15,7 +15,6 @@ import java.awt.*;
 
 import static com.intellij.ide.ui.UISettings.setupAntialiasing;
 import static com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES;
-import static com.intellij.ui.tree.ui.DefaultTreeUI.SHRINK_LONG_RENDERER;
 import static com.intellij.util.ui.UIUtil.getTreeSelectionForeground;
 
 /**
@@ -32,7 +31,6 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   private int myDurationOffset;
 
   public TestTreeRenderer(final TestConsoleProperties consoleProperties) {
-    putClientProperty(SHRINK_LONG_RENDERER, true);
     myConsoleProperties = consoleProperties;
   }
 

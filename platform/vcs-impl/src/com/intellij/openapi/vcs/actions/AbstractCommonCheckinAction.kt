@@ -76,20 +76,17 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     return DescindingFilesFilter.filterDescindingFiles(roots, project)
   }
 
-  protected open fun isForceUpdateNotEmptyCommitState(): Boolean = false
-
   protected open fun performCheckIn(context: VcsContext, project: Project, roots: Array<FilePath>) {
     LOG.debug("invoking commit dialog after update")
 
     val selectedChanges = context.selectedChanges
     val selectedUnversioned = context.selectedUnversionedFiles
-    val initialChangeList = getInitiallySelectedChangeList(context, project)
     val changesToCommit: Collection<Change>
     val included: Collection<*>
 
     if (selectedChanges.isNullOrEmpty() && selectedUnversioned.isEmpty()) {
       changesToCommit = getChangesIn(project, roots)
-      included = initialChangeList.changes.intersect(changesToCommit)
+      included = changesToCommit
     }
     else {
       changesToCommit = selectedChanges.orEmpty().toList()
@@ -99,22 +96,20 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     val executor = getExecutor(project)
     if (executor == null && isNonModalCommit()) {
       val workflowHandler = (ChangesViewManager.getInstance(project) as? ChangesViewManager)?.commitWorkflowHandler
-      workflowHandler?.run {
-        setCommitState(included, isForceUpdateNotEmptyCommitState())
-        activate()
-      }
+      workflowHandler?.activate()
     }
     else {
+      val initialChangeList = getInitiallySelectedChangeList(context, project)
       CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, executor, null)
     }
   }
 
-  protected open fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList {
+  protected open fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList? {
     val manager = ChangeListManager.getInstance(project)
 
-    return context.selectedChangeLists?.firstOrNull()?.let { manager.findChangeList(it.name) }
-           ?: context.selectedChanges?.firstOrNull()?.let { manager.getChangeList(it) }
-           ?: manager.defaultChangeList
+    context.selectedChangeLists?.firstOrNull()?.let { return manager.findChangeList(it.name) }
+    context.selectedChanges?.firstOrNull()?.let { return manager.getChangeList(it) }
+    return manager.defaultChangeList
   }
 
   protected open fun getExecutor(project: Project): CommitExecutor? = null

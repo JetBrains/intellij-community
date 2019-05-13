@@ -31,13 +31,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Value;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -744,8 +742,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           // psiVariable may live in PsiCodeFragment not only in debugger editors, for example Fabrique has such variables.
           // So treat it as synthetic var only when this code fragment is located in DebuggerEditor,
           // that's why we need to check that containing code fragment is the one we visited
-          JVMName jvmName = JVMNameUtil.getJVMQualifiedName(CompilingEvaluatorTypesUtil.getVariableType((PsiVariable)element));
-          myResult = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, ((PsiVariable)element).getName(), jvmName);
+          myResult = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, ((PsiVariable)element).getName(),
+                                                    JVMNameUtil.getJVMQualifiedName(((PsiVariable)element).getType()));
           return;
         }
         // local variable
@@ -1056,7 +1054,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiReferenceExpression methodExpr = expression.getMethodExpression();
 
       final JavaResolveResult resolveResult = methodExpr.advancedResolve(false);
-      final PsiMethod psiMethod = CompilingEvaluatorTypesUtil.getReferencedMethod(resolveResult);
+      final PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
 
       PsiExpression qualifier = methodExpr.getQualifierExpression();
       Evaluator objectEvaluator;
@@ -1417,7 +1415,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         );
       }
       else if (expressionPsiType instanceof PsiClassType){ // must be a class ref
-        PsiClass aClass = CompilingEvaluatorTypesUtil.getClass((PsiClassType)expressionPsiType);
+        PsiClass aClass = ((PsiClassType)expressionPsiType).resolve();
         if(aClass instanceof PsiAnonymousClass) {
           throw new EvaluateRuntimeException(new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.anonymous.class.evaluation.not.supported")));
         }
@@ -1427,7 +1425,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
         final PsiExpression[] argExpressions = argumentList.getExpressions();
         final JavaResolveResult constructorResolveResult = expression.resolveMethodGenerics();
-        PsiMethod constructor = CompilingEvaluatorTypesUtil.getReferencedConstructor((PsiMethod)constructorResolveResult.getElement());
+        final PsiMethod constructor = (PsiMethod)constructorResolveResult.getElement();
         if (constructor == null && argExpressions.length > 0) {
           throw new EvaluateRuntimeException(new EvaluateException(
             DebuggerBundle.message("evaluation.error.cannot.resolve.constructor", expression.getText()), null));
@@ -1468,9 +1466,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
 
         JVMName signature = JVMNameUtil.getJVMConstructorSignature(constructor, aClass);
-        PsiType instanceType = CompilingEvaluatorTypesUtil.getClassType((PsiClassType)expressionPsiType);
         myResult = new NewClassInstanceEvaluator(
-          new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(instanceType)),
+          new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(expressionPsiType)),
           signature,
           argumentEvaluators
         );
@@ -1589,62 +1586,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           argumentEvaluators[idx] = declaredParamType instanceof PsiPrimitiveType ? new UnBoxingEvaluator(argEval) : new BoxingEvaluator(argEval);
         }
       }
-    }
-  }
-
-  /**
-   * Contains a set of methods to ensure access to extracted generated class in compiling evaluator
-   */
-  private static class CompilingEvaluatorTypesUtil {
-    @NotNull
-    private static PsiType getVariableType(@NotNull PsiVariable variable) {
-      PsiType type = variable.getType();
-      PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
-      if (psiClass != null) {
-        PsiType typeToUse = psiClass.getUserData(ExtractLightMethodObjectHandler.REFERENCED_TYPE);
-        if (typeToUse != null) {
-          type = typeToUse;
-        }
-      }
-
-      return type;
-    }
-
-    @Nullable
-    private static PsiMethod getReferencedMethod(@NotNull JavaResolveResult resolveResult) {
-      PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
-      PsiMethod methodToUseInstead = psiMethod == null ? null : psiMethod.getUserData(ExtractLightMethodObjectHandler.REFERENCE_METHOD);
-      if (methodToUseInstead != null) {
-        psiMethod = methodToUseInstead;
-      }
-
-      return psiMethod;
-    }
-
-    @Nullable
-    private static PsiClass getClass(@NotNull PsiClassType classType) {
-      PsiClass aClass = classType.resolve();
-      PsiType type = aClass == null ? null : aClass.getUserData(ExtractLightMethodObjectHandler.REFERENCED_TYPE);
-      if (type != null) {
-        return PsiTypesUtil.getPsiClass(type);
-      }
-
-      return aClass;
-    }
-
-    @Nullable
-    @Contract("null -> null")
-    private static PsiMethod getReferencedConstructor(@Nullable PsiMethod originalConstructor) {
-      if (originalConstructor == null) return null;
-      PsiMethod methodToUseInstead = originalConstructor.getUserData(ExtractLightMethodObjectHandler.REFERENCE_METHOD);
-      return methodToUseInstead == null ? originalConstructor : methodToUseInstead;
-    }
-
-    @NotNull
-    private static PsiType getClassType(@NotNull PsiClassType expressionPsiType) {
-      PsiClass aClass = expressionPsiType.resolve();
-      PsiType type = aClass == null ? null : aClass.getUserData(ExtractLightMethodObjectHandler.REFERENCED_TYPE);
-      return type != null ? type : expressionPsiType;
     }
   }
 }

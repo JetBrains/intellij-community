@@ -17,10 +17,11 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.NonExtendable
+/**
+ * @author nik
+ */
 public abstract class JavaModuleExternalPaths extends ModuleExtension {
 
   public static JavaModuleExternalPaths getInstance(Module module) {

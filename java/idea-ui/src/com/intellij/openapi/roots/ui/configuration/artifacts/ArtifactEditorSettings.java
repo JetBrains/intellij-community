@@ -62,7 +62,7 @@ public class ArtifactEditorSettings implements PersistentStateComponent<Artifact
     mySortElements = sortElements;
   }
 
-  public void setTypesToShowContent(Collection<? extends ComplexPackagingElementType<?>> typesToShowContent) {
+  public void setTypesToShowContent(Collection<ComplexPackagingElementType<?>> typesToShowContent) {
     myTypesToShowContent.clear();
     myTypesToShowContent.addAll(typesToShowContent);
   }

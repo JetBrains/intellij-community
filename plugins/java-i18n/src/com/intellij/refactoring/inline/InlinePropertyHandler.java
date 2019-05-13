@@ -19,6 +19,7 @@ import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -34,7 +35,7 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
   public boolean canInlineElement(PsiElement element) {
     if (PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL)) {
       PsiReference[] references = element.getParent().getReferences();
-      return ContainerUtil.findInstance(references, PropertyReference.class) != null;
+      return ContainerUtil.find(references, FilteringIterator.instanceOf(PropertyReference.class)) != null;
     }
     return element instanceof IProperty;
   }

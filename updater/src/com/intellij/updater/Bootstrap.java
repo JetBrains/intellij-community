@@ -130,6 +130,6 @@ public class Bootstrap {
   }
 
   private static boolean isMac() {
-    return System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("mac");
+    return System.getProperty("os.name").toLowerCase(Locale.US).startsWith("mac");
   }
 }

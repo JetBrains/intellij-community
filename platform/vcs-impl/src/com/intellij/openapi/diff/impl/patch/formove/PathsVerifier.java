@@ -360,10 +360,10 @@ public class PathsVerifier {
       return checkModificationValid(file, name);
     }
 
-    protected boolean checkModificationValid(@NotNull VirtualFile file, final String name) {
+    protected boolean checkModificationValid(final VirtualFile file, final String name) {
       if (ApplicationManager.getApplication().isUnitTestMode() && myIgnoreContentRootsCheck) return true;
       // security check to avoid overwriting system files with a patch
-      if (!inContent(file) && myVcsManager.getVcsRootFor(file) == null) {
+      if (file == null || !inContent(file) || myVcsManager.getVcsRootFor(file) == null) {
         setErrorMessage("File to patch found outside content root: " + name);
         return false;
       }

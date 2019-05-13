@@ -20,7 +20,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.RunFirst;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RunFirst
-@SkipSlowTestLocally
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class VirtualFilePointerRootsTest extends PlatformTestCase {
   private final Disposable disposable = Disposer.newDisposable();
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;

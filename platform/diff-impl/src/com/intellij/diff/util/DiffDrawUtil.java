@@ -3,7 +3,6 @@ package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -32,8 +31,6 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public class DiffDrawUtil {
-  private static final Logger LOG = Logger.getInstance(DiffDrawUtil.class);
-
   public static final int STRIPE_LAYER = HighlighterLayer.ERROR - 1;
   public static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 3;
   public static final int INLINE_LAYER = HighlighterLayer.SELECTION - 2;
@@ -168,7 +165,7 @@ public class DiffDrawUtil {
   public static int lineToY(@NotNull Editor editor, int line) {
     Document document = editor.getDocument();
     if (line >= getLineCount(document)) {
-      int y = editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getTextLength())).y;
+      int y = lineToY(editor, getLineCount(document) - 1);
       return y + editor.getLineHeight() * (line - getLineCount(document) + 1);
     }
     return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
@@ -240,12 +237,9 @@ public class DiffDrawUtil {
         int x2 = gutter.getWidth();
 
         int y = r.y;
-        if (placement == SeparatorPlacement.BOTTOM) {
-          LOG.warn("BOTTOM gutter line renderers are not supported");
-          y += editor.getLineHeight() - 1;
-        }
+        if (placement == SeparatorPlacement.BOTTOM) y += editor.getLineHeight();
 
-        drawChunkBorderLine(g2, x1, x2, y, type.getColor(editor), doubleLine, resolved);
+        drawChunkBorderLine(g2, x1, x2, y - 1, type.getColor(editor), doubleLine, resolved);
       }
 
       @NotNull
@@ -329,7 +323,7 @@ public class DiffDrawUtil {
   @NotNull
   public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type) {
     if (line == 0) return Collections.emptyList();
-    return new LineMarkerBuilder(editor, line, SeparatorPlacement.TOP)
+    return new LineMarkerBuilder(editor, line - 1, SeparatorPlacement.BOTTOM)
       .withType(type)
       .withDefaultRenderer(false)
       .withDefaultGutterRenderer(false)

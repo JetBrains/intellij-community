@@ -28,6 +28,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     ]
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
+    productLayout.mainModules = ["intellij.idea.community.main"]
     productLayout.compatiblePluginsToIgnore = PythonCommunityPluginModules.PYCHARM_ONLY_PLUGIN_MODULES + ["intellij.java.plugin"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       CommunityRepositoryModules.androidPlugin([:]),
@@ -36,11 +37,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
 
     mavenArtifacts.forIdeModules = true
-    mavenArtifacts.additionalModules = [
-      "intellij.tools.jps.buildScriptDependencies",
-      "intellij.platform.debugger.testFramework",
-      "intellij.platform.vcs.testFramework"
-    ]
+    mavenArtifacts.additionalModules = ["intellij.tools.jps.buildScriptDependencies"]
 
     versionCheckerConfig = CE_CLASS_VERSIONS
   }
@@ -88,7 +85,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new LinuxDistributionCustomizer() {
       {
-        iconPngPath = "$projectHome/platform/icons/compatibilityResources/icon_CE_128.png"
+        iconPngPath = "$projectHome/platform/icons/src/icon_CE_128.png"
         iconPngPathForEAP = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
         snapName = "intellij-idea-community"
         snapDescription =

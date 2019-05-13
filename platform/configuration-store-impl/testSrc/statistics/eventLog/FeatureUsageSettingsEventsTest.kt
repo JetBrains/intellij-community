@@ -8,10 +8,13 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.ClassRule
 import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class FeatureUsageSettingsEventsTest {
   companion object {
@@ -23,13 +26,13 @@ class FeatureUsageSettingsEventsTest {
   @Test
   fun `project name to hash`() {
     val printer = TestFeatureUsageSettingsEventsPrinter(true)
-    assertThat(printer.toHash(projectRule.project)).isNotNull
+    assertNotNull(printer.toHash(projectRule.project))
   }
 
   @Test
   fun `no project name to hash`() {
     val printer = TestFeatureUsageSettingsEventsPrinter(true)
-    assertThat(printer.toHash(null)).isNull()
+    assertNull(printer.toHash(null))
   }
 
   @Test
@@ -114,7 +117,7 @@ class FeatureUsageSettingsEventsTest {
 
     val withProject = true
     val defaultProject = false
-    assertThat(printer.result).hasSize(2)
+    assertEquals(2, printer.result.size)
     assertDefaultState(printer.getOptionByName("boolOption"), "boolOption", false, withProject, defaultProject)
     assertDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", true, withProject, defaultProject)
   }
@@ -127,7 +130,7 @@ class FeatureUsageSettingsEventsTest {
     val printer = TestFeatureUsageSettingsEventsPrinter(false)
     printer.logDefaultConfigurationState(spec.name, MultiComponentState::class.java, projectRule.project)
 
-    assertThat(printer.result).hasSize(1)
+    assertEquals(1, printer.result.size)
     assertDefaultWithoutDefaultRecording(printer, true, false)
   }
 
@@ -169,7 +172,7 @@ class FeatureUsageSettingsEventsTest {
 
     val withProject = false
     val defaultProject = false
-    assertThat(printer.result).hasSize(2)
+    assertEquals(2, printer.result.size)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
     assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
   }
@@ -194,7 +197,7 @@ class FeatureUsageSettingsEventsTest {
 
     val withProject = true
     val defaultProject = false
-    assertThat(printer.result).hasSize(2)
+    assertEquals(2, printer.result.size)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
     assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
   }
@@ -209,7 +212,7 @@ class FeatureUsageSettingsEventsTest {
 
     val withProject = true
     val defaultProject = false
-    assertThat(printer.result).hasSize(2)
+    assertEquals(2, printer.result.size)
     assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
     assertDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", true, withProject, defaultProject)
   }
@@ -224,7 +227,7 @@ class FeatureUsageSettingsEventsTest {
 
     val withProject = true
     val defaultProject = false
-    assertThat(printer.result).hasSize(2)
+    assertEquals(2, printer.result.size)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
     assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
   }
@@ -239,7 +242,7 @@ class FeatureUsageSettingsEventsTest {
 
     val withProject = true
     val defaultProject = false
-    assertThat(printer.result).hasSize(2)
+    assertEquals(2, printer.result.size)
     assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
     assertNotDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", false, withProject, defaultProject)
   }
@@ -254,7 +257,7 @@ class FeatureUsageSettingsEventsTest {
 
     val withProject = true
     val defaultProject = false
-    assertThat(printer.result).hasSize(3)
+    assertEquals(3, printer.result.size)
     assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
     assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
     assertNotDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", false, withProject, defaultProject)
@@ -263,12 +266,12 @@ class FeatureUsageSettingsEventsTest {
   private fun assertDefaultWithoutDefaultRecording(printer: TestFeatureUsageSettingsEventsPrinter,
                                                    withProject: Boolean,
                                                    defaultProject: Boolean) {
-    assertThat(printer.result).hasSize(1)
+    assertEquals(1, printer.result.size)
     assertInvokedRecorded(printer.result[0], withProject, defaultProject)
   }
 
   private fun assertNotDefaultState(printer: TestFeatureUsageSettingsEventsPrinter, withProject: Boolean, defaultProject: Boolean) {
-    assertThat(printer.result).hasSize(1)
+    assertEquals(1, printer.result.size)
     assertNotDefaultState(printer.result[0], "boolOption", true, withProject, defaultProject)
   }
 
@@ -277,28 +280,28 @@ class FeatureUsageSettingsEventsTest {
                                     value: Any,
                                     withProject: Boolean,
                                     defaultProject: Boolean) {
-    assertThat(event.group.id).isEqualTo("settings")
-    assertThat(event.group.version > 0).isTrue()
-    assertThat(event.id).isEqualTo("MyTestComponent")
+    assertEquals("settings", event.group.id)
+    assertTrue(event.group.version > 0)
+    assertEquals("MyTestComponent", event.id)
 
     var size = 3
     if (withProject) size++
     if (defaultProject) size++
 
-    assertThat(event.data).hasSize(size)
-    assertThat(event.data["name"]).isEqualTo(name)
-    assertThat(event.data["value"]).isEqualTo(value)
-    assertThat(event.data["default"]).isEqualTo(false)
+    assertEquals(size, event.data.size)
+    assertTrue { event.data["name"] == name }
+    assertTrue { event.data["value"] == value }
+    assertTrue { event.data["default"] == false }
     if (withProject) {
-      assertThat(event.data).containsKey("project")
+      assertTrue { event.data.containsKey("project") }
     }
     if (defaultProject) {
-      assertThat(event.data["default_project"]).isEqualTo(true)
+      assertTrue { event.data["default_project"] == true }
     }
   }
 
   private fun assertDefaultState(printer: TestFeatureUsageSettingsEventsPrinter, withProject: Boolean, defaultProject: Boolean) {
-    assertThat(printer.result).hasSize(1)
+    assertEquals(1, printer.result.size)
     assertDefaultState(printer.result[0], "boolOption", false, withProject, defaultProject)
   }
 
@@ -307,41 +310,43 @@ class FeatureUsageSettingsEventsTest {
                                  value: Any,
                                  withProject: Boolean,
                                  defaultProject: Boolean) {
-    assertThat(event.group.id).isEqualTo("settings")
-    assertThat(event.group.version).isGreaterThan(0)
-    assertThat(event.id).isEqualTo("MyTestComponent")
+    assertEquals("settings", event.group.id)
+    assertTrue(event.group.version > 0)
+    assertEquals("MyTestComponent", event.id)
 
     var size = 2
     if (withProject) size++
     if (defaultProject) size++
 
-    assertThat(event.data).hasSize(size)
-    assertThat(event.data["name"]).isEqualTo(name)
-    assertThat(event.data["value"]).isEqualTo(value)
+    assertEquals(size, event.data.size)
+    assertTrue { event.data["name"] == name }
+    assertTrue { event.data["value"] == value }
     if (withProject) {
-      assertThat(event.data).containsKey("project")
+      assertTrue { event.data.containsKey("project") }
     }
     if (defaultProject) {
-      assertThat(event.data["default_project"]).isEqualTo(true)
+      assertTrue { event.data["default_project"] == true }
     }
   }
 
-  private fun assertInvokedRecorded(event: LoggedComponentStateEvents, withProject: Boolean, defaultProject: Boolean) {
-    assertThat(event.group.id).isEqualTo("settings")
-    assertThat(event.group.version).isGreaterThan(0)
-    assertThat(event.id).isEqualTo("MyTestComponent")
+  private fun assertInvokedRecorded(event: LoggedComponentStateEvents,
+                                    withProject: Boolean,
+                                    defaultProject: Boolean) {
+    assertEquals("settings", event.group.id)
+    assertTrue(event.group.version > 0)
+    assertEquals("MyTestComponent", event.id)
 
     var size = 1
     if (withProject) size++
     if (defaultProject) size++
 
-    assertThat(event.data).hasSize(size)
-    assertThat(event.data["invoked"]).isEqualTo(true)
+    assertEquals(size, event.data.size)
+    assertTrue { event.data["invoked"] == true }
     if (withProject) {
-      assertThat(event.data).containsKey("project")
+      assertTrue { event.data.containsKey("project") }
     }
     if (defaultProject) {
-      assertThat(event.data["default_project"]).isEqualTo(true)
+      assertTrue { event.data["default_project"] == true }
     }
   }
 

@@ -3,11 +3,9 @@ package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.StopAction;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule;
 import com.intellij.execution.dashboard.tree.RunConfigurationNode;
-import com.intellij.execution.dashboard.tree.RunDashboardGroupImpl;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.services.ServiceViewDescriptor;
 import com.intellij.execution.services.ServiceViewGroupingContributor;
@@ -45,17 +43,7 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.RUN_DASHBOARD_POPUP
 public class RunConfigurationsServiceViewContributor
   implements ServiceViewGroupingContributor<RunConfigurationsServiceViewContributor.RunConfigurationContributor, RunDashboardGroup> {
   private static final ServiceViewDescriptor CONTRIBUTOR_DESCRIPTOR =
-    new SimpleServiceViewDescriptor("Run Configurations", AllIcons.RunConfigurations.Application) {
-      @Override
-      public ActionGroup getToolbarActions() {
-        return RunConfigurationsServiceViewContributor.getToolbarActions(null);
-      }
-
-      @Override
-      public ActionGroup getPopupActions() {
-        return RunConfigurationsServiceViewContributor.getPopupActions();
-      }
-    };
+    new SimpleServiceViewDescriptor("Run Configurations", AllIcons.RunConfigurations.Application);
   private static final RunDashboardGroupingRule TYPE_GROUPING_RULE = new ConfigurationTypeDashboardGroupingRule();
 
   @NotNull
@@ -93,18 +81,6 @@ public class RunConfigurationsServiceViewContributor
     presentationData.setPresentableText(group.getName());
     presentationData.setIcon(group.getIcon());
     return new ServiceViewDescriptor() {
-      @Nullable
-      @Override
-      public String getId() {
-        if (group instanceof RunDashboardGroupImpl) {
-          Object value = ((RunDashboardGroupImpl)group).getValue();
-          if (value instanceof ConfigurationType) {
-            return ((ConfigurationType)value).getId();
-          }
-        }
-        return group.getName();
-      }
-
       @Override
       public JComponent getContentComponent() {
         return null;
@@ -169,15 +145,8 @@ public class RunConfigurationsServiceViewContributor
 
     private final RunConfigurationNode node;
 
-    RunConfigurationServiceViewDescriptor(RunConfigurationNode node) {
+    private RunConfigurationServiceViewDescriptor(RunConfigurationNode node) {
       this.node = node;
-    }
-
-    @Nullable
-    @Override
-    public String getId() {
-      RunConfiguration configuration = node.getConfigurationSettings().getConfiguration();
-      return configuration.getType().getId() + "/" + configuration.getName();
     }
 
     @Override
@@ -326,7 +295,9 @@ public class RunConfigurationsServiceViewContributor
 
         @Override
         public ActionGroup getToolbarActions() {
-          return RunConfigurationsServiceViewContributor.getToolbarActions(null);
+          DefaultActionGroup actionGroup = new DefaultActionGroup();
+          actionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+          return actionGroup;
         }
 
         @Override

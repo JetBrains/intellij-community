@@ -463,10 +463,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return fileType.getDefaultExtension();
   }
 
-  /**
-   * This method is called on any UI changes (controls altered or initialized, preview updated, etc.).
-   * Implementors are expected to update their UI state if needed, keeping models intact.
-   */
   public void onSomethingChanged() {
     setSomethingChanged(true);
     if (myEditor != null) {

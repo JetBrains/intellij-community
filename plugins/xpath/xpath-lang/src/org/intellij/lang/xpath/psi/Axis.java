@@ -15,8 +15,6 @@
  */
 package org.intellij.lang.xpath.psi;
 
-import com.intellij.openapi.util.text.StringUtil;
-
 @SuppressWarnings({"UnusedDeclaration"})
 public enum Axis {
     ANCESTOR,
@@ -35,12 +33,12 @@ public enum Axis {
     INVALID;
 
     public String getName() {
-        return StringUtil.toLowerCase(name()).replace('_', '-');
+        return name().toLowerCase().replace('_', '-');
     }
 
     public static Axis fromName(String name) {
       try {
-        return valueOf(StringUtil.toUpperCase(name).replace('-', '_'));
+        return valueOf(name.toUpperCase().replace('-', '_'));
       } catch (IllegalArgumentException e) {
         return INVALID;
       }

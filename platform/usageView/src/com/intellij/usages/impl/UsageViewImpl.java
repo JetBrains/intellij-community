@@ -673,7 +673,7 @@ public class UsageViewImpl implements UsageViewEx {
       }
     });
 
-    TreeUtil.promiseSelectFirst(myTree);
+    TreeUtil.selectFirstNode(myTree);
     PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
 
     myTree.addTreeExpansionListener(new TreeExpansionListener() {

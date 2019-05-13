@@ -5,6 +5,5 @@ class Main {
   }
 
   private String getFileName(Path path) { return path.toString(); }
-  private String getFileName(Path path, boolean something) { return path.toString(); }
   private void foo(String text, int count) {}
 }

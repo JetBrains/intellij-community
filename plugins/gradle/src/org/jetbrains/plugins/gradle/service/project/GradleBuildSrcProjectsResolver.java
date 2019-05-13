@@ -10,7 +10,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
@@ -231,8 +230,8 @@ public class GradleBuildSrcProjectsResolver {
       }
     }
     if (buildSrcModuleNode != null) {
-      Set<String> buildSrcRuntimeSourcesPaths = new THashSet<>();
-      Set<String> buildSrcRuntimeClassesPaths = new THashSet<>();
+      Set<String> buildSrcRuntimeSourcesPaths = new HashSet<>();
+      Set<String> buildSrcRuntimeClassesPaths = new HashSet<>();
 
       addSourcePaths(buildSrcRuntimeSourcesPaths, buildSrcModuleNode);
 
@@ -259,10 +258,11 @@ public class GradleBuildSrcProjectsResolver {
       if (!buildSrcRuntimeSourcesPaths.isEmpty() || !buildSrcRuntimeClassesPaths.isEmpty()) {
         buildClasspathNodes.forEach(classpathNode -> {
           BuildScriptClasspathData data = classpathNode.getData();
-          List<BuildScriptClasspathData.ClasspathEntry> classpathEntries = new ArrayList<>(data.getClasspathEntries());
+          List<BuildScriptClasspathData.ClasspathEntry> classpathEntries = new ArrayList<>();
+          classpathEntries.addAll(data.getClasspathEntries());
           classpathEntries.add(new BuildScriptClasspathData.ClasspathEntry(
-            new THashSet<>(buildSrcRuntimeClassesPaths),
-            new THashSet<>(buildSrcRuntimeSourcesPaths),
+            new HashSet<>(buildSrcRuntimeClassesPaths),
+            new HashSet<>(buildSrcRuntimeSourcesPaths),
             Collections.emptySet()
           ));
           BuildScriptClasspathData buildScriptClasspathData = new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);

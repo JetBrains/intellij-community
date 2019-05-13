@@ -3,7 +3,6 @@
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -13,8 +12,6 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
 
 class TestMethod extends TestObject {
   TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -116,9 +113,7 @@ class TestMethod extends TestObject {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("test.method.doesnt.exist.error.message", methodName));
     }
 
-    if (!testAnnotated && 
-        !AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY) &&
-        !MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(JUnitUtil.CUSTOM_TESTABLE_ANNOTATION))) {
+    if (!AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY) && !testAnnotated) {
       try {
         final PsiClass testCaseClass = JUnitUtil.getTestCaseClass(configurationModule.getModule());
         if (!psiClass.isInheritor(testCaseClass, true)) {
