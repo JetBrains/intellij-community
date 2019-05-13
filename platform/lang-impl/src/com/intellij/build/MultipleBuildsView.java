@@ -129,26 +129,29 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   @Override
   public void onEvent(@NotNull BuildEvent event) {
     List<Runnable> runOnEdt = new SmartList<>();
+    AbstractViewManager.BuildInfo buildInfo;
     if (event instanceof StartBuildEvent) {
       StartBuildEvent startBuildEvent = (StartBuildEvent)event;
       if (isInitializeStarted.get()) {
         clearOldBuilds(runOnEdt, startBuildEvent);
       }
-      AbstractViewManager.BuildInfo buildInfo = new AbstractViewManager.BuildInfo(
+      buildInfo = new AbstractViewManager.BuildInfo(
         event.getId(), startBuildEvent.getBuildTitle(), startBuildEvent.getWorkingDir(), event.getEventTime());
       myBuildsMap.put(event.getId(), buildInfo);
     }
-    else {
-      if (event.getParentId() != null) {
-        AbstractViewManager.BuildInfo buildInfo = myBuildsMap.get(event.getParentId());
+    else if (event.getParentId() != null) {
+      buildInfo = myBuildsMap.get(event.getParentId());
+      if (event.mayHaveChildren()) {
         assert buildInfo != null;
         myBuildsMap.put(event.getId(), buildInfo);
       }
     }
+    else {
+      buildInfo = myBuildsMap.get(event.getId());
+    }
+    assert buildInfo != null;
 
     runOnEdt.add(() -> {
-      final AbstractViewManager.BuildInfo buildInfo = myBuildsMap.get(event.getId());
-      assert buildInfo != null;
       if (event instanceof StartBuildEvent) {
         StartBuildEvent startBuildEvent = (StartBuildEvent)event;
         buildInfo.message = startBuildEvent.getMessage();

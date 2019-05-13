@@ -60,4 +60,9 @@ public interface BuildEvent {
 
   @Nullable
   String getDescription();
+
+  /**
+   * Returns true if the event may have child events, i.e. events with the parent ID equal to the ID of this event.
+   */
+  boolean mayHaveChildren();
 }

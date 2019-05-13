@@ -27,6 +27,8 @@ public abstract class AbstractBuildEvent implements BuildEvent {
     myParentId = parentId;
     myEventTime = eventTime;
     myMessage = message;
+    // java.lang.Object is never used as parentId. See the mayHaveChildren method.
+    assert parentId == null || !myParentId.getClass().equals(Object.class);
   }
 
   @NotNull
@@ -70,6 +72,11 @@ public abstract class AbstractBuildEvent implements BuildEvent {
 
   public void setDescription(@Nullable String description) {
     myDescription = description;
+  }
+
+  @Override
+  public boolean mayHaveChildren() {
+    return !myEventId.getClass().equals(Object.class);
   }
 
   @Override
