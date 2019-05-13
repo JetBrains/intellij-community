@@ -40,7 +40,6 @@ import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -132,13 +131,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     });
 
-    // TODO: We've gotta switch over to the standard one; NotificationsManagerImpl#newEnabled()
-    if (PlatformUtils.isAndroidStudio()) {
-      myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
-    }
-    else {
-      myBalloonLayout = new BalloonLayoutImpl(rootPane, JBUI.insets(8));
-    }
+    myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
 
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
