@@ -203,7 +203,6 @@ class BashTextRenameRefactoring {
   }
 
   private class MyTemplateListener extends TemplateEditingAdapter {
-
     @Override
     public void beforeTemplateFinished(@NotNull TemplateState templateState, Template template) {
       clearHighlights();

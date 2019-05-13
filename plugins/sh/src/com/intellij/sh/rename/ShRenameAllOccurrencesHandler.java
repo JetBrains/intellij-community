@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
@@ -29,21 +28,17 @@ public class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   @Override
   public void doExecute(@NotNull final Editor editor, @Nullable Caret c, DataContext dataContext) {
     Caret caret = editor.getCaretModel().getPrimaryCaret();
-    TextRange caretTextRange;
-    boolean matchExactWords = true;
-    if (caret.hasSelection()) {
-      matchExactWords = false;
-      SelectionModel selectionModel = editor.getSelectionModel();
-      caretTextRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
-    }
-    else {
-      caretTextRange = ShTextOccurrencesUtil.findTextRangeOfIdentifierAtCaret(editor);
-      if (caretTextRange == null) return;
-    }
+    SelectionModel selectionModel = editor.getSelectionModel();
+    boolean hasSelection = caret.hasSelection();
+    TextRange caretTextRange = hasSelection
+        ? new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())
+        : ShTextOccurrencesUtil.findTextRangeOfIdentifierAtCaret(editor);
+    if (caretTextRange == null) return;
     CharSequence documentText = editor.getDocument().getImmutableCharSequence();
     CharSequence textToFind = caretTextRange.subSequence(documentText);
-    List<TextRange> occurrences = ShTextOccurrencesUtil.findAllOccurrences(documentText, textToFind, matchExactWords);
-    Project project = Objects.requireNonNull(editor.getProject());
+    List<TextRange> occurrences = ShTextOccurrencesUtil.findAllOccurrences(documentText, textToFind, !hasSelection);
+    Project project = editor.getProject();
+    assert project != null;
     BashTextRenameRefactoring rename = BashTextRenameRefactoring.create(editor, project, textToFind.toString(), occurrences, caretTextRange);
     if (rename != null) {
       rename.start();
