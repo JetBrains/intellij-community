@@ -47,15 +47,15 @@ class LocalFileSystemRefreshWorker {
   }
 
   @NotNull
-  public List<VFileEvent> getEvents() {
+  List<VFileEvent> getEvents() {
     return myHelper.getEvents();
   }
 
-  public void cancel() {
+  void cancel() {
     myCancelled = true;
   }
 
-  public void scan() {
+  void scan() {
     NewVirtualFile root = myRefreshRoot;
     boolean rootDirty = root.isDirty();
     if (LOG.isDebugEnabled()) LOG.debug("root=" + root + " dirty=" + rootDirty);
@@ -119,23 +119,21 @@ class LocalFileSystemRefreshWorker {
         }
       };
     }
-    else {
-      return new RefreshContext(fs, persistentFS, strategy) {
-        private final Queue<Runnable> myRefreshRequests = new Queue<>(100);
+    return new RefreshContext(fs, persistentFS, strategy) {
+      private final Queue<Runnable> myRefreshRequests = new Queue<>(100);
 
-        @Override
-        void submitRefreshRequest(@NotNull Runnable request) {
-          myRefreshRequests.addLast(request);
-        }
+      @Override
+      void submitRefreshRequest(@NotNull Runnable request) {
+        myRefreshRequests.addLast(request);
+      }
 
-        @Override
-        void doWaitForRefreshToFinish() {
-          while (!myRefreshRequests.isEmpty()) {
-            myRefreshRequests.pullFirst().run();
-          }
+      @Override
+      void doWaitForRefreshToFinish() {
+        while (!myRefreshRequests.isEmpty()) {
+          myRefreshRequests.pullFirst().run();
         }
-      };
-    }
+      }
+    };
   }
 
   private void processFile(@NotNull NewVirtualFile file, @NotNull RefreshContext refreshContext) {
