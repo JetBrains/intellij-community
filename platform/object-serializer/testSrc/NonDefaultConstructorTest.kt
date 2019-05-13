@@ -18,6 +18,11 @@ class NonDefaultConstructorTest {
   }
 
   @Test
+  fun `null string as arg`() {
+    test(NullableArgBean(null))
+  }
+
+  @Test
   fun `id registration`() {
     // test that bean created by non-default constructor is registered in object table
     val bean = ContainingBean()
@@ -44,3 +49,6 @@ private class Bean3 {
 @Suppress("UNUSED_PARAMETER", "unused")
 private class NoDefaultConstructorBean @PropertyMapping(["someParameter", "intList"]) constructor(@JvmField val someParameter: String,
                                                                                                   @JvmField val intList: List<Int>)
+
+@Suppress("UNUSED_PARAMETER", "unused")
+private class NullableArgBean @PropertyMapping(["p"]) constructor(@JvmField val p: String?)
