@@ -129,7 +129,13 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
           return@readStruct
         }
 
-        initArgs[argIndex] = (bindings[bindingIndex]).deserialize(subReadContext)
+        val binding = bindings[bindingIndex]
+        try {
+          initArgs[argIndex] = binding.deserialize(subReadContext)
+        }
+        catch (e: Exception) {
+          LOG.error("Cannot deserialize value for parameter $fieldName (binding=$binding, valueType=${reader.type}, beanClass=${beanClass})", e)
+        }
       }
     }
 
@@ -197,11 +203,17 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
       val bindingIndex = nameToBindingIndex.get(fieldName)
       // ignore unknown field
       if (bindingIndex == -1) {
-        LOG.debug("Unknown field $fieldName for ${beanClass}")
+        LOG.warn("Unknown field $fieldName (beanClass=${beanClass})")
         return@readStruct
       }
 
-      bindings[bindingIndex].deserialize(instance, accessors[bindingIndex], context)
+      val binding = bindings[bindingIndex]
+      try {
+        binding.deserialize(instance, accessors[bindingIndex], context)
+      }
+      catch (e: Exception) {
+        LOG.error("Cannot deserialize value for field $fieldName (binding=$binding, valueType=${reader.type}, beanClass=${beanClass})", e)
+      }
     }
   }
 }

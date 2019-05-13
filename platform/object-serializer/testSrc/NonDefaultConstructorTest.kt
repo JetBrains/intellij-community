@@ -19,7 +19,7 @@ class NonDefaultConstructorTest {
 
   @Test
   fun `null string as arg`() {
-    test(NullableArgBean(null))
+    test(NullableArgBean("foo", null, ""))
   }
 
   @Test
@@ -51,4 +51,4 @@ private class NoDefaultConstructorBean @PropertyMapping(["someParameter", "intLi
                                                                                                   @JvmField val intList: List<Int>)
 
 @Suppress("UNUSED_PARAMETER", "unused")
-private class NullableArgBean @PropertyMapping(["p"]) constructor(@JvmField val p: String?)
+private class NullableArgBean @PropertyMapping(["p", "p2", "p3"]) constructor(@JvmField val p: String?, @JvmField val p2: String?, @JvmField val p3: String?)

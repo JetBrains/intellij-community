@@ -35,6 +35,10 @@ open class BaseBeanBinding(protected val beanClass: Class<*>) {
     }
     return constructor.newInstance()
   }
+
+  override fun toString(): String {
+    return "${javaClass.simpleName}(beanClass=$beanClass)"
+  }
 }
 
 // ReflectionUtil uses another approach to do it - unreliable because located in util module, where Kotlin cannot be used.
