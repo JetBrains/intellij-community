@@ -44,10 +44,9 @@ public class ShRenameAllOccurrencesHandler extends EditorActionHandler {
     CharSequence textToFind = caretTextRange.subSequence(documentText);
     List<TextRange> occurrences = ShTextOccurrencesUtil.findAllOccurrences(documentText, textToFind, matchExactWords);
     Project project = Objects.requireNonNull(editor.getProject());
-    TextOccurrencesInplaceRenamer renamer = TextOccurrencesInplaceRenamer.create(editor, project,
-        textToFind.toString(), occurrences, caretTextRange);
-    if (renamer != null) {
-      renamer.start();
+    BashTextRenameRefactoring rename = BashTextRenameRefactoring.create(editor, project, textToFind.toString(), occurrences, caretTextRange);
+    if (rename != null) {
+      rename.start();
     }
   }
 }
