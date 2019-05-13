@@ -273,7 +273,6 @@ class LocalFileSystemRefreshWorker {
   private static class ConcurrentRefreshContext extends RefreshContext {
     private final ExecutorService service;
     private final AtomicInteger tasksScheduled = new AtomicInteger();
-    private final AtomicInteger workersInProcess = new AtomicInteger();
     private final CountDownLatch refreshFinishedLatch = new CountDownLatch(1);
 
     ConcurrentRefreshContext(@NotNull NewVirtualFileSystem fs,
@@ -288,15 +287,12 @@ class LocalFileSystemRefreshWorker {
     void submitRefreshRequest(@NotNull Runnable action) {
       tasksScheduled.incrementAndGet();
 
-      service.submit(() -> {
-        workersInProcess.incrementAndGet();
+      service.execute(() -> {
         try {
           action.run();
         }
         finally {
-          workersInProcess.decrementAndGet();
-          int currentTasks = tasksScheduled.decrementAndGet();
-          if (currentTasks == 0 && workersInProcess.get() == 0) {
+          if (tasksScheduled.decrementAndGet() == 0) {
             refreshFinishedLatch.countDown();
           }
         }
