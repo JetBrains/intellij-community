@@ -92,24 +92,30 @@ public final class ContentRootData extends AbstractExternalEntityData {
 
   public static class SourceRoot implements Serializable {
     @NotNull
-    private final String myPath;
+    private final String path;
 
     @Nullable
-    private final String myPackagePrefix;
+    private final String packagePrefix;
 
     public SourceRoot(@NotNull String path, @Nullable String prefix) {
-      myPath = path;
-      myPackagePrefix = prefix;
+      this.path = path;
+      packagePrefix = prefix;
+    }
+
+    @SuppressWarnings("unused")
+    private SourceRoot() {
+      path = "";
+      packagePrefix = "";
     }
 
     @NotNull
     public String getPath() {
-      return myPath;
+      return path;
     }
 
     @Nullable
     public String getPackagePrefix() {
-      return myPackagePrefix;
+      return packagePrefix;
     }
 
     @Override
@@ -117,24 +123,24 @@ public final class ContentRootData extends AbstractExternalEntityData {
       if (this == o) return true;
       if (!(o instanceof SourceRoot)) return false;
       SourceRoot root = (SourceRoot)o;
-      if (myPackagePrefix != null ? !myPackagePrefix.equals(root.myPackagePrefix) : root.myPackagePrefix != null) return false;
-      if (!myPath.equals(root.myPath)) return false;
+      if (packagePrefix != null ? !packagePrefix.equals(root.packagePrefix) : root.packagePrefix != null) return false;
+      if (!path.equals(root.path)) return false;
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = myPath.hashCode();
-      result = 31 * result + (myPackagePrefix != null ? myPackagePrefix.hashCode() : 0);
+      int result = path.hashCode();
+      result = 31 * result + (packagePrefix != null ? packagePrefix.hashCode() : 0);
       return result;
     }
 
     @Override
     public String toString() {
       StringBuilder buffer = new StringBuilder("source_root(");
-      buffer.append(myPath);
-      if (myPackagePrefix != null) {
-        buffer.append(", ").append(myPackagePrefix);
+      buffer.append(path);
+      if (packagePrefix != null) {
+        buffer.append(", ").append(packagePrefix);
       }
       buffer.append(")");
       return buffer.toString();
@@ -146,7 +152,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
 
     @Override
     public int compare(@NotNull SourceRoot o1, @NotNull SourceRoot o2) {
-      return StringUtil.naturalCompare(o1.myPath, o2.myPath);
+      return StringUtil.naturalCompare(o1.path, o2.path);
     }
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.serialization
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import gnu.trove.THashMap
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
@@ -16,7 +17,9 @@ class ObjectSerializerTest {
   @JvmField
   val testName = TestName()
 
-  private fun test(bean: Any) = test(bean, testName)
+  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration? = null): T {
+    return test(bean, testName, writeConfiguration)
+  }
 
   @Test
   fun `same bean binding regardless of type parameters`() {
@@ -136,6 +139,30 @@ class ObjectSerializerTest {
     val bean = TestInterfaceBean()
     bean.shape = Circle()
     test(bean)
+  }
+
+  @Test
+  fun `interface type for map value - allowSubTypes`() {
+    class TestInterfaceBean {
+      @JvmField
+      val shape: MutableMap<String, Shape> = THashMap()
+    }
+
+    val bean = TestInterfaceBean()
+    bean.shape.put("first", Circle())
+    test(bean, WriteConfiguration(allowAnySubTypes = true, binary = false))
+  }
+
+  @Test
+  fun `interface type for field - allowSubTypes`() {
+    class TestInterfaceBean {
+      @JvmField
+      var shape: Shape? = null
+    }
+
+    val bean = TestInterfaceBean()
+    bean.shape = Circle()
+    test(bean, WriteConfiguration(allowAnySubTypes = true, binary = false))
   }
 }
 

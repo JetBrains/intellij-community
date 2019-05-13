@@ -19,7 +19,7 @@ import java.lang.reflect.Type
 import java.nio.file.Path
 import kotlin.experimental.or
 
-private const val FORMAT_VERSION = 0
+private const val FORMAT_VERSION = 1
 
 internal class IonObjectSerializer {
   val readerBuilder: IonReaderBuilder = IonReaderBuilder.standard().immutable()
@@ -48,7 +48,7 @@ internal class IonObjectSerializer {
   }
 
   @Throws(IOException::class)
-  fun <T : Any> readVersioned(objectClass: Class<T>, file: Path, expectedVersion: Int, beanConstructed: BeanConstructed? = null, originalType: Type? = null): T? {
+  fun <T : Any> readVersioned(objectClass: Class<T>, file: Path, expectedVersion: Int, configuration: ReadConfiguration, originalType: Type? = null): T? {
     readerBuilder.build(file.inputStream().buffered()).use { reader ->
       @Suppress("UNUSED_VARIABLE")
       var isVersionChecked = 0
@@ -93,7 +93,7 @@ internal class IonObjectSerializer {
               return null
             }
 
-            return doRead(objectClass, originalType, reader, beanConstructed)
+            return doRead(objectClass, originalType, reader, configuration)
           }
           else -> LOG.warn("Unknown field: $fieldName (file=$file, expectedVersion=$expectedVersion, objectClass=$objectClass)")
         }
@@ -116,33 +116,33 @@ internal class IonObjectSerializer {
     bindingProducer.getRootBinding(aClass, originalType ?: aClass).serialize(obj, writeContext)
   }
 
-  fun <T> read(objectClass: Class<T>, reader: ValueReader, beanConstructed: BeanConstructed? = null, originalType: Type? = null): T {
+  fun <T> read(objectClass: Class<T>, reader: ValueReader, configuration: ReadConfiguration, originalType: Type? = null): T {
     reader.use {
       reader.next()
-      return doRead(objectClass, originalType, reader, beanConstructed)
+      return doRead(objectClass, originalType, reader, configuration)
     }
   }
 
   // reader cursor must be already pointed to struct
-  private fun <T> doRead(objectClass: Class<T>, originalType: Type?, reader: ValueReader, beanConstructed: BeanConstructed?): T {
+  private fun <T> doRead(objectClass: Class<T>, originalType: Type?, reader: ValueReader, configuration: ReadConfiguration): T {
     when (reader.type) {
       IonType.NULL -> throw SerializationException("root value is null")
       null -> throw SerializationException("empty input")
       else -> {
+        val binding = bindingProducer.getRootBinding(objectClass, originalType ?: objectClass)
         @Suppress("UNCHECKED_CAST")
-        return bindingProducer.getRootBinding(objectClass, originalType ?: objectClass).deserialize(
-          createReadContext(reader, beanConstructed)) as T
+        return binding.deserialize(createReadContext(reader, configuration)) as T
       }
     }
   }
 
-  fun <T> readList(itemClass: Class<T>, reader: ValueReader, beanConstructed: BeanConstructed?): List<T> {
+  fun <T> readList(itemClass: Class<T>, reader: ValueReader, configuration: ReadConfiguration): List<T> {
     @Suppress("UNCHECKED_CAST")
-    return read(List::class.java, reader, beanConstructed, ParameterizedTypeImpl(List::class.java, itemClass)) as List<T>
+    return read(List::class.java, reader, configuration, ParameterizedTypeImpl(List::class.java, itemClass)) as List<T>
   }
 
-  private fun createReadContext(reader: ValueReader, beanConstructed: BeanConstructed? = null): ReadContext {
-    return ReadContextImpl(reader, ObjectIdReader(), bindingProducer, beanConstructed)
+  private fun createReadContext(reader: ValueReader, configuration: ReadConfiguration): ReadContext {
+    return ReadContextImpl(reader, ObjectIdReader(), bindingProducer, configuration)
   }
 }
 
@@ -153,7 +153,7 @@ private val DEFAULT_FILTER = object : SerializationFilter {
 private data class ReadContextImpl(override val reader: ValueReader,
                                    override val objectIdReader: ObjectIdReader,
                                    override val bindingProducer: BindingProducer<RootBinding>,
-                                   override val beanConstructed: BeanConstructed?) : ReadContext {
+                                   override val configuration: ReadConfiguration) : ReadContext {
   private var byteArrayOutputStream: BufferExposingByteArrayOutputStream? = null
 
   override fun allocateByteArrayOutputStream(): BufferExposingByteArrayOutputStream {
@@ -168,7 +168,7 @@ private data class ReadContextImpl(override val reader: ValueReader,
     return result
   }
 
-  override fun createSubContext(reader: ValueReader) = ReadContextImpl(reader, objectIdReader, bindingProducer, beanConstructed)
+  override fun createSubContext(reader: ValueReader) = ReadContextImpl(reader, objectIdReader, bindingProducer, configuration)
 }
 
 private val binaryWriterBuilder by lazy { IonBinaryWriterBuilder.standard().immutable() }

@@ -2,6 +2,8 @@
 package com.intellij.openapi.externalSystem.model
 
 import com.intellij.serialization.BeanConstructed
+import com.intellij.serialization.ReadConfiguration
+import com.intellij.serialization.WriteConfiguration
 
 val externalSystemBeanConstructed: BeanConstructed = {
   if (it is ProjectSystemId) {
@@ -11,3 +13,9 @@ val externalSystemBeanConstructed: BeanConstructed = {
     it
   }
 }
+
+fun createDataNodeReadConfiguration(classLoader: ClassLoader): ReadConfiguration {
+  return ReadConfiguration(allowAnySubTypes = true, classLoader = classLoader, beanConstructed = externalSystemBeanConstructed)
+}
+
+val dataNodeWriteConfiguration = WriteConfiguration(allowAnySubTypes = true)

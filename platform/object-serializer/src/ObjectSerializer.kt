@@ -25,6 +25,8 @@ annotation class PropertyMapping(val value: Array<String>)
 
 internal val defaultWriteConfiguration = WriteConfiguration()
 
+val defaultReadConfiguration = ReadConfiguration()
+
 /**
  * @see [VersionedFile]
  */
@@ -56,65 +58,40 @@ class ObjectSerializer {
     serializer.write(obj, outputStream, configuration, ParameterizedTypeImpl(Collection::class.java, itemClass))
   }
 
-  fun <T> read(objectClass: Class<T>, bytes: ByteArray, beanConstructed: BeanConstructed? = null): T {
-    return serializer.read(objectClass, readerBuilder.build(bytes), beanConstructed)
+  fun <T> read(objectClass: Class<T>, bytes: ByteArray, configuration: ReadConfiguration = defaultReadConfiguration): T {
+    return serializer.read(objectClass, readerBuilder.build(bytes), configuration)
   }
 
-  fun <T> read(objectClass: Class<T>, inputStream: InputStream): T {
-    return serializer.read(objectClass, readerBuilder.build(inputStream))
+  fun <T> read(objectClass: Class<T>, inputStream: InputStream, configuration: ReadConfiguration = defaultReadConfiguration): T {
+    return serializer.read(objectClass, readerBuilder.build(inputStream), configuration)
   }
 
-  fun <T> read(objectClass: Class<T>, reader: Reader): T {
-    return serializer.read(objectClass, readerBuilder.build(reader))
+  fun <T> read(objectClass: Class<T>, reader: Reader, configuration: ReadConfiguration = defaultReadConfiguration): T {
+    return serializer.read(objectClass, readerBuilder.build(reader), configuration)
   }
 
-  fun <T> read(objectClass: Class<T>, text: String): T {
-    return serializer.read(objectClass, readerBuilder.build(text))
+  fun <T> read(objectClass: Class<T>, text: String, configuration: ReadConfiguration = defaultReadConfiguration): T {
+    return serializer.read(objectClass, readerBuilder.build(text), configuration)
   }
 
-  fun <T> readList(itemClass: Class<T>, reader: Reader, beanConstructed: BeanConstructed? = null): List<T> {
-    return serializer.readList(itemClass, readerBuilder.build(reader), beanConstructed)
-  }
-
-  @JvmOverloads
-  fun <T> readList(itemClass: Class<T>, bytes: ByteArray, beanConstructed: BeanConstructed? = null): List<T> {
-    return serializer.readList(itemClass, readerBuilder.build(bytes), beanConstructed)
+  fun <T> readList(itemClass: Class<T>, reader: Reader, configuration: ReadConfiguration = defaultReadConfiguration): List<T> {
+    return serializer.readList(itemClass, readerBuilder.build(reader), configuration)
   }
 
   @JvmOverloads
-  fun <T> readList(itemClass: Class<T>, input: InputStream, beanConstructed: BeanConstructed? = null): List<T> {
-    return serializer.readList(itemClass, readerBuilder.build(input), beanConstructed)
+  fun <T> readList(itemClass: Class<T>, bytes: ByteArray, configuration: ReadConfiguration = defaultReadConfiguration): List<T> {
+    return serializer.readList(itemClass, readerBuilder.build(bytes), configuration)
+  }
+
+  @JvmOverloads
+  fun <T> readList(itemClass: Class<T>, input: InputStream, configuration: ReadConfiguration = defaultReadConfiguration): List<T> {
+    return serializer.readList(itemClass, readerBuilder.build(input), configuration)
   }
 }
-
-data class WriteConfiguration(val binary: Boolean = true,
-                              val filter: SerializationFilter? = null,
-                              val orderMapEntriesByKeys: Boolean = false)
 
 // not finished concept because not required for object graph serialization
 interface SerializationFilter {
   fun isSkipped(value: Any?): Boolean
-}
-
-data class WriteContext(val writer: ValueWriter,
-                        val filter: SerializationFilter,
-                        val objectIdWriter: ObjectIdWriter?,
-                        val configuration: WriteConfiguration,
-                        val bindingProducer: BindingProducer<RootBinding>)
-
-interface ReadContext {
-  val reader: ValueReader
-  val objectIdReader: ObjectIdReader
-  val bindingProducer: BindingProducer<RootBinding>
-
-  val beanConstructed: BeanConstructed?
-
-  /**
-   * Each call will reset previously allocated result. For sub readers it is not a problem, because you must use [createSubContext] for this case.
-   */
-  fun allocateByteArrayOutputStream(): BufferExposingByteArrayOutputStream
-
-  fun createSubContext(reader: ValueReader): ReadContext
 }
 
 class ObjectIdWriter {

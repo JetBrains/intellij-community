@@ -34,7 +34,7 @@ internal fun <T : Any> test(bean: T, testName: TestName, _writeConfiguration: Wr
   val out = BufferExposingByteArrayOutputStream(8 * 1024)
 
   // just to test binary
-  objectSerializer.write(bean, out, WriteConfiguration(binary = true))
+  objectSerializer.write(bean, out, WriteConfiguration(binary = true, allowAnySubTypes = _writeConfiguration?.allowAnySubTypes ?: false))
   assertThat(out.size() > 0)
   out.reset()
 
@@ -44,7 +44,7 @@ internal fun <T : Any> test(bean: T, testName: TestName, _writeConfiguration: Wr
   val ionText = out.toString()
   out.reset()
 
-  val deserializedBean = objectSerializer.read(bean.javaClass, ionText)
+  val deserializedBean = objectSerializer.read(bean.javaClass, ionText, configuration = ReadConfiguration(allowAnySubTypes = writeConfiguration.allowAnySubTypes))
   objectSerializer.write(deserializedBean, out, writeConfiguration)
   assertThat(out.toString()).isEqualTo(ionText)
 

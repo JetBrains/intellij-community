@@ -8,8 +8,8 @@ import java.lang.reflect.Type
 import java.util.*
 
 internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitializationContext) : RootBinding, NestedBinding {
-  private val keyBinding = createBindingByType(keyType, context)
-  private val valueBinding = createBindingByType(valueType, context)
+  private val keyBinding = createElementBindingByType(keyType, context)
+  private val valueBinding = createElementBindingByType(valueType, context)
 
   private val isKeyComparable = Comparable::class.java.isAssignableFrom(ClassUtil.typeToClass(keyType))
 

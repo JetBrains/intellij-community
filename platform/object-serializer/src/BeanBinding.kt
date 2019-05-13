@@ -98,6 +98,10 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
       reader.next()
       val subReadContext = context.createSubContext(reader)
       readStruct(reader) { fieldName, type ->
+        if (type == IonType.NULL) {
+          return@readStruct
+        }
+
         if (type == IonType.INT && fieldName == ID_FIELD_NAME) {
           id = reader.intValue()
           return@readStruct
@@ -135,7 +139,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
         readIntoObject(instance, context.createSubContext(reader), checkId = false /* already registered */) { !names.contains(it) }
       }
     }
-    return context.beanConstructed?.let { it(instance) } ?: instance
+    return context.configuration.beanConstructed?.let { it(instance) } ?: instance
   }
 
   override fun deserialize(context: ReadContext): Any {
@@ -166,7 +170,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
 
     readIntoObject(instance, context)
 
-    return context.beanConstructed?.let { it(instance) } ?: instance
+    return context.configuration.beanConstructed?.let { it(instance) } ?: instance
   }
 
   private fun readIntoObject(instance: Any, context: ReadContext, checkId: Boolean = true, filter: ((fieldName: String) -> Boolean)? = null) {

@@ -10,12 +10,8 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.util.function.Consumer
 
-internal fun createBindingByType(type: Type, context: BindingInitializationContext): RootBinding {
-  return context.bindingProducer.getRootBinding(ClassUtil.typeToClass(type), type)
-}
-
 internal abstract class BaseCollectionBinding(itemType: Type, context: BindingInitializationContext) : RootBinding, NestedBinding {
-  private val itemBinding = createBindingByType(itemType, context)
+  private val itemBinding = createElementBindingByType(itemType, context)
 
   final override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
     write(hostObject, property, context) {

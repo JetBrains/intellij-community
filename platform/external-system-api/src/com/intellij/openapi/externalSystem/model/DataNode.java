@@ -124,7 +124,7 @@ public class DataNode<T> implements UserDataHolderEx {
     try {
       MultiLoaderWrapper classLoader = new MultiLoaderWrapper(getClass().getClassLoader(), classLoaders);
       //noinspection unchecked
-      data = ObjectSerializer.getInstance().read((Class<T>)classLoader.findClass(dataClassName), rawData, SerializationKt.getExternalSystemBeanConstructed());
+      data = ObjectSerializer.getInstance().read((Class<T>)classLoader.findClass(dataClassName), rawData, SerializationKt.createDataNodeReadConfiguration(classLoader));
       assert data != null;
       clearRawData();
     }
@@ -232,7 +232,7 @@ public class DataNode<T> implements UserDataHolderEx {
     else {
       LOG.assertTrue(!(data instanceof Proxy));
       dataClassName = data.getClass().getName();
-      rawData = ObjectSerializer.getInstance().writeAsBytes(data);
+      rawData = ObjectSerializer.getInstance().writeAsBytes(data, SerializationKt.getDataNodeWriteConfiguration());
     }
   }
 

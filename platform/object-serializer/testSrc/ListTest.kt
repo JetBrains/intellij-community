@@ -78,7 +78,7 @@ class ListTest {
     assertThat(file.file.readChars().trim()).isEqualTo("""
       {
         version:42,
-        formatVersion:0,
+        formatVersion:1,
         data:[
           foo,
           bar
