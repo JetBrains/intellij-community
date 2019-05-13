@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
@@ -331,6 +332,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
     MemoryStateChange findRelation(DfaVariableValue value, @NotNull Predicate<Relation> relationPredicate, boolean startFromSelf) {
       return findChange(change -> {
+        if (change.myInstruction instanceof AssignInstruction && change.myTopOfStack == value) return true;
         Change varChange = change.myChanges.get(value);
         if (varChange != null && varChange.myAddedRelations.stream().anyMatch(relationPredicate)) return true;
         Change bridgeVarChange = change.myBridgeChanges.get(value);
@@ -346,6 +348,10 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
           if (factPair != null) return factPair;
           factPair = factFromChange(type, change, change.myBridgeChanges.get(value));
           if (factPair != null) return factPair;
+          if (change.myInstruction instanceof AssignInstruction && change.myTopOfStack == value && change.myPrevious != null) {
+            FactDefinition<T> fact = change.myPrevious.findFact(value, type);
+            return new FactDefinition<>(change, fact.myFact);
+          }
         }
         return new FactDefinition<>(null, ((DfaVariableValue)value).getInherentFacts().get(type));
       }
@@ -507,6 +513,11 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     @Contract("!null -> !null")
     T getFact(T defaultFact) {
       return myFact == null ? defaultFact : myFact;
+    }
+
+    @Override
+    public String toString() {
+      return myFact + " @ " + myChange;
     }
   }
 }

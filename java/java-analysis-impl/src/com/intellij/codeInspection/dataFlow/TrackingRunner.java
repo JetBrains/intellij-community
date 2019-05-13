@@ -800,14 +800,20 @@ public class TrackingRunner extends StandardDataFlowRunner {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       PsiMethod method = call.resolveMethod();
       CauseItem causeItem = fromMemberNullability(nullability, method, "method", call.getMethodExpression().getReferenceNameElement());
-      if (causeItem != null) return causeItem;
-      switch (nullability) {
-        case NULL:
-        case NULLABLE:
-          return fromCallContract(factUse, call, ContractReturnValue.returnNull());
-        case NOT_NULL:
-          return fromCallContract(factUse, call, ContractReturnValue.returnNotNull());
-        default:
+      if (causeItem == null) {
+        switch (nullability) {
+          case NULL:
+          case NULLABLE:
+            causeItem = fromCallContract(factUse, call, ContractReturnValue.returnNull());
+            break;
+          case NOT_NULL:
+            causeItem = fromCallContract(factUse, call, ContractReturnValue.returnNotNull());
+            break;
+          default:
+        }
+      }
+      if (causeItem != null) {
+        return causeItem;
       }
     }
     if (expression instanceof PsiReferenceExpression) {
