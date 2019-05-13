@@ -20,12 +20,14 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.formatter.ShShfmtFormatterUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.labels.ActionLink;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 
 public class CodeStyleShPanel extends CodeStyleAbstractPanel {
   private static final String BROWSE_FORMATTER_TITLE = "Choose Path to the Shfmt Formatter:";
@@ -56,7 +58,13 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
 
     Project project = ProjectUtil.guessCurrentProject(getPanel());
     myShfmtPathSelector.addBrowseFolderListener(BROWSE_FORMATTER_TITLE, "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
-    myShfmtPathSelector.setEditable(false);
+    myShfmtPathSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent documentEvent) {
+        myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(myShfmtPathSelector.getText()));
+      }
+    });
+
     myTabCharacter.addChangeListener(listener -> {
       if (myTabCharacter.isSelected()) {
         myIndentField.setEnabled(false);
