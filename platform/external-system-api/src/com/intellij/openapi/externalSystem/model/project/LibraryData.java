@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class LibraryData extends AbstractNamedData implements Named, ProjectCoordinate {
-  private final Map<LibraryPathType, Set<String>> paths = new HashMap<>();
+  private final Map<LibraryPathType, Set<String>> paths = new EnumMap<>(LibraryPathType.class);
 
   private final boolean unresolved;
   private String group;
