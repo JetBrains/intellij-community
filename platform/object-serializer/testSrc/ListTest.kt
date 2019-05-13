@@ -3,7 +3,9 @@ package com.intellij.serialization
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.SmartList
+import com.intellij.util.io.readChars
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -12,6 +14,10 @@ class ListTest {
   @Rule
   @JvmField
   val testName = TestName()
+
+  @JvmField
+  @Rule
+  val fsRule = InMemoryFsRule()
 
   private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration? = null): T {
     return test(bean, testName, writeConfiguration)
@@ -61,5 +67,24 @@ class ListTest {
     bean.list.add(setOf("bar"))
     val deserializedBean = test(bean)
     assertThat(deserializedBean.list.first()).isInstanceOf(Set::class.java)
+  }
+
+
+  @Test
+  fun `versioned file`() {
+    val file = VersionedFile(fsRule.fs.getPath("cache"), 42)
+    val list = listOf("foo", "bar")
+    file.writeList(list, String::class.java, configuration = WriteConfiguration(binary = false))
+    assertThat(file.file.readChars().trim()).isEqualTo("""
+      {
+        version:42,
+        formatVersion:0,
+        data:[
+          foo,
+          bar
+        ]
+      }
+    """.trimIndent())
+    assertThat(file.readList(String::class.java)).isEqualTo(list)
   }
 }

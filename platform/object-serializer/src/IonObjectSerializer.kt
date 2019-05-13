@@ -2,15 +2,23 @@
 package com.intellij.serialization
 
 import com.amazon.ion.IonType
+import com.amazon.ion.IonWriter
 import com.amazon.ion.system.IonBinaryWriterBuilder
 import com.amazon.ion.system.IonReaderBuilder
 import com.amazon.ion.system.IonTextWriterBuilder
 import com.amazon.ion.system.IonWriterBuilder
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.outputStream
+import java.io.IOException
 import java.io.OutputStream
 import java.lang.reflect.Type
+import java.nio.file.Path
 import kotlin.experimental.or
+
+private const val FORMAT_VERSION = 0
 
 internal class IonObjectSerializer {
   val readerBuilder: IonReaderBuilder = IonReaderBuilder.standard().immutable()
@@ -20,41 +28,108 @@ internal class IonObjectSerializer {
 
   internal val bindingProducer = IonBindingProducer(propertyCollector)
 
-  fun write(obj: Any, outputStream: OutputStream, _configuration: WriteConfiguration?, originalType: Type? = null) {
-    val configuration = _configuration ?: WriteConfiguration()
-    createIonWriterBuilder(configuration.binary).build(outputStream).use { ionWriter ->
-      val aClass = obj.javaClass
-      bindingProducer.getRootBinding(aClass, originalType ?: aClass).serialize(obj, WriteContext(ionWriter, configuration.filter ?: DEFAULT_FILTER, ObjectIdWriter(), configuration))
+  @Throws(IOException::class)
+  fun writeVersioned(obj: Any, file: Path, fileVersion: Int, configuration: WriteConfiguration = defaultWriteConfiguration, originalType: Type? = null) {
+    createIonWriterBuilder(configuration.binary).build(file.outputStream().buffered()).use { writer ->
+      writer.stepIn(IonType.STRUCT)
+
+      writer.setFieldName("version")
+      writer.writeInt(fileVersion.toLong())
+
+      writer.setFieldName("formatVersion")
+      writer.writeInt(FORMAT_VERSION.toLong())
+
+      writer.setFieldName("data")
+      doWrite(obj, writer, configuration, originalType)
+
+      writer.stepOut()
     }
   }
 
-  fun <T> read(objectClass: Class<T>, reader: ValueReader, beanConstructed: BeanConstructed? = null): T {
-    reader.use {
-      when (reader.next()) {
-        IonType.NULL -> throw SerializationException("root value is null")
-        null -> throw SerializationException("empty input")
-        else -> {
-          @Suppress("UNCHECKED_CAST")
-          return bindingProducer.getRootBinding(objectClass).deserialize(createReadContext(reader, beanConstructed)) as T
+  @Throws(IOException::class)
+  fun <T : Any> readVersioned(objectClass: Class<T>, file: Path, expectedVersion: Int, beanConstructed: BeanConstructed? = null, originalType: Type? = null): T? {
+    readerBuilder.build(file.inputStream().buffered()).use { reader ->
+      @Suppress("UNUSED_VARIABLE")
+      var isVersionChecked = 0
+
+      fun logVersionMismatch(prefix: String, currentVersion: Int) {
+        LOG.debug { "$prefix version mismatch (file=$file, currentVersion: $currentVersion, expectedVersion=$expectedVersion, objectClass=$objectClass)" }
+      }
+
+      reader.next()
+      reader.stepIn()
+      while (reader.next() != null) {
+        when (val fieldName = reader.fieldName) {
+          "version" -> {
+            val currentVersion = reader.intValue()
+            if (currentVersion != expectedVersion) {
+              logVersionMismatch("App", currentVersion)
+              return null
+            }
+            @Suppress("UNUSED_CHANGED_VALUE")
+            isVersionChecked++
+          }
+          "formatVersion" -> {
+            val currentVersion = reader.intValue()
+            if (currentVersion != FORMAT_VERSION) {
+              logVersionMismatch("Format", currentVersion)
+              return null
+            }
+            @Suppress("UNUSED_CHANGED_VALUE")
+            isVersionChecked++
+          }
+          "data" -> {
+            if (isVersionChecked != 2) {
+              // if version was not specified - consider data as invalid
+              return null
+            }
+
+            return doRead(objectClass, originalType, reader, beanConstructed)
+          }
+          else -> LOG.warn("Unknown field: $fieldName (file=$file, expectedVersion=$expectedVersion, objectClass=$objectClass)")
         }
+      }
+      reader.stepOut()
+
+      return null
+    }
+  }
+
+  fun write(obj: Any, outputStream: OutputStream, configuration: WriteConfiguration = defaultWriteConfiguration, originalType: Type? = null) {
+    createIonWriterBuilder(configuration.binary).build(outputStream).use { writer ->
+      doWrite(obj, writer, configuration, originalType)
+    }
+  }
+
+  private fun doWrite(obj: Any, writer: IonWriter, configuration: WriteConfiguration, originalType: Type?) {
+    val aClass = obj.javaClass
+    val writeContext = WriteContext(writer, configuration.filter ?: DEFAULT_FILTER, ObjectIdWriter(), configuration)
+    bindingProducer.getRootBinding(aClass, originalType ?: aClass).serialize(obj, writeContext)
+  }
+
+  fun <T> read(objectClass: Class<T>, reader: ValueReader, beanConstructed: BeanConstructed? = null, originalType: Type? = null): T {
+    reader.use {
+      reader.next()
+      return doRead(objectClass, originalType, reader, beanConstructed)
+    }
+  }
+
+  // reader cursor must be already pointed to struct
+  private fun <T> doRead(objectClass: Class<T>, originalType: Type?, reader: ValueReader, beanConstructed: BeanConstructed?): T {
+    when (reader.type) {
+      IonType.NULL -> throw SerializationException("root value is null")
+      null -> throw SerializationException("empty input")
+      else -> {
+        @Suppress("UNCHECKED_CAST")
+        return bindingProducer.getRootBinding(objectClass, originalType ?: objectClass).deserialize(
+          createReadContext(reader, beanConstructed)) as T
       }
     }
   }
 
   fun <T> readList(itemClass: Class<T>, reader: ValueReader, beanConstructed: BeanConstructed?): List<T> {
-    reader.use {
-      @Suppress("UNCHECKED_CAST")
-      when (reader.next()) {
-        IonType.NULL -> throw SerializationException("root value is null")
-        null -> throw SerializationException("empty input")
-        else -> {
-          val result = mutableListOf<Any?>()
-          val binding = bindingProducer.getRootBinding(ArrayList::class.java, ParameterizedTypeImpl(ArrayList::class.java, itemClass)) as CollectionBinding
-          binding.readInto(result as MutableCollection<Any?>, createReadContext(reader, beanConstructed))
-          return result as List<T>
-        }
-      }
-    }
+    @Suppress("UNCHECKED_CAST")
+    return read(List::class.java, reader, beanConstructed, ParameterizedTypeImpl(List::class.java, itemClass)) as List<T>
   }
 
   private fun createReadContext(reader: ValueReader, beanConstructed: BeanConstructed? = null): ReadContext {
@@ -86,12 +161,15 @@ private data class ReadContextImpl(override val reader: ValueReader,
   override fun createSubContext(reader: ValueReader) = ReadContextImpl(reader, objectIdReader, beanConstructed)
 }
 
+private val binaryWriterBuilder by lazy { IonBinaryWriterBuilder.standard().immutable() }
+private val textWriterBuilder by lazy {
+  // line separator is not configurable and platform-dependent (https://github.com/amzn/ion-java/issues/57)
+  IonTextWriterBuilder.pretty().immutable()
+}
+
 private fun createIonWriterBuilder(binary: Boolean): IonWriterBuilder {
-  if (binary) {
-    return IonBinaryWriterBuilder.standard()
-  }
-  else {
-    // line separator is not configurable and platform-dependent (https://github.com/amzn/ion-java/issues/57)
-    return IonTextWriterBuilder.pretty()
+  return when {
+    binary -> binaryWriterBuilder
+    else -> textWriterBuilder
   }
 }

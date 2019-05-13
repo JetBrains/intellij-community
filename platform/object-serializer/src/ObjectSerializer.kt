@@ -23,6 +23,11 @@ typealias BeanConstructed = (instance: Any) -> Any
 @Target(AnnotationTarget.CONSTRUCTOR)
 annotation class PropertyMapping(val value: Array<String>)
 
+internal val defaultWriteConfiguration = WriteConfiguration()
+
+/**
+ * @see [VersionedFile]
+ */
 class ObjectSerializer {
   companion object {
     @JvmStatic
@@ -35,19 +40,19 @@ class ObjectSerializer {
   internal val serializer = IonObjectSerializer()
 
   @JvmOverloads
-  fun writeAsBytes(obj: Any, configuration: WriteConfiguration? = null): ByteArray {
+  fun writeAsBytes(obj: Any, configuration: WriteConfiguration = defaultWriteConfiguration): ByteArray {
     val out = BufferExposingByteArrayOutputStream()
     serializer.write(obj, out, configuration)
     return out.toByteArray()
   }
 
   @JvmOverloads
-  fun write(obj: Any, outputStream: OutputStream, configuration: WriteConfiguration? = null) {
+  fun write(obj: Any, outputStream: OutputStream, configuration: WriteConfiguration = defaultWriteConfiguration) {
     serializer.write(obj, outputStream, configuration)
   }
 
   @JvmOverloads
-  fun <T> writeList(obj: Collection<T>, itemClass: Class<T>, outputStream: OutputStream, configuration: WriteConfiguration? = null) {
+  fun <T> writeList(obj: Collection<T>, itemClass: Class<T>, outputStream: OutputStream, configuration: WriteConfiguration = defaultWriteConfiguration) {
     serializer.write(obj, outputStream, configuration, ParameterizedTypeImpl(Collection::class.java, itemClass))
   }
 
