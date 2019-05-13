@@ -86,6 +86,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
+    // Android Studio specific authentication to the builtin webserver
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
     LOG.debug(String.format("myHandler=%s, port=%s", myHttpHandler, port));
 
@@ -143,7 +144,8 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
     int port = ssh.getXmlRcpPort();
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
-    myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
+    // Android Studio specific authentication to the builtin webserver
+    myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
     LOG.debug(String.format("myHandler=%s, port=%s", mySshHandler, port));
 
     final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
@@ -191,6 +193,8 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
                                            service.getScriptPath(useBatchFile).getPath());
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV, myNativeSshHandler.toString());
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV, Integer.toString(port));
+    // Android Studio specific authentication to the builtin webserver
+    myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
     LOG.debug(String.format("myHandler=%s, port=%s", myNativeSshHandler, port));
 
     // SSH_ASKPASS is ignored if DISPLAY variable is not set

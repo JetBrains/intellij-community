@@ -4,6 +4,7 @@ package org.jetbrains.git4idea.nativessh;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.GitExternalApp;
+import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
 
 /**
  * <p>This is a program that would be called by ssh when key passphrase is needed,
@@ -25,7 +26,9 @@ public class GitNativeSshAskPassApp implements GitExternalApp {
 
       String token = getNotNull(GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV);
       int xmlRpcPort = Integer.parseInt(getNotNull(GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV));
-      GitNativeSshAskPassXmlRpcClient xmlRpcClient = new GitNativeSshAskPassXmlRpcClient(xmlRpcPort);
+      // Android Studio specific authentication to the builtin webserver
+      String xmlRpcToken = getNotNull(GitAskPassXmlRpcHandler.GIT_ASK_PASS_TOKEN_ENV);
+      GitNativeSshAskPassXmlRpcClient xmlRpcClient = new GitNativeSshAskPassXmlRpcClient(xmlRpcPort, xmlRpcToken);
 
       String answer = adjustNull(xmlRpcClient.handleInput(token, description));
       if (answer == null) {

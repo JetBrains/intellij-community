@@ -34,7 +34,7 @@ class GitAskPassXmlRpcClient {
   @NotNull private final XmlRpcClient myClient;
 
   GitAskPassXmlRpcClient(int port, String token) throws IOException {
-    URL url = new URL("http", "localhost", port, "/RPC2");
+    URL url = new URL("http", "127.0.0.1", port, "/RPC2");
     DefaultXmlRpcTransportFactory factory = new DefaultXmlRpcTransportFactory(url);
     factory.setBasicAuthentication("_token_", token);
     myClient = new XmlRpcClient(url, factory);
