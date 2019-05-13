@@ -175,9 +175,12 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
     val accessors = accessors
     val reader = context.reader
     readStruct(reader) { fieldName, type ->
-      if (checkId && type == IonType.INT && fieldName == ID_FIELD_NAME) {
-        val id = reader.intValue()
-        context.objectIdReader.registerObject(instance, id)
+      if (type == IonType.INT && fieldName == ID_FIELD_NAME) {
+        // check flag checkId only here, to ensure that @id is not reported as unknown field
+        if (checkId) {
+          val id = reader.intValue()
+          context.objectIdReader.registerObject(instance, id)
+        }
         return@readStruct
       }
 
