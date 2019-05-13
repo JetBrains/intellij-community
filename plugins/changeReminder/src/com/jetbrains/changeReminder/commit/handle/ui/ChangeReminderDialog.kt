@@ -4,11 +4,13 @@ package com.jetbrains.changeReminder.commit.handle.ui
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.layout.*
@@ -62,6 +64,9 @@ internal class ChangeReminderDialog(private val project: Project, private val fi
     return panel
   }
 
+  private fun getHelpTooltipText() = "${ApplicationNamesInfo.getInstance().fullProductName} " +
+                                     "predicts files that are usually committed together, so that they are not forgotten by mistake."
+
   private fun createRelatedFilesPrefix() = buildString {
     append("Following ${StringUtil.pluralize("file", files.size)} ")
     if (files.size == 1) {
@@ -74,7 +79,10 @@ internal class ChangeReminderDialog(private val project: Project, private val fi
 
   override fun createCenterPanel() = panel {
     row {
-      JBLabel("${createRelatedFilesPrefix()} usually committed with files from commit:")()
+      cell {
+        JBLabel("${createRelatedFilesPrefix()} usually committed with files from commit: ")()
+        ContextHelpLabel.create(getHelpTooltipText())()
+      }
     }
     row {
       createTreePanel()(grow, push)
