@@ -392,7 +392,6 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.hints.InlayHintsSettings"/>
     <codeInsight.inlayProviderFactory implementation="com.intellij.codeInsight.hints.SingleLanguageInlayProviderFactory"/>
-    <codeInsight.inlayProviderFactory implementation="com.intellij.codeInsight.hints.parameter.NewParameterHintsProviderFactory"/>
 
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager"/>
 
