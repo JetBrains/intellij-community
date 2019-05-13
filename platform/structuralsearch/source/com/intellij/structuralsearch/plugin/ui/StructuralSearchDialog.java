@@ -644,7 +644,6 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
 
     final FindSettings findSettings = FindSettings.getInstance();
-    findSettings.setDefaultScopeName(scope.getDisplayName());
     findSettings.setShowResultsInSeparateView(myOpenInNewTab.isSelected());
 
     try {
