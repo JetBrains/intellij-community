@@ -38,6 +38,7 @@ import org.junit.Assume.assumeTrue
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertTrue
@@ -173,6 +174,22 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents(
       { arrayOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
       mapOf(watchedFile1 to 'U', watchedFile2 to 'U'))
+  }
+
+  @Test fun testMove() {
+    val top = tempDir.newFolder("top")
+    val srcFile = tempDir.newFile("top/src/f")
+    val srcDir = tempDir.newFolder("top/src/sub")
+    tempDir.newFile("top/src/sub/f1")
+    tempDir.newFile("top/src/sub/f2")
+    val dst = tempDir.newFolder("top/dst")
+    val dstFile = File(dst, srcFile.name)
+    val dstDir = File(dst, srcDir.name)
+    refresh(top)
+
+    watch(top)
+    assertEvents({ Files.move(srcFile.toPath(), dstFile.toPath(), StandardCopyOption.ATOMIC_MOVE) }, mapOf(srcFile to 'D', dstFile to 'C'))
+    assertEvents({ Files.move(srcDir.toPath(), dstDir.toPath(), StandardCopyOption.ATOMIC_MOVE) }, mapOf(srcDir to 'D', dstDir to 'C'))
   }
 
   @Test fun testIncorrectPath() {
