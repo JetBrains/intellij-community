@@ -2,11 +2,10 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.find.FindBundle;
-import com.intellij.find.FindInProjectSettings;
-import com.intellij.find.FindSettings;
+import com.intellij.find.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
@@ -16,14 +15,22 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -38,11 +45,16 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -53,11 +65,14 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
+import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.TextTransferable;
@@ -72,6 +87,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -100,6 +116,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @NonNls FileType myFileType = StructuralSearchUtil.getDefaultFileType();
   Language myDialect = null;
   String myContext = null;
+  private final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
 
   // ui management
   private final Alarm myAlarm;
@@ -212,6 +229,9 @@ public class StructuralSearchDialog extends DialogWrapper {
     myAlarm.addRequest(() -> {
       try {
         final boolean valid = isValid();
+        if (!valid) {
+          highlightMatches(Collections.emptyList(), "");
+        }
         initializeFilterPanel();
         final JRootPane component = getRootPane();
         if (component == null) {
@@ -625,6 +645,12 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   @Override
+  public void doCancelAction() {
+    super.doCancelAction();
+    highlightMatches(Collections.emptyList(), "");
+  }
+
+  @Override
   protected void doOKAction() {
     myDoingOkAction = true;
     final boolean result = isValid();
@@ -633,11 +659,10 @@ public class StructuralSearchDialog extends DialogWrapper {
 
     myAlarm.cancelAllRequests();
     myConfiguration.removeUnusedVariables();
-    final SearchScope scope = myScopePanel.getScope();
-    if (scope == null) return;
     super.doOKAction();
     if (myEditConfigOnly) return;
 
+    final SearchScope scope = myScopePanel.getScope();
     if (scope instanceof GlobalSearchScopesCore.DirectoryScope) {
       final GlobalSearchScopesCore.DirectoryScope directoryScope = (GlobalSearchScopesCore.DirectoryScope)scope;
       FindInProjectSettings.getInstance(getProject()).addDirectory(directoryScope.getDirectory().getPresentableUrl());
@@ -662,8 +687,9 @@ public class StructuralSearchDialog extends DialogWrapper {
 
   private boolean isValid() {
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
+    final Project project = getProject();
     try {
-      Matcher.validate(getProject(), matchOptions);
+      Matcher.validate(project, matchOptions);
     }
     catch (MalformedPatternException e) {
       final String message = isEmpty(matchOptions.getSearchPattern())
@@ -683,7 +709,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     reportMessage(null, false, mySearchCriteriaEdit);
     if (myReplace) {
       try {
-        Replacer.checkReplacementPattern(getProject(), myConfiguration.getReplaceOptions());
+        Replacer.checkReplacementPattern(project, myConfiguration.getReplaceOptions());
       }
       catch (UnsupportedPatternException ex) {
         reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
@@ -695,7 +721,67 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     }
     reportMessage(null, false, myReplaceCriteriaEdit);
-    return myEditConfigOnly || myScopePanel.getScope() != null;
+    highlightMatches(matchOptions);
+    return true;
+  }
+
+  private void highlightMatches(MatchOptions matchOptions) {
+    if (myDoingOkAction) {
+      highlightMatches(Collections.emptyList(), "");
+    }
+    else {
+      final Project project = getProject();
+      final FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor();
+      if (editor == null) {
+        return;
+      }
+      final VirtualFile vFile = editor.getFile();
+      if (vFile == null) {
+        return;
+      }
+      final PsiFile file = ReadAction.compute(() -> PsiManager.getInstance(project).findFile(vFile));
+      if (file == null) {
+        return;
+      }
+      matchOptions.setScope(new LocalSearchScope(file, IdeBundle.message("scope.current.file")));
+      final CollectingMatchResultSink sink = new CollectingMatchResultSink();
+      new Matcher(project).findMatches(sink, matchOptions);
+      final List<MatchResult> matches = sink.getMatches();
+      highlightMatches(matches, matches.size() + " results found in current file");
+    }
+  }
+
+  private void highlightMatches(@NotNull List<MatchResult> elementList, @Nullable String statusBarText) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final Project project = getProject();
+      if (project.isDisposed()) {
+        return;
+      }
+      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      if (editor == null) {
+        return;
+      }
+      final HighlightManager highlightManager = HighlightManager.getInstance(getProject());
+      for (RangeHighlighter highlighter : myRangeHighlighters) {
+        highlightManager.removeSegmentHighlighter(editor, highlighter);
+      }
+      myRangeHighlighters.clear();
+      if (!elementList.isEmpty()) {
+        final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+        final TextAttributes textattributes = globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+        final PsiElement[] elements = ContainerUtil.map2Array(elementList, PsiElement.class, m -> m.getMatch());
+        highlightManager.addOccurrenceHighlights(editor, elements, textattributes, true, myRangeHighlighters);
+        final FindManager findmanager = FindManager.getInstance(project);
+        FindModel findmodel = findmanager.getFindNextModel();
+        if (findmodel == null) {
+          findmodel = findmanager.getFindInFileModel();
+        }
+        findmodel.setSearchHighlighters(true);
+        findmanager.setFindWasPerformed();
+        findmanager.setFindNextModel(findmodel);
+      }
+      WindowManager.getInstance().getStatusBar(project).setInfo(statusBarText);
+    });
   }
 
   void reportMessage(String message, boolean error, JComponent component) {
@@ -862,11 +948,9 @@ public class StructuralSearchDialog extends DialogWrapper {
 
     if (!myEditConfigOnly) {
       final SearchScope scope = myScopePanel.getScope();
-      if (scope != null) {
-        final boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(scope.getDisplayName());
-        // We need to reset search within hierarchy scope during online validation since the scope works with user participation
-        matchOptions.setScope(searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : scope);
-      }
+      final boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(scope.getDisplayName());
+      // We need to reset search within hierarchy scope during online validation since the scope works with user participation
+      matchOptions.setScope(searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : scope);
     }
     matchOptions.setFileType(myFileType);
     matchOptions.setDialect(myDialect);
