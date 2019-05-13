@@ -392,7 +392,17 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(STRING_CONTENT)('$[1+2]')
+            OLD_ARITHMETIC_EXPANSION
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
+              ADD_EXPRESSION
+                LITERAL_EXPRESSION
+                  NUMBER
+                    PsiElement(int)('1')
+                PsiElement(+)('+')
+                LITERAL_EXPRESSION
+                  NUMBER
+                    PsiElement(int)('2')
+              PsiElement(ARITH_SQUARE_RIGHT)(']')
             PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST

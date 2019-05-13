@@ -154,6 +154,7 @@ StringContent            = [^$\"`(] | {EscapedChar}
                                     else return STRING_CONTENT; }
     "$("                          { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
+    "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
     "`"                           { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); return OPEN_BACKQUOTE; }
     {Variable}                    { return VAR; }
     "$" | "(" | {StringContent}+  { return STRING_CONTENT; }

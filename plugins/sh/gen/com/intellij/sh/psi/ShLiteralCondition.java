@@ -13,8 +13,8 @@ public interface ShLiteralCondition extends ShCondition {
   @Nullable
   ShBraceExpansion getBraceExpansion();
 
-  @Nullable
-  ShCommand getCommand();
+  @NotNull
+  List<ShCommand> getCommandList();
 
   @Nullable
   ShNumber getNumber();

@@ -247,7 +247,7 @@ heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipel
             (HEREDOC_MARKER_END | <<eof>>)
 private heredoc_pipeline_separator ::= ('&&' | '||' | '&' | '|' | '|&' | ';')
 
-private vars ::= variable | composed_var | command_substitution_command
+private vars ::= variable | composed_var | command_substitution_command | old_arithmetic_expansion
 private composed_var ::= '$' &('(' | '((' | '{') composed_var_inner {pin=2}
 private composed_var_inner ::= arithmetic_expansion
                               | subshell_command

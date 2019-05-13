@@ -38,9 +38,9 @@ public class ShLiteralConditionImpl extends ShConditionImpl implements ShLiteral
   }
 
   @Override
-  @Nullable
-  public ShCommand getCommand() {
-    return findChildByClass(ShCommand.class);
+  @NotNull
+  public List<ShCommand> getCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShCommand.class);
   }
 
   @Override

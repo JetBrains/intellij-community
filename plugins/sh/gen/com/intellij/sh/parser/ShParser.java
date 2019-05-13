@@ -2476,13 +2476,14 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // variable | composed_var | command_substitution_command
+  // variable | composed_var | command_substitution_command | old_arithmetic_expansion
   static boolean vars(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "vars")) return false;
     boolean r;
     r = variable(b, l + 1);
     if (!r) r = composed_var(b, l + 1);
     if (!r) r = command_substitution_command(b, l + 1);
+    if (!r) r = old_arithmetic_expansion(b, l + 1);
     return r;
   }
 
