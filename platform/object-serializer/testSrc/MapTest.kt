@@ -1,17 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import gnu.trove.THashMap
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
+import java.util.*
 
 class MapTest {
   @Rule
   @JvmField
   val testName = TestName()
 
-  private fun test(bean: Any, writeConfiguration: WriteConfiguration? = null) = test(bean, testName, writeConfiguration)
+  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration? = null): T {
+    return test(bean, testName, writeConfiguration)
+  }
 
   @Test
   fun map() {
@@ -20,6 +24,32 @@ class MapTest {
     test(bean)
   }
 
+  @Test
+  fun `enum map`() {
+    class TestBean {
+      @JvmField
+      val map = EnumMap<TestEnum, String>(TestEnum::class.java)
+    }
+
+    val bean = TestBean()
+    bean.map.put(TestEnum.BLUE, "red")
+    bean.map.put(TestEnum.RED, "blue")
+    val deserializedBean = test(bean)
+    assertThat(deserializedBean.map).isInstanceOf(EnumMap::class.java)
+  }
+
+  @Test
+  fun `parametrized type as map value`() {
+    class TestBean {
+      @JvmField
+      val map: MutableMap<String, Set<String>> = THashMap()
+    }
+
+    val bean = TestBean()
+    bean.map.put("bar", setOf("b"))
+    val deserializedBean = test(bean)
+    assertThat(deserializedBean.map.values.first()).isInstanceOf(Set::class.java)
+  }
 
   @Test
   fun `bean map`() {

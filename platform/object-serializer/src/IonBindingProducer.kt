@@ -128,7 +128,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       Collection::class.java.isAssignableFrom(aClass) -> createCollectionBinding(type)
       Map::class.java.isAssignableFrom(aClass) -> {
         val typeArguments = (type as ParameterizedType).actualTypeArguments
-        MapBinding(ClassUtil.typeToClass(typeArguments[0]), ClassUtil.typeToClass(typeArguments[1]), this)
+        MapBinding(typeArguments[0], typeArguments[1], this)
       }
       aClass.isArray -> ArrayBinding(aClass.componentType, this)
       java.lang.Number::class.java.isAssignableFrom(aClass) -> AccessorWrapperBinding(NumberAsObjectBinding())
@@ -137,7 +137,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
   }
 
   private fun createCollectionBinding(type: Type): CollectionBinding {
-    return CollectionBinding(ClassUtil.typeToClass((type as ParameterizedType).actualTypeArguments[0]), this)
+    return CollectionBinding(type as ParameterizedType, this)
   }
 }
 

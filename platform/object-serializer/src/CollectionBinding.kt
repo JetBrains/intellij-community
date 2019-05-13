@@ -3,21 +3,24 @@ package com.intellij.serialization
 
 import com.amazon.ion.IonType
 import com.intellij.util.ArrayUtil
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.SmartList
+import gnu.trove.THashSet
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 import java.util.function.Consumer
 
-internal abstract class BaseCollectionBinding(itemClass: Class<*>, context: BindingInitializationContext) : RootBinding, NestedBinding {
-  private val itemBinding = context.bindingProducer.getRootBinding(itemClass)
+internal fun createBindingByType(type: Type, context: BindingInitializationContext): RootBinding {
+  return context.bindingProducer.getRootBinding(ClassUtil.typeToClass(type), type)
+}
+
+internal abstract class BaseCollectionBinding(itemType: Type, context: BindingInitializationContext) : RootBinding, NestedBinding {
+  private val itemBinding = createBindingByType(itemType, context)
 
   final override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
     write(hostObject, property, context) {
       serialize(it, context)
     }
-  }
-
-  override fun deserialize(context: ReadContext): ArrayList<Any?> {
-    val result = ArrayList<Any?>()
-    readInto(result, context)
-    return result
   }
 
   protected fun createItemConsumer(context: WriteContext): Consumer<Any?> {
@@ -48,7 +51,15 @@ internal abstract class BaseCollectionBinding(itemClass: Class<*>, context: Bind
   }
 }
 
-internal class CollectionBinding(itemClass: Class<*>, context: BindingInitializationContext) : BaseCollectionBinding(itemClass, context) {
+internal class CollectionBinding(type: ParameterizedType, context: BindingInitializationContext) : BaseCollectionBinding(type.actualTypeArguments[0], context) {
+  private val collectionClass = ClassUtil.typeToClass(type)
+
+  override fun deserialize(context: ReadContext): Collection<Any?> {
+    val result = createCollection()
+    readInto(result, context)
+    return result
+  }
+
   override fun serialize(obj: Any, context: WriteContext) {
     val writer = context.writer
     val collection = obj as Collection<*>
@@ -70,14 +81,40 @@ internal class CollectionBinding(itemClass: Class<*>, context: BindingInitializa
       result.clear()
     }
     else {
-      result = ArrayList()
+      result = createCollection()
       property.set(hostObject, result)
     }
     readInto(result, context)
   }
+
+  private fun createCollection(propertyForDebugPurposes: MutableAccessor? = null): MutableCollection<Any?> {
+    if (collectionClass.isInterface) {
+      when (collectionClass) {
+        Set::class.java -> return THashSet()
+        List::class.java, Collection::class.java -> return ArrayList()
+        else -> LOG.warn("Unknown collection type interface: ${collectionClass} (property: $propertyForDebugPurposes)")
+      }
+    }
+    else {
+      return when (collectionClass) {
+        THashSet::class.java -> THashSet()
+        HashSet::class.java -> HashSet()
+        ArrayList::class.java -> ArrayList()
+        SmartList::class.java -> SmartList()
+        else -> {
+          @Suppress("UNCHECKED_CAST")
+          ReflectionUtil.newInstance(collectionClass, false) as MutableCollection<Any?>
+        }
+      }
+    }
+
+    return ArrayList()
+  }
 }
 
 internal class ArrayBinding(private val itemClass: Class<*>, context: BindingInitializationContext) : BaseCollectionBinding(itemClass, context) {
+  override fun deserialize(context: ReadContext) = readArray(context)
+
   override fun serialize(obj: Any, context: WriteContext) {
     val writer = context.writer
     writer.stepIn(IonType.LIST)
@@ -88,10 +125,15 @@ internal class ArrayBinding(private val itemClass: Class<*>, context: BindingIni
 
   override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
     read(hostObject, property, context) {
-      val list = deserialize(context)
-      val result = ArrayUtil.newArray(itemClass, list.size)
-      list.toArray(result)
-      result
+      readArray(context)
     }
+  }
+
+  private fun readArray(context: ReadContext): Array<out Any> {
+    val list = ArrayList<Any?>()
+    readInto(list, context)
+    val result = ArrayUtil.newArray(itemClass, list.size)
+    list.toArray(result)
+    return result
   }
 }

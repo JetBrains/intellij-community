@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -86,39 +85,6 @@ class ObjectSerializerTest {
   }
 
   @Test
-  fun `list of strings`() {
-    val bean = TestObjectBean()
-    bean.list.add("foo")
-    bean.list.add("bar")
-    test(bean)
-  }
-
-  @Test
-  fun `list of objects`() {
-    val bean = TestObjectBean()
-
-    val item1 = TestObjectBean()
-    item1.bean = bean
-    bean.children.add(item1)
-    bean.children.add(TestObjectBean())
-
-    test(bean)
-  }
-
-  @Test
-  fun `read root list`() {
-    val out = BufferExposingByteArrayOutputStream(8 * 1024)
-
-    objectSerializer.writeList(listOf("foo", "bar"), String::class.java, out, WriteConfiguration(binary = false))
-
-    val ionText = out.toString()
-    out.reset()
-
-    val result = objectSerializer.readList(String::class.java, ionText.reader())
-    assertThat(result).isEqualTo(listOf("foo", "bar"))
-  }
-
-  @Test
   fun `array of string`() {
     test(TestArrayBean(list = arrayOf("foo", "bar")))
   }
@@ -141,11 +107,11 @@ class ObjectSerializerTest {
   }
 }
 
-private enum class TestEnum {
+internal enum class TestEnum {
   RED, GREEN, BLUE
 }
 
-private class TestEnumBean() {
+private class TestEnumBean {
   @JvmField
   var color: TestEnum = TestEnum.BLUE
 }
@@ -157,7 +123,7 @@ private class TestArrayBean(
   /*  test set to final field */@JvmField val children: Array<TestBean> = arrayOf()
 )
 
-private class TestObjectBean {
+internal class TestObjectBean {
   @JvmField
   var bean: TestObjectBean? = null
 

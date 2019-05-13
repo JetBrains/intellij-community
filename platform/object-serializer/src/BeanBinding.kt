@@ -10,7 +10,7 @@ import com.intellij.util.containers.ObjectIntHashMap
 import java.lang.reflect.Constructor
 import java.lang.reflect.Type
 
-private val LOG = logger<BeanBinding>()
+internal val LOG = logger<BeanBinding>()
 
 private val structWriterBuilder by lazy {
   IonBinaryWriterBuilder.standard().withStreamCopyOptimized(true).immutable()

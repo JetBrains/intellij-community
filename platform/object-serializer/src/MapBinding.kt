@@ -4,11 +4,14 @@ package com.intellij.serialization
 import com.amazon.ion.IonType
 import com.intellij.util.ArrayUtil
 import gnu.trove.THashMap
+import java.lang.reflect.Type
 import java.util.*
 
-internal class MapBinding(private val keyClass: Class<*>, valueClass: Class<*>, context: BindingInitializationContext) : RootBinding, NestedBinding {
-  private val keyBinding = context.bindingProducer.getRootBinding(keyClass)
-  private val valueBinding = context.bindingProducer.getRootBinding(valueClass)
+internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitializationContext) : RootBinding, NestedBinding {
+  private val keyBinding = createBindingByType(keyType, context)
+  private val valueBinding = createBindingByType(valueType, context)
+
+  private val isKeyComparable = Comparable::class.java.isAssignableFrom(ClassUtil.typeToClass(keyType))
 
   override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
     write(hostObject, property, context) {
@@ -37,7 +40,7 @@ internal class MapBinding(private val keyClass: Class<*>, valueClass: Class<*>, 
     }
 
     writer.stepIn(IonType.LIST)
-    if (context.configuration.orderMapEntriesByKeys && map !is SortedMap<*, *> && map !is LinkedHashMap<*, *> && Comparable::class.java.isAssignableFrom(keyClass)) {
+    if (context.configuration.orderMapEntriesByKeys && isKeyComparable && map !is SortedMap<*, *> && map !is LinkedHashMap<*, *>) {
       val keys = ArrayUtil.toObjectArray(map.keys)
       Arrays.sort(keys) { a, b ->
         @Suppress("UNCHECKED_CAST")
