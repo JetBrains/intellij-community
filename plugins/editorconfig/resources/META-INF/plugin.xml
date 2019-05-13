@@ -28,6 +28,7 @@
     <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" order="first"/>
     <applicationService serviceImplementation="org.editorconfig.plugincomponents.SettingsProviderComponent"/>
     <postStartupActivity implementation="org.editorconfig.plugincomponents.ConfigProjectComponent"/>
+    <fileEditorProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider"/>
 
     <!-- Language support -->
     <fileTypeFactory implementation="org.editorconfig.language.filetype.EditorConfigFileTypeFactory"/>
