@@ -1443,7 +1443,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return myPatternsTable;
   }
 
-  void setPatternsTable(@NotNull Set<? extends FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
+  void setPatternsTable(@NotNull Set<FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
+    Map<FileNameMatcher, FileType> removedMappings = getExtensionMap().getRemovedMappings(assocTable, fileTypes);
     fireBeforeFileTypesChanged();
     for (FileType existing : getRegisteredFileTypes()) {
       if (!fileTypes.contains(existing)) {
@@ -1458,6 +1459,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     myPatternsTable = assocTable.copy();
     fireFileTypesChanged();
+
+    Iterator<Map.Entry<FileNameMatcher, Pair<FileType, Boolean>>> iterator = myRemovedMappings.entrySet().iterator();
+    while (iterator.hasNext()) {
+      Map.Entry<FileNameMatcher, Pair<FileType, Boolean>> entry = iterator.next();
+      if (assocTable.isAssociatedWith(entry.getValue().first, entry.getKey()))
+        iterator.remove();
+    }
+    for (FileNameMatcher matcher : removedMappings.keySet()) {
+      myRemovedMappings.put(matcher, Pair.create(removedMappings.get(matcher), true));
+    }
   }
 
   public void associate(@NotNull FileType fileType, @NotNull FileNameMatcher matcher, boolean fireChange) {
