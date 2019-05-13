@@ -50,7 +50,6 @@ public class ShellcheckOptionsPanel {
 
     String shellcheckPath = ShSettings.getShellcheckPath();
     myShellcheckSelector.setText(shellcheckPath);
-    myShellcheckSelector.setEditable(false);
     myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
 
     disabledInspections.forEach(setting -> {
