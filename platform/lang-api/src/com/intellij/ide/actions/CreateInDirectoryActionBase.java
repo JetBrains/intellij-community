@@ -6,6 +6,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,7 +18,9 @@ public abstract class CreateInDirectoryActionBase extends AnAction {
   protected CreateInDirectoryActionBase() {
   }
 
-  protected CreateInDirectoryActionBase(String text, String description, Icon icon) {
+  protected CreateInDirectoryActionBase(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                                        @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                                        Icon icon) {
     super(text, description, icon);
   }
 
