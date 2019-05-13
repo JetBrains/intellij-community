@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -9,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -18,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
@@ -32,11 +29,10 @@ public abstract class AbstractExternalSystemSettings<
   SS extends AbstractExternalSystemSettings<SS, PS, L>,
   PS extends ExternalProjectSettings,
   L extends ExternalSystemSettingsListener<PS>>
-  implements Disposable
 {
 
   @NotNull private final Topic<L> myChangesTopic;
-  private Supplier<Project> myProjectSupplier;
+  @NotNull private final Project myProject;
 
   @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettings = new HashMap<>();
 
@@ -45,17 +41,12 @@ public abstract class AbstractExternalSystemSettings<
 
   protected AbstractExternalSystemSettings(@NotNull Topic<L> topic, @NotNull Project project) {
     myChangesTopic = topic;
-    myProjectSupplier = project.isDefault() ? ()->ProjectManager.getInstance().getDefaultProject() : ()->project;
-  }
-
-  @Override
-  public void dispose() {
-    myProjectSupplier = null;
+    myProject = project;
   }
 
   @NotNull
   public Project getProject() {
-    return myProjectSupplier.get();
+    return myProject;
   }
 
   public boolean showSelectiveImportDialogOnInitialImport() {
@@ -134,11 +125,11 @@ public abstract class AbstractExternalSystemSettings<
     return true;
   }
 
-  public void setLinkedProjectsSettings(@NotNull Collection<PS> settings) {
+  public void setLinkedProjectsSettings(@NotNull Collection<? extends PS> settings) {
     setLinkedProjectsSettings(settings, null);
   }
 
-  private void setLinkedProjectsSettings(@NotNull Collection<PS> settings, @Nullable ExternalSystemSettingsListener listener) {
+  private void setLinkedProjectsSettings(@NotNull Collection<? extends PS> settings, @Nullable ExternalSystemSettingsListener listener) {
     // do not add invalid 'null' settings
     settings = ContainerUtil.filter(settings, ps -> ps.getExternalProjectPath() != null);
 
