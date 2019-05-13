@@ -9,13 +9,13 @@ message()
 {
   TITLE="Cannot start @@product_full@@"
   if [ -n "`which zenity`" ]; then
-    zenity --error --title="$TITLE" --text="$1"
+    zenity --error --title="$TITLE" --text="$1" --no-wrap
   elif [ -n "`which kdialog`" ]; then
     kdialog --error "$1" --title "$TITLE"
+  elif [ -n "`which notify-send`" ]; then
+    notify-send "ERROR: $TITLE" "$1"
   elif [ -n "`which xmessage`" ]; then
     xmessage -center "ERROR: $TITLE: $1"
-  elif [ -n "`which notify-send`" ]; then
-    notify-send "ERROR: $TITLE: $1"
   else
     printf "ERROR: $TITLE\n$1\n"
   fi
