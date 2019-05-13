@@ -20,15 +20,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.HighlightUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +129,8 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
       tracker.deleteAndRestoreComments(appendStatement);
     }
     if (variable != null) {
-      HighlightUtil.showRenameTemplate(appendStatementParent, variable);
+      final PsiReference[] references = ReferencesSearch.search(variable, variable.getUseScope()).toArray(PsiReference.EMPTY_ARRAY);
+      HighlightUtils.showRenameTemplate(appendStatementParent, variable, references);
     }
   }
 
