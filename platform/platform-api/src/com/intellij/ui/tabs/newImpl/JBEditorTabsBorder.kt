@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.newImpl
 
-import com.intellij.ui.tabs.JBTabsBackgroundAndBorder
+import com.intellij.ui.tabs.JBTabsBorder
 import com.intellij.ui.tabs.JBTabsPosition
-import com.intellij.util.ui.JBUI
 import java.awt.*
 
-class JBEditorTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBTabsBackgroundAndBorder(tabs) {
+class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
 
   override val effectiveBorder: Insets
     get() = Insets(thickness, 0, 0, 0)
@@ -16,8 +15,6 @@ class JBEditorTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBTabsBackgroundAndBor
 
     g as Graphics2D
     val firstLabel = tabs.myInfo2Label.get(tabs.lastLayoutPass.getTabAt(0, 0)) ?: return
-
-    paintBackground(g, Rectangle(x, y, width, height))
 
     val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
     tabs.tabPainter.paintBorderLine(g, thickness, Point(x, startY), Point(x + width, startY))

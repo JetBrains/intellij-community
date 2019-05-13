@@ -4,12 +4,10 @@ package com.intellij.ui.tabs
 import com.intellij.ui.tabs.newImpl.JBTabsImpl
 import com.intellij.util.ui.JBUI
 import java.awt.Component
-import java.awt.Graphics2D
 import java.awt.Insets
-import java.awt.Rectangle
 import javax.swing.border.Border
 
-abstract class JBTabsBackgroundAndBorder(val tabs: JBTabsImpl) : Border {
+abstract class JBTabsBorder(val tabs: JBTabsImpl) : Border {
   var thickness: Int = JBUI.scale(1)
 
   override fun getBorderInsets(c: Component?): Insets = JBUI.emptyInsets()
@@ -21,7 +19,4 @@ abstract class JBTabsBackgroundAndBorder(val tabs: JBTabsImpl) : Border {
   open val effectiveBorder: Insets
     get() = JBUI.emptyInsets()
 
-  protected fun paintBackground(g: Graphics2D, rect: Rectangle) {
-    tabs.tabPainter.fillBackground(g, rect)
-  }
 }

@@ -352,10 +352,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  void setPaintBlocked(boolean blocked) {
-    myTabs.getPresentation().setPaintBlocked(blocked, true);
-  }
-
   private static class MyQueryable implements Queryable {
     private final TabInfo myTab;
 
@@ -707,8 +703,8 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
 
     @Override
-    protected JBTabsBackgroundAndBorder createTabBorder() {
-      return new JBEditorTabsBackgroundAndBorder(this);
+    protected JBTabsBorder createTabBorder() {
+      return new JBEditorTabsBorder(this);
     }
 
     private boolean active = false;
@@ -728,7 +724,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
             if(newActive != active) {
               active = newActive;
-              updateTabs();
+              revalidateAndRepaint();
             }
           });
         }
