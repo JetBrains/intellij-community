@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class DisableInspectionIntention implements IntentionAction, LowPriorityAction, Iconable {
-  private String myInspectionCode;
-  private String myMessage;
+  private final String myInspectionCode;
+  private final String myMessage;
 
   public DisableInspectionIntention(String message, String inspectionCode) {
     myInspectionCode = inspectionCode;

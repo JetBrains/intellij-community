@@ -11,9 +11,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class SuppressInspectionIntention implements IntentionAction {
-  private String myInspectionCode;
-  private String myMessage;
-  private int myOffset;
+  private final String myInspectionCode;
+  private final String myMessage;
+  private final int myOffset;
 
   public SuppressInspectionIntention(String message, String inspectionCode, int offset) {
     myInspectionCode = inspectionCode;

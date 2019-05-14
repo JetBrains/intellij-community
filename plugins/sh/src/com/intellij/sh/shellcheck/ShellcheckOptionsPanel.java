@@ -32,8 +32,8 @@ public class ShellcheckOptionsPanel {
   private ActionLink myShellcheckDownloadLink;
   private TextFieldWithBrowseButton myShellcheckSelector;
   private MultipleCheckboxOptionsPanel myInspectionsCheckboxPanel;
-  private BiConsumer<String, Boolean> myInspectionsChangeListener;
-  private Project myProject;
+  private final BiConsumer<String, Boolean> myInspectionsChangeListener;
+  private final Project myProject;
 
   ShellcheckOptionsPanel(List<String> disabledInspections, BiConsumer<String, Boolean> inspectionsChangeListener) {
     myInspectionsChangeListener = inspectionsChangeListener;

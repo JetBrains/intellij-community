@@ -31,6 +31,7 @@ public class ShRunFileAction extends DumbAwareAction {
         : runner;
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(isEnabled(e));
   }

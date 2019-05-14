@@ -23,7 +23,7 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
   public static final String SHORT_NAME = "ShellCheck";
   private static final String SHELLCHECK_SETTINGS_TAG = "shellcheck_settings";
   private static final String DELIMITER = ",";
-  private Set<String> myDisabledInspections = new TreeSet<>();
+  private final Set<String> myDisabledInspections = new TreeSet<>();
   private JComponent myOptionsPanel;
 
   @NotNull

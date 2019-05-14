@@ -17,19 +17,17 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.sh.ShStringUtil;
 import com.intellij.sh.ShTypes;
-import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.psi.ShString;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.sh.ShStringUtil.quote;
@@ -100,7 +98,7 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
               if (dir.exists() && dir.isDirectory()) {
                 File[] files = dir.listFiles();
                 if (files != null) {
-                  List<LookupElement> collect = Arrays.stream(files).map(ShFilePathCompletionContributor::createFileLookupElement).collect(Collectors.toList());
+                  List<LookupElement> collect = ContainerUtil.map(files, ShFilePathCompletionContributor::createFileLookupElement);
                   String prefix = afterSlash.endsWith("\\") ? afterSlash.substring(0, afterSlash.length() - 1) : afterSlash;
                   result.withPrefixMatcher(prefix).caseInsensitive().addAllElements(collect);
                 }
@@ -123,7 +121,7 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
   }
 
   @Nullable
-  private String getTextWithEnvVarReplacement(@NotNull CompletionParameters parameters) {
+  private static String getTextWithEnvVarReplacement(@NotNull CompletionParameters parameters) {
     PsiElement original = parameters.getOriginalPosition();
     if (original == null) return null;
 
@@ -148,14 +146,14 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
     PsiElement e = file.findElementAt(offset);
     if (!(e instanceof LeafPsiElement)) return null;
     LeafPsiElement leaf = (LeafPsiElement) e;
-    if (leaf.getElementType() == ShTokenTypes.VAR) return leaf;
+    if (leaf.getElementType() == ShTypes.VAR) return leaf;
     if (isStringOfVar(leaf)) return leaf.getPrevSibling();
     return null;
   }
 
   // e.g. "$HOME"/<caret>
   private static boolean isStringOfVar(@NotNull LeafPsiElement e) {
-    if (e.getElementType() != ShTokenTypes.CLOSE_QUOTE) return false;
+    if (e.getElementType() != ShTypes.CLOSE_QUOTE) return false;
     PsiElement str = e.getParent();
     if (!(str instanceof ShString)) return false;
 

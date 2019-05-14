@@ -54,11 +54,13 @@ public class ShSyntaxHighlighter extends SyntaxHighlighterBase {
     fillMap(map, conditionalOperators, ShHighlighterColors.CONDITIONAL_OPERATORS);
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(final IElementType tokenType) {
     return pack(map.get(tokenType));
   }
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     return new ShLexer();

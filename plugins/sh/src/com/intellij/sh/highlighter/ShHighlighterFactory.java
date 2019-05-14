@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import org.jetbrains.annotations.NotNull;
 
 public class ShHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
+  @Override
   @NotNull
   protected SyntaxHighlighter createHighlighter() {
     return new ShSyntaxHighlighter();

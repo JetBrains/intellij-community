@@ -23,15 +23,18 @@ public class ShBraceMatcher implements PairedBraceMatcher, ShTokenTypes {
       new BracePair(LEFT_CURLY, RIGHT_CURLY, true),
   };
 
+  @Override
   @NotNull
   public BracePair[] getPairs() {
     return PAIRS;
   }
 
+  @Override
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType tokenType) {
     return true;
   }
 
+  @Override
   public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
     return openingBraceOffset;
   }

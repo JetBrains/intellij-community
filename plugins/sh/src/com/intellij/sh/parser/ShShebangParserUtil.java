@@ -4,16 +4,16 @@ package com.intellij.sh.parser;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 public class ShShebangParserUtil {
-  private static final List<String> KNOWN_EXTENSIONS = ContainerUtil.list("exe", "bat", "cmd");
+  private static final List<String> KNOWN_EXTENSIONS = Arrays.asList("exe", "bat", "cmd");
   private static final String PREFIX = "#!";
 
   private ShShebangParserUtil() {

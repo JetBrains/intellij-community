@@ -13,21 +13,25 @@ public class ShFileType extends LanguageFileType {
     super(ShLanguage.INSTANCE);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "Shell Script";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "Shell Script";
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return "sh";
   }
 
+  @Override
   public Icon getIcon() {
     return ShIcons.FILE_TYPE;
   }
