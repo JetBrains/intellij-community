@@ -1205,16 +1205,17 @@ public class InferenceSession {
     else {
       for (PsiType upperType : var.getBounds(InferenceBound.UPPER)) {
         if (myErrorMessages == null && isProperType(upperType)) {
-          String incompatibleBoundsMessage = null;
           if (type != lowerBound && !TypeConversionUtil.isAssignable(upperType, type)) {
-            incompatibleBoundsMessage = incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.UPPER, UPPER_BOUNDS_PRESENTATION);
-          }
-          else if (type == lowerBound && !TypeConversionUtil.isAssignable(upperType, lowerBound)) {
-            incompatibleBoundsMessage = incompatibleBoundsMessage(var, substitutor, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION, InferenceBound.UPPER, UPPER_BOUNDS_PRESENTATION);
-          }
-          if (incompatibleBoundsMessage != null) {
-            registerIncompatibleErrorMessage(incompatibleBoundsMessage);
+            registerIncompatibleErrorMessage(incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.UPPER, UPPER_BOUNDS_PRESENTATION));
             return PsiType.NULL;
+          }
+          else if (type == lowerBound) {
+            for (PsiType lowerBoundConjunct : var.getBounds(InferenceBound.LOWER)) {
+              if (isProperType(lowerBoundConjunct) && !TypeConversionUtil.isAssignable(upperType, lowerBoundConjunct)) {
+                registerIncompatibleErrorMessage(incompatibleBoundsMessage(var, substitutor, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION, InferenceBound.UPPER, UPPER_BOUNDS_PRESENTATION));
+                return PsiType.NULL;
+              }
+            }
           }
         }
       }
