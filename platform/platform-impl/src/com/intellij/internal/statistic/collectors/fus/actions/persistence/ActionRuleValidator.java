@@ -16,7 +16,7 @@ public class ActionRuleValidator extends CustomUtilsWhiteListRule {
   @NotNull
   @Override
   protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-    if (ActionsCollectorImpl.DEFAULT_ID.equals(data)) return ValidationResultType.ACCEPTED;
+    if (ActionsCollectorImpl.isCustomAllowedAction(data)) return ValidationResultType.ACCEPTED;
 
     return acceptWhenReportedByJetbrainsPlugin(context);
   }
