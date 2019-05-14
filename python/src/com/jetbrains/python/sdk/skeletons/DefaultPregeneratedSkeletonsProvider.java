@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,7 +91,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
                                                 boolean withMinorVersion,
                                                 boolean withExtension) {
 
-    String version = versionString.toLowerCase().replace(" ", "-");
+    String version = StringUtil.toLowerCase(versionString).replace(" ", "-");
     if (!withMinorVersion) {
       int ind = version.lastIndexOf(".");
       if (ind != -1) {

@@ -173,7 +173,7 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
           if (rollbackEnvironment != null) {
             if (indicator != null) {
               indicator.setText(vcs.getDisplayName() +
-                                ": performing " + UIUtil.removeMnemonic(rollbackEnvironment.getRollbackOperationName()).toLowerCase() + "...");
+                                ": performing " + StringUtil.toLowerCase(UIUtil.removeMnemonic(rollbackEnvironment.getRollbackOperationName())) + "...");
               indicator.setIndeterminate(false);
             }
             rollbackEnvironment

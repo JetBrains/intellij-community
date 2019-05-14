@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -153,15 +154,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     if (params.getCompletionType() == CompletionType.SMART) {
       final String text = insertedScalar.getText();
       final int caretPos = text.indexOf(DUMMY_IDENTIFIER_TRIMMED);
-      @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale") final String pattern =
-        (caretPos >= 0 ? text.substring(0, caretPos) : text).toLowerCase();
+      String pattern = StringUtil.toLowerCase((caretPos >= 0 ? text.substring(0, caretPos) : text));
 
       final Collection<List<Field>> paths = collectPaths(fieldList, pattern.length() > 0 ? 10 : 1);
 
       for (List<Field> pathToInsert : paths) {
         final Field lastField = pathToInsert.get(pathToInsert.size() - 1);
-        //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
-        if (lastField.getName().toLowerCase().startsWith(pattern)) {
+        if (StringUtil.toLowerCase(lastField.getName()).startsWith(pattern)) {
           final YamlMetaType.ForcedCompletionPath completionPath = YamlMetaType.ForcedCompletionPath.forDeepCompletion(pathToInsert);
           LookupElementBuilder l = LookupElementBuilder
             .create(completionPath, completionPath.getName())

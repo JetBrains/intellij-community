@@ -272,7 +272,7 @@ public abstract class PluginManagerMain implements Disposable {
   void modifyPluginsList(@NotNull List<? extends IdeaPluginDescriptor> list) {
     IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
     pluginsModel.updatePluginsList(list);
-    pluginsModel.filter(myFilter.getFilter().toLowerCase());
+    pluginsModel.filter(StringUtil.toLowerCase(myFilter.getFilter()));
     if (selected != null) {
       select(selected);
     }
@@ -787,7 +787,7 @@ public abstract class PluginManagerMain implements Disposable {
     @Override
     public void filter() {
       getPluginTable().putClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY, getFilter());
-      pluginsModel.filter(getFilter().toLowerCase());
+      pluginsModel.filter(StringUtil.toLowerCase(getFilter()));
       TableUtil.ensureSelectionExists(getPluginTable());
     }
   }

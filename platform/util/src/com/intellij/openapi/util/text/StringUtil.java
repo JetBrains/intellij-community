@@ -3237,10 +3237,9 @@ public class StringUtil extends StringUtilRt {
    * Say smallPart = "op" and bigPart="open". Method returns true for "Ope" and false for "ops"
    */
   @Contract(pure = true)
-  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   public static boolean isBetween(@NotNull String string, @NotNull String smallPart, @NotNull String bigPart) {
-    final String s = string.toLowerCase();
-    return s.startsWith(smallPart.toLowerCase()) && bigPart.toLowerCase().startsWith(s);
+    String s = toLowerCase(string);
+    return s.startsWith(toLowerCase(smallPart)) && toLowerCase(bigPart).startsWith(s);
   }
 
   /**

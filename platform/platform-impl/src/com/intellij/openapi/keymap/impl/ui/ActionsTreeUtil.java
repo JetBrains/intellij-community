@@ -490,7 +490,7 @@ public class ActionsTreeUtil {
       if (action == null) return false;
       action = tryUnstubAction(action);
 
-      final String insensitiveFilter = filter.toLowerCase();
+      final String insensitiveFilter = StringUtil.toLowerCase(filter);
       ArrayList<String> options = new ArrayList<>();
       options.add(action.getTemplatePresentation().getText());
       options.add(action.getTemplatePresentation().getDescription());
@@ -502,7 +502,7 @@ public class ActionsTreeUtil {
 
       for (String text : options) {
         if (text != null) {
-          final String lowerText = text.toLowerCase();
+          final String lowerText = StringUtil.toLowerCase(text);
 
           if (SearchUtil.isComponentHighlighted(lowerText, insensitiveFilter, force, null) || lowerText.contains(insensitiveFilter)) {
             return true;

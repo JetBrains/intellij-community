@@ -224,7 +224,7 @@ public class DocStringUtil {
       final String line = lines[i];
       if (NumpyDocString.SECTION_HEADER.matcher(line).matches() && i > 0) {
         @NonNls final String lineBefore = lines[i - 1];
-        if (SectionBasedDocString.SECTION_NAMES.contains(lineBefore.trim().toLowerCase())) {
+        if (SectionBasedDocString.SECTION_NAMES.contains(StringUtil.toLowerCase(lineBefore.trim()))) {
           return true;
         }
       }

@@ -101,7 +101,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @Nullable
   public static String getNormalizedSectionTitle(@NotNull @NonNls String title) {
-    return SECTION_ALIASES.get(title.toLowerCase());
+    return SECTION_ALIASES.get(StringUtil.toLowerCase(title));
   }
 
   public static boolean isValidSectionTitle(@NotNull @NonNls String title) {

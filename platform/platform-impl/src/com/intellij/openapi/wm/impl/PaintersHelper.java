@@ -206,8 +206,8 @@ final class PaintersHelper implements Painter.Listener {
       private void loadImageAsync(@Nullable String propertyValue) {
         String[] parts = (propertyValue != null ? propertyValue : propertyName + ".png").split(",");
         float newAlpha = Math.abs(Math.min(StringUtil.parseInt(parts.length > 1 ? parts[1] : "", 10) / 100f, 1f));
-        IdeBackgroundUtil.Fill newFillType = StringUtil.parseEnum(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "", SCALE, IdeBackgroundUtil.Fill.class);
-        IdeBackgroundUtil.Anchor newAnchor = StringUtil.parseEnum(parts.length > 3 ? parts[3].toUpperCase(Locale.ENGLISH) : "", CENTER, IdeBackgroundUtil.Anchor.class);
+        IdeBackgroundUtil.Fill newFillType = StringUtil.parseEnum(parts.length > 2 ? StringUtil.toUpperCase(parts[2]) : "", SCALE, IdeBackgroundUtil.Fill.class);
+        IdeBackgroundUtil.Anchor newAnchor = StringUtil.parseEnum(parts.length > 3 ? StringUtil.toUpperCase(parts[3]) : "", CENTER, IdeBackgroundUtil.Anchor.class);
         String flip = parts.length > 4 ? parts[4] : "none";
         String filePath = parts[0];
         if (StringUtil.isEmpty(filePath)) {

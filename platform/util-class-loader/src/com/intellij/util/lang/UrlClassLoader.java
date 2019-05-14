@@ -30,7 +30,7 @@ public class UrlClassLoader extends ClassLoader {
     //this class is compiled for Java 6 so it's enough to check that it isn't running under Java 6
     boolean isAtLeastJava7 = !System.getProperty("java.runtime.version", "unknown").startsWith("1.6.");
 
-    boolean ibmJvm = System.getProperty("java.vm.vendor", "unknown").toLowerCase(Locale.US).contains("ibm");
+    boolean ibmJvm = System.getProperty("java.vm.vendor", "unknown").toLowerCase(Locale.ENGLISH).contains("ibm");
     boolean capable =
       isAtLeastJava7 && !ibmJvm && Boolean.parseBoolean(System.getProperty("use.parallel.class.loading", "true"));
     if (capable) {

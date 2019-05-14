@@ -3,6 +3,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -266,7 +267,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
       Dimension initialSize = dragObject.getInitialSize(myContainer);
       feedbackLayer.putFeedback(myContainer.getDelegee(), getFeedbackRect(myQuadrant, initialSize),
-                                myContainer.getDisplayName() + " (" + myQuadrant.toLowerCase() + ")");
+                                myContainer.getDisplayName() + " (" + StringUtil.toLowerCase(myQuadrant) + ")");
     }
 
     private Rectangle getFeedbackRect(final String quadrant, final Dimension initialSize) {

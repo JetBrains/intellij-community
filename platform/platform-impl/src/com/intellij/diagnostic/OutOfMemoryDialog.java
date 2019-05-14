@@ -21,6 +21,7 @@ import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.MemoryDumpHelper;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.Locale;
 
 public class OutOfMemoryDialog extends DialogWrapper {
   private final MemoryKind myMemoryKind;
@@ -162,7 +162,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
       TimeoutUtil.sleep(250);  // to give UI chance to update
       String message = "";
       try {
-        String name = ApplicationNamesInfo.getInstance().getFullProductName().replace(' ', '-').toLowerCase(Locale.US);
+        String name = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getFullProductName().replace(' ', '-'));
         String path = SystemProperties.getUserHome() + File.separator + "heapDump-" + name + '-' + System.currentTimeMillis() + ".hprof.zip";
         MemoryDumpHelper.captureMemoryDumpZipped(path);
         message = "Dumped to " + path;

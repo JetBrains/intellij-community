@@ -17,6 +17,7 @@ package org.intellij.images.ui;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import icons.ImagesIcons;
@@ -136,7 +137,7 @@ public class ThumbnailComponentUI extends ComponentUI {
         Font font = getSmallFont().deriveFont(Font.BOLD);
         FontMetrics fontMetrics = g.getFontMetrics(font);
 
-        String format = tc.getFormat().toUpperCase();
+        String format = StringUtil.toUpperCase(tc.getFormat());
         int stringWidth = fontMetrics.stringWidth(format);
         int x = ImagesIcons.ThumbnailBlank.getIconWidth() - stringWidth + 2;
         int y = ImagesIcons.ThumbnailBlank.getIconHeight() - fontMetrics.getHeight() + 4;

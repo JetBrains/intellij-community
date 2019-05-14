@@ -82,7 +82,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
   public String toString() {
     StringBuilder buffer = new StringBuilder("content root:");
     for (Map.Entry<ExternalSystemSourceType, Collection<SourceRoot>> entry : data.entrySet()) {
-      buffer.append(entry.getKey().toString().toLowerCase(Locale.ENGLISH)).append("=").append(entry.getValue()).append("|");
+      buffer.append(StringUtil.toLowerCase(entry.getKey().toString())).append("=").append(entry.getValue()).append("|");
     }
     if (!data.isEmpty()) {
       buffer.setLength(buffer.length() - 1);

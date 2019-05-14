@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.RemoteFilePath;
@@ -241,7 +242,7 @@ public abstract class GitHandler {
   }
 
   private boolean isCmd() {
-    return myCommandLine.getExePath().toLowerCase().endsWith("cmd");
+    return StringUtil.toLowerCase(myCommandLine.getExePath()).endsWith("cmd");
   }
 
   /**

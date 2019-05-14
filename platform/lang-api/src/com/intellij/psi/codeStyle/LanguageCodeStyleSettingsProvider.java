@@ -11,6 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,7 +22,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -70,7 +74,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    */
   @NotNull
   public String getExternalLanguageId() {
-    return getLanguage().getID().toLowerCase(Locale.ENGLISH);
+    return StringUtil.toLowerCase(getLanguage().getID());
   }
 
   /**

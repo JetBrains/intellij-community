@@ -1147,7 +1147,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     private static BuildMessage.Kind getKindByMessageText(String line) {
-      final String lowercasedLine = line.toLowerCase(Locale.US);
+      final String lowercasedLine = StringUtil.toLowerCase(line);
       if (lowercasedLine.contains("error") || lowercasedLine.contains("requires target release")) {
         return BuildMessage.Kind.ERROR;
       }

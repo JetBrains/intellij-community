@@ -421,7 +421,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             final IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
-            final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);
+            final String filter = StringUtil.toLowerCase(myFilter.getFilter());
             ((InstalledPluginsTableModel)pluginsModel).setEnabledFilter(enabledValue, filter);
             if (selection != null) {
               select(selection);

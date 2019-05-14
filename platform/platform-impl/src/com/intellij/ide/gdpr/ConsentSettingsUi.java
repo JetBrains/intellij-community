@@ -26,8 +26,10 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -103,7 +105,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
     final JPanel pane;
     if (addCheckBox) {
-      final JCheckBox cb = new JBCheckBox(StringUtil.capitalize(consent.getName().toLowerCase(Locale.US)), consent.isAccepted());
+      final JCheckBox cb = new JBCheckBox(StringUtil.capitalize(StringUtil.toLowerCase(consent.getName())), consent.isAccepted());
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
                                                    +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
       cb.setOpaque(false);

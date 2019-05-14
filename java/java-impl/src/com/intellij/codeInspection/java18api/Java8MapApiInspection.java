@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -29,7 +30,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.*;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
@@ -267,7 +267,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
         break;
       }
     }
-    return nameCandidate.toLowerCase(Locale.ENGLISH);
+    return StringUtil.toLowerCase(nameCandidate);
   }
 
   private static class ReplaceWithSingleMapOperation implements LocalQuickFix {

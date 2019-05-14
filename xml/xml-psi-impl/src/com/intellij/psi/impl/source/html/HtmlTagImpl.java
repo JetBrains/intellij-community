@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.html;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,7 +45,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     for (final XmlTag subTag : subTags) {
       if (namespace == null) {
         String tagName = subTag.getName();
-        tagName = tagName.toLowerCase();
+        tagName = StringUtil.toLowerCase(tagName);
 
         if (name == null || name.equals(tagName)) {
           if (result == null) {
@@ -75,19 +76,19 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
 
   @Override
   public String getAttributeValue(String qname) {
-    qname = qname.toLowerCase();
+    qname = StringUtil.toLowerCase(qname);
     return super.getAttributeValue(qname);
   }
 
   @Override
   protected void cacheOneAttributeValue(String name, String value, final Map<String, String> attributesValueMap) {
-    name = name.toLowerCase();
+    name = StringUtil.toLowerCase(name);
     super.cacheOneAttributeValue(name, value, attributesValueMap);
   }
 
   @Override
   public String getAttributeValue(String name, String namespace) {
-    name = name.toLowerCase();
+    name = StringUtil.toLowerCase(name);
     return super.getAttributeValue(name, namespace);
   }
 

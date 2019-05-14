@@ -15,6 +15,7 @@
  */
 package git4idea.rebase;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,7 @@ public class GitRebaseEditorMain {
       XmlRpcClientLite client = new XmlRpcClientLite("127.0.0.1", port);
       Vector<Object> params = new Vector<>();
       params.add(handlerId);
-      if (System.getProperty("os.name").toLowerCase().startsWith("windows") && file.startsWith(CYGDRIVE_PREFIX)) {
+      if (StringUtil.toLowerCase(System.getProperty("os.name")).startsWith("windows") && file.startsWith(CYGDRIVE_PREFIX)) {
         int p = CYGDRIVE_PREFIX.length();
         file = file.substring(p, p + 1) + ":" + file.substring(p + 1);
       }

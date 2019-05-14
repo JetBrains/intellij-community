@@ -115,7 +115,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   public Element getState() {
     Element state = new Element("state");
     if (defaultBrowserPolicy != DefaultBrowserPolicy.SYSTEM) {
-      state.setAttribute("default", defaultBrowserPolicy.name().toLowerCase(Locale.ENGLISH));
+      state.setAttribute("default", StringUtil.toLowerCase(defaultBrowserPolicy.name()));
     }
     if (!myShowBrowserHover) {
       state.setAttribute("showHover", "false");
@@ -218,7 +218,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     String defaultValue = element.getAttributeValue("default");
     if (!StringUtil.isEmpty(defaultValue)) {
       try {
-        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(defaultValue.toUpperCase(Locale.ENGLISH));
+        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(StringUtil.toUpperCase(defaultValue));
       }
       catch (IllegalArgumentException e) {
         LOG.warn(e);

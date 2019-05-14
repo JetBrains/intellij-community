@@ -343,13 +343,13 @@ public class SearchUtil {
     final Set<String> words = searchableOptionsRegistrar.getProcessedWords(option);
     final Set<String> options = configurable != null ? searchableOptionsRegistrar.replaceSynonyms(words, configurable) : words;
     if (options.isEmpty()) {
-      return text.toLowerCase(Locale.US).contains(option.toLowerCase(Locale.US));
+      return StringUtil.toLowerCase(text).contains(StringUtil.toLowerCase(option));
     }
     final Set<String> tokens = searchableOptionsRegistrar.getProcessedWords(text);
     if (!force) {
       options.retainAll(tokens);
       final boolean highlight = !options.isEmpty();
-      return highlight || text.toLowerCase(Locale.US).contains(option.toLowerCase(Locale.US));
+      return highlight || StringUtil.toLowerCase(text).contains(StringUtil.toLowerCase(option));
     }
     else {
       options.removeAll(tokens);
@@ -400,7 +400,7 @@ public class SearchUtil {
 
   private static String quoteStrictOccurrences(final String textToMarkup, final String filter) {
     StringBuilder cur = new StringBuilder();
-    final String s = textToMarkup.toLowerCase(Locale.US);
+    final String s = StringUtil.toLowerCase(textToMarkup);
     for (String part : filter.split(" ")) {
       if (s.contains(part)) {
         cur.append("\"").append(part).append("\" ");
@@ -511,7 +511,7 @@ public class SearchUtil {
       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
       final String[] words = text.substring(pos, end).split("[\\W&&[^-]]+");
       for (String word : words) {
-        if (filters.contains(PorterStemmerUtil.stem(word.toLowerCase(Locale.US)))) {
+        if (filters.contains(PorterStemmerUtil.stem(StringUtil.toLowerCase(word)))) {
           selectedWords.add(word);
         }
       }
@@ -519,7 +519,7 @@ public class SearchUtil {
   }
 
   public static List<Set<String>> findKeys(String filter, Set<? super String> quoted) {
-    filter = processFilter(filter.toLowerCase(Locale.US), quoted);
+    filter = processFilter(StringUtil.toLowerCase(filter), quoted);
     final List<Set<String>> keySetList = new ArrayList<>();
     final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> words = optionsRegistrar.getProcessedWords(filter);

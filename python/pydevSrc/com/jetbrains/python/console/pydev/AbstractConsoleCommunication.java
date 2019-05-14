@@ -3,11 +3,11 @@ package com.jetbrains.python.console.pydev;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * @author traff
@@ -34,7 +34,7 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
   public static Pair<String, Boolean> parseExecResponseString(String str) {
     boolean more;
     String errorContents = null;
-    String lower = str.toLowerCase(Locale.ENGLISH);
+    String lower = StringUtil.toLowerCase(str);
     if (lower.equals("true") || lower.equals("1")) {
       more = true;
     }

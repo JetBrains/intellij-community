@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.tasks.LocalTask;
@@ -41,7 +42,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
-import java.util.Locale;
 
 /**
  * @author Dmitry Avdeev
@@ -173,7 +173,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     String branchName = myVcsTaskHandler != null
                ? myVcsTaskHandler.cleanUpBranchName(myTaskManager.constructDefaultBranchName(task))
                : myTaskManager.suggestBranchName(task);
-    return TaskSettings.getInstance().LOWER_CASE_BRANCH ? branchName.toLowerCase(Locale.ENGLISH) : branchName;
+    return TaskSettings.getInstance().LOWER_CASE_BRANCH ? StringUtil.toLowerCase(branchName) : branchName;
   }
 
   private void updateFields(boolean initial) {
