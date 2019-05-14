@@ -330,6 +330,7 @@ public class PluginManagerConfigurableNewLayout
       @Override
       protected void createSearchTextField(int flyDelay) {
         super.createSearchTextField(250);
+        mySearchTextField.setHistoryPropertyName("MarketplacePluginsSearchHistory");
       }
 
       @NotNull
@@ -742,6 +743,8 @@ public class PluginManagerConfigurableNewLayout
                   () -> showRightBottomPopup(textField, "Show", myInstalledSearchGroup)));
         textField.putClientProperty("JTextField.variant", null);
         textField.putClientProperty("JTextField.variant", "search");
+
+        mySearchTextField.setHistoryPropertyName("InstalledPluginsSearchHistory");
       }
 
       @NotNull
@@ -1283,7 +1286,8 @@ public class PluginManagerConfigurableNewLayout
   private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull String name,
                         @NotNull String showAllQuery,
-                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function) throws IOException {
+                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function)
+    throws IOException {
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {

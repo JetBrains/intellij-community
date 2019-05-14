@@ -232,6 +232,7 @@ public abstract class PluginsTab {
       myDetailsPage.showPlugin(null, false);
     }
     mySearchPanel.setQuery(query);
+    mySearchTextField.addCurrentTextToHistory();
   }
 
   public void hideSearchPanel() {
