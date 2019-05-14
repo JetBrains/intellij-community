@@ -48,10 +48,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent</implementation-class>
       <headless-implementation-class/>
     </component>

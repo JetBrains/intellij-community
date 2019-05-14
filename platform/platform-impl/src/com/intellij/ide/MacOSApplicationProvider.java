@@ -22,17 +22,11 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.color.ColorSpace;
-import java.awt.color.ICC_ColorSpace;
-import java.awt.color.ICC_Profile;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -41,15 +35,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class MacOSApplicationProvider {
   private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
-  private static final String GENERIC_RGB_PROFILE_PATH = "/System/Library/ColorSync/Profiles/Generic RGB Profile.icc";
 
-  private final ColorSpace genericRgbColorSpace;
+  private MacOSApplicationProvider() { }
 
-  public static MacOSApplicationProvider getInstance() {
-    return ApplicationManager.getApplication().getComponent(MacOSApplicationProvider.class);
-  }
-
-  public MacOSApplicationProvider() {
+  public static void initApplication() {
     if (SystemInfo.isMac) {
       try {
         Worker.initMacApplication();
@@ -57,27 +46,7 @@ public class MacOSApplicationProvider {
       catch (Throwable t) {
         LOG.warn(t);
       }
-      genericRgbColorSpace = initializeNativeColorSpace();
     }
-    else {
-      genericRgbColorSpace = null;
-    }
-  }
-
-  private static ColorSpace initializeNativeColorSpace() {
-    try (InputStream is = new FileInputStream(GENERIC_RGB_PROFILE_PATH)) {
-      ICC_Profile profile = ICC_Profile.getInstance(is);
-      return new ICC_ColorSpace(profile);
-    }
-    catch (Throwable e) {
-      LOG.warn("Couldn't load generic RGB color profile", e);
-      return null;
-    }
-  }
-
-  @Nullable
-  public ColorSpace getGenericRgbColorSpace() {
-    return genericRgbColorSpace;
   }
 
   private static class Worker {

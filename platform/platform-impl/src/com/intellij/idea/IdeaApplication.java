@@ -367,6 +367,8 @@ public class IdeaApplication {
 
     @Override
     public void main(String[] args) {
+      if (SystemInfo.isMac) MacOSApplicationProvider.initApplication();
+
       SystemDock.updateMenu();
 
       RecentProjectsManager.getInstance();  // ensures that RecentProjectsManager app listener is added
