@@ -91,12 +91,14 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
 
   private static final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
 
-  /**
-   * @return psiFile associated with the content. If the file was not set on FileContentCreation, it will be created on the spot
-   */
   @NotNull
   @Override
   public PsiFile getPsiFile() {
+    return getPsiFileForPsiDependentIndex();
+  }
+
+  @NotNull
+  private PsiFile getFileFromText() {
     PsiFile psi = getUserData(IndexingDataKeys.PSI_FILE);
 
     if (psi == null) {
@@ -266,7 +268,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
       }
     }
     if (psi == null) {
-      psi = getPsiFile();
+      psi = getFileFromText();
     }
     return psi;
   }
