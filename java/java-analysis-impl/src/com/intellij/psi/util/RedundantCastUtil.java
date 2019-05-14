@@ -709,6 +709,13 @@ public class RedundantCastUtil {
         }
         else if (TypeConversionUtil.isAssignable(castTo, opType, false) &&
                  (expectedTypeByParent == null || TypeConversionUtil.isAssignable(expectedTypeByParent, opType, false))) {
+          if (parent instanceof PsiSwitchBlock && 
+              opType instanceof PsiClassType && PsiPrimitiveType.getUnboxedType(opType) == null && !opType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+            PsiClass aClass = ((PsiClassType)opType).resolve();
+            if (aClass != null && !aClass.isEnum()) {
+              return;
+            }
+          }
           addToResults(typeCast);
         }
       }
