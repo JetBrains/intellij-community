@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java18api;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -156,6 +158,10 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
           if (PsiTreeUtil.collectElements(presentValue, e -> PsiEquivalenceUtil.areElementsEquivalent(e, absentValue)).length == 0) {
             return;
           }
+          if (NullabilityUtil.getExpressionNullability(absentValue) == Nullability.NULLABLE ||
+              NullabilityUtil.getExpressionNullability(presentValue) == Nullability.NULLABLE) {
+            return;
+          }
           boolean informationLevel =
             !mySideEffects && SideEffectChecker.mayHaveSideEffects(presentValue, ex -> condition.extractGetCall(ex) != null);
           register(condition, holder, informationLevel, new ReplaceWithSingleMapOperation("merge", PsiTreeUtil
@@ -208,6 +214,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
            */
           PsiExpression lambdaCandidate = extractLambdaCandidate(condition, noneBranch);
           if (lambdaCandidate != null && mySuggestMapComputeIfAbsent) {
+            if (NullabilityUtil.getExpressionNullability(lambdaCandidate) == Nullability.NULLABLE) return;
             boolean informationLevel = !mySideEffects && SideEffectChecker.mayHaveSideEffects(lambdaCandidate);
             register(condition, holder, informationLevel, ReplaceWithSingleMapOperation.fromIf("computeIfAbsent", condition, lambdaCandidate));
           }
