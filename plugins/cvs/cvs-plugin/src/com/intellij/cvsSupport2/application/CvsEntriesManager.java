@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
@@ -59,12 +60,13 @@ public class CvsEntriesManager implements VirtualFileListener {
   private static final String CVS_ADMIN_DIRECTORY_NAME = CvsUtil.CVS;
 
   private final Collection<CvsEntriesListener> myEntriesListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private int myIsActive;
+  private int myIsActive; // guarded by this
   private final Collection<String> myFilesToRefresh = new THashSet<>();
 
   private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new THashMap<>();
   private final UserDirIgnores myUserDirIgnores = new UserDirIgnores();
   private final CvsApplicationLevelConfiguration myApplicationLevelConfiguration;
+  private Disposable listenerDisposable;
 
   public static CvsEntriesManager getInstance() {
     return ServiceManager.getService(CvsEntriesManager.class);
@@ -81,17 +83,22 @@ public class CvsEntriesManager implements VirtualFileListener {
     }
   }
 
-  public void registerAsVirtualFileListener(@NotNull Disposable listenerDisposable) {
-    VirtualFileManager.getInstance().addVirtualFileListener(this, listenerDisposable);
-    VirtualFileManager.getInstance().addVirtualFileManagerListener(new MyVirtualFileManagerListener(), listenerDisposable);
+  public synchronized void activate() {
+    if (myIsActive == 0) {
+      listenerDisposable = Disposer.newDisposable();
+      VirtualFileManager.getInstance().addVirtualFileListener(this, listenerDisposable);
+      VirtualFileManager.getInstance().addVirtualFileManagerListener(new MyVirtualFileManagerListener(), listenerDisposable);
+    }
     myIsActive++;
   }
 
-  public synchronized void unregisterAsVirtualFileListener() {
+  public synchronized void deactivate() {
     LOG.assertTrue(isActive());
     myIsActive--;
     if (myIsActive == 0) {
       myInfoByParentDirectoryPath.clear();
+      Disposer.dispose(listenerDisposable);
+      listenerDisposable = null;
     }
   }
 
@@ -380,7 +387,7 @@ public class CvsEntriesManager implements VirtualFileListener {
     return UserDirIgnores.userHomeCvsIgnoreFile().equals(CvsVfsUtil.getFileFor(file));
   }
 
-  public boolean isActive() {
+  public synchronized boolean isActive() {
     return myIsActive > 0;
   }
 
