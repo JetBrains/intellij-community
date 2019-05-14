@@ -1,5 +1,7 @@
 {
   '@id':0,
+  map:[
+  ],
   beanMap:[
     {
       '@id':1,
@@ -12,6 +14,8 @@
         '123',
         foo,
         bar
+      ],
+      beanMap:[
       ]
     },
     {
@@ -19,6 +23,8 @@
       map:[
         'some key',
         'some value'
+      ],
+      beanMap:[
       ]
     }
   ]

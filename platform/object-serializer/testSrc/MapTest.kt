@@ -65,7 +65,7 @@ class MapTest {
     value.map.put("some key", "some value")
 
     bean.beanMap.put(key, value)
-    test(bean, WriteConfiguration(binary = false, filter = FILTER, orderMapEntriesByKeys = true))
+    test(bean, WriteConfiguration(binary = false, orderMapEntriesByKeys = true))
   }
 }
 

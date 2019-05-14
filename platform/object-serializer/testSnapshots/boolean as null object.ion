@@ -1,4 +1,5 @@
 {
   '@id':0,
+  boolAsObject:null,
   bool:false
 }
