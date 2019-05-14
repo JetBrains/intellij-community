@@ -6,8 +6,9 @@ import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ShowSettingsAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.IdeaApplication;
+import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,18 +41,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class MacOSApplicationProvider {
   private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
-  private static final AtomicBoolean ENABLED = new AtomicBoolean(true);
-  private static final Callback IMPL = new Callback() {
-    @SuppressWarnings("unused")
-    public void callback(ID self, String selector) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        ActionManagerEx am = ActionManagerEx.getInstanceEx();
-        MouseEvent me = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
-        am.tryToExecute(am.getAction("CheckForUpdate"), me, null, null, false);
-      });
-    }
-  };
   private static final String GENERIC_RGB_PROFILE_PATH = "/System/Library/ColorSync/Profiles/Generic RGB Profile.icc";
 
   private final ColorSpace genericRgbColorSpace;
@@ -92,17 +81,23 @@ public class MacOSApplicationProvider {
   }
 
   private static class Worker {
-    public static void initMacApplication() {
+    private static final AtomicBoolean ENABLED = new AtomicBoolean(true);
+
+    static void initMacApplication() {
       Application application = Application.getApplication();
+
       application.setAboutHandler(event -> AboutAction.perform(getProject(false)));
+
       application.setPreferencesHandler(event -> {
         Project project = getProject(true);
         submit("Preferences", () -> ShowSettingsAction.perform(project));
       });
+
       application.setQuitHandler((event, response) -> {
         submit("Quit", () -> ApplicationManager.getApplication().exit());
         response.cancelQuit();
       });
+
       application.setOpenFileHandler(event -> {
         Project project = getProject(false);
         List<File> list = event.getFiles();
@@ -113,7 +108,10 @@ public class MacOSApplicationProvider {
           }
         });
       });
-      installAutoUpdateMenu();
+
+      if (JnaLoader.isLoaded()) {
+        installAutoUpdateMenu();
+      }
 
       TouchBarsManager.onApplicationInitialized();
     }
@@ -127,14 +125,23 @@ public class MacOSApplicationProvider {
       ID appMenu = Foundation.invoke(item, Foundation.createSelector("submenu"));
 
       ID checkForUpdatesClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSMenuItem"), "NSCheckForUpdates");
-      Foundation.addMethod(checkForUpdatesClass, Foundation.createSelector("checkForUpdates"), IMPL, "v");
-
+      Callback impl = new Callback() {
+        @SuppressWarnings("unused")
+        public void callback(ID self, String selector) {
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(() -> {
+            ActionManager am = ActionManager.getInstance();
+            MouseEvent me = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
+            am.tryToExecute(am.getAction("CheckForUpdate"), me, null, null, false);
+          });
+        }
+      };
+      Foundation.addMethod(checkForUpdatesClass, Foundation.createSelector("checkForUpdates"), impl, "v");
       Foundation.registerObjcClassPair(checkForUpdatesClass);
 
       ID checkForUpdates = Foundation.invoke("NSCheckForUpdates", "alloc");
       Foundation.invoke(checkForUpdates, Foundation.createSelector("initWithTitle:action:keyEquivalent:"),
-                        Foundation.nsString("Check for Updates..."),
-                        Foundation.createSelector("checkForUpdates"), Foundation.nsString(""));
+                        Foundation.nsString("Check for Updates..."), Foundation.createSelector("checkForUpdates"), Foundation.nsString(""));
       Foundation.invoke(checkForUpdates, Foundation.createSelector("setTarget:"), checkForUpdates);
 
       Foundation.invoke(appMenu, Foundation.createSelector("insertItem:atIndex:"), checkForUpdates, 1);
@@ -144,8 +151,7 @@ public class MacOSApplicationProvider {
     }
 
     private static Project getProject(boolean useDefault) {
-      @SuppressWarnings("deprecation")
-      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+      @SuppressWarnings("deprecation") Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
       if (project == null) {
         LOG.debug("MacMenu: no project in data context");
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
