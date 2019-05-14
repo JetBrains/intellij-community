@@ -91,20 +91,22 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   @Nullable
   protected AnActionButtonRunnable createAddAction() {
-    return button -> {
-      myTableView.stopEditing();
-      setModified();
-      SwingUtilities.invokeLater(() -> {
-        if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
-          myElements.add(createElement());
-          myTableView.getTableViewModel().setItems(myElements);
-        }
-        myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
-        myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
-        myTableView.getComponent().revalidate();
-        myTableView.getComponent().repaint();
-      });
-    };
+    return button -> addNewElement();
+  }
+
+  protected void addNewElement() {
+    myTableView.stopEditing();
+    setModified();
+    SwingUtilities.invokeLater(() -> {
+      if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
+        myElements.add(createElement());
+        myTableView.getTableViewModel().setItems(myElements);
+      }
+      myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
+      myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
+      myTableView.getComponent().revalidate();
+      myTableView.getComponent().repaint();
+    });
   }
 
   protected void removeSelected() {
