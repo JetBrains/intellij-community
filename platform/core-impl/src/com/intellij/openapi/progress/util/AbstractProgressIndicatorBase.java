@@ -44,7 +44,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private TDoubleArrayList myFractionStack; // guarded by this
   private Stack<String> myText2Stack; // guarded by this
 
-  protected ProgressIndicator myModalityProgress;
+  private ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
   private volatile int myNonCancelableSectionCount;
   private final Object lock = ObjectUtils.sentinel("APIB lock");
@@ -225,6 +225,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public final boolean isModal() {
     return myModalityProgress != null;
+  }
+
+  final boolean isModalEntity() {
+    return myModalityProgress == this;
   }
 
   @Override
