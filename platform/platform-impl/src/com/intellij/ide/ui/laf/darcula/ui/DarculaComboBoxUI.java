@@ -358,7 +358,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       tf.setColumns(0);
     }
 
-    installEditorKeyListener(comboBoxEditor);
     return comboBoxEditor;
   }
 
@@ -509,6 +508,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected void configureEditor() {
     super.configureEditor();
 
+    installEditorKeyListener(comboBox.getEditor());
     if (editor instanceof JComponent) {
       JComponent jEditor = (JComponent)editor;
       jEditor.setOpaque(false);

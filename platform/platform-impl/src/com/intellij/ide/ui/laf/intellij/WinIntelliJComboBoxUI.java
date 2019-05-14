@@ -334,7 +334,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       }
     };
 
-    installEditorKeyListener(comboBoxEditor);
     return comboBoxEditor;
   }
 
@@ -342,6 +341,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   protected void configureEditor() {
     super.configureEditor();
 
+    installEditorKeyListener(comboBox.getEditor());
     if (editor instanceof JComponent) {
       JComponent jEditor = (JComponent)editor;
       jEditor.setBorder(DEFAULT_EDITOR_BORDER);
