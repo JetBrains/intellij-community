@@ -59,7 +59,7 @@ public class CvsEntriesManager implements VirtualFileListener {
   private static final String CVS_ADMIN_DIRECTORY_NAME = CvsUtil.CVS;
 
   private final Collection<CvsEntriesListener> myEntriesListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private int myIsActive = 0;
+  private int myIsActive;
   private final Collection<String> myFilesToRefresh = new THashSet<>();
 
   private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new THashMap<>();
@@ -76,12 +76,8 @@ public class CvsEntriesManager implements VirtualFileListener {
 
   private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
     @Override
-    public void afterRefreshFinish(boolean asynchonous) {
+    public void afterRefreshFinish(boolean asynchronous) {
       ensureFilesCached(); //to cache for next refreshes
-    }
-
-    @Override
-    public void beforeRefreshStart(boolean asynchonous) {
     }
   }
 
@@ -129,9 +125,8 @@ public class CvsEntriesManager implements VirtualFileListener {
     for (final VirtualFile file : myInfoByParentDirectoryPath.keySet()) {
       if (file == null) continue;
       if (!file.isValid()) continue;
-      if (VfsUtil.isAncestor(parent, file, false)) {
-        myInfoByParentDirectoryPath.get(file)
-          .clearFilter();
+      if (VfsUtilCore.isAncestor(parent, file, false)) {
+        myInfoByParentDirectoryPath.get(file).clearFilter();
       }
     }
     fileStatusesChanged();
@@ -208,7 +203,7 @@ public class CvsEntriesManager implements VirtualFileListener {
     for (final VirtualFile file : myInfoByParentDirectoryPath.keySet()) {
       if (file == null) continue;
       if (!file.isValid()) continue;
-      if (VfsUtil.isAncestor(parent, file, false)) clearCachedEntriesFor(file);
+      if (VfsUtilCore.isAncestor(parent, file, false)) clearCachedEntriesFor(file);
     }
   }
 
@@ -218,7 +213,7 @@ public class CvsEntriesManager implements VirtualFileListener {
 
   public Entry getEntryFor(@NotNull VirtualFile file) {
     final CvsInfo cvsInfo = getCvsInfo(file.getParent());
-    assert(cvsInfo != null);
+    assert cvsInfo != null;
     return cvsInfo.getEntryNamed(file.getName());
   }
 
@@ -294,7 +289,7 @@ public class CvsEntriesManager implements VirtualFileListener {
     }
   }
 
-  public void watchForCvsAdminFiles(final VirtualFile parent) {
+  void watchForCvsAdminFiles(final VirtualFile parent) {
     if (parent == null) return;
     synchronized (myFilesToRefresh) {
       myFilesToRefresh.add(parent.getPath() + "/" + CVS_ADMIN_DIRECTORY_NAME);
@@ -360,7 +355,7 @@ public class CvsEntriesManager implements VirtualFileListener {
     return getInfoFor(directory);
   }
 
-  public CvsConnectionSettings createConnectionSettingsOn(String cvsRoot) {
+  CvsConnectionSettings createConnectionSettingsOn(String cvsRoot) {
     if (!myStringToSettingsMap.containsKey(cvsRoot)) {
       final CvsRootConfiguration rootConfiguration = myApplicationLevelConfiguration.getConfigurationForCvsRoot(cvsRoot);
       CvsConnectionSettings settings = new IDEARootFormatter(rootConfiguration).createConfiguration();

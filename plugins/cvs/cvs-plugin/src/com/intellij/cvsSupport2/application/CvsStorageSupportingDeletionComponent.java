@@ -22,7 +22,7 @@ import java.io.File;
 
 public class CvsStorageSupportingDeletionComponent implements VirtualFileListener {
   private static final Logger LOG = Logger.getInstance(CvsStorageSupportingDeletionComponent.class);
-  protected boolean myIsActive;
+  private boolean myIsActive;
   private final Project myProject;
 
   private DeletedCVSDirectoryStorage myDeletedStorage;
@@ -92,7 +92,8 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
     myIsActive = false;
   }
 
-  public DeleteHandler getDeleteHandler() {
+  @NotNull
+  DeleteHandler getDeleteHandler() {
     if (myDeleteHandler == null) {
       myDeleteHandler = myDeletedStorage.createDeleteHandler(myProject, this);
     }
@@ -104,13 +105,10 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
       return false;
     }
     final VirtualFile file = event.getFile();
-    if (disabled(file) || event.isFromRefresh() || isStorageEvent(event) || !isUnderCvsManagedModuleRoot(file)) {
-      return false;
-    }
-    return true;
+    return !disabled(file) && !event.isFromRefresh() && !isStorageEvent(event) && isUnderCvsManagedModuleRoot(file);
   }
 
-  public boolean getIsActive() {
+  boolean getIsActive() {
     return myIsActive;
   }
 
@@ -174,7 +172,8 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
     execute();
   }
 
-  public AddHandler getAddHandler() {
+  @NotNull
+  AddHandler getAddHandler() {
     if (myAddHandler == null) {
       myAddHandler = new AddHandler(myProject, this);
     }
