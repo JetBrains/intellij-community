@@ -16,7 +16,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Alarm;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -50,6 +52,9 @@ import static one.util.streamex.StreamEx.of;
 public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener {
 
   private static final Logger LOG = Logger.getInstance(GitBranchIncomingOutgoingManager.class);
+  private static final String MAC_DEFAULT_LAUNCH = "com.apple.launchd";
+
+  private static final boolean HAS_EXTERNAL_SSH_AGENT = hasExternalSSHAgent();
 
   @NotNull private final Object LOCK = new Object();
   @NotNull private final Set<GitRepository> myDirtyReposPull = new HashSet<>();
@@ -87,6 +92,12 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
         stopScheduling();
       }
     });
+  }
+
+  private static boolean hasExternalSSHAgent() {
+    String ssh_auth_sock = EnvironmentUtil.getValue("SSH_AUTH_SOCK");
+    if (ssh_auth_sock == null) return false;
+    return !StringUtil.contains(ssh_auth_sock, MAC_DEFAULT_LAUNCH);
   }
 
   public boolean hasIncomingFor(@Nullable GitRepository repository, @NotNull String localBranchName) {
@@ -276,6 +287,14 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     return NONE;
   }
 
+  private boolean shouldAvoidUserInteraction(@NotNull GitRemote remote) {
+    return myGitSettings.getIncomingCheckStrategy() == Auto && HAS_EXTERNAL_SSH_AGENT && containsSSHUrl(remote);
+  }
+
+  private static boolean containsSSHUrl(@NotNull GitRemote remote) {
+    return exists(remote.getUrls(), url -> !url.startsWith(URLUtil.HTTP_PROTOCOL));
+  }
+
   @NotNull
   private Map<String, Hash> lsRemote(@NotNull GitRepository repository,
                                      @NotNull GitRemote remote,
@@ -284,7 +303,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     Map<String, Hash> result = new HashMap<>();
 
     if (!supportsIncomingOutgoing()) return result;
-    if (authenticationMode == NONE) {
+    if (authenticationMode == NONE || (authenticationMode == SILENT && shouldAvoidUserInteraction(remote))) {
       myErrorMap.putValue(repository, remote);
       return result;
     }
