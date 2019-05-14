@@ -1,16 +1,25 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
+import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.io.write
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
+import java.lang.reflect.InvocationTargetException
 
 class NonDefaultConstructorTest {
   @Rule
   @JvmField
   val testName = TestName()
 
-  private fun test(bean: Any) = test(bean, testName)
+  @JvmField
+  @Rule
+  val fsRule = InMemoryFsRule()
+
+  private fun test(bean: Any) = test(bean, testName, defaultTestWriteConfiguration)
 
   @Test
   fun `no default constructor`() {
@@ -30,6 +39,25 @@ class NonDefaultConstructorTest {
     bean.b2 = Bean3()
     bean.b2!!.b = bean.b
     test(bean)
+  }
+
+  @Test
+  fun `remove versioned file on parameter error`() {
+    val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42)
+    file.file.write("""
+      {
+        version:42,
+        formatVersion:1,
+        data:{
+        }
+      }
+    """.trimIndent())
+    assertThatThrownBy {
+      assertThat(file.read(NoDefaultConstructorBean::class.java)).isNull()
+    }
+      .isInstanceOf(AssertionError::class.java)
+      .hasCauseInstanceOf(InvocationTargetException::class.java)
+    assertThat(file.file).doesNotExist()
   }
 }
 

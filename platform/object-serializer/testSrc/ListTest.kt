@@ -6,6 +6,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.SmartList
 import com.intellij.util.io.readChars
+import com.intellij.util.io.write
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -19,7 +20,7 @@ class ListTest {
   @Rule
   val fsRule = InMemoryFsRule()
 
-  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration? = null): T {
+  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration = defaultTestWriteConfiguration): T {
     return test(bean, testName, writeConfiguration)
   }
 
@@ -69,10 +70,9 @@ class ListTest {
     assertThat(deserializedBean.list.first()).isInstanceOf(Set::class.java)
   }
 
-
   @Test
   fun `versioned file`() {
-    val file = VersionedFile(fsRule.fs.getPath("cache"), 42)
+    val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42)
     val list = listOf("foo", "bar")
     file.writeList(list, String::class.java, configuration = WriteConfiguration(binary = false))
     assertThat(file.file.readChars().trim()).isEqualTo("""
@@ -86,5 +86,13 @@ class ListTest {
       }
     """.trimIndent())
     assertThat(file.readList(String::class.java)).isEqualTo(list)
+  }
+
+  @Test
+  fun `remove versioned file on input error`() {
+    val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42)
+    file.file.write(byteArrayOf(0, 42, 0))
+    assertThat(file.readList(String::class.java)).isNull()
+    assertThat(file.file).doesNotExist()
   }
 }

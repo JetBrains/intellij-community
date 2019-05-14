@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.util.SmartList
 
 data class ReadConfiguration(val allowAnySubTypes: Boolean = false,
                              val classLoader: ClassLoader? = null,
@@ -31,4 +33,27 @@ interface ReadContext {
   fun allocateByteArrayOutputStream(): BufferExposingByteArrayOutputStream
 
   fun createSubContext(reader: ValueReader): ReadContext
+
+  val errors: ReadErrors
 }
+
+data class ReadErrors(
+  val unknownFields: MutableList<ReadError> = SmartList(),
+  val parameters: MutableList<ReadError> = SmartList(),
+  val fields: MutableList<ReadError> = SmartList()
+) {
+  fun report(logger: Logger) {
+    if (unknownFields.isNotEmpty()) {
+      logger.warn(unknownFields.joinToString("\n"))
+    }
+    if (fields.isNotEmpty()) {
+      logger.warn(unknownFields.joinToString("\n"))
+    }
+
+    if (parameters.isNotEmpty()) {
+      logger.error(parameters.joinToString("\n"))
+    }
+  }
+}
+
+data class ReadError(val message: String, val cause: Exception? = null)

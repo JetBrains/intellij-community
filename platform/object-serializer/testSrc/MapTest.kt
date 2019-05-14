@@ -13,7 +13,7 @@ class MapTest {
   @JvmField
   val testName = TestName()
 
-  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration? = null): T {
+  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration = defaultTestWriteConfiguration): T {
     return test(bean, testName, writeConfiguration)
   }
 

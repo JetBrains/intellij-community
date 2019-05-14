@@ -3,6 +3,7 @@ package com.intellij.serialization
 
 import com.amazon.ion.IonReader
 import com.amazon.ion.IonWriter
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
 import com.intellij.util.containers.ObjectIntHashMap
@@ -24,6 +25,7 @@ typealias BeanConstructed = (instance: Any) -> Any
 annotation class PropertyMapping(val value: Array<String>)
 
 internal val defaultWriteConfiguration = WriteConfiguration()
+internal val LOG = logger<ObjectSerializer>()
 
 val defaultReadConfiguration = ReadConfiguration()
 

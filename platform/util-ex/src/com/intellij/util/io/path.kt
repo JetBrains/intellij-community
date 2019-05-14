@@ -13,7 +13,6 @@ import java.nio.channels.Channels
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
-import java.util.*
 
 fun Path.exists(): Boolean = Files.exists(this)
 
@@ -203,7 +202,7 @@ fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Pat
  * Consider using [SafeWriteRequestor.shallUseSafeStream] along with [SafeFileOutputStream]
  */
 fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
-  val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
+  val tempFile = parent.resolve("${fileName}.${DigestUtil.randomToken()}.tmp")
   tempFile.outputStream().use(outConsumer)
   try {
     Files.move(tempFile, this, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)

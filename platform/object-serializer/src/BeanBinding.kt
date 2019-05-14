@@ -5,12 +5,9 @@ import com.amazon.ion.IonReader
 import com.amazon.ion.IonType
 import com.amazon.ion.system.IonBinaryWriterBuilder
 import com.amazon.ion.system.IonReaderBuilder
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.ObjectIntHashMap
 import java.lang.reflect.Constructor
 import java.lang.reflect.Type
-
-internal val LOG = logger<BeanBinding>()
 
 private val structWriterBuilder by lazy {
   IonBinaryWriterBuilder.standard().withStreamCopyOptimized(true).immutable()
@@ -123,7 +120,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
           initArgs[argIndex] = binding.deserialize(subReadContext)
         }
         catch (e: Exception) {
-          LOG.error("Cannot deserialize value for parameter $fieldName (binding=$binding, valueType=${reader.type}, beanClass=$beanClass)", e)
+          context.errors.parameters.add(ReadError("Cannot deserialize parameter value (fieldName=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=$beanClass)", e))
         }
       }
     }
@@ -195,7 +192,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
       val bindingIndex = nameToBindingIndex.get(fieldName)
       // ignore unknown field
       if (bindingIndex == -1) {
-        LOG.warn("Unknown field: $fieldName (beanClass=${instance.javaClass})")
+        context.errors.unknownFields.add(ReadError("Unknown field (fieldName=$fieldName, beanClass=$beanClass)"))
         return@readStruct
       }
 
@@ -204,7 +201,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
         binding.deserialize(instance, accessors[bindingIndex], context)
       }
       catch (e: Exception) {
-        LOG.error("Cannot deserialize value (field=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${instance.javaClass})", e)
+        context.errors.fields.add(ReadError("Cannot deserialize field value (field=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=$beanClass)", e))
       }
     }
   }

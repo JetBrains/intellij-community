@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
 import com.intellij.util.io.inputStream
-import com.intellij.util.io.outputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.lang.reflect.Type
@@ -30,12 +29,12 @@ internal class IonObjectSerializer {
   internal val bindingProducer = IonBindingProducer(propertyCollector)
 
   @Throws(IOException::class)
-  fun writeVersioned(obj: Any, file: Path, fileVersion: Int, configuration: WriteConfiguration = defaultWriteConfiguration, originalType: Type? = null) {
-    createIonWriterBuilder(configuration.binary).build(file.outputStream().buffered()).use { writer ->
+  fun writeVersioned(obj: Any, out: OutputStream, expectedVersion: Int, configuration: WriteConfiguration = defaultWriteConfiguration, originalType: Type? = null) {
+    createIonWriterBuilder(configuration.binary).build(out).use { writer ->
       writer.stepIn(IonType.STRUCT)
 
       writer.setFieldName("version")
-      writer.writeInt(fileVersion.toLong())
+      writer.writeInt(expectedVersion.toLong())
 
       writer.setFieldName("formatVersion")
       writer.writeInt(FORMAT_VERSION.toLong())
@@ -93,7 +92,13 @@ internal class IonObjectSerializer {
               return null
             }
 
-            return doRead(objectClass, originalType, reader, configuration)
+            val context = createReadContext(reader, configuration)
+            try {
+              return doRead(objectClass, originalType, context)
+            }
+            finally {
+              context.errors.report(LOG)
+            }
           }
           else -> LOG.warn("Unknown field: $fieldName (file=$file, expectedVersion=$expectedVersion, objectClass=$objectClass)")
         }
@@ -119,19 +124,20 @@ internal class IonObjectSerializer {
   fun <T> read(objectClass: Class<T>, reader: ValueReader, configuration: ReadConfiguration, originalType: Type? = null): T {
     reader.use {
       reader.next()
-      return doRead(objectClass, originalType, reader, configuration)
+      val context = createReadContext(reader, configuration)
+      return doRead(objectClass, originalType, context)
     }
   }
 
   // reader cursor must be already pointed to struct
-  private fun <T> doRead(objectClass: Class<T>, originalType: Type?, reader: ValueReader, configuration: ReadConfiguration): T {
-    when (reader.type) {
+  private fun <T> doRead(objectClass: Class<T>, originalType: Type?, context: ReadContext): T {
+    when (context.reader.type) {
       IonType.NULL -> throw SerializationException("root value is null")
       null -> throw SerializationException("empty input")
       else -> {
         val binding = bindingProducer.getRootBinding(objectClass, originalType ?: objectClass)
         @Suppress("UNCHECKED_CAST")
-        return binding.deserialize(createReadContext(reader, configuration)) as T
+        return binding.deserialize(context) as T
       }
     }
   }
@@ -155,6 +161,8 @@ private data class ReadContextImpl(override val reader: ValueReader,
                                    override val bindingProducer: BindingProducer<RootBinding>,
                                    override val configuration: ReadConfiguration) : ReadContext {
   private var byteArrayOutputStream: BufferExposingByteArrayOutputStream? = null
+
+  override val errors = ReadErrors()
 
   override fun allocateByteArrayOutputStream(): BufferExposingByteArrayOutputStream {
     var result = byteArrayOutputStream

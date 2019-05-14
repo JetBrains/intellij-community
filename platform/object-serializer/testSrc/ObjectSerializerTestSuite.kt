@@ -30,16 +30,17 @@ class ObjectSerializerTestSuite {
   }
 }
 
+internal val defaultTestWriteConfiguration = WriteConfiguration(binary = false)
+
 // don't use serialization filter in tests to make sure that test are closer to production usage (e.g. not null arg was not caught by tests because of null filtration)
-internal fun <T : Any> test(bean: T, testName: TestName, _writeConfiguration: WriteConfiguration? = null): T {
+internal fun <T : Any> test(bean: T, testName: TestName, writeConfiguration: WriteConfiguration): T {
   val out = BufferExposingByteArrayOutputStream(8 * 1024)
 
   // just to test binary
-  objectSerializer.write(bean, out, WriteConfiguration(binary = true, allowAnySubTypes = _writeConfiguration?.allowAnySubTypes ?: false))
+  objectSerializer.write(bean, out, writeConfiguration.copy(binary = true))
   assertThat(out.size() > 0)
   out.reset()
 
-  val writeConfiguration = _writeConfiguration ?: WriteConfiguration(binary = false)
   objectSerializer.write(bean, out, writeConfiguration)
 
   val ionText = out.toString()
