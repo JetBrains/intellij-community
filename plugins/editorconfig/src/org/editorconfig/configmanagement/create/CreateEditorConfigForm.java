@@ -4,6 +4,7 @@ package org.editorconfig.configmanagement.create;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBRadioButton;
+import org.editorconfig.language.messages.EditorConfigBundle;
 
 import javax.swing.*;
 
@@ -15,7 +16,7 @@ public class CreateEditorConfigForm {
   private JPanel myPropertiesPanel;
 
   public CreateEditorConfigForm() {
-    myPropertiesPanel.setBorder(IdeBorderFactory.createTitledBorder("Properties", true));
+    myPropertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("export.properties.title"), true));
   }
 
   public JPanel getTopPanel() {

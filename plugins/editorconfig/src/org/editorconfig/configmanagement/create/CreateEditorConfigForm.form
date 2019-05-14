@@ -19,7 +19,7 @@
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="Topmost file (root = true)"/>
+          <text resource-bundle="messages/EditorConfigBundle" key="export.topmost.file"/>
         </properties>
       </component>
       <grid id="d52" binding="myPropertiesPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -35,7 +35,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="EditorConfig Standard"/>
+              <text resource-bundle="messages/EditorConfigBundle" key="export.properties.standard"/>
             </properties>
           </component>
           <hspacer id="92200">
@@ -48,7 +48,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="IntelliJ IDEA-specific"/>
+              <text resource-bundle="messages/EditorConfigBundle" key="export.properties.intellij"/>
             </properties>
           </component>
         </children>
