@@ -279,8 +279,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
 
     //add standard engines only if no engine api is present
-    if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope) ||
-        !isCustomJUnit5(globalSearchScope)) {
+    if (!hasJUnit5EnginesAPI(globalSearchScope, psiFacade) || !isCustomJUnit5(globalSearchScope)) {
       PsiClass testAnnotation = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
         () -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope));
       String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
@@ -299,6 +298,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                          new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
       }
     }
+  }
+
+  public static boolean hasJUnit5EnginesAPI(GlobalSearchScope globalSearchScope, JavaPsiFacade psiFacade) {
+    return hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope);
   }
 
   private static String getVersion(PsiClass classFromCommon) {

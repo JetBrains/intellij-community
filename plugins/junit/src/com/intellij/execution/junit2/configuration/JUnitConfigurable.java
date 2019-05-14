@@ -9,6 +9,7 @@ import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
+import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -280,7 +281,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       aModel.addElement(JUnitConfigurationModel.CATEGORY);
     }
 
-    if (JUnitUtil.isJUnit5(searchScope, myProject)) {
+    if (JUnitUtil.isJUnit5(searchScope, myProject) || 
+        TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
       aModel.addElement(JUnitConfigurationModel.UNIQUE_ID);
       aModel.addElement(JUnitConfigurationModel.TAGS);
     }
