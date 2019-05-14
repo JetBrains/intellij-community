@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AnimatedIcon;
+import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -13,6 +14,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class PluginListLayout extends AbstractLayoutManager implements PagePluginLayout {
+  private final JBValue myGroupGap = new JBValue.Float(10);
   private int myMiddleLineHeight;
 
   @Override
@@ -38,6 +40,11 @@ public class PluginListLayout extends AbstractLayoutManager implements PagePlugi
 
     calculateLineHeight(lines);
 
+    int size = ((PluginsGroupComponent)parent).getGroups().size();
+    if (size > 1) {
+      height += myGroupGap.get() * (size - 1);
+    }
+
     return new Dimension(0, height);
   }
 
@@ -46,6 +53,7 @@ public class PluginListLayout extends AbstractLayoutManager implements PagePlugi
     List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).getGroups();
     int width = parent.getWidth();
     int y = 0;
+    int groupGap = myGroupGap.get();
 
     int lines = 0;
     myMiddleLineHeight = 0;
@@ -64,6 +72,7 @@ public class PluginListLayout extends AbstractLayoutManager implements PagePlugi
       }
 
       lines += group.plugins.size();
+      y += groupGap;
     }
 
     calculateLineHeight(lines);
