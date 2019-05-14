@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Proxy;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -347,5 +348,17 @@ public class DataNode<T> implements UserDataHolderEx {
       copy.addChild(copy(child, copy));
     }
     return copy;
+  }
+
+  public final void visit(@NotNull Consumer<? super DataNode<?>> consumer) {
+    ArrayDeque<List<DataNode<?>>> toProcess = new ArrayDeque<>();
+    toProcess.add(Collections.singletonList(this));
+    List<DataNode<?>> nodes;
+    while ((nodes = toProcess.pollFirst()) != null) {
+      nodes.forEach(consumer);
+      for (DataNode<?> node : nodes) {
+        toProcess.add(node.children);
+      }
+    }
   }
 }
