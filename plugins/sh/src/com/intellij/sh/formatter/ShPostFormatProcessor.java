@@ -9,10 +9,11 @@ import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
 import com.intellij.sh.psi.ShFile;
 import org.jetbrains.annotations.NotNull;
 
-public class ShPostFormatProcessor implements PostFormatProcessor {
+final class ShPostFormatProcessor implements PostFormatProcessor {
+  @NotNull
   @Override
   public PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
-    return source instanceof ShFile ? source : null;
+    return source;
   }
 
   @NotNull
