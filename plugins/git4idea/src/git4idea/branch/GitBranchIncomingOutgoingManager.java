@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Alarm;
@@ -39,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.commands.GitAuthenticationMode.*;
+import static git4idea.config.GitIncomingCheckStrategy.*;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
 import static git4idea.repo.GitRefUtil.getResolvedHashes;
 import static java.util.Collections.singletonList;
@@ -96,7 +98,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   public boolean shouldCheckIncoming() {
-    return myGitSettings.shouldUpdateBranchInfo();
+    return Registry.is("git.update.incoming.outgoing.info") && myGitSettings.getIncomingCheckStrategy() != Never;
   }
 
   @NotNull
@@ -128,7 +130,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   public void updateIncomingScheduling() {
     if (myPeriodicalUpdater == null && shouldCheckIncoming()) {
       updateBranchesToPull(false);
-      int timeout = myGitSettings.getBranchInfoUpdateTime();
+      int timeout = Registry.intValue("git.update.incoming.info.time");
       myPeriodicalUpdater = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateBranchesToPull(false), timeout, timeout,
                                                                                TimeUnit.MINUTES);
     }
@@ -138,7 +140,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   @CalledInAwt
-  public void stopScheduling() {
+  private void stopScheduling() {
     if (myPeriodicalUpdater != null) {
       myPeriodicalUpdater.cancel(true);
       myPeriodicalUpdater = null;

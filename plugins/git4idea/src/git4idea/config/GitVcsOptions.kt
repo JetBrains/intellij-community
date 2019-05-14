@@ -53,6 +53,9 @@ class GitVcsOptions : BaseState() {
   @get:OptionTag("PUSH_TAGS")
   var pushTags by property<GitPushTagMode>()
 
+  @get:OptionTag("INCOMING_CHECK_STRATEGY")
+  var incomingCheckStrategy by enum(GitIncomingCheckStrategy.Auto)
+
   @get:OptionTag("SIGN_OFF_COMMIT")
   var isSignOffCommit by property(false)
   @get:OptionTag("SET_USER_NAME_GLOBALLY")
@@ -61,8 +64,6 @@ class GitVcsOptions : BaseState() {
   var isSwapSidesInCompareBranches by property(false)
   @get:OptionTag("UPDATE_BRANCHES_INFO")
   var isUpdateBranchesInfo by property(true)
-  @get:OptionTag("BRANCH_INFO_UPDATE_TIME")
-  var branchInfoUpdateTime by property(10)
   @get:OptionTag("PREVIEW_PUSH_ON_COMMIT_AND_PUSH")
   var isPreviewPushOnCommitAndPush by property(true)
   @get:OptionTag("PREVIEW_PUSH_PROTECTED_ONLY")
