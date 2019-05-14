@@ -70,9 +70,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
           picoContainer.registerComponentInstance(Project.class, DefaultProject.this);
 
           init(PluginManagerCore.getLoadedPlugins(null), null, null);
-
-          ApplicationManager.getApplication()
-            .getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
         }
 
         @Override
