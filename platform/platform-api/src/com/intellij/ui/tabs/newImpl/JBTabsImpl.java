@@ -231,6 +231,11 @@ public class JBTabsImpl extends JComponent
     mySingleRowLayout = createSingleRowLayout();
     myLayout = mySingleRowLayout;
 
+    if(JBTabsFactory.getUseNewTabs()) {
+      OnePixelDivider divider = mySplitter.getDivider();
+      divider.setOpaque(false);
+    }
+
     PropertyCombinatorsKt.map(childAtMouse(this), it -> it instanceof TabLabel ? it : null).advise(lifetime, label -> {
       if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
 
@@ -1698,6 +1703,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   protected void paintComponent(final Graphics g) {
+    g.clearRect(0, 0, getWidth(), getHeight());
     myTabPainter.fillBackground((Graphics2D)g, new Rectangle(0, 0, getWidth(), getHeight()));
     myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
 
