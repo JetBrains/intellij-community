@@ -292,8 +292,8 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
-  public static String toLowerCase(@Nullable final String str) {
-    return str == null ? null : str.toLowerCase();
+  public static String toLowerCase(@Nullable String str) {
+    return str == null ? null : str.toLowerCase(Locale.ENGLISH);
   }
 
   @NotNull
@@ -610,7 +610,7 @@ public class StringUtil extends StringUtilRt {
             buffer.append("\\").append(ch);
           }
           else if (escapeUnicode && !isPrintableUnicode(ch)) {
-            CharSequence hexCode = StringUtilRt.toUpperCase(Integer.toHexString(ch));
+            CharSequence hexCode = toUpperCase(Integer.toHexString(ch));
             buffer.append("\\u");
             int paddingCount = 4 - hexCode.length();
             while (paddingCount-- > 0) {
@@ -836,7 +836,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String capitalize(@NotNull String s) {
     if (s.isEmpty()) return s;
-    if (s.length() == 1) return StringUtilRt.toUpperCase(s).toString();
+    if (s.length() == 1) return toUpperCase(s);
 
     // Optimization
     if (Character.isUpperCase(s.charAt(0))) return s;
@@ -3075,8 +3075,8 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
-  public static String toUpperCase(String a) {
-    return a == null ? null : StringUtilRt.toUpperCase(a).toString();
+  public static String toUpperCase(String s) {
+    return s == null ? null : s.toUpperCase(Locale.ENGLISH);
   }
 
   @Contract(pure = true)
