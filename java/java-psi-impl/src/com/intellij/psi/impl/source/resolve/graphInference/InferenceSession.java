@@ -56,7 +56,7 @@ public class InferenceSession {
   private PsiSubstitutor myRestoreNameSubstitution = PsiSubstitutor.EMPTY;
   private MethodCandidateInfo myCurrentMethod;
 
-  public InferenceSession(InitialInferenceState initialState) {
+  public InferenceSession(InitialInferenceState initialState, ParameterTypeInferencePolicy policy) {
     myContext = initialState.getContext();
     myManager = myContext.getManager();
 
@@ -69,7 +69,7 @@ public class InferenceSession {
     }
     myInferenceSessionContainer = initialState.getInferenceSessionContainer();
     myErased = initialState.isErased();
-    myPolicy = DefaultParameterTypeInferencePolicy.INSTANCE;
+    myPolicy = policy;
   }
 
   public InferenceSession(PsiTypeParameter[] typeParams,
@@ -124,6 +124,11 @@ public class InferenceSession {
 
   public void setCurrentMethod(MethodCandidateInfo currentMethod) {
     myCurrentMethod = currentMethod;
+  }
+
+  @NotNull
+  public ParameterTypeInferencePolicy getInferencePolicy() {
+    return myPolicy;
   }
 
   public static PsiType createTypeParameterTypeWithUpperBound(@NotNull PsiType upperBound, @NotNull PsiElement place) {

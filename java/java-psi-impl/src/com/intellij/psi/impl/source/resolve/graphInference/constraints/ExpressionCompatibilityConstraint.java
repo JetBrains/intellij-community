@@ -155,7 +155,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
       if (typeParams != null) {
         PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(currentMethod, resolveResult, method);
-        final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression);
+        InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression, session.getInferencePolicy());
         callSession.propagateVariables(session);
         if (method != null) {
           final PsiExpression[] args = argumentList.getExpressions();
