@@ -714,6 +714,7 @@ sfinae
 sftp
 shader
 sharding
+shellcheck
 sigabrt
 sigaio
 sigalrm
