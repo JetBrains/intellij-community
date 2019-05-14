@@ -682,8 +682,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     @Override
     protected void configureList() {
       super.configureList();
-      list.setBackground(comboBox.isEditable() ? UIManager.getColor("TextField.background")
-                                               : UIManager.getColor("Label.background"));
+      //list.setBackground(comboBox.isEditable() ? UIManager.getColor("TextField.background")
+      //                                         : UIManager.getColor("Label.background"));
       //noinspection unchecked
       list.setCellRenderer(new MyDelegateRenderer());
     }
