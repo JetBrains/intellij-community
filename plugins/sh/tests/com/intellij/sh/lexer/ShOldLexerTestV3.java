@@ -2,6 +2,7 @@
 package com.intellij.sh.lexer;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ public class ShOldLexerTestV3 extends LexerTestCase {
 
   @Override
   protected String getDirPath() {
-    return "testData/oldLexer/v3";
+    return PluginPathManager.getPluginHomePath("sh") + "/testData/oldLexer/v3";
   }
 
   @NotNull

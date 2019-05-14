@@ -7,7 +7,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class ShShebangParserUtilTest {
-
   @Test
   public void invalidShebangTest() {
     assertNull(ShShebangParserUtil.getInterpreter(null));

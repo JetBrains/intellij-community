@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.oldParser;
 
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.sh.parser.ShParserDefinition;
 import com.intellij.testFramework.ParsingTestCase;
 
@@ -11,7 +12,7 @@ public class ShOldParserTest extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return "testData";
+    return PluginPathManager.getPluginHomePath("sh") + "/testData";
   }
 
   public void testAppendAssignment()                    { doTest(true); }

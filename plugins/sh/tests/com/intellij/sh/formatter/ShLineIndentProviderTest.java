@@ -1,19 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.formatter;
 
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
-import java.io.File;
-
 public class ShLineIndentProviderTest extends LightPlatformCodeInsightFixtureTestCase {
-
   private static final String FILE_EXTENSION = ".sh";
   private static final String AFTER_FILE_EXTENSION = ".after.sh";
   private static final char KEY_ENTER = '\n';
 
   @Override
   protected String getTestDataPath() {
-    return new File("testData/formatter").getAbsolutePath();
+    return PluginPathManager.getPluginHomePath("sh") + "/testData/formatter";
   }
 
   public void testShebang()               { doTest(); }
