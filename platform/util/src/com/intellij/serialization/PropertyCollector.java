@@ -13,10 +13,12 @@ import java.awt.*;
 import java.lang.reflect.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 @ApiStatus.Internal
 public class PropertyCollector {
-  private final Map<Class, List<MutableAccessor>> accessorCache = ContainerUtil.newConcurrentMap();
+  private final Map<Class<?>, List<MutableAccessor>> accessorCache = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Class<?>, List<MutableAccessor>> classToOwnFields = ContainerUtil.newConcurrentMap();
 
   private final boolean collectAccessors;
   private final boolean collectPrivateFields;
@@ -80,9 +82,17 @@ public class PropertyCollector {
     return accessors;
   }
 
-  private void collectFieldAccessors(@NotNull Class<?> aClass, @NotNull List<? super MutableAccessor> accessors) {
-    Class<?> currentClass = aClass;
+  private void collectFieldAccessors(@NotNull Class<?> originalClass, @NotNull List<? super MutableAccessor> totalProperties) {
+    Class<?> currentClass = originalClass;
     do {
+      List<MutableAccessor> ownFields = classToOwnFields.get(currentClass);
+      if (ownFields != null) {
+        if (!ownFields.isEmpty()) {
+          totalProperties.addAll(ownFields);
+        }
+        continue;
+      }
+
       for (Field field : currentClass.getDeclaredFields()) {
         int modifiers = field.getModifiers();
         if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
@@ -107,10 +117,18 @@ public class PropertyCollector {
           }
         }
 
-        accessors.add(new FieldAccessor(field));
+        if (ownFields == null) {
+          ownFields = new ArrayList<>();
+        }
+        ownFields.add(new FieldAccessor(field));
+      }
+
+      classToOwnFields.putIfAbsent(currentClass, ContainerUtil.notNullize(ownFields));
+      if (ownFields != null) {
+        totalProperties.addAll(ownFields);
       }
     }
-    while ((currentClass = currentClass.getSuperclass()) != null && !isAnnotatedAsTransient(currentClass));
+    while ((currentClass = currentClass.getSuperclass()) != null && !isAnnotatedAsTransient(currentClass) && currentClass != Object.class);
   }
 
   @NotNull
