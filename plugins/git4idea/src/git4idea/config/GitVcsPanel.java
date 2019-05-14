@@ -305,9 +305,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
       projectSettings.setUpdateBranchInfo(myUpdateBranchInfoCheckBox.isSelected());
       GitBranchIncomingOutgoingManager incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
       incomingOutgoingManager.stopScheduling();
-      if (projectSettings.shouldUpdateBranchInfo()) {
-        incomingOutgoingManager.startScheduling();
-      }
+      incomingOutgoingManager.updateIncomingScheduling();
     }
   }
 

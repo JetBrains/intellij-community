@@ -108,15 +108,14 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
           preselectActionCondition, DIMENSION_SERVICE_KEY);
 
     final GitBranchIncomingOutgoingManager gitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
-    if (GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo() && !gitBranchIncomingOutgoingManager.supportsIncomingOutgoing()) {
+    if (gitBranchIncomingOutgoingManager.shouldCheckIncoming() && !gitBranchIncomingOutgoingManager.supportsIncomingOutgoing()) {
       myPopup.addToolbarAction(
         createWarningAction("Update checks not supported. Git 2.9+ required",
                             e -> ShowSettingsUtil.getInstance().showSettingsDialog(myProject, GitVcs.NAME)), false);
     }
-    else if (GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo() &&
-             gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
+    else if (gitBranchIncomingOutgoingManager.shouldCheckIncoming() && gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
       myPopup.addToolbarAction(createWarningAction("Update checks failed. Click to retry", e -> {
-        gitBranchIncomingOutgoingManager.forceUpdateBranches(true);
+        gitBranchIncomingOutgoingManager.forceUpdateBranchesToPull();
         myPopup.cancel();
       }), false);
     }
