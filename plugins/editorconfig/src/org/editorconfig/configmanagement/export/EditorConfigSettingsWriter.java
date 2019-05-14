@@ -77,6 +77,12 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
     }
   }
 
+  public EditorConfigSettingsWriter forLanguages(List<Language> languages) {
+    myLanguages = new HashSet<>(languages.size());
+    myLanguages.addAll(languages);
+    return this;
+  }
+
   public EditorConfigSettingsWriter forLanguages(Language... languages) {
     myLanguages = new HashSet<>(languages.length);
     myLanguages.addAll(Arrays.asList(languages));
