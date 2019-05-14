@@ -311,7 +311,7 @@ public abstract class NullableNotNullManager {
   }
 
   @Nullable
-  private static PsiAnnotation findPlainAnnotation(@NotNull PsiModifierListOwner owner,
+  public static PsiAnnotation findPlainAnnotation(@NotNull PsiModifierListOwner owner,
                                                    boolean checkBases,
                                                    @NotNull Set<String> qualifiedNames) {
     PsiAnnotation memberAnno = checkBases && owner instanceof PsiMethod

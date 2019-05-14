@@ -238,7 +238,9 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testLambdaInlineReassignReturnWithDeeperEquality() { doTest(); }
 
   public void testReturningNonNullFromMethodWithNullableArrayInReturnType() {
-    setupAmbiguousAnnotations("foo", myFixture);
+    setupAmbiguousAnnotations("mixed", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
+    NullableNotNullManager.getInstance(getProject()).setNullables("mixed.Nullable", "typeUse.Nullable");
     doTest();
   }
 
