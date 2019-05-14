@@ -50,7 +50,7 @@ public class EditorMouseFixture {
     component.dispatchEvent(new MouseEvent(myLastComponent = component,
                                            myLastId = MouseEvent.MOUSE_PRESSED,
                                            System.currentTimeMillis(),
-                                           myModifiers,
+                                           myModifiers | getModifiersForButtonPress(myButton),
                                            myX = p.x,
                                            myY = p.y,
                                            clickCount,
@@ -68,7 +68,7 @@ public class EditorMouseFixture {
     myLastComponent.dispatchEvent(new MouseEvent(myLastComponent,
                                                  myLastId = MouseEvent.MOUSE_RELEASED,
                                                  System.currentTimeMillis(),
-                                                 myModifiers,
+                                                 myModifiers | getModifiersForButtonRelease(myButton),
                                                  myX,
                                                  myY,
                                                  clickCount,
@@ -78,7 +78,7 @@ public class EditorMouseFixture {
       myLastComponent.dispatchEvent(new MouseEvent(myLastComponent,
                                                    myLastId = MouseEvent.MOUSE_CLICKED,
                                                    System.currentTimeMillis(),
-                                                   myModifiers,
+                                                   myModifiers | getModifiersForButtonRelease(myButton),
                                                    myX,
                                                    myY,
                                                    clickCount,
@@ -141,12 +141,12 @@ public class EditorMouseFixture {
     component.dispatchEvent(new MouseEvent(component,
                                            myLastId = MouseEvent.MOUSE_DRAGGED,
                                            System.currentTimeMillis(),
-                                           myModifiers,
+                                           myModifiers | getModifiersForButtonPress(myButton),
                                            myX = x,
                                            myY = y,
                                            1,
                                            false,
-                                           myButton));
+                                           0));
     return this;
   }
 
@@ -182,5 +182,24 @@ public class EditorMouseFixture {
 
   private Point getPoint(int visualLine, int visualColumn) {
     return myEditor.visualPositionToXY(new VisualPosition(visualLine, visualColumn));
+  }
+
+  @MagicConstant(flagsFromClass = InputEvent.class)
+  private static int getModifiersForButtonPress(int button) {
+    switch (button) {
+      case MouseEvent.BUTTON1: return InputEvent.BUTTON1_DOWN_MASK;
+      case MouseEvent.BUTTON2: return InputEvent.BUTTON2_DOWN_MASK;
+      case MouseEvent.BUTTON3: return InputEvent.BUTTON3_DOWN_MASK;
+      default: return 0;
+    }
+  }
+
+  @MagicConstant(flagsFromClass = InputEvent.class)
+  private static int getModifiersForButtonRelease(int button) {
+    switch (button) {
+      case MouseEvent.BUTTON2: return InputEvent.ALT_DOWN_MASK;
+      case MouseEvent.BUTTON3: return InputEvent.META_DOWN_MASK;
+      default: return 0;
+    }
   }
 }
