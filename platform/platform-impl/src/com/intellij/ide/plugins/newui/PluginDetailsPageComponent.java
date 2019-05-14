@@ -123,6 +123,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     int offset = PluginManagerConfigurableNew.offset5();
     JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
 
+    myNameAndButtons.setYOffset(JBUI.scale(3));
     myNameAndButtons.add(myNameComponent);
     createButtons();
     centerPanel.add(myNameAndButtons, VerticalLayout.FILL_HORIZONTAL);
