@@ -171,4 +171,5 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testFailingCall() { doTest(); }
   public void testInstanceOfMethodReturn() { doTest(); }
   public void testReassignAfterCheck() { doTest(); }
+  public void testAndAllTrue() { doTest(); }
 }
