@@ -29,9 +29,10 @@ import java.util.stream.Collectors;
 import static org.editorconfig.core.EditorConfig.OutPair;
 
 public class EditorConfigSettingsWriter extends OutputStreamWriter {
-  private final           CodeStyleSettings              mySettings;
-  private final @Nullable Project                        myProject;
-  private final           Map<String, String>            myGeneralOptions = new HashMap<>();
+  private final           CodeStyleSettings   mySettings;
+  private final @Nullable Project             myProject;
+  private final           Map<String, String> myGeneralOptions = new HashMap<>();
+  private final           boolean             myAddRootFlag;
 
   private final static Comparator<OutPair> PAIR_COMPARATOR = (pair1, pair2) -> {
     EditorConfigPropertyKind pKind1 = getPropertyKind(pair1.getKey());
@@ -45,10 +46,11 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   private final Set<EditorConfigPropertyKind> myPropertyKinds = EnumSet.allOf(EditorConfigPropertyKind.class);
   // endregion
 
-  public EditorConfigSettingsWriter(@Nullable Project project, @NotNull OutputStream out, CodeStyleSettings settings) {
+  public EditorConfigSettingsWriter(@Nullable Project project, @NotNull OutputStream out, CodeStyleSettings settings, boolean isRoot) {
     super(out, StandardCharsets.UTF_8);
     mySettings = settings;
     myProject = project;
+    myAddRootFlag = isRoot;
     fillGeneralOptions();
   }
 
@@ -88,6 +90,10 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   }
 
   public void writeSettings() throws IOException {
+    if (myAddRootFlag) {
+      writeProperties(Collections.singletonList(new OutPair("root", "true")));
+      write("\n");
+    }
     writeGeneralSection();
     final MultiMap<String,LanguageCodeStylePropertyMapper> mappers = new MultiMap<>();
     CodeStylePropertiesUtil.collectMappers(mySettings, mapper -> {

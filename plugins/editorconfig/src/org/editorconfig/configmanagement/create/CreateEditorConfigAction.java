@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.EnumSet;
 
 public class CreateEditorConfigAction extends AnAction implements DumbAware {
   private final static Logger LOG = Logger.getInstance(CreateEditorConfigAction.class);
@@ -51,7 +50,7 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
           final VirtualFile dirVFile = dir.getVirtualFile();
           File outputFile = getOutputFile(dirVFile);
           if (!outputFile.exists()) {
-            if (export(outputFile, project, settings, dialog.getPropertyKinds())) {
+            if (export(outputFile, project, settings, dialog.isRoot(), dialog.getPropertyKinds())) {
               VirtualFile outputVFile = VfsUtil.findFileByIoFile(outputFile, true);
               if (outputVFile != null) {
                 OpenFileAction.openFile(outputVFile, project);
@@ -107,11 +106,12 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
   private static boolean export(@NotNull File outputFile,
                                 @NotNull Project project,
                                 @NotNull CodeStyleSettings settings,
+                                boolean isRoot,
                                 @NotNull EditorConfigPropertyKind... propertyKinds) {
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
       try (
         EditorConfigSettingsWriter settingsWriter =
-          new EditorConfigSettingsWriter(project, outputStream, settings).forPropertyKinds(propertyKinds)) {
+          new EditorConfigSettingsWriter(project, outputStream, settings, isRoot).forPropertyKinds(propertyKinds)) {
         settingsWriter.writeSettings();
         return true;
       }

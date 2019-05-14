@@ -17,7 +17,7 @@ public class EditorConfigExportTest extends LightPlatformTestCase {
     setting.LINE_SEPARATOR = LineSeparator.CRLF.getSeparatorString();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     try (EditorConfigSettingsWriter writer =
-           new EditorConfigSettingsWriter(getProject(), output, setting)
+           new EditorConfigSettingsWriter(getProject(), output, setting, false)
              .forLanguages(EditorConfigLanguage.INSTANCE, XMLLanguage.INSTANCE)) {
       writer.writeSettings();
     }
@@ -59,7 +59,7 @@ public class EditorConfigExportTest extends LightPlatformTestCase {
     CodeStyleSettings setting = CodeStyleSettings.getDefaults().clone();
     setting.LINE_SEPARATOR = LineSeparator.CRLF.getSeparatorString();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
-    try (EditorConfigSettingsWriter writer = new EditorConfigSettingsWriter(getProject(), output, setting)
+    try (EditorConfigSettingsWriter writer = new EditorConfigSettingsWriter(getProject(), output, setting, false)
       .forLanguages(EditorConfigLanguage.INSTANCE, XMLLanguage.INSTANCE)
       .forPropertyKinds(EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD)) {
       writer.writeSettings();
@@ -83,13 +83,15 @@ public class EditorConfigExportTest extends LightPlatformTestCase {
     setting.LINE_SEPARATOR = LineSeparator.CRLF.getSeparatorString();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     try (EditorConfigSettingsWriter writer =
-           new EditorConfigSettingsWriter(getProject(), output, setting)
+           new EditorConfigSettingsWriter(getProject(), output, setting, true)
              .forLanguages(EditorConfigLanguage.INSTANCE)
              .forPropertyKinds(EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD)) {
       writer.writeSettings();
     }
     String result = output.toString("UTF-8");
     assertEquals(
+      "root = true\n" +
+      "\n" +
       "[*]\n" +
       "charset = utf-8\n" +
       "end_of_line = crlf\n" +

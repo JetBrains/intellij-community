@@ -37,4 +37,8 @@ public class CreateEditorConfigDialog extends DialogWrapper {
     }
     return kinds.toArray(new EditorConfigPropertyKind[0]);
   }
+
+  public boolean isRoot() {
+    return myForm.isRoot();
+  }
 }
