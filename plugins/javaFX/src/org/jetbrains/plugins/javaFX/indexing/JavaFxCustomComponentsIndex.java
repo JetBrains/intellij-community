@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String, Set<String>> {
+public class JavaFxCustomComponentsIndex extends FileBasedIndexExtension<String, Set<String>> implements DocumentChangesDependentIndex {
 
   @NonNls public static final ID<String, Set<String>> KEY = ID.create("javafx.custom.component");
 
