@@ -210,7 +210,8 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       }
     }
 
-    data.myVariants.stream().filter(v -> v.myVariant.equals(variants.get(0))).findFirst().ifPresent(data::select);
+    data.myVariants.stream().filter(v -> v.myVariant == variants.get(0)).findFirst().ifPresent(data::select);
+    LOG.assertTrue(data.myCurrentVariant != null);
 
     session.updateExecutionPosition();
     IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
@@ -319,7 +320,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       }
     }
 
-    void select(VariantInfo variant) {
+    void select(@NotNull VariantInfo variant) {
       setCurrentVariantHighlighterAttributes(DebuggerColors.SMART_STEP_INTO_TARGET);
       myCurrentVariant = variant;
       setCurrentVariantHighlighterAttributes(DebuggerColors.SMART_STEP_INTO_SELECTION);
@@ -333,7 +334,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       }
     }
 
-    void stepInto(VariantInfo variant) {
+    void stepInto(@NotNull VariantInfo variant) {
       clear();
       mySession.smartStepInto(myHandler, variant.myVariant);
     }
@@ -345,10 +346,10 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
 
     class VariantInfo {
-      final V myVariant;
-      final Point myStartPoint;
+      @NotNull final V myVariant;
+      @NotNull final Point myStartPoint;
 
-      VariantInfo(V variant) {
+      VariantInfo(@NotNull V variant) {
         myVariant = variant;
         myStartPoint = myEditor.offsetToXY(variant.getHighlightRange().getStartOffset());
       }
