@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.BalloonImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.EmptyClipboardOwner;
@@ -256,10 +257,11 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   private static boolean isContextMenu(Window window) {
-    if (window != null) {
-      for (Component component : window.getComponents()) {
-        if (component instanceof JComponent
-            && UIUtil.findComponentOfType((JComponent)component, JPopupMenu.class) != null) {
+    if (window instanceof JWindow) {
+      JLayeredPane layeredPane = ((JWindow)window).getLayeredPane();
+      for (Component component : layeredPane.getComponents()) {
+        if (component instanceof JPanel
+            && ContainerUtil.findInstance(((JPanel)component).getComponents(), JPopupMenu.class) != null) {
           return true;
         }
       }
