@@ -21,7 +21,7 @@
     <additionalTextAttributes scheme="Default" file="colors/ShDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colors/ShDarcula.xml"/>
 
-    <psi.referenceContributor implementation="com.intellij.sh.ShUrlReferenceContributor"/>
+    <psi.referenceContributor language="Shell Script" implementation="com.intellij.sh.ShUrlReferenceContributor"/>
 
     <completion.contributor language="Shell Script" implementationClass="com.intellij.sh.completion.ShKeywordCompletionContributor" order="after bashFilePathCompletionContributor"/>
     <completion.contributor id="bashFilePathCompletionContributor" language="Shell Script" implementationClass="com.intellij.sh.completion.ShFilePathCompletionContributor"/>
