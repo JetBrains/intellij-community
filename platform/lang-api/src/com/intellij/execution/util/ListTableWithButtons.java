@@ -103,7 +103,8 @@ public abstract class ListTableWithButtons<T> extends Observable {
         myTableView.getTableViewModel().setItems(myElements);
       }
       myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
-      myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
+      if(shouldEditRowOnCreation())
+        myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
       myTableView.getComponent().revalidate();
       myTableView.getComponent().repaint();
     });
@@ -246,6 +247,10 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   protected boolean isUpDownSupported() {
     return false;
+  }
+
+  protected boolean shouldEditRowOnCreation() {
+    return true;
   }
 
   protected abstract T cloneElement(T variable);
