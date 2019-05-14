@@ -5,6 +5,7 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.SaveAndSyncHandler;
@@ -20,6 +21,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -383,6 +385,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     Runnable process = () -> {
+      if (!ApplicationManager.getApplication().isUnitTestMode() && TransactionGuard.getInstance().getContextTransaction() == null) {
+        LOG.error("Project opening should be done in a transaction",
+                  new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+      }
+
       TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
 
       StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
