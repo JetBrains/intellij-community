@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
@@ -90,7 +89,7 @@ public class EclipseImlTest extends IdeaTestCase {
     if (actual.contains("jar://$MAVEN_REPOSITORY$/junit")) {
       fail(actual + "\n\n" + macroMap.toString());
     }
-    assertThat(actual).isEqualTo(Paths.get(project.getBasePath(), "expected", "expected.iml"));
+    assertThat(actual).toMatchSnapshot(Paths.get(project.getBasePath(), "expected", "expected.iml"));
   }
 
   public void testWorkspaceOnly() throws Exception {
