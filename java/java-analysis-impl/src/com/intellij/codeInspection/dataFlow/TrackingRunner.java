@@ -20,9 +20,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
@@ -34,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
+
+import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSuperCall;
 
 @SuppressWarnings("SuspiciousNameCombination")
 public class TrackingRunner extends StandardDataFlowRunner {
@@ -108,10 +112,44 @@ public class TrackingRunner extends StandardDataFlowRunner {
     PsiElement body = DfaUtil.getDataflowContext(expression);
     if (body == null) return Collections.emptyList();
     TrackingRunner runner = new TrackingRunner(unknownAreNullables, body, expression);
-    StandardInstructionVisitor visitor = new StandardInstructionVisitor(true);
-    RunnerResult result = runner.analyzeMethodRecursively(body, visitor, ignoreAssertions);
-    if (result != RunnerResult.OK) return Collections.emptyList();
+    if (!analyze(ignoreAssertions, expression, body, runner)) return Collections.emptyList();
     return ContainerUtil.createMaybeSingletonList(runner.findProblemCause(expression, type));
+  }
+
+  private static boolean analyze(boolean ignoreAssertions, PsiExpression expression, PsiElement body, TrackingRunner runner) {
+    List<DfaMemoryState> endOfInitializerStates = new ArrayList<>();
+    StandardInstructionVisitor visitor = new StandardInstructionVisitor(true) {
+      @Override
+      public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction,
+                                                         DataFlowRunner runner,
+                                                         DfaMemoryState state) {
+        if (!instruction.isStatic()) {
+          endOfInitializerStates.add(state.createCopy());
+        }
+        return super.visitEndOfInitializer(instruction, runner, state);
+      }
+    };
+    RunnerResult result = runner.analyzeMethodRecursively(body, visitor, ignoreAssertions);
+    if (result != RunnerResult.OK) return false;
+    if (body instanceof PsiClass) {
+      PsiMethod ctor = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+      if (ctor != null && ctor.isConstructor()) {
+        List<DfaMemoryState> initialStates;
+        PsiCodeBlock ctorBody = ctor.getBody();
+        if (ctorBody != null) {
+          PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(ctor);
+          if (JavaPsiConstructorUtil.isChainedConstructorCall(call) ||
+              (call == null && hasImplicitImpureSuperCall((PsiClass)body, ctor))) {
+            initialStates = Collections.singletonList(runner.createMemoryState());
+          }
+          else {
+            initialStates = StreamEx.of(endOfInitializerStates).map(DfaMemoryState::createCopy).toList();
+          }
+          return runner.analyzeBlockRecursively(ctorBody, initialStates, visitor, false) == RunnerResult.OK;
+        }
+      }
+    }
+    return true;
   }
 
   /*
@@ -489,16 +527,19 @@ public class TrackingRunner extends StandardDataFlowRunner {
   private static CauseItem createAssignmentCause(AssignInstruction instruction, DfaValue target) {
     PsiExpression rExpression = instruction.getRExpression();
     PsiElement anchor = null;
+    String targetName = target.toString();
     if (rExpression != null) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(rExpression.getParent());
       if (parent instanceof PsiAssignmentExpression) {
         anchor = ((PsiAssignmentExpression)parent).getOperationSign();
+        targetName = ((PsiAssignmentExpression)parent).getLExpression().getText();
       }
       else if (parent instanceof PsiVariable) {
         ASTNode node = parent.getNode();
         if (node instanceof CompositeElement) {
           anchor = ((CompositeElement)node).findChildByRoleAsPsiElement(ChildRole.INITIALIZER_EQ);
         }
+        targetName = ((PsiVariable)parent).getName();
       }
       if (anchor == null) {
         anchor = rExpression;
@@ -509,7 +550,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     if (stripped instanceof PsiLiteralExpression) {
       suffix = " to '" + StringUtil.shortenTextWithEllipsis(stripped.getText(), 40, 5) + "'";
     }
-    return new CauseItem("'" + target + "' was assigned" + suffix, anchor);
+    return new CauseItem("'" + targetName + "' was assigned" + suffix, anchor);
   }
 
   private CauseItem[] findBooleanResultCauses(PsiExpression expression,
