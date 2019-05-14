@@ -125,6 +125,10 @@ public class ConfigurableExtensionPointUtil {
     if (!withIdeSettings && project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
+    if (project != null) {
+      // workaround for not initialized correctly default project (6721c69f8d3e50eb537808371bd603939c86c8d0)
+      project.getPicoContainer();
+    }
     return getConfigurableGroup(getConfigurables(project, withIdeSettings), project);
   }
 
