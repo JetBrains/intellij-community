@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
 
 public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
@@ -31,7 +30,6 @@ public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    assumeFalse("Tests shouldn't run on Windows OS", SystemInfo.isWindows);
     super.setUp();
     myTempDirectory = FileUtil.createTempDirectory(ShFileCompletionTest.class.getSimpleName().toLowerCase(), null, true);
   }
@@ -46,6 +44,7 @@ public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testSimple() throws Exception {
+    if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
     assert new File(myTempDirectory, FIRST_FILE_NAME).createNewFile();
     assert new File(myTempDirectory, SECOND_FILE_NAME).createNewFile();
 
@@ -55,6 +54,7 @@ public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testFolderCompletion() throws Exception {
+    if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
     File folder = new File(myTempDirectory, FOLDER_NAME);
     assert folder.mkdir();
     assert new File(folder, FIRST_FILE_NAME).createNewFile();
@@ -69,6 +69,7 @@ public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testFileNameEncoding() throws Exception {
+    if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
     String folderName = " '\"#$=,[]!<>|;{}()*?^&`";
     assert new File(myTempDirectory, folderName).mkdir();
 
@@ -82,6 +83,7 @@ public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testHomeDirCompletion() {
+    if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
     myFixture.configureByText("a.sh", "~/<caret>");
 
     LookupElement[] lookupElements = myFixture.completeBasic();
@@ -89,6 +91,7 @@ public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testEnvVariablesCompletion() {
+    if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
     String envVar = "HOME";
     assumeNotNull(System.getenv(envVar));
 
@@ -113,6 +116,7 @@ public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCompletionWithPrefixMatch() throws IOException {
+    if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
     assert new File(myTempDirectory, FIRST_FILE_NAME).createNewFile();
     assert new File(myTempDirectory, SECOND_FILE_NAME).createNewFile();
 
@@ -131,6 +135,7 @@ public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testReplacement() throws Exception {
+    if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
     assert new File(myTempDirectory, FOLDER_NAME).mkdir();
     assert new File(myTempDirectory, FIRST_FILE_NAME).createNewFile();
     assert new File(myTempDirectory, SECOND_FILE_NAME).createNewFile();
