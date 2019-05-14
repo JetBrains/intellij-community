@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType
 
 import java.util.concurrent.TimeUnit
 
+import static com.intellij.openapi.application.ActionsKt.runReadAction
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 
 /**
@@ -264,9 +265,11 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
       PsiTestUtil.addLibrary(module, 'lib', tempDir.getFile('').path, [] as String[], [''] as String[])
     }
 
-    def facade = JavaPsiFacade.getInstance(project)
-    assert !facade.findClass('java', GlobalSearchScope.allScope(project))
-    assert !facade.findPackage('').findClassByShortName('java', GlobalSearchScope.allScope(project))
+    runReadAction {
+      def facade = JavaPsiFacade.getInstance(project)
+      assert !facade.findClass('java', GlobalSearchScope.allScope(project))
+      assert !facade.findPackage('').findClassByShortName('java', GlobalSearchScope.allScope(project))
+    }
 
     def file = myFixture.addFileToProject("Foo.groovy", """\
 int a = 42
