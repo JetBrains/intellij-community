@@ -328,19 +328,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @TestOnly
   public boolean isDefaultProjectInitialized() {
-    synchronized (lock) {
-      return myDefaultProject.isCached();
-    }
+    return myDefaultProject.isCached();
   }
 
   @Override
   @NotNull
   public Project getDefaultProject() {
-    synchronized (lock) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
-      // call instance method to reset timeout
-      LOG.assertTrue(!myDefaultProject.isDisposed());
-    }
+    LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
+    // call instance method to reset timeout
+    LOG.assertTrue(!myDefaultProject.getMessageBus().isDisposed());
+    LOG.assertTrue(myDefaultProject.isCached());
     return myDefaultProject;
   }
 
