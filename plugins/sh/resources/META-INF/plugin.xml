@@ -1,9 +1,8 @@
 <idea-plugin>
-  <idea-version since-build="191.6183" until-build="192.*"/>
   <id>com.jetbrains.sh</id>
-  <vendor email="ignatov@jetbrains.com">Sergey Ignatov</vendor>
+  <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.lang</depends>
-  <depends optional="true" config-file="terminal.xml">org.jetbrains.plugins.terminal</depends>
+  <depends optional="true" config-file="sh-terminal.xml">org.jetbrains.plugins.terminal</depends>
   <name>Shell Script</name>
   <description><![CDATA[
     <p>Shell Script support for IntelliJ IDEA, RubyMine, WebStorm, etc.</p>
