@@ -2105,6 +2105,11 @@ public abstract class DialogWrapper {
     return myDisposed;
   }
 
+  public void disposeIfNeeded() {
+    if (isDisposed()) return;
+    Disposer.dispose(getDisposable());
+  }
+
   /**
    * @see Adapter
    */

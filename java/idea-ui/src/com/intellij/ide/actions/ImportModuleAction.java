@@ -86,8 +86,12 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
     if (wizard == null || wizard.getStepCount() > 0 && !wizard.showAndGet()) {
       return Collections.emptyList();
     }
-
-    return createFromWizard(project, wizard);
+    try {
+      return createFromWizard(project, wizard);
+    }
+    finally {
+      wizard.disposeIfNeeded();
+    }
   }
 
   public static List<Module> createFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
