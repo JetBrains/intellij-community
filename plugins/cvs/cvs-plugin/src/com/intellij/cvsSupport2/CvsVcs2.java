@@ -241,7 +241,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
 
   @Override
   protected void activate() {
-    CvsStorageSupportingDeletionComponent.getInstance(myProject).init(getProject());
+    CvsStorageSupportingDeletionComponent.getInstance(myProject).init();
     CvsEntriesManager.getInstance().addCvsEntriesListener(myCvsEntriesListener);
   }
 
