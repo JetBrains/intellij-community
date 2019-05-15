@@ -28,10 +28,7 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -323,24 +320,19 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileLength() throws IOException {
-    File file = File.createTempFile("test", "txt");
-    try {
-      FileUtil.writeToFile(file, "hello");
-      VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
-      assertNotNull(virtualFile);
-      String s = VfsUtilCore.loadText(virtualFile);
-      assertEquals("hello", s);
-      assertEquals(5, virtualFile.getLength());
+    File file = tempDir.newFile("test.txt");
+    FileUtil.writeToFile(file, "hello");
+    VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(virtualFile);
+    String s = VfsUtilCore.loadText(virtualFile);
+    assertEquals("hello", s);
+    assertEquals(5, virtualFile.getLength());
 
-      FileUtil.writeToFile(file, "new content");
-      ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContent(((VirtualFileWithId)virtualFile).getId());
-      s = VfsUtilCore.loadText(virtualFile);
-      assertEquals("new content", s);
-      assertEquals(11, virtualFile.getLength());
-    }
-    finally {
-      FileUtil.delete(file);
-    }
+    FileUtil.writeToFile(file, "new content");
+    ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContent(((VirtualFileWithId)virtualFile).getId());
+    s = VfsUtilCore.loadText(virtualFile);
+    assertEquals("new content", s);
+    assertEquals(11, virtualFile.getLength());
   }
 
   @Test
