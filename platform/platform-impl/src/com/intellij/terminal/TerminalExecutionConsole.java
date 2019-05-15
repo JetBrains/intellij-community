@@ -73,12 +73,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
   private boolean myEnableConsoleActions = true;
 
-  private boolean myEnterKeyDefaultCodeEnabled = false; // TODO turn on by default in 2019.2
-  private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
-
-  {
-    myKeyEncoder.setAutoNewLine(true);
-  }
+  private boolean myEnterKeyDefaultCodeEnabled = true;
 
   public TerminalExecutionConsole(@NotNull Project project, @Nullable ProcessHandler processHandler) {
     myProject = project;
@@ -120,17 +115,11 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
            color.getBlue() + "m";
   }
 
-  public void setAutoNewLineMode(boolean enabled) {
-    myKeyEncoder.setAutoNewLine(enabled);
-  }
-
   /**
-   * @deprecated use
+   * @deprecated use {@link #withEnterKeyDefaultCodeEnabled(boolean)}
    */
   @Deprecated
-  @NotNull
-  public TerminalExecutionConsole withEnterKeyLineSeparator(@NotNull LineSeparator lineSeparator) {
-    return this;
+  public void setAutoNewLineMode(boolean enabled) {
   }
 
   @NotNull
@@ -363,13 +352,10 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       return new TerminalStarter(terminal, connector, myDataStream) {
         @Override
         public byte[] getCode(int key, int modifiers) {
-          if (key == KeyEvent.VK_ENTER) {
-            if (modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
-              // pty4j expects \r on Windows and \n on Unix as Enter key code
-              // https://github.com/JetBrains/pty4j/commit/3166f860354c24740729999df51e9b8a46fb417c
-              return SystemInfo.isWindows ? LineSeparator.CR.getSeparatorBytes() : LineSeparator.LF.getSeparatorBytes();
-            }
-            return myKeyEncoder.getCode(key, modifiers);
+          if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
+            // pty4j expects \r on Windows and \n on Unix as Enter key code
+            // https://github.com/JetBrains/pty4j/commit/3166f860354c24740729999df51e9b8a46fb417c
+            return SystemInfo.isWindows ? LineSeparator.CR.getSeparatorBytes() : LineSeparator.LF.getSeparatorBytes();
           }
           return super.getCode(key, modifiers);
         }
