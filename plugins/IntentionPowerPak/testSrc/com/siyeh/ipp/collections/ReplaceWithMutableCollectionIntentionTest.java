@@ -67,6 +67,14 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testFieldAssignment() {
+    doTest();
+  }
+
+  public void testGenericMethod() {
+    assertIntentionNotAvailable();
+  }
+
   @Override
   protected String getIntentionName() {
     return IntentionPowerPackBundle.message("replace.with.mutable.collection.intention.family.name");
