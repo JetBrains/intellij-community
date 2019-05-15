@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
@@ -227,43 +228,44 @@ public class StructuralSearchDialog extends DialogWrapper {
     if (myAlarm.isDisposed()) return;
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
-      try {
-        final boolean valid = isValid();
-        if (!valid) {
-          highlightMatches(Collections.emptyList(), "");
+      final boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+        try {
+          final CompiledPattern compiledPattern = compilePattern();
+          if (compiledPattern == null) {
+            // invalid pattern, remove editor highlights
+            highlightMatches(Collections.emptyList(), "");
+          }
+          initializeFilterPanel(compiledPattern);
+          final JRootPane component = getRootPane();
+          if (component == null) {
+            return;
+          }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            setSearchTargets(myConfiguration.getMatchOptions());
+            getOKAction().setEnabled(compiledPattern != null);
+          }, ModalityState.stateForComponent(component));
         }
-        initializeFilterPanel();
-        final JRootPane component = getRootPane();
-        if (component == null) {
-          return;
+        catch (ProcessCanceledException e) {
+          throw e;
         }
-        ApplicationManager.getApplication().invokeLater(() -> {
-          setSearchTargets(myConfiguration.getMatchOptions());
-          getOKAction().setEnabled(valid);
-        }, ModalityState.stateForComponent(component));
+        catch (RuntimeException e) {
+          Logger.getInstance(StructuralSearchDialog.class).error(e);
+        }
+      });
+      if (!success) {
+        initiateValidation();
       }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (RuntimeException e) {
-        Logger.getInstance(StructuralSearchDialog.class).error(e);
-      }
-    }, 250);
+    }, 100);
   }
 
-  private void initializeFilterPanel() {
-    try {
-      final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false);
-      if (compiledPattern != null) {
-        myFilterPanel.setCompiledPattern(compiledPattern);
-        if (!myFilterPanel.isInitialized()) {
-          myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
-        }
+  private void initializeFilterPanel(CompiledPattern compiledPattern) {
+    if (compiledPattern != null) {
+      myFilterPanel.setCompiledPattern(compiledPattern);
+      if (!myFilterPanel.isInitialized()) {
+        myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
       }
-      myFilterPanel.setValid(compiledPattern != null);
-    } catch (MalformedPatternException e) {
-      myFilterPanel.setValid(false);
     }
+    myFilterPanel.setValid(compiledPattern != null);
   }
 
   private Configuration createConfiguration(Configuration template) {
@@ -653,9 +655,9 @@ public class StructuralSearchDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     myDoingOkAction = true;
-    final boolean result = isValid();
+    final CompiledPattern compiledPattern = compilePattern();
     myDoingOkAction = false;
-    if (!result) return;
+    if (compiledPattern == null) return;
 
     myAlarm.cancelAllRequests();
     myConfiguration.removeUnusedVariables();
@@ -685,46 +687,49 @@ public class StructuralSearchDialog extends DialogWrapper {
     return myConfiguration;
   }
 
-  private boolean isValid() {
+  private CompiledPattern compilePattern() {
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
     final Project project = getProject();
     try {
-      Matcher.validate(project, matchOptions);
+      final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, true);
+      reportMessage(null, false, mySearchCriteriaEdit);
+      if (myReplace) {
+        try {
+          Replacer.checkReplacementPattern(project, myConfiguration.getReplaceOptions());
+        }
+        catch (UnsupportedPatternException ex) {
+          reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
+          return null;
+        }
+        catch (MalformedPatternException ex) {
+          reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
+          return null;
+        }
+      }
+      reportMessage(null, false, myReplaceCriteriaEdit);
+      highlightMatches(matchOptions);
+      return compiledPattern;
     }
     catch (MalformedPatternException e) {
       final String message = isEmpty(matchOptions.getSearchPattern())
                              ? null
                              : SSRBundle.message("this.pattern.is.malformed.message", (e.getMessage() != null) ? e.getMessage() : "");
       reportMessage(message, true, mySearchCriteriaEdit);
-      return false;
+      return null;
     }
     catch (UnsupportedPatternException e) {
       reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", e.getMessage()), true, mySearchCriteriaEdit);
-      return false;
+      return null;
     }
     catch (NoMatchFoundException e) {
       reportMessage(e.getMessage(), false, myScopePanel);
-      return false;
+      return null;
     }
-    reportMessage(null, false, mySearchCriteriaEdit);
-    if (myReplace) {
-      try {
-        Replacer.checkReplacementPattern(project, myConfiguration.getReplaceOptions());
-      }
-      catch (UnsupportedPatternException ex) {
-        reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
-        return false;
-      }
-      catch (MalformedPatternException ex) {
-        reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
-        return false;
-      }
-    }
-    reportMessage(null, false, myReplaceCriteriaEdit);
-    highlightMatches(matchOptions);
-    return true;
   }
 
+  /**
+   * Needs read action.
+   */
   private void highlightMatches(MatchOptions matchOptions) {
     if (myDoingOkAction) {
       highlightMatches(Collections.emptyList(), "");
@@ -739,7 +744,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       if (vFile == null) {
         return;
       }
-      final PsiFile file = ReadAction.compute(() -> PsiManager.getInstance(project).findFile(vFile));
+      final PsiFile file = PsiManager.getInstance(project).findFile(vFile);
       if (file == null) {
         return;
       }
