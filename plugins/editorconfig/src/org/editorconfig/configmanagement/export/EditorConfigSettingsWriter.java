@@ -33,6 +33,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   private final @Nullable Project             myProject;
   private final           Map<String, String> myGeneralOptions = new HashMap<>();
   private final           boolean             myAddRootFlag;
+  private final           boolean             myCommentOutProperties;
 
   private final static Comparator<OutPair> PAIR_COMPARATOR = (pair1, pair2) -> {
     EditorConfigPropertyKind pKind1 = getPropertyKind(pair1.getKey());
@@ -46,11 +47,16 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   private final Set<EditorConfigPropertyKind> myPropertyKinds = EnumSet.allOf(EditorConfigPropertyKind.class);
   // endregion
 
-  public EditorConfigSettingsWriter(@Nullable Project project, @NotNull OutputStream out, CodeStyleSettings settings, boolean isRoot) {
+  public EditorConfigSettingsWriter(@Nullable Project project,
+                                    @NotNull OutputStream out,
+                                    CodeStyleSettings settings,
+                                    boolean isRoot,
+                                    boolean commentOutProperties) {
     super(out, StandardCharsets.UTF_8);
     mySettings = settings;
     myProject = project;
     myAddRootFlag = isRoot;
+    myCommentOutProperties = commentOutProperties;
     fillGeneralOptions();
   }
 
@@ -97,7 +103,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
 
   public void writeSettings() throws IOException {
     if (myAddRootFlag) {
-      writeProperties(Collections.singletonList(new OutPair("root", "true")));
+      writeProperties(Collections.singletonList(new OutPair("root", "true")), false);
       write("\n");
     }
     writeGeneralSection();
@@ -130,7 +136,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
       .map(key -> new OutPair(key, myGeneralOptions.get(key)))
       .filter(pair -> isNameAllowed(pair.getKey()))
       .sorted(PAIR_COMPARATOR).collect(Collectors.toList());
-   writeProperties(pairs);
+   writeProperties(pairs, myCommentOutProperties);
   }
 
   private boolean writeLangSection(@NotNull LanguageCodeStylePropertyMapper mapper, @Nullable String pattern) throws IOException {
@@ -142,7 +148,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
           write("\n[" + pattern + "]\n");
         }
         Collections.sort(optionValueList, PAIR_COMPARATOR);
-        writeProperties(optionValueList);
+        writeProperties(optionValueList, myCommentOutProperties);
         return true;
       }
     }
@@ -185,8 +191,11 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
     return value != null && !value.trim().isEmpty();
   }
 
-  private void writeProperties(@NotNull List<OutPair> outPairs) throws IOException {
+  private void writeProperties(@NotNull List<OutPair> outPairs, boolean commentOut) throws IOException {
     for (OutPair pair : outPairs) {
+      if (commentOut) {
+        write("# ");
+      }
       write(pair.getKey() + " = " + pair.getVal() + "\n");
     }
   }

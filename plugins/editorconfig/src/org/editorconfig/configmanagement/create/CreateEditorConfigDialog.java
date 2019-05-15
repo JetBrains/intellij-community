@@ -44,6 +44,10 @@ public class CreateEditorConfigDialog extends DialogWrapper {
     return myForm.isRoot();
   }
 
+  public boolean isCommentProperties() {
+    return myForm.isCommentProperties();
+  }
+
   public List<Language> getLanguages() {
     return myForm.getSelectedLanguages();
   }

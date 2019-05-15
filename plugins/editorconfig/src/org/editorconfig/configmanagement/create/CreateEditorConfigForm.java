@@ -21,8 +21,9 @@ public class CreateEditorConfigForm {
   private JBCheckBox myStandardPropertiesCb;
   private JBCheckBox myIntelliJPropertiesCb;
   private JBCheckBox myRootCb;
-  private JPanel myPropertiesPanel;
-  private JPanel myLanguagesPanel;
+  private JPanel     myPropertiesPanel;
+  private JPanel     myLanguagesPanel;
+  private JBCheckBox myCommentProperties;
 
   private final List<LanguageCheckBoxRec> myLanguageCheckBoxes;
 
@@ -34,6 +35,7 @@ public class CreateEditorConfigForm {
     myLanguagesPanel.setLayout(new BoxLayout(myLanguagesPanel, BoxLayout.X_AXIS));
     myLanguageCheckBoxes = creteLanguageCheckBoxes(myLanguagesPanel);
     setLanguagePanelEnabled(false);
+    myCommentProperties.setEnabled(false);
     myIntelliJPropertiesCb.addActionListener(new LanguagePanelEnabler());
     myStandardPropertiesCb.addActionListener(new LanguagePanelEnabler());
   }
@@ -41,7 +43,9 @@ public class CreateEditorConfigForm {
   private class LanguagePanelEnabler implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      setLanguagePanelEnabled(myIntelliJPropertiesCb.isSelected() || myStandardPropertiesCb.isSelected());
+      final boolean addProperties = myIntelliJPropertiesCb.isSelected() || myStandardPropertiesCb.isSelected();
+      setLanguagePanelEnabled(addProperties);
+      myCommentProperties.setEnabled(addProperties);
     }
   }
 
@@ -104,6 +108,10 @@ public class CreateEditorConfigForm {
     return myLanguageCheckBoxes.stream()
       .filter(rec -> rec.myCheckBox.isSelected())
       .map(rec -> rec.myLanguage).collect(Collectors.toList());
+  }
+
+  public boolean isCommentProperties() {
+    return myCommentProperties.isSelected();
   }
 
   private static class LanguageCheckBoxRec {

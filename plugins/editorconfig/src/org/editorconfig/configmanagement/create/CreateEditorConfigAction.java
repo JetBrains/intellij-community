@@ -52,7 +52,11 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
           final VirtualFile dirVFile = dir.getVirtualFile();
           File outputFile = getOutputFile(dirVFile);
           if (!outputFile.exists()) {
-            if (export(outputFile, project, settings, dialog.isRoot(), dialog.getLanguages(), dialog.getPropertyKinds())) {
+            if (export(outputFile, project, settings,
+                       dialog.isRoot(),
+                       dialog.isCommentProperties(),
+                       dialog.getLanguages(),
+                       dialog.getPropertyKinds())) {
               VirtualFile outputVFile = VfsUtil.findFileByIoFile(outputFile, true);
               if (outputVFile != null) {
                 OpenFileAction.openFile(outputVFile, project);
@@ -109,12 +113,13 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
                                 @NotNull Project project,
                                 @NotNull CodeStyleSettings settings,
                                 boolean isRoot,
+                                boolean commentOutProperties,
                                 @NotNull List<Language> languages,
                                 @NotNull EditorConfigPropertyKind... propertyKinds) {
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
       try (
         EditorConfigSettingsWriter settingsWriter =
-          new EditorConfigSettingsWriter(project, outputStream, settings, isRoot)
+          new EditorConfigSettingsWriter(project, outputStream, settings, isRoot, commentOutProperties)
             .forLanguages(languages)
             .forPropertyKinds(propertyKinds)) {
         settingsWriter.writeSettings();
