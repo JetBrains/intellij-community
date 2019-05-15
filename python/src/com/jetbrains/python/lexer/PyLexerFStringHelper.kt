@@ -64,7 +64,7 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
       return type
     }
   }
-  
+
   fun handleColonInFragment(): IElementType {
     if (myFStringStates.peek().fragmentStates.peek().braceBalance == 0) {
       myLexer.yybegin(_PythonLexer.FSTRING_FRAGMENT_FORMAT)
@@ -72,6 +72,17 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
     }
     else {
       return PyTokenTypes.COLON
+    }
+  }
+
+  fun handleColonEqInFragment(): IElementType {
+    if (myFStringStates.peek().fragmentStates.peek().braceBalance == 0) {
+      myLexer.yybegin(_PythonLexer.FSTRING_FRAGMENT_FORMAT)
+      myLexer.yypushback(1)
+      return PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START
+    }
+    else {
+      return PyTokenTypes.COLONEQ
     }
   }
 
