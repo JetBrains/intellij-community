@@ -32,6 +32,12 @@ public class ShSelectCommandImpl extends ShCommandImpl implements ShSelectComman
   }
 
   @Override
+  @Nullable
+  public ShBlock getBlock() {
+    return findChildByClass(ShBlock.class);
+  }
+
+  @Override
   @NotNull
   public List<ShBraceExpansion> getBraceExpansionList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ShBraceExpansion.class);
@@ -41,6 +47,12 @@ public class ShSelectCommandImpl extends ShCommandImpl implements ShSelectComman
   @NotNull
   public List<ShCommand> getCommandList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ShCommand.class);
+  }
+
+  @Override
+  @Nullable
+  public ShDoBlock getDoBlock() {
+    return findChildByClass(ShDoBlock.class);
   }
 
   @Override

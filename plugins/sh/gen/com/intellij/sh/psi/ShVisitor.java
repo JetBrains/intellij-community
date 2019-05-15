@@ -59,7 +59,7 @@ public class ShVisitor extends PsiElementVisitor {
   }
 
   public void visitBlock(@NotNull ShBlock o) {
-    visitCommand(o);
+    visitLazyBlock(o);
   }
 
   public void visitBraceExpansion(@NotNull ShBraceExpansion o) {
@@ -115,7 +115,7 @@ public class ShVisitor extends PsiElementVisitor {
   }
 
   public void visitDoBlock(@NotNull ShDoBlock o) {
-    visitBlock(o);
+    visitLazyDoBlock(o);
   }
 
   public void visitElifClause(@NotNull ShElifClause o) {
@@ -316,6 +316,14 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitWhileCommand(@NotNull ShWhileCommand o) {
     visitCommand(o);
+  }
+
+  public void visitLazyBlock(@NotNull ShLazyBlock o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitLazyDoBlock(@NotNull ShLazyDoBlock o) {
+    visitCompositeElement(o);
   }
 
   public void visitCompositeElement(@NotNull ShCompositeElement o) {

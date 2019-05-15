@@ -116,6 +116,8 @@
   extends("(comma|assignment|conditional|logical_or|logical_and|bitwise_or|bitwise_exclusive_or|bitwise_and|equality|comparison|bitwise_shift|add|mul|exp)_expression")=binary_expression
   extends(".*expression")=expression
   extends(".*condition")=condition
+  generateTokenAccessors(".*block")=false
+  extraRoot(".*block")=true
 }
 
 private file ::=
@@ -217,8 +219,18 @@ conditional_command ::=  '[[' condition* (']]'|']'  <<differentBracketsWarning>>
                        | '['  condition* ( ']'|']]' <<differentBracketsWarning>>) {pin(".*")=1}
 
 private any_block ::= block | do_block
-do_block ::= do  block_compound_list done {pin(".*")=1 extends=block}
-block    ::= '{' block_compound_list '}'  {pin(".*")=1 extends=command}
+do_block ::= do  block_compound_list done {
+  pin(".*")=1
+  implements="com.intellij.sh.psi.ShLazyDoBlock"
+  extends="com.intellij.sh.psi.impl.ShLazyDoBlockImpl"
+  elementTypeClass="com.intellij.sh.lexer.ShLazyDoBlockElementType"
+}
+block    ::= '{' block_compound_list '}'  {
+  pin(".*")=1
+  implements="com.intellij.sh.psi.ShLazyBlock"
+  extends="com.intellij.sh.psi.impl.ShLazyBlockImpl"
+  elementTypeClass="com.intellij.sh.lexer.ShLazyBlockElementType"
+}
 
 block_compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list newlines {
   pin(".*")=1

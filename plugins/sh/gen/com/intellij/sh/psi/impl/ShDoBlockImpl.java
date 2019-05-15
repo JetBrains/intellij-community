@@ -9,8 +9,13 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
+import com.intellij.psi.tree.IElementType;
 
-public class ShDoBlockImpl extends ShBlockImpl implements ShDoBlock {
+public class ShDoBlockImpl extends ShLazyDoBlockImpl implements ShDoBlock {
+
+  public ShDoBlockImpl(@NotNull IElementType type, @Nullable CharSequence buffer) {
+    super(type, buffer);
+  }
 
   public ShDoBlockImpl(ASTNode node) {
     super(node);
@@ -26,15 +31,9 @@ public class ShDoBlockImpl extends ShBlockImpl implements ShDoBlock {
   }
 
   @Override
-  @NotNull
-  public PsiElement getDo() {
-    return findNotNullChildByType(DO);
-  }
-
-  @Override
   @Nullable
-  public PsiElement getDone() {
-    return findChildByType(DONE);
+  public ShCompoundList getCompoundList() {
+    return findChildByClass(ShCompoundList.class);
   }
 
 }

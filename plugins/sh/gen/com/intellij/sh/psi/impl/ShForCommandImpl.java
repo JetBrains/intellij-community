@@ -33,6 +33,12 @@ public class ShForCommandImpl extends ShCommandImpl implements ShForCommand {
 
   @Override
   @Nullable
+  public ShDoBlock getDoBlock() {
+    return findChildByClass(ShDoBlock.class);
+  }
+
+  @Override
+  @Nullable
   public ShForClause getForClause() {
     return findChildByClass(ShForClause.class);
   }

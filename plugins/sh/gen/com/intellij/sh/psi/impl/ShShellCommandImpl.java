@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 
-public abstract class ShShellCommandImpl extends ShCommandImpl implements ShShellCommand {
+public class ShShellCommandImpl extends ShCommandImpl implements ShShellCommand {
 
   public ShShellCommandImpl(ASTNode node) {
     super(node);
@@ -23,6 +23,12 @@ public abstract class ShShellCommandImpl extends ShCommandImpl implements ShShel
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);
+  }
+
+  @Override
+  @Nullable
+  public ShBlock getBlock() {
+    return findChildByClass(ShBlock.class);
   }
 
 }

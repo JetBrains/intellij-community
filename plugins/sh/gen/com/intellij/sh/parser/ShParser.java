@@ -28,9 +28,23 @@ public class ShParser implements PsiParser, LightPsiParser {
       r = parse_root_(t, b, 0);
     }
     else {
-      r = false;
+      r = parse_extra_roots_(t, b, 0);
     }
     exit_section_(b, 0, m, t, r, true, TRUE_CONDITION);
+  }
+
+  static boolean parse_extra_roots_(IElementType t, PsiBuilder b, int l) {
+    boolean r;
+    if (t == BLOCK) {
+      r = block(b, l + 1);
+    }
+    else if (t == DO_BLOCK) {
+      r = do_block(b, l + 1);
+    }
+    else {
+      r = false;
+    }
+    return r;
   }
 
   protected boolean parse_root_(IElementType t, PsiBuilder b, int l) {
@@ -44,12 +58,11 @@ public class ShParser implements PsiParser, LightPsiParser {
     create_token_set_(ASSIGNMENT_CONDITION, COMPARISON_CONDITION, CONDITION, EQUALITY_CONDITION,
       LITERAL_CONDITION, LOGICAL_AND_CONDITION, LOGICAL_BITWISE_CONDITION, LOGICAL_OR_CONDITION,
       PARENTHESES_CONDITION),
-    create_token_set_(ASSIGNMENT_COMMAND, BLOCK, CASE_COMMAND, COMMAND,
-      COMMAND_SUBSTITUTION_COMMAND, CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND,
-      FUNCTION_DEFINITION, GENERIC_COMMAND_DIRECTIVE, IF_COMMAND, INCLUDE_COMMAND,
-      INCLUDE_DIRECTIVE, LET_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND,
-      SHELL_COMMAND, SIMPLE_COMMAND, SUBSHELL_COMMAND, UNTIL_COMMAND,
-      WHILE_COMMAND),
+    create_token_set_(ASSIGNMENT_COMMAND, CASE_COMMAND, COMMAND, COMMAND_SUBSTITUTION_COMMAND,
+      CONDITIONAL_COMMAND, FOR_COMMAND, FUNCTION_DEFINITION, GENERIC_COMMAND_DIRECTIVE,
+      IF_COMMAND, INCLUDE_COMMAND, INCLUDE_DIRECTIVE, LET_COMMAND,
+      PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND,
+      SUBSHELL_COMMAND, UNTIL_COMMAND, WHILE_COMMAND),
     create_token_set_(ADD_EXPRESSION, ARRAY_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION,
       BITWISE_EXCLUSIVE_OR_EXPRESSION, BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION,
       COMPARISON_EXPRESSION, CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION,
@@ -1130,7 +1143,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "function_definition")) return false;
     if (!nextTokenIs(b, "<function definition>", FUNCTION, WORD)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, FUNCTION_DEFINITION, "<function definition>");
+    Marker m = enter_section_(b, l, _NONE_, FUNCTION_DEFINITION, "<function definition>");
     r = function_definition_0(b, l + 1);
     r = r && function_definition_inner(b, l + 1);
     exit_section_(b, l, m, r, false, null);

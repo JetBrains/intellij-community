@@ -5,12 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface ShDoBlock extends ShBlock {
-
-  @NotNull
-  PsiElement getDo();
+public interface ShDoBlock extends ShLazyDoBlock {
 
   @Nullable
-  PsiElement getDone();
+  ShCompoundList getCompoundList();
 
 }

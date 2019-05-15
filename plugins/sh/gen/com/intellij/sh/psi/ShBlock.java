@@ -5,15 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface ShBlock extends ShCommand {
+public interface ShBlock extends ShLazyBlock {
 
   @Nullable
   ShCompoundList getCompoundList();
-
-  @NotNull
-  PsiElement getLeftCurly();
-
-  @Nullable
-  PsiElement getRightCurly();
 
 }

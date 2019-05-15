@@ -11,6 +11,9 @@ public interface ShForCommand extends ShCommand {
   ShBlock getBlock();
 
   @Nullable
+  ShDoBlock getDoBlock();
+
+  @Nullable
   ShForClause getForClause();
 
   @NotNull

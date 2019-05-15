@@ -7,4 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface ShShellCommand extends ShCommand {
 
+  @Nullable
+  ShBlock getBlock();
+
 }

@@ -9,8 +9,13 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
+import com.intellij.psi.tree.IElementType;
 
-public class ShBlockImpl extends ShCommandImpl implements ShBlock {
+public class ShBlockImpl extends ShLazyBlockImpl implements ShBlock {
+
+  public ShBlockImpl(@NotNull IElementType type, @Nullable CharSequence buffer) {
+    super(type, buffer);
+  }
 
   public ShBlockImpl(ASTNode node) {
     super(node);
@@ -29,18 +34,6 @@ public class ShBlockImpl extends ShCommandImpl implements ShBlock {
   @Nullable
   public ShCompoundList getCompoundList() {
     return findChildByClass(ShCompoundList.class);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getLeftCurly() {
-    return findNotNullChildByType(LEFT_CURLY);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRightCurly() {
-    return findChildByType(RIGHT_CURLY);
   }
 
 }

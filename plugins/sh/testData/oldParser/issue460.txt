@@ -2,28 +2,29 @@ SHELL_SCRIPT
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        BLOCK
-          PsiElement({)('{')
-          PsiWhiteSpace(' ')
-          COMPOUND_LIST
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
+        SHELL_COMMAND
+          BLOCK
+            PsiElement({)('{')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('git')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('log')
+                  PsiWhiteSpace(' ')
+                  PsiElement(|)('|')
+                  PsiWhiteSpace(' ')
                   GENERIC_COMMAND_DIRECTIVE
                     LITERAL
-                      PsiElement(word)('git')
-                  PsiWhiteSpace(' ')
-                  LITERAL
-                    PsiElement(word)('log')
-                PsiWhiteSpace(' ')
-                PsiElement(|)('|')
-                PsiWhiteSpace(' ')
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('cat')
-            PsiElement(;)(';')
-          PsiWhiteSpace(' ')
-          PsiElement(})('}')
+                      PsiElement(word)('cat')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(})('}')
         PsiWhiteSpace(' ')
         PsiElement(|&)('|&')
         PsiWhiteSpace(' ')
@@ -71,37 +72,38 @@ SHELL_SCRIPT
     PsiWhiteSpace(' ')
     PIPELINE_COMMAND
       PIPELINE
-        BLOCK
-          PsiElement({)('{')
-          COMPOUND_LIST
-            PsiElement(\n)('\n')
-            PsiWhiteSpace('\t')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('show_help')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    VARIABLE
-                      PsiElement(var)('$ACTION')
-                    PsiElement(STRING_CONTENT)(' is not a valid command')
-                    PsiElement(CLOSE_QUOTE)('"')
-            PsiElement(;)(';')
-            PsiElement(\n)('\n')
-            PsiWhiteSpace('\t')
-            PIPELINE_COMMAND
-              PIPELINE
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('exit')
-                  PsiWhiteSpace(' ')
-                  NUMBER
-                    PsiElement(int)('1')
-            PsiElement(;)(';')
-            PsiElement(\n)('\n')
-          PsiElement(})('}')
+        SHELL_COMMAND
+          BLOCK
+            PsiElement({)('{')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('\t')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('show_help')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      VARIABLE
+                        PsiElement(var)('$ACTION')
+                      PsiElement(STRING_CONTENT)(' is not a valid command')
+                      PsiElement(CLOSE_QUOTE)('"')
+              PsiElement(;)(';')
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('\t')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('exit')
+                    PsiWhiteSpace(' ')
+                    NUMBER
+                      PsiElement(int)('1')
+              PsiElement(;)(';')
+              PsiElement(\n)('\n')
+            PsiElement(})('}')
     PsiElement(;)(';')

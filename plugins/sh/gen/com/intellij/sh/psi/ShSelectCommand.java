@@ -10,11 +10,17 @@ public interface ShSelectCommand extends ShCommand {
   @NotNull
   List<ShArithmeticExpansion> getArithmeticExpansionList();
 
+  @Nullable
+  ShBlock getBlock();
+
   @NotNull
   List<ShBraceExpansion> getBraceExpansionList();
 
   @NotNull
   List<ShCommand> getCommandList();
+
+  @Nullable
+  ShDoBlock getDoBlock();
 
   @Nullable
   ShListTerminator getListTerminator();

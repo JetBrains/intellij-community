@@ -5,6 +5,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.sh.psi.ShCompositeElementType;
+import com.intellij.sh.lexer.ShLazyBlockElementType;
+import com.intellij.sh.lexer.ShLazyDoBlockElementType;
 import com.intellij.sh.psi.ShTokenType;
 import com.intellij.sh.psi.impl.*;
 
@@ -22,7 +24,7 @@ public interface ShTypes {
   IElementType BITWISE_EXCLUSIVE_OR_EXPRESSION = new ShCompositeElementType("BITWISE_EXCLUSIVE_OR_EXPRESSION");
   IElementType BITWISE_OR_EXPRESSION = new ShCompositeElementType("BITWISE_OR_EXPRESSION");
   IElementType BITWISE_SHIFT_EXPRESSION = new ShCompositeElementType("BITWISE_SHIFT_EXPRESSION");
-  IElementType BLOCK = new ShCompositeElementType("BLOCK");
+  IElementType BLOCK = new ShLazyBlockElementType("BLOCK");
   IElementType BRACE_EXPANSION = new ShCompositeElementType("BRACE_EXPANSION");
   IElementType CASE_CLAUSE = new ShCompositeElementType("CASE_CLAUSE");
   IElementType CASE_COMMAND = new ShCompositeElementType("CASE_COMMAND");
@@ -36,7 +38,7 @@ public interface ShTypes {
   IElementType CONDITION = new ShCompositeElementType("CONDITION");
   IElementType CONDITIONAL_COMMAND = new ShCompositeElementType("CONDITIONAL_COMMAND");
   IElementType CONDITIONAL_EXPRESSION = new ShCompositeElementType("CONDITIONAL_EXPRESSION");
-  IElementType DO_BLOCK = new ShCompositeElementType("DO_BLOCK");
+  IElementType DO_BLOCK = new ShLazyDoBlockElementType("DO_BLOCK");
   IElementType ELIF_CLAUSE = new ShCompositeElementType("ELIF_CLAUSE");
   IElementType ELSE_CLAUSE = new ShCompositeElementType("ELSE_CLAUSE");
   IElementType EQUALITY_CONDITION = new ShCompositeElementType("EQUALITY_CONDITION");
@@ -384,6 +386,9 @@ public interface ShTypes {
       }
       else if (type == SELECT_COMMAND) {
         return new ShSelectCommandImpl(node);
+      }
+      else if (type == SHELL_COMMAND) {
+        return new ShShellCommandImpl(node);
       }
       else if (type == SHELL_PARAMETER_EXPANSION) {
         return new ShShellParameterExpansionImpl(node);

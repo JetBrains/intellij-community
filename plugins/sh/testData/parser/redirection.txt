@@ -15,25 +15,26 @@ SHELL_SCRIPT
               PIPELINE_COMMAND
                 PIPELINE
                   COMMAND
-                    BLOCK
-                      PsiElement({)('{')
-                      COMPOUND_LIST
-                        PsiElement(\n)('\n')
-                        PsiWhiteSpace('    ')
-                        PIPELINE_COMMAND
-                          PIPELINE
-                            SIMPLE_COMMAND
-                              GENERIC_COMMAND_DIRECTIVE
-                                LITERAL
-                                  PsiElement(word)('echo')
-                              PsiWhiteSpace(' ')
-                              STRING
-                                PsiElement(OPEN_QUOTE)('"')
-                                PsiElement(STRING_CONTENT)('Dummy text')
-                                PsiElement(CLOSE_QUOTE)('"')
-                        PsiElement(\n)('\n')
-                      PsiWhiteSpace('  ')
-                      PsiElement(})('}')
+                    SHELL_COMMAND
+                      BLOCK
+                        PsiElement({)('{')
+                        COMPOUND_LIST
+                          PsiElement(\n)('\n')
+                          PsiWhiteSpace('    ')
+                          PIPELINE_COMMAND
+                            PIPELINE
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('echo')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(OPEN_QUOTE)('"')
+                                  PsiElement(STRING_CONTENT)('Dummy text')
+                                  PsiElement(CLOSE_QUOTE)('"')
+                          PsiElement(\n)('\n')
+                        PsiWhiteSpace('  ')
+                        PsiElement(})('}')
                     PsiWhiteSpace(' ')
                     REDIRECTION
                       PsiElement(>)('>')
