@@ -719,9 +719,13 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
         parseEntityRef();
         continue;
       }
-
-      if (myBuilder.getTokenType() != XML_NAME && myBuilder.getTokenType() != XML_BAR) break;
-      addToken();
+      else if (myBuilder.getTokenType() == XML_BAR) {
+        addToken();
+        continue;
+      }
+      else if (!parseName()) {
+        break;
+      }
     }
   }
 
