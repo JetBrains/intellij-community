@@ -409,7 +409,7 @@ public class PluginGroups {
     }
   }
 
-  private void collectInvolvedIds(final String pluginId, boolean toEnable, Set<String> ids) {
+  private void collectInvolvedIds(final String pluginId, boolean toEnable, Set<? super String> ids) {
     ids.add(pluginId);
     if (toEnable) {
       for (String id : getNonOptionalDependencies(pluginId)) {

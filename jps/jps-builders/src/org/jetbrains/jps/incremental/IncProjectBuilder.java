@@ -771,7 +771,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {
+  private static void runTasks(CompileContext context, final List<? extends BuildTask> tasks) throws ProjectBuildException {
     for (BuildTask task : tasks) {
       task.build(context);
     }
@@ -912,7 +912,7 @@ public class IncProjectBuilder {
       }
     }
 
-    private void queueTasks(List<BuildChunkTask> tasks) {
+    private void queueTasks(List<? extends BuildChunkTask> tasks) {
       if (LOG.isDebugEnabled() && !tasks.isEmpty()) {
         final List<BuildTargetChunk> chunksToLog = new ArrayList<>();
         for (BuildChunkTask task : tasks) {

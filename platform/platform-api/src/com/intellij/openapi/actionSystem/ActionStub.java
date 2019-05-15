@@ -33,7 +33,7 @@ public class ActionStub extends AnAction{
 
   private final String myClassName;
   private final String myProjectType;
-  private final Supplier<Presentation> myTemplatePresentation;
+  private final Supplier<? extends Presentation> myTemplatePresentation;
   private final String myId;
   private final ClassLoader myLoader;
   private final PluginId myPluginId;
@@ -44,7 +44,7 @@ public class ActionStub extends AnAction{
                     ClassLoader loader,
                     PluginId pluginId,
                     String iconPath, String projectType,
-                    @NotNull Supplier<Presentation> templatePresentation) {
+                    @NotNull Supplier<? extends Presentation> templatePresentation) {
     myLoader = loader;
     myClassName=actionClass;
     myProjectType = projectType;

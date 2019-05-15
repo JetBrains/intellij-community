@@ -42,7 +42,7 @@ class FileElementInfo extends SmartPointerElementInfo {
   private final Class<? extends PsiFile> myFileClass;
 
   FileElementInfo(@NotNull final PsiFile file) {
-    myVirtualFile = file.getVirtualFile();
+    myVirtualFile = file.getViewProvider().getVirtualFile();
     myProject = file.getProject();
     myLanguage = LanguageUtil.getRootLanguage(file);
     myFileClass = file.getClass();

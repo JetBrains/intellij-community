@@ -4,7 +4,7 @@ package com.intellij.configurationStore.properties
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.xmlb.XmlSerializerUtil
+import com.intellij.serialization.ClassUtil
 import kotlin.reflect.KProperty
 
 abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : StoredPropertyBase<T>() {
@@ -78,7 +78,7 @@ class EnumStoredProperty<T : Enum<*>>(private val defaultValue: T?, val clazz: C
       value = defaultValue
     }
     else {
-      value = XmlSerializerUtil.stringToEnum(rawValue, clazz, true /* lowercase in YAML by default */) as T? ?: defaultValue
+      value = ClassUtil.stringToEnum(rawValue, clazz, true /* lowercase in YAML by default */) as T? ?: defaultValue
     }
   }
 }

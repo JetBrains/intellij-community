@@ -92,7 +92,7 @@ public class SortedListModel<T> extends AbstractListModel<T> {
     return myItems.get(index);
   }
 
-  public void setAll(Collection<T> items) {
+  public void setAll(Collection<? extends T> items) {
     clear();
     myItems.addAll(items);
     if (myComparator != null) Collections.sort(myItems, myComparator);

@@ -109,7 +109,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
   }
 
   @Override
-  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<TextRange> fragments) {
+  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<? extends TextRange> fragments) {
     if (fragments == null) return Integer.MIN_VALUE;
     if (fragments.isEmpty()) return 0;
 

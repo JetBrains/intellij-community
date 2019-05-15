@@ -28,6 +28,8 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements PsiMethodCallExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl");
 
@@ -156,14 +158,17 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       else {
         parentArgList = null;
       }
-      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(parentArgList);
-      final boolean genericMethodCall = currentMethod != null && currentMethod.isToInferApplicability();
+      final boolean genericParentOverloadResolution = parentArgList != null && 
+                                                      MethodCandidateInfo.isOverloadCheck(parentArgList) &&
+                                                      Arrays.stream(parentArgList.getExpressions())
+                                                        .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
+                                                        .noneMatch(expression -> LambdaUtil.getFunctionalTypeMap().containsKey(expression));
 
       PsiType theOnly = null;
       for (int i = 0; i < results.length; i++) {
         final JavaResolveResult candidateInfo = results[i];
 
-        if (genericMethodCall && PsiPolyExpressionUtil.isMethodCallPolyExpression(call, (PsiMethod)candidateInfo.getElement())) {
+        if (genericParentOverloadResolution && PsiPolyExpressionUtil.isMethodCallPolyExpression(call, (PsiMethod)candidateInfo.getElement())) {
           LOG.error("poly expression evaluation during overload resolution");
         }
 

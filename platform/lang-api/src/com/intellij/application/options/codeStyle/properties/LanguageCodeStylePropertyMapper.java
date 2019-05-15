@@ -90,7 +90,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     return customSettingsList;
   }
 
-  private void addCustomSettings(@NotNull List<CustomCodeStyleSettings> list,
+  private void addCustomSettings(@NotNull List<? super CustomCodeStyleSettings> list,
                                  @NotNull CodeStyleSettings rootSettings,
                                  @NotNull List<? extends CodeStyleSettingsProvider> providerList) {
     for (CodeStyleSettingsProvider provider : providerList) {

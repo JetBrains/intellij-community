@@ -147,7 +147,7 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
     return elementGenerator.createExpressionFromText(LanguageLevel.forElement(expression), "not " + expression.getText());
   }
 
-  private static boolean isBooleanLiteral(@NotNull PsiElement element) {
+  private static boolean isBooleanLiteral(@Nullable PsiElement element) {
     if (element instanceof PyBoolLiteralExpression) {
       return true;
     }

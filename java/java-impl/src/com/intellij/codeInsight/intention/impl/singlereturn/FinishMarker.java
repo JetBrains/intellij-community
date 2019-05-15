@@ -48,12 +48,12 @@ public class FinishMarker {
    * @param returns list of all method returns
    * @return a FinishMarker which is suitable for given method
    */
-  public static FinishMarker defineFinishMarker(@NotNull PsiCodeBlock block, @NotNull PsiType returnType, List<PsiReturnStatement> returns) {
+  public static FinishMarker defineFinishMarker(@NotNull PsiCodeBlock block, @NotNull PsiType returnType, List<? extends PsiReturnStatement> returns) {
     boolean mayNeedMarker = mayNeedMarker(returns, block);
     return defineFinishMarker(block, returns, returnType, mayNeedMarker, JavaPsiFacade.getElementFactory(block.getProject()));
   }
 
-  private static boolean mayNeedMarker(List<PsiReturnStatement> returns, PsiCodeBlock block) {
+  private static boolean mayNeedMarker(List<? extends PsiReturnStatement> returns, PsiCodeBlock block) {
     for (PsiReturnStatement returnStatement : returns) {
       if (mayNeedMarker(returnStatement, block)) return true;
     }
@@ -128,13 +128,13 @@ public class FinishMarker {
     }
   }
 
-  private static FinishMarker defineFinishMarker(PsiCodeBlock block, List<PsiReturnStatement> returns, PsiType returnType,
+  private static FinishMarker defineFinishMarker(PsiCodeBlock block, List<? extends PsiReturnStatement> returns, PsiType returnType,
                                                  boolean mayNeedMarker, PsiElementFactory factory) {
     if (PsiType.VOID.equals(returnType)) {
       return new FinishMarker(FinishMarkerType.SEPARATE_VAR, null);
     }
     PsiReturnStatement terminalReturn = tryCast(ArrayUtil.getLastElement(block.getStatements()), PsiReturnStatement.class);
-    List<PsiExpression> nonTerminalReturns = StreamEx.of(returns).without(terminalReturn)
+    List<PsiExpression> nonTerminalReturns = StreamEx.<PsiReturnStatement>of(returns).without(terminalReturn)
       .map(PsiReturnStatement::getReturnValue)
       .map(PsiUtil::skipParenthesizedExprDown).toList();
     if (nonTerminalReturns.size() == 0) {

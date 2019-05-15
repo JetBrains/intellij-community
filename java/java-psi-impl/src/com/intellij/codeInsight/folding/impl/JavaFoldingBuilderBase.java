@@ -199,7 +199,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   private static void addCommentsToFold(@NotNull List<? super FoldingDescriptor> list,
                                         @NotNull PsiElement element,
                                         @NotNull Document document,
-                                        @NotNull Set<PsiElement> processedComments) {
+                                        @NotNull Set<? super PsiElement> processedComments) {
     final PsiComment[] comments = PsiTreeUtil.getChildrenOfType(element, PsiComment.class);
     if (comments == null) return;
 
@@ -211,7 +211,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   private static void addCommentToFold(@NotNull List<? super FoldingDescriptor> list,
                                        @NotNull PsiComment comment,
                                        @NotNull Document document,
-                                       @NotNull Set<PsiElement> processedComments) {
+                                       @NotNull Set<? super PsiElement> processedComments) {
     final FoldingDescriptor commentDescriptor = CommentFoldingUtil.getCommentDescriptor(comment, document, processedComments,
                                                                                         CustomFoldingBuilder::isCustomRegionElement,
                                                                                         isCollapseCommentByDefault(comment));
@@ -449,7 +449,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   private static void addFoldsForModule(@NotNull List<? super FoldingDescriptor> list,
                                         @NotNull PsiJavaModule module,
                                         @NotNull Document document,
-                                        @NotNull Set<PsiElement> processedComments) {
+                                        @NotNull Set<? super PsiElement> processedComments) {
     addToFold(list, module, document, true, getCodeBlockPlaceholder(null), moduleRange(module), false);
     addCommentsToFold(list, module, document, processedComments);
     addAnnotationsToFold(list, module.getModifierList(), document);
@@ -458,7 +458,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   private void addFoldsForClass(@NotNull List<? super FoldingDescriptor> list,
                                 @NotNull PsiClass aClass,
                                 @NotNull Document document,
-                                @NotNull Set<PsiElement> processedComments,
+                                @NotNull Set<? super PsiElement> processedComments,
                                 boolean quick) {
     PsiElement parent = aClass.getParent();
     if (!(parent instanceof PsiJavaFile) || ((PsiJavaFile)parent).getClasses().length > 1) {
@@ -509,7 +509,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                                  @NotNull PsiMethod method,
                                  @NotNull Document document,
                                  boolean quick,
-                                 @NotNull Set<PsiElement> processedComments) {
+                                 @NotNull Set<? super PsiElement> processedComments) {
     boolean oneLiner = addOneLineMethodFolding(list, method);
     if (!oneLiner) {
       addToFold(list, method, document, true, getCodeBlockPlaceholder(method.getBody()), methodRange(method), isCollapseMethodByDefault(method));
@@ -643,7 +643,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   }
 
   private void addCodeBlockFolds(@NotNull final List<? super FoldingDescriptor> list, @NotNull PsiElement scope,
-                                 @NotNull final Set<PsiElement> processedComments,
+                                 @NotNull final Set<? super PsiElement> processedComments,
                                  @NotNull final Document document,
                                  final boolean quick) {
     final boolean dumb = DumbService.isDumb(scope.getProject());
@@ -712,7 +712,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   private boolean addClosureFolding(@NotNull PsiClass aClass,
                                     @NotNull Document document,
                                     @NotNull List<? super FoldingDescriptor> list,
-                                    @NotNull Set<PsiElement> processedComments,
+                                    @NotNull Set<? super PsiElement> processedComments,
                                     boolean quick) {
     if (!JavaCodeFoldingSettings.getInstance().isCollapseLambdas()) {
       return false;

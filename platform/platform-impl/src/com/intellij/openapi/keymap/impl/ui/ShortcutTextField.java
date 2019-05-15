@@ -161,7 +161,7 @@ public final class ShortcutTextField extends ExtendableTextField {
     return list;
   }
 
-  private static void addKeyStrokes(@NotNull ArrayList<KeyStroke> list, @Nullable Iterable<AWTKeyStroke> strokes) {
+  private static void addKeyStrokes(@NotNull ArrayList<? super KeyStroke> list, @Nullable Iterable<? extends AWTKeyStroke> strokes) {
     if (strokes != null) {
       for (AWTKeyStroke stroke : strokes) {
         int keyCode = stroke.getKeyCode();

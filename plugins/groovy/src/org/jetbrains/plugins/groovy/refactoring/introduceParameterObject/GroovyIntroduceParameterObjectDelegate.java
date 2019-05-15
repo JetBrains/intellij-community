@@ -68,7 +68,7 @@ public class GroovyIntroduceParameterObjectDelegate
   @Override
   public GrParameterInfo createMergedParameterInfo(GroovyIntroduceObjectClassDescriptor descriptor,
                                                    GrMethod method,
-                                                   List<GrParameterInfo> oldMethodParameters) {
+                                                   List<? extends GrParameterInfo> oldMethodParameters) {
     final GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(method.getProject());
     PsiType classType =
       elementFactory.createTypeByFQClassName(StringUtil.getQualifiedName(descriptor.getPackageName(), descriptor.getClassName()));
@@ -119,7 +119,7 @@ public class GroovyIntroduceParameterObjectDelegate
   }
 
   @Override
-  public <M1 extends PsiNamedElement, P1 extends ParameterInfo> ReadWriteAccessDetector.Access collectInternalUsages(Collection<FixableUsageInfo> usages,
+  public <M1 extends PsiNamedElement, P1 extends ParameterInfo> ReadWriteAccessDetector.Access collectInternalUsages(Collection<? super FixableUsageInfo> usages,
                                                                                                                      GrMethod overridingMethod,
                                                                                                                      IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
                                                                                                                      P1 parameterInfo,
@@ -142,7 +142,7 @@ public class GroovyIntroduceParameterObjectDelegate
   }
 
   @Override
-  public void collectUsagesToGenerateMissedFieldAccessors(Collection<FixableUsageInfo> usages,
+  public void collectUsagesToGenerateMissedFieldAccessors(Collection<? super FixableUsageInfo> usages,
                                                           GrMethod method,
                                                           GroovyIntroduceObjectClassDescriptor descriptor,
                                                           ReadWriteAccessDetector.Access[] accessors) {
@@ -150,7 +150,7 @@ public class GroovyIntroduceParameterObjectDelegate
   }
 
   @Override
-  public void collectAdditionalFixes(Collection<FixableUsageInfo> usages,
+  public void collectAdditionalFixes(Collection<? super FixableUsageInfo> usages,
                                      GrMethod method,
                                      GroovyIntroduceObjectClassDescriptor descriptor) {
     throw new UnsupportedOperationException();

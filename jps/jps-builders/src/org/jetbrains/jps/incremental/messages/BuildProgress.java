@@ -90,7 +90,7 @@ public class BuildProgress {
    * If there is no information about average build time for any {@link BuildTargetType} returns {@link BuilderRegistry#getExpectedBuildTimeForTarget the default expected value}.
    * Otherwise estimate build time using real average time for other targets and ratio between the default expected times.
    */
-  private static long computeExpectedTimeBasedOnOtherTargets(BuildTargetType<?> type, Set<BuildTargetType<?>> allTypes,
+  private static long computeExpectedTimeBasedOnOtherTargets(BuildTargetType<?> type, Set<? extends BuildTargetType<?>> allTypes,
                                                              TObjectLongHashMap<BuildTargetType<?>> expectedBuildTimeForTarget) {
     BuilderRegistry registry = BuilderRegistry.getInstance();
     int baseTargetsCount = 0;

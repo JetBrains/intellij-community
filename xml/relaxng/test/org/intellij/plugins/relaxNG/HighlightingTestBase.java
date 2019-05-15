@@ -97,8 +97,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
 
     final CodeInsightTestFixture testFixture = factory.createCodeInsightFixture(fixture);
 
-    final String root = testFixture.getTempDirPath();
-    moduleBuilder.addContentRoot(root);
+    moduleBuilder.addContentRoot(testFixture.getTempDirPath());
     moduleBuilder.addSourceRoot("/");
 
     return testFixture;

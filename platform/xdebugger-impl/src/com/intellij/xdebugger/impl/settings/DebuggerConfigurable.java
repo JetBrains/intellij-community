@@ -93,7 +93,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     }
   }
 
-  private static void computeMergedConfigurables(@NotNull DebuggerConfigurableProvider[] providers, @NotNull List<Configurable> result) {
+  private static void computeMergedConfigurables(@NotNull DebuggerConfigurableProvider[] providers, @NotNull List<? super Configurable> result) {
     for (DebuggerSettingsCategory category : MERGED_CATEGORIES) {
       List<Configurable> configurables = getConfigurables(category, providers);
       if (!configurables.isEmpty()) {

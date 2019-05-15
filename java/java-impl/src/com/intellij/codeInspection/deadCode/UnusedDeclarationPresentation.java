@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
@@ -18,7 +17,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
@@ -30,12 +28,10 @@ import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -162,7 +158,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull Consumer<Element> resultConsumer,
+  public void exportResults(@NotNull Consumer<? super Element> resultConsumer,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<? super CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;

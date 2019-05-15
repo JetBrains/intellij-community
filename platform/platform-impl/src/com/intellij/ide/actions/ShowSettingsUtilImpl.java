@@ -40,7 +40,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @NotNull
-  public static DialogWrapper getDialog(@Nullable Project project, @NotNull List<ConfigurableGroup> groups, @Nullable Configurable toSelect) {
+  public static DialogWrapper getDialog(@Nullable Project project, @NotNull List<? extends ConfigurableGroup> groups, @Nullable Configurable toSelect) {
     return SettingsDialogFactory.getInstance().create(getProject(project), filterEmptyGroups(groups), toSelect, null);
   }
 
@@ -96,7 +96,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   @Override
   public <T extends Configurable> void showSettingsDialog(@Nullable Project project,
                                                           @NotNull Class<T> configurableClass,
-                                                          @Nullable Consumer<T> additionalConfiguration) {
+                                                          @Nullable Consumer<? super T> additionalConfiguration) {
     assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
     showSettingsDialog(project, it -> ConfigurableWrapper.cast(configurableClass, it) != null, it -> {
       if (additionalConfiguration != null) {
@@ -136,7 +136,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Nullable
-  private static Configurable findPreselectedByDisplayName(@NotNull String preselectedConfigurableDisplayName, @NotNull List<ConfigurableGroup> groups) {
+  private static Configurable findPreselectedByDisplayName(@NotNull String preselectedConfigurableDisplayName, @NotNull List<? extends ConfigurableGroup> groups) {
     for (ConfigurableGroup eachGroup : groups) {
       for (Configurable configurable : SearchUtil.expandGroup(eachGroup)) {
         if (preselectedConfigurableDisplayName.equals(configurable.getDisplayName())) {
@@ -164,7 +164,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @NotNull
-  private static List<ConfigurableGroup> filterEmptyGroups(@NotNull List<ConfigurableGroup> group) {
+  private static List<ConfigurableGroup> filterEmptyGroups(@NotNull List<? extends ConfigurableGroup> group) {
     List<ConfigurableGroup> groups = new ArrayList<>();
     for (ConfigurableGroup g : group) {
       if (g.getConfigurables().length > 0) {

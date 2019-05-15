@@ -1,73 +1,103 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.serialization
+package com.intellij.serialization
 
+import com.amazon.ion.IonType
+import com.amazon.ion.Timestamp
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashMap
-import software.amazon.ion.IonType
-import software.amazon.ion.Timestamp
+import java.io.File
+import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
+import java.nio.file.FileSystems
+import java.nio.file.Path
 import java.util.*
 
-private typealias NestedBindingFactory = (accessor: MutableAccessor) -> NestedBinding
-private typealias RootBindingFactory = () -> RootBinding
+internal typealias NestedBindingFactory = (accessor: MutableAccessor) -> NestedBinding
+internal typealias RootBindingFactory = () -> RootBinding
 
 internal class IonBindingProducer(override val propertyCollector: PropertyCollector) : BindingProducer<RootBinding>(), BindingInitializationContext {
   companion object {
     private val classToNestedBindingFactory = THashMap<Class<*>, NestedBindingFactory>(32, ContainerUtil.identityStrategy())
     private val classToRootBindingFactory = THashMap<Class<*>, RootBindingFactory>(32, ContainerUtil.identityStrategy())
 
-    private fun resolved(binding: NestedBinding): NestedBindingFactory = { binding }
-
     init {
       // for root resolved factory doesn't make sense because root bindings will be cached
-      classToRootBindingFactory.put(java.lang.String::class.java) { StringBinding() }
+      classToRootBindingFactory.put(File::class.java) { FileBinding() }
+      classToRootBindingFactory.put(Path::class.java) { PathBinding() }
       classToRootBindingFactory.put(Date::class.java) { DateBinding() }
+      classToRootBindingFactory.put(ByteArray::class.java) { ByteArrayBinding() }
 
-      val map = classToNestedBindingFactory
-      map.put(java.lang.Short.TYPE, resolved(ShortBinding()))
-      map.put(Integer.TYPE, resolved(IntBinding()))
-      map.put(java.lang.Long.TYPE, resolved(LongBinding()))
+      val numberFactory = ::NumberAsObjectBinding
+      classToRootBindingFactory.put(java.lang.Short::class.java, numberFactory)
+      classToRootBindingFactory.put(java.lang.Integer::class.java, numberFactory)
+      classToRootBindingFactory.put(java.lang.Long::class.java, numberFactory)
 
-      map.put(java.lang.Float.TYPE, resolved(FloatBinding()))
-      map.put(java.lang.Double.TYPE, resolved(DoubleBinding()))
-
-      // java.lang.Float cannot be cast to java.lang.Double
-      map.put(java.lang.Float::class.java, resolved(FloatAsObjectBinding()))
-      map.put(java.lang.Double::class.java, resolved(DoubleAsObjectBinding()))
-
-      map.put(java.lang.Boolean.TYPE, resolved(BooleanBinding()))
-      map.put(java.lang.Boolean::class.java, resolved(BooleanAsObjectBinding()))
-
-      val char: NestedBindingFactory = { throw UnsupportedOperationException("char is not supported") }
-      map.put(Character.TYPE, char)
-      map.put(Character::class.java, char)
-
-      val byte: NestedBindingFactory = { throw UnsupportedOperationException("byte is not supported") }
-      map.put(java.lang.Byte.TYPE, byte)
-      map.put(java.lang.Byte::class.java, byte)
+      registerPrimitiveBindings(classToRootBindingFactory, classToNestedBindingFactory)
 
       classToRootBindingFactory.forEachEntry { key, factory ->
-        map.put(key) { AccessorWrapperBinding(factory()) }
+        classToNestedBindingFactory.put(key) { PropertyBinding(factory()) }
         true
       }
     }
   }
 
+  override val isResolveConstructorOnInit = SystemProperties.`is`("idea.serializer.resolve.ctor.on.init")
+
   override val bindingProducer: BindingProducer<RootBinding>
     get() = this
 
-  override fun createRootBinding(aClass: Class<*>, type: Type, map: MutableMap<Type, RootBinding>): RootBinding {
-    val binding = if (Collection::class.java.isAssignableFrom(aClass)) {
-      createCollectionBinding(type)
+  override fun createCacheKey(aClass: Class<*>, originalType: Type): Type {
+    if (aClass !== originalType && !Collection::class.java.isAssignableFrom(aClass) && !classToRootBindingFactory.contains(aClass)) {
+      // type parameters for bean binding doesn't play any role, should be the only binding for such class
+      return aClass
     }
     else {
-      classToRootBindingFactory.get(aClass)?.invoke() ?: BeanBinding(aClass)
+      return originalType
+    }
+  }
+
+  override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, RootBinding>): RootBinding {
+    val binding = doCreateRootBinding(aClass, type, cacheKey)
+    map.put(cacheKey, binding)
+    try {
+      binding.init(type, this)
+    }
+    catch (e: Throwable) {
+      map.remove(type)
+      throw e
+    }
+    return binding
+  }
+
+  private fun doCreateRootBinding(aClass: Class<*>, type: Type, cacheKey: Type): RootBinding {
+    val customFactory = classToRootBindingFactory.get(aClass)
+    if (customFactory != null) {
+      return customFactory.invoke()
     }
 
-    map.put(type, binding)
-    binding.init(type, this)
-    return binding
+    return when {
+      Collection::class.java.isAssignableFrom(aClass) -> createCollectionBinding(type)
+      Map::class.java.isAssignableFrom(aClass) -> {
+        val typeArguments = (type as ParameterizedType).actualTypeArguments
+        MapBinding(typeArguments[0], typeArguments[1], this)
+      }
+      aClass.isArray -> ArrayBinding(aClass.componentType, this)
+      aClass.isEnum -> {
+        @Suppress("UNCHECKED_CAST")
+        EnumBinding(aClass as Class<out Enum<*>>)
+      }
+      else -> {
+        assert(cacheKey === aClass)
+        if (aClass.isInterface || Modifier.isAbstract(aClass.modifiers)) {
+          PolymorphicBinding(aClass)
+        }
+        else {
+          BeanBinding(aClass)
+        }
+      }
+    }
   }
 
   // note about field name - Ion binary writer interns string automatically, no need to intern (text writer doesn't support symbol tables)
@@ -84,148 +114,69 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
     // CollectionBinding implements NestedBinding directly because can mutate property value directly
     return when {
       Collection::class.java.isAssignableFrom(aClass) -> createCollectionBinding(type)
+      Map::class.java.isAssignableFrom(aClass) -> {
+        val typeArguments = (type as ParameterizedType).actualTypeArguments
+        MapBinding(typeArguments[0], typeArguments[1], this)
+      }
       aClass.isArray -> ArrayBinding(aClass.componentType, this)
-      java.lang.Number::class.java.isAssignableFrom(aClass) -> NumberAsObjectBinding()
-      aClass.isEnum -> throw UnsupportedOperationException("enum is not supported")
-      else -> AccessorWrapperBinding(getRootBinding(aClass, type))
+      java.lang.Number::class.java.isAssignableFrom(aClass) -> PropertyBinding(NumberAsObjectBinding())
+      aClass.isInterface || Modifier.isAbstract(aClass.modifiers) -> {
+        val annotation = accessor.getAnnotation(Property::class.java)
+        if (annotation == null) {
+          // todo respect configuration
+          return PropertyBinding(getRootBinding(aClass, type))
+          // throw SerializationException("Allowed types are not specified", linkedMapOf("accessor" to accessor))
+        }
+
+        // even if annotation in Java, Kotlin forces to use Klass, so, use java bridge
+        val allowedTypes = PropertyAnnotationUtil.getAllowedClass(annotation)
+        if (allowedTypes.isEmpty()) {
+          throw SerializationException("Allowed types list is empty", linkedMapOf("accessor" to accessor))
+        }
+        InterfacePropertyBinding(allowedTypes)
+      }
+      else -> {
+        PropertyBinding(getRootBinding(aClass, type))
+      }
     }
   }
 
   private fun createCollectionBinding(type: Type): CollectionBinding {
-    return CollectionBinding(ClassUtil.typeToClass((type as ParameterizedType).actualTypeArguments[0]), this)
+    return CollectionBinding(type as ParameterizedType, this)
   }
 }
 
-private class FloatAsObjectBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    write(hostObject, property, context) {
-      writeFloat((it as Float).toDouble())
-    }
-  }
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    read(hostObject, property, context) {
-      doubleValue().toFloat()
-    }
-  }
-}
-
-private class DoubleAsObjectBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    write(hostObject, property, context) {
-      writeFloat(it as Double)
-    }
-  }
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    read(hostObject, property, context) {
-      doubleValue()
-    }
-  }
-}
-
-private class NumberAsObjectBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    write(hostObject, property, context) {
-      writeInt((it as Number).toLong())
-    }
-  }
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    read(hostObject, property, context) {
-      intValue()
-    }
-  }
-}
-
-private class BooleanAsObjectBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    write(hostObject, property, context) {
-      writeBool(it as Boolean)
-    }
-  }
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    read(hostObject, property, context) {
-      booleanValue()
-    }
-  }
-}
-
-private class BooleanBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    val writer = context.writer
-    writer.setFieldName(property.name)
-    writer.writeBool(property.readBoolean(hostObject))
-  }
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    property.setBoolean(hostObject, context.reader.booleanValue())
-  }
-}
-
-private open class IntBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    val writer = context.writer
-    writer.setFieldName(property.name)
-    writer.writeInt(property.readInt(hostObject).toLong())
-  }
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    property.setInt(hostObject, context.reader.intValue())
-  }
-}
-
-private class ShortBinding : IntBinding() {
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    property.setShort(hostObject, context.reader.intValue().toShort())
-  }
-}
-
-private class LongBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    val writer = context.writer
-    writer.setFieldName(property.name)
-    writer.writeInt(property.readLong(hostObject))
-  }
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    property.setLong(hostObject, context.reader.longValue())
-  }
-}
-
-private class FloatBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    val writer = context.writer
-    writer.setFieldName(property.name)
-    writer.writeFloat(property.readFloat(hostObject).toDouble())
-  }
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    property.setFloat(hostObject, context.reader.doubleValue().toFloat())
-  }
-}
-
-private class DoubleBinding : NestedBinding {
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    val writer = context.writer
-    writer.setFieldName(property.name)
-    writer.writeFloat(property.readDouble(hostObject))
-  }
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    property.setDouble(hostObject, context.reader.doubleValue())
-  }
-}
-
-// todo intern short strings?
-private class StringBinding : RootBinding {
+private class FileBinding : RootBinding {
   override fun deserialize(context: ReadContext): Any {
-    return context.reader.stringValue()
+    return File(context.reader.stringValue())
   }
 
   override fun serialize(obj: Any, context: WriteContext) {
-    context.writer.writeString(obj as String)
+    context.writer.writeSymbol((obj as File).path)
+  }
+}
+
+private class PathBinding : RootBinding {
+  override fun deserialize(context: ReadContext): Any {
+    return FileSystems.getDefault().getPath(context.reader.stringValue())
+  }
+
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeSymbol((obj as Path).toString())
+  }
+}
+
+private class EnumBinding(private val valueClass: Class<out Enum<*>>) : RootBinding {
+  override fun deserialize(context: ReadContext): Any {
+    val enumConstants = valueClass.enumConstants
+    val value = context.reader.stringValue()
+    return enumConstants.firstOrNull { it.name == value }
+           ?: enumConstants.firstOrNull { it.name.equals(value, ignoreCase = true) }
+           ?: enumConstants.first()
+  }
+
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeSymbol((obj as Enum<*>).name)
   }
 }
 
@@ -235,7 +186,7 @@ private class DateBinding : RootBinding {
   }
 
   override fun deserialize(context: ReadContext): Any {
-    return context.reader.timestampValue().dateValue()
+    return context.reader.dateValue()
   }
 }
 
@@ -263,4 +214,18 @@ internal inline fun read(hostObject: Any, property: MutableAccessor, context: Re
   else {
     property.set(hostObject, context.reader.read())
   }
+}
+
+private class ByteArrayBinding : RootBinding {
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeBlob(obj as ByteArray)
+  }
+
+  override fun deserialize(context: ReadContext): Any {
+    return context.reader.newBytes()
+  }
+}
+
+internal fun createElementBindingByType(type: Type, context: BindingInitializationContext): RootBinding {
+  return context.bindingProducer.getRootBinding(ClassUtil.typeToClass(type), type)
 }

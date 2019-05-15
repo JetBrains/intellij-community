@@ -121,7 +121,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                       session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType, reference);
                     }
                   }
-                  return session.infer(method.getParameterList().getParameters(), null, null);
+                  return session.infer(method.getParameterList().getParameters(), null, null, null);
                 }
 
                 @Override

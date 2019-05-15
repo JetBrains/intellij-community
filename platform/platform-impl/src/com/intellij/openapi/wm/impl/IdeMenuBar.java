@@ -378,7 +378,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
-  private void expandActionGroup(final DataContext context, final List<AnAction> newVisibleActions, ActionManager actionManager) {
+  private void expandActionGroup(final DataContext context, final List<? super AnAction> newVisibleActions, ActionManager actionManager) {
     final ActionGroup mainActionGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
     if (mainActionGroup == null) return;
     final AnAction[] children = mainActionGroup.getChildren(null);

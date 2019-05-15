@@ -9,13 +9,13 @@ message()
 {
   TITLE="Cannot start @@product_full@@"
   if [ -n "`which zenity`" ]; then
-    zenity --error --title="$TITLE" --text="$1"
+    zenity --error --title="$TITLE" --text="$1" --no-wrap
   elif [ -n "`which kdialog`" ]; then
     kdialog --error "$1" --title "$TITLE"
+  elif [ -n "`which notify-send`" ]; then
+    notify-send "ERROR: $TITLE" "$1"
   elif [ -n "`which xmessage`" ]; then
     xmessage -center "ERROR: $TITLE: $1"
-  elif [ -n "`which notify-send`" ]; then
-    notify-send "ERROR: $TITLE: $1"
   else
     printf "ERROR: $TITLE\n$1\n"
   fi
@@ -196,6 +196,7 @@ fi
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
+JAVA_ERR_LOG=`"$MKTEMP" -t java.error.log.XXXXXX`
 IFS="$(printf '\n\t')"
 "$JAVA_BIN" \
   -classpath "$CLASSPATH" \
@@ -207,4 +208,10 @@ IFS="$(printf '\n\t')"
   ${IDE_PROPERTIES_PROPERTY} \
   @@ide_jvm_args@@ \
   com.intellij.idea.Main \
-  "$@"
+  "$@" 2> "$JAVA_ERR_LOG"
+EC=$?
+if [ ${EC} -ne 0 -a -s "$JAVA_ERR_LOG" ]; then
+  message "$(cat "$JAVA_ERR_LOG")"
+fi
+rm -f "$JAVA_ERR_LOG"
+exit ${EC}

@@ -2,10 +2,10 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.serialization.ClassUtil;
+import com.intellij.serialization.MutableAccessor;
+import com.intellij.serialization.SerializationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.serialization.ClassUtil;
-import com.intellij.util.serialization.MutableAccessor;
-import com.intellij.util.serialization.SerializationException;
 import com.intellij.util.xmlb.annotations.CollectionBean;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -226,7 +226,7 @@ public final class XmlSerializerImpl {
     }
     else if (valueClass.isEnum()) {
       //noinspection unchecked
-      accessor.set(host, XmlSerializerUtil.stringToEnum(value, (Class<? extends Enum<?>>)valueClass, false));
+      accessor.set(host, ClassUtil.stringToEnum(value, (Class<? extends Enum<?>>)valueClass, false));
     }
     else if (Date.class.isAssignableFrom(valueClass)) {
       try {

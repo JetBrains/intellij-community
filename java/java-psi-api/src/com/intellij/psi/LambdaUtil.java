@@ -481,7 +481,7 @@ public class LambdaUtil {
         if (results != null) {
           final Set<PsiType> types = new HashSet<>();
           for (JavaResolveResult result : results) {
-            final PsiType functionalExpressionType = getSubstitutedType(functionalExpression, true, lambdaIdx, result);
+            final PsiType functionalExpressionType = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(functionalExpression, false, () -> getSubstitutedType(functionalExpression, true, lambdaIdx, result));
             if (functionalExpressionType != null && types.add(functionalExpressionType)) {
               overloadProcessor.consume(functionalExpressionType);
             }
@@ -721,10 +721,6 @@ public class LambdaUtil {
       }
     }
     return null;
-  }
-
-  public static boolean isLambdaParameterCheck() {
-    return !ourParameterGuard.currentStack().isEmpty();
   }
 
   @Nullable

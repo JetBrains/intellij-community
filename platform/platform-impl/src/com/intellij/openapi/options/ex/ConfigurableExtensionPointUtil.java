@@ -32,7 +32,7 @@ public class ConfigurableExtensionPointUtil {
   }
 
   @NotNull
-  public static List<Configurable> buildConfigurablesList(@NotNull List<ConfigurableEP<Configurable>> extensions, @Nullable ConfigurableFilter filter) {
+  public static List<Configurable> buildConfigurablesList(@NotNull List<? extends ConfigurableEP<Configurable>> extensions, @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<>();
     final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<>();
     List<String> idsInEpOrder = new ArrayList<>();
@@ -124,6 +124,10 @@ public class ConfigurableExtensionPointUtil {
   public static ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
     if (!withIdeSettings && project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
+    }
+    if (project != null) {
+      // workaround for not initialized correctly default project (6721c69f8d3e50eb537808371bd603939c86c8d0)
+      project.getPicoContainer();
     }
     return getConfigurableGroup(getConfigurables(project, withIdeSettings), project);
   }
@@ -453,7 +457,7 @@ public class ConfigurableExtensionPointUtil {
   }
 
   @Nullable
-  private static Configurable createConfigurableForProvider(@NotNull List<ConfigurableEP<Configurable>> extensions, Class<? extends ConfigurableProvider> providerClass) {
+  private static Configurable createConfigurableForProvider(@NotNull List<? extends ConfigurableEP<Configurable>> extensions, Class<? extends ConfigurableProvider> providerClass) {
     for (ConfigurableEP<Configurable> extension : extensions) {
       if (extension.providerClass != null) {
         final Class<Object> aClass = extension.findClassNoExceptions(extension.providerClass);

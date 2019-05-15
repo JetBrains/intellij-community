@@ -39,11 +39,11 @@ import java.util.*;
 public class LibraryImpl extends TraceableDisposable implements LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
   @NonNls public static final String LIBRARY_NAME_ATTR = "name";
-  @NonNls private static final String LIBRARY_TYPE_ATTR = "type";
-  @NonNls private static final String ROOT_PATH_ELEMENT = "root";
+  @NonNls public static final String LIBRARY_TYPE_ATTR = "type";
+  @NonNls public static final String ROOT_PATH_ELEMENT = "root";
   @NonNls public static final String ELEMENT = "library";
-  @NonNls private static final String PROPERTIES_ELEMENT = "properties";
-  private static final String EXCLUDED_ROOTS_TAG = "excluded";
+  @NonNls public static final String PROPERTIES_ELEMENT = "properties";
+  public static final String EXCLUDED_ROOTS_TAG = "excluded";
   private String myName;
   private final LibraryTable myLibraryTable;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots = new HashMap<>(2);
@@ -264,7 +264,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     readJarDirectories(element);
   }
 
-  @NonNls private static final String ROOT_TYPE_ATTR = "type";
+  @NonNls public static final String ROOT_TYPE_ATTR = "type";
   private static final OrderRootType DEFAULT_JAR_DIRECTORY_TYPE = OrderRootType.CLASSES;
 
   @NotNull
@@ -350,7 +350,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   //TODO<rv> Remove the next two methods as a temporary solution. Sort in OrderRootType.
   //
   @NotNull
-  private static List<OrderRootType> sortRootTypes(@NotNull Collection<OrderRootType> rootTypes) {
+  private static List<OrderRootType> sortRootTypes(@NotNull Collection<? extends OrderRootType> rootTypes) {
     List<OrderRootType> allTypes = new ArrayList<>(rootTypes);
     Collections.sort(allTypes, (o1, o2) -> o1.name().compareToIgnoreCase(o2.name()));
     return allTypes;

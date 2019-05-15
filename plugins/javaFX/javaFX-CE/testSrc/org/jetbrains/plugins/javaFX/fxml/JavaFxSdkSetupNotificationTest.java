@@ -16,7 +16,7 @@ public class JavaFxSdkSetupNotificationTest extends SdkSetupNotificationTestBase
   private static final String SAMPLE_FXML = "<?import javafx.scene.layout.VBox?>\n<VBox/>";
 
   public void testJavaFxAsLibrary() {
-    ModuleRootModificationUtil.updateModel(myModule, model -> AbstractJavaFXTestCase.addJavaFxJarAsLibrary(model));
+    ModuleRootModificationUtil.updateModel(getModule(), model -> AbstractJavaFXTestCase.addJavaFxJarAsLibrary(model));
     final EditorNotificationPanel panel = configureBySdkAndText(IdeaTestUtil.getMockJdk18(), false, "sample.fxml", SAMPLE_FXML);
     assertNull(panel);
   }

@@ -494,7 +494,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor) {
+  public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<? super PsiElement> processor) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) {
       return;

@@ -191,7 +191,7 @@ public class FSOperations {
                              final CompilationRound round,
                              Timestamps timestamps,
                              boolean forceMarkDirty,
-                             @Nullable THashSet<File> currentFiles,
+                             @Nullable Set<? super File> currentFiles,
                              @Nullable FileFilter filter) throws IOException {
     boolean completelyMarkedDirty = true;
     for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
@@ -223,7 +223,7 @@ public class FSOperations {
                                              final File file,
                                              @NotNull final Timestamps tsStorage,
                                              final boolean forceDirty,
-                                             @Nullable Set<File> currentFiles, @Nullable FileFilter filter) throws IOException {
+                                             @Nullable Set<? super File> currentFiles, @Nullable FileFilter filter) throws IOException {
 
     final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     final Ref<Boolean> allFilesMarked = Ref.create(Boolean.TRUE);
@@ -286,12 +286,12 @@ public class FSOperations {
   }
 
   private static boolean traverseRecursivelyIO(CompileContext context,
-                                             final BuildRootDescriptor rd,
-                                             final CompilationRound round,
-                                             final File file,
-                                             @NotNull final Timestamps tsStorage,
-                                             final boolean forceDirty,
-                                             @Nullable Set<File> currentFiles, @Nullable FileFilter filter) throws IOException {
+                                               final BuildRootDescriptor rd,
+                                               final CompilationRound round,
+                                               final File file,
+                                               @NotNull final Timestamps tsStorage,
+                                               final boolean forceDirty,
+                                               @Nullable Set<? super File> currentFiles, @Nullable FileFilter filter) throws IOException {
     BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     final File[] children = file.listFiles();
     if (children != null) { // is directory

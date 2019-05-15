@@ -80,6 +80,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
       return "file_type".equals(ruleId);
     }
 
+    @NotNull
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       FileType fileType = FileTypeManager.getInstance().findFileTypeByName(data);

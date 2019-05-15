@@ -144,7 +144,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
   }
 
-  private static void copyGridLine(final RadContainer container, final ArrayList<RadComponent> componentsInBorder, boolean isRow) {
+  private static void copyGridLine(final RadContainer container, final ArrayList<? super RadComponent> componentsInBorder, boolean isRow) {
     int cell = 0;
     while(cell < container.getGridCellCount(!isRow)) {
       RadComponent c = container.getComponentAtGrid(isRow, 0, cell);

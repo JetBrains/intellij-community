@@ -549,7 +549,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   private static void processPreparedSubTypes(ReferenceType classType,
-                                              BiConsumer<ReferenceType, ClassesByNameProvider> consumer,
+                                              BiConsumer<? super ReferenceType, ? super ClassesByNameProvider> consumer,
                                               ProgressIndicator progressIndicator) {
     long start = 0;
     if (LOG.isDebugEnabled()) {

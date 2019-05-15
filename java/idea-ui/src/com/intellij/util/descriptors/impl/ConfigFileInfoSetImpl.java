@@ -103,7 +103,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   }
 
   @Override
-  public void setConfigFileInfos(final Collection<ConfigFileInfo> descriptors) {
+  public void setConfigFileInfos(final Collection<? extends ConfigFileInfo> descriptors) {
     myConfigFiles.clear();
     for (ConfigFileInfo descriptor : descriptors) {
       myConfigFiles.put(descriptor.getMetaData(), descriptor);

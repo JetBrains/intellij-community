@@ -83,7 +83,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     }
   }
 
-  private static void doOpenFile(@Nullable Project project, @NotNull List<VirtualFile> result) {
+  private static void doOpenFile(@Nullable Project project, @NotNull List<? extends VirtualFile> result) {
     for (VirtualFile file : result) {
       if (file.isDirectory()) {
         Project openedProject;

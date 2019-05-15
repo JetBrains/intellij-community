@@ -61,8 +61,8 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
     protected abstract AbstractMemberSelectionPanel<M, I> getEqualsPanel();
     protected abstract AbstractMemberSelectionPanel<M, I> getHashCodePanel();
     protected abstract AbstractMemberSelectionPanel<M, I> getNonNullPanel();
-    protected abstract void updateHashCodeMemberInfos(Collection<I> equalsMemberInfos);
-    protected abstract void updateNonNullMemberInfos(Collection<I> equalsMemberInfos);
+    protected abstract void updateHashCodeMemberInfos(Collection<? extends I> equalsMemberInfos);
+    protected abstract void updateNonNullMemberInfos(Collection<? extends I> equalsMemberInfos);
   }
 
   public AbstractGenerateEqualsWizard(Project project, Builder<C, M, I> builder) {

@@ -46,7 +46,7 @@ public class Java12SwitchExpressionSanityTest extends LightCodeInsightFixtureTes
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_12_PREVIEW, getTestRootDisposable());
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_12_PREVIEW, getTestRootDisposable());
   }
 
   @NotNull

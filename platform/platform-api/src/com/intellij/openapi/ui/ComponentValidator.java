@@ -52,10 +52,10 @@ public class ComponentValidator {
   public static final Function<JComponent, JComponent> CWBB_PROVIDER = c -> ((ComponentWithBrowseButton)c).getChildComponent();
 
   private final Disposable parentDisposable;
-  private Supplier<ValidationInfo> validator;
-  private Supplier<ValidationInfo> focusValidator;
+  private Supplier<? extends ValidationInfo> validator;
+  private Supplier<? extends ValidationInfo> focusValidator;
 
-  private Function<JComponent, JComponent> outlineProvider = Function.identity();
+  private Function<? super JComponent, ? extends JComponent> outlineProvider = Function.identity();
   private HyperlinkListener hyperlinkListener;
 
   private ValidationInfo validationInfo;
@@ -74,7 +74,7 @@ public class ComponentValidator {
 
    // @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
   @Deprecated
-  public ComponentValidator withValidator(@NotNull Consumer<ComponentValidator> validator) {
+  public ComponentValidator withValidator(@NotNull Consumer<? super ComponentValidator> validator) {
     this.validator = () -> {
       validator.accept(this);
       return validationInfo;
@@ -82,12 +82,12 @@ public class ComponentValidator {
     return this;
   }
 
-  public ComponentValidator withValidator(@NotNull Supplier<ValidationInfo> validator) {
+  public ComponentValidator withValidator(@NotNull Supplier<? extends ValidationInfo> validator) {
     this.validator = validator;
     return this;
   }
 
-  public ComponentValidator withFocusValidator(@NotNull Supplier<ValidationInfo> focusValidator) {
+  public ComponentValidator withFocusValidator(@NotNull Supplier<? extends ValidationInfo> focusValidator) {
     this.focusValidator = focusValidator;
     return this;
   }
@@ -97,7 +97,7 @@ public class ComponentValidator {
     return this;
   }
 
-  public ComponentValidator withOutlineProvider(@NotNull Function<JComponent, JComponent> outlineProvider) {
+  public ComponentValidator withOutlineProvider(@NotNull Function<? super JComponent, ? extends JComponent> outlineProvider) {
     this.outlineProvider = outlineProvider;
     return this;
   }
@@ -234,7 +234,7 @@ public class ComponentValidator {
   }
 
   @NotNull
-  public static ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<JEditorPane> configurator) {
+  public static ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<? super JEditorPane> configurator) {
     JEditorPane tipComponent = new JEditorPane();
     View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", info.message));
     String text = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?

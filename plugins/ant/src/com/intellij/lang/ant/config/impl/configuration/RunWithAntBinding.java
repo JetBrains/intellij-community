@@ -85,7 +85,7 @@ public class RunWithAntBinding extends UIPropertyBinding {
   }
 
   @Override
-  public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
+  public void addAllPropertiesTo(Collection<? super AbstractProperty> properties) {
     properties.add(AntBuildFileImpl.ANT_REFERENCE);
   }
 

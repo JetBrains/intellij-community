@@ -323,7 +323,7 @@ public class VcsLogUtil {
    * waits for it in a background task, and executes the action after the log is ready.
    */
   @CalledInAwt
-  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<VcsProjectLog, VcsLogManager> action) {
+  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<? super VcsProjectLog, ? super VcsLogManager> action) {
     VcsProjectLog log = VcsProjectLog.getInstance(project);
     VcsLogManager manager = log.getLogManager();
     if (manager != null) {

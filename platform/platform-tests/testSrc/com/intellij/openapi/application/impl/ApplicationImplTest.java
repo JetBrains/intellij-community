@@ -703,7 +703,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     try {
       app.executeSuspendingWriteAction(ourProject, "", () ->
         future.set(app.executeOnPooledThread(
-          () -> assertTrue(mayFinish.waitFor(1000)))));
+          () -> assertTrue(mayFinish.waitFor(5_000)))));
     }
     catch (AssertionError e) {
       if (!isEscapingThreadAssertion(e)) {
@@ -857,10 +857,12 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       Assert.assertThat(applicationInfo.getPluginsListUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
       Assert.assertThat(applicationInfo.getPluginsDownloadUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
       Assert.assertThat(applicationInfo.getChannelsListUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
-    } finally {
+    }
+    finally {
       if (oldHost == null) {
         System.clearProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY);
-      } else {
+      }
+      else {
         System.setProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY, oldHost);
       }
     }

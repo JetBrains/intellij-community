@@ -91,7 +91,7 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
     }
   }
 
-  private static boolean isPackageAccessible(@NotNull Iterable<PsiPackageAccessibilityStatement> statements,
+  private static boolean isPackageAccessible(@NotNull Iterable<? extends PsiPackageAccessibilityStatement> statements,
                                              @NotNull String packageName,
                                              @NotNull PsiJavaModule javaModule) {
     for (PsiPackageAccessibilityStatement statement : statements) {

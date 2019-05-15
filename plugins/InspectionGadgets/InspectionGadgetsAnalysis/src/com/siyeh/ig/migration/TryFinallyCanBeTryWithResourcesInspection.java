@@ -79,7 +79,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("try.finally.can.be.try.with.resources.quickfix");
     }
 
-    private static <T> Pair<List<T>, List<T>> partition(Iterable<T> iterable, Predicate<T> predicate) {
+    private static <T> Pair<List<T>, List<T>> partition(Iterable<? extends T> iterable, Predicate<? super T> predicate) {
       List<T> list1 = new SmartList<>();
       List<T> list2 = new SmartList<>();
       for (T value : iterable) {
@@ -194,7 +194,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
 
 
-    private String joinToString(List<ResourceVariable> variables) {
+    private String joinToString(List<? extends ResourceVariable> variables) {
       return variables.stream().map(ResourceVariable::generateResourceDeclaration).collect(Collectors.joining("; "));
     }
 
@@ -362,7 +362,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return false;
   }
 
-  private static boolean resourceVariableUsedInCatches(PsiTryStatement tryStatement, Set<PsiVariable> collectedVariables) {
+  private static boolean resourceVariableUsedInCatches(PsiTryStatement tryStatement, Set<? extends PsiVariable> collectedVariables) {
     for (PsiCatchSection catchSection : tryStatement.getCatchSections()) {
       for (PsiVariable variable : collectedVariables) {
         if (VariableAccessUtils.variableIsUsed(variable, catchSection)) {

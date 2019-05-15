@@ -2,7 +2,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.serialization.SerializationException;
+import com.intellij.serialization.SerializationException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;

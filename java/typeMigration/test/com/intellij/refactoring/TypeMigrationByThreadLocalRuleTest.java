@@ -23,6 +23,6 @@ public class TypeMigrationByThreadLocalRuleTest extends TypeMigrationTestBase {
   }
 
   public void testLanguageLevel() {
-    IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_3, () -> doTestFieldType("i", getElementFactory().createTypeFromText("java.lang.ThreadLocal", null)));
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_3, () -> doTestFieldType("i", getElementFactory().createTypeFromText("java.lang.ThreadLocal", null)));
   }
 }

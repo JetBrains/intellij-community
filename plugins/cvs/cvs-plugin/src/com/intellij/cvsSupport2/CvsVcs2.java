@@ -393,7 +393,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
 
   @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     return in;
   }
 }

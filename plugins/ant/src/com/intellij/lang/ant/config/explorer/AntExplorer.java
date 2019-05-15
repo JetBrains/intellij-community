@@ -531,7 +531,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     return super.getData(dataId);
   }
 
-  private <T> List<T> collectAntFiles(final Function<AntBuildFile, T> function) {
+  private <T> List<T> collectAntFiles(final Function<? super AntBuildFile, ? extends T> function) {
     final TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) {
       return null;

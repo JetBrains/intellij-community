@@ -28,7 +28,7 @@ public class FilteringTableModel<T> extends AbstractTableModel {
   private final TableModel myOriginalModel;
   private final List<List<T>> myData = new ArrayList<>();
   private final Class<T> myClz;
-  private Condition<T> myCondition = null;
+  private Condition<? super T> myCondition = null;
   private final ArrayList<Integer> myIndex = new ArrayList<>();
 
   private final TableModelListener myListDataListener = e -> refilter();
@@ -43,7 +43,7 @@ public class FilteringTableModel<T> extends AbstractTableModel {
     myOriginalModel.removeTableModelListener(myListDataListener);
   }
 
-  public void setFilter(Condition<T> condition) {
+  public void setFilter(Condition<? super T> condition) {
     myCondition = condition;
     refilter();
   }

@@ -35,8 +35,8 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     Context context = Context.from(myErrorElement);
     if (context == null) return;
 
-    List<PsiClassType> unhandledExceptions = context.myExceptions;
-    List<PsiCatchSection> catches = context.myCatches;
+    List<? extends PsiClassType> unhandledExceptions = context.myExceptions;
+    List<? extends PsiCatchSection> catches = context.myCatches;
 
     if (catches.size() == 1) {
       PsiCatchSection selectedSection = catches.get(0);
@@ -58,7 +58,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       );
     }
   }
-  private static List<PsiCatchSection> findSuitableSections(List<PsiCatchSection> sections, @NotNull List<PsiClassType> exceptionTypes, boolean isJava7OrHigher) {
+  private static List<PsiCatchSection> findSuitableSections(List<? extends PsiCatchSection> sections, @NotNull List<? extends PsiClassType> exceptionTypes, boolean isJava7OrHigher) {
     List<PsiCatchSection> finalSections = new ArrayList<>();
     for (PsiCatchSection section : Lists.reverse(sections)) {
       finalSections.add(section);
@@ -79,7 +79,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     return finalSections;
   }
 
-  private static void addTypeToCatch(@NotNull List<PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
+  private static void addTypeToCatch(@NotNull List<? extends PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
     Project project = catchSection.getProject();
     WriteCommandAction.runWriteCommandAction(project, () -> {
       if (!catchSection.isValid() || !exceptionsToAdd.stream().allMatch(type -> type.isValid())) return;
@@ -95,7 +95,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     });
   }
 
-  private static String getTypeText(@NotNull List<PsiClassType> exceptionsToAdd,
+  private static String getTypeText(@NotNull List<? extends PsiClassType> exceptionsToAdd,
                                     PsiParameter parameter,
                                     PsiType parameterType,
                                     PsiElementFactory factory) {
@@ -127,11 +127,11 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
   }
 
   private static class Context {
-    private final List<PsiCatchSection> myCatches;
-    private final List<PsiClassType> myExceptions;
+    private final List<? extends PsiCatchSection> myCatches;
+    private final List<? extends PsiClassType> myExceptions;
 
 
-    private Context(List<PsiCatchSection> catches, List<PsiClassType> exceptions) {
+    private Context(List<? extends PsiCatchSection> catches, List<? extends PsiClassType> exceptions) {
       myCatches = catches;
       myExceptions = exceptions;
     }

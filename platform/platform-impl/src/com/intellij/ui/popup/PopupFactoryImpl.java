@@ -68,7 +68,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<T> list) {
+  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<? extends T> list) {
     return new PopupChooserBuilder<>(new JBList<>(new CollectionListModel<>(list)));
   }
 
@@ -170,7 +170,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean honorActionMnemonics,
                             final Runnable disposeCallback,
                             final int maxRowCount,
-                            final Condition<AnAction> preselectActionCondition,
+                            final Condition<? super AnAction> preselectActionCondition,
                             @Nullable final String actionPlace) {
       this(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
            maxRowCount, preselectActionCondition, actionPlace, false);
@@ -185,7 +185,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean honorActionMnemonics,
                             final Runnable disposeCallback,
                             final int maxRowCount,
-                            final Condition<AnAction> preselectActionCondition,
+                            final Condition<? super AnAction> preselectActionCondition,
                             @Nullable final String actionPlace,
                             boolean autoSelection) {
       this(null, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
@@ -241,7 +241,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                             boolean useAlphaAsNumbers,
                                             boolean showDisabledActions,
                                             boolean honorActionMnemonics,
-                                            Condition<AnAction> preselectActionCondition,
+                                            Condition<? super AnAction> preselectActionCondition,
                                             @Nullable String actionPlace,
                                             boolean autoSelection) {
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
@@ -343,7 +343,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           boolean showDisabledActions,
                                           Runnable disposeCallback,
                                           int maxRowCount,
-                                          Condition<AnAction> preselectActionCondition,
+                                          Condition<? super AnAction> preselectActionCondition,
                                           @Nullable String actionPlace) {
     return new ActionGroupPopup(title,
                                 actionGroup,
@@ -368,7 +368,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           boolean honorActionMnemonics,
                                           final Runnable disposeCallback,
                                           final int maxRowCount,
-                                          final Condition<AnAction> preselectActionCondition) {
+                                          final Condition<? super AnAction> preselectActionCondition) {
     return new ActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
                                   disposeCallback, maxRowCount, preselectActionCondition, null);
   }

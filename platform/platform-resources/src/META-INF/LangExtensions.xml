@@ -921,6 +921,7 @@
     <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger$LiveTemplateValidator" />
     <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator" />
     <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule" />
+    <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator" />
 
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionUsagesCollector"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeExtensionUsagesCollectorStartupActivity"/>

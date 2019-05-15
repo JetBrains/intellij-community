@@ -21,7 +21,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 public class CmdlineProtoUtil {
 
   public static CmdlineRemoteProto.Message.ControllerMessage createUpToDateCheckRequest(String project,
-                                                                                        List<TargetTypeBuildScope> scopes,
+                                                                                        List<? extends TargetTypeBuildScope> scopes,
                                                                                         Collection<String> paths,
                                                                                         final Map<String, String> userData,
                                                                                         final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
@@ -32,7 +32,7 @@ public class CmdlineProtoUtil {
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createBuildRequest(String project,
-                                                                                List<TargetTypeBuildScope> scopes,
+                                                                                List<? extends TargetTypeBuildScope> scopes,
                                                                                 Collection<String> paths,
                                                                                 final Map<String, String> userData,
                                                                                 final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
@@ -62,7 +62,7 @@ public class CmdlineProtoUtil {
 
   private static CmdlineRemoteProto.Message.ControllerMessage createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType,
                                                                                           String project,
-                                                                                          List<TargetTypeBuildScope> scopes,
+                                                                                          List<? extends TargetTypeBuildScope> scopes,
                                                                                           Map<String, String> userData,
                                                                                           Collection<String> paths,
                                                                                           final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
@@ -199,14 +199,14 @@ public class CmdlineProtoUtil {
     return createBuildEvent(BuilderMessage.BuildEvent.Type.BUILD_COMPLETED, description, status, null, null);
   }
 
-  public static BuilderMessage createFileGeneratedEvent(final Collection<Pair<String, String>> paths) {
+  public static BuilderMessage createFileGeneratedEvent(final Collection<? extends Pair<String, String>> paths) {
     return createBuildEvent(BuilderMessage.BuildEvent.Type.FILES_GENERATED, null, null, paths, null);
   }
 
   private static BuilderMessage createBuildEvent(final BuilderMessage.BuildEvent.Type type,
                                                  @Nullable String description,
                                                  @Nullable final BuilderMessage.BuildEvent.Status status,
-                                                 @Nullable Collection<Pair<String, String>> generatedPaths,
+                                                 @Nullable Collection<? extends Pair<String, String>> generatedPaths,
                                                  @Nullable final BuilderMessage.BuildEvent.CustomBuilderMessage builderMessage) {
     final BuilderMessage.BuildEvent.Builder builder = BuilderMessage.BuildEvent.newBuilder().setEventType(type);
     if (description != null) {

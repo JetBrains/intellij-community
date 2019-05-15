@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
@@ -25,10 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
@@ -388,8 +386,24 @@ public class AppUIUtil {
           new JLabel("Please read and accept these terms and conditions. Scroll down for full text:")), BorderLayout.NORTH);
         JBScrollPane scrollPane = new JBScrollPane(myViewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
         centerPanel.add(scrollPane, BorderLayout.CENTER);
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
+          JPanel eapPanel = new JPanel(new BorderLayout(8, 8));
+          eapPanel.setBorder(JBUI.Borders.empty(8));
+          //noinspection UseJBColor
+          eapPanel.setBackground(new Color(0xDCE4E8));
+          IconLoader.activate();
+          JLabel label = new JLabel(AllIcons.General.BalloonInformation);
+          label.setVerticalAlignment(SwingConstants.TOP);
+          eapPanel.add(label, BorderLayout.WEST);
+          JEditorPane html = SwingHelper.createHtmlLabel("EAP builds report usage statistics by default per the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>." +
+                                                  "\nNo personal or sensitive data are sent. You may disable this in the settings.", null, null);
+          eapPanel.add(html, BorderLayout.CENTER);
+          bottomPanel.add(eapPanel, BorderLayout.NORTH);
+        }
         JCheckBox checkBox = new JCheckBox("I confirm that I have read and accept the terms of this User Agreement");
-        centerPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.SOUTH);
+        bottomPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.CENTER);
+        centerPanel.add(JBUI.Borders.emptyTop(8).wrap(bottomPanel), BorderLayout.SOUTH);
         checkBox.addActionListener(e -> setOKActionEnabled(checkBox.isSelected()));
         return centerPanel;
       }
@@ -424,7 +438,7 @@ public class AppUIUtil {
     };
     dialog.setModal(true);
     dialog.setTitle(title);
-    dialog.setSize(JBUI.scale(509), JBUI.scale(395));
+    dialog.setSize(JBUI.scale(550), JBUI.scale(500));
     dialog.show();
   }
 

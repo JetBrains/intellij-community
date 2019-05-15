@@ -47,7 +47,7 @@ public abstract class UIPropertyBinding {
 
   public abstract void beEnabled();
 
-  public abstract void addAllPropertiesTo(Collection<AbstractProperty> properties);
+  public abstract void addAllPropertiesTo(Collection<? super AbstractProperty> properties);
 
   public static class Composite extends UIPropertyBinding {
     private final ArrayList<UIPropertyBinding> myBindings = new ArrayList<>();
@@ -117,7 +117,7 @@ public abstract class UIPropertyBinding {
     }
 
     @Override
-    public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
+    public void addAllPropertiesTo(Collection<? super AbstractProperty> properties) {
       for (final UIPropertyBinding binding : myBindings) {
         binding.addAllPropertiesTo(properties);
       }
@@ -163,7 +163,7 @@ public abstract class UIPropertyBinding {
     }
 
     @Override
-    public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
+    public void addAllPropertiesTo(Collection<? super AbstractProperty> properties) {
       properties.add(myProperty);
     }
 
@@ -492,7 +492,7 @@ public abstract class UIPropertyBinding {
     }
 
     @Override
-    public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
+    public void addAllPropertiesTo(Collection<? super AbstractProperty> properties) {
       properties.add(myProperty);
     }
 

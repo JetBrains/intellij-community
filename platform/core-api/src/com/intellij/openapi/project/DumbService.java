@@ -203,7 +203,7 @@ public abstract class DumbService {
    * @see #isDumbAware(Object)
    */
   @NotNull
-  public <T> List<T> filterByDumbAwareness(@NotNull Collection<T> collection) {
+  public <T> List<T> filterByDumbAwareness(@NotNull Collection<? extends T> collection) {
     if (isDumb()) {
       final ArrayList<T> result = new ArrayList<>(collection.size());
       for (T element : collection) {

@@ -73,7 +73,7 @@ public interface Promise<T> {
    * </pre>
    */
   @NotNull
-  <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, Promise<SUB_RESULT>> done);
+  <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, ? extends Promise<SUB_RESULT>> done);
 
   /**
    * Execute passed handler on promise resolve.
@@ -95,14 +95,14 @@ public interface Promise<T> {
    * Execute passed handler on promise reject.
    */
   @NotNull
-  Promise<T> onError(@NotNull java.util.function.Consumer<Throwable> rejected);
+  Promise<T> onError(@NotNull java.util.function.Consumer<? super Throwable> rejected);
 
   /**
    * @deprecated Use {@link #onError(java.util.function.Consumer)}
    */
   @Deprecated
   @NotNull
-  default Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
+  default Promise<T> rejected(@NotNull Consumer<? super Throwable> rejected) {
     return onError(it -> rejected.consume(it));
   }
 

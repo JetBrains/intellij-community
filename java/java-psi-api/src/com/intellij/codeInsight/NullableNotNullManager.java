@@ -295,7 +295,7 @@ public abstract class NullableNotNullManager {
     return null;
   }
 
-  private PsiAnnotation takeAnnotationFromSuperParameters(@NotNull PsiParameter owner, @NotNull List<PsiParameter> superOwners) {
+  private PsiAnnotation takeAnnotationFromSuperParameters(@NotNull PsiParameter owner, @NotNull List<? extends PsiParameter> superOwners) {
     return RecursionManager.doPreventingRecursion(owner, true, () -> {
       for (PsiParameter superOwner : superOwners) {
         PsiAnnotation anno = findNullityAnnotationWithDefault(superOwner, false, false);

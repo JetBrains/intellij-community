@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -304,7 +305,8 @@ public class RedundantCastUtil {
           final PsiExpression arg = deparenthesizeExpression(args[i]);
           if (arg instanceof PsiTypeCastExpression) {
             PsiTypeCastExpression cast = (PsiTypeCastExpression)arg;
-            if (i == args.length - 1 && args.length == parameters.length && parameters[i].isVarArgs()) {
+            if (i == args.length - 1 && args.length == parameters.length && parameters[i].isVarArgs() && 
+                ExpressionUtils.isNullLiteral(cast.getOperand())) {
               //do not mark cast to resolve ambiguity for calling varargs method with inexact argument
               continue;
             }

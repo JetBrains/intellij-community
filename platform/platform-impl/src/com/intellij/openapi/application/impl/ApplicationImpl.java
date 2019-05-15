@@ -402,7 +402,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     load(configPath, null, null);
   }
 
-  public void load(@Nullable final String configPath, @Nullable Splash splash, @Nullable List<IdeaPluginDescriptor> plugins) {
+  public void load(@Nullable final String configPath, @Nullable Splash splash, @Nullable List<? extends IdeaPluginDescriptor> plugins) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       StartupProgress startupProgress = splash == null ? null : (message, progress) -> splash.showProgress("", progress);

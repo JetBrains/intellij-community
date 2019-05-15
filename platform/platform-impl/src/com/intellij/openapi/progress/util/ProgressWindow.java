@@ -73,7 +73,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   public static final Topic<Listener> TOPIC = Topic.create("progress window", Listener.class);
 
-  public ProgressWindow(boolean shouldShowCancel, Project project) {
+  public ProgressWindow(boolean shouldShowCancel, @Nullable Project project) {
     this(shouldShowCancel, false, project);
   }
 
@@ -81,15 +81,15 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     this(shouldShowCancel, shouldShowBackground, project, null);
   }
 
-  public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project, String cancelText) {
+  public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project, @Nullable String cancelText) {
     this(shouldShowCancel, shouldShowBackground, project, null, cancelText);
   }
 
   public ProgressWindow(boolean shouldShowCancel,
                         boolean shouldShowBackground,
                         @Nullable Project project,
-                        JComponent parentComponent,
-                        String cancelText) {
+                        @Nullable JComponent parentComponent,
+                        @Nullable String cancelText) {
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
@@ -99,7 +99,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     if (myProject != null) {
       Disposer.register(myProject, this);
     }
-    myDialog = new ProgressDialog(this, shouldShowBackground, myCancelText, parentWindow);
+    myDialog = new ProgressDialog(this, shouldShowBackground, cancelText, parentWindow);
     Disposer.register(this, myDialog);
 
     setModalityProgress(shouldShowBackground ? null : this);
@@ -154,10 +154,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       if (isRunning()) {
         if (myDialog != null) {
           final DialogWrapper popup = myDialog.myPopup;
-          if (popup != null) {
-            if (popup.isShowing()) {
-              myDialog.myWasShown = true;
-            }
+          if (popup != null && popup.isShowing()) {
+            myDialog.setWasShown();
           }
         }
         showDialog();

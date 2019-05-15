@@ -30,9 +30,9 @@ public interface ChildrenBuilder extends XCompositeNode {
     
   ValueDescriptor getParentDescriptor();
 
-  void setChildren(List<DebuggerTreeNode> children);
+  void setChildren(List<? extends DebuggerTreeNode> children);
 
-  default void addChildren(List<DebuggerTreeNode> children, boolean last) {
+  default void addChildren(List<? extends DebuggerTreeNode> children, boolean last) {
     setChildren(children);
   }
 

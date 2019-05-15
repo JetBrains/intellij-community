@@ -529,8 +529,9 @@ public class TrackingRunner extends StandardDataFlowRunner {
     if (expression instanceof PsiPolyadicExpression) {
       IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
       boolean and = tokenType.equals(JavaTokenType.ANDAND);
-      if ((and || tokenType.equals(JavaTokenType.OROR)) && value != and) {
+      if (and || tokenType.equals(JavaTokenType.OROR)) {
         PsiExpression[] operands = ((PsiPolyadicExpression)expression).getOperands();
+        List<CauseItem> operandCauses = new ArrayList<>();
         for (int i = 0; i < operands.length; i++) {
           PsiExpression operand = operands[i];
           operand = PsiUtil.skipParenthesizedExprDown(operand);
@@ -542,8 +543,14 @@ public class TrackingRunner extends StandardDataFlowRunner {
                 Boolean.valueOf(value).equals(((DfaConstValue)push.myTopOfStack).getValue())))) {
             CauseItem cause = new CauseItem("operand #" + (i + 1) + " of " + (and ? "&&" : "||") + "-chain is " + value, operand);
             cause.addChildren(findBooleanResultCauses(operand, push, value));
-            return new CauseItem[]{cause};
+            operandCauses.add(cause);
           }
+        }
+        if (value != and && !operandCauses.isEmpty()) {
+          return new CauseItem[]{operandCauses.get(0)};
+        }
+        else if (operandCauses.size() == operands.length) {
+          return operandCauses.toArray(new CauseItem[0]);
         }
       }
     }
@@ -800,14 +807,20 @@ public class TrackingRunner extends StandardDataFlowRunner {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       PsiMethod method = call.resolveMethod();
       CauseItem causeItem = fromMemberNullability(nullability, method, "method", call.getMethodExpression().getReferenceNameElement());
-      if (causeItem != null) return causeItem;
-      switch (nullability) {
-        case NULL:
-        case NULLABLE:
-          return fromCallContract(factUse, call, ContractReturnValue.returnNull());
-        case NOT_NULL:
-          return fromCallContract(factUse, call, ContractReturnValue.returnNotNull());
-        default:
+      if (causeItem == null) {
+        switch (nullability) {
+          case NULL:
+          case NULLABLE:
+            causeItem = fromCallContract(factUse, call, ContractReturnValue.returnNull());
+            break;
+          case NOT_NULL:
+            causeItem = fromCallContract(factUse, call, ContractReturnValue.returnNotNull());
+            break;
+          default:
+        }
+      }
+      if (causeItem != null) {
+        return causeItem;
       }
     }
     if (expression instanceof PsiReferenceExpression) {

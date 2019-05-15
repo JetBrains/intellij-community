@@ -305,7 +305,7 @@ public class MigrationPanel extends JPanel implements Disposable {
       return null;
     }
 
-    private static void collectInfos(final Set<TypeMigrationUsageInfo> usageInfos, final MigrationNode currentNode) {
+    private static void collectInfos(final Set<? super TypeMigrationUsageInfo> usageInfos, final MigrationNode currentNode) {
       usageInfos.add(currentNode.getInfo());
       if (!currentNode.areChildrenInitialized()) return;
       final Collection<? extends AbstractTreeNode> nodes = currentNode.getChildren();

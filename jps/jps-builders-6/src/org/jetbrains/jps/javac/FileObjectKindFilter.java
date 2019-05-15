@@ -39,9 +39,9 @@ public class FileObjectKindFilter<T> {
     myFilterMap = Collections.unmodifiableMap(filterMap);
   }
 
-  public BooleanFunction<T> getFor(final Set<JavaFileObject.Kind> kinds) {
+  public BooleanFunction<T> getFor(final Set<? extends JavaFileObject.Kind> kinds) {
     // optimization for a single-element collection
-    final Iterator<JavaFileObject.Kind> it = kinds.iterator();
+    final Iterator<? extends JavaFileObject.Kind> it = kinds.iterator();
     if (it.hasNext()) {
       final JavaFileObject.Kind kind = it.next();
       if (!it.hasNext()) {

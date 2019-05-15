@@ -85,7 +85,7 @@ public class ComplexElementSubstitutionParameters {
     return myTypesToSubstitute.isEmpty() && mySubstituted.isEmpty();
   }
 
-  public void setTypesToShowContent(Collection<ComplexPackagingElementType<?>> types) {
+  public void setTypesToShowContent(Collection<? extends ComplexPackagingElementType<?>> types) {
     myTypesToSubstitute.clear();
     myTypesToSubstitute.addAll(types);
   }

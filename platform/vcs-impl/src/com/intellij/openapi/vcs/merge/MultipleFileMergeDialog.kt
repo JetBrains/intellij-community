@@ -395,7 +395,9 @@ open class MultipleFileMergeDialog(
         checkMarkModifiedProject(file)
 
         if (result != MergeResult.CANCEL) {
-          markFileProcessed(file, getSessionResolution(result))
+          ProgressManager.getInstance().runProcessWithProgressSynchronously({
+            markFileProcessed(file, getSessionResolution(result))
+          }, "Resolving Conflicts...", true, project, contentPanel)
         }
       }
 

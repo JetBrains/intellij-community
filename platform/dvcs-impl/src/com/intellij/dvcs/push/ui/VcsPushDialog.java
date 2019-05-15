@@ -265,9 +265,9 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   private class ComplexPushAction extends AbstractAction implements OptionAction {
-    private final List<ActionWrapper> myOptions;
+    private final List<? extends ActionWrapper> myOptions;
 
-    private ComplexPushAction(@NotNull List<ActionWrapper> additionalActions) {
+    private ComplexPushAction(@NotNull List<? extends ActionWrapper> additionalActions) {
       super("&Push");
       myOptions = additionalActions;
     }

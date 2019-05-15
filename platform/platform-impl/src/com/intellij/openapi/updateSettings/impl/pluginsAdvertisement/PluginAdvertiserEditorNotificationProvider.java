@@ -64,7 +64,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   }
 
   @Nullable
-  private EditorNotificationPanel createPanel(final String extension, final Set<PluginsAdvertiser.Plugin> plugins, @NotNull Project project) {
+  private EditorNotificationPanel createPanel(final String extension, final Set<? extends PluginsAdvertiser.Plugin> plugins, @NotNull Project project) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
 
     panel.setText("Plugins supporting " + extension + " files found.");
@@ -111,7 +111,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     return panel;
   }
 
-  private static boolean hasNonBundledPlugin(Set<PluginsAdvertiser.Plugin> plugins) {
+  private static boolean hasNonBundledPlugin(Set<? extends PluginsAdvertiser.Plugin> plugins) {
     for (PluginsAdvertiser.Plugin plugin : plugins) {
       if (!plugin.myBundled) return true;
     }

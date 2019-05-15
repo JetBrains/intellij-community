@@ -369,7 +369,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return descriptor;
   }
 
-  private static void readComponents(@NotNull Element parent, @NotNull Ref<BeanBinding> oldComponentConfigBean, @NotNull ArrayList<ComponentConfig> result) {
+  private static void readComponents(@NotNull Element parent, @NotNull Ref<BeanBinding> oldComponentConfigBean, @NotNull ArrayList<? super ComponentConfig> result) {
     List<Content> content = parent.getContent();
     int contentSize = content.size();
     if (contentSize == 0) {

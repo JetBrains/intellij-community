@@ -130,7 +130,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     }
   }
 
-  private void findUsagesForMethod(PsiMethod psiMethod, List<FixableUsageInfo> usages) {
+  private void findUsagesForMethod(PsiMethod psiMethod, List<? super FixableUsageInfo> usages) {
     for (PsiReference reference : ReferencesSearch.search(psiMethod, psiMethod.getUseScope())) {
       final PsiElement referenceElement = reference.getElement();
       final PsiElement parent = referenceElement.getParent();

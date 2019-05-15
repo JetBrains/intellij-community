@@ -143,7 +143,7 @@ public class Matcher {
   public void processMatchesInElement(MatchContext context,
                                       Configuration configuration,
                                       NodeIterator matchedNodes,
-                                      PairProcessor<MatchResult, Configuration> processor) {
+                                      PairProcessor<? super MatchResult, ? super Configuration> processor) {
     try {
       configureOptions(context, configuration, matchedNodes.current(), processor);
       context.setShouldRecursivelyMatch(false);
@@ -173,7 +173,7 @@ public class Matcher {
   private void configureOptions(MatchContext context,
                                 final Configuration configuration,
                                 PsiElement psiFile,
-                                final PairProcessor<MatchResult, Configuration> processor) {
+                                final PairProcessor<? super MatchResult, ? super Configuration> processor) {
     if (psiFile == null) return;
     matchContext.clear();
     matchContext.setMatcher(visitor);
@@ -196,7 +196,7 @@ public class Matcher {
     );
   }
 
-  public void precompileOptions(List<Configuration> configurations, Map<Configuration, MatchContext> out) {
+  public void precompileOptions(List<? extends Configuration> configurations, Map<Configuration, MatchContext> out) {
     for (final Configuration configuration : configurations) {
       if (out.containsKey(configuration)) {
         continue;

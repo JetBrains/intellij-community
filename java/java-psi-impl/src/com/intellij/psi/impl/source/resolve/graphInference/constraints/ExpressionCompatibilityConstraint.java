@@ -127,11 +127,10 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     }
     final PsiExpressionList argumentList = ((PsiCall)expression).getArgumentList();
     if (argumentList != null) {
-      final MethodCandidateInfo currentMethod = MethodCandidateInfo.getCurrentMethod(argumentList);
+      final MethodCandidateInfo currentMethod = session.getCurrentMethod(argumentList);
       PsiType returnType = null;
       PsiTypeParameter[] typeParams = null;
-      final JavaResolveResult resolveResult = currentMethod != null ? null : PsiDiamondType
-        .getDiamondsAwareResolveResult((PsiCall)expression);
+      final JavaResolveResult resolveResult = currentMethod != null ? null : PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)expression);
       PsiMethod method = currentMethod != null ? currentMethod.getElement() :
                          resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getElement() :
                          null;

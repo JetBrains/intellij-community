@@ -31,7 +31,7 @@ public class DiffTree<OT, NT> {
 
   private final FlyweightCapableTreeStructure<OT> myOldTree;
   private final FlyweightCapableTreeStructure<NT> myNewTree;
-  private final ShallowNodeComparator<OT, NT> myComparator;
+  private final ShallowNodeComparator<? super OT, ? super NT> myComparator;
   private final List<Ref<OT[]>> myOldChildrenLists = new ArrayList<>();
   private final List<Ref<NT[]>> myNewChildrenLists = new ArrayList<>();
   private final CharSequence myOldText;
@@ -41,7 +41,7 @@ public class DiffTree<OT, NT> {
 
   private DiffTree(@NotNull FlyweightCapableTreeStructure<OT> oldTree,
                    @NotNull FlyweightCapableTreeStructure<NT> newTree,
-                   @NotNull ShallowNodeComparator<OT, NT> comparator,
+                   @NotNull ShallowNodeComparator<? super OT, ? super NT> comparator,
                    @NotNull CharSequence oldText) {
     myOldTree = oldTree;
     myNewTree = newTree;
@@ -54,8 +54,8 @@ public class DiffTree<OT, NT> {
 
   public static <OT, NT> void diff(@NotNull FlyweightCapableTreeStructure<OT> oldTree,
                                    @NotNull FlyweightCapableTreeStructure<NT> newTree,
-                                   @NotNull ShallowNodeComparator<OT, NT> comparator,
-                                   @NotNull DiffTreeChangeBuilder<OT, NT> consumer,
+                                   @NotNull ShallowNodeComparator<? super OT, ? super NT> comparator,
+                                   @NotNull DiffTreeChangeBuilder<? super OT, ? super NT> consumer,
                                    @NotNull CharSequence oldText) {
     final DiffTree<OT, NT> tree = new DiffTree<>(oldTree, newTree, comparator, oldText);
     tree.build(oldTree.getRoot(), newTree.getRoot(), 0, consumer);
@@ -91,7 +91,7 @@ public class DiffTree<OT, NT> {
   };
 
   @NotNull
-  private CompareResult build(@NotNull OT oldNode, @NotNull NT newNode, int level, @NotNull DiffTreeChangeBuilder<OT, NT> consumer) {
+  private CompareResult build(@NotNull OT oldNode, @NotNull NT newNode, int level, @NotNull DiffTreeChangeBuilder<? super OT, ? super NT> consumer) {
     if (level > 1000) {
       return CompareResult.NOT_EQUAL;
     }
@@ -239,7 +239,7 @@ public class DiffTree<OT, NT> {
     final boolean hasStartMatch() { return this == fullStartMatch || this == drillDownStartMatch || this == replaceStart; }
   }
 
-  private int matchLastChildren(int level, DiffTreeChangeBuilder<OT, NT> consumer,
+  private int matchLastChildren(int level, DiffTreeChangeBuilder<? super OT, ? super NT> consumer,
                                 int oldChildrenLimit, OT[] oldChildren, int oldIndex,
                                 int newChildrenLimit, NT[] newChildren, int newIndex) {
     int len = 0;

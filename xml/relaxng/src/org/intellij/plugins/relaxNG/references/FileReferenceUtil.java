@@ -31,11 +31,11 @@ import static com.intellij.patterns.XmlPatterns.*;
 
 public class FileReferenceUtil {
 
-  public static PsiReference[] restrict(FileReferenceSet set, final Condition<PsiFile> cond) {
+  public static PsiReference[] restrict(FileReferenceSet set, final Condition<? super PsiFile> cond) {
     return restrict(set, cond, null);
   }
 
-  public static PsiReference[] restrict(FileReferenceSet set, final Condition<PsiFile> cond, final Boolean soft) {
+  public static PsiReference[] restrict(FileReferenceSet set, final Condition<? super PsiFile> cond, final Boolean soft) {
     final FileReference[] references = set.getAllReferences();
 
     return ContainerUtil.map2Array(references, PsiReference.class, (NotNullFunction<FileReference, PsiReference>)fileReference -> new MyFileReference(fileReference, cond, soft));
@@ -76,10 +76,10 @@ public class FileReferenceUtil {
   }
 
   private static class MyFileReference extends FileReference {
-    private final Condition<PsiFile> myCond;
+    private final Condition<? super PsiFile> myCond;
     private final Boolean mySoft;
 
-    MyFileReference(FileReference fileReference, Condition<PsiFile> cond, @Nullable Boolean soft) {
+    MyFileReference(FileReference fileReference, Condition<? super PsiFile> cond, @Nullable Boolean soft) {
       super(fileReference.getFileReferenceSet(), fileReference.getRangeInElement(), fileReference.getIndex(), fileReference.getCanonicalText());
       myCond = cond;
       mySoft = soft;

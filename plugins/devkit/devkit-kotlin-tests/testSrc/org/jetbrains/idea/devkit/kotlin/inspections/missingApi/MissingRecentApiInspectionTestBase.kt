@@ -79,7 +79,7 @@ abstract class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
 
   private fun configureSinceAnnotations() {
     val annotationsRoot = myFixture.copyDirectoryToProject("since-2.0", "extAnnotations").url
-    ModuleRootModificationUtil.updateModel(myModule) { model ->
+    ModuleRootModificationUtil.updateModel(module) { model ->
       model
         .getModuleExtension(JavaModuleExternalPaths::class.java)
         .setExternalAnnotationUrls(arrayOf(annotationsRoot))

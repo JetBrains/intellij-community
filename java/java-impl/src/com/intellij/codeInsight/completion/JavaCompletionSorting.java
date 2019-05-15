@@ -19,16 +19,14 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -58,9 +56,13 @@ public class JavaCompletionSorting {
     } else if (PsiTreeUtil.getParentOfType(position, PsiReferenceList.class) == null) {
       sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorterClasses", true, new LiftShorterClasses(position));
     }
+
+    List<LookupElementWeigher> afterPriority = new ArrayList<>();
+    ContainerUtil.addIfNotNull(afterPriority, dispreferPreviousChainCalls(position));
     if (smart) {
-      sorter = sorter.weighAfter("priority", new PreferDefaultTypeWeigher(expectedTypes, parameters, false));
+      afterPriority.add(new PreferDefaultTypeWeigher(expectedTypes, parameters, false));
     }
+    sorter = sorter.weighAfter("priority", afterPriority.toArray(new LookupElementWeigher[0]));
 
     List<LookupElementWeigher> afterStats = new ArrayList<>();
     afterStats.add(new PreferByKindWeigher(type, position, expectedTypes));
@@ -83,6 +85,30 @@ public class JavaCompletionSorting {
     sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[0]));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[0]));
     return result.withRelevanceSorter(sorter);
+  }
+
+  @Nullable
+  private static LookupElementWeigher dispreferPreviousChainCalls(PsiElement position) {
+    Set<PsiMethod> previousChainCalls = new HashSet<>();
+    if (position.getParent() instanceof PsiReferenceExpression) {
+      PsiMethodCallExpression qualifier = getCallQualifier((PsiReferenceExpression)position.getParent());
+      while (qualifier != null) {
+        ContainerUtil.addIfNotNull(previousChainCalls, qualifier.resolveMethod());
+        qualifier = getCallQualifier(qualifier.getMethodExpression());
+      }
+    }
+    return previousChainCalls.isEmpty() ? null : new LookupElementWeigher("dispreferPreviousChainCalls") {
+      @Override
+      public Comparable weigh(@NotNull LookupElement element, @NotNull WeighingContext context) {
+        //noinspection SuspiciousMethodCalls
+        return previousChainCalls.contains(element.getPsiElement());
+      }
+    };
+  }
+
+  @Nullable
+  private static PsiMethodCallExpression getCallQualifier(PsiReferenceExpression ref) {
+    return ObjectUtils.tryCast(ref.getQualifier(), PsiMethodCallExpression.class);
   }
 
   @NotNull

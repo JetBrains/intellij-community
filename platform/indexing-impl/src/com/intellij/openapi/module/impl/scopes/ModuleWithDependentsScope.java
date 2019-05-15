@@ -51,7 +51,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
     this(module.getProject(), Collections.singleton(module));
   }
 
-  public ModuleWithDependentsScope(@NotNull Project project, @NotNull Collection<Module> modules) {
+  public ModuleWithDependentsScope(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     super(project);
     myRootModules = new LinkedHashSet<>(modules);
 

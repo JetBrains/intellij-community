@@ -114,7 +114,7 @@ public class CommittedListsSequencesZipperTest {
 
     @Override
     @NotNull
-    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<RepositoryLocation> in) {
+    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
       RepositoryLocationGroup group = new RepositoryLocationGroup("");
 
       for (RepositoryLocation location : in) {

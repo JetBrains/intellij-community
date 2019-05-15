@@ -111,7 +111,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     return isOK() ? myChooser.getSelectedElements() : Collections.emptyList();
   }
 
-  public void selectElements(@NotNull List<T> elements) {
+  public void selectElements(@NotNull List<? extends T> elements) {
     myChooser.selectElements(elements);
   }
 

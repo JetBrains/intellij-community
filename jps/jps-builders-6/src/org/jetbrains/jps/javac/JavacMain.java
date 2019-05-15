@@ -38,7 +38,7 @@ public class JavacMain {
   public static boolean compile(Collection<String> options,
                                 final Collection<? extends File> sources,
                                 Collection<? extends File> classpath,
-                                Collection<File> platformClasspath,
+                                Collection<? extends File> platformClasspath,
                                 Collection<? extends File> modulePath,
                                 Collection<? extends File> upgradeModulePath,
                                 Collection<? extends File> sourcePath,
@@ -343,7 +343,7 @@ public class JavacMain {
     return result;
   }
 
-  private static Collection<File> buildPlatformClasspath(Collection<File> platformClasspath, Collection<String> options) {
+  private static Collection<? extends File> buildPlatformClasspath(Collection<? extends File> platformClasspath, Collection<String> options) {
     final Map<PathOption, String> argsMap = new HashMap<PathOption, String>();
     for (Iterator<String> iterator = options.iterator(); iterator.hasNext(); ) {
       final String arg = iterator.next();
@@ -368,7 +368,7 @@ public class JavacMain {
     return result;
   }
 
-  private static void appendFiles(Map<PathOption, String> args, PathOption option, Collection<File> container, boolean listDir) {
+  private static void appendFiles(Map<PathOption, String> args, PathOption option, Collection<? super File> container, boolean listDir) {
     final String path = args.get(option);
     if (path == null) {
       return;

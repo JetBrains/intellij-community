@@ -536,7 +536,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     myDispatcher.removeListener(listener);
   }
 
-  void execute(@NotNull List<FinalizableCommand> commandList) {
+  void execute(@NotNull List<? extends FinalizableCommand> commandList) {
     execute(commandList, true);
   }
 
@@ -544,7 +544,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
    * This is helper method. It delegated its functionality to the WindowManager.
    * Before delegating it fires state changed.
    */
-  private void execute(@NotNull List<FinalizableCommand> commandList, boolean isFireStateChangedEvent) {
+  private void execute(@NotNull List<? extends FinalizableCommand> commandList, boolean isFireStateChangedEvent) {
     if (isFireStateChangedEvent) {
       for (FinalizableCommand each : commandList) {
         if (each.willChangeState()) {

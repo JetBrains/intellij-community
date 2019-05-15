@@ -98,7 +98,7 @@ class Pluralizer {
   /**
    * Sanitize a word by passing in the word and sanitization rules.
    */
-  private String sanitizeWord(String word, List<Pair<Pattern, String>> rules) {
+  private String sanitizeWord(String word, List<? extends Pair<Pattern, String>> rules) {
     if (StringUtil.isEmpty(word) || uncountables.contains(word)) return word;
 
     int len = rules.size();
@@ -117,7 +117,7 @@ class Pluralizer {
    * Replace a word with the updated word.
    * @return null if no applicable rules found
    */
-  private String replaceWord(String word, Map<String, String> replaceMap, Map<String, String> keepMap, List<Pair<Pattern, String>> rules) {
+  private String replaceWord(String word, Map<String, String> replaceMap, Map<String, String> keepMap, List<? extends Pair<Pattern, String>> rules) {
     if (StringUtil.isEmpty(word)) return word;
 
     // Get the correct token and case restoration functions.

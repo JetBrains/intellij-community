@@ -1455,7 +1455,7 @@ public class JavaDocInfoGenerator {
     generateParametersSection(buffer, CodeInsightBundle.message("javadoc.type.parameters"), collectedTags);
   }
 
-  private void generateParametersSection(StringBuilder buffer, String titleMessage, List<ParamInfo> collectedTags) {
+  private void generateParametersSection(StringBuilder buffer, String titleMessage, List<? extends ParamInfo> collectedTags) {
     if (!collectedTags.isEmpty()) {
       startHeaderSection(buffer, titleMessage)
             .append(StringUtil.join(collectedTags, tag -> generateOneParameter(tag), "<p>"))

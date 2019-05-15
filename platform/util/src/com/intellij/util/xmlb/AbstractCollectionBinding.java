@@ -3,11 +3,11 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.ClassUtil;
+import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.serialization.ClassUtil;
-import com.intellij.util.serialization.MutableAccessor;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Content;

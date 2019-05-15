@@ -804,7 +804,7 @@ public class XmlUtil {
     return processEnumerationValues(element, tagProcessor, new HashSet<>());
   }
 
-  private static boolean processEnumerationValues(XmlTag element, Processor<? super XmlTag> tagProcessor, Set<XmlTag> visited) {
+  private static boolean processEnumerationValues(XmlTag element, Processor<? super XmlTag> tagProcessor, Set<? super XmlTag> visited) {
     if (!visited.add(element)) return true;
     boolean exhaustiveEnum = true;
 

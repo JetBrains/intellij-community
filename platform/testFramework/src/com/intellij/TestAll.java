@@ -98,7 +98,7 @@ public class TestAll implements Test {
     this(rootPackage, getClassRoots());
   }
 
-  public TestAll(String rootPackage, List<File> classesRoots) throws ClassNotFoundException {
+  public TestAll(String rootPackage, List<? extends File> classesRoots) throws ClassNotFoundException {
     String classFilterName = "tests/testGroups.properties";
     myTestCaseLoader = new TestCaseLoader(classFilterName);
     myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));

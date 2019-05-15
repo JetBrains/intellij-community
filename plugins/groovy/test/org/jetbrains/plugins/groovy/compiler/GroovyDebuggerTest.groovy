@@ -4,8 +4,6 @@ package org.jetbrains.plugins.groovy.compiler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiFile
@@ -13,9 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.ThreadTracker
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyFileType
 
@@ -36,7 +32,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
   @Override
   protected void setUp() {
     super.setUp()
-    addGroovyLibrary(myModule)
+    addGroovyLibrary(module)
     enableDebugLogging()
   }
 
@@ -75,7 +71,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
   }
 
   void runDebugger(PsiFile script, Closure cl) {
-    def configuration = createScriptConfiguration(script.virtualFile.path, myModule)
+    def configuration = createScriptConfiguration(script.virtualFile.path, module)
     runDebugger(configuration, cl)
   }
 
@@ -225,7 +221,7 @@ def getFoo() { 13 }
     runInEdtAndWait {
       tempDir.setUp()
       disposeOnTearDown({ tempDir.tearDown() } as Disposable)
-      PsiTestUtil.addContentRoot(myModule, tempDir.getFile(''))
+      PsiTestUtil.addContentRoot(module, tempDir.getFile(''))
     }
 
     VirtualFile myClass = null
@@ -265,7 +261,7 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
       tempDir.setUp()
       disposeOnTearDown({ tempDir.tearDown() } as Disposable)
       tempDir.createFile("pkg/java.groovy", "class java {}")
-      PsiTestUtil.addLibrary(myModule, 'lib', tempDir.getFile('').path, [] as String[], [''] as String[])
+      PsiTestUtil.addLibrary(module, 'lib', tempDir.getFile('').path, [] as String[], [''] as String[])
     }
 
     def facade = JavaPsiFacade.getInstance(project)
@@ -336,7 +332,7 @@ println "hello"
     addGroovyLibrary(module1)
     addGroovyLibrary(module2)
     runInEdtAndWait {
-      ModuleRootModificationUtil.addDependency(myModule, module1)
+      ModuleRootModificationUtil.addDependency(module, module1)
     }
 
     def scr = myFixture.addFileToProject('module1/Scr.groovy', 'println "hello"')

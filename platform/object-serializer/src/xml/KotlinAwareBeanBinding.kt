@@ -1,13 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("PackageDirectoryMismatch")
-package com.intellij.configurationStore
+package com.intellij.serialization.xml
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.serialization.BaseBeanBinding
+import com.intellij.serialization.PropertyAccessor
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.IntArrayList
-import com.intellij.util.serialization.BaseBeanBinding
-import com.intellij.util.serialization.PropertyAccessor
 import com.intellij.util.xmlb.BeanBinding
 import com.intellij.util.xmlb.SerializationFilter
 import org.jdom.Element

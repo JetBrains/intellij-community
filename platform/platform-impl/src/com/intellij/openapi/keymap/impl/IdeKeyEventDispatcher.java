@@ -849,12 +849,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static class SecondaryKeystrokePopup extends ListPopupImpl {
 
-    SecondaryKeystrokePopup(@NotNull KeyStroke firstKeystroke, @NotNull List<Pair<AnAction, KeyStroke>> actions, DataContext context) {
+    SecondaryKeystrokePopup(@NotNull KeyStroke firstKeystroke, @NotNull List<? extends Pair<AnAction, KeyStroke>> actions, DataContext context) {
       super(CommonDataKeys.PROJECT.getData(context), buildStep(actions, context));
       registerActions(firstKeystroke, actions, context);
     }
 
-    private void registerActions(@NotNull final KeyStroke firstKeyStroke, @NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
+    private void registerActions(@NotNull final KeyStroke firstKeyStroke, @NotNull final List<? extends Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
       ContainerUtil.process(actions, pair -> {
         final String actionText = pair.getFirst().getTemplatePresentation().getText();
         final AbstractAction a = new AbstractAction() {
@@ -899,7 +899,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return new ActionListCellRenderer();
     }
 
-    private static ListPopupStep buildStep(@NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
+    private static ListPopupStep buildStep(@NotNull final List<? extends Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
       return new BaseListPopupStep<Pair<AnAction, KeyStroke>>("Choose an action", ContainerUtil.findAll(actions, pair -> {
         final AnAction action = pair.getFirst();
         final Presentation presentation = action.getTemplatePresentation().clone();

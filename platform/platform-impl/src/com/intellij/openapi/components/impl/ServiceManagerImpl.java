@@ -87,7 +87,7 @@ public final class ServiceManagerImpl implements Disposable {
   }
 
   @ApiStatus.Internal
-  public static void processProjectDescriptors(@NotNull BiConsumer<? super ServiceDescriptor, PluginDescriptor> consumer) {
+  public static void processProjectDescriptors(@NotNull BiConsumer<? super ServiceDescriptor, ? super PluginDescriptor> consumer) {
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(null)) {
       for (ServiceDescriptor serviceDescriptor : ((IdeaPluginDescriptorImpl)plugin).getProjectServices()) {
         consumer.accept(serviceDescriptor, plugin);

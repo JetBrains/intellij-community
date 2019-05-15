@@ -197,7 +197,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
   private static boolean collectPatternMatches(IndexPattern[] allIndexPatterns,
                                                IndexPattern indexPattern,
                                                CharSequence chars,
-                                               List<CommentRange> commentRanges,
+                                               List<? extends CommentRange> commentRanges,
                                                int commentNum,
                                                PsiFile file,
                                                TextRange range,
@@ -246,7 +246,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
   }
 
   private static List<TextRange> findContinuation(int mainRangeStartOffset, CharSequence text, IndexPattern[] allIndexPatterns,
-                                                  List<CommentRange> commentRanges, int commentNum) {
+                                                  List<? extends CommentRange> commentRanges, int commentNum) {
     CommentRange commentRange = commentRanges.get(commentNum);
     int lineStartOffset = CharArrayUtil.shiftBackwardUntil(text, mainRangeStartOffset - 1, "\n") + 1;
     int lineEndOffset = CharArrayUtil.shiftForwardUntil(text, mainRangeStartOffset, "\n");

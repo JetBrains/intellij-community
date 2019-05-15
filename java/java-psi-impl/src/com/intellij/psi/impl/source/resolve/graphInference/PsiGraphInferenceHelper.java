@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,17 +25,18 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                                  @NotNull ParameterTypeInferencePolicy policy) {
     final PsiSubstitutor substitutor;
     if (parent != null) {
-      substitutor = inferTypeArguments(new PsiTypeParameter[]{typeParameter}, 
-                                       parameters, 
-                                       arguments, 
-                                       partialSubstitutor, 
-                                       parent, 
-                                       policy, 
-                                       PsiUtil.getLanguageLevel(parent));
+      substitutor = inferTypeArguments(new PsiTypeParameter[]{typeParameter},
+                                       parameters,
+                                       arguments,
+                                       null, partialSubstitutor,
+                                       parent,
+                                       policy,
+                                       PsiUtil.getLanguageLevel(parent)
+      );
     }
     else {
       final InferenceSession inferenceSession = new InferenceSession(new PsiTypeParameter[]{typeParameter}, partialSubstitutor, myManager, null);
-      inferenceSession.initExpressionConstraints(parameters, arguments, null);
+      inferenceSession.initExpressionConstraints(parameters, arguments, null, false);
       substitutor = inferenceSession.infer();
     }
     return substitutor.substitute(typeParameter);
@@ -45,13 +47,13 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
   public PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
                                            @NotNull PsiParameter[] parameters,
                                            @NotNull PsiExpression[] arguments,
-                                           @NotNull PsiSubstitutor partialSubstitutor,
+                                           @Nullable MethodCandidateInfo currentMethod, @NotNull PsiSubstitutor partialSubstitutor,
                                            @NotNull PsiElement parent,
                                            @NotNull ParameterTypeInferencePolicy policy,
                                            @NotNull LanguageLevel languageLevel) {
     if (typeParameters.length == 0) return partialSubstitutor;
 
-    return InferenceSessionContainer.infer(typeParameters, parameters, arguments, partialSubstitutor, parent, policy);
+    return InferenceSessionContainer.infer(typeParameters, parameters, arguments, partialSubstitutor, parent, policy, currentMethod);
   }
 
   @NotNull

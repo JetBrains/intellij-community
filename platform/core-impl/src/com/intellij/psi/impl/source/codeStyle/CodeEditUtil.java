@@ -37,7 +37,7 @@ public class CodeEditUtil {
   private static final Key<Boolean> REFORMAT_KEY = new Key<>("REFORMAT_KEY");
   private static final ThreadLocal<Boolean> ALLOW_TO_MARK_NODES_TO_REFORMAT = ThreadLocal.withInitial(() -> Boolean.TRUE);
   private static final ThreadLocal<Boolean> ALLOW_NODES_REFORMATTING = ThreadLocal.withInitial(() -> Boolean.TRUE);
-  private static final ThreadLocal<NotNullFunction<ASTNode, Boolean>> NODE_REFORMAT_STRATEGY = new ThreadLocal<>();
+  private static final ThreadLocal<NotNullFunction<? super ASTNode, Boolean>> NODE_REFORMAT_STRATEGY = new ThreadLocal<>();
 
   private CodeEditUtil() { }
 
@@ -361,7 +361,7 @@ public class CodeEditUtil {
     if (node.getCopyableUserData(REFORMAT_KEY) == null || !isSuspendedNodesReformattingAllowed()) {
       return false;
     }
-    final NotNullFunction<ASTNode, Boolean> strategy = NODE_REFORMAT_STRATEGY.get();
+    NotNullFunction<? super ASTNode, Boolean> strategy = NODE_REFORMAT_STRATEGY.get();
     return strategy == null || strategy.fun(node);
   }
 
@@ -437,7 +437,7 @@ public class CodeEditUtil {
    *
    * @param strategy strategy to use; {@code null} as an indication that no fine-grained checking should be performed
    */
-  public static void setNodeReformatStrategy(@Nullable NotNullFunction<ASTNode, Boolean> strategy) {
+  public static void setNodeReformatStrategy(@Nullable NotNullFunction<? super ASTNode, Boolean> strategy) {
     NODE_REFORMAT_STRATEGY.set(strategy);
   }
 }

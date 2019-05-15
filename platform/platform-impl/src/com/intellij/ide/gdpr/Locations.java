@@ -6,6 +6,7 @@ package com.intellij.ide.gdpr;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,11 +17,11 @@ import java.io.File;
  * Date: 06-Dec-17
  */
 public class Locations {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.gdpr.Locations");
   private static final File ourDataDir;
 
   static {
-    final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    final String relativeResourcePath = appInfo.isVendorJetBrains() ? "JetBrains" : normalizePathName(appInfo.getShortCompanyName());
+    final String relativeResourcePath = getRelativeResourcePath();
 
     File dataDir = null;
     if (SystemInfo.isWindows) {
@@ -59,9 +60,17 @@ public class Locations {
     return ourDataDir;
   }
 
-
   @NotNull
-  private static String normalizePathName(String path) {
-    return path == null? "unknown_vendor" : path.trim().replace(' ', '_');
+  private static String getRelativeResourcePath() {
+    try {
+      final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      final String path = appInfo.getShortCompanyName();
+      return appInfo.isVendorJetBrains() ? "JetBrains" : path == null ? "unknown_vendor" : path.trim().replace(' ', '_');
+    }
+    catch (Throwable e) {
+      LOG.info("Problems initializing location path",  e);
+      return "JetBrains"; // default vendor
+    }
   }
+
 }

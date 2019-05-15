@@ -255,6 +255,6 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   }
 
   private void doTest5() {
-    IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_5,() -> doTest());
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_5, () -> doTest());
   }
 }

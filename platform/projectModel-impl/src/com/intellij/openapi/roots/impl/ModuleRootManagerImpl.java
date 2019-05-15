@@ -25,9 +25,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
+import kotlin.NotImplementedError;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
@@ -117,6 +119,12 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
       }
     }
     return model;
+  }
+
+  @Override
+  @TestOnly
+  public long getModificationCountForTests() {
+    throw new NotImplementedError("Make sense only for persistent root manager");
   }
 
   void makeRootsChange(@NotNull Runnable runnable) {

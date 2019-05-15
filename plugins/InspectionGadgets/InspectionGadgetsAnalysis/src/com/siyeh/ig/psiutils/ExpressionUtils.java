@@ -526,7 +526,7 @@ public class ExpressionUtils {
         }
         return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
       } else if ("append".equals(name)) {
-        if (expressions.length < 1 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[0]))) {
+        if (expressions.length != 1 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[0]))) {
           return true;
         }
         return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");

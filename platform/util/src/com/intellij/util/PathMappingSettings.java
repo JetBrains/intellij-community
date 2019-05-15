@@ -179,7 +179,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     myPathMappings.addAll(settings.getPathMappings());
   }
 
-  public void addAll(@NotNull List<PathMapping> mappings) {
+  public void addAll(@NotNull List<? extends PathMapping> mappings) {
     myPathMappings.addAll(mappings);
   }
 

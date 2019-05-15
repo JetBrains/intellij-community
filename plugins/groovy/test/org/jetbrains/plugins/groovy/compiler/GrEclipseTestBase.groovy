@@ -22,7 +22,7 @@ abstract class GrEclipseTestBase extends GroovyCompilerTest {
 
   @Override
   void runTest() {
-    if (JavaSdkVersionUtil.getJavaSdkVersion(ModuleRootManager.getInstance(myModule).sdk)?.isAtLeast(JavaSdkVersion.JDK_10)) {
+    if (JavaSdkVersionUtil.getJavaSdkVersion(ModuleRootManager.getInstance(module).sdk)?.isAtLeast(JavaSdkVersion.JDK_10)) {
       println "Groovy-Eclipse doesn't support Java 10+ yet"
       return
     }

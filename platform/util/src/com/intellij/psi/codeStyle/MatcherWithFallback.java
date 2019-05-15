@@ -41,7 +41,7 @@ class MatcherWithFallback extends MinusculeMatcher {
   }
 
   @Override
-  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<TextRange> fragments) {
+  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<? extends TextRange> fragments) {
     FList<TextRange> mainRanges = myMainMatcher.matchingFragments(name);
     boolean useMainRanges = mainRanges != null && !mainRanges.isEmpty() || myFallbackMatcher == null;
 

@@ -98,11 +98,11 @@ public class FilteringIterator<Dom, E extends Dom> implements PeekableIterator<E
     return (E)myCurrent;
   }
 
-  public static <T> Iterator<T> skipNulls(Iterator<T> iterator) {
+  public static <T> Iterator<T> skipNulls(Iterator<? extends T> iterator) {
     return create(iterator, Conditions.notNull());
   }
 
-  public static <Dom, T extends Dom> Iterator<T> create(Iterator<Dom> iterator, Condition<? super Dom> condition) {
+  public static <T> Iterator<T> create(Iterator<? extends T> iterator, Condition<? super T> condition) {
     if (condition == Condition.TRUE || condition == Conditions.TRUE) return (Iterator<T>)iterator;
     return new FilteringIterator<>(iterator, condition);
   }

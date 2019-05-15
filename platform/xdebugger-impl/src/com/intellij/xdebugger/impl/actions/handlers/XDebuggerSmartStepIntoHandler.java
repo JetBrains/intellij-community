@@ -104,7 +104,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
   }
 
   protected <V extends XSmartStepIntoVariant> boolean handleSimpleCases(XSmartStepIntoHandler<V> handler,
-                                                                        List<V> variants,
+                                                                        List<? extends V> variants,
                                                                         XDebugSession session) {
     if (variants.isEmpty()) {
       handler.stepIntoEmpty(session);
@@ -118,7 +118,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
   }
 
   private static <V extends XSmartStepIntoVariant> void choose(final XSmartStepIntoHandler<V> handler,
-                                                               List<V> variants,
+                                                               List<? extends V> variants,
                                                                XSourcePosition position,
                                                                final XDebugSession session,
                                                                Editor editor) {
@@ -131,7 +131,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
   }
 
   private static <V extends XSmartStepIntoVariant> void showPopup(final XSmartStepIntoHandler<V> handler,
-                                                                    List<V> variants,
+                                                                    List<? extends V> variants,
                                                                     XSourcePosition position,
                                                                     final XDebugSession session,
                                                                     Editor editor) {
@@ -188,7 +188,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
   }
 
   private static <V extends XSmartStepIntoVariant> void inplaceChoose(XSmartStepIntoHandler<V> handler,
-                                                                      List<V> variants,
+                                                                      List<? extends V> variants,
                                                                       XDebugSession session,
                                                                       Editor editor) {
     HighlightManager highlightManager = HighlightManager.getInstance(session.getProject());
@@ -264,7 +264,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     private VariantInfo myCurrentVariant;
     private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
-    SmartStepData(final XSmartStepIntoHandler<V> handler, List<V> variants, final XDebugSession session, Editor editor) {
+    SmartStepData(final XSmartStepIntoHandler<V> handler, List<? extends V> variants, final XDebugSession session, Editor editor) {
       myHandler = handler;
       mySession = session;
       myEditor = editor;

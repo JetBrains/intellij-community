@@ -546,7 +546,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private static List<Action> flattenOptionsActions(@NotNull List<Action> actions) {
+  private static List<Action> flattenOptionsActions(@NotNull List<? extends Action> actions) {
     List<Action> newActions = new ArrayList<>();
     for (Action action : actions) {
       newActions.add(action);
@@ -575,7 +575,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private List<JButton> createButtons(@NotNull List<Action> actions) {
+  private List<JButton> createButtons(@NotNull List<? extends Action> actions) {
     List<JButton> buttons = new ArrayList<>();
     for (Action action : actions) {
       buttons.add(createJButtonForAction(action));
@@ -584,8 +584,8 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private JPanel createSouthPanel(@NotNull List<JButton> leftSideButtons,
-                                  @NotNull List<JButton> rightSideButtons,
+  private JPanel createSouthPanel(@NotNull List<? extends JButton> leftSideButtons,
+                                  @NotNull List<? extends JButton> rightSideButtons,
                                   boolean addHelpToLeftSide) {
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override

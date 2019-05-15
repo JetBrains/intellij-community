@@ -623,7 +623,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     @NotNull
     private static <T> JBList<T> createList(CollectionListModel<T> baseModel,
-                                            Function<T, String> namer,
+                                            Function<? super T, String> namer,
                                             SwitcherSpeedSearch speedSearch,
                                             boolean pinned) {
       ListModel<T> listModel;

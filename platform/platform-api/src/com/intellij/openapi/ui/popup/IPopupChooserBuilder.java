@@ -22,7 +22,7 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setRenderer(ListCellRenderer renderer);
 
   @NotNull
-  IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Consumer<T> callback);
+  IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Consumer<? super T> callback);
 
   @NotNull
   IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<? super Set<T>> callback);
@@ -33,7 +33,7 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setTitle(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title);
 
   @NotNull
-  IPopupChooserBuilder<T> setCouldPin(@Nullable Processor<JBPopup> callback);
+  IPopupChooserBuilder<T> setCouldPin(@Nullable Processor<? super JBPopup> callback);
 
   IPopupChooserBuilder<T> setRequestFocus(boolean requestFocus);
 
@@ -51,7 +51,7 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setAutoselectOnMouseMove(boolean doAutoSelect);
 
-  IPopupChooserBuilder<T> setNamerForFiltering(Function<T, String> namer);
+  IPopupChooserBuilder<T> setNamerForFiltering(Function<? super T, String> namer);
 
   IPopupChooserBuilder<T> setAutoPackHeightOnFiltering(boolean autoPackHeightOnFiltering);
 

@@ -43,7 +43,7 @@ public class ContextComputationProcessor {
   }
 
   @NotNull
-  public static List<Object> collectOperands(@NotNull String prefix, String suffix, Ref<Boolean> unparsable, PsiElement[] operands) {
+  public static List<Object> collectOperands(@NotNull String prefix, String suffix, Ref<? super Boolean> unparsable, PsiElement[] operands) {
     ArrayList<Object> result = new ArrayList<>();
     ContextComputationProcessor processor = new ContextComputationProcessor(operands[0].getProject());
     addStringFragment(prefix, result);
@@ -65,7 +65,7 @@ public class ContextComputationProcessor {
     }
   }
 
-  public void collectOperands(PsiElement expression, List<Object> result, Ref<Boolean> unparsable) {
+  public void collectOperands(PsiElement expression, List<Object> result, Ref<? super Boolean> unparsable) {
     if (expression instanceof PsiParenthesizedExpression) {
       collectOperands(((PsiParenthesizedExpression)expression).getExpression(), result, unparsable);
     }

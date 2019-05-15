@@ -344,13 +344,6 @@ public class FileTypesTest extends PlatformTestCase {
     log("T: ensureRedetected: clear");
   }
 
-  public void testReassignedPredefinedFileType() {
-    final FileType fileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
-    assertEquals("Perl", fileType.getName());
-    assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
-    doReassignTest(fileType, "cgi");
-  }
-
   public void testReassignTextFileType() {
     doReassignTest(PlainTextFileType.INSTANCE, "dtd");
   }
@@ -425,6 +418,30 @@ public class FileTypesTest extends PlatformTestCase {
     assertTrue(pair.second);
   }
 
+  public void testReassignedPredefinedFileType() {
+    final FileType fileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
+    assertEquals("Perl", fileType.getName());
+    assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
+    doReassignTest(fileType, "cgi");
+  }
+
+  public void testReAddedMapping() {
+    ArchiveFileType fileType = ArchiveFileType.INSTANCE;
+    FileNameMatcher matcher = myFileTypeManager.getAssociations(fileType).get(0);
+    myFileTypeManager.getRemovedMappings().put(matcher, Pair.create(fileType, true));
+
+    WriteAction.run(() -> myFileTypeManager
+      .setPatternsTable(new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes())), myFileTypeManager.getExtensionMap().copy()));
+    assertEquals(0, myFileTypeManager.getRemovedMappings().size());
+  }
+
+  public void testPreserveRemovedMappingForUnknownFileType() {
+    myFileTypeManager.getRemovedMappings().put(new ExtensionFileNameMatcher("xxx"), Pair.create(createTestFileType(), true));
+    WriteAction.run(() -> myFileTypeManager
+      .setPatternsTable(new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes())), myFileTypeManager.getExtensionMap().copy()));
+    assertEquals(1, myFileTypeManager.getRemovedMappings().size());
+  }
+
   public void testGetRemovedMappings() {
     FileTypeAssocTable<FileType> table = myFileTypeManager.getExtensionMap().copy();
     ArchiveFileType fileType = ArchiveFileType.INSTANCE;
@@ -481,47 +498,7 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testPreserveUninstalledPluginAssociations() {
-    final FileType typeFromPlugin = new FileType() {
-      @NotNull
-      @Override
-      public String getName() {
-        return "Foo files";
-      }
-
-      @NotNull
-      @Override
-      public String getDescription() {
-        return "";
-      }
-
-      @NotNull
-      @Override
-      public String getDefaultExtension() {
-        return "fromPlugin";
-      }
-
-      @Nullable
-      @Override
-      public Icon getIcon() {
-        return null;
-      }
-
-      @Override
-      public boolean isBinary() {
-        return false;
-      }
-
-      @Override
-      public boolean isReadOnly() {
-        return false;
-      }
-
-      @Nullable
-      @Override
-      public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
-        return null;
-      }
-    };
+    final FileType typeFromPlugin = createTestFileType();
     FileTypeFactory factory = new FileTypeFactory() {
       @Override
       public void createFileTypes(@NotNull FileTypeConsumer consumer) {
@@ -804,5 +781,50 @@ public class FileTypesTest extends PlatformTestCase {
     finally {
       manager.setDefaultCharsetName(oldProject);
     }
+  }
+
+  @NotNull
+  private static FileType createTestFileType() {
+    return new FileType() {
+      @NotNull
+      @Override
+      public String getName() {
+        return "Foo files";
+      }
+
+      @NotNull
+      @Override
+      public String getDescription() {
+        return "";
+      }
+
+      @NotNull
+      @Override
+      public String getDefaultExtension() {
+        return "fromPlugin";
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon() {
+        return null;
+      }
+
+      @Override
+      public boolean isBinary() {
+        return false;
+      }
+
+      @Override
+      public boolean isReadOnly() {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+        return null;
+      }
+    };
   }
 }

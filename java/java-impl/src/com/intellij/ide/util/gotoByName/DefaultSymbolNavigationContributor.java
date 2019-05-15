@@ -79,7 +79,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   }
 
-  private static boolean hasSuperMethod(PsiMethod method, GlobalSearchScope scope, Condition<PsiMember> qualifiedMatcher, String pattern) {
+  private static boolean hasSuperMethod(PsiMethod method, GlobalSearchScope scope, Condition<? super PsiMember> qualifiedMatcher, String pattern) {
     if (pattern.contains(".") && Registry.is("ide.goto.symbol.include.overrides.on.qualified.patterns")) {
       return false;
     }

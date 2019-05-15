@@ -61,7 +61,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
     ArtifactUtil.processParents(artifact, myArtifactEditor.getContext(), new ParentElementProcessor() {
       @Override
       public boolean process(@NotNull CompositePackagingElement<?> element,
-                             @NotNull List<Pair<Artifact,CompositePackagingElement<?>>> parents,
+                             @NotNull List<? extends Pair<Artifact, CompositePackagingElement<?>>> parents,
                              @NotNull Artifact artifact) {
         if (parents.size() == 1) {
           final Pair<Artifact, CompositePackagingElement<?>> parent = parents.get(0);

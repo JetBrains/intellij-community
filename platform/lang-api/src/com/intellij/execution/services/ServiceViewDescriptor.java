@@ -21,6 +21,11 @@ public interface ServiceViewDescriptor {
     return null;
   }
 
+  @NotNull
+  default ItemPresentation getContentPresentation() {
+    return getPresentation();
+  }
+
   @Nullable
   default ActionGroup getToolbarActions() {
     return null;

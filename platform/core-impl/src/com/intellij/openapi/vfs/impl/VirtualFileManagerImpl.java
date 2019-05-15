@@ -43,11 +43,11 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
 
-  public VirtualFileManagerImpl(@NotNull List<VirtualFileSystem> fileSystems) {
+  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems) {
     this(fileSystems, ApplicationManager.getApplication().getMessageBus());
   }
 
-  public VirtualFileManagerImpl(@NotNull List<VirtualFileSystem> fileSystems, @NotNull MessageBus bus) {
+  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems, @NotNull MessageBus bus) {
     List<VirtualFileSystem> physicalFileSystems = new ArrayList<>(fileSystems);
 
     ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> point = myCollector.getPoint();

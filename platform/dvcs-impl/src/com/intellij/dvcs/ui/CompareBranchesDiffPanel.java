@@ -116,7 +116,7 @@ class CompareBranchesDiffPanel extends JPanel {
   }
 
   private class MyChangesBrowser extends SimpleChangesBrowser {
-    MyChangesBrowser(@NotNull Project project, @NotNull List<Change> changes) {
+    MyChangesBrowser(@NotNull Project project, @NotNull List<? extends Change> changes) {
       super(project, false, true);
       setChangesToDisplay(changes);
     }

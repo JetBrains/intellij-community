@@ -18,7 +18,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.util.serialization.SerializationException
+import com.intellij.serialization.SerializationException
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.write
 import com.intellij.util.xmlb.XmlSerializer

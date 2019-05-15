@@ -91,7 +91,7 @@ public class RefreshWorker {
     while (!myRefreshQueue.isEmpty()) {
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
-      if (!myHelper.checkDirty(file)) continue;
+      if (!VfsEventGenerationHelper.checkDirty(file)) continue;
 
       checkCancelled(file);
 
@@ -200,8 +200,8 @@ public class RefreshWorker {
     }
 
     // generating events unless a directory was changed in between
-    boolean transactionSucceeded = false;
     myHelper.beginTransaction();
+    boolean transactionSucceeded = false;
     try {
       checkCancelled(dir);
       if (isDirectoryChanged(persistence, dir, persistedNames, children)) {
@@ -241,10 +241,10 @@ public class RefreshWorker {
     return transactionSucceeded;
   }
 
-  private boolean isDirectoryChanged(@NotNull PersistentFS persistence,
-                                     @NotNull VirtualDirectoryImpl dir,
-                                     @NotNull String[] persistedNames,
-                                     @NotNull VirtualFile[] children) {
+  private static boolean isDirectoryChanged(@NotNull PersistentFS persistence,
+                                            @NotNull VirtualDirectoryImpl dir,
+                                            @NotNull String[] persistedNames,
+                                            @NotNull VirtualFile[] children) {
     return ReadAction.compute(() -> {
       if (!Arrays.equals(persistedNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
         if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
@@ -333,7 +333,7 @@ public class RefreshWorker {
     return new ChildInfo(ChildInfo.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
-  private static class RefreshCancelledException extends RuntimeException { }
+  static class RefreshCancelledException extends RuntimeException { }
 
   private void checkCancelled(@NotNull NewVirtualFile stopAt) throws RefreshCancelledException {
     Function<? super VirtualFile, Boolean> cancellingCondition;

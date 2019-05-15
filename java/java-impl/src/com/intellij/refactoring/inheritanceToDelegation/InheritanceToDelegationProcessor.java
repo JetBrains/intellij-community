@@ -297,7 +297,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return result.toArray(new ObjectUpcastedUsageInfo[0]);
   }
 
-  private ArrayList<UsageInfo> filterUsages(ArrayList<UsageInfo> usages) {
+  private ArrayList<UsageInfo> filterUsages(ArrayList<? extends UsageInfo> usages) {
     ArrayList<UsageInfo> result = new ArrayList<>();
 
     for (UsageInfo usageInfo : usages) {
@@ -318,7 +318,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
-  private void processClass(PsiClass inheritor, ArrayList<UsageInfo> usages) {
+  private void processClass(PsiClass inheritor, ArrayList<? super UsageInfo> usages) {
     ClassReferenceScanner scanner = new ClassReferenceSearchingScanner(inheritor);
     final MyClassInstanceReferenceVisitor instanceVisitor = new MyClassInstanceReferenceVisitor(inheritor, usages);
     scanner.processReferences(

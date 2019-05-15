@@ -531,7 +531,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return list;
   }
 
-  public void processSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses, Consumer<LookupElement> result) {
+  public void processSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses, Consumer<? super LookupElement> result) {
     GlobalSearchScope packageScope = PackageScope.packageScope(context, true);
     GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(getElement().getProject());
     if (scope != null) {

@@ -119,7 +119,7 @@ public class AbstractPopup implements JBPopup {
 
   private Runnable myFinalRunnable;
   private Runnable myOkHandler;
-  @Nullable private BooleanFunction<KeyEvent> myKeyEventHandler;
+  @Nullable private BooleanFunction<? super KeyEvent> myKeyEventHandler;
 
   protected boolean myOk;
   private final List<Runnable> myResizeListeners = new ArrayList<>();
@@ -223,7 +223,7 @@ public class AbstractPopup implements JBPopup {
                      boolean showBorder,
                      Color borderColor,
                      boolean cancelOnWindowDeactivation,
-                     @Nullable BooleanFunction<KeyEvent> keyEventHandler) {
+                     @Nullable BooleanFunction<? super KeyEvent> keyEventHandler) {
     assert !requestFocus || focusable : "Incorrect argument combination: requestFocus=true focusable=false";
 
     all.add(this);
@@ -1361,10 +1361,6 @@ public class AbstractPopup implements JBPopup {
     return myProject;
   }
 
-  public void setProject(Project project) {
-    myProject = project;
-  }
-
   @Override
   public void dispose() {
     if (myState == State.SHOWN) {
@@ -1890,7 +1886,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public boolean dispatchKeyEvent(@NotNull KeyEvent e) {
-    BooleanFunction<KeyEvent> handler = myKeyEventHandler;
+    BooleanFunction<? super KeyEvent> handler = myKeyEventHandler;
     if (handler != null && handler.fun(e)) {
       return true;
     }

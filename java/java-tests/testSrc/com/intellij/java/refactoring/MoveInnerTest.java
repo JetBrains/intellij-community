@@ -124,9 +124,9 @@ public class MoveInnerTest extends LightMultiFileTestCase {
                                false, false, null) {
       @Override
       protected boolean isPassOuterClass() {
-        final PsiClass outerClass = myFixture.getJavaFacade().findClass("pack1.DImpl", GlobalSearchScope.moduleScope(myModule));
+        final PsiClass outerClass = myFixture.getJavaFacade().findClass("pack1.DImpl", GlobalSearchScope.moduleScope(getModule()));
         assertNotNull(outerClass);
-        final PsiClass innerClass = myFixture.getJavaFacade().findClass(innerClassName, GlobalSearchScope.moduleScope(myModule));
+        final PsiClass innerClass = myFixture.getJavaFacade().findClass(innerClassName, GlobalSearchScope.moduleScope(getModule()));
         assertNotNull(innerClass);
         return MoveInnerDialog.isThisNeeded(innerClass, outerClass);
       }
@@ -167,7 +167,7 @@ public class MoveInnerTest extends LightMultiFileTestCase {
     @Override
     public void run() {
       final JavaPsiFacade manager = myFixture.getJavaFacade();
-      final PsiClass aClass = manager.findClass(myInnerClassName, GlobalSearchScope.moduleScope(myModule));
+      final PsiClass aClass = manager.findClass(myInnerClassName, GlobalSearchScope.moduleScope(getModule()));
       final MoveInnerProcessor moveInnerProcessor = new MoveInnerProcessor(getProject(), null);
       final PsiElement targetContainer = myPackageName != null ? findDirectory(myPackageName) : MoveInnerImpl.getTargetContainer(aClass, false);
       assertNotNull(targetContainer);

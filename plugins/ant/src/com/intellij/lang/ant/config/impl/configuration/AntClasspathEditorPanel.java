@@ -26,7 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class AntClasspathEditorPanel extends JPanel {
   private ListProperty<AntClasspathEntry> myClasspathProperty;
@@ -66,7 +65,7 @@ public class AntClasspathEditorPanel extends JPanel {
       }
 
       @Override
-      public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
+      public void addAllPropertiesTo(Collection<? super AbstractProperty> properties) {
       }
     });
     return myBinding;

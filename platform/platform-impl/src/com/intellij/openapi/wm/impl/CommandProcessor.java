@@ -38,7 +38,7 @@ public final class CommandProcessor implements Runnable {
    * commands with BlockFocusEventsCmd - UnblockFocusEventsCmd. It's required to
    * prevent focus handling of events which is caused by the commands to be executed.
    */
-  public final void execute(@NotNull List<FinalizableCommand> commandList, @NotNull Condition expired) {
+  public final void execute(@NotNull List<? extends FinalizableCommand> commandList, @NotNull Condition expired) {
     synchronized (myLock) {
       final boolean isBusy = myCommandCount > 0 || !myFlushed;
 
@@ -93,10 +93,10 @@ public final class CommandProcessor implements Runnable {
   }
 
   private static class CommandGroup {
-    private final List<FinalizableCommand> myList;
+    private final List<? extends FinalizableCommand> myList;
     private Condition myExpireCondition;
 
-    private CommandGroup(@NotNull List<FinalizableCommand> list, @NotNull Condition expireCondition) {
+    private CommandGroup(@NotNull List<? extends FinalizableCommand> list, @NotNull Condition expireCondition) {
       myList = list;
       myExpireCondition = expireCondition;
     }

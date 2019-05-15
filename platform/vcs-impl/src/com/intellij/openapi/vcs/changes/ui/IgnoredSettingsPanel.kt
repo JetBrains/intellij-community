@@ -37,7 +37,7 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
           cell {
             Label(message("ignored.file.manage.policy.label"))()
             comboBox(
-              DefaultComboBoxModel(arrayOf(None,
+              DefaultComboBoxModel(arrayOf(AlwaysAsk,
                                            AllProjectsManage,
                                            CurrentProjectManage,
                                            DoNotManageForCurrentProject,
@@ -48,10 +48,10 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
           }
         }
       }
-      titledRow("Excluded directory management policy") {
+      titledRow(message("ignored.file.excluded.settings.title")) {
         row {
           cell {
-            checkBox("Add excluded directories to ignore file", ::selectedMarkExcludedAsIgnored)
+            checkBox(message("ignored.file.excluded.to.ignored.label"), ::selectedMarkExcludedAsIgnored)
           }
         }
       }
@@ -85,7 +85,7 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
         applicationSettings.MANAGE_IGNORE_FILES = false
         applicationSettings.DISABLE_MANAGE_IGNORE_FILES = false
       }
-      None -> {
+      AlwaysAsk -> {
         propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, false)
         propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, false)
         applicationSettings.MANAGE_IGNORE_FILES = false
@@ -102,12 +102,12 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
       applicationSettings.MANAGE_IGNORE_FILES -> AllProjectsManage
       propertiesComponent.getBoolean(MANAGE_IGNORE_FILES_PROPERTY, false) -> CurrentProjectManage
       propertiesComponent.getBoolean(ASKED_MANAGE_IGNORE_FILES_PROPERTY, false) -> DoNotManageForCurrentProject
-      else -> None
+      else -> AlwaysAsk
     }
   }
 
   enum class ManageIgnoredOption(val displayName: String) {
-    None(""),
+    AlwaysAsk(message("ignored.file.manage.always.ask.option")),
     AllProjectsManage(message("ignored.file.manage.all.projects.option")),
     CurrentProjectManage(message("ignored.file.manage.this.project.option")),
     DoNotManageForCurrentProject(message("ignored.file.not.manage.this.project.option")),

@@ -532,7 +532,7 @@ public class JDParser {
     return false;
   }
 
-  private static void endParagraph(@NotNull List<Pair<String, Boolean>> result, @NotNull StringBuilder sb) {
+  private static void endParagraph(@NotNull List<? super Pair<String, Boolean>> result, @NotNull StringBuilder sb) {
     if (sb.length() > 0) {
       result.add(new Pair<>(sb.toString(), false));
       sb.setLength(0);

@@ -48,7 +48,7 @@ public class SearchUtil {
     processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, true), options);
   }
 
-  private static void processConfigurables(@NotNull List<Configurable> configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
+  private static void processConfigurables(@NotNull List<? extends Configurable> configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
     for (final Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
         //ignore invisible root nodes
@@ -572,7 +572,7 @@ public class SearchUtil {
     return result;
   }
 
-  public static void processExpandedGroups(@NotNull ConfigurableGroup group, @NotNull Consumer<Configurable> consumer) {
+  public static void processExpandedGroups(@NotNull ConfigurableGroup group, @NotNull Consumer<? super Configurable> consumer) {
     Configurable[] configurables = group.getConfigurables();
     List<Configurable> result = new ArrayList<>();
     ContainerUtil.addAll(result, configurables);

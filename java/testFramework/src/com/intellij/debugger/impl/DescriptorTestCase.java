@@ -149,13 +149,13 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     boolean shouldExpand(TreeNode node);
   }
 
-  protected void expandAll(final DebuggerTree tree, final Runnable runnable, final Set<Value> alreadyExpanded, final NodeFilter filter) {
+  protected void expandAll(final DebuggerTree tree, final Runnable runnable, final Set<? super Value> alreadyExpanded, final NodeFilter filter) {
     expandAll(tree, runnable, alreadyExpanded, filter, tree.getDebuggerContext().getSuspendContext());
   }
 
   protected void expandAll(final Tree tree,
                            final Runnable runnable,
-                           final Set<Value> alreadyExpanded,
+                           final Set<? super Value> alreadyExpanded,
                            final NodeFilter filter,
                            final SuspendContextImpl context) {
     invokeRatherLater(context, () -> {

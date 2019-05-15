@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.xml.util.IncludedXmlTag;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -48,7 +49,8 @@ import java.util.concurrent.Callable;
  */
 abstract class NewServiceActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
 
-  NewServiceActionBase(String text, String description) {
+  NewServiceActionBase(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                       @Nls(capitalization = Nls.Capitalization.Sentence) String description) {
     super(text, description, null);
   }
 

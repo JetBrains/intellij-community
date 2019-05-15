@@ -173,7 +173,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       map.values().forEach(CachedOptions::dispose);
     }
 
-    private static void dispose(Collection<OptionDescription> options) {
+    private static void dispose(Collection<? extends OptionDescription> options) {
       if (options != null) options.forEach(CachedOptions::dispose);
     }
 
@@ -263,7 +263,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       LOG.info(delta + " ms spent to cache options in " + name);
     }
 
-    private static void scheduleEdtTasks(@NotNull Deque<ConfigurableOptionsTopHitProvider> edtProviders, @Nullable ProgressIndicator indicator, @Nullable Project project) {
+    private static void scheduleEdtTasks(@NotNull Deque<? extends ConfigurableOptionsTopHitProvider> edtProviders, @Nullable ProgressIndicator indicator, @Nullable Project project) {
       if (edtProviders.isEmpty()) {
         if (project != null) {
           StartUpPerformanceReporter startUpPerformanceReporter = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(StartUpPerformanceReporter.class);

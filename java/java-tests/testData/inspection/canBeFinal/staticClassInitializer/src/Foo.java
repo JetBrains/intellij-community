@@ -19,3 +19,15 @@ enum Test1 {
         System.out.println(A.i);
     }
 }
+
+abstract class Test2 {
+    private static String FOO;
+
+     static {
+         try {
+             FOO = null;
+         } catch (Exception e) {
+             e.printStackTrace();
+         }
+     }
+}

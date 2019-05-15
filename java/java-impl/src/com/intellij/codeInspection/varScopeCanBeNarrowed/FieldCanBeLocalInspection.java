@@ -284,7 +284,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     return writtenVariables.get();
   }
 
-  private static boolean hasImplicitReadOrWriteUsage(final PsiField field, List<ImplicitUsageProvider> implicitUsageProviders) {
+  private static boolean hasImplicitReadOrWriteUsage(final PsiField field, List<? extends ImplicitUsageProvider> implicitUsageProviders) {
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitRead(field) || provider.isImplicitWrite(field)) {
         return true;

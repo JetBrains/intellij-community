@@ -142,8 +142,8 @@ public class JavaBuilderUtil {
                                        final Mappings delta,
                                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                        ModuleChunk chunk,
-                                       Collection<File> filesToCompile,
-                                       Collection<File> successfullyCompiled) throws IOException {
+                                       Collection<? extends File> filesToCompile,
+                                       Collection<? extends File> successfullyCompiled) throws IOException {
     return updateMappings(context, delta, dirtyFilesHolder, chunk, filesToCompile, successfullyCompiled, CompilationRound.NEXT, null);
   }
 
@@ -165,8 +165,8 @@ public class JavaBuilderUtil {
                                         final Mappings delta,
                                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                         ModuleChunk chunk,
-                                        Collection<File> filesToCompile,
-                                        Collection<File> successfullyCompiled,
+                                        Collection<? extends File> filesToCompile,
+                                        Collection<? extends File> successfullyCompiled,
                                         final CompilationRound markDirtyRound,
                                         @Nullable FileFilter skipMarkingDirtyFilter) throws IOException {
     try {
@@ -356,7 +356,7 @@ public class JavaBuilderUtil {
     }
   }
 
-  private static boolean containsProcessorGeneratedFiles(ModuleChunk chunk, Collection<File> files) {
+  private static boolean containsProcessorGeneratedFiles(ModuleChunk chunk, Collection<? extends File> files) {
     final JpsModule module = chunk.representativeTarget().getModule();
     final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
     assert compilerConfig != null;
@@ -386,7 +386,7 @@ public class JavaBuilderUtil {
     return JpsJavaExtensionService.getInstance().getJavaModuleIndex(project);
   }
 
-  private static FileFilter createOrFilter(final List<FileFilter> filters) {
+  private static FileFilter createOrFilter(final List<? extends FileFilter> filters) {
     if (filters == null || filters.isEmpty()) return null;
     return pathname -> {
       for (FileFilter filter : filters) {
@@ -398,9 +398,9 @@ public class JavaBuilderUtil {
     };
   }
 
-  private static void removeFilesAcceptedByFilter(@NotNull Set<File> files, @Nullable FileFilter filter) {
+  private static void removeFilesAcceptedByFilter(@NotNull Set<? extends File> files, @Nullable FileFilter filter) {
     if (filter != null) {
-      for (final Iterator<File> it = files.iterator(); it.hasNext();) {
+      for (final Iterator<? extends File> it = files.iterator(); it.hasNext();) {
         if (filter.accept(it.next())) {
           it.remove();
         }
@@ -419,7 +419,7 @@ public class JavaBuilderUtil {
     return scope.isBuildIncrementally(JavaModuleBuildTargetType.PRODUCTION) || scope.isBuildIncrementally(JavaModuleBuildTargetType.TEST);
   }
 
-  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<File> affected, ModulesBasedFileFilter moduleBasedFilter) {
+  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<? extends File> affected, ModulesBasedFileFilter moduleBasedFilter) {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
@@ -545,7 +545,7 @@ public class JavaBuilderUtil {
       return rd != null && myChunkTargets.contains(rd.target);
     }
 
-    public boolean containsFilesFromCurrentTargetChunk(Collection<File> files) {
+    public boolean containsFilesFromCurrentTargetChunk(Collection<? extends File> files) {
       for (File file : files) {
         if (belongsToCurrentTargetChunk(file)) {
           return true;

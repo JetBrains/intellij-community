@@ -175,7 +175,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                                                   final ProjectData projectInfo, boolean trackTestFolders,
                                                   @NotNull final ProjectFileIndex index,
                                                   @NotNull final CoverageEngine coverageEngine,
-                                                  Set<VirtualFile> visitedDirs,
+                                                  Set<? super VirtualFile> visitedDirs,
                                                   @NotNull final Map<String, String> normalizedFiles2Files) {
     if (!index.isInContent(dir)) {
       return null;

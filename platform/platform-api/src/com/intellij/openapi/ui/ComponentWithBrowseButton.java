@@ -148,7 +148,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
                                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<Comp> accessor) {
+                                      TextComponentAccessor<? super Comp> accessor) {
     addActionListener(new BrowseFolderActionListener<>(title, description, this, project, fileChooserDescriptor, accessor));
   }
 
@@ -160,7 +160,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
                                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<Comp> accessor, boolean autoRemoveOnHide) {
+                                      TextComponentAccessor<? super Comp> accessor, boolean autoRemoveOnHide) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor);
   }
 

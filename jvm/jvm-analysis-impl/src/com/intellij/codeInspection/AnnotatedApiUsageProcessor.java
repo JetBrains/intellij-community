@@ -15,6 +15,6 @@ public interface AnnotatedApiUsageProcessor {
   void processAnnotatedTarget(
     @NotNull UElement sourceNode,
     @NotNull PsiModifierListOwner annotatedTarget,
-    @NotNull List<PsiAnnotation> annotations
+    @NotNull List<? extends PsiAnnotation> annotations
   );
 }

@@ -396,7 +396,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  public void checkPositionNotFiltered(ThreadReferenceProxyImpl thread, Consumer<List<ClassFilter>> action) {
+  public void checkPositionNotFiltered(ThreadReferenceProxyImpl thread, Consumer<? super List<ClassFilter>> action) {
     List<ClassFilter> activeFilters = getActiveFilters();
     if (!activeFilters.isEmpty()) {
       String currentClassName = getCurrentClassName(thread);

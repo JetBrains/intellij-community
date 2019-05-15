@@ -4,16 +4,17 @@ package com.jetbrains.changeReminder.commit.handle.ui
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBDimension
-import com.jetbrains.changeReminder.predict.PredictedChange
 import com.jetbrains.changeReminder.predict.PredictedFile
 import java.awt.BorderLayout
 import javax.swing.Action
@@ -63,24 +64,25 @@ internal class ChangeReminderDialog(private val project: Project, private val fi
     return panel
   }
 
-  private fun createForgottenFilesString() = buildString {
-    val modifiedFilesCount = files.filterIsInstance<PredictedChange>().size
-    val unmodifiedFilesCount = files.size - modifiedFilesCount
-    if (modifiedFilesCount > 0) {
-      append("commit ")
+  private fun getHelpTooltipText() = "${ApplicationNamesInfo.getInstance().fullProductName} " +
+                                     "predicts files that are usually committed together, so that they are not forgotten by mistake."
+
+  private fun createRelatedFilesPrefix() = buildString {
+    append("Following ${StringUtil.pluralize("file", files.size)} ")
+    if (files.size == 1) {
+      append("is")
     }
-    if (modifiedFilesCount > 0 && unmodifiedFilesCount > 0) {
-      append("or ")
+    else {
+      append("are")
     }
-    if (unmodifiedFilesCount > 0) {
-      append("modify ")
-    }
-    append("${StringUtil.pluralize("this", files.size)} ${StringUtil.pluralize("file", files.size)}")
   }
 
   override fun createCenterPanel() = panel {
     row {
-      JBLabel("You might have forgotten to ${createForgottenFilesString()}:")()
+      cell {
+        JBLabel("${createRelatedFilesPrefix()} usually committed with files from commit: ")()
+        ContextHelpLabel.create(getHelpTooltipText())()
+      }
     }
     row {
       createTreePanel()(grow, push)

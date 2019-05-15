@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,14 @@
  */
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.spellchecker.xml.NoSpellchecking;
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.impl.KeymapConverter;
 
 public interface KeyboardShortcut extends DomElement {
 
@@ -30,10 +33,8 @@ public interface KeyboardShortcut extends DomElement {
 
   @NotNull
   @Required
-  GenericAttributeValue<String> getKeymap();
-
-  @NotNull
-  GenericAttributeValue<String> getUseShortcutOf();
+  @Convert(KeymapConverter.class)
+  GenericAttributeValue<XmlFile> getKeymap();
 
   @NotNull
   @NoSpellchecking

@@ -433,7 +433,7 @@ public class ActionsTree {
       }
     }
 
-    private void addPathToList(DefaultMutableTreeNode root, ArrayList<String> list) {
+    private void addPathToList(DefaultMutableTreeNode root, ArrayList<? super String> list) {
       String path = getPath(root);
       if (!StringUtil.isEmpty(path)) {
         list.add(path);

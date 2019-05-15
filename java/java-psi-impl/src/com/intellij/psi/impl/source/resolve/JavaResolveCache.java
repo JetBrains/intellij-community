@@ -78,8 +78,8 @@ public class JavaResolveCache {
   }
 
   @Nullable
-  public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
-    final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck() || LambdaUtil.isLambdaParameterCheck();
+  public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<? super T, ? extends PsiType> f) {
+    final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck();
     final boolean polyExpression = PsiPolyExpressionUtil.isPolyExpression(expr);
 
     ConcurrentMap<PsiExpression, PsiType> map = myCalculatedTypes.get();

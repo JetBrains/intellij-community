@@ -147,7 +147,7 @@ public class Replacer {
     }
   }
 
-  public void replaceAll(final List<ReplacementInfo> infos) {
+  public void replaceAll(final List<? extends ReplacementInfo> infos) {
     for (ReplacementInfo info : infos) {
       replaceHandler.prepare(info);
     }

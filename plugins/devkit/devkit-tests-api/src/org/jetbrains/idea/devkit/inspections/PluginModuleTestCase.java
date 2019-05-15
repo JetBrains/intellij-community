@@ -63,7 +63,7 @@ public abstract class PluginModuleTestCase extends LightCodeInsightFixtureTestCa
 
   @NotNull
   private PluginBuildConfiguration getPluginBuildConfiguration() {
-    final PluginBuildConfiguration pluginBuildConfiguration = PluginBuildConfiguration.getInstance(myModule);
+    final PluginBuildConfiguration pluginBuildConfiguration = PluginBuildConfiguration.getInstance(getModule());
     assertNotNull(pluginBuildConfiguration);
     return pluginBuildConfiguration;
   }

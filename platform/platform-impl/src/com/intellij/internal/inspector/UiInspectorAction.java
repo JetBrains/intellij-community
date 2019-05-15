@@ -129,7 +129,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class InspectorWindow extends JDialog {
     private InspectorTable myInspectorTable;
     private Component myComponent;
-    private List<PropertyBean> myInfo;
+    private List<? extends PropertyBean> myInfo;
     private final Component myInitialComponent;
     private HighlightComponent myHighlightComponent;
     private final HierarchyTree myHierarchyTree;
@@ -197,7 +197,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         }
 
         @Override
-        public void onComponentChanged(List<PropertyBean> info) {
+        public void onComponentChanged(List<? extends PropertyBean> info) {
           boolean wasHighlighted = myHighlightComponent != null;
           setHighlightingEnabled(false);
           switchInfo(info);
@@ -259,7 +259,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myWrapperPanel.repaint();
     }
 
-    private void switchInfo(@NotNull List<PropertyBean> clickInfo) {
+    private void switchInfo(@NotNull List<? extends PropertyBean> clickInfo) {
       myComponent = null;
       myInfo = clickInfo;
       setTitle("Click Info");
@@ -523,7 +523,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       }
     }
 
-    public abstract void onComponentChanged(List<PropertyBean> info);
+    public abstract void onComponentChanged(List<? extends PropertyBean> info);
 
     public abstract void onComponentChanged(Component c);
 
@@ -632,7 +632,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     InspectorTableModel myModel;
     DimensionsComponent myDimensionComponent;
 
-    private InspectorTable(@NotNull final List<PropertyBean> clickInfo) {
+    private InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo) {
        myModel = new InspectorTableModel(clickInfo);
        init(null);
     }

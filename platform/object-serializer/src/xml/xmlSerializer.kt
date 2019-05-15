@@ -6,10 +6,11 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
+import com.intellij.serialization.BindingProducer
+import com.intellij.serialization.MutableAccessor
+import com.intellij.serialization.SerializationException
+import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.util.io.URLUtil
-import com.intellij.util.serialization.BindingProducer
-import com.intellij.util.serialization.MutableAccessor
-import com.intellij.util.serialization.SerializationException
 import com.intellij.util.xmlb.*
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -146,23 +147,19 @@ fun serializeObjectInto(o: Any, target: Element, filter: SerializationFilter? = 
   beanBinding.serializeInto(o, target, filter ?: getDefaultSerializationFilter())
 }
 
-private val serializer by lazy { MyXmlSerializer() }
+private val serializer = MyXmlSerializer()
 
 private class MyXmlSerializer : XmlSerializerImpl.XmlSerializerBase() {
   val bindingProducer = object : BindingProducer<Binding>() {
     override fun getNestedBinding(accessor: MutableAccessor) = throw IllegalStateException()
 
-    override fun createRootBinding(aClass: Class<*>, type: Type, map: MutableMap<Type, Binding>): Binding {
+    override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, Binding>): Binding {
       val binding = createClassBinding(aClass, null, type) ?: KotlinAwareBeanBinding(aClass)
-      map.put(type, binding)
+      map.put(cacheKey, binding)
       try {
         binding.init(type, this@MyXmlSerializer)
       }
-      catch (e: RuntimeException) {
-        map.remove(type)
-        throw e
-      }
-      catch (e: Error) {
+      catch (e: Throwable) {
         map.remove(type)
         throw e
       }
