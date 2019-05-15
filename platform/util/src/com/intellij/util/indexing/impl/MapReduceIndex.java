@@ -236,11 +236,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       if (myDisposed) {
         return new ValueContainerImpl<>();
       }
-      ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
+      DebugAssertions.DEBUG_INDEX_ID.set(myIndexId);
       return myStorage.read(key);
     }
     finally {
-      ValueContainerImpl.ourDebugIndexInfo.set(null);
+      DebugAssertions.DEBUG_INDEX_ID.set(null);
       lock.unlock();
     }
   }
@@ -354,9 +354,9 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
                                @NotNull UpdateData<Key, Value> updateData) throws StorageException {
     getWriteLock().lock();
     try {
-      IndexId oldIndexId = ValueContainerImpl.ourDebugIndexInfo.get();
+      IndexId oldIndexId = DebugAssertions.DEBUG_INDEX_ID.get();
       try {
-        ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
+        DebugAssertions.DEBUG_INDEX_ID.set(myIndexId);
         boolean hasDifference = updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
         if (hasDifference) updateData.updateForwardIndex();
       }
@@ -367,7 +367,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         throw new StorageException(e);
       }
       finally {
-        ValueContainerImpl.ourDebugIndexInfo.set(oldIndexId);
+        DebugAssertions.DEBUG_INDEX_ID.set(oldIndexId);
       }
     }
     finally {
