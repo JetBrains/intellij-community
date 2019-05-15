@@ -717,11 +717,9 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
     while (true) {
       if (myBuilder.getTokenType() == XML_ENTITY_REF_TOKEN) {
         parseEntityRef();
-        continue;
       }
       else if (myBuilder.getTokenType() == XML_BAR) {
         addToken();
-        continue;
       }
       else if (!parseName()) {
         break;
