@@ -57,6 +57,8 @@ public class HgHistoryTest extends HgPlatformTest {
       echo(names[i], "f" + i);
       hg("commit -m a ");
     }
+
+    changeListManager.waitUntilRefreshed();
   }
 
   public void testFileNameInTargetRevisionAfterRename() throws HgCommandException {
