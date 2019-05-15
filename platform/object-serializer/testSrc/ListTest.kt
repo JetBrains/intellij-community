@@ -74,7 +74,8 @@ class ListTest {
   fun `versioned file`() {
     val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42)
     val list = listOf("foo", "bar")
-    file.writeList(list, String::class.java, configuration = WriteConfiguration(binary = false))
+    val configuration = WriteConfiguration(binary = false)
+    file.writeList(list, String::class.java, configuration = configuration)
     assertThat(file.file.readChars().trim()).isEqualTo("""
       {
         version:42,
@@ -86,6 +87,10 @@ class ListTest {
       }
     """.trimIndent())
     assertThat(file.readList(String::class.java)).isEqualTo(list)
+
+    // test that we can read regardless of compressed setting
+    VersionedFile(file.file, 42, isCompressed = true).writeList(list, String::class.java, configuration = configuration)
+    assertThat(VersionedFile(file.file, 42, isCompressed = false).readList(String::class.java)).isEqualTo(list)
   }
 
   @Test

@@ -11,8 +11,8 @@ import com.amazon.ion.system.IonWriterBuilder
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
-import com.intellij.util.io.inputStream
 import java.io.IOException
+import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.Type
 import java.nio.file.Path
@@ -47,13 +47,13 @@ internal class IonObjectSerializer {
   }
 
   @Throws(IOException::class)
-  fun <T : Any> readVersioned(objectClass: Class<T>, file: Path, expectedVersion: Int, configuration: ReadConfiguration, originalType: Type? = null): T? {
-    readerBuilder.build(file.inputStream().buffered()).use { reader ->
+  fun <T : Any> readVersioned(objectClass: Class<T>, input: InputStream, inputName: Path, expectedVersion: Int, configuration: ReadConfiguration, originalType: Type? = null): T? {
+    readerBuilder.build(input).use { reader ->
       @Suppress("UNUSED_VARIABLE")
       var isVersionChecked = 0
 
       fun logVersionMismatch(prefix: String, currentVersion: Int) {
-        LOG.debug { "$prefix version mismatch (file=$file, currentVersion: $currentVersion, expectedVersion=$expectedVersion, objectClass=$objectClass)" }
+        LOG.debug { "$prefix version mismatch (file=$inputName, currentVersion: $currentVersion, expectedVersion=$expectedVersion, objectClass=$objectClass)" }
       }
 
       try {
@@ -100,7 +100,7 @@ internal class IonObjectSerializer {
               context.errors.report(LOG)
             }
           }
-          else -> LOG.warn("Unknown field: $fieldName (file=$file, expectedVersion=$expectedVersion, objectClass=$objectClass)")
+          else -> LOG.warn("Unknown field: $fieldName (file=$inputName, expectedVersion=$expectedVersion, objectClass=$objectClass)")
         }
       }
       reader.stepOut()
