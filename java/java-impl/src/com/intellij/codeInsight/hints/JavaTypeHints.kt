@@ -47,13 +47,14 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
       }
     }
     val presentations = mutableListOf(joinWithDot(qualifierPresentation, className))
-    if (level > myFoldingLevel) {
-      presentations.add(myFactory.seq(myFactory.smallText("<"), myFactory.folding(myFactory.smallText("...")) { parametersHint(classType, level) }, myFactory.smallText(">")))
-    } else {
-      presentations.add(myFactory.smallText("<"))
-      presentations.add(parametersHint(classType, level))
-      presentations.add(myFactory.smallText(">"))
-    }
+    val collapsible = myFactory.collapsible(
+      prefix = myFactory.smallText("<"),
+      collapsed = myFactory.smallText("..."),
+      expanded = { parametersHint(classType, level) },
+      suffix = myFactory.smallText(">"),
+      startWithPlaceholder = level > myFoldingLevel
+    )
+    presentations.add(collapsible)
     return SequencePresentation(presentations)
   }
 
