@@ -411,14 +411,21 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      BoundedRangeModel model = myTerminalWidget.getTerminalPanel().getBoundedRangeModel();
-      e.getPresentation().setEnabled(model.getValue() != 0);
+      BoundedRangeModel model = getBoundedRangeModel();
+      e.getPresentation().setEnabled(model != null && model.getValue() != 0);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      BoundedRangeModel model = myTerminalWidget.getTerminalPanel().getBoundedRangeModel();
-      model.setValue(0);
+      BoundedRangeModel model = getBoundedRangeModel();
+      if (model != null) {
+        model.setValue(0);
+      }
+    }
+
+    @Nullable
+    private BoundedRangeModel getBoundedRangeModel() {
+      return myTerminalWidget != null ? myTerminalWidget.getTerminalPanel().getBoundedRangeModel() : null;
     }
   }
 }
