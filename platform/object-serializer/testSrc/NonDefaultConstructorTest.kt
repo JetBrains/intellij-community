@@ -67,7 +67,7 @@ private class ContainingBean {
   var b2: Bean3? = null
 }
 
-private class Bean2 @PropertyMapping(["name"]) constructor(@JvmField val name: String)
+private class Bean2 @PropertyMapping("name") constructor(@JvmField val name: String)
 
 private class Bean3 {
   @JvmField
@@ -75,8 +75,8 @@ private class Bean3 {
 }
 
 @Suppress("UNUSED_PARAMETER", "unused")
-private class NoDefaultConstructorBean @PropertyMapping(["someParameter", "intList"]) constructor(@JvmField val someParameter: String,
+private class NoDefaultConstructorBean @PropertyMapping("someParameter", "intList") constructor(@JvmField val someParameter: String,
                                                                                                   @JvmField val intList: List<Int>)
 
 @Suppress("UNUSED_PARAMETER", "unused")
-private class NullableArgBean @PropertyMapping(["p", "p2", "p3"]) constructor(@JvmField val p: String?, @JvmField val p2: String?, @JvmField val p3: String?)
+private class NullableArgBean @PropertyMapping("p", "p2", "p3") constructor(@JvmField val p: String?, @JvmField val p2: String?, @JvmField val p3: String?)

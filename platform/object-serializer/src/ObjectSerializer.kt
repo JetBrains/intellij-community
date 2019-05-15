@@ -17,13 +17,6 @@ internal typealias ValueReader = IonReader
 internal typealias ValueWriter = IonWriter
 typealias BeanConstructed = (instance: Any) -> Any
 
-/**
- * Kotlin: `@PropertyMapping(["name", "name2"])`
- * Java: `@PropertyMapping({"name", "name2"})`
- */
-@Target(AnnotationTarget.CONSTRUCTOR)
-annotation class PropertyMapping(val value: Array<String>)
-
 internal val defaultWriteConfiguration = WriteConfiguration()
 internal val LOG = logger<ObjectSerializer>()
 

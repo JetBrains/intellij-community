@@ -25,5 +25,6 @@
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.yaml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
+    <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
   </component>
 </module>
