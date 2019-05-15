@@ -379,6 +379,9 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
 
   private boolean isFileSystemLocation(Location location) {
     try {
+      if (!(location instanceof StandardLocation)) {
+        return false;
+      }
       final StandardLocation loc = StandardLocation.valueOf(location.getName());
       if (loc == StandardLocation.PLATFORM_CLASS_PATH) {
         return myJavacBefore9;
