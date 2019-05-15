@@ -232,7 +232,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       float arc = COMPONENT_ARC.getFloat();
 
       boolean editable = comboBox.isEnabled() && editor != null && comboBox.isEditable();
-      g2.setColor(editable ? editor.getBackground() : comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground());
+      Color backgroundColor = editable ? editor.getBackground() : getBackgroundColor();
+      g2.setColor(backgroundColor);
 
       g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
     }
@@ -244,6 +245,13 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       checkFocus();
       paintCurrentValue(g, rectangleForCurrentValue(), hasFocus);
     }
+  }
+
+  private Color getBackgroundColor() {
+    if (comboBox.isBackgroundSet()) {
+      return comboBox.getBackground();
+    }
+    return comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground();
   }
 
   /**
@@ -261,7 +269,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
 
     c.setFont(comboBox.getFont());
-    c.setBackground(comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground());
+    c.setBackground(getBackgroundColor());
 
     if (hasFocus && !isPopupVisible(comboBox)) {
       c.setForeground(listBox.getForeground());
