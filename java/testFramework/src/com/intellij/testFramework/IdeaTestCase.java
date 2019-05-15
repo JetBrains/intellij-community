@@ -23,8 +23,13 @@ public abstract class IdeaTestCase extends PlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(getProjectLanguageLevel());
     myJavaFacade = JavaPsiFacadeEx.getInstanceEx(myProject);
+  }
+
+  @NotNull
+  protected LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_1_6;
   }
 
   @Override
