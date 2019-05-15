@@ -907,6 +907,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     });
   }
 
+  @Override
+  public void visitPyAssignmentExpression(PyAssignmentExpression node) {
+    final PyExpression assignedValue = node.getAssignedValue();
+    if (assignedValue != null) assignedValue.accept(this);
+
+    node.getTarget().accept(this);
+  }
+
   private void abruptFlow(final PsiElement node) {
     // Here we process pending instructions!!!
     myBuilder.processPending((pendingScope, instruction) -> {
