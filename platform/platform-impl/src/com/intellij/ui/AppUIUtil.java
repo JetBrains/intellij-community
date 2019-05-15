@@ -344,9 +344,6 @@ public class AppUIUtil {
     showEndUserAgreementText(title, htmlText);
   }
 
-  /**
-   * Used by {@link com.intellij.idea.StartupListener}
-   */
   public static void showEndUserAgreementText(String title, @NotNull String htmlText) {
       DialogWrapper dialog = new DialogWrapper(true) {
 
