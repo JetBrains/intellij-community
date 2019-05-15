@@ -6,7 +6,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ShOldLexerTestV3 extends LexerTestCase {
+public class ShOldLexerVersion3Test extends LexerTestCase {
   @Override
   protected Lexer createLexer() {
     return new ShLexer();
