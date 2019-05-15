@@ -192,7 +192,7 @@ class FeatureUsageData {
   fun copy(): FeatureUsageData {
     val result = FeatureUsageData()
     for ((key, value) in data) {
-      data[key] = value
+      result.data[key] = value
     }
     return result
   }

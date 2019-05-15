@@ -392,4 +392,38 @@ class FeatureUsageDataTest {
     Assert.assertTrue(build["event_data_99"] == "default-value")
     Assert.assertTrue(build["value"] == 10)
   }
+
+  @Test
+  fun `test merge group with group default event data fields`() {
+    val group = FeatureUsageData().addPlace("EditorToolbar")
+    val event = FeatureUsageData().addData("second", "value-2")
+    val merged = FUStateUsagesLogger.mergeWithEventData(group, event, 1)
+
+    val build = merged!!.build()
+    Assert.assertTrue(build.size == 2)
+    Assert.assertTrue(build["place"] == "EditorToolbar")
+    Assert.assertTrue(build["second"] == "value-2")
+  }
+
+  @Test
+  fun `test merge group with event default event data fields`() {
+    val group = FeatureUsageData().addData("first", "value-1")
+    val event = FeatureUsageData().addPlace("EditorToolbar")
+    val merged = FUStateUsagesLogger.mergeWithEventData(group, event, 1)
+
+    val build = merged!!.build()
+    Assert.assertTrue(build.size == 2)
+    Assert.assertTrue(build["first"] == "value-1")
+    Assert.assertTrue(build["place"] == "EditorToolbar")
+  }
+
+  @Test
+  fun `test copy group with default event data fields`() {
+    val data = FeatureUsageData().addPlace("EditorToolbar")
+    val copied = data.copy()
+
+    val build = copied.build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build["place"] == "EditorToolbar")
+  }
 }
