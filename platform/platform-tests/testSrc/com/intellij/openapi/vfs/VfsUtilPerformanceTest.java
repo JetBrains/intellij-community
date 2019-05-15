@@ -6,6 +6,7 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -68,7 +69,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     assertNotNull(theChild);
     UIUtil.pump(); // wait for all event handlers to calm down
 
-    LOG.debug("Start searching...");
+    Logger.getInstance(VfsUtilPerformanceTest.class).debug("Start searching...");
     PlatformTestUtil.startPerformanceTest("finding child", 1500, () -> {
       for (int i = 0; i < 1_000_000; i++) {
         VirtualFile child = vDir.findChild("5111.txt");
