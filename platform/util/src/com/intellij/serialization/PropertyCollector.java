@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentMap;
 
 @ApiStatus.Internal
 public class PropertyCollector {
-  private final Map<Class<?>, List<MutableAccessor>> accessorCache = ContainerUtil.newConcurrentMap();
   private final ConcurrentMap<Class<?>, List<MutableAccessor>> classToOwnFields = ContainerUtil.newConcurrentMap();
 
   private final boolean collectAccessors;
@@ -40,13 +39,11 @@ public class PropertyCollector {
     this.collectFinalFields = BitUtil.isSet(flags, COLLECT_FINAL_FIELDS);
   }
 
+  /**
+   * Result is not cached because caller should cache it if need.
+   */
   @NotNull
   public List<MutableAccessor> collect(@NotNull Class<?> aClass) {
-    return accessorCache.computeIfAbsent(aClass, this::doCollect);
-  }
-
-  @NotNull
-  private synchronized List<MutableAccessor> doCollect(@NotNull Class<?> aClass) {
     List<MutableAccessor> accessors;
     accessors = new ArrayList<>();
 
