@@ -160,7 +160,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     setRootColumnSize();
 
-    for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
+    for (int i = 0; i < getVisibleColumnCount(); i++) {
       TableColumn column = getColumnModel().getColumn(i);
       column.setResizable(column.getModelIndex() != ROOT_COLUMN);
     }
@@ -198,7 +198,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     List<Integer> columnOrder = getColumnOrderFromProperties();
     if (columnOrder != null) {
-      int columnCount = columnModel.getColumnCount();
+      int columnCount = getVisibleColumnCount();
       for (int i = columnCount - 1; i >= 0; i--) {
         columnModel.removeColumn(columnModel.getColumn(i));
       }
@@ -224,7 +224,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private boolean isValidColumnOrder(@NotNull List<Integer> columnOrder) {
-    int columnCount = getModel().getColumnCount();
+    int columnCount = getTotalColumnCount();
     if (!columnOrder.contains(ROOT_COLUMN)) return false;
     if (!columnOrder.contains(COMMIT_COLUMN)) return false;
     for (Integer index : columnOrder) {
@@ -243,10 +243,18 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private List<Integer> getVisibleColumns() {
     List<Integer> columnOrder = new ArrayList<>();
 
-    for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
+    for (int i = 0; i < getVisibleColumnCount(); i++) {
       columnOrder.add(getColumnModel().getColumn(i).getModelIndex());
     }
     return columnOrder;
+  }
+
+  private int getTotalColumnCount() {
+    return getModel().getColumnCount();
+  }
+
+  private int getVisibleColumnCount() {
+    return getColumnModel().getColumnCount();
   }
 
   public void reLayout() {
@@ -379,7 +387,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private void updateCommitColumnWidth() {
     int size = getWidth();
-    for (int i = 0; i < getModel().getColumnCount(); i++) {
+    for (int i = 0; i < getTotalColumnCount(); i++) {
       if (i == COMMIT_COLUMN) continue;
       TableColumn column = getColumnByModelIndex(i);
       if (column != null) size -= column.getPreferredWidth();
