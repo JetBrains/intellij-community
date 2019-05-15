@@ -360,7 +360,7 @@ public class LambdaUtil {
 
     final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
     if (map != null) {
-      final PsiType type = map.get(expression);
+      final PsiType type = ObjectUtils.chooseNotNull(map.get(expression), map.get(element));
       if (type != null) {
         return type;
       }
