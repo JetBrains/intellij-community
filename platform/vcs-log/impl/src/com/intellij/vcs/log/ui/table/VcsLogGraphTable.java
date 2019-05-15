@@ -160,8 +160,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     setRootColumnSize();
 
-    for (int i = 0; i < getVisibleColumnCount(); i++) {
-      TableColumn column = getColumnModel().getColumn(i);
+    for (TableColumn column : myTableColumns) {
       column.setResizable(column.getModelIndex() != ROOT_COLUMN);
     }
   }
