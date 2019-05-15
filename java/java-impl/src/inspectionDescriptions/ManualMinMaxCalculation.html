@@ -1,19 +1,19 @@
 <html>
 <body>
-Reports cases where minimum or maximum of two numbers can be calculated using
+Reports cases where the minimum or the maximum of two numbers can be calculated by means of
 <code>Math.max()</code> or <code>Math.min()</code> instead of doing it manually.
-Example:
-<p><code>
+<p>Example:</p>
+<pre>
   public int getMinWeight(int typeDiffWeight, int rawTypeDiffWeight) {
-  return (rawTypeDiffWeight < typeDiffWeight ? rawTypeDiffWeight : typeDiffWeight);
+    return (rawTypeDiffWeight &lt; typeDiffWeight ? rawTypeDiffWeight : typeDiffWeight);
   }
-</code></p>
-Will be replaced with:
-<p><code>
+</pre>
+<p>Will be replaced with:</p>
+<pre>
   public int getMinWeight(int typeDiffWeight, int rawTypeDiffWeight) {
-  return Math.min(rawTypeDiffWeight, typeDiffWeight);
+    return Math.min(rawTypeDiffWeight, typeDiffWeight);
   }
-</code></p>
+</pre>
 <!-- tooltip end -->
 <p><small>New in 2019.2</small></p>
 </body>
