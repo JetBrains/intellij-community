@@ -17,7 +17,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class ShShellcheckInspection extends LocalInspectionTool implements ExternalAnnotatorBatchInspection {
   public static final String SHORT_NAME = "ShellCheck";
@@ -48,7 +51,10 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
     }
 
     Project project = ProjectUtil.guessCurrentProject(myOptionsPanel);
-    EditorNotifications.getInstance(project).updateAllNotifications();
+    EditorNotifications editorNotifications = EditorNotifications.getInstance(project);
+    if (editorNotifications != null) {
+      editorNotifications.updateAllNotifications();
+    }
   }
 
   @Nullable
@@ -79,7 +85,7 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
   @NotNull
   static ShShellcheckInspection findShShellcheckInspection(@NotNull PsiElement element) {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
-    ShShellcheckInspection tool = (ShShellcheckInspection) profile.getUnwrappedTool(SHORT_NAME, element);
+    ShShellcheckInspection tool = (ShShellcheckInspection)profile.getUnwrappedTool(SHORT_NAME, element);
     return tool == null ? new ShShellcheckInspection() : tool;
   }
 }
