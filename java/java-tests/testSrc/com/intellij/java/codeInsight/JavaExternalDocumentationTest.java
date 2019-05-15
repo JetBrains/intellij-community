@@ -104,6 +104,10 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
     doTest("class Foo {{ new com.jetbrains.LinkBetweenMethods().<caret>m1(); }}");
   }
 
+  public void testEscapingLink() throws Exception {
+    doTest("class Foo {{ new com.jetbrains.GenericClass().<caret>genericMethod(null); }}");
+  }
+
   private void doTest(String text) throws Exception {
     String actualText = getDocumentationText(text);
     String expectedText = StringUtil.convertLineSeparators(FileUtil.loadFile(getDataFile(getTestName(false) + ".html")));
