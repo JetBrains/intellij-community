@@ -2,8 +2,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -25,8 +23,7 @@ import java.util.function.Supplier;
  * @author anna
  */
 public class LambdaUtil {
-  public static final RecursionGuard<PsiParameter> ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
-  public static final ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<>();
+  private static final ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<>();
   private static final Logger LOG = Logger.getInstance(LambdaUtil.class);
 
   @Nullable
@@ -856,13 +853,18 @@ public class LambdaUtil {
     }
   }
 
-  public static <T> T performWithLambdaTargetType(PsiLambdaExpression lambdaExpression, PsiType targetType, Supplier<? extends T> producer) {
+  public static <T> T performWithTargetType(@NotNull PsiElement element, @NotNull PsiType targetType, @NotNull Supplier<? extends T> producer) {
+    Map<PsiElement, PsiType> map = getFunctionalTypeMap();
+    PsiType prev = map.put(element, targetType);
     try {
-      getFunctionalTypeMap().put(lambdaExpression, targetType);
       return producer.get();
     }
     finally {
-      getFunctionalTypeMap().remove(lambdaExpression);
+      if (prev == null) {
+        map.remove(element);
+      } else {
+        map.put(element, prev);
+      }
     }
   }
 

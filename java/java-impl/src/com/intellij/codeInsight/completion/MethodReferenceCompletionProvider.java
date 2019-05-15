@@ -52,19 +52,14 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
                   return;
                 }
 
-                final PsiType added = map.put(referenceExpression, functionalType);
-                try {
+                LambdaUtil.performWithTargetType(referenceExpression, functionalType, () -> {
                   final PsiElement resolve = referenceExpression.resolve();
-                  if (resolve != null && PsiEquivalenceUtil.areElementsEquivalent(element, resolve) && 
+                  if (resolve != null && PsiEquivalenceUtil.areElementsEquivalent(element, resolve) &&
                       PsiMethodReferenceUtil.checkMethodReferenceContext(referenceExpression, resolve, functionalType) == null) {
                     result.addElement(new JavaMethodReferenceElement((PsiMethod)element, refPlace));
                   }
-                }
-                finally {
-                  if (added == null) {
-                    map.remove(referenceExpression);
-                  }
-                }
+                  return null;
+                });
               }
             }
 
