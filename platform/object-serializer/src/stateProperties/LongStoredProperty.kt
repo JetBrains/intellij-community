@@ -1,19 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.configurationStore.properties
+package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.text.StringUtil
 import kotlin.reflect.KProperty
 
-internal class FloatStoredProperty(private val defaultValue: Float, private val valueNormalizer: ((value: Float) -> Float)?) : StoredPropertyBase<Float>(), ScalarProperty {
+internal class LongStoredProperty(private val defaultValue: Long, private val valueNormalizer: ((value: Long) -> Long)?) : StoredPropertyBase<Long>(), ScalarProperty {
   private var value = defaultValue
 
   override val jsonType: JsonSchemaType
-    get() = JsonSchemaType.NUMBER
+    get() = JsonSchemaType.INTEGER
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
 
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, value: Float) {
+  override fun setValue(thisRef: BaseState, property: KProperty<*>, value: Long) {
     val newValue = valueNormalizer?.invoke(value) ?: value
     if (this.value != newValue) {
       thisRef.intIncrementModificationCount()
@@ -21,8 +21,8 @@ internal class FloatStoredProperty(private val defaultValue: Float, private val 
     }
   }
 
-  override fun setValue(other: StoredProperty<Float>): Boolean {
-    val newValue = (other as FloatStoredProperty).value
+  override fun setValue(other: StoredProperty<Long>): Boolean {
+    val newValue = (other as LongStoredProperty).value
     if (newValue == value) {
       return false
     }
@@ -31,7 +31,7 @@ internal class FloatStoredProperty(private val defaultValue: Float, private val 
     return true
   }
 
-  override fun equals(other: Any?) = this === other || (other is FloatStoredProperty && value == other.value)
+  override fun equals(other: Any?) = this === other || (other is LongStoredProperty && value == other.value)
 
   override fun hashCode() = value.hashCode()
 
@@ -44,11 +44,11 @@ internal class FloatStoredProperty(private val defaultValue: Float, private val 
       return
     }
 
-    value = parseYamlFloat(rawValue)
+    value = parseYamlLong(rawValue)
   }
 }
 
-private fun parseYamlFloat(_value: String): Float {
+private fun parseYamlLong(_value: String): Long {
   var value = StringUtil.replace(_value, "_", "")
   var sign = +1
   val first = value.get(0)
@@ -60,22 +60,44 @@ private fun parseYamlFloat(_value: String): Float {
     value = value.substring(1)
   }
 
+  if ("0" == value) {
+    return 0
+  }
+
   return when {
-    StringUtil.equalsIgnoreCase(".inf", value) -> if (sign == -1) Float.NEGATIVE_INFINITY else Float.POSITIVE_INFINITY
-    StringUtil.equalsIgnoreCase(".nan", value) -> Float.NaN
+    value.startsWith("0b") -> {
+      createNumber(sign, value.substring(2), 2)
+    }
+
+    value.startsWith("0x") -> {
+      createNumber(sign, value.substring(2), 16)
+    }
+
+    value.startsWith("0") -> {
+      createNumber(sign, value.substring(1), 6)
+    }
+
     value.indexOf(':') != -1 -> {
       val digits = value.split(":")
       var bes = 1
-      var v = 0.0F
+      var v = 0L
       var i = 0
       val j = digits.size
       while (i < j) {
-        v += (digits[j - i - 1]).toFloat() * bes
+        v += ((digits[j - i - 1]).toLong() * bes)
         bes *= 60
         i++
       }
-      sign * v
+      createNumber(sign, v.toString(), 10)
     }
-    else -> value.toFloat() * sign
+    else -> createNumber(sign, value, 10)
   }
+}
+
+private fun createNumber(sign: Int, _number: String, radix: Int): Long {
+  var number = _number
+  if (sign < 0) {
+    number = "-$number"
+  }
+  return number.toLong(radix)
 }

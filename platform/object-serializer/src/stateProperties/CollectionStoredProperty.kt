@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.configurationStore.properties
+package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.JsonSchemaType
@@ -14,7 +14,7 @@ import kotlin.reflect.KProperty
 /**
  * AbstractCollectionBinding modifies collection directly, so, we cannot use null as default null and return empty list on get.
  */
-open class CollectionStoredProperty<E, C : MutableCollection<E>>(protected val value: C) : StoredPropertyBase<C>() {
+open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected val value: C) : StoredPropertyBase<C>() {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.ARRAY
 
@@ -53,6 +53,6 @@ open class CollectionStoredProperty<E, C : MutableCollection<E>>(protected val v
   fun __getValue() = value
 }
 
-internal class ListStoredProperty<T> : CollectionStoredProperty<T, SmartList<T>>(SmartList()) {
+internal class ListStoredProperty<T : Any> : CollectionStoredProperty<T, SmartList<T>>(SmartList()) {
   override fun getModificationCount() = value.modificationCount.toLong()
 }
