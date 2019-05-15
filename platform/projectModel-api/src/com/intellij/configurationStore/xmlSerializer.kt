@@ -11,52 +11,49 @@ import org.jetbrains.annotations.ApiStatus
 import java.net.URL
 import java.util.*
 
-private val serializer: JdomSerializer = ServiceLoader.load<JdomSerializer>(JdomSerializer::class.java).first()
-
 @ApiStatus.Internal
-fun getDefaultSerializationFilter() = serializer.getDefaultSerializationFilter()
+val jdomSerializer: JdomSerializer = ServiceLoader.load<JdomSerializer>(JdomSerializer::class.java).first()
 
 @JvmOverloads
-fun <T : Any> T.serialize(filter: SerializationFilter? = serializer.getDefaultSerializationFilter(), createElementIfEmpty: Boolean = false): Element? {
-  return serializer.serialize(this, filter, createElementIfEmpty)
+fun <T : Any> serialize(obj: T, filter: SerializationFilter? = jdomSerializer.getDefaultSerializationFilter(), createElementIfEmpty: Boolean = false): Element? {
+  return jdomSerializer.serialize(obj, filter, createElementIfEmpty)
 }
 
-inline fun <reified T: Any> Element.deserialize(): T = deserialize(T::class.java)
+inline fun <reified T: Any> deserialize(element: Element): T = jdomSerializer.deserialize(element, T::class.java)
 
-fun <T> Element.deserialize(clazz: Class<T>): T = serializer.deserialize(this, clazz)
+fun <T> Element.deserialize(clazz: Class<T>): T = jdomSerializer.deserialize(this, clazz)
 
-fun Element.deserializeInto(bean: Any) = serializer.deserializeInto(this, bean)
-
-fun <T> deserialize(url: URL, aClass: Class<T>): T = serializer.deserialize(url, aClass)
+fun Element.deserializeInto(bean: Any) = jdomSerializer.deserializeInto(bean, this)
 
 @JvmOverloads
 fun <T> deserializeAndLoadState(component: PersistentStateComponent<T>, element: Element, clazz: Class<T> = ComponentSerializationUtil.getStateClass<T>(component::class.java)) {
-  val state = serializer.deserialize(element, clazz)
+  val state = jdomSerializer.deserialize(element, clazz)
   (state as? BaseState)?.resetModificationCount()
   component.loadState(state)
 }
 
 @JvmOverloads
 fun serializeObjectInto(o: Any, target: Element, filter: SerializationFilter? = null) {
-  serializer.serializeObjectInto(o, target, filter)
+  jdomSerializer.serializeObjectInto(o, target, filter)
 }
 
 fun serializeStateInto(component: PersistentStateComponent<*>, element: Element) {
   component.state?.let {
-    serializer.serializeObjectInto(it, element)
+    jdomSerializer.serializeObjectInto(it, element)
   }
 }
 
 interface JdomSerializer {
-  fun getDefaultSerializationFilter(): SkipDefaultsSerializationFilter
-
   fun <T : Any> serialize(obj: T, filter: SerializationFilter?, createElementIfEmpty: Boolean = false): Element?
 
-  fun serializeObjectInto(o: Any, target: Element, filter: SerializationFilter? = null)
+  fun serializeObjectInto(obj: Any, target: Element, filter: SerializationFilter? = null)
 
   fun <T> deserialize(element: Element, clazz: Class<T>): T
 
-  fun deserializeInto(element: Element, bean: Any)
+  fun deserializeInto(obj: Any, element: Element)
 
   fun <T> deserialize(url: URL, aClass: Class<T>): T
+
+  @ApiStatus.Internal
+  fun getDefaultSerializationFilter(): SkipDefaultsSerializationFilter
 }

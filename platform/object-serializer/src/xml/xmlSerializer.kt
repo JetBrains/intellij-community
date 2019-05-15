@@ -23,11 +23,9 @@ private fun doGetDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
   if (result == null) {
     result = object : SkipDefaultsSerializationFilter() {
       override fun accepts(accessor: Accessor, bean: Any): Boolean {
-        return if (bean is BaseState) {
-          bean.accepts(accessor, bean)
-        }
-        else {
-          super.accepts(accessor, bean)
+        return when (bean) {
+          is BaseState -> bean.accepts(accessor, bean)
+          else -> super.accepts(accessor, bean)
         }
       }
     }
@@ -41,33 +39,32 @@ internal class JdomSerializerImpl : JdomSerializer {
 
   override fun <T : Any> serialize(obj: T, filter: SerializationFilter?, createElementIfEmpty: Boolean): Element? {
     try {
-      val clazz = javaClass
-      val binding = serializer.getRootBinding(clazz)
+      val binding = serializer.getRootBinding(obj.javaClass)
       return if (binding is BeanBinding) {
         // top level expects not null (null indicates error, empty element will be omitted)
-        binding.serialize(this, createElementIfEmpty, filter)
+        binding.serialize(obj, createElementIfEmpty, filter)
       }
       else {
-        binding.serialize(this, null, filter) as Element
+        binding.serialize(obj, null, filter) as Element
       }
     }
     catch (e: SerializationException) {
       throw e
     }
     catch (e: Exception) {
-      throw XmlSerializationException("Can't serialize instance of ${this.javaClass}", e)
+      throw XmlSerializationException("Can't serialize instance of ${obj.javaClass}", e)
     }
   }
 
-  override fun serializeObjectInto(o: Any, target: Element, filter: SerializationFilter?) {
-    if (o is Element) {
-      val iterator = o.children.iterator()
+  override fun serializeObjectInto(obj: Any, target: Element, filter: SerializationFilter?) {
+    if (obj is Element) {
+      val iterator = obj.children.iterator()
       for (child in iterator) {
         iterator.remove()
         target.addContent(child)
       }
 
-      val attributeIterator = o.attributes.iterator()
+      val attributeIterator = obj.attributes.iterator()
       for (attribute in attributeIterator) {
         attributeIterator.remove()
         target.setAttribute(attribute)
@@ -75,14 +72,14 @@ internal class JdomSerializerImpl : JdomSerializer {
       return
     }
 
-    val beanBinding = serializer.getRootBinding(o.javaClass) as KotlinAwareBeanBinding
-    beanBinding.serializeInto(o, target, filter ?: doGetDefaultSerializationFilter())
+    val beanBinding = serializer.getRootBinding(obj.javaClass) as KotlinAwareBeanBinding
+    beanBinding.serializeInto(obj, target, filter ?: getDefaultSerializationFilter())
   }
 
   override fun <T> deserialize(element: Element, clazz: Class<T>): T {
     if (clazz == Element::class.java) {
       @Suppress("UNCHECKED_CAST")
-      return this as T
+      return element as T
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -97,9 +94,9 @@ internal class JdomSerializerImpl : JdomSerializer {
     }
   }
 
-  override fun deserializeInto(element: Element, bean: Any) {
+  override fun deserializeInto(obj: Any, element: Element) {
     try {
-      (serializer.getRootBinding(bean.javaClass) as BeanBinding).deserializeInto(bean, element)
+      (serializer.getRootBinding(obj.javaClass) as BeanBinding).deserializeInto(obj, element)
     }
     catch (e: SerializationException) {
       throw e
