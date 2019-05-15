@@ -103,6 +103,7 @@ public class BaselinePanel extends NonOpaquePanel {
         for (Component component : myButtonComponents) {
           if (component.isVisible()) {
             parentWidth -= component.getPreferredSize().width;
+            visibleCount++;
           }
         }
         parentWidth -= myButtonOffset.get() * (visibleCount - 1);
