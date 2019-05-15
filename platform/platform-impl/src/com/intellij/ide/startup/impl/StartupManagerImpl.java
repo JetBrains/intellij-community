@@ -153,12 +153,12 @@ public class StartupManagerImpl extends StartupManagerEx {
     DumbService dumbService = DumbService.getInstance(myProject);
     for (StartupActivity extension : StartupActivity.POST_STARTUP_ACTIVITY.getExtensionList()) {
       if (DumbService.isDumbAware(extension)) {
-        logActivityDuration(uiFreezeWarned, extension);
+        runActivity(uiFreezeWarned, extension);
       }
       else {
         dumbService.runWhenSmart(() -> {
           ProgressManager.checkCanceled();
-          logActivityDuration(uiFreezeWarned, extension);
+          runActivity(uiFreezeWarned, extension);
         });
       }
     }
@@ -166,9 +166,8 @@ public class StartupManagerImpl extends StartupManagerEx {
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
   }
 
-  private void logActivityDuration(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension) {
+  private void runActivity(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension) {
     long startTime = StartUpMeasurer.getCurrentTime();
-
     try {
       extension.runActivity(myProject);
     }
@@ -191,11 +190,6 @@ public class StartupManagerImpl extends StartupManagerEx {
           " under modal progress, or just making them faster to speed up project opening.");
       }
     }
-  }
-
-  // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
-  private void queueSmartModeActivity(@NotNull Runnable activity) {
-    DumbService.getInstance(myProject).runWhenSmart(() -> runActivity(activity));
   }
 
   public void runPostStartupActivities() {
@@ -223,9 +217,14 @@ public class StartupManagerImpl extends StartupManagerEx {
 
         while (true) {
           List<Runnable> dumbUnaware = takeDumbUnawareStartupActivities();
-          if (dumbUnaware.isEmpty()) break;
+          if (dumbUnaware.isEmpty()) {
+            break;
+          }
 
-          dumbUnaware.forEach(StartupManagerImpl.this::queueSmartModeActivity);
+          // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
+          for (Runnable activity : dumbUnaware) {
+            dumbService.runWhenSmart(() -> runActivity(activity));
+          }
         }
 
         if (dumbService.isDumb()) {
@@ -242,7 +241,12 @@ public class StartupManagerImpl extends StartupManagerEx {
     });
   }
 
+  @NotNull
   private synchronized List<Runnable> takeDumbUnawareStartupActivities() {
+    if (myNotDumbAwarePostStartupActivities.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     List<Runnable> result = new ArrayList<>(myNotDumbAwarePostStartupActivities);
     myNotDumbAwarePostStartupActivities.clear();
     return result;
