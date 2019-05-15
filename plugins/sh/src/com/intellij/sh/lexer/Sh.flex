@@ -87,7 +87,7 @@ UnclosedRawString        = '[^']*
 RawString                = {UnclosedRawString}'
 
 WordFirst                = [[:letter:]||[:digit:]||[_/@?.*:%\^+,~-]] | {EscapedChar} | [\u00C0-\u00FF] | {LineContinuation}
-WordAfter                = {WordFirst} | [#!] // \[\]
+WordAfter                = {WordFirst} | [#!]
 Word                     = {WordFirst}{WordAfter}*
 
 ArithWordFirst           = [a-zA-Z_@.] | {EscapedChar} | {LineContinuation}
@@ -101,8 +101,12 @@ IntegerLiteral           = [0] | ([1-9][0-9]*) | (6[0-4]|[1-5][0-9]|[2-9]) # [[:
 HexIntegerLiteral        = "0" [xX] [0-9a-fA-F]+
 OctalIntegerLiteral      = "0" [0-7]+
 
-CaseFirst                = {EscapedChar} | [^|\"'$)(# \n\r\f\t\f]
-CaseAfter                = {EscapedChar} | [^|\"'$`)( \n\r\f\t\f;]
+PatternSimple = [*?]
+PatternExt = ([?*+@!] "(" [^)]+ ")" ) | ([?*+@!] "[" [^]]+ "]")
+Pattern = ({PatternSimple} | {PatternExt})+
+
+CaseFirst                = {EscapedChar} | {Pattern} | [^|\"'$)(# \n\r\f\t\f]
+CaseAfter                = {EscapedChar} | {Pattern} | [^|\"'$`)( \n\r\f\t\f;]
 CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 
 Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage ('<&' | '>&') (num | '-') in parser
@@ -388,6 +392,7 @@ StringContent            = [^$\"`(] | {EscapedChar}
 
 <YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_CONDITION, CASE_PATTERN, IF_CONDITION,
   OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION> {
+    {PatternExt}+                 |
     {Word}                        { return WORD; }
 }
 

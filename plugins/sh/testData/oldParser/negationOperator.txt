@@ -5,12 +5,7 @@ SHELL_SCRIPT
         CONDITIONAL_COMMAND
           PsiElement([[)('[[')
           PsiWhiteSpace(' ')
-          LOGICAL_BITWISE_CONDITION
-            PsiElement(!)('!')
-            PARENTHESES_CONDITION
-              PsiElement(()('(')
-              LITERAL_CONDITION
-                PsiElement(word)('a')
-              PsiElement())(')')
+          LITERAL_CONDITION
+            PsiElement(word)('!(a)')
           PsiWhiteSpace(' ')
           PsiElement(]])(']]')

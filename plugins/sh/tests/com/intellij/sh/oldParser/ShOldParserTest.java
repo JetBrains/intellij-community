@@ -103,6 +103,7 @@ public class ShOldParserTest extends ParsingTestCase {
   public void testIntegration9()                        { doTest(true); }
   public void testInvalidHereDoc()                      { doTest(true); }
   public void testIsBackquoteCommand()                  { doTest(true); }
+  public void testIssue118()                            { doTest(true); }
   public void testIssue125()                            { doTest(true); }
   public void testIssue201()                            { doTest(true); }
   public void testIssue243()                            { doTest(true); }
@@ -122,6 +123,7 @@ public class ShOldParserTest extends ParsingTestCase {
   public void testIssue401()                            { doTest(true); }
   public void testIssue431()                            { doTest(true); }
   public void testIssue432()                            { doTest(true); }
+  public void testIssue458()                            { doTest(true); }
   public void testIssue474()                            { doTest(true); }
   public void testIssue515()                            { doTest(true); }
   public void testIssue657()                            { doTest(true); }

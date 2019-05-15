@@ -186,7 +186,11 @@ public class ShOldLexerTestV3 extends LexerTestCase {
   public void testMultilineHeredoc() {
     doFileTest("sh");
   }
-  
+
+  public void testIssue118() {
+    doFileTest("sh");
+  }
+
   public void testIssue125() {
     doFileTest("sh");
   }
@@ -320,6 +324,10 @@ public class ShOldLexerTestV3 extends LexerTestCase {
   }
 
   public void testIssue457() {
+    doFileTest("sh");
+  }
+
+  public void testIssue458() {
     doFileTest("sh");
   }
   
