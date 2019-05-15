@@ -385,10 +385,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     Runnable process = () -> {
-      if (!ApplicationManager.getApplication().isUnitTestMode() && TransactionGuard.getInstance().getContextTransaction() == null) {
-        LOG.error("Project opening should be done in a transaction",
-                  new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
-      }
+      assertInTransaction();
 
       TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
 
@@ -426,7 +423,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return true;
   }
 
+  private static void assertInTransaction() {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && TransactionGuard.getInstance().getContextTransaction() == null) {
+      LOG.error("Project opening should be done in a transaction",
+                new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+    }
+  }
+
   private static boolean loadProjectUnderProgress(@NotNull Project project, @NotNull Runnable performLoading) {
+    assertInTransaction();
+
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (!ApplicationManager.getApplication().isDispatchThread() && indicator != null) {
       indicator.setText("Preparing workspace...");
