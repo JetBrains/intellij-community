@@ -47,7 +47,7 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
     val presentations = mutableListOf(joinWithDot(qualifierPresentation, className))
     val collapsible = myFactory.collapsible(
       prefix = myFactory.smallText("<"),
-      collapsed = myFactory.smallText("..."),
+      collapsed = myFactory.smallText(PLACEHOLDER_MARK),
       expanded = { parametersHint(classType, level) },
       suffix = myFactory.smallText(">"),
       startWithPlaceholder = level > myFoldingLevel
@@ -78,11 +78,15 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
       }
     }
     val presentations = mutableListOf(joinWithDot(containingClassPresentation, className))
-    presentations.add(myFactory.smallText("<"))
-    aClass.typeParameters.mapTo(presentations) {
-      myFactory.psiSingleReference(getName(it)) { it }
-    }
-    presentations.add(myFactory.smallText(">"))
+    presentations.add(with(myFactory) {
+      collapsible(
+        prefix = smallText("<"),
+        collapsed = smallText(PLACEHOLDER_MARK),
+        expanded = { join(aClass.typeParameters.map { myFactory.psiSingleReference(getName(it), resolve = { it }) }, ", ") },
+        suffix = smallText(">"),
+        startWithPlaceholder = false
+      )
+    })
     return SequencePresentation(presentations)
   }
 
@@ -129,5 +133,6 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
     }
 
     private const val ANONYMOUS_MARK = "anonymous"
+    private const val PLACEHOLDER_MARK = "..."
   }
 }
