@@ -184,7 +184,7 @@ class FeatureUsageData {
   fun merge(next: FeatureUsageData, prefix: String): FeatureUsageData {
     for ((key, value) in next.build()) {
       val newKey = if (key.startsWith("data_")) "$prefix$key" else key
-      addDataInternal(newKey, value)
+      data[newKey] = value
     }
     return this
   }
@@ -192,7 +192,7 @@ class FeatureUsageData {
   fun copy(): FeatureUsageData {
     val result = FeatureUsageData()
     for ((key, value) in data) {
-      result.addDataInternal(key, value)
+      data[key] = value
     }
     return result
   }
