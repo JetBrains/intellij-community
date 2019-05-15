@@ -45,7 +45,7 @@ import java.nio.charset.Charset;
  *
  * Class is not final since it is overridden in Upsource
  */
-public class FileContentImpl extends UserDataHolderBase implements FileContent {
+public class FileContentImpl extends UserDataHolderBase implements PsiDependentFileContent {
   private final VirtualFile myFile;
   private final String myFileName;
   private final FileType myFileType;
@@ -113,8 +113,9 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     return psi;
   }
 
+  @Override
   @NotNull
-  public LighterAST getLighterASTForPsiDependentIndex() {
+  public LighterAST getLighterAST() {
     LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
       FileASTNode node = getPsiFileForPsiDependentIndex().getNode();
