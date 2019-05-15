@@ -379,7 +379,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private void updateCommitColumnWidth() {
     int size = getWidth();
-    for (int i = 0; i < getColumnCount(); i++) {
+    for (int i = 0; i < getModel().getColumnCount(); i++) {
       if (i == COMMIT_COLUMN) continue;
       TableColumn column = getColumnByModelIndex(i);
       if (column != null) size -= column.getPreferredWidth();
