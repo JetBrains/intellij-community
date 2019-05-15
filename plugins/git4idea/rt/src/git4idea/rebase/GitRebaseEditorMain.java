@@ -4,6 +4,7 @@ package git4idea.rebase;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.GitExternalApp;
 
 import java.io.File;
 import java.util.Arrays;
@@ -16,7 +17,7 @@ import java.util.Vector;
  * registered on the host passed as the first parameter. The application
  * exits with exit code returned from the service.
  */
-public class GitRebaseEditorMain {
+public class GitRebaseEditorMain implements GitExternalApp {
   /**
    * The environment variable for handler no
    */
