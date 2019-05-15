@@ -916,6 +916,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON38);
   }
 
+  // PY-33886
+  public void testAssignmentExpressionsInFString() {
+    doTest(LanguageLevel.PYTHON38);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }
