@@ -58,7 +58,7 @@ public class DataNode<T> implements UserDataHolderEx {
     this.parent = parent;
   }
 
-  // deserialization, serializer can create object without default constructor, but in this case fields (userData) will be not initialized to default values
+  // deserialization, data decoded on demand
   @SuppressWarnings("unused")
   private DataNode() {
   }
