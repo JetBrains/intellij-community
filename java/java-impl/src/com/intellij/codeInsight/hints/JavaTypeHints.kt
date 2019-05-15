@@ -22,12 +22,9 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
     is PsiDisjunctionType -> join(type.disjunctions.map { hint(it, level) }, " | ")
     is PsiIntersectionType -> join(type.conjuncts.map { hint(it, level) }, " & ")
     else -> myFactory.smallText(type.presentableText)
-
   }
 
   private fun classTypeHint(classType: PsiClassType, level: Int): InlayPresentation {
-    // TODO not print qualifier, if it is anonymous class
-    //  same for class
     val qualifierPresentation = when (val aClass = classType.resolve()) {
       null -> null
       else -> when (val qualifier = aClass.containingClass) {
@@ -35,7 +32,8 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
         else -> classHint(qualifier, level)
       }
     }
-    val className = myFactory.psiSingleReference(myFactory.smallText(classType.className)) {
+
+    val className = myFactory.psiSingleReference(myFactory.smallText(classType.className ?: ANONYMOUS_MARK)) {
       classType.resolve()
     }
     if (classType.parameterCount == 0) {
@@ -62,7 +60,8 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
     return join(classType.parameters.map { hint(it, level + 1) }, ", ")
   }
 
-  private fun classHint(aClass: PsiClass, level: Int): InlayPresentation {
+  private fun classHint(aClass: PsiClass, level: Int): InlayPresentation? {
+    if (aClass.name == null) return null
     val containingClass = aClass.containingClass
     val containingClassPresentation = when {
       containingClass != null -> classHint(containingClass, level)
@@ -105,11 +104,8 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
   }
 
   private fun getName(element: PsiNamedElement): InlayPresentation {
-    val name = element.name
-    if (name != null) {
-      return myFactory.smallText(name)
-    }
-    return myFactory.asWrongReference(myFactory.smallText(NO_NAME_MARKER))
+    return myFactory.smallText(element.name ?: ANONYMOUS_MARK)
+
   }
 
   private fun join(presentations: Iterable<InlayPresentation>, text: String) : InlayPresentation {
@@ -132,6 +128,6 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
       return factory.roundWithBackground(base)
     }
 
-    private const val NO_NAME_MARKER = "<NO NAME>"
+    private const val ANONYMOUS_MARK = "anonymous"
   }
 }
