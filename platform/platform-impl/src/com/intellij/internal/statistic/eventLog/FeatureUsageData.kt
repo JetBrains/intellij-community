@@ -34,7 +34,8 @@ import java.util.*
  * </p>
  */
 class FeatureUsageData {
-  private var data: MutableMap<String, Any> = HashMap<String, Any>()
+  private var data: MutableMap<String, Any> = HashMap()
+
   companion object {
     val platformDataKeys: MutableList<String> = Arrays.asList("plugin", "project", "version", "os", "plugin_type",
                                                               "lang", "current_file", "input_event", "place")
@@ -88,10 +89,15 @@ class FeatureUsageData {
     return this
   }
 
-  fun addLanguage(language: Language): FeatureUsageData {
-    val type = getPluginType(language.javaClass)
-    if (type.isSafeToReport()) {
-      data["lang"] = language.id
+  fun addLanguage(language: Language?): FeatureUsageData {
+    language?.let {
+      val type = getPluginType(language.javaClass)
+      if (type.isSafeToReport()) {
+        data["lang"] = language.id
+      }
+      else {
+        data["lang"] = "third.party"
+      }
     }
     return this
   }
