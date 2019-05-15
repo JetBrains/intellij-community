@@ -216,7 +216,7 @@ public class RefreshWorker {
       }
 
       for (ChildInfo record : newKids) {
-        myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, ()->checkCancelled(dir));
+        myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, () -> checkCancelled(dir));
       }
 
       for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
@@ -260,10 +260,10 @@ public class RefreshWorker {
                                  @NotNull VirtualDirectoryImpl dir) {
     while (true) {
       checkCancelled(dir);
+
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
         ReadAction.compute(() -> pair(dir.getCachedChildren(), dir.getSuspiciousNames()));
-
       List<VirtualFile> cached = result.getFirst();
       List<String> wanted = result.getSecond();
 
@@ -271,8 +271,7 @@ public class RefreshWorker {
         fs.isCaseSensitive() || cached.isEmpty() ? null : new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
 
       if (LOG.isTraceEnabled()) {
-        LOG.trace("cached=" + cached + " actual=" + actualNames);
-        LOG.trace("suspicious=" + wanted);
+        LOG.trace("cached=" + cached + " actual=" + actualNames + " suspicious=" + wanted);
       }
 
       // reading children attributes
@@ -313,7 +312,7 @@ public class RefreshWorker {
         }
 
         for (ChildInfo record : newKids) {
-          myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, ()->checkCancelled(dir));
+          myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, () -> checkCancelled(dir));
         }
 
         return true;
@@ -379,7 +378,7 @@ public class RefreshWorker {
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
       String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
-      myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, ()->checkCancelled(parent));
+      myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, () -> checkCancelled(parent));
       return true;
     }
 
