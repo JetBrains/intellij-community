@@ -994,6 +994,13 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-33886
+  public void testAssignmentExpressionInComprehension() {
+    final PyFile file = getTestFile();
+    assertNotNull(file.findTopLevelAttribute("total"));
+    assertNotParsed(file);
+  }
+
   private static class DataclassFieldChecker {
 
     @NotNull
