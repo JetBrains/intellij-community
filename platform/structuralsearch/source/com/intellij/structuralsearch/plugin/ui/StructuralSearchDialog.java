@@ -47,10 +47,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -955,13 +952,13 @@ public class StructuralSearchDialog extends DialogWrapper {
     matchOptions.setFileType(myFileType);
     matchOptions.setDialect(myDialect);
     matchOptions.setPatternContext(myContext);
-    matchOptions.setSearchPattern(mySearchCriteriaEdit.getDocument().getText());
+    matchOptions.setSearchPattern(getPattern(mySearchCriteriaEdit));
     matchOptions.setCaseSensitiveMatch(myMatchCase.isSelected());
 
     if (myReplace) {
       final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
 
-      replaceOptions.setReplacement(myReplaceCriteriaEdit.getDocument().getText());
+      replaceOptions.setReplacement(getPattern(myReplaceCriteriaEdit));
       replaceOptions.setToShortenFQN(myShortenFQN.isSelected());
       replaceOptions.setToReformatAccordingToStyle(myReformat.isSelected());
       replaceOptions.setToUseStaticImport(myUseStaticImport.isSelected());
@@ -981,6 +978,19 @@ public class StructuralSearchDialog extends DialogWrapper {
       properties.setValue(RECURSIVE_STATE, myRecursive.isSelected());
       properties.setValue(MATCH_CASE_STATE, myMatchCase.isSelected());
     }
+  }
+
+  private String getPattern(EditorTextField textField) {
+    final Document document = textField.getDocument();
+    return ReadAction.compute(() -> {
+      final PsiCodeFragment fragment = (PsiCodeFragment)PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+      if (fragment == null) {
+        return "";
+      }
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+      assert profile != null;
+      return profile.getCodeFragmentText(fragment);
+    });
   }
 
   @Nullable
