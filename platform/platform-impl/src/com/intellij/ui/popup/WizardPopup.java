@@ -157,9 +157,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   @Override
   public void dispose() {
-    super.dispose();
-
     myAutoSelectionTimer.stop();
+
+    super.dispose();
 
     PopupDispatcher.unsetShowing(this);
     PopupDispatcher.clearRootIfNeeded(this);
