@@ -142,7 +142,7 @@ public class BlockSupportImpl extends BlockSupport {
       if (elementType instanceof IReparseableElementType || elementType instanceof IReparseableLeafElementType) {
         final TextRange textRange = node.getTextRange();
 
-        if (textRange.getLength() + lengthShift > 0) {
+        if (baseLanguage.isKindOf(elementType.getLanguage()) && textRange.getLength() + lengthShift > 0) {
           final int start = textRange.getStartOffset();
           final int end = start + textRange.getLength() + lengthShift;
           if (end > newFileText.length()) {
