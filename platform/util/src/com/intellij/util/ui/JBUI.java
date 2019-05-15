@@ -183,7 +183,7 @@ public class JBUI {
           gc.getDevice().getType() == GraphicsDevice.TYPE_PRINTER)
       {
         // in this case gc doesn't provide a valid scale
-        return (float)g.getTransform().getScaleX();
+        return Math.abs((float)g.getTransform().getScaleX());
       }
       return sysScale(gc);
     }
