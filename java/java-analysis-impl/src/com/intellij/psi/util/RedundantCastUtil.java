@@ -305,11 +305,6 @@ public class RedundantCastUtil {
           final PsiExpression arg = deparenthesizeExpression(args[i]);
           if (arg instanceof PsiTypeCastExpression) {
             PsiTypeCastExpression cast = (PsiTypeCastExpression)arg;
-            if (i == args.length - 1 && args.length == parameters.length && parameters[i].isVarArgs() && 
-                ExpressionUtils.isNullLiteral(cast.getOperand())) {
-              //do not mark cast to resolve ambiguity for calling varargs method with inexact argument
-              continue;
-            }
             final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
             final PsiCall newCall;
             if (typeByParent != null) {
@@ -348,6 +343,14 @@ public class RedundantCastUtil {
             }
             else {
               newResult = newCall.resolveMethodGenerics();
+            }
+
+            if (i == args.length - 1 && args.length == parameters.length && parameters[i].isVarArgs() && 
+                (ExpressionUtils.isNullLiteral(cast.getOperand()) ||
+                 oldResult instanceof MethodCandidateInfo && newResult instanceof MethodCandidateInfo && 
+                 ((MethodCandidateInfo)oldResult).getApplicabilityLevel() != ((MethodCandidateInfo)newResult).getApplicabilityLevel())) {
+              //do not mark cast to resolve ambiguity for calling varargs method with inexact argument
+              continue;
             }
 
             final PsiAnonymousClass oldAnonymousClass = expression instanceof PsiNewExpression ? ((PsiNewExpression)expression).getAnonymousClass() : null;
