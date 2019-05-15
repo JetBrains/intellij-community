@@ -436,7 +436,7 @@ public class ActionUtil {
     final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
       manager.fireBeforeActionPerformed(action, dataContext, event);
-      action.actionPerformed(event);
+      performActionDumbAware(action, event);
       if (onDone != null) {
         onDone.run();
       }
