@@ -36,6 +36,11 @@ import java.util.Map;
 class ShShellcheckUtil {
   private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
   private static final String SHELLCHECK = "shellcheck";
+  private static final String SHELLCHECK_VERSION = "0.6.0-1";
+  private static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
+  private static final String SHELLCHECK_URL = "https://cache-redirector.jetbrains.com/" +
+                                               "jetbrains.bintray.com/intellij-third-party-dependencies/" +
+                                               "org/jetbrains/intellij/deps/shellcheck/";
   private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
   static void download(@Nullable Project project, @Nullable Runnable onSuccess) {
@@ -75,10 +80,7 @@ class ShShellcheckUtil {
       return;
     }
 
-    String downloadName = SHELLCHECK;
-    if (SystemInfoRt.isMac) {
-      downloadName += "Archive";
-    }
+    String downloadName = SHELLCHECK + SHELLCHECK_ARCHIVE_EXTENSION;
     DownloadableFileService service = DownloadableFileService.getInstance();
     DownloadableFileDescription description = service.createFileDescription(url, downloadName);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
@@ -91,10 +93,7 @@ class ShShellcheckUtil {
           Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
           File file = first != null ? first.first : null;
           if (file != null) {
-            String path = file.getCanonicalPath();
-            if (SystemInfoRt.isMac) {
-              path = decompressShellcheck(path, directory);
-            }
+            String path = decompressShellcheck(file.getCanonicalPath(), directory);
             if (StringUtil.isNotEmpty(path)) {
               FileUtilRt.setExecutableAttribute(path, true);
               ShSettings.setShellcheckPath(path);
@@ -138,7 +137,6 @@ class ShShellcheckUtil {
 
     Decompressor.Tar tar = new Decompressor.Tar(archive);
     File tmpDir = new File(directory, "tmp");
-    tar.filter(tarEntry -> tarEntry.equals("shellcheck/0.6.0_1/bin/shellcheck"));
     tar.postprocessor(outputFile -> {
       try {
         FileUtil.copyDir(outputFile.getParentFile(), directory);
@@ -153,22 +151,26 @@ class ShShellcheckUtil {
     FileUtil.delete(tmpDir);
     FileUtil.delete(archive);
 
-    File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK);
+    File shellcheck = new File(directory, SHELLCHECK + (SystemInfoRt.isWindows ? ".exe" : ""));
     return shellcheck.exists() ? shellcheck.getCanonicalPath() : "";
   }
 
   @Nullable
   private static String getShellcheckDistributionLink() {
+    String platform;
     if (SystemInfoRt.isMac) {
-      return "https://homebrew.bintray.com/bottles/shellcheck-0.6.0_1.mojave.bottle.tar.gz";
+      platform = "mac";
     }
-    if (SystemInfoRt.isLinux) {
-      return "https://shellcheck.storage.googleapis.com/shellcheck-v0.6.0.linux-x86_64";
+    else if (SystemInfoRt.isLinux) {
+      platform = "linux";
     }
-    if (SystemInfoRt.isWindows) {
-      return "https://shellcheck.storage.googleapis.com/shellcheck-v0.6.0.exe";
+    else if (SystemInfoRt.isWindows) {
+      platform = "windows";
     }
-    return null;
+    else {
+      return null;
+    }
+    return SHELLCHECK_URL + SHELLCHECK_VERSION + "/" + platform + SHELLCHECK_ARCHIVE_EXTENSION;
   }
 
   private static void showInfoNotification() {
