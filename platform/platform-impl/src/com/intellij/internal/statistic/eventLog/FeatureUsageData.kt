@@ -37,8 +37,10 @@ class FeatureUsageData {
   private var data: MutableMap<String, Any> = HashMap()
 
   companion object {
-    val platformDataKeys: MutableList<String> = Arrays.asList("plugin", "project", "version", "os", "plugin_type",
-                                                              "lang", "current_file", "input_event", "place")
+    // don't list "version" as "platformDataKeys" because it format depends a lot on the tool
+    val platformDataKeys: MutableList<String> = Arrays.asList(
+      "plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place"
+    )
   }
 
   fun addFeatureContext(context: FUSUsageContext?): FeatureUsageData {
@@ -90,22 +92,22 @@ class FeatureUsageData {
   }
 
   fun addLanguage(language: Language?): FeatureUsageData {
+    return addLanguageInternal("lang", language)
+  }
+
+  fun addCurrentFile(language: Language?): FeatureUsageData {
+    return addLanguageInternal("current_file", language)
+  }
+
+  private fun addLanguageInternal(fieldName: String, language: Language?): FeatureUsageData {
     language?.let {
       val type = getPluginType(language.javaClass)
       if (type.isSafeToReport()) {
-        data["lang"] = language.id
+        data[fieldName] = language.id
       }
       else {
-        data["lang"] = "third.party"
+        data[fieldName] = "third.party"
       }
-    }
-    return this
-  }
-
-  fun addCurrentFile(language: Language): FeatureUsageData {
-    val type = getPluginType(language.javaClass)
-    if (type.isSafeToReport()) {
-      data["current_file"] = language.id
     }
     return this
   }
