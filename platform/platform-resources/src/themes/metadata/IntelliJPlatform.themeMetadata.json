@@ -583,6 +583,12 @@
       "key": "TitlePane.background"
     },
     {
+      "key": "TitlePane.infoForeground"
+    },
+    {
+      "key": "TitlePane.inactiveInfoForeground"
+    },
+    {
       "key": "ToggleButton.borderColor"
     },
     {

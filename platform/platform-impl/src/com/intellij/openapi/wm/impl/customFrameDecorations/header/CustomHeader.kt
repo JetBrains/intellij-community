@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButto
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
@@ -127,6 +128,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     override fun addNotify() {
         super.addNotify()
         installListeners()
+        setCustomDecorationHitTestSpots()
     }
 
     override fun removeNotify() {
@@ -149,10 +151,11 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     }
 
     protected fun setCustomDecorationHitTestSpots() {
-        JdkEx.setCustomDecorationHitTestSpots(window, getHitTestSpots())
+        val toList = getHitTestSpots().map {it.getRectangleOn(window)}.toList()
+        JdkEx.setCustomDecorationHitTestSpots(window, toList)
     }
 
-    abstract fun getHitTestSpots(): List<Rectangle>
+    abstract fun getHitTestSpots(): List<RelativeRectangle>
 
     private fun setActive(value: Boolean) {
         myActive = value

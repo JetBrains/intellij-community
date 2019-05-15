@@ -71,7 +71,9 @@ open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
       icon = closeInactive
     }.build()
 
-  protected val panel = JPanel(MigLayout("top, ins 0 0 0 0, gap 0, hidemode 3, novisualpadding")).apply { isOpaque = false }
+  protected val panel = JPanel(MigLayout("top, ins 0 2 0 0, gap 0, hidemode 3, novisualpadding")).apply {
+    isOpaque = false
+  }
 
   private val myCloseButton: JButton = createButton("Close", myCloseAction)
 
