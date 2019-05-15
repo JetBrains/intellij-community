@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,6 +34,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.junit.Assert.*;
 
 public class VfsUtilTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
@@ -301,9 +303,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertSame(test, ProjectManager.getInstance());
     try {
       File temp = myTempDir.newFolder();
-      VirtualDirectoryImpl vtemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
-      assertNotNull(vtemp);
-      vtemp.getChildren(); //to force full dir refresh?!
+      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+      assertNotNull(vTemp);
+      vTemp.getChildren(); //to force full dir refresh?!
 
       File d = new File(temp, "d");
       assertTrue(d.mkdir());
@@ -313,9 +315,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       assertTrue(x.createNewFile());
 
       assertFalse(ApplicationManager.getApplication().isDispatchThread());
-      VfsUtil.markDirty(true, false, vtemp);
+      VfsUtil.markDirty(true, false, vTemp);
       CountDownLatch refreshed = new CountDownLatch(1);
-      LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(vtemp), false, true, refreshed::countDown);
+      LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(vTemp), false, true, refreshed::countDown);
 
       while (refreshed.getCount() != 0) {
         UIUtil.pump();

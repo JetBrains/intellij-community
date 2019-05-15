@@ -24,6 +24,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
+import static org.junit.Assert.*;
 
 public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();

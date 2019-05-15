@@ -43,6 +43,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
+import static org.junit.Assert.*;
+
 @RunFirst
 @SkipSlowTestLocally
 public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
