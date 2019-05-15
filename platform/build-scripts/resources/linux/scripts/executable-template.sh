@@ -33,7 +33,7 @@ RM=`which rm`
 CAT=`which cat`
 SED=`which sed`
 
-if [ -z "$UNAME" -o -z "$GREP" -o -z "$CUT" -o -z "$MKTEMP" -o -z "$RM" -o -z "$CAT" -o -z "$SED" ]; then
+if [ -z "$UNAME" -o -z "$GREP" -o -z "$CUT" -o -z "$DIRNAME" -o -z "$MKTEMP" -o -z "$RM" -o -z "$CAT" -o -z "$SED" ]; then
   message "Required tools are missing - check beginning of \"$0\" file for details."
   exit 1
 fi
@@ -50,10 +50,10 @@ if [ -x "$READLINK" ]; then
   done
 fi
 
-cd "`dirname "$SCRIPT_LOCATION"`"
+cd $(${DIRNAME} ${SCRIPT_LOCATION})
 IDE_BIN_HOME=`pwd`
-IDE_HOME=`dirname "$IDE_BIN_HOME"`
-cd "$OLDPWD"
+IDE_HOME=$(${DIRNAME} ${IDE_BIN_HOME})
+cd ${OLDPWD}
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
@@ -116,7 +116,7 @@ if [ -z "$JDK" ]; then
     fi
   fi
 
-  if [ -z "$JDK" -a -x "$READLINK" -a -x "$XARGS" -a -x "$DIRNAME" ]; then
+  if [ -z "$JDK" -a -n "$JDK_PATH" -a -x "$READLINK" -a -x "$XARGS" ]; then
     JAVA_LOCATION=`"$READLINK" -f "$JDK_PATH"`
     case "$JAVA_LOCATION" in
       */jre/bin/java)
