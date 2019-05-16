@@ -15,10 +15,12 @@
  */
 package com.intellij.ui.colorpicker
 
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import sun.awt.image.ToolkitImage
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
@@ -89,7 +91,12 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
     val knobX = Math.round(saturation * component.width)
     val knobY = Math.round(component.height * (1.0f - brightness))
 
-    g.color = KNOB_COLOR
+    if (image is ToolkitImage) {
+      val rgb = image.bufferedImage.getRGB(knobX, knobY)
+      g.color = if (ColorUtil.isDark(Color(rgb))) Color.WHITE else Color.BLACK
+    } else {
+      g.color = KNOB_COLOR
+    }
     val config = GraphicsUtil.setupAAPainting(g)
     g.drawOval(knobX - JBUI.scale(KNOB_OUTER_RADIUS),
                knobY - JBUI.scale(KNOB_OUTER_RADIUS),
