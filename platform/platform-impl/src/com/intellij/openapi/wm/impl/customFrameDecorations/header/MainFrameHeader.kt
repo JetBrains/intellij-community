@@ -33,7 +33,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     }
 
     changeListener = ChangeListener {
-      setCustomDecorationHitTestSpots()
+      updateCustomDecorationHitTestSpots()
     }
 
     mySelectedEditorFilePath = CustomDecorationPath()

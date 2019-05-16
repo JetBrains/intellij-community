@@ -9,14 +9,15 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.labels.BoldLabel
 import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
+import java.awt.Font
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.plaf.FontUIResource
 
 
 open class SelectedEditorFilePath() {
@@ -35,7 +36,7 @@ open class SelectedEditorFilePath() {
 
   private var added = false
 
-  protected val projectLabel = object : BoldLabel(){
+  protected val projectLabel = object : JLabel(){
     override fun addNotify() {
       super.addNotify()
       added = true
@@ -47,11 +48,13 @@ open class SelectedEditorFilePath() {
       added = false
       updateListeners()
     }
+  }.apply {
+    font = FontUIResource(font.deriveFont(font.style or Font.BOLD))
   }
 
   protected val label = JLabel()
 
-  private val pane = JPanel(MigLayout("ins 0, gap 0", "[min!][]")).apply {
+  private val pane = JPanel(MigLayout("ins 0, gap 0", "[min!][pref]push")).apply {
     add(projectLabel)
     add(label, "growx")
   }
@@ -164,24 +167,28 @@ open class SelectedEditorFilePath() {
       when {
         pnWidth > width -> {
           projectLabel.toolTipText = path
+          label.toolTipText = path
           clippedProjectName = ""
           ""
         }
 
         pnWidth == width || pnWidth + symbolWidth + delimiterWidth >= width -> {
           projectLabel.toolTipText = path
+          label.toolTipText = path
           clippedProjectName = projectName
           ""
         }
 
         textWidth > width - pnWidth - delimiterWidth -> {
           projectLabel.toolTipText = path
+          label.toolTipText = path
           clippedProjectName = projectName
           val clipString = clipString(label, path, width - pnWidth - delimiterWidth)
           if (clipString.isEmpty()) "" else "$delimiterSymbol$clipString"
         }
         else -> {
           projectLabel.toolTipText = null
+          label.toolTipText = null
           clippedProjectName = projectName
           if (path.isEmpty()) "" else "$delimiterSymbol$path"
         }
