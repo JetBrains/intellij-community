@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -250,7 +252,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   protected void activate() {
-    myExecutableManager.testGitExecutableVersionValid(myProject);
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ProgressManager.getInstance().executeProcessUnderProgress(
+        () -> myExecutableManager.testGitExecutableVersionValid(myProject), new EmptyProgressIndicator()));
 
     if (myVFSListener == null) {
       myVFSListener = GitVFSListener.createInstance(this, myGit, myVcsConsoleWriter);
@@ -317,6 +321,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   /**
    * @return the version number of Git, which is used by IDEA. Or {@link GitVersion#NULL} if version info is unavailable yet.
+   * @see GitExecutableManager#getVersionOrCancel
    */
   @NotNull
   public GitVersion getVersion() {

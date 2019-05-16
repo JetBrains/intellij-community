@@ -140,12 +140,12 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @Override
   public VcsPushOptionsPanel createOptionsPanel() {
     return new GitPushOptionsPanel(mySettings.getPushTagMode(),
-                                   GitVersionSpecialty.SUPPORTS_FOLLOW_TAGS.existsIn(myVcs.getVersion()),
+                                   GitVersionSpecialty.SUPPORTS_FOLLOW_TAGS.existsIn(myVcs),
                                    shouldShowSkipHookOption());
   }
 
   private boolean shouldShowSkipHookOption() {
-    return GitVersionSpecialty.PRE_PUSH_HOOK.existsIn(myVcs.getVersion()) &&
+    return GitVersionSpecialty.PRE_PUSH_HOOK.existsIn(myVcs) &&
            getRepositoryManager()
              .getRepositories()
              .stream()

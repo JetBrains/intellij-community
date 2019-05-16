@@ -499,7 +499,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       Collection<String> names = ContainerUtil.map(userFilter.getUsers(root), VcsUserUtil::toExactString);
       if (regexp) {
         List<String> authors = ContainerUtil.map(names, UserNameRegex.EXTENDED_INSTANCE);
-        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs.getVersion())) {
+        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs)) {
           filterParameters.add(prepareParameter("author", StringUtil.join(authors, "|")));
         }
         else {
