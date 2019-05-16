@@ -59,10 +59,10 @@ public class ShParser implements PsiParser, LightPsiParser {
       LITERAL_CONDITION, LOGICAL_AND_CONDITION, LOGICAL_BITWISE_CONDITION, LOGICAL_OR_CONDITION,
       PARENTHESES_CONDITION),
     create_token_set_(ASSIGNMENT_COMMAND, CASE_COMMAND, COMMAND, COMMAND_SUBSTITUTION_COMMAND,
-      CONDITIONAL_COMMAND, FOR_COMMAND, FUNCTION_DEFINITION, GENERIC_COMMAND_DIRECTIVE,
-      IF_COMMAND, INCLUDE_COMMAND, INCLUDE_DIRECTIVE, LET_COMMAND,
-      PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND, SIMPLE_COMMAND,
-      SUBSHELL_COMMAND, UNTIL_COMMAND, WHILE_COMMAND),
+      CONDITIONAL_COMMAND, EVAL_COMMAND, FOR_COMMAND, FUNCTION_DEFINITION,
+      GENERIC_COMMAND_DIRECTIVE, IF_COMMAND, INCLUDE_COMMAND, INCLUDE_DIRECTIVE,
+      LET_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND,
+      SIMPLE_COMMAND, SUBSHELL_COMMAND, UNTIL_COMMAND, WHILE_COMMAND),
     create_token_set_(ADD_EXPRESSION, ARRAY_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION,
       BITWISE_EXCLUSIVE_OR_EXPRESSION, BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION,
       COMPARISON_EXPRESSION, CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION,
@@ -1089,6 +1089,44 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // eval (EVAL_CONTENT|simple_command_element)+
+  public static boolean eval_command(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "eval_command")) return false;
+    if (!nextTokenIs(b, EVAL)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, EVAL_COMMAND, null);
+    r = consumeToken(b, EVAL);
+    p = r; // pin = 1
+    r = r && eval_command_1(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // (EVAL_CONTENT|simple_command_element)+
+  private static boolean eval_command_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "eval_command_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = eval_command_1_0(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!eval_command_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "eval_command_1", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // EVAL_CONTENT|simple_command_element
+  private static boolean eval_command_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "eval_command_1_0")) return false;
+    boolean r;
+    r = consumeToken(b, EVAL_CONTENT);
+    if (!r) r = simple_command_element(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
   // shebang? newlines
   //   simple_list
   static boolean file(PsiBuilder b, int l) {
@@ -1845,12 +1883,14 @@ public class ShParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // '!'? pipeline
   //                     | let_command
+  //                     | eval_command
   public static boolean pipeline_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, PIPELINE_COMMAND, "<pipeline command>");
     r = pipeline_command_0(b, l + 1);
     if (!r) r = let_command(b, l + 1);
+    if (!r) r = eval_command(b, l + 1);
     exit_section_(b, l, m, r, false, ShParser::pipeline_recover);
     return r;
   }
@@ -1936,7 +1976,7 @@ public class ShParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|'(('|
-  //                                time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}')
+  //                                var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}')
   static boolean pipeline_recover(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_recover")) return false;
     boolean r;
@@ -1947,7 +1987,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   // case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|'(('|
-  //                                time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}'
+  //                                var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}'
   private static boolean pipeline_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_recover_0")) return false;
     boolean r;
@@ -1974,8 +2014,6 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, PIPE_AMP);
     if (!r) r = consumeToken(b, LINEFEED);
     if (!r) r = consumeToken(b, LEFT_DOUBLE_PAREN);
-    if (!r) r = consumeToken(b, TIME);
-    if (!r) r = consumeToken(b, TRAP);
     if (!r) r = consumeToken(b, VAR);
     if (!r) r = consumeToken(b, WORD);
     if (!r) r = consumeToken(b, EXPR_CONDITIONAL_LEFT);

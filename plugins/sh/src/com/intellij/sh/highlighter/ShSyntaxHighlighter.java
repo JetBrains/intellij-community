@@ -26,6 +26,7 @@ public class ShSyntaxHighlighter extends SyntaxHighlighterBase {
   private static final TokenSet numberSet = TokenSet.create(NUMBER, OCTAL, HEX, INT);
   private static final TokenSet bracketSet = TokenSet.create(LEFT_SQUARE, RIGHT_SQUARE);
   private static final TokenSet parenthesisSet = TokenSet.create(LEFT_PAREN, RIGHT_PAREN);
+  private static final TokenSet commandSet = TokenSet.create(LET, EVAL);
   private static final TokenSet conditionalOperators = TokenSet.create(OR_OR, AND_AND, BANG, EQ, REGEXP, GT, LT);
   private static final TokenSet redirectionSet = TokenSet.create(GT, LT, SHIFT_RIGHT, REDIRECT_HERE_STRING, REDIRECT_LESS_GREATER,
       REDIRECT_GREATER_BAR, REDIRECT_GREATER_AMP, REDIRECT_AMP_GREATER, REDIRECT_LESS_AMP, REDIRECT_AMP_GREATER_GREATER,
@@ -41,8 +42,8 @@ public class ShSyntaxHighlighter extends SyntaxHighlighterBase {
     map.put(HEREDOC_CONTENT, ShHighlighterColors.HERE_DOC);
     map.put(HEREDOC_MARKER_END, ShHighlighterColors.HERE_DOC_END);
     map.put(HEREDOC_MARKER_START, ShHighlighterColors.HERE_DOC_START);
-    map.put(LET, ShHighlighterColors.LET_COMMAND);
     map.put(BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
+    fillMap(map, commandSet, ShHighlighterColors.GENERIC_COMMAND);
     fillMap(map, stringSet, ShHighlighterColors.STRING);
     fillMap(map, bracesSet, ShHighlighterColors.BRACE);
     fillMap(map, backQuoteSet, ShHighlighterColors.BACKQUOTE);

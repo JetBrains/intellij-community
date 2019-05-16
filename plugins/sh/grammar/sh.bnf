@@ -104,8 +104,9 @@
     OPEN_BACKQUOTE = 'OPEN_BACKQUOTE'
     CLOSE_BACKQUOTE = 'CLOSE_BACKQUOTE'
 
-    FILEDESCRIPTOR='file descriptor'
+    EVAL_CONTENT = 'EVAL_CONTENT'
 
+    FILEDESCRIPTOR='file descriptor'
     PARAMETER_EXPANSION_BODY='parameter expansion body'
   ]
 
@@ -134,11 +135,14 @@ commands_list ::= pipeline_command (
                  )*
 
 pipeline_command ::=  '!'? pipeline
-                    | let_command {recoverWhile=pipeline_recover}
-let_command ::= let expression
+                    | let_command
+                    | eval_command {recoverWhile=pipeline_recover}
+
+let_command  ::= let expression
+eval_command ::= eval (EVAL_CONTENT|simple_command_element)+
 
 private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|'(('|
-                               time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}')
+                               var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}')
 
 pipeline ::= command (('|&'|'|') newlines command)* {pin(".*")=1}
 

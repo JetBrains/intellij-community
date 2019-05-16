@@ -43,6 +43,7 @@ public interface ShTypes {
   IElementType ELSE_CLAUSE = new ShCompositeElementType("ELSE_CLAUSE");
   IElementType EQUALITY_CONDITION = new ShCompositeElementType("EQUALITY_CONDITION");
   IElementType EQUALITY_EXPRESSION = new ShCompositeElementType("EQUALITY_EXPRESSION");
+  IElementType EVAL_COMMAND = new ShCompositeElementType("EVAL_COMMAND");
   IElementType EXPRESSION = new ShCompositeElementType("EXPRESSION");
   IElementType EXP_EXPRESSION = new ShCompositeElementType("EXP_EXPRESSION");
   IElementType FOR_CLAUSE = new ShCompositeElementType("FOR_CLAUSE");
@@ -116,6 +117,8 @@ public interface ShTypes {
   IElementType ELSE = new ShTokenType("else");
   IElementType EQ = new ShTokenType("==");
   IElementType ESAC = new ShTokenType("esac");
+  IElementType EVAL = new ShTokenType("eval");
+  IElementType EVAL_CONTENT = new ShTokenType("EVAL_CONTENT");
   IElementType EXPONENT = new ShTokenType("**");
   IElementType EXPR_CONDITIONAL_LEFT = new ShTokenType("[ ");
   IElementType EXPR_CONDITIONAL_RIGHT = new ShTokenType(" ]");
@@ -184,8 +187,6 @@ public interface ShTypes {
   IElementType SHIFT_RIGHT_ASSIGN = new ShTokenType(">>=");
   IElementType STRING_CONTENT = new ShTokenType("STRING_CONTENT");
   IElementType THEN = new ShTokenType("then");
-  IElementType TIME = new ShTokenType("time");
-  IElementType TRAP = new ShTokenType("trap");
   IElementType UNTIL = new ShTokenType("until");
   IElementType VAR = new ShTokenType("var");
   IElementType WHILE = new ShTokenType("while");
@@ -284,6 +285,9 @@ public interface ShTypes {
       }
       else if (type == EQUALITY_EXPRESSION) {
         return new ShEqualityExpressionImpl(node);
+      }
+      else if (type == EVAL_COMMAND) {
+        return new ShEvalCommandImpl(node);
       }
       else if (type == EXP_EXPRESSION) {
         return new ShExpExpressionImpl(node);

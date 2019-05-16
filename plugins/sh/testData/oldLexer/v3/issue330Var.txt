@@ -1,4 +1,4 @@
-word ('eval')
+eval ('eval')
 WHITE_SPACE (' ')
 OPEN_QUOTE ('"')
 STRING_CONTENT ('\${')

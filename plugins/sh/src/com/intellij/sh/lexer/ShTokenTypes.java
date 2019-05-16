@@ -23,15 +23,14 @@ public interface ShTokenTypes extends ShTypes {
   TokenSet commentTokens = TokenSet.create(COMMENT, SHEBANG);
 
   TokenSet HUMAN_READABLE_KEYWORDS_WITHOUT_TEMPLATES = TokenSet.create(
-      DO, DONE, ELSE, ESAC, FI, IN, THEN, TIME
+      DO, DONE, ELSE, ESAC, FI, IN, THEN
   );
 
   //conditional expressions
   TokenSet HUMAN_READABLE_KEYWORDS = TokenSet.create(
       CASE, DO, DONE,
       ELIF, ELSE, ESAC, FI, FOR, FUNCTION,
-      IF, IN, SELECT, THEN, UNTIL, WHILE,
-      TIME
+      IF, IN, SELECT, THEN, UNTIL, WHILE
   );
 
   TokenSet keywords = TokenSet.orSet(HUMAN_READABLE_KEYWORDS, TokenSet.create(
@@ -46,7 +45,7 @@ public interface ShTokenTypes extends ShTypes {
   //these tokens will be remapped to word tokens if they occur at a position where a word token would be accepted
   TokenSet identifierKeywords = TokenSet.create(
       CASE, DO, DONE, ELIF, ELSE, ESAC, FI, FOR, FUNCTION,
-      IF, IN, SELECT, THEN, UNTIL, WHILE, TIME
+      IF, IN, SELECT, THEN, UNTIL, WHILE
   );
 
   TokenSet stringLiterals = TokenSet.create(WORD, RAW_STRING, INT, COLON);

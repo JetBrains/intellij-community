@@ -1,23 +1,14 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('eval')
-          PsiWhiteSpace(' ')
-          STRING
-            PsiElement(OPEN_QUOTE)('"')
-            PsiElement(STRING_CONTENT)('executable')
-            PsiElement(CLOSE_QUOTE)('"')
-          PsiWhiteSpace(' ')
-          NUMBER
-            PsiElement(int)('2')
-          SIMPLE_COMMAND_ELEMENT
-            REDIRECTION
-              PsiElement(>)('>')
-              PsiElement(word)('/dev/null')
+    EVAL_COMMAND
+      PsiElement(eval)('eval')
+      PsiWhiteSpace(' ')
+      STRING
+        PsiElement(OPEN_QUOTE)('"')
+        PsiElement(STRING_CONTENT)('executable')
+        PsiElement(CLOSE_QUOTE)('"')
+      PsiWhiteSpace(' ')
+      PsiElement(EVAL_CONTENT)('2>/dev/null')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -32,24 +23,15 @@ SHELL_SCRIPT
             SUBSHELL_COMMAND
               PsiElement(()('(')
               COMPOUND_LIST
-                PIPELINE_COMMAND
-                  PIPELINE
-                    SIMPLE_COMMAND
-                      GENERIC_COMMAND_DIRECTIVE
-                        LITERAL
-                          PsiElement(word)('eval')
-                      PsiWhiteSpace(' ')
-                      STRING
-                        PsiElement(OPEN_QUOTE)('"')
-                        VARIABLE
-                          PsiElement(var)('$executable')
-                        PsiElement(CLOSE_QUOTE)('"')
-                      PsiWhiteSpace(' ')
-                      NUMBER
-                        PsiElement(int)('2')
-                      SIMPLE_COMMAND_ELEMENT
-                        REDIRECTION
-                          PsiElement(>)('>')
-                          PsiElement(word)('/dev/null')
+                EVAL_COMMAND
+                  PsiElement(eval)('eval')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(OPEN_QUOTE)('"')
+                    VARIABLE
+                      PsiElement(var)('$executable')
+                    PsiElement(CLOSE_QUOTE)('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(EVAL_CONTENT)('2>/dev/null')
               PsiElement())(')')
             PsiElement(CLOSE_QUOTE)('"')
