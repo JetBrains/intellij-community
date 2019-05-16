@@ -29,12 +29,22 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
-import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencyManagement;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.indices.IndicesBundle;
+import org.jetbrains.idea.maven.indices.MavenArtifactSearchResult;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
+import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER;
@@ -97,7 +107,7 @@ public class MavenDependencyCompletionUtil {
       }
     }
 
-    DependencySearchService service = MavenProjectIndicesManager.getInstance(project).getSearchService();
+    OfflineSearchService service = MavenProjectIndicesManager.getInstance(project).getOfflineSearchService();
 
     List<MavenDependencyCompletionItem> versions = service.findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null));
     if (versions.size() == 1) {
@@ -126,9 +136,39 @@ public class MavenDependencyCompletionUtil {
       .withIcon(getIcon(item.getType()));
   }
 
+  public static MavenDependencyCompletionItem getMaxIcon(MavenArtifactSearchResult searchResult) {
+    return Collections.max(Arrays.asList(searchResult.getSearchResults().getItems()),
+                           Comparator.comparing(r -> {
+                             if (r.getType() == null) {
+                               return Integer.MIN_VALUE;
+                             }
+                             return r.getType().getWeight();
+                           }));
+  }
+
   public static LookupElementBuilder lookupElement(MavenDependencyCompletionItem item) {
     return lookupElement(item, getLookupString(item));
   }
+
+  public static LookupElementBuilder lookupElement(MavenRepositoryArtifactInfo info) {
+    return LookupElementBuilder.create(info, getLookupString(info.getItems()[0]))
+      .withPresentableText(getPresentableText(info))
+      .withIcon(getIcon(info));
+  }
+
+  private static Icon getIcon(MavenRepositoryArtifactInfo info) {
+    return getIcon(
+      Collections.max(ContainerUtil.newArrayList(info.getItems()), Comparator.comparing(i -> i.getType().getWeight())).getType());
+  }
+
+  private static String getPresentableText(MavenRepositoryArtifactInfo info) {
+    if (info.getItems().length == 1) {
+      return getLookupString(info.getItems()[0]);
+    }
+    String key = "maven.dependency.completion.presentable";
+    return IndicesBundle.message(key, info.getGroupId(), info.getArtifactId(), info.getItems().length);
+  }
+
 
   @Nullable
   public static Icon getIcon(@Nullable MavenDependencyCompletionItem.Type type) {

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
+import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
 import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
 import org.jetbrains.idea.maven.onlinecompletion.ProjectModulesCompletionProvider;
 
@@ -63,7 +63,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    DependencySearchService service = myIndicesFixture.getProjectIndicesManager().getSearchService();
+    OfflineSearchService service = myIndicesFixture.getProjectIndicesManager().getOfflineSearchService();
     assertEquals(3, service.getProviders().size());
 
     assertTrue(service.getProviders().get(0) instanceof IndexBasedCompletionProvider);

@@ -101,6 +101,7 @@ public class MavenParsingContext {
 
     private final ProjectExecutionEntry myProject;
 
+
     MojoExecutionEntry(String name,
                        int threadId,
                        ProjectExecutionEntry currentProject) {

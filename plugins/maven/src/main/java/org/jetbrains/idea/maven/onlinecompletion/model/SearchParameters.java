@@ -6,13 +6,13 @@ import java.util.EnumSet;
 public class SearchParameters {
 
   public enum Flags {
-    ALL_VERSIONS("requesting all versions"),
+    LAST_VERSION_ONLY("Last version only"),
     NOT_DEDUPLICATE("Deduplication will not be called");
 
     Flags(String desc) {}
   }
 
-  public static final SearchParameters DEFAULT = new SearchParameters(200, 1000, EnumSet.noneOf(Flags.class));
+  public static final SearchParameters DEFAULT = new SearchParameters(200, 2000, EnumSet.noneOf(Flags.class));
   private final int maxResults;
   private final long millisToWait;
   private final EnumSet<Flags> myFlags;

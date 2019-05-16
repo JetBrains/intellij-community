@@ -2,8 +2,14 @@
 package org.jetbrains.idea.maven.dom.model.completion;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -17,18 +23,22 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.completion.insert.MavenArtifactInfoInsertionHandler;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.onlinecompletion.MavenScopeTable;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER;
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
-import static com.intellij.patterns.StandardPatterns.string;
 
 /**
  * @author Sergey Evdokimov
@@ -60,14 +70,31 @@ public class MavenDependenciesCompletionProvider extends CompletionContributor {
       return;
     }
 
-
-    List<MavenDependencyCompletionItem> candidates = MavenProjectIndicesManager.getInstance(project).getSearchService().findByTemplate(
-      StringUtil.trim(xmlText.getText().replace(DUMMY_IDENTIFIER, "").replace(DUMMY_IDENTIFIER_TRIMMED, "")));
-
-    for (MavenDependencyCompletionItem candidate : candidates) {
-      result.addElement(MavenDependencyCompletionUtil.lookupElement(candidate).withInsertHandler(MavenDependencyInsertHandler.INSTANCE));
+    String coord = StringUtil.trim(xmlText.getText().replace(DUMMY_IDENTIFIER, "").replace(DUMMY_IDENTIFIER_TRIMMED, ""));
+    if (StringUtil.isEmpty(coord)) {
+      return;
     }
-    result.restartCompletionOnPrefixChange(string().containsChars(":-."));
+    MavenId id = new MavenId(coord);
+    SearchParameters searchParameters = SearchParameters.DEFAULT;
+    if (id.getVersion() == null) {
+      searchParameters = searchParameters.withFlag(SearchParameters.Flags.LAST_VERSION_ONLY);
+    }
+
+    ConcurrentLinkedDeque<MavenRepositoryArtifactInfo> cld = new ConcurrentLinkedDeque<>();
+    AsyncPromise<Void> asyncPromise = MavenProjectIndicesManager.getInstance(project).getDependencySearchService().fulltextSearch(
+      coord, searchParameters,
+      mdci -> cld.add(mdci)
+    );
+
+    result.restartCompletionOnAnyPrefixChange();
+    while (!asyncPromise.isDone() || !cld.isEmpty()) {
+      ProgressManager.checkCanceled();
+      MavenRepositoryArtifactInfo item = cld.poll();
+      if (item != null) {
+        result
+          .addElement(MavenDependencyCompletionUtil.lookupElement(item).withInsertHandler(MavenArtifactInfoInsertionHandler.INSTANCE));
+      }
+    }
   }
 
   private static class MavenDependencyInsertHandler implements InsertHandler<LookupElement> {
