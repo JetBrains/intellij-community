@@ -2,7 +2,7 @@
 package org.jetbrains.concurrency
 
 import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
 import org.jetbrains.concurrency.Promise.State
@@ -59,7 +59,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
         }
         catch (e: Throwable) {
           if (e !is ControlFlowException) {
-            logger<AsyncPromise<*>>().error(e)
+            Logger.getInstance(AsyncPromise::class.java).error(e)
           }
         }
       }
@@ -136,7 +136,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
     }
 
     if (!hasErrorHandler.get()) {
-      logger<AsyncPromise<*>>().errorIfNotMessage(error)
+      Logger.getInstance(AsyncPromise::class.java).errorIfNotMessage(error)
     }
     return true
   }

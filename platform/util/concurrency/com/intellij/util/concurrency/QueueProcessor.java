@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.application.Application;
@@ -174,16 +174,16 @@ public class QueueProcessor<T> {
       }
     }
   }
-  
+
   boolean waitFor(long timeoutMS) {
     synchronized (myQueue) {
       long start = System.currentTimeMillis();
-      
+
       while (isProcessing) {
         long rest = timeoutMS - (System.currentTimeMillis() - start);
-        
+
         if (rest <= 0) return !isProcessing;
-        
+
         try {
           myQueue.wait(rest);
         }
@@ -191,16 +191,16 @@ public class QueueProcessor<T> {
           //ok
         }
       }
-      
+
       return true;
     }
   }
 
-  private boolean startProcessing() {
+  private void startProcessing() {
     LOG.assertTrue(Thread.holdsLock(myQueue));
 
     if (isProcessing || !myStarted) {
-      return false;
+      return;
     }
     isProcessing = true;
     final T item = myQueue.removeFirst();
@@ -224,7 +224,6 @@ public class QueueProcessor<T> {
     else {
       application.executeOnPooledThread(runnable);
     }
-    return true;
   }
 
   public static void runSafely(@NotNull Runnable run) {
