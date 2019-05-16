@@ -22,7 +22,7 @@ public class ShTextOccurrencesUtil {
     if (caret.hasSelection()) {
       TextRange textRange = TextRange.create(caret.getSelectionStart(), caret.getSelectionEnd());
       CharSequence subSequence = textRange.subSequence(editor.getDocument().getCharsSequence());
-      return StringUtil.isEmptyOrSpaces(subSequence) ? null : textRange;
+      return StringUtil.isEmptyOrSpaces(subSequence) || StringUtil.contains(subSequence, "\n") ? null : textRange;
     }
     return SelectWordUtil.getWordSelectionRange(editor.getDocument().getImmutableCharSequence(),
         caret.getOffset(),
