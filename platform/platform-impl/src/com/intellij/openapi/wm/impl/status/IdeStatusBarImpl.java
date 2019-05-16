@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,7 +25,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx {
+public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher {
   private static final int MIN_ICON_HEIGHT = 18 + 1 + 1;
   private final InfoAndProgressPanel myInfoAndProgressPanel;
   private IdeFrame myFrame;
@@ -55,6 +55,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   private JPanel myLeftPanel;
   private JPanel myRightPanel;
   private JPanel myCenterPanel;
+  private Component myHoveredComponent;
 
   private String myInfo;
 
@@ -150,8 +151,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    IdeEventQueue.getInstance().addPostprocessor(this, this);
   }
-
 
   public IdeStatusBarImpl() {
     this(null);
@@ -499,7 +500,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   private static JComponent wrap(@NotNull final StatusBarWidget widget) {
     if (widget instanceof CustomStatusBarWidget) {
-      return addHoverMouseListener(((CustomStatusBarWidget)widget).getComponent());
+      return ((CustomStatusBarWidget)widget).getComponent();
     }
     final StatusBarWidget.WidgetPresentation presentation =
       widget.getPresentation(SystemInfoRt.isMac ? StatusBarWidget.PlatformType.MAC : StatusBarWidget.PlatformType.DEFAULT);
@@ -521,31 +522,31 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       throw new IllegalArgumentException("Unable to find a wrapper for presentation: " + presentation.getClass().getSimpleName());
     }
     wrapper.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
-    return addHoverMouseListener(wrapper);
+    return wrapper;
   }
 
-  private static JComponent addHoverMouseListener(JComponent component) {
-    component.addMouseListener(new MouseEventHandler() {
-      @Override
-      protected void handle(MouseEvent event) {
-        if (!event.isConsumed()) {
-          if (!component.isEnabled()) {
-            return;
-          }
-          switch (event.getID()) {
-            case MouseEvent.MOUSE_MOVED:
-            case MouseEvent.MOUSE_ENTERED:
-            case MouseEvent.MOUSE_EXITED:
-              component.setBackground(insideComponent(event, component) ? JBUI.CurrentTheme.ActionButton.hoverBackground() : null);
-          }
-        }
-      }
+  private void hoverComponent(@Nullable Component component) {
+    if (myHoveredComponent != null) {
+      myHoveredComponent.setBackground(null);
+    }
+    if (component != null && component.isEnabled()) {
+      component.setBackground(JBUI.CurrentTheme.ActionButton.hoverBackground());
+    }
+    myHoveredComponent = component;
+  }
 
-      private boolean insideComponent(MouseEvent e, JComponent component) {
-        return new Rectangle(component.getWidth(), component.getHeight()).contains(e.getX(), e.getY());
+  @Override
+  public boolean dispatch(@NotNull AWTEvent e) {
+    if (e instanceof MouseEvent) {
+      Component component = ((MouseEvent)e).getComponent();
+      if (component == null) {
+        return false;
       }
-    });
-    return component;
+      Point point = SwingUtilities.convertPoint(component, ((MouseEvent)e).getPoint(), myRightPanel);
+      Component widget = myRightPanel.getComponentAt(point);
+      hoverComponent(widget != myRightPanel ? widget : null);
+    }
+    return false;
   }
 
   @Override
