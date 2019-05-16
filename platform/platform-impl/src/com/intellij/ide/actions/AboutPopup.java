@@ -4,6 +4,8 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -13,6 +15,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -23,6 +26,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
@@ -46,11 +52,14 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
@@ -416,7 +425,7 @@ public class AboutPopup {
     }
 
     public String getText() {
-      return myInfo.toString() + SystemInfo.getOsNameAndVersion();
+      return myInfo.toString() + getExtraInfo();
     }
 
     private class TextRenderer {
@@ -616,6 +625,24 @@ public class AboutPopup {
         return AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(text);
       }
     }
+  }
+
+  @NotNull
+  private static String getExtraInfo() {
+    return SystemInfo.getOsNameAndVersion() + "\n" +
+
+           "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
+             .map(GarbageCollectorMXBean::getName).collect(StringUtil.joining()) + "\n" +
+
+           "Memory: " + (Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE) + "M" + "\n" +
+
+           "CPU: " + Runtime.getRuntime().availableProcessors() + "\n" +
+
+           "Registry: " + Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
+             .map(v -> v.getKey() + "=" + v.asString()).collect(StringUtil.joining()) + "\n" +
+
+           "Non-Bundled Plugins: " + Arrays.stream(PluginManagerCore.getPlugins()).filter(p -> !p.isBundled() && p.isEnabled())
+             .map(p -> p.getPluginId().getIdString()).collect(StringUtil.joining());
   }
 
   public static class PopupPanel extends JPanel {
