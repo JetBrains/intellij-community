@@ -23,6 +23,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,19 +90,26 @@ public class JavaCompletionSorting {
 
   @Nullable
   private static LookupElementWeigher dispreferPreviousChainCalls(PsiElement position) {
-    Set<PsiMethod> previousChainCalls = new HashSet<>();
+    TObjectIntHashMap<PsiMethod> previousChainCalls = new TObjectIntHashMap<>();
     if (position.getParent() instanceof PsiReferenceExpression) {
       PsiMethodCallExpression qualifier = getCallQualifier((PsiReferenceExpression)position.getParent());
       while (qualifier != null) {
-        ContainerUtil.addIfNotNull(previousChainCalls, qualifier.resolveMethod());
+        PsiMethod method = qualifier.resolveMethod();
+        if (method != null) {
+          String name = method.getName();
+          boolean seemsLikeExpectsMultipleCalls = name.startsWith("put") || name.startsWith("add");
+          if (!seemsLikeExpectsMultipleCalls) {
+            previousChainCalls.put(method, previousChainCalls.get(method) + 1);
+          }
+        }
         qualifier = getCallQualifier(qualifier.getMethodExpression());
       }
     }
     return previousChainCalls.isEmpty() ? null : new LookupElementWeigher("dispreferPreviousChainCalls") {
       @Override
       public Comparable weigh(@NotNull LookupElement element, @NotNull WeighingContext context) {
-        //noinspection SuspiciousMethodCalls
-        return previousChainCalls.contains(element.getPsiElement());
+        PsiElement psi = element.getPsiElement();
+        return psi instanceof PsiMethod && previousChainCalls.get((PsiMethod)psi) == 1;
       }
     };
   }
