@@ -231,7 +231,20 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
 
-    JPanel panel2 = new NonOpaquePanel(new HorizontalLayout(myMarketplace ? offset : JBUI.scale(7)));
+    JPanel panel2 = new NonOpaquePanel(new HorizontalLayout(myMarketplace ? offset : JBUI.scale(7)) {
+      @Override
+      public void layoutContainer(Container parent) {
+        super.layoutContainer(parent);
+        if (myTagPanel != null && myTagPanel.isVisible()) {
+          int baseline = myTagPanel.getBaseline(-1, -1);
+          if (baseline != -1) {
+            Rectangle bounds = myVersion.getBounds();
+            int newY = myTagPanel.getY() + baseline - myVersion.getBaseline(bounds.width, bounds.height);
+            myVersion.setBounds(bounds.x, newY, bounds.width, bounds.height);
+          }
+        }
+      }
+    });
     if (myMarketplace) {
       panel2.add(myTagPanel = new TagPanel(mySearchListener));
     }
