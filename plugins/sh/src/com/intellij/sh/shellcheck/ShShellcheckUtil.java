@@ -38,8 +38,8 @@ class ShShellcheckUtil {
   private static final String SHELLCHECK = "shellcheck";
   private static final String SHELLCHECK_VERSION = "0.6.0-1";
   private static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
-  private static final String SHELLCHECK_URL = "https://cache-redirector.jetbrains.com/" +
-                                               "jetbrains.bintray.com/intellij-third-party-dependencies/" +
+  private static final String SHELLCHECK_URL = "https://jetbrains.bintray.com/" +
+                                               "intellij-third-party-dependencies/" +
                                                "org/jetbrains/intellij/deps/shellcheck/";
   private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
@@ -514,4 +514,14 @@ class ShShellcheckUtil {
     "SC2246", "This shebang specifies a directory. Ensure the interpreter is a file.",
     "SC2247", "Flip leading $ and \" if this should be a quoted substitution.",
     "SC2249", "Consider adding a default *) case, even if it just exits with error.");
+
+  static int calcOffset(CharSequence sequence, int startOffset, int column) {
+    int i = 1;
+    while (i < column) {
+      int c = Character.codePointAt(sequence, startOffset);
+      i += c == '\t' ? 8 : 1;
+      startOffset++;
+    }
+    return startOffset;
+  }
 }
