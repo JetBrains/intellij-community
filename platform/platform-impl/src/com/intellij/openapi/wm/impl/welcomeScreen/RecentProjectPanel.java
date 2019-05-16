@@ -163,7 +163,7 @@ public class RecentProjectPanel extends JPanel {
         if (selectedValued != null) {
           for (Object selection : selectedValued) {
             AnActionEvent event = AnActionEvent.createFromInputEvent((AnAction)selection, null, ActionPlaces.WELCOME_SCREEN);
-            ((AnAction)selection).actionPerformed(event);
+            ActionUtil.performActionDumbAware((AnAction)selection, event);
           }
         }
       }
