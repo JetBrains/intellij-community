@@ -157,20 +157,25 @@ class ShShellcheckUtil {
 
   @Nullable
   private static String getShellcheckDistributionLink() {
-    String platform;
+    String platform = getPlatform();
+    if (platform == null) return null;
+    return SHELLCHECK_URL + SHELLCHECK_VERSION + "/" + platform + SHELLCHECK_ARCHIVE_EXTENSION;
+  }
+
+  @Nullable
+  private static String getPlatform() {
     if (SystemInfoRt.isMac) {
-      platform = "mac";
+      return "mac";
     }
     else if (SystemInfoRt.isLinux) {
-      platform = "linux";
+      return "linux";
     }
     else if (SystemInfoRt.isWindows) {
-      platform = "windows";
+      return "windows";
     }
     else {
       return null;
     }
-    return SHELLCHECK_URL + SHELLCHECK_VERSION + "/" + platform + SHELLCHECK_ARCHIVE_EXTENSION;
   }
 
   private static void showInfoNotification() {
