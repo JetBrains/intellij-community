@@ -346,8 +346,8 @@ public class GraphTableController {
     }
 
     private void restoreCursor(int newCursorType) {
-      if (myLastCursor != null && myTable.getCursor().getType() == newCursorType) {
-        myTable.setCursor(myLastCursor);
+      if (myTable.getCursor().getType() == newCursorType) {
+        myTable.setCursor(myLastCursor != null && myLastCursor.getType() != Cursor.DEFAULT_CURSOR ? myLastCursor : null);
         myLastCursor = null;
       }
     }

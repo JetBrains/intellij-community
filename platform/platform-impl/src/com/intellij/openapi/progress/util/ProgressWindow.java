@@ -171,14 +171,14 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   final void enterModality() {
-    if (myModalityProgress == this && !myModalityEntered) {
+    if (isModalEntity() && !myModalityEntered) {
       LaterInvocator.enterModal(this, (ModalityStateEx)getModalityState());
       myModalityEntered = true;
     }
   }
 
   final void exitModality() {
-    if (myModalityProgress == this && myModalityEntered) {
+    if (isModalEntity() && myModalityEntered) {
       myModalityEntered = false;
       LaterInvocator.leaveModal(this);
     }

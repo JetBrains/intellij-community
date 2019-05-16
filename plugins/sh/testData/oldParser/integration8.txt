@@ -1,0 +1,40 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            VARIABLE
+              PsiElement(var)('$action')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<)('<')
+              PsiWhiteSpace(' ')
+              PsiElement($)('$')
+              SHELL_PARAMETER_EXPANSION
+                PsiElement({)('{')
+                PsiElement(parameter_expansion_body)('DEVICE_PREFIX')
+                PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement($)('$')
+          SHELL_PARAMETER_EXPANSION
+            PsiElement({)('{')
+            PsiElement(parameter_expansion_body)('#a')
+            PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement($)('$')
+          PsiWhiteSpace(' ')
+          SHELL_PARAMETER_EXPANSION
+            PsiElement({)('{')
+            PsiErrorElement:parameter_expansion_body expected
+              <empty list>
+  PsiComment(Comment)('#a} #this is an invalid syntax in bash')

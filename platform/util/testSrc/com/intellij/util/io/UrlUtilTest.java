@@ -2,6 +2,7 @@
 
 package com.intellij.util.io;
 
+import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -71,7 +72,7 @@ public class UrlUtilTest {
 
   @Test
   public void resourceExistsForFileInJar() throws Exception {
-    URL stringUrl = String.class.getResource("String.class");
+    URL stringUrl = Maps.class.getResource("Maps.class");
     assertEquals(ThreeState.YES, URLUtil.resourceExists(stringUrl));
     URL xxxUrl = new URL(stringUrl.getProtocol(), "", -1, stringUrl.getPath() + "/xxx");
     assertEquals(ThreeState.NO, URLUtil.resourceExists(xxxUrl));

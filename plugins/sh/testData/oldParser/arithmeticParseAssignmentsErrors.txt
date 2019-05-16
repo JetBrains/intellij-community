@@ -1,0 +1,88 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            ASSIGNMENT_EXPRESSION
+              LITERAL_EXPRESSION
+                NUMBER
+                  PsiElement(int)('1')
+              PsiElement(=)('=')
+              LITERAL_EXPRESSION
+                NUMBER
+                  PsiElement(int)('1')
+            PsiElement()))('))')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            ASSIGNMENT_EXPRESSION
+              LITERAL_EXPRESSION
+                NUMBER
+                  PsiElement(int)('1')
+              PsiWhiteSpace(' ')
+              PsiElement(+=)('+=')
+              PsiWhiteSpace(' ')
+              LITERAL_EXPRESSION
+                NUMBER
+                  PsiElement(int)('1')
+            PsiElement()))('))')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            ASSIGNMENT_EXPRESSION
+              LITERAL_EXPRESSION
+                NUMBER
+                  PsiElement(int)('1')
+              PsiWhiteSpace(' ')
+              PsiElement(-=)('-=')
+              PsiWhiteSpace(' ')
+              LITERAL_EXPRESSION
+                NUMBER
+                  PsiElement(int)('1')
+            PsiElement()))('))')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            ASSIGNMENT_EXPRESSION
+              LITERAL_EXPRESSION
+                NUMBER
+                  PsiElement(int)('1')
+              PsiWhiteSpace(' ')
+              PsiElement(*=)('*=')
+              PsiWhiteSpace(' ')
+              LITERAL_EXPRESSION
+                NUMBER
+                  PsiElement(int)('1')
+            PsiElement()))('))')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            ASSIGNMENT_EXPRESSION
+              LITERAL_EXPRESSION
+                NUMBER
+                  PsiElement(int)('1')
+              PsiWhiteSpace(' ')
+              PsiElement(%=)('%=')
+              PsiWhiteSpace(' ')
+              LITERAL_EXPRESSION
+                NUMBER
+                  PsiElement(int)('1')
+            PsiElement()))('))')

@@ -23,12 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -637,7 +636,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (SystemInfo.isWindows) {
       if (path.length() >= 2 && path.charAt(1) == ':') {
         // Drive letter
-        return path.substring(0, 2).toUpperCase(Locale.US);
+        return StringUtil.toUpperCase(path.substring(0, 2));
       }
 
       if (path.startsWith("//") || path.startsWith("\\\\")) {

@@ -24,6 +24,7 @@ public class BaselinePanel extends NonOpaquePanel {
   private final List<Component> myButtonComponents = new ArrayList<>();
   private boolean[] myButtonEnableStates;
   private Component myProgressComponent;
+  private int myYOffset;
 
   private final JBValue myOffset = new JBValue.Float(8);
   private final JBValue myBeforeButtonOffset = new JBValue.Float(40);
@@ -102,6 +103,7 @@ public class BaselinePanel extends NonOpaquePanel {
         for (Component component : myButtonComponents) {
           if (component.isVisible()) {
             parentWidth -= component.getPreferredSize().width;
+            visibleCount++;
           }
         }
         parentWidth -= myButtonOffset.get() * (visibleCount - 1);
@@ -164,7 +166,7 @@ public class BaselinePanel extends NonOpaquePanel {
           emptyButtons = false;
           Dimension size = component.getPreferredSize();
           lastX -= size.width;
-          setBaselineBounds(lastX, y, component, size);
+          setBaselineBounds(lastX, y - myYOffset, component, size);
           lastX -= myButtonOffset.get();
         }
 
@@ -213,6 +215,10 @@ public class BaselinePanel extends NonOpaquePanel {
 
   public void setListeners(@NotNull EventHandler eventHandler) {
     myEventHandler = eventHandler;
+  }
+
+  public void setYOffset(int YOffset) {
+    myYOffset = YOffset;
   }
 
   @Override

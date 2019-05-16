@@ -310,6 +310,17 @@ public abstract class NullableNotNullManager {
     return findPlainAnnotation(owner, checkBases, qNames);
   }
 
+  /**
+   * @return an annotation (if any) with the given nullability semantics on the given declaration or its type. In case of conflicts,
+   * type annotations are preferred.
+   */
+  @Nullable
+  public PsiAnnotation findExplicitNullabilityAnnotation(@NotNull PsiModifierListOwner owner, @NotNull Nullability nullability) {
+    if (nullability == Nullability.UNKNOWN) return null;
+    List<String> names = nullability == Nullability.NULLABLE ? getNullablesWithNickNames() : getNotNullsWithNickNames();
+    return findPlainAnnotation(owner, false, new HashSet<>(names));
+  }
+
   @Nullable
   private static PsiAnnotation findPlainAnnotation(@NotNull PsiModifierListOwner owner,
                                                    boolean checkBases,

@@ -207,7 +207,9 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    *
    * @param filePath the path to check.
    * @return true if the path is managed by this VCS, false otherwise.
+   * @deprecated Use {@link VcsRootChecker} instead.
    */
+  @Deprecated
   public boolean fileIsUnderVcs(FilePath filePath) {
     return true;
   }
@@ -237,7 +239,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   public void enableIntegration() {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (vcsManager != null) {
-      vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", getName())));
+      vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(getName())));
     }
   }
 
@@ -390,7 +392,9 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    *
    * @param dir the directory to check.
    * @return {@code true} if directory is managed by this VCS
+   * @deprecated Use {@link VcsRootChecker} instead.
    */
+  @Deprecated
   public boolean isVersionedDirectory(VirtualFile dir) {
     return false;
   }
@@ -440,16 +444,11 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   @NotNull
+  @Deprecated
   public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
-    new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
-    return in;
-  }
-
-  @NotNull
-  public static <S> List<S> filterUniqueRootsDefault(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
-    FilterDescendantVirtualFileConvertible<S> convertible =
-      new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance());
-    convertible.doFilter(in);
+    if (!allowsNestedRoots()) {
+      new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
+    }
     return in;
   }
 

@@ -4,9 +4,11 @@ package com.intellij.openapi.vcs;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI;
@@ -51,21 +53,9 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     vcses.registerManually(new MockAbstractVcs(myProject, "CVS"));
     vcses.registerManually(new MockAbstractVcs(myProject, "mock2"));
     myMappings = new NewMappings(myProject, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject),
-                                 FileStatusManager.getInstance(myProject));
+                                 FileStatusManager.getInstance(myProject), DefaultVcsRootPolicy.getInstance(myProject));
+    Disposer.register(getTestRootDisposable(), myMappings);
     startupManager.runPostStartupActivities();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      myMappings.disposeMe();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   public void testMappingsFilter() {
@@ -104,41 +94,41 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   public void testSamePrefix() {
     myMappings.setMapping(myRootPath + "/a", "CVS");
     myMappings.setMapping(myRootPath + "/a-b", "mock2");
-    assertEquals(3, myMappings.getDirectoryMappings().size());
+    assertEquals(2, myMappings.getDirectoryMappings().size());
     myMappings.cleanupMappings();
-    assertEquals(3, myMappings.getDirectoryMappings().size());
-    assertEquals("mock2", myMappings.getVcsFor(myProjectRoot.findChild("a-b")));
-    assertEquals("CVS", myMappings.getVcsFor(myProjectRoot.findChild("a")));
+    assertEquals(2, myMappings.getDirectoryMappings().size());
+    assertEquals("mock2", getVcsFor(myProjectRoot.findChild("a-b")));
+    assertEquals("CVS", getVcsFor(myProjectRoot.findChild("a")));
   }
 
   public void testSamePrefixEmpty() {
     myMappings.setMapping(myRootPath + "/a", "CVS");
-    assertEquals("", myMappings.getVcsFor(myProjectRoot.findChild("a-b")));
+    assertNull(getVcsFor(myProjectRoot.findChild("a-b")));
   }
 
   public void testSame() {
-    myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
-    myMappings.setMapping(myRootPath + "/parent/path", "CVS");
+    myMappings.setMapping(myRootPath + "/parent/path1", "CVS");
+    myMappings.setMapping(myRootPath + "\\parent\\path2", "CVS");
 
     final String[] children = {
-      myRootPath + "/parent/path", myRootPath + "\\parent\\path", myRootPath + "\\parent\\path"
+      myRootPath + "\\parent\\path1", myRootPath + "/parent/path1", myRootPath + "\\parent\\path1",
+      myRootPath + "\\parent\\path2", myRootPath + "/parent/path2", myRootPath + "\\parent\\path2"
     };
     createFiles(children);
 
     for (String child : children) {
       myMappings.setMapping(child, "CVS");
       myMappings.cleanupMappings();
-      assertEquals("cleanup failed: " + child, 1, myMappings.getDirectoryMappings().size());
+      assertEquals("cleanup failed: " + child, 2, myMappings.getDirectoryMappings().size());
     }
 
     for (String child : children) {
       myMappings.setMapping(child, "CVS");
-      assertEquals("cleanup failed: " + child, 1, myMappings.getDirectoryMappings().size());
+      assertEquals("cleanup failed: " + child, 2, myMappings.getDirectoryMappings().size());
     }
   }
 
   public void testHierarchy() {
-    myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent", "CVS");
 
     final String[] children = {
@@ -154,15 +144,18 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   }
 
   public void testNestedInnerCopy() {
-    myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent", "CVS");
     myMappings.setMapping(myRootPath + "/parent/child", "mock");
 
     final String[] children = {
-      myRootPath + "/parent/child1", myRootPath + "\\parent\\middle\\child2", myRootPath + "/parent/middle/child3",
+      myRootPath + "/parent/child1",
+      myRootPath + "\\parent\\middle\\child2",
+      myRootPath + "/parent/middle/child3",
       myRootPath + "/parent/child/inner"
     };
     createFiles(children);
+
+    myMappings.waitMappedRootsUpdate();
 
     final String[] awaitedVcsNames = {"CVS","CVS","CVS","mock"};
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -170,7 +163,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
       String child = children[i];
       final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(child));
       assertNotNull(vf);
-      final VcsDirectoryMapping mapping = myMappings.getMappingFor(vf);
+      final VcsDirectoryMapping mapping = getMappingFor(vf);
       assertNotNull(mapping);
       assertEquals(awaitedVcsNames[i], mapping.getVcs());
     }
@@ -183,5 +176,17 @@ public class DirectoryMappingListTest extends PlatformTestCase {
       assert created || file.isDirectory() : file;
       myFilesToDelete.add(file);
     }
+    LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
+  }
+
+  private String getVcsFor(VirtualFile file) {
+    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
+    AbstractVcs vcs = root != null ? root.vcs : null;
+    return vcs != null ? vcs.getName() : null;
+  }
+
+  private VcsDirectoryMapping getMappingFor(VirtualFile file) {
+    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
+    return root != null ? root.mapping : null;
   }
 }

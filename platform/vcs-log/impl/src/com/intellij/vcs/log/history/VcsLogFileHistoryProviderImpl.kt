@@ -7,10 +7,8 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ObjectUtils.assertNotNull
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsLogFileHistoryProvider
-import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.AbstractVcsLogUi
@@ -30,7 +28,8 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     val root = VcsLogUtil.getActualRoot(project, path) ?: return false
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
 
-    return dataManager.index.isIndexingEnabled(root)
+    return dataManager.index.isIndexingEnabled(root) ||
+           canShowHistoryInLog(dataManager, getCorrectedPath(project, path, root, revisionNumber), root)
   }
 
   override fun showFileHistory(project: Project, path: FilePath, revisionNumber: String?) {
@@ -50,12 +49,19 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     }
 
     val logManager = VcsProjectLog.getInstance(project).logManager!!
-    if (correctedPath.isDirectory && VcsLogUtil.isFolderHistoryShownInLog()) {
+    if (canShowHistoryInLog(logManager.dataManager, correctedPath, root)) {
       findOrOpenFolderHistory(project, logManager, root, correctedPath, hash, historyUiConsumer)
     }
     else {
       findOrOpenHistory(project, logManager, root, correctedPath, hash, historyUiConsumer)
     }
+  }
+
+  private fun canShowHistoryInLog(dataManager: VcsLogData,
+                                  correctedPath: FilePath,
+                                  root: VirtualFile): Boolean {
+    return (VcsLogUtil.isFolderHistoryShownInLog() && correctedPath.isDirectory &&
+            VcsLogProperties.get(dataManager.getLogProvider(root), VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY))
   }
 
   private fun triggerFileHistoryUsage(path: FilePath, hash: Hash?) {

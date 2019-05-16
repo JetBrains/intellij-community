@@ -2,7 +2,10 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -44,7 +47,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private TDoubleArrayList myFractionStack; // guarded by this
   private Stack<String> myText2Stack; // guarded by this
 
-  protected ProgressIndicator myModalityProgress;
+  private ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
   private volatile int myNonCancelableSectionCount;
   private final Object lock = ObjectUtils.sentinel("APIB lock");
@@ -227,6 +230,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     return myModalityProgress != null;
   }
 
+  final boolean isModalEntity() {
+    return myModalityProgress == this;
+  }
+
   @Override
   @NotNull
   public ModalityState getModalityState() {
@@ -241,15 +248,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   private void setModalityState(@Nullable ProgressIndicator modalityProgress) {
-    Application application = ApplicationManager.getApplication();
+    ModalityState modalityState = ModalityState.defaultModalityState();
 
-    if (modalityProgress == null && !application.isDispatchThread()) {
-      myModalityState = ModalityState.NON_MODAL;
-      return;
-    }
-
-    ModalityState modalityState = application.getCurrentModalityState();
     if (modalityProgress != null) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       modalityState = ((ModalityStateEx)modalityState).appendProgress(modalityProgress);
       ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(modalityState);
     }

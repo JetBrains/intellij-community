@@ -1398,6 +1398,15 @@ SectionEnd
 Function .onInit
   SetRegView 32
   Call createLog
+  ${If} ${RunningX64}
+    Goto init
+  ${Else}
+    StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" install_jbr11_bundled_on_win32 init
+install_jbr11_bundled_on_win32:
+    MessageBox MB_OK "$(not_supported_32bit_win_version)"
+    Abort
+  ${EndIf}
+init:
   !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
   Call getInstallationOptionsPositions

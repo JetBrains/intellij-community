@@ -249,14 +249,14 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         return JavaResolveResult.EMPTY;
       }
 
-      final MethodCandidateInfo staticFactoryCandidateInfo = createMethodCandidate(staticFactory, context, false, argumentList);
+      final MethodCandidateInfo staticFactoryCandidateInfo = createMethodCandidate((MethodCandidateInfo)result, context, false, argumentList);
       if (!staticFactory.isVarArgs()) {
         return staticFactoryCandidateInfo;
       }
 
       final ArrayList<CandidateInfo> conflicts = new ArrayList<>();
       conflicts.add(staticFactoryCandidateInfo);
-      conflicts.add(createMethodCandidate(staticFactory, context, true, argumentList));
+      conflicts.add(createMethodCandidate((MethodCandidateInfo)result, context, true, argumentList));
       return resolver.resolveConflict(conflicts);
     });
   }
@@ -438,11 +438,11 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
 
-  private static MethodCandidateInfo createMethodCandidate(@NotNull final PsiMethod staticFactoryMethod,
+  private static MethodCandidateInfo createMethodCandidate(@NotNull final MethodCandidateInfo staticFactoryMethod,
                                                            final PsiElement parent,
                                                            final boolean varargs,
                                                            final PsiExpressionList argumentList) {
-    return new MethodCandidateInfo(staticFactoryMethod, PsiSubstitutor.EMPTY, false, false, argumentList, parent, null, null) {
+    return new MethodCandidateInfo(staticFactoryMethod.getElement(), PsiSubstitutor.EMPTY, !staticFactoryMethod.isAccessible(), false, argumentList, parent, null, null) {
       private PsiType[] myExpressionTypes;
 
       @Override

@@ -46,23 +46,27 @@ import java.util.*;
 public class BuildOperations {
   private BuildOperations() { }
 
-  public static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target) throws IOException {
+  public static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target, boolean readOnly) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
     if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
       FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, timestamps, true, null, null);
       pd.fsState.markInitialScanPerformed(target);
-      configuration.save(context);
+      if (!readOnly) {
+        configuration.save(context);
+      }
     }
     else if (context.getScope().isBuildForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
       initTargetFSState(context, target, true);
-      if (!context.getScope().isBuildForced(target)) {
-        // case when target build is forced, is handled separately
-        IncProjectBuilder.clearOutputFiles(context, target);
+      if (!readOnly) {
+        if (!context.getScope().isBuildForced(target)) {
+          // case when target build is forced, is handled separately
+          IncProjectBuilder.clearOutputFiles(context, target);
+        }
+        pd.dataManager.cleanTargetStorages(target);
+        configuration.save(context);
       }
-      pd.dataManager.cleanTargetStorages(target);
-      configuration.save(context);
     }
     else if (!pd.fsState.isInitialScanPerformed(target)) {
       initTargetFSState(context, target, false);

@@ -87,6 +87,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.java.debugger.streams",
     "intellij.android.smali",
     "intellij.statsCollector",
+    "intellij.sh",
     "intellij.vcs.changeReminder"
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [

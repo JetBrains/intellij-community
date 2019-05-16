@@ -1279,7 +1279,7 @@ public class JavaDocInfoGenerator {
     PsiElement sibling = tag.getPrevSibling();
     while (sibling != null) {
       if (sibling instanceof PsiDocToken) {
-        String text = sibling.getText().toLowerCase();
+        String text = StringUtil.toLowerCase(sibling.getText());
         int pos = text.lastIndexOf("pre>");
         if (pos > 0) {
           switch (text.charAt(pos - 1)) {

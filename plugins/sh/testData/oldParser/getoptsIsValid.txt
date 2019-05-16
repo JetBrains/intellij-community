@@ -1,0 +1,31 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('getopts')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('x')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('varX')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('getopts')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('x')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('varX')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('p1')

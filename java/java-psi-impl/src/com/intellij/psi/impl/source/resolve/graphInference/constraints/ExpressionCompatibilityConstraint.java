@@ -64,7 +64,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     }
     if (myExpression instanceof PsiParenthesizedExpression) {
       final PsiExpression expression = ((PsiParenthesizedExpression)myExpression).getExpression();
-      if (expression != null) {
+      if (expression != null && !InferenceSession.ignoreLambdaConstraintTree(expression)) {
         constraints.add(new ExpressionCompatibilityConstraint(expression, myT));
         return true;
       }
@@ -72,19 +72,23 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
     if (myExpression instanceof PsiConditionalExpression) {
       final PsiExpression thenExpression = ((PsiConditionalExpression)myExpression).getThenExpression();
-      if (thenExpression != null) {
+      if (thenExpression != null && !InferenceSession.ignoreLambdaConstraintTree(thenExpression)) {
         constraints.add(new ExpressionCompatibilityConstraint(thenExpression, myT));
       }
 
       final PsiExpression elseExpression = ((PsiConditionalExpression)myExpression).getElseExpression();
-      if (elseExpression != null) {
+      if (elseExpression != null && !InferenceSession.ignoreLambdaConstraintTree(elseExpression)) {
         constraints.add(new ExpressionCompatibilityConstraint(elseExpression, myT));
       }
       return true;
     }
 
     if (myExpression instanceof PsiSwitchExpression) {
-      PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)myExpression).forEach(expression -> constraints.add(new ExpressionCompatibilityConstraint(expression,myT)));
+      PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)myExpression).forEach(expression -> {
+        if (!InferenceSession.ignoreLambdaConstraintTree(expression)) {
+          constraints.add(new ExpressionCompatibilityConstraint(expression, myT));
+        }
+      });
       return true;
     }
 
@@ -155,7 +159,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
       if (typeParams != null) {
         PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(currentMethod, resolveResult, method);
-        final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression);
+        InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression, session.getInferencePolicy());
         callSession.propagateVariables(session);
         if (method != null) {
           final PsiExpression[] args = argumentList.getExpressions();

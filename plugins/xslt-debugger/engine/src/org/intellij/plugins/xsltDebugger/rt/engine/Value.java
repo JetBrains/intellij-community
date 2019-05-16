@@ -18,6 +18,7 @@ package org.intellij.plugins.xsltDebugger.rt.engine;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Locale;
 
 public interface Value extends Serializable {
   interface Type extends Serializable {
@@ -28,7 +29,7 @@ public interface Value extends Serializable {
     BOOLEAN, NUMBER, STRING, NODESET, OBJECT, UNKNOWN;
 
     public String getName() {
-      return name().toLowerCase();
+      return name().toLowerCase(Locale.ENGLISH);
     }
   }
 

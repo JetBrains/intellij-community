@@ -340,7 +340,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "kXML2", libraryName: "kxml2", version: "2.3.0", license: "BSD", url: "http://sourceforge.net/projects/kxml/"),
     new LibraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2.17", license: "Apache 2.0",
                        url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "lz4-java", libraryName: "lz4-java", version: "1.3", license: "Apache 2.0",
+    new LibraryLicense(name: "lz4-java", libraryName: "lz4-java", version: "1.6.0", license: "Apache 2.0",
                        url: "https://github.com/lz4/lz4-java", licenseUrl: "https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
     new LibraryLicense(name: "markdown4j", libraryName: "markdown4j", version: "2.2", license: "New BSD",
                        url: "https://code.google.com/p/markdown4j/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),

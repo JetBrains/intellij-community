@@ -374,21 +374,22 @@ public class JobUtilTest extends LightPlatformTestCase {
       assertFalse(job.isDone());
       TimeoutUtil.sleep(random.nextInt(100));
       job.cancel();
-      while (!job.isDone() && !t.timedOut(i)) {
-        boolean wasDone = job.isDone();
-        boolean wasStarted = started.get();
-        boolean wasFinished = finished.get();
-        if (wasStarted && !wasFinished) {
-          assertFalse(wasDone);
-        }
-        // else no guarantees
 
-        // but can be finished=true but done=false still
-        if (wasDone) {
-          assertTrue(wasFinished);
+      while (!started.get() && !t.timedOut(i)) {
+        // need to test cancel() after started
+      }
+      while (!t.timedOut(i)) {
+        boolean isDone = job.isDone();
+        boolean isFinished = finished.get();
+
+        // the only forbidden state is isDone == 1, isFinished == 0
+        if (isDone && !isFinished) {
+          fail("isDone: " + isDone + "; isFinished: +" + isFinished);
+        }
+        if (isDone) {
+          break;
         }
       }
-      assertTrue(job.isDone());
     }
   }
 

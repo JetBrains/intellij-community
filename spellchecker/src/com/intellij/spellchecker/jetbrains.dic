@@ -714,6 +714,7 @@ sfinae
 sftp
 shader
 sharding
+shellcheck
 sigabrt
 sigaio
 sigalrm
@@ -938,6 +939,7 @@ wildcards
 wildfly
 wordwrap
 workflow
+workgroup
 writeln
 wsdl
 xcode

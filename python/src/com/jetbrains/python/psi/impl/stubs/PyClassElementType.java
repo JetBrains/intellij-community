@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.util.QualifiedName;
@@ -195,7 +196,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(PyClassNameIndex.KEY, name);
-      sink.occurrence(PyClassNameIndexInsensitive.KEY, name.toLowerCase());
+      sink.occurrence(PyClassNameIndexInsensitive.KEY, StringUtil.toLowerCase(name));
     }
 
     for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(stub.getPsi())) {

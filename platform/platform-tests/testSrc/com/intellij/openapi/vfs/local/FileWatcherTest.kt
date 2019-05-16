@@ -32,9 +32,12 @@ import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.*
+import org.junit.After
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -69,7 +72,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
 
     watcher = (fs as LocalFileSystemImpl).fileWatcher
-    assertFalse(watcher.isOperational)
+    assertThat(watcher.isOperational).isFalse()
     watchedPaths += tempDir.root.path
     startup(watcher) { path ->
       if (path === FileWatcher.RESET || path !== FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
@@ -100,7 +103,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val dir = tempDir.newFolder("dir")
     val r1 = watch(dir)
     val r2 = watch(dir)
-    assertFalse(r1 == r2)
+    assertThat(r1 == r2).isFalse()
   }
 
   @Test fun testFileRoot() {
@@ -558,12 +561,12 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val root_bak = File(top, "root.bak")
 
     val vFile = fs.refreshAndFindFileByIoFile(file)!!
-    assertEquals("new content", VfsUtilCore.loadText(vFile))
+    assertThat(VfsUtilCore.loadText(vFile)).isEqualTo("new content")
 
     watch(root)
     assertEvents({ root.renameTo(root_bak); root_copy.renameTo(root) }, mapOf(file to 'U'))
     assertTrue(vFile.isValid)
-    assertEquals("original content", VfsUtilCore.loadText(vFile))
+    assertThat(VfsUtilCore.loadText(vFile)).isEqualTo("original content")
   }
 
   @Test fun testWatchRootReplacement() {
@@ -590,7 +593,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(file)
     assertEvents({ PlatformTestUtil.assertSuccessful(GeneralCommandLine(*ro)) }, mapOf(file to 'P'))
-    assertFalse(vFile.isWritable)
+    assertThat(vFile.isWritable).isFalse()
     assertEvents({ PlatformTestUtil.assertSuccessful(GeneralCommandLine(*rw)) }, mapOf(file to 'P'))
     assertTrue(vFile.isWritable)
   }
@@ -653,7 +656,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     val expected = expectedOps.entries.map { "${it.value} : ${FileUtil.toSystemIndependentName(it.key.path)}" }.sorted()
     val actual = VfsTestUtil.print(events).sorted()
-    assertEquals(expected, actual)
+    assertThat(actual).isEqualTo(expected)
   }
 
   //</editor-fold>

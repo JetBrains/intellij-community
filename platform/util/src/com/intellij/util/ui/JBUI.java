@@ -183,7 +183,7 @@ public class JBUI {
           gc.getDevice().getType() == GraphicsDevice.TYPE_PRINTER)
       {
         // in this case gc doesn't provide a valid scale
-        return (float)g.getTransform().getScaleX();
+        return Math.abs((float)g.getTransform().getScaleX());
       }
       return sysScale(gc);
     }
@@ -648,6 +648,16 @@ public class JBUI {
       @NotNull
       public static Color titlePaneBackground() {
         return JBColor.namedColor("TitlePane.background", paneBackground());
+      }
+
+      @NotNull
+      public static Color titlePaneInfoForeground() {
+        return JBColor.namedColor("TitlePane.infoForeground", new JBColor(0x595959, 0x999999));
+      }
+
+      @NotNull
+      public static Color titlePaneInactiveInfoForeground() {
+        return JBColor.namedColor("TitlePane.inactiveInfoForeground", new JBColor(0xB1B1B1, 0x737373));
       }
 
       @NotNull

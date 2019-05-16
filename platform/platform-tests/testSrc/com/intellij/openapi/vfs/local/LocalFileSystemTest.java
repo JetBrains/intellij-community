@@ -44,7 +44,8 @@ import java.util.*;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.UsefulTestCase.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -323,24 +324,19 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileLength() throws IOException {
-    File file = File.createTempFile("test", "txt");
-    try {
-      FileUtil.writeToFile(file, "hello");
-      VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
-      assertNotNull(virtualFile);
-      String s = VfsUtilCore.loadText(virtualFile);
-      assertEquals("hello", s);
-      assertEquals(5, virtualFile.getLength());
+    File file = tempDir.newFile("test.txt");
+    FileUtil.writeToFile(file, "hello");
+    VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(virtualFile);
+    String s = VfsUtilCore.loadText(virtualFile);
+    assertEquals("hello", s);
+    assertEquals(5, virtualFile.getLength());
 
-      FileUtil.writeToFile(file, "new content");
-      ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContent(((VirtualFileWithId)virtualFile).getId());
-      s = VfsUtilCore.loadText(virtualFile);
-      assertEquals("new content", s);
-      assertEquals(11, virtualFile.getLength());
-    }
-    finally {
-      FileUtil.delete(file);
-    }
+    FileUtil.writeToFile(file, "new content");
+    ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContent(((VirtualFileWithId)virtualFile).getId());
+    s = VfsUtilCore.loadText(virtualFile);
+    assertEquals("new content", s);
+    assertEquals(11, virtualFile.getLength());
   }
 
   @Test
@@ -406,7 +402,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(virtualDir);
     virtualDir.getChildren();
     virtualDir.refresh(false, true);
-    assertOneElement(virtualDir.getChildren());
+    assertThat(virtualDir.getChildren()).hasSize(1);
 
     FileUtil.writeToFile(new File(tempDir.getRoot(), "Bar.java"), content);
     virtualDir.refresh(false, true);
@@ -438,7 +434,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     File file = tempDir.newFile("test\\file.txt");
     VirtualFile vDir = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());
     assertNotNull(vDir);
-    assertEmpty(vDir.getChildren());
+    assertThat(vDir.getChildren()).isEmpty();
 
     ((VirtualFileSystemEntry)vDir).markDirtyRecursively();
     vDir.refresh(false, true);
@@ -487,15 +483,14 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   public void testCaseInsensitiveRename() throws IOException {
     File file = tempDir.newFile("file.txt");
     File home = PlatformTestUtil.notNull(file.getParentFile());
-    assertSameElements(home.list(),"file.txt");
+    assertThat(home.list()).containsExactly("file.txt");
 
     VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
     assertNotNull(vFile);
     runInEdtAndWait(() -> WriteAction.run(() -> vFile.rename(LocalFileSystemTest.class, "FILE.txt")));
 
     assertEquals("FILE.txt", vFile.getName());
-
-    assertSameElements(home.list(), "FILE.txt");
+    assertThat(home.list()).containsExactly("FILE.txt");
   }
 
   @Test
@@ -560,11 +555,11 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       FileUtil.writeToFile(file2, "++");
       ((NewVirtualFile)topDir).markDirtyRecursively();
       topDir.refresh(false, false);
-      assertSameElements(processed, vFile1);  // vFile2 should stay unvisited after non-recursive refresh
+      assertThat(processed).containsExactly(vFile1);  // vFile2 should stay unvisited after non-recursive refresh
 
       processed.clear();
       topDir.refresh(false, true);
-      assertSameElements(processed, vFile2);  // vFile2 changes should be picked up by a next recursive refresh
+      assertThat(processed).containsExactly(vFile2);  // vFile2 changes should be picked up by a next recursive refresh
     }
     finally {
       connection.disconnect();
@@ -652,12 +647,11 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
       RefreshWorker.setCancellingCondition(file -> file.getPath().endsWith(top.getName() + "/sub_2/file_2"));
       topDir.refresh(false, true);
-      assertNotEmpty(processed);
-      assertTrue(processed.size()<files.size());
+      assertThat(processed).hasSizeBetween(1, files.size() - 1);
 
       RefreshWorker.setCancellingCondition(null);
       topDir.refresh(false, true);
-      assertEquals(files, processed);
+      assertThat(processed).isEqualTo(files);
     }
     finally {
       connection.disconnect();
@@ -718,8 +712,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
       WriteAction.run(() -> myFS.moveFile(this, file, target));
 
-      assertEmpty(srcDir.list());
-      assertSameElements(dstDir.list(), link.getName());
+      assertThat(srcDir.list()).isEmpty();
+      assertThat(dstDir.list()).containsExactly(link.getName());
     });
   }
 

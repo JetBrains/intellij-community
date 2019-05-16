@@ -69,7 +69,6 @@ import java.beans.PropertyChangeListener;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.URL;
-import java.util.Locale;
 
 /**
  * Image editor UI
@@ -193,7 +192,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       if (format == null) {
         format = editor != null ? ImagesBundle.message("unknown.format") : "";
       } else {
-        format = format.toUpperCase(Locale.ENGLISH);
+        format = StringUtil.toUpperCase(format);
       }
       VirtualFile file = editor != null ? editor.getFile() : null;
       infoLabel.setText(

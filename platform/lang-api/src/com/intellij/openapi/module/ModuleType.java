@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
@@ -8,6 +8,7 @@ import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +32,11 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public abstract T createModuleBuilder();
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getName();
+
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public abstract String getDescription();
 
   public Icon getIcon() {

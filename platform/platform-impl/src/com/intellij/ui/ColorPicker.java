@@ -11,6 +11,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.colorpicker.ColorPickerBuilder;
+import com.intellij.ui.colorpicker.LightCalloutPopup;
+import com.intellij.ui.colorpicker.MaterialGraphicalColorPipetteProvider;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.picker.ColorPipette;
 import com.intellij.ui.picker.ColorPipetteBase;
@@ -349,6 +352,24 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     return null;
+  }
+
+  public static void showColorPickerPopup(@Nullable Color currentColor, @NotNull ColorListener listener) {
+    LightCalloutPopup dialog = new LightCalloutPopup();
+
+    JPanel panel = new ColorPickerBuilder()
+      .setOriginalColor(currentColor)
+      .addSaturationBrightnessComponent()
+      .addColorAdjustPanel(new MaterialGraphicalColorPipetteProvider())
+      .addColorValuePanel().withFocus()
+      //.addSeparator()
+      //.addCustomComponent(MaterialColorPaletteProvider.INSTANCE)
+      .addColorListener(listener)
+      .focusWhenDisplay(true)
+      .setFocusCycleRoot(true)
+      .build();
+
+    dialog.show(panel, null, MouseInfo.getPointerInfo().getLocation());
   }
 
   private JComponent buildTopPanel(boolean enablePipette) throws ParseException {

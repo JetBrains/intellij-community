@@ -37,6 +37,14 @@ public abstract class VcsRootChecker {
   }
 
   /**
+   * Checks if registered mapping can be used to perform VCS operations.
+   * The difference with {@link #isRoot} is that this method should return {@code true} if unsure.
+   */
+  public boolean validateRoot(@NotNull String path) {
+    return isRoot(path);
+  }
+
+  /**
    * Returns the VCS supported by this checker.
    */
   @NotNull
@@ -57,6 +65,13 @@ public abstract class VcsRootChecker {
    * is not ignored from that root (e.g. the root is the home directory, and the VCS is used for storing configs, ignoring everything else).
    */
   public boolean isIgnored(@NotNull VirtualFile root, @NotNull VirtualFile checkForIgnore) {
+    return false;
+  }
+
+  /**
+   * @return Whether any descendant of VCS root can be registered as valid VCS mapping.
+   */
+  public boolean areChildrenValidMappings() {
     return false;
   }
 }

@@ -233,7 +233,7 @@ public class JavacMain {
   private static void tryUnwrapFileManager(JavaCompiler.CompilationTask task, JavaFileManager manager) {
     try {
       final Class<? extends JavaCompiler.CompilationTask> taskClass = task.getClass();
-      final Field contextField = findFiledOfType(taskClass, Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader()));
+      final Field contextField = findFieldOfType(taskClass, Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader()));
       if (contextField != null) {
         final Object contextObject = contextField.get(task);
         final Method getMethod = contextObject.getClass().getMethod("get", Class.class);
@@ -248,7 +248,7 @@ public class JavacMain {
     }
   }
 
-  private static Field findFiledOfType(final Class<?> aClass, final Class<?> fieldType) {
+  private static Field findFieldOfType(final Class<?> aClass, final Class<?> fieldType) {
     for (Class<?> from = aClass; from != null && !Object.class.equals(from); from = from.getSuperclass()) {
       for (Field field : from.getDeclaredFields()) {
         if (fieldType.equals(field.getType())) {

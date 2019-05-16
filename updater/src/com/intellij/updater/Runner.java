@@ -144,7 +144,8 @@ public class Runner {
 
   public static void checkCaseSensitivity(String path) {
     boolean orig = new File(path).exists();
-    ourCaseSensitiveFs = orig != new File(path.toUpperCase()).exists() || orig != new File(path.toLowerCase()).exists();
+    ourCaseSensitiveFs = orig != new File(path.toUpperCase(Locale.ENGLISH)).exists() ||
+                         orig != new File(path.toLowerCase(Locale.ENGLISH)).exists();
   }
 
   private static Map<String, String> buildWarningMap(List<String> warnings) {

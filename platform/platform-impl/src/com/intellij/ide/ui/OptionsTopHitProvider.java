@@ -103,7 +103,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                                        @NotNull Consumer<Object> collector,
                                        @Nullable Project project) {
     if (provider.getId().startsWith(id) || pattern.startsWith(" ")) {
-      pattern = pattern.startsWith(" ") ? pattern.trim() : pattern.substring(id.length()).trim().toLowerCase(Locale.ENGLISH);
+      pattern = pattern.startsWith(" ") ? pattern.trim() : StringUtil.toLowerCase(pattern.substring(id.length()).trim());
       MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       consumeTopHitsForApplicableProvider(provider, matcher, collector, project);
     }

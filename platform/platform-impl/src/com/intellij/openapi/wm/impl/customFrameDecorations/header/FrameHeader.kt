@@ -94,26 +94,11 @@ open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         closeMenuItem.font = JBUI.Fonts.label().deriveFont(Font.BOLD)
     }
 
-    override fun getHitTestSpots(): ArrayList<Rectangle> {
-        val hitTestSpots = ArrayList<Rectangle>()
+    override fun getHitTestSpots(): ArrayList<RelativeRectangle> {
+        val hitTestSpots = ArrayList<RelativeRectangle>()
 
-        val iconRect = RelativeRectangle(productIcon).getRectangleOn(this)
-        val buttonsRect = RelativeRectangle(buttonPanes.getView()).getRectangleOn(this)
-
-        buttonsRect.x -= HIT_TEST_RESIZE_GAP
-
-        val state = frame.extendedState
-        iconRect.width = (iconRect.width * 1.5).toInt()
-
-        if (state != MAXIMIZED_VERT && state != MAXIMIZED_BOTH) {
-            buttonsRect.y += HIT_TEST_RESIZE_GAP
-            buttonsRect.height -= HIT_TEST_RESIZE_GAP
-        } else {
-            buttonsRect.width += HIT_TEST_RESIZE_GAP
-        }
-
-        hitTestSpots.add(iconRect)
-        hitTestSpots.add(buttonsRect)
+        hitTestSpots.add(RelativeRectangle(productIcon))
+        hitTestSpots.add(RelativeRectangle(buttonPanes.getView()))
         return hitTestSpots
     }
 }

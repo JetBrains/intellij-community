@@ -23,7 +23,7 @@ import java.util.*;
  * Date: 01-Oct-18
  */
 public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> implements StandardJavaFileManager {
-  private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.US);
+  private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
   private static final boolean isWindows = _OS_NAME.startsWith("windows");
   private static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
   private static final boolean isMac = _OS_NAME.startsWith("mac");

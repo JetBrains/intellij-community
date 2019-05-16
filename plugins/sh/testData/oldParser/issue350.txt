@@ -1,0 +1,55 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('eval')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement(STRING_CONTENT)('executable')
+            PsiElement(CLOSE_QUOTE)('"')
+          PsiWhiteSpace(' ')
+          NUMBER
+            PsiElement(int)('2')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(>)('>')
+              PsiElement(word)('/dev/null')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('res')
+          PsiElement(=)('=')
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement($)('$')
+            SUBSHELL_COMMAND
+              PsiElement(()('(')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('eval')
+                      PsiWhiteSpace(' ')
+                      STRING
+                        PsiElement(OPEN_QUOTE)('"')
+                        VARIABLE
+                          PsiElement(var)('$executable')
+                        PsiElement(CLOSE_QUOTE)('"')
+                      PsiWhiteSpace(' ')
+                      NUMBER
+                        PsiElement(int)('2')
+                      SIMPLE_COMMAND_ELEMENT
+                        REDIRECTION
+                          PsiElement(>)('>')
+                          PsiElement(word)('/dev/null')
+              PsiElement())(')')
+            PsiElement(CLOSE_QUOTE)('"')

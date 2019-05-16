@@ -35,7 +35,7 @@ class LoadTest : IcsTestCase() {
 
   @Test fun `load scheme`() {
     val localScheme = TestScheme("local")
-    provider.write("$dirName/local.xml", localScheme.serialize()!!.toByteArray())
+    provider.write("$dirName/local.xml", serialize(localScheme)!!.toByteArray())
 
     val schemeManager = createSchemeManager(dirName)
     schemeManager.loadSchemes()
@@ -51,8 +51,8 @@ class LoadTest : IcsTestCase() {
 
     assertThat(dirPath).doesNotExist()
 
-    provider.write("$dirName/local1.xml", TestScheme("local1").serialize()!!.toByteArray())
-    provider.write("$dirName/local2.xml", TestScheme("local2").serialize()!!.toByteArray())
+    provider.write("$dirName/local1.xml", serialize(TestScheme("local1"))!!.toByteArray())
+    provider.write("$dirName/local2.xml", serialize(TestScheme("local2"))!!.toByteArray())
 
     assertThat(dirPath.resolve("local1.xml")).isRegularFile()
     assertThat(dirPath.resolve("local2.xml")).isRegularFile()
@@ -67,7 +67,7 @@ class LoadTest : IcsTestCase() {
 
   @Test fun `load scheme with the same names`() {
     val localScheme = TestScheme("local")
-    val data = localScheme.serialize()!!.toByteArray()
+    val data = serialize(localScheme)!!.toByteArray()
     provider.write("$dirName/local.xml", data)
     provider.write("$dirName/local2.xml", data)
 
@@ -80,12 +80,12 @@ class LoadTest : IcsTestCase() {
   fun `load scheme from repo and read-only repo`() = runBlocking {
     val localScheme = TestScheme("local")
 
-    provider.write("$dirName/local.xml", localScheme.serialize()!!.toByteArray())
+    provider.write("$dirName/local.xml", serialize(localScheme)!!.toByteArray())
 
     val remoteScheme = TestScheme("remote")
     val remoteRepository = tempDirManager.createRepository()
     remoteRepository
-      .add("$dirName/Mac OS X from RubyMine.xml", remoteScheme.serialize()!!.toByteArray())
+      .add("$dirName/Mac OS X from RubyMine.xml", serialize(remoteScheme)!!.toByteArray())
       .commit("add")
 
     remoteRepository.useAsReadOnlySource {
@@ -108,12 +108,12 @@ class LoadTest : IcsTestCase() {
     val schemeName = "Emacs"
     val localScheme = TestScheme(schemeName, "local")
 
-    provider.write("$dirName/$schemeName.xml", localScheme.serialize()!!.toByteArray())
+    provider.write("$dirName/$schemeName.xml", serialize(localScheme)!!.toByteArray())
 
     val remoteScheme = TestScheme(schemeName, "remote")
     val remoteRepository = tempDirManager.createRepository("remote")
     remoteRepository
-      .add("$dirName/$schemeName.xml", remoteScheme.serialize()!!.toByteArray())
+      .add("$dirName/$schemeName.xml", serialize(remoteScheme)!!.toByteArray())
       .commit("")
 
     remoteRepository.useAsReadOnlySource {

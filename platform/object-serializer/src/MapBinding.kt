@@ -75,7 +75,7 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
     }
 
     @Suppress("UNCHECKED_CAST")
-    var result = property.read(hostObject) as MutableMap<Any?, Any?>?
+    var result = property.readUnsafe(hostObject) as MutableMap<Any?, Any?>?
     if (result != null && ClassUtil.isMutableMap(result)) {
       result.clear()
     }

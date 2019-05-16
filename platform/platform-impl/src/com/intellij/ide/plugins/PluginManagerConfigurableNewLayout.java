@@ -66,8 +66,7 @@ public class PluginManagerConfigurableNewLayout
   private static final int MARKETPLACE_TAB = 0;
   private static final int INSTALLED_TAB = 1;
 
-  private TabHeaderComponent myTabHeaderComponent;
-  private PluginManagerConfigurableNew.CountTabName myInstalledTabName;
+  private TabbedPaneHeaderComponent myTabHeaderComponent;
   private MultiPanel myCardPanel;
 
   private PluginsTab myMarketplaceTab;
@@ -85,7 +84,8 @@ public class PluginManagerConfigurableNewLayout
   private LinkListener<String> mySearchListener;
 
   private final LinkLabel<Object> myUpdateAll = new LinkLabel<>("Update All", null);
-  private final JLabel myUpdateCounter = new PluginManagerConfigurableTreeRenderer.CountComponent();
+  private final JLabel myUpdateCounter = new CountComponent();
+  private final CountIcon myCountIcon = new CountIcon();
 
   private final MyPluginModel myPluginModel = new MyPluginModel() {
     @Override
@@ -134,7 +134,7 @@ public class PluginManagerConfigurableNewLayout
   @Nullable
   @Override
   public JComponent createComponent() {
-    myTabHeaderComponent = new TabHeaderComponent(createGearActions(), index -> {
+    myTabHeaderComponent = new TabbedPaneHeaderComponent(createGearActions(), index -> {
       myCardPanel.select(index, true);
       storeSelectionTab(index);
     });
@@ -142,20 +142,23 @@ public class PluginManagerConfigurableNewLayout
     myUpdateAll.setVisible(false);
     myUpdateCounter.setVisible(false);
 
-    myTabHeaderComponent.addTab("Marketplace");
-    myTabHeaderComponent.addTab(myInstalledTabName = new PluginManagerConfigurableNew.CountTabName(myTabHeaderComponent, "Installed") {
-      @Override
-      public void setCount(int count) {
-        super.setCount(count);
-        myUpdateAll.setEnabled(true);
-        myUpdateAll.setVisible(count > 0);
-        myUpdateCounter.setText(String.valueOf(count));
-        myUpdateCounter.setVisible(count > 0);
-      }
-    });
+    myTabHeaderComponent.addTab("Marketplace", null);
+    myTabHeaderComponent.addTab("Installed", myCountIcon);
 
-    myPluginUpdatesService =
-      PluginUpdatesService.connectConfigurable(countValue -> myInstalledTabName.setCount(countValue == null ? 0 : countValue));
+    myPluginUpdatesService = PluginUpdatesService.connectConfigurable(countValue -> {
+      int count = countValue == null ? 0 : countValue;
+      String text = String.valueOf(count);
+      boolean visible = count > 0;
+
+      myUpdateAll.setEnabled(true);
+      myUpdateAll.setVisible(visible);
+
+      myUpdateCounter.setText(text);
+      myUpdateCounter.setVisible(visible);
+
+      myCountIcon.setText(text);
+      myTabHeaderComponent.update();
+    });
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
 
     myNameListener = (aSource, aLinkData) -> {
@@ -181,6 +184,8 @@ public class PluginManagerConfigurableNewLayout
       }
     };
     myCardPanel.setMinimumSize(new JBDimension(580, 380));
+
+    myTabHeaderComponent.setListener();
 
     int selectionTab = getStoredSelectionTab();
     myTabHeaderComponent.setSelection(selectionTab);
@@ -325,6 +330,7 @@ public class PluginManagerConfigurableNewLayout
       @Override
       protected void createSearchTextField(int flyDelay) {
         super.createSearchTextField(250);
+        mySearchTextField.setHistoryPropertyName("MarketplacePluginsSearchHistory");
       }
 
       @NotNull
@@ -737,6 +743,8 @@ public class PluginManagerConfigurableNewLayout
                   () -> showRightBottomPopup(textField, "Show", myInstalledSearchGroup)));
         textField.putClientProperty("JTextField.variant", null);
         textField.putClientProperty("JTextField.variant", "search");
+
+        mySearchTextField.setHistoryPropertyName("InstalledPluginsSearchHistory");
       }
 
       @NotNull
@@ -1278,7 +1286,8 @@ public class PluginManagerConfigurableNewLayout
   private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull String name,
                         @NotNull String showAllQuery,
-                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function) throws IOException {
+                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function)
+    throws IOException {
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {

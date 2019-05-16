@@ -139,7 +139,7 @@ public class PythonFileType extends LanguageFileType {
     if (charset == null) {
       return null;
     }
-    charset = charset.toLowerCase();
+    charset = StringUtil.toLowerCase(charset);
     if ("latin-1".equals(charset)) {
       return "iso-8859-1";
     }

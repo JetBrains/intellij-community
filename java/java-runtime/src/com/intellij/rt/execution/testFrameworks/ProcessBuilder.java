@@ -29,7 +29,7 @@ public class ProcessBuilder {
 
   private static boolean isWindows() {
     try {
-      return System.getProperty("os.name").toLowerCase(Locale.US).startsWith("windows");
+      return System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows");
     }
     catch (SecurityException e) {
       return false;

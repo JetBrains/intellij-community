@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.SerializationConstants;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.*;
 
@@ -312,7 +313,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     if (myKind == null) return;
 
     myProperties = myKind.createDefaultProperties();
-    final Element propertiesElement = element.getChild(PROPERTIES_ELEMENT);
+    final Element propertiesElement = element.getChild(JpsLibraryTableSerializer.PROPERTIES_TAG);
     if (propertiesElement != null) {
       ComponentSerializationUtil.loadComponentState(myProperties, propertiesElement);
     }
@@ -328,14 +329,14 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       if (rootChild == null) {
         continue;
       }
-      if (!rootChild.getChildren(ROOT_PATH_ELEMENT).isEmpty()) {
+      if (!rootChild.getChildren(JpsLibraryTableSerializer.ROOT_TAG).isEmpty()) {
         VirtualFilePointerContainer roots = getOrCreateContainer(rootType);
-        roots.readExternal(rootChild, ROOT_PATH_ELEMENT, false);
+        roots.readExternal(rootChild, JpsLibraryTableSerializer.ROOT_TAG, false);
       }
     }
     Element excludedRoot = element.getChild(EXCLUDED_ROOTS_TAG);
-    if (excludedRoot != null && !excludedRoot.getChildren(ROOT_PATH_ELEMENT).isEmpty()) {
-      getOrCreateExcludedRoots().readExternal(excludedRoot, ROOT_PATH_ELEMENT, false);
+    if (excludedRoot != null && !excludedRoot.getChildren(JpsLibraryTableSerializer.ROOT_TAG).isEmpty()) {
+      getOrCreateExcludedRoots().readExternal(excludedRoot, JpsLibraryTableSerializer.ROOT_TAG, false);
     }
   }
 
@@ -371,7 +372,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       if (state != null) {
         final Element propertiesElement = XmlSerializer.serialize(state);
         if (propertiesElement != null) {
-          element.addContent(propertiesElement.setName(PROPERTIES_ELEMENT));
+          element.addContent(propertiesElement.setName(JpsLibraryTableSerializer.PROPERTIES_TAG));
         }
       }
     }
@@ -404,13 +405,13 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
       final Element rootTypeElement = new Element(rootType.name());
       if (roots != null) {
-        roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT, false);
+        roots.writeExternal(rootTypeElement, JpsLibraryTableSerializer.ROOT_TAG, false);
       }
       element.addContent(rootTypeElement);
     }
     if (myExcludedRoots != null && myExcludedRoots.size() > 0) {
       Element excluded = new Element(EXCLUDED_ROOTS_TAG);
-      myExcludedRoots.writeExternal(excluded, ROOT_PATH_ELEMENT, false);
+      myExcludedRoots.writeExternal(excluded, JpsLibraryTableSerializer.ROOT_TAG, false);
       element.addContent(excluded);
     }
     writeJarDirectories(element);

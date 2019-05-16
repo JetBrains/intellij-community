@@ -56,7 +56,7 @@ public class InferenceSession {
   private PsiSubstitutor myRestoreNameSubstitution = PsiSubstitutor.EMPTY;
   private MethodCandidateInfo myCurrentMethod;
 
-  public InferenceSession(InitialInferenceState initialState) {
+  public InferenceSession(InitialInferenceState initialState, ParameterTypeInferencePolicy policy) {
     myContext = initialState.getContext();
     myManager = myContext.getManager();
 
@@ -69,7 +69,7 @@ public class InferenceSession {
     }
     myInferenceSessionContainer = initialState.getInferenceSessionContainer();
     myErased = initialState.isErased();
-    myPolicy = DefaultParameterTypeInferencePolicy.INSTANCE;
+    myPolicy = policy;
   }
 
   public InferenceSession(PsiTypeParameter[] typeParams,
@@ -124,6 +124,11 @@ public class InferenceSession {
 
   public void setCurrentMethod(MethodCandidateInfo currentMethod) {
     myCurrentMethod = currentMethod;
+  }
+
+  @NotNull
+  public ParameterTypeInferencePolicy getInferencePolicy() {
+    return myPolicy;
   }
 
   public static PsiType createTypeParameterTypeWithUpperBound(@NotNull PsiType upperBound, @NotNull PsiElement place) {
@@ -401,7 +406,7 @@ public class InferenceSession {
         final PsiType parameterType = nestedSubstitutor.substitute(getParameterType(parameters, i, siteSubstitutor, varargs));
         if (!isPertinentToApplicability(arg, parentMethod)) {
           ExpressionCompatibilityConstraint compatibilityConstraint = new ExpressionCompatibilityConstraint(arg, parameterType);
-          if (arg instanceof PsiLambdaExpression && ignoreConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
+          if (arg instanceof PsiLambdaExpression && ignoreLambdaConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
             ignoredConstraints.add(compatibilityConstraint);
             continue;
           }
@@ -446,7 +451,7 @@ public class InferenceSession {
     return false;
   }
   
-  private static boolean ignoreConstraintTree(PsiExpression arg) {
+  public static boolean ignoreLambdaConstraintTree(PsiExpression arg) {
     for (PsiElement expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
       if (PsiTreeUtil.getParentOfType(expr, PsiLambdaExpression.class) == arg) {
         return true;

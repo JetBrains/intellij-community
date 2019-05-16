@@ -8,13 +8,14 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.Nls
 
 /**
  * @author yole
  */
 class RegistryKeyBean : PluginAware {
   @JvmField @Attribute("key") val key: String = ""
-  @JvmField @Attribute("description") val description: String = ""
+  @JvmField @Attribute("description") @Nls(capitalization = Nls.Capitalization.Sentence) val description: String = ""
   @JvmField @Attribute("defaultValue") val defaultValue: String = ""
   @JvmField @Attribute("restartRequired") val restartRequired: Boolean = false
 

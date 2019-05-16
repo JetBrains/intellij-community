@@ -72,8 +72,8 @@ public class UseJBColorInspection extends DevKitInspectionBase {
               text = "DARK_GRAY";
             }
             final ProblemDescriptor descriptor = holder.getManager()
-              .createProblemDescriptor(expression, "Change to JBColor." + text.toUpperCase(),
-                                       new ConvertToJBColorConstantQuickFix(text.toUpperCase()),
+              .createProblemDescriptor(expression, "Change to JBColor." + StringUtil.toUpperCase(text),
+                                       new ConvertToJBColorConstantQuickFix(StringUtil.toUpperCase(text)),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
             holder.registerProblem(descriptor);
           }

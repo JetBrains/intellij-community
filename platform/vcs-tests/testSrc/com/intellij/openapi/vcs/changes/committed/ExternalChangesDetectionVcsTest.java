@@ -67,7 +67,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
       myVcs.setChangeProvider(new MyMockChangeProvider());
       myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
       myVcsManager.registerVcs(myVcs);
-      myVcsManager.setDirectoryMapping("", myVcs.getName());
+      myVcsManager.setDirectoryMapping(myClientRoot.getPath(), myVcs.getName());
 
       myLFS = LocalFileSystem.getInstance();
       myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);

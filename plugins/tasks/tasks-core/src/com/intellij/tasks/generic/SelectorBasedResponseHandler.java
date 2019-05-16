@@ -217,7 +217,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
     if (s == null) {
       return null;
     }
-    s = s.trim().toLowerCase();
+    s = StringUtil.toLowerCase(s.trim());
     if (s.equals("true")) {
       return true;
     }

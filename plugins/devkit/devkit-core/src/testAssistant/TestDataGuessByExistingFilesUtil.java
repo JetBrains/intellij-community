@@ -47,7 +47,6 @@ import java.util.*;
  *
  * @author Denis Zhdanov
  */
-@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class TestDataGuessByExistingFilesUtil {
   private static final Logger LOG = Logger.getInstance(TestDataGuessByExistingFilesUtil.class);
 
@@ -218,8 +217,8 @@ public class TestDataGuessByExistingFilesUtil {
         if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, test)) {
           continue;
         }
-        String fileName = PathUtil.getFileName(filePath).toLowerCase();
-        int i = fileName.indexOf(possibleFileName.toLowerCase());
+        String fileName = StringUtil.toLowerCase(PathUtil.getFileName(filePath));
+        int i = fileName.indexOf(StringUtil.toLowerCase(possibleFileName));
         // Skip files that doesn't contain target test name and files that contain digit after target test name fragment.
         // Example: there are tests with names 'testEnter()' and 'testEnter2()' and we don't want test data file 'testEnter2'
         // to be matched to the test 'testEnter()'.
@@ -307,10 +306,10 @@ public class TestDataGuessByExistingFilesUtil {
 
     // By package.
     int lastDotIndex = className.lastIndexOf(".");
-    String candidateLcDir = candidate.pathPrefix.toLowerCase();
-    String currentLcDir = current.pathPrefix.toLowerCase();
+    String candidateLcDir = StringUtil.toLowerCase(candidate.pathPrefix);
+    String currentLcDir = StringUtil.toLowerCase(current.pathPrefix);
     if (lastDotIndex >= 0) {
-      String packageAsPath = className.substring(0, lastDotIndex).replace('.', '/').toLowerCase();
+      String packageAsPath = StringUtil.toLowerCase(className.substring(0, lastDotIndex).replace('.', '/'));
       candidateMatched = candidateLcDir.contains(packageAsPath);
       currentMatched = currentLcDir.contains(packageAsPath);
       if (candidateMatched ^ currentMatched) {
@@ -323,7 +322,7 @@ public class TestDataGuessByExistingFilesUtil {
     if (simpleName == null) {
       return false;
     }
-    String pattern = simpleName.toLowerCase();
+    String pattern = StringUtil.toLowerCase(simpleName);
     candidateMatched = candidateLcDir.contains(pattern);
     currentMatched = currentLcDir.contains(pattern);
     if (candidateMatched ^ currentMatched) {
@@ -340,7 +339,7 @@ public class TestDataGuessByExistingFilesUtil {
     StringBuilder currentNameSubstringSb = new StringBuilder();
     for (int i = 0; i < words.length; i++) {
       currentNameSubstringSb.append(words[i]);
-      String currentNameLcSubstring = currentNameSubstringSb.toString().toLowerCase();
+      String currentNameLcSubstring = StringUtil.toLowerCase(currentNameSubstringSb.toString());
 
       int candidateWordsIndex = candidateLcDir.lastIndexOf(currentNameLcSubstring);
       if (candidateWordsIndex > 0) {

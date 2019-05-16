@@ -156,7 +156,20 @@ class LogEventAction(val id: String, var state: Boolean = false, var count: Int 
 
 private val nonAscii = Regex("[^\\p{ASCII}]")
 
-private fun escape(str: String): String {
+fun escape(str: String): String {
   return str.replace(" ", "_").replace("\t", "_").replace("\"", "").
     replace(nonAscii, "?")
+}
+
+fun copyEscaped(from: MutableMap<String, Any>): MutableMap<String, Any> {
+  if (from.isEmpty()) {
+    return Collections.emptyMap()
+  }
+
+  val data: MutableMap<String, Any> = HashMap()
+  for (datum in from) {
+    val escapedValue = if (datum.value is String) escape(datum.value as String) else datum.value
+    data[escape(datum.key)] = escapedValue
+  }
+  return data
 }

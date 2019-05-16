@@ -17,7 +17,7 @@ class ObjectSerializerTest {
   @JvmField
   val testName = TestName()
 
-  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration? = null): T {
+  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration = defaultTestWriteConfiguration): T {
     return test(bean, testName, writeConfiguration)
   }
 
@@ -150,7 +150,7 @@ class ObjectSerializerTest {
 
     val bean = TestInterfaceBean()
     bean.shape.put("first", Circle())
-    test(bean, WriteConfiguration(allowAnySubTypes = true, binary = false))
+    test(bean, defaultTestWriteConfiguration.copy(allowAnySubTypes = true))
   }
 
   @Test
@@ -162,7 +162,7 @@ class ObjectSerializerTest {
 
     val bean = TestInterfaceBean()
     bean.shape = Circle()
-    test(bean, WriteConfiguration(allowAnySubTypes = true, binary = false))
+    test(bean, defaultTestWriteConfiguration.copy(allowAnySubTypes = true))
   }
 }
 

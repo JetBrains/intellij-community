@@ -18,6 +18,7 @@ package com.jetbrains.python.documentation.docstrings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,7 @@ public class NumpyDocString extends SectionBasedDocString {
   @Override
   protected Pair<Substring, Integer> parseSectionHeader(int lineNum) {
     @NonNls final String title = getLine(lineNum).trim().toString();
-    if (SECTION_NAMES.contains(title.toLowerCase())) {
+    if (SECTION_NAMES.contains(StringUtil.toLowerCase(title))) {
       final Substring nextLine = getLineOrNull(lineNum + 1);
       if (nextLine != null && SECTION_HEADER.matcher(nextLine).matches()) {
         return Pair.create(getLine(lineNum).trim(), lineNum + 2);

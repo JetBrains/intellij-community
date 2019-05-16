@@ -36,6 +36,7 @@ public class RedundantCast15Test extends LightCodeInsightFixtureTestCase {
 
   public void testNullInVarargsParameter() { doTest(); }
   public void testSingleArgForVarargsParameter() { doTest(); }
+  public void testSwitchSelector() { doTest(); }
 
   public void testWrapperToPrimitiveCast() { doTest(); }
 

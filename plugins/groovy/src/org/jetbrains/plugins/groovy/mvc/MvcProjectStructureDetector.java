@@ -21,6 +21,7 @@ import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,7 +38,7 @@ public abstract class MvcProjectStructureDetector extends ProjectStructureDetect
 
   public MvcProjectStructureDetector(MvcFramework framework) {
     myFramework = framework;
-    myDirectoryName = myFramework.getFrameworkName().toLowerCase() + "-app";
+    myDirectoryName = StringUtil.toLowerCase(myFramework.getFrameworkName()) + "-app";
   }
 
   @NotNull

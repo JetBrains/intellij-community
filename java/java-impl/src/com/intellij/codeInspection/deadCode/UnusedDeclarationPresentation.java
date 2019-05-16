@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -186,7 +187,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
       for (UnusedDeclarationHint hint : UnusedDeclarationHint.values()) {
         @NonNls Element hintElement = new Element("hint");
-        hintElement.setAttribute("value", hint.toString().toLowerCase());
+        hintElement.setAttribute("value", StringUtil.toLowerCase(hint.toString()));
         hintsElement.addContent(hintElement);
       }
       element.addContent(hintsElement);

@@ -19,6 +19,14 @@
                      groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.scheduled.for.removal.display.name"
                      implementationClass="com.intellij.codeInspection.ScheduledForRemovalInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="NonExtendableApiUsage"
+                     groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.api.no.extension.display.name"
+                     implementationClass="com.intellij.codeInspection.NonExtendableApiUsageInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="OverrideOnly"
+                     groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.api.override.only.display.name"
+                     implementationClass="com.intellij.codeInspection.OverrideOnlyInspection"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>

@@ -1,0 +1,41 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SHELL_COMMAND
+          BLOCK
+            PsiElement({)('{')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('a')
+              PsiElement(;)(';')
+            PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SHELL_COMMAND
+          BLOCK
+            PsiElement({)('{')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('a')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(})('}')

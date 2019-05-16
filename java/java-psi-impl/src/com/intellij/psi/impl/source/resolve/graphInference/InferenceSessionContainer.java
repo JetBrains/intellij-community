@@ -128,7 +128,7 @@ public class InferenceSessionContainer {
     final CompoundInitialState compoundInitialState = createState(parentSession);
     InitialInferenceState initialInferenceState = compoundInitialState.getInitialState(parent);
     if (initialInferenceState != null) {
-      final InferenceSession childSession = new InferenceSession(initialInferenceState);
+      InferenceSession childSession = new InferenceSession(initialInferenceState, parentSession.getInferencePolicy());
       return childSession.collectAdditionalAndInfer(parameters, arguments, currentMethod, compoundInitialState.getInitialSubstitutor());
     }
 
@@ -165,7 +165,7 @@ public class InferenceSessionContainer {
 
               //one of the grand parents were found in the top inference session
               //start from it as it is the top level call
-              final InferenceSession sessionInsideLambda = new InferenceSession(initialInferenceState);
+              InferenceSession sessionInsideLambda = new InferenceSession(initialInferenceState, parentSession.getInferencePolicy());
               sessionInsideLambda.collectAdditionalAndInfer(methodParameters, argumentList.getExpressions(), ((MethodCandidateInfo)result), compoundInitialState.getInitialSubstitutor());
               return inferNested(parameters, arguments, parent, currentMethod, sessionInsideLambda);
             }

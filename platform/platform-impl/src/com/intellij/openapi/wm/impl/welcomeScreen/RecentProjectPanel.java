@@ -12,6 +12,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -139,7 +140,7 @@ public class RecentProjectPanel extends JPanel {
             } else if (selection != null) {
               AnAction selectedAction = (AnAction) selection;
               AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(selectedAction, event, ActionPlaces.WELCOME_SCREEN);
-              selectedAction.actionPerformed(actionEvent);
+              ActionUtil.performActionDumbAware(selectedAction, actionEvent);
 
               // remove action from list if needed
               if (selectedAction instanceof ReopenProjectAction) {
@@ -162,7 +163,7 @@ public class RecentProjectPanel extends JPanel {
         if (selectedValued != null) {
           for (Object selection : selectedValued) {
             AnActionEvent event = AnActionEvent.createFromInputEvent((AnAction)selection, null, ActionPlaces.WELCOME_SCREEN);
-            ((AnAction)selection).actionPerformed(event);
+            ActionUtil.performActionDumbAware((AnAction)selection, event);
           }
         }
       }

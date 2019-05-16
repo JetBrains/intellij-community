@@ -268,9 +268,9 @@ public class JavaColorProvider implements ElementColorProvider {
         text = "0x";
         Color c = new Color(newValue, hasAlpha);
         if (hasAlpha) {
-          text += Integer.toHexString(c.getAlpha()).toUpperCase();
+          text += StringUtil.toUpperCase(Integer.toHexString(c.getAlpha()));
         }
-        text += ColorUtil.toHex(c).toUpperCase();
+        text += StringUtil.toUpperCase(ColorUtil.toHex(c));
       }
       else {
         text = Integer.toString(newValue);
