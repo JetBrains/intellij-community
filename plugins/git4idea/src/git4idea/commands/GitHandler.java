@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
@@ -25,6 +24,7 @@ import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutableManager;
+import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -143,7 +143,8 @@ public abstract class GitHandler {
     }
 
     List<String> toPass = new ArrayList<>();
-    boolean shouldResetCredentialHelper = Registry.is("git.reset.credential.helper") &&
+    boolean useCredentialHelper = GitVcsApplicationSettings.getInstance().isUseCredentialHelper();
+    boolean shouldResetCredentialHelper = !useCredentialHelper &&
                                           GitVersionSpecialty.CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY.existsIn(project);
     if (shouldResetCredentialHelper) toPass.add("credential.helper=");
     toPass.add("core.quotepath=false");

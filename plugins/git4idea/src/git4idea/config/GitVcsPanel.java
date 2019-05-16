@@ -75,6 +75,9 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JBCheckBox myPreviewPushOnCommitAndPush;
   private JBCheckBox myPreviewPushProtectedOnly;
   private JPanel myPreviewPushProtectedOnlyBorder;
+  // TODO: add tooltip: Do not use credential helpers when using git from IDE. Only works with Git version >=2.9.0
+  private JBCheckBox myUseCredHelperCheckbox;
+
 
   public GitVcsPanel(@NotNull Project project, @NotNull GitExecutableManager executableManager) {
     myProject = project;
@@ -184,6 +187,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myAutoUpdateIfPushRejected.setSelected(projectSettings.autoUpdateIfPushRejected());
     mySyncControl.setSelected(projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
     myAutoCommitOnCherryPick.setSelected(applicationSettings.isAutoCommitOnCherryPick());
+    myUseCredHelperCheckbox.setSelected(applicationSettings.isUseCredentialHelper());
     myAddCherryPickSuffix.setSelected(projectSettings.shouldAddSuffixToCherryPicksOfPublishedCommits());
     myWarnAboutCrlf.setSelected(projectSettings.warnAboutCrlf());
     myWarnAboutDetachedHead.setSelected(projectSettings.warnAboutDetachedHead());
@@ -222,6 +226,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
            !projectSettings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected() ||
             applicationSettings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected() ||
+            applicationSettings.isUseCredentialHelper() != myUseCredHelperCheckbox.isSelected() ||
             projectSettings.shouldAddSuffixToCherryPicksOfPublishedCommits() != myAddCherryPickSuffix.isSelected() ||
             projectSettings.warnAboutCrlf() != myWarnAboutCrlf.isSelected() ||
             projectSettings.warnAboutDetachedHead() != myWarnAboutDetachedHead.isSelected() ||
@@ -257,6 +262,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     projectSettings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
     projectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
     applicationSettings.setAutoCommitOnCherryPick(myAutoCommitOnCherryPick.isSelected());
+    applicationSettings.setUseCredentialHelper(myUseCredHelperCheckbox.isSelected());
     projectSettings.setAddSuffixToCherryPicks(myAddCherryPickSuffix.isSelected());
     projectSettings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
     projectSettings.setWarnAboutDetachedHead(myWarnAboutDetachedHead.isSelected());
