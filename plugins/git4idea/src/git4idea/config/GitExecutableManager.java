@@ -168,6 +168,10 @@ public class GitExecutableManager {
     }
   }
 
+  public void dropVersionCache(@NotNull String pathToGit) {
+    myVersionCache.dropCache(pathToGit);
+  }
+
   /**
    * Check is executable used for project is valid, notify if it is not
    *

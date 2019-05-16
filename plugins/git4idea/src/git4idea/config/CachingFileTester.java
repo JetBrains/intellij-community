@@ -58,6 +58,10 @@ abstract class CachingFileTester<T> {
     return myFileTestMap.get(filePath);
   }
 
+  public void dropCache(@NotNull String filePath) {
+    myFileTestMap.remove(filePath);
+  }
+
   @NotNull
   protected abstract T testFile(@NotNull String filePath) throws Exception;
 

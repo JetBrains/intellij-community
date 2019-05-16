@@ -115,6 +115,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        myExecutableManager.dropVersionCache(pathToGit);
         myVersion = myExecutableManager.identifyVersion(pathToGit);
       }
 
