@@ -25,10 +25,7 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +36,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.jediterm.terminal.*;
@@ -119,7 +117,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
    * @deprecated use {@link #withEnterKeyDefaultCodeEnabled(boolean)}
    */
   @Deprecated
-  public void setAutoNewLineMode(boolean enabled) {
+  public void setAutoNewLineMode(@SuppressWarnings("unused") boolean enabled) {
   }
 
   @NotNull
@@ -282,8 +280,14 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return false;
   }
 
-  public void enableConsoleActions(boolean enableConsoleActions) {
-    myEnableConsoleActions = enableConsoleActions;
+  @NotNull
+  public AnAction[] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
+    AnAction[] actions = createConsoleActions();
+    myEnableConsoleActions = false;
+    if (prependSeparatorIfNonEmpty && actions.length > 0) {
+      actions = ArrayUtil.mergeArrays(new AnAction[] {Separator.create()}, actions);
+    }
+    return actions;
   }
 
   @NotNull
