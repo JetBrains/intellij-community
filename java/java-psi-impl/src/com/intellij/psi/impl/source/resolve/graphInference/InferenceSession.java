@@ -357,12 +357,12 @@ public class InferenceSession {
         if (expectedActualErrorMessage != null && myErrorMessages != null) {
           myErrorMessages.add(0, expectedActualErrorMessage);
         }
-        if (isOverloadCheck()) {
+        if (isPertinentToApplicabilityCheckOnContainingCall(parent)) {
           return;
         }
       }
       //proceed to B3 constraints
-      else if (parameters != null && parameters.length > 0 && args != null && !isOverloadCheck()) {//todo
+      else if (parameters != null && parameters.length > 0 && args != null && !isPertinentToApplicabilityCheckOnContainingCall(parent)) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<>();
         final HashSet<ConstraintFormula> ignoredConstraints = new HashSet<>();
         collectAdditionalConstraints(parameters, args, method, mySiteSubstitutor, additionalConstraints,
@@ -375,22 +375,8 @@ public class InferenceSession {
     resolveBounds(myInferenceVariables, initialSubstitutor);
   }
 
-  private boolean isOverloadCheck() {
-    if (myContext != null) {
-      for (PsiElement o : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
-        //method references do not contain nested arguments anyway
-        if (o instanceof PsiExpressionList) {
-          final PsiExpressionList element = (PsiExpressionList)o;
-          for (PsiExpression expression : element.getExpressions()) {
-            if (PsiUtil.skipParenthesizedExprDown(expression) == myContext) {
-              return true;
-            }
-          }
-        }
-      }
-      return false;
-    }
-    return MethodCandidateInfo.isOverloadCheck();
+  private static boolean isPertinentToApplicabilityCheckOnContainingCall(@NotNull PsiElement parent) {
+    return LambdaUtil.getFunctionalTypeMap().containsKey(parent);
   }
 
   private void collectAdditionalConstraints(PsiParameter[] parameters,
