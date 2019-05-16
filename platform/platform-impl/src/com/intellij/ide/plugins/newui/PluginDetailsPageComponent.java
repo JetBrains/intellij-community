@@ -263,6 +263,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
     scrollPane.setBorder(null);
     myPanel.add(scrollPane);
 
+    myHomePage = new LinkPanel(bottomPanel, true, null, null);
+    bottomPanel.add(new JLabel());
+
     myDescriptionComponent = new JEditorPane();
     HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
     StyleSheet sheet = kit.getStyleSheet();
@@ -284,8 +287,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (myMarketplace) {
       bottomPanel.add(mySize = new JLabel());
     }
-
-    myHomePage = new LinkPanel(bottomPanel, true, null, null);
   }
 
   public void showPlugin(@Nullable CellPluginComponent component, boolean multiSelection) {
