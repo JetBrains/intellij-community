@@ -113,7 +113,7 @@ public class NewMappings implements Disposable {
       updateActiveVcses();
     }
 
-    mappingsChanged();
+    updateVcsMappings(null);
   }
 
   public void setMapping(@NotNull String path, @Nullable String activeVcsName) {
@@ -153,15 +153,15 @@ public class NewMappings implements Disposable {
     boolean mappingsChanged = !Comparing.equal(myMappings, newMappings);
     if (mappings != null && !mappingsChanged) return; // mappings are up-to-date
 
-    Mappings newMappedRoots = collectMappedRoots(newMappings);
-
     synchronized (myUpdateLock) {
-      Disposer.dispose(myFilePointerDisposable);
       myMappings = newMappings;
-      myMappedRoots = newMappedRoots.mappedRoots;
-      myFilePointerDisposable = newMappedRoots.filePointerDisposable;
 
       if (myActivated) {
+        Disposer.dispose(myFilePointerDisposable);
+        Mappings newMappedRoots = collectMappedRoots(newMappings);
+        myMappedRoots = newMappedRoots.mappedRoots;
+        myFilePointerDisposable = newMappedRoots.filePointerDisposable;
+
         updateActiveVcses();
       }
 
