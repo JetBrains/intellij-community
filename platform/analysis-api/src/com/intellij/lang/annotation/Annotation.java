@@ -40,7 +40,7 @@ import java.util.List;
  * @see AnnotationHolder
  * @see com.intellij.openapi.editor.markup.RangeHighlighter
  */
-public final class Annotation implements Segment {
+public class Annotation implements Segment {
   private final int myStartOffset;
   private final int myEndOffset;
   private final HighlightSeverity mySeverity;
