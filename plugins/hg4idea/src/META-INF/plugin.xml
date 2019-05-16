@@ -40,6 +40,18 @@
     <projectService serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"/>
     <ignoredFileContentProvider implementation="org.zmlx.hg4idea.ignore.HgIgnoredFileContentProvider"/>
+
+    <!-- HG ignore lang -->
+    <fileTypeFactory
+        implementation="org.zmlx.hg4idea.ignore.HgIgnoreFileTypeFactory"/>
+    <lang.parserDefinition language="HgIgnore"
+                           implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
+    <codeInsight.lineMarkerProvider language="HgIgnore"
+                                    implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInsight.IgnoreDirectoryMarkerProvider"/>
+    <lang.braceMatcher language="HgIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreBraceMatcher"/>
+    <lang.commenter language="HgIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
+    <!--END HG ignore lang-->
+
   </extensions>
 
   <actions>
