@@ -228,6 +228,13 @@ fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, timeout
   }
 }
 
+fun <C : Container> ContainerFixture<C>.actionButtonByIcon(iconName: String, timeout: Timeout = defaultTimeout): ActionButtonFixture {
+  return step("search action button by icon name '$iconName'") {
+    val actionButton = findComponentWithTimeout(timeout, ActionButtonFixture.byIcon(iconName))
+    return@step ActionButtonFixture(robot(), actionButton)
+  }
+}
+
 fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, filter: (ActionButton) -> Boolean, timeout: Timeout = defaultTimeout): ActionButtonFixture {
   val actionButton: ActionButton = try {
     findComponentWithTimeout(timeout) { ActionButtonFixture.textMatcher(actionName).invoke(it).and(filter.invoke(it)) }
