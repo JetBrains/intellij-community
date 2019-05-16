@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.sh.completion.ShCompletionUtil.*;
@@ -14,7 +15,7 @@ public class ShKeywordCompletionContributor extends CompletionContributor implem
 
   public ShKeywordCompletionContributor() {
     extend(CompletionType.BASIC, keywordElementPattern(), new ShKeywordCompletionProvider("if", "select", "case", "for", "while", "until", "function"));
-    extend(CompletionType.BASIC, insideThenOrElse(), new ShKeywordCompletionProvider("elif"));
+    extend(CompletionType.BASIC, elifElementPattern(), new ShKeywordCompletionProvider("elif"));
     extend(CompletionType.BASIC, insideCondition(), new ShKeywordCompletionProvider(true, "string equal",
         "string not equal", "string is empty", "string not empty", "number equal", "number not equal", "number less",
         "number less or equal", "number greater", "number greater or equal", "file exists", "file not empty",
@@ -22,9 +23,16 @@ public class ShKeywordCompletionContributor extends CompletionContributor implem
         "file equals", "file newer", "file older"));
   }
 
+  @NotNull
   private static PsiElementPattern.Capture<PsiElement> keywordElementPattern() {
     return psiElement().andNot(psiElement().andOr(insideForClause(), insideIfDeclaration(), insideWhileDeclaration(),
         insideUntilDeclaration(), insideFunctionDefinition(), insideSelectDeclaration(), insideCaseDeclaration(),
-        insideCondition(), insideArithmeticExpansions(), insideOldArithmeticExpansions(), insideParameterExpansion()));
+        insideCondition(), insideArithmeticExpansions(), insideOldArithmeticExpansions(), insideParameterExpansion(),
+        insideRawString(), insideString(), insideComment()));
+  }
+
+  @NotNull
+  private static PsiElementPattern.Capture<PsiElement> elifElementPattern() {
+    return insideThenOrElse().andNot(psiElement().andOr(insideRawString(), insideString(), insideComment()));
   }
 }

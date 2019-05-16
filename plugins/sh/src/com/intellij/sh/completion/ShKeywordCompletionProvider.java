@@ -18,6 +18,8 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.sh.completion.ShCompletionUtil.endsWithDot;
+
 class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
   @NotNull
   private final String[] myKeywords;
@@ -34,6 +36,8 @@ class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameter
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
+    if (endsWithDot(parameters)) return;
+
     Project project = parameters.getOriginalFile().getProject();
     for (String keyword : myKeywords) {
       result.addElement(createKeywordLookupElement(project, keyword));
@@ -53,7 +57,8 @@ class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameter
         .withInsertHandler(insertHandler);
   }
 
-  private InsertHandler<LookupElement> createTemplateBasedInsertHandler(@NotNull TemplateManagerImpl templateManager, @Nullable Template template) {
+  private static InsertHandler<LookupElement> createTemplateBasedInsertHandler(@NotNull TemplateManagerImpl templateManager,
+                                                                               @Nullable Template template) {
     return (context, item) -> {
       Editor editor = context.getEditor();
       if (template != null) {
