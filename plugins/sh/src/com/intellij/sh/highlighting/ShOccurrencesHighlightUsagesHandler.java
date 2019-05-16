@@ -4,6 +4,7 @@ package com.intellij.sh.highlighting;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
@@ -31,7 +32,7 @@ public class ShOccurrencesHighlightUsagesHandler extends HighlightUsagesHandlerB
   public void computeUsages(List<PsiElement> targets) {
     TextRange textRange = ShTextOccurrencesUtil.findTextRangeOfIdentifierAtCaret(myEditor);
     if (textRange != null) {
-      CharSequence documentText = myEditor.getDocument().getImmutableCharSequence();
+      CharSequence documentText = StringUtil.newBombedCharSequence(myEditor.getDocument().getImmutableCharSequence(), 3000);
       boolean hasSelection = myEditor.getCaretModel().getPrimaryCaret().hasSelection();
       List<TextRange> occurrences = ShTextOccurrencesUtil.findAllOccurrences(
           documentText,
