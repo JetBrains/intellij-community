@@ -34,11 +34,10 @@ public class ShOccurrencesHighlightUsagesHandler extends HighlightUsagesHandlerB
     if (textRange != null) {
       CharSequence documentText = StringUtil.newBombedCharSequence(myEditor.getDocument().getImmutableCharSequence(), 3000);
       boolean hasSelection = myEditor.getCaretModel().getPrimaryCaret().hasSelection();
-      List<TextRange> occurrences = ShTextOccurrencesUtil.findAllOccurrences(
-          documentText,
-          textRange.subSequence(documentText),
-          !hasSelection);
-      myReadUsages.addAll(occurrences);
+      ShTextOccurrencesUtil.consumeAllOccurrences(
+        documentText,
+        textRange.subSequence(documentText),
+        !hasSelection, range -> myReadUsages.add(range));
     }
   }
 }

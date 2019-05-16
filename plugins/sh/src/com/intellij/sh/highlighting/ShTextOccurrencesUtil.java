@@ -6,11 +6,12 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.CollectConsumer;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
 
 public class ShTextOccurrencesUtil {
   private ShTextOccurrencesUtil() {
@@ -34,19 +35,26 @@ public class ShTextOccurrencesUtil {
   }
 
   @NotNull
-  public static List<TextRange> findAllOccurrences(@NotNull CharSequence documentText,
-                                                   @NotNull CharSequence textToFind,
-                                                   boolean matchExactWordsOnly) {
-    List<TextRange> result = ContainerUtil.newSmartList();
+  public static Collection<TextRange> findAllOccurrences(@NotNull CharSequence documentText,
+                                                         @NotNull CharSequence textToFind,
+                                                         boolean matchExactWordsOnly) {
+    CollectConsumer<TextRange> consumer= new CollectConsumer<>();
+    consumeAllOccurrences(documentText, textToFind, matchExactWordsOnly, consumer);
+    return consumer.getResult();
+  }
+
+  public static void consumeAllOccurrences(@NotNull CharSequence documentText,
+                                           @NotNull CharSequence textToFind,
+                                           boolean matchExactWordsOnly,
+                                           Consumer<? super TextRange> consumer) {
     int offset = StringUtil.indexOf(documentText, textToFind);
     while (offset >= 0) {
       TextRange textRange = TextRange.create(offset, offset + textToFind.length());
       if (!matchExactWordsOnly || !isWordExpandableOutside(documentText, textRange)) {
-        result.add(textRange);
+        consumer.consume(textRange);
       }
       offset = StringUtil.indexOf(documentText, textToFind, offset + textToFind.length());
     }
-    return result;
   }
 
   private static boolean isWordExpandableOutside(@NotNull CharSequence documentText, @NotNull TextRange textRange) {

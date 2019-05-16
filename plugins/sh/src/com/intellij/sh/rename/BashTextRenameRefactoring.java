@@ -31,7 +31,7 @@ class BashTextRenameRefactoring {
   private final Editor myEditor;
   private final Project myProject;
   private final PsiFile myPsiFile;
-  private final List<TextRange> myOccurrenceRanges;
+  private final Collection<TextRange> myOccurrenceRanges;
   private final String myOccurrenceText;
   private final TextRange myOccurrenceRangeAtCaret;
   private RangeMarker myCaretRangeMarker;
@@ -41,7 +41,7 @@ class BashTextRenameRefactoring {
                                     @NotNull Project project,
                                     @NotNull PsiFile psiFile,
                                     @NotNull String occurrenceText,
-                                    @NotNull List<TextRange> occurrenceRanges,
+                                    @NotNull Collection<TextRange> occurrenceRanges,
                                     @NotNull TextRange occurrenceRangeAtCaret) {
     myEditor = editor;
     myProject = project;
@@ -55,7 +55,7 @@ class BashTextRenameRefactoring {
   static BashTextRenameRefactoring create(@NotNull Editor editor,
                                           @NotNull Project project,
                                           @NotNull String occurrenceText,
-                                          @NotNull List<TextRange> occurrenceRanges,
+                                          @NotNull Collection<TextRange> occurrenceRanges,
                                           @NotNull TextRange occurrenceRangeAtCaret) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (psiFile != null) {

@@ -12,7 +12,7 @@ import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
 
 public class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   public static final ShRenameAllOccurrencesHandler INSTANCE = new ShRenameAllOccurrencesHandler();
@@ -36,7 +36,7 @@ public class ShRenameAllOccurrencesHandler extends EditorActionHandler {
     if (caretTextRange == null) return;
     CharSequence documentText = editor.getDocument().getImmutableCharSequence();
     CharSequence textToFind = caretTextRange.subSequence(documentText);
-    List<TextRange> occurrences = ShTextOccurrencesUtil.findAllOccurrences(documentText, textToFind, !hasSelection);
+    Collection<TextRange> occurrences = ShTextOccurrencesUtil.findAllOccurrences(documentText, textToFind, !hasSelection);
     Project project = editor.getProject();
     assert project != null;
     BashTextRenameRefactoring rename = BashTextRenameRefactoring.create(editor, project, textToFind.toString(), occurrences, caretTextRange);
