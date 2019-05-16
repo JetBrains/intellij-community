@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class BashTextRenameRefactoring {
+class ShTextRenameRefactoring {
   private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   private static final String OTHER_VARIABLE_NAME = "OtherVariable";
 
@@ -37,12 +37,12 @@ class BashTextRenameRefactoring {
   private RangeMarker myCaretRangeMarker;
   private List<RangeHighlighter> myHighlighters;
 
-  private BashTextRenameRefactoring(@NotNull Editor editor,
-                                    @NotNull Project project,
-                                    @NotNull PsiFile psiFile,
-                                    @NotNull String occurrenceText,
-                                    @NotNull Collection<TextRange> occurrenceRanges,
-                                    @NotNull TextRange occurrenceRangeAtCaret) {
+  private ShTextRenameRefactoring(@NotNull Editor editor,
+                                  @NotNull Project project,
+                                  @NotNull PsiFile psiFile,
+                                  @NotNull String occurrenceText,
+                                  @NotNull Collection<TextRange> occurrenceRanges,
+                                  @NotNull TextRange occurrenceRangeAtCaret) {
     myEditor = editor;
     myProject = project;
     myPsiFile = psiFile;
@@ -52,14 +52,14 @@ class BashTextRenameRefactoring {
   }
 
   @Nullable
-  static BashTextRenameRefactoring create(@NotNull Editor editor,
-                                          @NotNull Project project,
-                                          @NotNull String occurrenceText,
-                                          @NotNull Collection<TextRange> occurrenceRanges,
-                                          @NotNull TextRange occurrenceRangeAtCaret) {
+  static ShTextRenameRefactoring create(@NotNull Editor editor,
+                                        @NotNull Project project,
+                                        @NotNull String occurrenceText,
+                                        @NotNull Collection<TextRange> occurrenceRanges,
+                                        @NotNull TextRange occurrenceRangeAtCaret) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (psiFile != null) {
-      return new BashTextRenameRefactoring(editor, project, psiFile, occurrenceText, occurrenceRanges, occurrenceRangeAtCaret);
+      return new ShTextRenameRefactoring(editor, project, psiFile, occurrenceText, occurrenceRanges, occurrenceRangeAtCaret);
     }
     return null;
   }
