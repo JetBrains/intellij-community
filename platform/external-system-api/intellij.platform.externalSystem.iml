@@ -20,5 +20,6 @@
     <orderEntry type="library" scope="RUNTIME" name="javassist" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
+    <orderEntry type="library" name="lz4-java" level="project" />
   </component>
 </module>

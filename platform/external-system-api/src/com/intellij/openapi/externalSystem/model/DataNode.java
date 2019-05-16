@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.model;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.serialization.ObjectSerializer;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,8 +124,7 @@ public class DataNode<T> implements UserDataHolderEx {
     try {
       MultiLoaderWrapper classLoader = new MultiLoaderWrapper(getClass().getClassLoader(), classLoaders);
       //noinspection unchecked
-      data = ObjectSerializer.getInstance().read((Class<T>)classLoader.findClass(dataClassName), rawData, SerializationKt.createDataNodeReadConfiguration(classLoader));
-      assert data != null;
+      data = SerializationKt.readDataNodeData(((Class<T>)classLoader.findClass(dataClassName)), rawData, classLoader);
       clearRawData();
     }
     catch (Exception e) {
@@ -221,7 +219,7 @@ public class DataNode<T> implements UserDataHolderEx {
     return result;
   }
 
-  public void serializeData() {
+  public void serializeData(@NotNull WriteAndCompressSession buffer) {
     if (rawData != null) {
       return;
     }
@@ -233,7 +231,7 @@ public class DataNode<T> implements UserDataHolderEx {
     else {
       LOG.assertTrue(!(data instanceof Proxy));
       dataClassName = data.getClass().getName();
-      rawData = ObjectSerializer.getInstance().writeAsBytes(data, SerializationKt.getDataNodeWriteConfiguration());
+      rawData = SerializationKt.serializeDataNodeData(data, buffer);
     }
   }
 
