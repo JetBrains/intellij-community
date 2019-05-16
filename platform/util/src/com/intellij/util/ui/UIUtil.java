@@ -213,6 +213,11 @@ public class UIUtil {
            MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
+  @Nullable
+  public static Cursor cursorIfNotDefault(@Nullable Cursor cursorToSet) {
+    return cursorToSet != null && cursorToSet.getType() != Cursor.DEFAULT_CURSOR ? cursorToSet : null;
+  }
+
   /**
    * Draws two horizontal lines, the first at {@code topY}, the second at {@code bottomY}.
    * The purpose of this method (and the ground of the name) is to draw two lines framing a horizontal filled rectangle.
