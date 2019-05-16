@@ -164,18 +164,10 @@ class ShShellcheckUtil {
 
   @Nullable
   private static String getPlatform() {
-    if (SystemInfoRt.isMac) {
-      return "mac";
-    }
-    else if (SystemInfoRt.isLinux) {
-      return "linux";
-    }
-    else if (SystemInfoRt.isWindows) {
-      return "windows";
-    }
-    else {
-      return null;
-    }
+    if (SystemInfoRt.isMac) return "mac";
+    if (SystemInfoRt.isLinux) return "linux";
+    if (SystemInfoRt.isWindows) return "windows";
+    return null;
   }
 
   private static void showInfoNotification() {
