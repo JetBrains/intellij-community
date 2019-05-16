@@ -55,6 +55,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private final ThreadLocal<String> myApplicabilityError = new ThreadLocal<>();
 
   private final LanguageLevel myLanguageLevel;
+  private boolean myErased;
 
   public MethodCandidateInfo(@NotNull PsiElement candidate,
                              @NotNull PsiSubstitutor substitutor,
@@ -208,6 +209,14 @@ public class MethodCandidateInfo extends CandidateInfo{
   
   public boolean isOnArgumentList(PsiExpressionList argumentList) {
     return myArgumentList == argumentList;
+  }
+
+  public void setErased(boolean erased) {
+    myErased = erased;
+  }
+
+  public boolean isErased() {
+    return myErased;
   }
 
   private static boolean checkFunctionalInterfaceAcceptance(PsiMethod method, PsiType left, PsiType right, boolean allowUncheckedConversion) {

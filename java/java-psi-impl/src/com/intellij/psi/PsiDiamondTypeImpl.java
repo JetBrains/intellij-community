@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -187,7 +186,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
     //15.9.3 Choosing the Constructor and its Arguments
     //The return type and throws clause of cj are the same as the return type and throws clause determined for mj (p15.12.2.6)
-    if (errorMessage == null && InferenceSession.wasUncheckedConversionPerformed(context)) {
+    if (errorMessage == null && ((MethodCandidateInfo)staticFactoryCandidateInfo).isErased()) {
       return DiamondInferenceResult.RAW_RESULT;
     }
 

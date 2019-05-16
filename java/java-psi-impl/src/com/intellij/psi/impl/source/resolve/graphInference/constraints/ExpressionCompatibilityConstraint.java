@@ -103,7 +103,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         for (Pair<InferenceVariable[], PsiClassType> pair : callSession.myIncorporationPhase.getCaptures()) {
           session.myIncorporationPhase.addCapture(pair.first, pair.second);
         }
-        callSession.setUncheckedInContext();
+        final MethodCandidateInfo currentMethod = session.getCurrentMethod(((PsiCall)myExpression).getArgumentList());
+        final JavaResolveResult resolveResult = currentMethod != null ? currentMethod : PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)myExpression);
+        if (resolveResult instanceof MethodCandidateInfo) {
+          ((MethodCandidateInfo)resolveResult).setErased(callSession.isErased());
+        }
       }
       return true;
     }
