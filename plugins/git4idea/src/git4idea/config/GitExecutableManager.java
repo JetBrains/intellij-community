@@ -61,6 +61,7 @@ public class GitExecutableManager {
                                                 Collections.emptyList());
     handler.setPreValidateExecutable(false);
     handler.setSilent(false);
+    handler.setTerminationTimeout(1000);
     handler.setStdoutSuppressed(false);
     GitCommandResult result = Git.getInstance().runCommand(handler);
     String rawResult = result.getOutputOrThrow();
