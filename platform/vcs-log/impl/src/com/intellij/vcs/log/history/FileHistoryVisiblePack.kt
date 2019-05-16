@@ -22,7 +22,7 @@ import com.intellij.vcs.log.data.DataPackBase
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.visible.VisiblePack
 
-internal class FileHistoryVisiblePack(dataPack: DataPackBase, graph: VisibleGraph<Int>, canRequestMore: Boolean,
+class FileHistoryVisiblePack(dataPack: DataPackBase, graph: VisibleGraph<Int>, canRequestMore: Boolean,
                                       filters: VcsLogFilterCollection,
                                       fileHistory: FileHistory) : VisiblePack(dataPack, graph, canRequestMore, filters, fileHistory) {
 
@@ -30,7 +30,7 @@ internal class FileHistoryVisiblePack(dataPack: DataPackBase, graph: VisibleGrap
               commitsToPaths: Map<Int, MaybeDeletedFilePath>) : this(dataPack, graph, canRequestMore, filters, FileHistory(commitsToPaths))
 
   companion object {
-    internal val VcsLogDataPack.fileHistory: FileHistory
+    val VcsLogDataPack.fileHistory: FileHistory
       get() {
         if (this !is VisiblePack) return EMPTY_HISTORY
         return this.getAdditionalData<Any>() as? FileHistory ?: EMPTY_HISTORY

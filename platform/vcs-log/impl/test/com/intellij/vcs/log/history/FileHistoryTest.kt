@@ -414,7 +414,7 @@ private class FileNamesDataBuilder(private val path: FilePath) {
       override fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> {
         return commitsMap[path] ?: TIntObjectHashMap()
       }
-    }
+    }.build()
   }
 }
 
