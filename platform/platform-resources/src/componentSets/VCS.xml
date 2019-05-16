@@ -99,6 +99,9 @@
     <lang.parserDefinition language="IgnoreLang"
                            implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
 
+    <lang.syntaxHighlighterFactory language="IgnoreLang"
+                                   implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguageHighlighterFactory"/>
+
     <localInspection
         bundle="messages.VcsBundle"
         enabledByDefault="true"
