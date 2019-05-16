@@ -959,4 +959,9 @@ public class PyFormatterTest extends PyTestCase {
   public void testSpacesAroundEqualsSignInFStringFragment() {
     doTest();
   }
+
+  // PY-35975
+  public void testSpacesAroundColonEqInAssignmentExpression() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+  }
 }
