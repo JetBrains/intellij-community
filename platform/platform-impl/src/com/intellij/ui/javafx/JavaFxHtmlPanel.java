@@ -5,6 +5,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.JBColor;
@@ -29,6 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JavaFxHtmlPanel implements Disposable {
+  // flag is reset after check
+  public static final String JAVAFX_INITIALIZATION_INCOMPLETE_PROPERTY = "js.debugger.javafx.inititalization";
   @NotNull
   private final JPanel myPanelWrapper;
   @NotNull
@@ -39,11 +42,14 @@ public class JavaFxHtmlPanel implements Disposable {
   private Color background;
 
   public JavaFxHtmlPanel() {
+    PropertiesComponent.getInstance().setValue(JAVAFX_INITIALIZATION_INCOMPLETE_PROPERTY, true, false);
+    ApplicationManager.getApplication().saveSettings();
     background = JBColor.background();
     myPanelWrapper = new JPanel(new BorderLayout());
     myPanelWrapper.setBackground(background);
 
     ApplicationManager.getApplication().invokeLater(() -> runFX(() -> PlatformImpl.startup(() -> {
+      PropertiesComponent.getInstance().setValue(JAVAFX_INITIALIZATION_INCOMPLETE_PROPERTY, false, false);
       myWebView = new WebView();
       myWebView.setContextMenuEnabled(false);
       myWebView.setZoom(JBUI.scale(1.f));
