@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,7 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
 
     public boolean ANNOTATE_IGNORE_SPACES = true;
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
+    public boolean USE_CREDENTIAL_HELPER = false;
   }
 
   public static GitVcsApplicationSettings getInstance() {
@@ -73,6 +75,14 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
 
   public void setAnnotateDetectMovementsOption(@NotNull AnnotateDetectMovementsOption value) {
     myState.ANNOTATE_DETECT_INNER_MOVEMENTS = value;
+  }
+
+  public void setUseCredentialHelper(boolean useCredentialHelper) {
+    myState.USE_CREDENTIAL_HELPER = useCredentialHelper;
+  }
+
+  public boolean isUseCredentialHelper() {
+    return myState.USE_CREDENTIAL_HELPER;
   }
 
   public enum AnnotateDetectMovementsOption {
