@@ -2,15 +2,18 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.components.labels.BoldLabel
 import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
-import java.awt.event.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -32,7 +35,7 @@ open class SelectedEditorFilePath() {
 
   private var added = false
 
-  protected val projectLabel =object : JLabel(){
+  protected val projectLabel = object : BoldLabel(){
     override fun addNotify() {
       super.addNotify()
       added = true
@@ -44,8 +47,6 @@ open class SelectedEditorFilePath() {
       added = false
       updateListeners()
     }
-  }.apply {
-    font = JBUI.Fonts.label().asBold();
   }
 
   protected val label = JLabel()
