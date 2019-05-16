@@ -8,6 +8,7 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceContentImpl;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
@@ -33,13 +34,23 @@ public class CodeFenceInjector implements MultiHostInjector {
     }
 
     registrar.startInjecting(language);
-    final List<MarkdownCodeFenceContentImpl> list = PsiTreeUtil.getChildrenOfTypeAsList(context, MarkdownCodeFenceContentImpl.class);
-    for (int i = 0; i < list.size(); i++) {
-      final MarkdownCodeFenceContentImpl content = list.get(i);
-      final boolean includeEol = (i + 1 < list.size());
-      final TextRange rangeInHost = TextRange.from(content.getStartOffsetInParent(),
-                                                   content.getTextLength() + (includeEol ? 1 : 0));
-      registrar.addPlace(null, null, ((MarkdownCodeFenceImpl)context), rangeInHost);
+    for (PsiElement child = context.getFirstChild().getNextSibling().getNextSibling(); child != null; child = child.getNextSibling()) {
+      if (child.getNode().getElementType() == MarkdownTokenTypes.EOL) {
+        registrar.addPlace(null, null, ((MarkdownCodeFenceImpl)context), TextRange.from(child.getStartOffsetInParent(), 1));
+        continue;
+      }
+
+      if (child instanceof MarkdownCodeFenceContentImpl) {
+        PsiElement nextSibling = child.getNextSibling();
+        boolean includeNewLine = nextSibling != null && nextSibling.getNode().getElementType() == MarkdownTokenTypes.EOL;
+        registrar.addPlace(null, null, ((MarkdownCodeFenceImpl)context), TextRange
+          .from(child.getStartOffsetInParent(), includeNewLine ? child.getTextLength() + 1 : child.getTextLength()));
+
+        if (includeNewLine) {
+          //noinspection AssignmentToForLoopParameter
+          child = nextSibling;
+        }
+      }
     }
     registrar.doneInjecting();
   }
