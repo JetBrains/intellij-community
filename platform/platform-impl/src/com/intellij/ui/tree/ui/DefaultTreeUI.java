@@ -187,7 +187,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
             JScrollBar vsb = pane.getVerticalScrollBar();
             if (vsb != null && vsb.isVisible() && !vsb.isOpaque()) {
               Boolean property = UIUtil.getClientProperty(vsb, IGNORE_SCROLLBAR_IN_INSETS);
-              if (isMac ? !Boolean.FALSE.equals(property) : Boolean.TRUE.equals(property)) {
+              if (isMac ? Boolean.FALSE.equals(property) : !Boolean.TRUE.equals(property)) {
                 vsbWidth = vsb.getWidth(); // to calculate a right margin of a renderer component
               }
             }
