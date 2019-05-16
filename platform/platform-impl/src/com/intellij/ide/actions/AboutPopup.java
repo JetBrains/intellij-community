@@ -633,7 +633,7 @@ public class AboutPopup {
 
            "Memory: " + (Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE) + "M" + "\n" +
 
-           "CPU: " + Runtime.getRuntime().availableProcessors() + "\n" +
+           "Cores: " + Runtime.getRuntime().availableProcessors() + "\n" +
 
            "Registry: " + Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
              .map(v -> v.getKey() + "=" + v.asString()).collect(StringUtil.joining()) + "\n" +
