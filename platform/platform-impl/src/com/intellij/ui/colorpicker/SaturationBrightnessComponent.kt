@@ -15,17 +15,19 @@
  */
 package com.intellij.ui.colorpicker
 
-import com.intellij.ui.colorpicker.ColorPickerModel
 import com.intellij.ui.picker.ColorListener
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-
-import javax.swing.*
-import java.awt.*
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.ColorModel
 import java.awt.image.MemoryImageSource
+import javax.swing.JComponent
 
 private val KNOB_COLOR = Color.WHITE
 private const val KNOB_OUTER_RADIUS = 4
@@ -88,6 +90,7 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
     val knobY = Math.round(component.height * (1.0f - brightness))
 
     g.color = KNOB_COLOR
+    val config = GraphicsUtil.setupAAPainting(g)
     g.drawOval(knobX - JBUI.scale(KNOB_OUTER_RADIUS),
                knobY - JBUI.scale(KNOB_OUTER_RADIUS),
                JBUI.scale(KNOB_OUTER_RADIUS * 2),
@@ -96,6 +99,7 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
                knobY - JBUI.scale(KNOB_INNER_RADIUS),
                JBUI.scale(KNOB_INNER_RADIUS * 2),
                JBUI.scale(KNOB_INNER_RADIUS * 2))
+    config.restore()
   }
 
   override fun colorChanged(color: Color, source: Any?) {
