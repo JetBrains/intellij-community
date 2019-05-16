@@ -133,11 +133,13 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     """)
     addPluginXml("custom", "<id>com.intellij.custom</id>")
     addPluginXml("custom2", "<id>com.intellij.custom2</id>")
+    addPluginXml("custom3", "<id>com.intellij.custom3</id>")
+    addPluginXml("custom4", "<id>com.intellij.custom4</id>")
     addPluginXml("duplicated", "<id>com.intellij.duplicated</id>")
 
     myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/optional.xml")
     configureByFile()
-    myFixture.checkHighlighting(false, false, false)
+    myFixture.checkHighlighting(true, false, false)
   }
 
   void testDependsConfigFileCompletion() {
