@@ -14,6 +14,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 public class Main {
   public static final int NO_GRAPHICS = 1;
@@ -148,6 +149,13 @@ public class Main {
 
   @SuppressWarnings({"UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
   public static void showMessage(String title, String message, boolean error) {
+    Properties sp = System.getProperties();
+    String jre = sp.getProperty("java.runtime.version", sp.getProperty("java.version", "(unknown)"));
+    String vendor = sp.getProperty("java.vendor", "(unknown vendor)");
+    String arch = sp.getProperty("os.arch", "(unknown arch)");
+    String home = sp.getProperty("java.home", "(unknown java.home)");
+    message += "\n-----\nJRE " + jre  + ' ' + arch + " by " + vendor + "\n" + home;
+
     PrintStream stream = error ? System.err : System.out;
     stream.println("\n" + title + ": " + message);
 
