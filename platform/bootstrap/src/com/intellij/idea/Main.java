@@ -134,6 +134,14 @@ public class Main {
     }
 
     t.printStackTrace(new PrintWriter(message));
+
+    Properties sp = System.getProperties();
+    String jre = sp.getProperty("java.runtime.version", sp.getProperty("java.version", "(unknown)"));
+    String vendor = sp.getProperty("java.vendor", "(unknown vendor)");
+    String arch = sp.getProperty("os.arch", "(unknown arch)");
+    String home = sp.getProperty("java.home", "(unknown java.home)");
+    message.append("\n-----\nJRE ").append(jre).append(' ').append(arch).append(" by ").append(vendor).append('\n').append(home);
+
     showMessage(title, message.toString(), true);
   }
 
@@ -149,13 +157,6 @@ public class Main {
 
   @SuppressWarnings({"UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
   public static void showMessage(String title, String message, boolean error) {
-    Properties sp = System.getProperties();
-    String jre = sp.getProperty("java.runtime.version", sp.getProperty("java.version", "(unknown)"));
-    String vendor = sp.getProperty("java.vendor", "(unknown vendor)");
-    String arch = sp.getProperty("os.arch", "(unknown arch)");
-    String home = sp.getProperty("java.home", "(unknown java.home)");
-    message += "\n-----\nJRE " + jre  + ' ' + arch + " by " + vendor + "\n" + home;
-
     PrintStream stream = error ? System.err : System.out;
     stream.println("\n" + title + ": " + message);
 
