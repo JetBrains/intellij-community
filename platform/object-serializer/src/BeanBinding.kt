@@ -79,7 +79,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
         binding.serialize(obj, property, context)
       }
       catch (e: Exception) {
-        throw SerializationException("Cannot serialize property (property=$property, binding=$binding, beanClass=$beanClass)", e)
+        throw SerializationException("Cannot serialize property (property=$property, binding=$binding, beanClass=${beanClass.name})", e)
       }
     }
     writer.stepOut()
@@ -87,7 +87,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
 
   private fun createUsingCustomConstructor(context: ReadContext): Any {
     val constructorInfo = propertyMapping.value
-                          ?: throw SerializationException("Please annotate non-default constructor with PropertyMapping (beanClass=$beanClass)")
+                          ?: throw SerializationException("Please annotate non-default constructor with PropertyMapping (beanClass=${beanClass.name})")
     val names = constructorInfo.names
     val initArgs = arrayOfNulls<Any?>(names.size)
 
@@ -118,7 +118,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
 
         val bindingIndex = nameToBindingIndex.get(fieldName)
         if (bindingIndex == -1) {
-          LOG.error("Cannot find binding (fieldName=$fieldName, valueType=${reader.type}, beanClass=$beanClass")
+          LOG.error("Cannot find binding (fieldName=$fieldName, valueType=${reader.type}, beanClass=${beanClass.name}")
           return@readStruct
         }
 
@@ -127,7 +127,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
           initArgs[argIndex] = binding.deserialize(subReadContext)
         }
         catch (e: Exception) {
-          context.errors.parameters.add(ReadError("Cannot deserialize parameter value (fieldName=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=$beanClass)", e))
+          context.errors.parameters.add(ReadError("Cannot deserialize parameter value (fieldName=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e))
         }
       }
     }
@@ -199,7 +199,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
       val bindingIndex = nameToBindingIndex.get(fieldName)
       // ignore unknown field
       if (bindingIndex == -1) {
-        context.errors.unknownFields.add(ReadError("Unknown field (fieldName=$fieldName, beanClass=$beanClass)"))
+        context.errors.unknownFields.add(ReadError("Unknown field (fieldName=$fieldName, beanClass=${beanClass.name})"))
         return@readStruct
       }
 
@@ -208,7 +208,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
         binding.deserialize(instance, accessors[bindingIndex], context)
       }
       catch (e: Exception) {
-        context.errors.fields.add(ReadError("Cannot deserialize field value (field=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=$beanClass)", e))
+        context.errors.fields.add(ReadError("Cannot deserialize field value (field=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e))
       }
     }
   }
