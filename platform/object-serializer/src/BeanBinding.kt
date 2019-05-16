@@ -22,7 +22,7 @@ private const val ID_FIELD_NAME = "@id"
 internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), RootBinding {
   private lateinit var bindings: Array<NestedBinding>
   private lateinit var nameToBindingIndex: ObjectIntHashMap<String>
-  private lateinit var accessors: List<MutableAccessor>
+  private lateinit var properties: List<MutableAccessor>
 
   private val propertyMapping: Lazy<NonDefaultConstructorInfo?> = lazy {
     computeNonDefaultConstructorInfo(beanClass)
@@ -30,7 +30,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
 
   override fun init(originalType: Type, context: BindingInitializationContext) {
     val list = context.propertyCollector.collect(beanClass)
-    accessors = list
+    properties = list
     val nameToBindingIndex = ObjectIntHashMap<String>(list.size)
     bindings = Array(list.size) { index ->
       val accessor = list.get(index)
@@ -71,9 +71,16 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
     }
 
     val bindings = bindings
-    val accessors = accessors
+    val properties = properties
     for (i in 0 until bindings.size) {
-      bindings[i].serialize(obj, accessors[i], context)
+      val property = properties[i]
+      val binding = bindings[i]
+      try {
+        binding.serialize(obj, property, context)
+      }
+      catch (e: Exception) {
+        throw SerializationException("Cannot serialize property (property=$property, binding=$binding, beanClass=$beanClass)", e)
+      }
     }
     writer.stepOut()
   }
@@ -111,7 +118,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
 
         val bindingIndex = nameToBindingIndex.get(fieldName)
         if (bindingIndex == -1) {
-          LOG.error("Cannot find binding for field $fieldName")
+          LOG.error("Cannot find binding (fieldName=$fieldName, valueType=${reader.type}, beanClass=$beanClass")
           return@readStruct
         }
 
@@ -173,7 +180,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
   private fun readIntoObject(instance: Any, context: ReadContext, checkId: Boolean = true, filter: ((fieldName: String) -> Boolean)? = null) {
     val nameToBindingIndex = nameToBindingIndex
     val bindings = bindings
-    val accessors = accessors
+    val accessors = properties
     val reader = context.reader
     readStruct(reader) { fieldName, type ->
       if (type == IonType.INT && fieldName == ID_FIELD_NAME) {

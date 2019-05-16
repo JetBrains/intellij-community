@@ -191,7 +191,7 @@ private class DateBinding : RootBinding {
 }
 
 internal inline fun write(hostObject: Any, accessor: MutableAccessor, context: WriteContext, write: ValueWriter.(value: Any) -> Unit) {
-  val value = accessor.read(hostObject)
+  val value = accessor.readUnsafe(hostObject)
   if (context.filter.isSkipped(value)) {
     return
   }
