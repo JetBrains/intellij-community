@@ -60,7 +60,7 @@ public class NewMappings implements Disposable {
   private volatile List<VcsDirectoryMapping> myMappings = Collections.emptyList(); // sorted by MAPPINGS_COMPARATOR
   private volatile List<MappedRoot> myMappedRoots = Collections.emptyList(); // sorted by ROOT_COMPARATOR
   private volatile List<AbstractVcs> myActiveVcses = Collections.emptyList();
-  private boolean myActivated = false;
+  private volatile boolean myActivated = false;
 
   @NotNull private final MergingUpdateQueue myRootUpdateQueue;
   private final VirtualFilePointerListener myFilePointerListener;
@@ -113,7 +113,7 @@ public class NewMappings implements Disposable {
       updateActiveVcses();
     }
 
-    updateVcsMappings(null);
+    updateMappedRoots(true);
   }
 
   public void setMapping(@NotNull String path, @Nullable String activeVcsName) {
@@ -136,41 +136,58 @@ public class NewMappings implements Disposable {
     myRootUpdateQueue.queue(new Update("update") {
       @Override
       public void run() {
-        updateVcsMappings(null);
+        updateMappedRoots(true);
       }
     });
   }
 
-  /**
-   * @param mappings New mappings or null, if only mapped roots should be updated
-   */
-  private void updateVcsMappings(@Nullable Collection<? extends VcsDirectoryMapping> mappings) {
+  private void updateVcsMappings(@NotNull Collection<? extends VcsDirectoryMapping> mappings) {
     myRootUpdateQueue.cancelAllUpdates();
 
-    List<VcsDirectoryMapping> newMappings = mappings != null ? unmodifiableList(sorted(removeDuplicates(mappings), MAPPINGS_COMPARATOR))
-                                                             : myMappings;
-
-    boolean mappingsChanged = !Comparing.equal(myMappings, newMappings);
-    if (mappings != null && !mappingsChanged) return; // mappings are up-to-date
+    List<VcsDirectoryMapping> newMappings = unmodifiableList(sorted(removeDuplicates(mappings), MAPPINGS_COMPARATOR));
 
     synchronized (myUpdateLock) {
+      boolean mappingsChanged = !Comparing.equal(myMappings, newMappings);
+      if (!mappingsChanged) return; // mappings are up-to-date
+
       myMappings = newMappings;
 
       if (myActivated) {
-        Disposer.dispose(myFilePointerDisposable);
-        Mappings newMappedRoots = collectMappedRoots(newMappings);
-        myMappedRoots = newMappedRoots.mappedRoots;
-        myFilePointerDisposable = newMappedRoots.filePointerDisposable;
-
         updateActiveVcses();
       }
 
-      if (mappingsChanged || LOG.isDebugEnabled()) {
-        dumpMappingsToLog();
+      dumpMappingsToLog();
+    }
+
+    updateMappedRoots(false);
+
+    mappingsChanged();
+  }
+
+  private void updateMappedRoots(boolean fireMappingsChangedEvent) {
+    myRootUpdateQueue.cancelAllUpdates();
+
+    if (!myActivated) return;
+    List<VcsDirectoryMapping> mappings = myMappings;
+    Mappings newMappedRoots = collectMappedRoots(mappings);
+
+    synchronized (myUpdateLock) {
+      boolean mappedRootsChanged = !Comparing.equal(myMappedRoots, newMappedRoots);
+      if (!mappedRootsChanged || myMappings != mappings) {
+        Disposer.dispose(newMappedRoots.filePointerDisposable);
+        return;
+      }
+
+      Disposer.dispose(myFilePointerDisposable);
+      myMappedRoots = newMappedRoots.mappedRoots;
+      myFilePointerDisposable = newMappedRoots.filePointerDisposable;
+
+      if (LOG.isDebugEnabled()) {
+        dumpMappedRootsToLog();
       }
     }
 
-    mappingsChanged();
+    if (fireMappingsChangedEvent) mappingsChanged();
   }
 
   @NotNull
@@ -342,11 +359,11 @@ public class NewMappings implements Disposable {
       String vcs = mapping.getVcs();
       LOG.info(String.format("VCS Root: [%s] - [%s]", vcs, path));
     }
+  }
 
-    if (LOG.isDebugEnabled()) {
-      for (MappedRoot root : myMappedRoots) {
-        LOG.debug(String.format("Mapped Root: [%s] - [%s]", root.vcs, root.root.getPath()));
-      }
+  private void dumpMappedRootsToLog() {
+    for (MappedRoot root : myMappedRoots) {
+      LOG.info(String.format("Mapped Root: [%s] - [%s]", root.vcs, root.root.getPath()));
     }
   }
 
