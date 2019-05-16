@@ -922,13 +922,11 @@
     <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator" />
     <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule" />
     <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator" />
-    <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.codeInsight.template.impl.SurroundWithLogger$SurroundWithSurrounderDescriptionValidator"/>
-    <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.codeInsight.template.impl.SurroundWithLogger$SurroundWithTemplateValidator"/>
-    <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.codeInsight.template.impl.SurroundWithLogger$SurroundWithCustomTemplateValidator"/>
     <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator" />
     <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator" />
     <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.execution.impl.statistics.AbstractRunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator" />
     <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationExecutorUtilValidator" />
+    <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.codeInsight.template.impl.SurroundWithLogger$SurroundWithIdValidator"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionUsagesCollector"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeExtensionUsagesCollectorStartupActivity"/>
