@@ -43,6 +43,7 @@ When a new dev branch (like studio-3.1-dev) is created, update studio-master-dev
     !define VERSION_MINOR 2
     ```
 
+ 1. Add an entry for the new version in [Kotlin compatibility metadata](https://dl.google.com/android/studio/plugins/compatibility.xml)
 --------------------------------------------------------------------------------
 Before the first release candidate, update the dev branch (like studio-1.4-dev):
 
