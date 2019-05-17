@@ -39,7 +39,6 @@ internal interface ReadContext {
 
 data class ReadErrors(
   val unknownFields: MutableList<ReadError> = SmartList(),
-  val parameters: MutableList<ReadError> = SmartList(),
   val fields: MutableList<ReadError> = SmartList()
 ) {
   fun report(logger: Logger) {
@@ -48,10 +47,6 @@ data class ReadErrors(
     }
     if (fields.isNotEmpty()) {
       logger.warn(unknownFields.joinToString("\n"))
-    }
-
-    if (parameters.isNotEmpty()) {
-      logger.error(parameters.joinToString("\n"))
     }
   }
 }

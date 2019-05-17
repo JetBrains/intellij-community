@@ -8,7 +8,6 @@ import com.amazon.ion.system.IonBinaryWriterBuilder
 import com.amazon.ion.system.IonReaderBuilder
 import com.amazon.ion.system.IonTextWriterBuilder
 import com.amazon.ion.system.IonWriterBuilder
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
 import java.io.IOException
@@ -53,7 +52,7 @@ internal class IonObjectSerializer {
       var isVersionChecked = 0
 
       fun logVersionMismatch(prefix: String, currentVersion: Int) {
-        LOG.debug { "$prefix version mismatch (file=$inputName, currentVersion: $currentVersion, expectedVersion=$expectedVersion, objectClass=$objectClass)" }
+        LOG.info("$prefix version mismatch (file=$inputName, currentVersion: $currentVersion, expectedVersion=$expectedVersion, objectClass=$objectClass)")
       }
 
       try {
@@ -125,7 +124,12 @@ internal class IonObjectSerializer {
     reader.use {
       reader.next()
       val context = createReadContext(reader, configuration)
-      return doRead(objectClass, originalType, context)
+      try {
+        return doRead(objectClass, originalType, context)
+      }
+      finally {
+        context.errors.report(LOG)
+      }
     }
   }
 
