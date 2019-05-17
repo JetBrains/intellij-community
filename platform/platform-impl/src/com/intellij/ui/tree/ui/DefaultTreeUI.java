@@ -247,6 +247,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
     super.installDefaults();
     JTree tree = getTree();
     if (tree != null) {
+      LookAndFeel.installBorder(tree, "Tree.border");
       if (tree.isForegroundSet()) tree.setForeground(null);
       if (UIManager.get("Tree.showsRootHandles") == null) {
         LookAndFeel.installProperty(tree, JTree.SHOWS_ROOT_HANDLES_PROPERTY, Boolean.TRUE);
