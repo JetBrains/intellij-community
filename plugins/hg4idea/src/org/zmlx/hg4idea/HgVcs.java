@@ -18,7 +18,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -258,10 +257,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
     myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      myIncomingWidget.activate();
-      myOutgoingWidget.activate();
-    }, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myIncomingWidget != null) myIncomingWidget.activate();
+      if (myOutgoingWidget != null) myOutgoingWidget.activate();
+    });
 
     // updaters and listeners
     myHgRemoteStatusUpdater =
