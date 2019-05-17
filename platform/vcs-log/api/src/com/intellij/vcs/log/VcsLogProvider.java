@@ -181,7 +181,9 @@ public interface VcsLogProvider {
    * @return diff handler or null if unsupported.
    */
   @Nullable
-  VcsLogDiffHandler getDiffHandler();
+  default VcsLogDiffHandler getDiffHandler() {
+    return null;
+  }
 
   /**
    * Returns the VCS root which should be used by the file history instead of the root found by standard mechanism (through mappings).
