@@ -37,3 +37,18 @@ intellij {
     updateSinceUntilBuild false
     sandboxDirectory "${project.projectDir}/.sandbox"
 }
+
+buildPlugin {
+    doLast {
+        def buildSettings = Build.buildSettings
+        if (buildSettings.isCIRun()){
+            def buildNumber = buildSettings.buildNumber
+
+            new File("$projectDir/build/distributions/update.xml").write("""<!-- Plugin repository URL: "http://buildserver.labs.intellij.net/guestAuth/repository/download/Circlet_IdeaCircletIntegration/lastSuccessful/update.xml" -->
+<plugins>
+    <plugin id="com.jetbrains.circlet" url="http://buildserver.labs.intellij.net/guestAuth/repository/download/Circlet_IdeaCircletIntegration/$buildNumber/app-idea-${buildNumber}.zip" version="$buildNumber"/>
+</plugins>""")
+            println "##teamcity[publishArtifacts 'app/app-idea/build/distributions/update.xml']"
+        }
+    }
+}
