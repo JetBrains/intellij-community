@@ -23,7 +23,7 @@ import org.jetbrains.idea.devkit.module.PluginModuleType
  * Base class for tests of [MissingRecentApiInspection] on Java and Kotlin sources.
  */
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/missingApi")
-class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
+class MissingRecentApiInspectionTest : PluginModuleTestCase() {
 
   private val projectDescriptor = object : LightCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
