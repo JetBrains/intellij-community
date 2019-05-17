@@ -91,15 +91,15 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   @Nullable
   protected AnActionButtonRunnable createAddAction() {
-    return button -> addNewElement();
+    return button -> addNewElement(createElement());
   }
 
-  protected void addNewElement() {
+  protected void addNewElement(T newElement) {
     myTableView.stopEditing();
     setModified();
     SwingUtilities.invokeLater(() -> {
       if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
-        myElements.add(createElement());
+        myElements.add(newElement);
         myTableView.getTableViewModel().setItems(myElements);
       }
       myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
