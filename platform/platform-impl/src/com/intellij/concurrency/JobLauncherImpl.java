@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
@@ -206,43 +205,13 @@ public class JobLauncherImpl extends JobLauncher {
     }
 
     @Override
-    public String getTitle() {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
     public boolean isCanceled() {
       return myForkJoinTask.isCancelled();
     }
 
     @Override
-    public void addTask(@NotNull Callable<Void> task) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public void addTask(@NotNull Runnable task, Void result) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public void addTask(@NotNull Runnable task) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public List<Void> scheduleAndWaitForResults() {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
     public void cancel() {
       myForkJoinTask.cancel(true);
-    }
-
-    @Override
-    public void schedule() {
-      throw new IncorrectOperationException();
     }
 
     // waits for the job to finish execution (when called on a canceled job in the middle of the execution, wait for finish)
@@ -260,6 +229,7 @@ public class JobLauncherImpl extends JobLauncher {
           // can't do anything but wait. help other tasks in the meantime
           if (!isDone()) {
             ForkJoinPool.commonPool().awaitQuiescence(millis, TimeUnit.MILLISECONDS);
+            if (!isDone()) throw new TimeoutException();
           }
         }
       }
