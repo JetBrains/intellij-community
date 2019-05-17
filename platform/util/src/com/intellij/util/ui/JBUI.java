@@ -662,7 +662,7 @@ public class JBUI {
 
       @NotNull
       public static Color paneBackground() {
-        return JBColor.namedColor("Panel.background", 0xcdcdcd);
+        return new JBColor(() -> ObjectUtils.notNull(UIManager.getColor("Panel.background"), Gray.xCD));
       }
     }
 
