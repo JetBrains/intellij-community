@@ -5,12 +5,14 @@ readonly dist_dir="$2"
 readonly build_number="$3"
 
 readonly script_dir="$(realpath "$(dirname "$0")")"
-readonly xvfb_script="$(realpath "${script_dir}/../vendor/google/testing/display/launch_xvfb.sh")"
-readonly java="$(realpath "${script_dir}/../../prebuilts/studio/jdk/linux/jre/bin/java")"
-readonly ant_jar="${script_dir}/lib/ant/lib/ant-launcher.jar"
-readonly test_groups="${UI_TEST_GROUPS:-DEFAULT,UNRELIABLE}"
 
 export DISPLAY=:10
+export JAVA_HOME="$(realpath "${script_dir}/../../prebuilts/studio/jdk/linux")"
+
+readonly xvfb_script="$(realpath "${script_dir}/../vendor/google/testing/display/launch_xvfb.sh")"
+readonly java="${JAVA_HOME}/jre/bin/java"
+readonly ant_jar="${script_dir}/lib/ant/lib/ant-launcher.jar"
+readonly test_groups="${UI_TEST_GROUPS:-DEFAULT,UNRELIABLE}"
 
 "${xvfb_script}" "${DISPLAY}" "$(realpath "${script_dir}/../..")" &
 readonly xvfb_script_pid=$!
