@@ -78,7 +78,7 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
         types.add(fileType);
       }
     }
-    Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    Collections.sort(types, (o1, o2) -> o1.getDescription().compareToIgnoreCase(o2.getDescription()));
     final List<FileTypeInfo> infos = new ArrayList<>();
     for (FileType fileType : types) {
       final boolean duplicated = isDuplicated(fileType, types);
@@ -88,6 +88,7 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
       if (profile instanceof StructuralSearchProfileBase) {
         final String[] contextNames = ((StructuralSearchProfileBase)profile).getContextNames();
         if (contextNames.length != 0) {
+          Arrays.sort(contextNames);
           infos.add(new FileTypeInfo(fileType, null, null, false, duplicated));
           for (String contextName: contextNames) {
             infos.add(new FileTypeInfo(fileType, null, contextName, true, duplicated));
