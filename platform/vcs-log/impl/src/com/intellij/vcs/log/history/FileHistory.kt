@@ -24,22 +24,25 @@ import java.util.*
 import java.util.function.BiConsumer
 
 class FileHistory internal constructor(val commitsToPathsMap: Map<Int, MaybeDeletedFilePath>,
+                                       internal val processedAdditionsDeletions: Set<AdditionDeletion>,
                                        internal val unmatchedAdditionsDeletions: Set<AdditionDeletion>,
                                        internal val commitToRename: MultiMap<UnorderedPair<Int>, Rename>) {
-  constructor(commitsToPathsMap: Map<Int, MaybeDeletedFilePath>) : this(commitsToPathsMap, emptySet(), MultiMap.empty())
+  constructor(commitsToPathsMap: Map<Int, MaybeDeletedFilePath>) : this(commitsToPathsMap, emptySet(), emptySet(), MultiMap.empty())
 }
 
 internal val EMPTY_HISTORY = FileHistory(emptyMap())
 
 internal class FileHistoryBuilder(private val startCommit: Int?,
                                   private val startPath: FilePath,
-                                  private val fileHistoryData: FileHistoryData) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
+                                  private val fileHistoryData: FileHistoryData,
+                                  private val oldFileHistory: FileHistory) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
   private val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
+  private val processedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
   private val unmatchedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
   private val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
 
   val fileHistory: FileHistory
-    get() = FileHistory(pathsMap, unmatchedAdditionsDeletions, commitToRename)
+    get() = FileHistory(pathsMap, processedAdditionsDeletions, unmatchedAdditionsDeletions, commitToRename)
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
     val needToRepeat = removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
@@ -56,9 +59,14 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   }
 
   private fun collectAdditionsDeletions(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
+    processedAdditionsDeletions.addAll(oldFileHistory.processedAdditionsDeletions)
+    processedAdditionsDeletions.addAll(oldFileHistory.unmatchedAdditionsDeletions)
+
     val additionsDeletions = mutableSetOf<AdditionDeletion>()
     fileHistoryData.iterateUnmatchedAdditionsDeletions { ad ->
+      if (!processedAdditionsDeletions.contains(ad)) {
         additionsDeletions.add(ad)
+      }
     }
     if (additionsDeletions.isNotEmpty()) {
       val grouped = additionsDeletions.groupBy { it.child }
