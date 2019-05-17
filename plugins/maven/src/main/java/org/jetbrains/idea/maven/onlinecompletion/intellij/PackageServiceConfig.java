@@ -32,6 +32,10 @@ public class PackageServiceConfig {
   private volatile PackageSearchEndpointUrls myPackageSearchEndpointUrls;
 
   public PackageServiceConfig() {
+    if(ApplicationManager.getApplication().isUnitTestMode()){
+      myPackageSearchEndpointUrls = null;
+      return;
+    }
     updateIfNessesary();
   }
 

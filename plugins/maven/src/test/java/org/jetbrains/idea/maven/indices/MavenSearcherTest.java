@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@Ignore("tests for online search to be ready")
 public class MavenSearcherTest extends MavenIndicesTestCase {
   MavenIndicesTestFixture myIndicesFixture;
 

@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.onlinecompletion.intellij;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.HttpRequests;
@@ -18,23 +17,15 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 public class PackageSearchService {
-
-  private static final String BASE_URL = loadBaseUrl();
   private static final MyErrorHandler<Throwable> myErrorHandler = new MyErrorHandler<>();
 
-  private static String loadBaseUrl() {
-    return null;
-  }
-
   private final Gson myGson;
-
   private final PackageServiceConfig myPackageServiceConfig;
 
   public PackageSearchService() {
     myGson = new Gson();
     myPackageServiceConfig = new PackageServiceConfig();
   }
-
 
   public Promise<Void> fullTextSearch(@NotNull String text,
                                       @NotNull SearchParameters parameters,
@@ -68,7 +59,7 @@ public class PackageSearchService {
                                   @NotNull Consumer<MavenRepositoryArtifactInfo> consumer,
                                   String url) {
 
-    if (url == null || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (url == null) {
       AsyncPromise<Void> result = new AsyncPromise<>();
       result.setResult(null);
       return result;
