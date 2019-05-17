@@ -141,10 +141,8 @@ public class MethodCandidateInfo extends CandidateInfo{
     final PsiMethod method = getElement();
 
     if (isToInferApplicability()) {
-      if (!isOverloadCheck()) {
-        //ensure applicability check is performed
-        getSubstitutor(false);
-      }
+      //ensure applicability check is performed
+      getSubstitutor(false);
 
       //already performed checks, so if inference failed, error message should be saved
       if (myApplicabilityError || isPotentiallyCompatible() != ThreeState.YES) {
@@ -357,7 +355,6 @@ public class MethodCandidateInfo extends CandidateInfo{
       if (myTypeArguments == null) {
         RecursionGuard.StackStamp stackStamp = RecursionManager.markStack();
 
-        myApplicabilityError = false;
         final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
         if (!stackStamp.mayCacheNow() ||
             isOverloadCheck() ||
@@ -497,12 +494,14 @@ public class MethodCandidateInfo extends CandidateInfo{
   /**
    * Should be invoked on the top level call expression candidate only
    */
-  public void setApplicabilityError(String applicabilityError) {
+  public void setApplicabilityError(@NotNull String applicabilityError) {
     boolean overloadCheck = isOverloadCheck();
     if (!overloadCheck) {
       myInferenceError = applicabilityError;
     }
-    myApplicabilityError = (myArgumentList == null ? overloadCheck : isOverloadCheck(myArgumentList)) && applicabilityError != null;
+    if (myArgumentList == null ? overloadCheck : isOverloadCheck(myArgumentList)) {
+      markNotApplicable();
+    }
   }
 
   public void markNotApplicable() {
