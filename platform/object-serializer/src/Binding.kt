@@ -32,7 +32,7 @@ interface RootBinding : Binding {
 
 interface BindingInitializationContext {
   val propertyCollector: PropertyCollector
-  val bindingProducer: BindingProducer<RootBinding>
+  val bindingProducer: BindingProducer
 
   val isResolveConstructorOnInit: Boolean
     get() = false

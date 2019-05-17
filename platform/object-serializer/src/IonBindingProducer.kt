@@ -3,7 +3,6 @@ package com.intellij.serialization
 
 import com.amazon.ion.IonType
 import com.amazon.ion.Timestamp
-import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashMap
 import java.io.File
@@ -18,7 +17,7 @@ import java.util.*
 internal typealias NestedBindingFactory = (accessor: MutableAccessor) -> NestedBinding
 internal typealias RootBindingFactory = () -> RootBinding
 
-internal class IonBindingProducer(override val propertyCollector: PropertyCollector) : BindingProducer<RootBinding>(), BindingInitializationContext {
+internal class IonBindingProducer(override val propertyCollector: PropertyCollector) : BindingProducer() {
   companion object {
     private val classToNestedBindingFactory = THashMap<Class<*>, NestedBindingFactory>(32, ContainerUtil.identityStrategy())
     private val classToRootBindingFactory = THashMap<Class<*>, RootBindingFactory>(32, ContainerUtil.identityStrategy())
@@ -44,42 +43,22 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
     }
   }
 
-  override val isResolveConstructorOnInit = SystemProperties.`is`("idea.serializer.resolve.ctor.on.init")
-
-  override val bindingProducer: BindingProducer<RootBinding>
-    get() = this
-
-  override fun createCacheKey(aClass: Class<*>, originalType: Type): Type {
-    if (aClass !== originalType && !Collection::class.java.isAssignableFrom(aClass) && !classToRootBindingFactory.contains(aClass)) {
-      // type parameters for bean binding doesn't play any role, should be the only binding for such class
-      return aClass
-    }
-    else {
-      return originalType
+  // type parameters for bean binding doesn't play any role, should be the only binding for such class
+  override fun createCacheKey(aClass: Class<*>, type: Type): Type {
+    when {
+      aClass !== type && !Collection::class.java.isAssignableFrom(aClass) && !classToRootBindingFactory.contains(aClass) -> return aClass
+      else -> return type
     }
   }
 
-  override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, RootBinding>): RootBinding {
-    val binding = doCreateRootBinding(aClass, type, cacheKey)
-    map.put(cacheKey, binding)
-    try {
-      binding.init(type, this)
-    }
-    catch (e: Throwable) {
-      map.remove(type)
-      throw e
-    }
-    return binding
-  }
-
-  private fun doCreateRootBinding(aClass: Class<*>, type: Type, cacheKey: Type): RootBinding {
+  override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type): RootBinding {
     val customFactory = classToRootBindingFactory.get(aClass)
     if (customFactory != null) {
       return customFactory.invoke()
     }
 
     return when {
-      Collection::class.java.isAssignableFrom(aClass) -> createCollectionBinding(type)
+      Collection::class.java.isAssignableFrom(aClass) -> CollectionBinding(type as ParameterizedType, this)
       Map::class.java.isAssignableFrom(aClass) -> {
         val typeArguments = (type as ParameterizedType).actualTypeArguments
         MapBinding(typeArguments[0], typeArguments[1], this)
@@ -121,7 +100,6 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
 
     // CollectionBinding implements NestedBinding directly because can mutate property value directly
     return when {
-      Collection::class.java.isAssignableFrom(aClass) -> createCollectionBinding(type)
       Map::class.java.isAssignableFrom(aClass) -> {
         val typeArguments = (type as ParameterizedType).actualTypeArguments
         MapBinding(typeArguments[0], typeArguments[1], this)
@@ -144,13 +122,13 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
         InterfacePropertyBinding(allowedTypes)
       }
       else -> {
-        PropertyBinding(getRootBinding(aClass, type))
+        val binding = getRootBinding(aClass, type)
+        when (binding) {
+          is NestedBinding -> binding
+          else -> PropertyBinding(binding)
+        }
       }
     }
-  }
-
-  private fun createCollectionBinding(type: Type): CollectionBinding {
-    return CollectionBinding(type as ParameterizedType, this)
   }
 }
 

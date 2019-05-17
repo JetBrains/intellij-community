@@ -18,12 +18,12 @@ data class WriteContext(val writer: ValueWriter,
                         val filter: SerializationFilter,
                         val objectIdWriter: ObjectIdWriter?,
                         val configuration: WriteConfiguration,
-                        val bindingProducer: BindingProducer<RootBinding>)
+                        val bindingProducer: BindingProducer)
 
 interface ReadContext {
   val reader: ValueReader
   val objectIdReader: ObjectIdReader
-  val bindingProducer: BindingProducer<RootBinding>
+  val bindingProducer: BindingProducer
 
   val configuration: ReadConfiguration
 

@@ -4,17 +4,20 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
-import com.intellij.serialization.BindingProducer
-import com.intellij.serialization.MutableAccessor
 import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.*
+import gnu.trove.THashMap
 import org.jdom.Element
 import org.jdom.JDOMException
+import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.lang.reflect.Type
 import java.net.URL
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
 
@@ -130,9 +133,40 @@ fun deserializeBaseStateWithCustomNameFilter(state: BaseState, excludedPropertyN
 private val serializer = MyXmlSerializer()
 
 private class MyXmlSerializer : XmlSerializerImpl.XmlSerializerBase() {
-  val bindingProducer = object : BindingProducer<Binding>() {
-    override fun getNestedBinding(accessor: MutableAccessor) = throw IllegalStateException()
+  internal abstract class OldBindingProducer<ROOT_BINDING> {
+    private val cache: MutableMap<Type, ROOT_BINDING> = THashMap()
+    private val cacheLock = ReentrantReadWriteLock()
 
+    @get:TestOnly
+    internal val bindingCount: Int
+      get() = cacheLock.read { cache.size }
+
+    fun getRootBinding(aClass: Class<*>, originalType: Type = aClass): ROOT_BINDING {
+      val cacheKey = createCacheKey(aClass, originalType)
+      return cacheLock.read {
+        // create cache only under write lock
+        cache.get(cacheKey)
+      } ?: cacheLock.write {
+        cache.get(cacheKey)?.let {
+          return it
+        }
+
+        createRootBinding(aClass, originalType, cacheKey, cache)
+      }
+    }
+
+    protected open fun createCacheKey(aClass: Class<*>, originalType: Type) = originalType
+
+    protected abstract fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, ROOT_BINDING>): ROOT_BINDING
+
+    fun clearBindingCache() {
+      cacheLock.write {
+        cache.clear()
+      }
+    }
+  }
+
+  val bindingProducer = object : OldBindingProducer<Binding>() {
     override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, Binding>): Binding {
       val binding = createClassBinding(aClass, null, type) ?: KotlinAwareBeanBinding(aClass)
       map.put(cacheKey, binding)
