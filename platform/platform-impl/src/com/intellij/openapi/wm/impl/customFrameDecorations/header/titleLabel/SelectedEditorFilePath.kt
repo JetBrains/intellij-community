@@ -48,9 +48,16 @@ open class SelectedEditorFilePath() {
       added = false
       updateListeners()
     }
+
+    override fun setFont(font: Font) {
+      super.setFont(fontUIResource(font))
+    }
   }.apply {
-    font = FontUIResource(font.deriveFont(font.style or Font.BOLD))
+    font = fontUIResource(font)
   }
+
+  private fun fontUIResource(font: Font) = FontUIResource(font.deriveFont(font.style or Font.BOLD))
+
 
   protected val label = JLabel()
 
@@ -194,7 +201,7 @@ open class SelectedEditorFilePath() {
         }
       }
     }
-    projectLabel.text = projectName
+    projectLabel.text = clippedProjectName
     label.text = clippedText
   }
 
