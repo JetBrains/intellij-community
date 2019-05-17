@@ -29,17 +29,19 @@ import com.intellij.psi.codeStyle.ExternalFormatProcessor;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.sh.settings.ShSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 // todo: rewrite with the future API, see IDEA-203568
 public class ShExternalFormatter implements ExternalFormatProcessor {
   private static final Logger LOG = Logger.getInstance(ShExternalFormatter.class);
-  private static final List<String> KNOWN_SHELLS = ContainerUtil.list("bash", "posix", "mksh");
+  private static final List<String> KNOWN_SHELLS = Arrays.asList("bash", "posix", "mksh");
 
   @Override
   public boolean activeForFile(@NotNull PsiFile file) {
@@ -65,8 +67,17 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
     String shFmtExecutable = shSettings.SHFMT_PATH;
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
-      Notification notification = new Notification("Shell Script", "", "Would you like to install a shell script formatter?", NotificationType.INFORMATION);
-      notification.addAction(NotificationAction.createSimple("Install", () -> ShShfmtFormatterUtil.download(project, settings, null)));
+      Notification notification =
+        new Notification("Shell Script", "", "Would you like to install a shell script formatter?", NotificationType.INFORMATION);
+      notification.addAction(
+        NotificationAction.createSimple("Install", () -> {
+          notification.expire();
+          ShShfmtFormatterUtil.download(project, settings, null);
+        }));
+      notification.addAction(NotificationAction.createSimple("No, thanks", () -> {
+        notification.expire();
+        shSettings.SHFMT_PATH = ShSettings.NOT_AVAILABLE_PATH;
+      }));
       Notifications.Bus.notify(notification);
       return;
     }
@@ -83,7 +94,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     documentManager.saveDocument(document);
 
     List<String> params = ContainerUtil.newSmartList();
-    params.add("-ln=" + ShShebangParserUtil.getInterpreter((ShFile) psiFile, KNOWN_SHELLS, "bash"));
+    params.add("-ln=" + ShShebangParserUtil.getInterpreter((ShFile)psiFile, KNOWN_SHELLS, "bash"));
     if (!settings.useTabCharacter(file.getFileType())) {
       int tabSize = settings.getIndentSize(file.getFileType());
       params.add("-i=" + tabSize);
@@ -107,9 +118,9 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
 
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine()
-          .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-          .withExePath(shFmtExecutable)
-          .withParameters(params);
+        .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
+        .withExePath(shFmtExecutable)
+        .withParameters(params);
 
       OSProcessHandler handler = new OSProcessHandler(commandLine);
       handler.addProcessListener(new CapturingProcessAdapter() {

@@ -170,15 +170,15 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(shSettings.SHFMT_PATH));
   }
 
-  private boolean isFieldModified(JCheckBox checkBox, boolean value) {
+  private static boolean isFieldModified(@NotNull JCheckBox checkBox, boolean value) {
     return checkBox.isSelected() != value;
   }
 
-  private boolean isFieldModified(IntegerField textField, int value) {
+  private static boolean isFieldModified(@NotNull IntegerField textField, int value) {
     return textField.getValue() != value;
   }
 
-  private boolean isFieldModified(TextFieldWithBrowseButton browseButton, String value) {
+  private static boolean isFieldModified(@NotNull TextFieldWithBrowseButton browseButton, String value) {
     return !browseButton.getText().equals(value);
   }
 

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
+import com.intellij.sh.settings.ShSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
@@ -106,6 +107,7 @@ public class ShShfmtFormatterUtil {
 
   public static boolean isValidPath(@Nullable String path) {
     if (path == null) return false;
+    if (ShSettings.NOT_AVAILABLE_PATH.equals(path)) return true;
     File file = new File(path);
     if (!file.canExecute()) return false;
     return file.getName().contains("shfmt");

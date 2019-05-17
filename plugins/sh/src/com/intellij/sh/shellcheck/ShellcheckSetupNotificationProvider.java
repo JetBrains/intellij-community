@@ -40,7 +40,7 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
         }
       }));
       panel.createActionLabel("No, thanks", () -> {
-        ShSettings.setShellcheckPath(ShSettings.I_DO_MIND);
+        ShSettings.setShellcheckPath(ShSettings.NOT_AVAILABLE_PATH);
         EditorNotifications.getInstance(project).updateAllNotifications();
       });
       return panel;
