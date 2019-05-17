@@ -14,8 +14,13 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
   private val isKeyComparable = Comparable::class.java.isAssignableFrom(ClassUtil.typeToClass(keyType))
 
   override fun serialize(obj: Any, context: WriteContext) {
-    val writer = context.writer
     val map = obj as Map<*, *>
+    val writer = context.writer
+
+    if (context.filter.skipEmptyMap && map.isEmpty()) {
+      writer.writeInt(0)
+      return
+    }
 
     fun writeEntry(key: Any?, value: Any?) {
       if (key == null) {

@@ -2,6 +2,10 @@
   '@id':0,
   bean:{
     '@id':1,
-    bean:0
-  }
+    bean:0,
+    list:0,
+    children:0
+  },
+  list:0,
+  children:0
 }

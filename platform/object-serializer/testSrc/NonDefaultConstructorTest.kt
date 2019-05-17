@@ -19,11 +19,16 @@ class NonDefaultConstructorTest {
   @Rule
   val fsRule = InMemoryFsRule()
 
-  private fun test(bean: Any) = test(bean, testName, defaultTestWriteConfiguration)
+  private fun test(bean: Any, writeConfiguration: WriteConfiguration = defaultTestWriteConfiguration) = test(bean, testName, writeConfiguration)
 
   @Test
   fun `no default constructor`() {
     test(NoDefaultConstructorBean("foo", arrayListOf(42, 21)))
+  }
+
+  @Test
+  fun `skipped empty list and not null parameter`() {
+    test(NoDefaultConstructorBean("foo", emptyList()), defaultTestWriteConfiguration.copy(filter = SkipNullAndEmptySerializationFilter))
   }
 
   @Test
