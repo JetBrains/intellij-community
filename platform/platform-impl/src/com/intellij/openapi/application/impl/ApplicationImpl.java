@@ -46,7 +46,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -71,9 +70,11 @@ import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -453,6 +454,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       });
 
+      ourThreadExecutorsService.submit(() -> createLocatorFile());
+
       Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
       for (ApplicationInitializedListener listener : ((ExtensionsAreaImpl)Extensions.getArea(null)).<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
         if (listener == null) {
@@ -475,8 +478,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       token.finish();
     }
     myLoaded = true;
-
-    createLocatorFile();
   }
 
   @Override
@@ -506,10 +507,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private static void createLocatorFile() {
-    File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
+    Path locatorFile = Paths.get(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME);
     try {
-      byte[] data = PathManager.getHomePath().getBytes(StandardCharsets.UTF_8);
-      FileUtil.writeToFile(locatorFile, data);
+      Files.write(locatorFile, PathManager.getHomePath().getBytes(StandardCharsets.UTF_8));
     }
     catch (IOException e) {
       LOG.warn("can't store a location in '" + locatorFile + "'", e);
