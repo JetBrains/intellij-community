@@ -896,6 +896,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  // PY-35512
+  public void testPositionalOnlyParameters() {
+    doTest(LanguageLevel.PYTHON38);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }
