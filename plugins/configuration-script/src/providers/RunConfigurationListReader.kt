@@ -12,10 +12,10 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.util.ReflectionUtil
 import gnu.trove.THashMap
-import org.yaml.snakeyaml.nodes.MappingNode
-import org.yaml.snakeyaml.nodes.Node
-import org.yaml.snakeyaml.nodes.ScalarNode
-import org.yaml.snakeyaml.nodes.SequenceNode
+import org.snakeyaml.engine.v1.nodes.MappingNode
+import org.snakeyaml.engine.v1.nodes.Node
+import org.snakeyaml.engine.v1.nodes.ScalarNode
+import org.snakeyaml.engine.v1.nodes.SequenceNode
 
 internal class RunConfigurationListReader(private val processor: (factory: ConfigurationFactory, state: Any) -> Unit) {
   // rc grouped by type
@@ -24,7 +24,7 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
     for (tuple in parentNode.value) {
       val keyNode = tuple.keyNode
       if (keyNode !is ScalarNode) {
-        LOG.warn("Unexpected keyNode type: ${keyNode.nodeId}")
+        LOG.warn("Unexpected keyNode type: $keyNode")
         continue
       }
 
@@ -57,7 +57,7 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
       val valueNode = tuple.valueNode
       if (factories.size > 1) {
         if (valueNode !is MappingNode) {
-          LOG.warn("Unexpected valueNode type: ${valueNode.nodeId}")
+          LOG.warn("Unexpected valueNode type: ${valueNode}")
           continue
         }
 
@@ -74,7 +74,7 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
     for (tuple in parentNode.value) {
       val keyNode = tuple.keyNode
       if (keyNode !is ScalarNode) {
-        LOG.warn("Unexpected keyNode type: ${keyNode.nodeId}")
+        LOG.warn("Unexpected keyNode type: ${keyNode}")
         continue
       }
 

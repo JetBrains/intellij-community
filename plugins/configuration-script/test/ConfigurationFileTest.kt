@@ -1,6 +1,6 @@
 package com.intellij.configurationScript
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.configurationScript.schemaGenerators.rcTypeIdToPropertyName
 import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.execution.configurations.ConfigurationTypeBase
@@ -34,8 +34,8 @@ class ConfigurationFileTest {
   fun schema() {
     // check that parseable
     val schema = doGenerateConfigurationSchema(emptyList())
-    val jsonReader = Gson().fromJson(CharSequenceReader(schema), Any::class.java)
-    assertThat(jsonReader).isNotNull
+    val jsonFactory = JsonFactory()
+    jsonFactory.createParser(CharSequenceReader(schema)).nextValue()
   }
 
   @Test

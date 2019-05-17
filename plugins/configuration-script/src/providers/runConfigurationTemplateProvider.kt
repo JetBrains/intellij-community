@@ -13,8 +13,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import gnu.trove.THashMap
-import org.yaml.snakeyaml.nodes.MappingNode
-import org.yaml.snakeyaml.nodes.ScalarNode
+import org.snakeyaml.engine.v1.nodes.MappingNode
+import org.snakeyaml.engine.v1.nodes.ScalarNode
 
 private class FactoryEntry(state: Any) {
   var state: Any? = state
