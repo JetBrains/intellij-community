@@ -4,10 +4,12 @@ package com.intellij.sh.completion;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ShKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
+import java.util.List;
 
+public class ShKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testIfCompletion() {
     myFixture.configureByText("a.sh", "if<caret>");
     myFixture.completeBasic();
@@ -330,6 +332,37 @@ public class ShKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testNoCompletionInParameterExpansion() {
     myFixture.configureByText("a.sh", "${ <caret> }");
     assertEmpty(myFixture.completeBasic());
+  }
+
+  public void testNoKeywordCompletionInString() {
+    myFixture.configureByText("a.sh", "\"<caret> \"");
+    myFixture.completeBasic();
+    assertLookupNotContainsTemplateKeywords();
+  }
+
+  public void testNoKeywordCompletionInRawString() {
+    myFixture.configureByText("a.sh", "'<caret> '");
+    myFixture.completeBasic();
+    assertLookupNotContainsTemplateKeywords();
+  }
+
+  public void testNoCompletionInComment() {
+    myFixture.configureByText("a.sh", "#<caret>");
+    assertEmpty(myFixture.completeBasic());
+  }
+
+  public void testNoCompletionAfterDot() {
+    myFixture.configureByText("a.sh", ".<caret>");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "#.<caret>");
+    assertEmpty(myFixture.completeBasic());
+  }
+
+  private void assertLookupNotContainsTemplateKeywords() {
+    List<String> templateKeywords = ContainerUtil.newSmartList("if", "select", "case", "for", "while", "until", "function", "elif");
+    LookupImpl lookup = (LookupImpl) myFixture.getLookup();
+    assertNotNull(lookup);
+    assertTrue(lookup.getItems().stream().noneMatch(item -> templateKeywords.contains(item.getLookupString())));
   }
 
   private void completeByRule(@NotNull String rule) {

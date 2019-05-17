@@ -201,7 +201,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
 
   override fun dispose() = Unit
 
-  private inner class DefaultCommitAction : DumbAwareAction() {
+  inner class DefaultCommitAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = commitButton.isEnabled
     }

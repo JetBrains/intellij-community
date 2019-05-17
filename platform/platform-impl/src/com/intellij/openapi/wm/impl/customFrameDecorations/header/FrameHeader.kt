@@ -7,8 +7,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameT
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
 import java.awt.*
-import java.awt.Frame.MAXIMIZED_BOTH
-import java.awt.Frame.MAXIMIZED_VERT
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowStateListener
 import java.util.ArrayList
@@ -78,7 +76,7 @@ open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         myCloseAction.isEnabled = true
 
         buttonPanes.updateVisibility()
-        setCustomDecorationHitTestSpots()
+        updateCustomDecorationHitTestSpots()
     }
 
     override fun addMenuItems(menu: JMenu) {

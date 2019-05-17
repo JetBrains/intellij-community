@@ -33,6 +33,7 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 import static com.intellij.util.ui.tree.WideSelectionTreeUI.TREE_TABLE_TREE_KEY;
 
 public final class DefaultTreeUI extends BasicTreeUI {
+  public static final Key<Control.Painter> CONTROL_PAINTER = Key.create("tree control painter");
   public static final Key<Boolean> SHRINK_LONG_RENDERER = Key.create("resize renderer component if it exceed a visible area");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
@@ -49,11 +50,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   @NotNull
   private static Control.Painter getPainter(@NotNull JTree tree) {
-    Object property = tree.getClientProperty(Control.Painter.class);
-    if (property instanceof Control.Painter) return (Control.Painter)property;
-    if (is("ide.tree.painter.classic.compact")) return ClassicPainter.COMPACT;
+    Control.Painter painter = UIUtil.getClientProperty(tree, CONTROL_PAINTER);
+    if (painter != null) return painter;
+    if (is("ide.tree.painter.classic.compact")) return Control.Painter.COMPACT;
     if (is("ide.tree.painter.compact.default")) return CompactPainter.DEFAULT;
-    return ClassicPainter.DEFAULT;
+    return Control.Painter.DEFAULT;
   }
 
   @Nullable

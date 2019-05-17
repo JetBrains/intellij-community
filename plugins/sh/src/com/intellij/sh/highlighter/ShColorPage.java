@@ -38,7 +38,6 @@ public class ShColorPage implements ColorSettingsPage {
 
       new AttributesDescriptor("Backquotes", ShHighlighterColors.BACKQUOTE),
       new AttributesDescriptor("Redirection", ShHighlighterColors.REDIRECTION),
-      new AttributesDescriptor("Commands//Let Command", ShHighlighterColors.LET_COMMAND),
       new AttributesDescriptor("Commands//Generic Command", ShHighlighterColors.GENERIC_COMMAND),
       new AttributesDescriptor("Commands//Subshell Command", ShHighlighterColors.SUBSHELL_COMMAND),
       new AttributesDescriptor("Conditional operators", ShHighlighterColors.CONDITIONAL_OPERATORS),
@@ -98,7 +97,7 @@ public class ShColorPage implements ColorSettingsPage {
         "#!/usr/bin/env sh\n" +
         "\n" +
         "#Sample comment\n" +
-        "let \"a=16 << 2\";\n" +
+        "<generic>let</generic> \"a=16 << 2\";\n" +
         "<var>b</var>=\"Sample text\";\n" +
         "\n" +
         "function <function>foo</function>() {\n" +

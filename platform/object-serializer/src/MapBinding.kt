@@ -7,21 +7,20 @@ import gnu.trove.THashMap
 import java.lang.reflect.Type
 import java.util.*
 
-internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitializationContext) : RootBinding, NestedBinding {
+internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitializationContext) : Binding {
   private val keyBinding = createElementBindingByType(keyType, context)
   private val valueBinding = createElementBindingByType(valueType, context)
 
   private val isKeyComparable = Comparable::class.java.isAssignableFrom(ClassUtil.typeToClass(keyType))
 
-  override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    write(hostObject, property, context) {
-      serialize(it, context)
-    }
-  }
-
   override fun serialize(obj: Any, context: WriteContext) {
-    val writer = context.writer
     val map = obj as Map<*, *>
+    val writer = context.writer
+
+    if (context.filter.skipEmptyMap && map.isEmpty()) {
+      writer.writeInt(0)
+      return
+    }
 
     fun writeEntry(key: Any?, value: Any?) {
       if (key == null) {
@@ -103,7 +102,7 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
     reader.stepOut()
   }
 
-  private fun read(type: IonType, binding: RootBinding, context: ReadContext): Any? {
+  private fun read(type: IonType, binding: Binding, context: ReadContext): Any? {
     return when (type) {
       IonType.NULL -> null
       else -> binding.deserialize(context)

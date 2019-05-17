@@ -23,9 +23,9 @@ class ObjectSerializerTest {
 
   @Test
   fun `same bean binding regardless of type parameters`() {
-    val bindingProducer = getBindingProducer(ObjectSerializer())
-    bindingProducer.getRootBinding(TestGenericBean::class.java)
-    assertThat(getBindingCount(bindingProducer)).isEqualTo(1)
+    val serializer = ObjectSerializer()
+    getBinding(TestGenericBean::class.java, serializer)
+    assertThat(getBindingCount(getBindingProducer(serializer))).isEqualTo(1)
   }
 
   @Test
@@ -88,7 +88,9 @@ class ObjectSerializerTest {
     val bean2 = TestObjectBean()
     bean.bean = bean2
     bean2.bean = bean
-    test(bean)
+
+    // test SkipNullAndEmptySerializationFilter
+    test(bean, defaultTestWriteConfiguration.copy(filter = SkipNullAndEmptySerializationFilter))
   }
 
   @Test

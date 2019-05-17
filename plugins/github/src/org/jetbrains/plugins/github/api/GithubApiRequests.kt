@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 import com.intellij.util.ThrowableConvertor
@@ -182,7 +182,7 @@ object GithubApiRequests {
 
       @JvmStatic
       fun add(server: GithubServerPath, username: String, repoName: String, collaborator: String) =
-        Put.json<Any>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", collaborator))
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", collaborator))
     }
 
     object Issues : Entity("/issues") {

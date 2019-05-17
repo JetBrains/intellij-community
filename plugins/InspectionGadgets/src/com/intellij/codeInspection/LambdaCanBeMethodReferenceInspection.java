@@ -106,10 +106,11 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   }
 
   @Nullable
-  public static PsiExpression canBeMethodReferenceProblem(final PsiVariable[] parameters,
-                                                          PsiType functionalInterfaceType,
+  public static PsiExpression canBeMethodReferenceProblem(@NotNull PsiVariable[] parameters,
+                                                          @Nullable PsiType functionalInterfaceType,
                                                           @Nullable PsiElement context,
                                                           final PsiExpression methodRefCandidate) {
+    if (functionalInterfaceType == null) return null;
     if (methodRefCandidate instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)methodRefCandidate;
       if (newExpression.getAnonymousClass() != null || newExpression.getArrayInitializer() != null) {

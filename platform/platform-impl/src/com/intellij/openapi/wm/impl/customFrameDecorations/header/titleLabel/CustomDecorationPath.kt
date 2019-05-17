@@ -2,8 +2,10 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.ui.awt.RelativeRectangle
-import java.awt.Rectangle
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
+import java.awt.Rectangle
+import java.util.ArrayList
+import javax.swing.JComponent
 
 class CustomDecorationPath : SelectedEditorFilePath() {
   fun setActive(value: Boolean) {
@@ -13,19 +15,28 @@ class CustomDecorationPath : SelectedEditorFilePath() {
   }
 
   fun getListenerBounds(): List<RelativeRectangle> {
-    val mouseInsets = 2
     return if (isClipped()) {
       emptyList()
     }
     else {
-      listOf(
-        RelativeRectangle(projectLabel, Rectangle(0, 0, mouseInsets, projectLabel.height)),
-        RelativeRectangle(projectLabel, Rectangle(0, 0, projectLabel.width, mouseInsets)),
-        RelativeRectangle(projectLabel,
-                          Rectangle(projectLabel.x, projectLabel.width - mouseInsets, projectLabel.width, mouseInsets)),
-        RelativeRectangle(projectLabel,
-                          Rectangle(projectLabel.width - mouseInsets, 0, mouseInsets, projectLabel.height))
-      )
+      val hitTestSpots = ArrayList<RelativeRectangle>()
+
+      hitTestSpots.addAll(getMouseInsetList(projectLabel, 1))
+      hitTestSpots.addAll(getMouseInsetList(label, 1))
+
+      hitTestSpots
     }
+  }
+
+  private fun getMouseInsetList(view: JComponent,
+                                mouseInsets: Int): List<RelativeRectangle> {
+    return listOf(
+      RelativeRectangle(view, Rectangle(0, 0, mouseInsets, view.height)),
+      RelativeRectangle(view, Rectangle(0, 0, view.width, mouseInsets)),
+      RelativeRectangle(view,
+                        Rectangle(0, view.height - mouseInsets, view.width, mouseInsets)),
+      RelativeRectangle(view,
+                        Rectangle(view.width - mouseInsets, 0, mouseInsets, view.height))
+    )
   }
 }

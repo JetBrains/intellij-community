@@ -2,23 +2,43 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.missingApi
 
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.JavaModuleExternalPaths
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.PathUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
 import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection
 import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiUsageProcessor
-import org.jetbrains.idea.devkit.kotlin.inspections.missingApi.project.PluginProjectWithIdeaJdkDescriptor
-import org.jetbrains.idea.devkit.kotlin.inspections.missingApi.project.PluginProjectWithIdeaLibraryDescriptor
+import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.jetbrains.idea.devkit.module.PluginModuleType
 
 /**
  * Base class for tests of [MissingRecentApiInspection] on Java and Kotlin sources.
  */
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/missingApi")
-abstract class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
+class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
+
+  private val projectDescriptor = object : LightCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.HIGHEST) {
+    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+      super.configureModule(module, model, contentEntry)
+      PsiTestUtil.addProjectLibrary(model, "annotations", listOf(PathUtil.getJarPathForClass(ApiStatus.OverrideOnly::class.java)))
+      PsiTestUtil.addProjectLibrary(model, "library", listOf(testDataPath))
+      PsiTestUtil.addProjectLibrary(model, "kotlin-stdlib", listOf(PathUtil.getJarPathForClass(Function::class.java)))
+    }
+
+    override fun getModuleType() = PluginModuleType.getInstance()
+  }
 
   private var inspection = MissingRecentApiInspection()
+
+  override fun getProjectDescriptor() = projectDescriptor
 
   override fun setUp() {
     super.setUp()
@@ -35,19 +55,13 @@ abstract class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
   override fun tearDown() {
     try {
       myFixture.disableInspections(inspection)
-      //Dispose IDEA module or JDK and all attached roots.
-      PluginProjectWithIdeaLibraryDescriptor.disposeIdeaLibrary(project)
-      PluginProjectWithIdeaJdkDescriptor.disposeIdeaJdk()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
     }
     finally {
       super.tearDown()
     }
   }
 
-  final override fun getTestDataPath() = DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH + "inspections/missingApi"
+  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/missingApi"
 
   /**
    * "Library" classes are put to the same test source root as "client" one,
@@ -103,18 +117,4 @@ abstract class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
     myFixture.testHighlighting("plugin/missingApiUsages.kt")
   }
 
-}
-
-/**
- * Implementation of [MissingRecentApiInspectionTestBase] for sources with configured IDEA library.
- */
-class MissingRecentApiWithIdeaLibraryInspectionTest : MissingRecentApiInspectionTestBase() {
-  override fun getProjectDescriptor() = PluginProjectWithIdeaLibraryDescriptor()
-}
-
-/**
- * Implementation of [MissingRecentApiInspectionTestBase] for sources with configured IDEA JDK.
- */
-class MissingRecentApiWithIdeaJdkInspectionTest : MissingRecentApiInspectionTestBase() {
-  override fun getProjectDescriptor() = PluginProjectWithIdeaJdkDescriptor()
 }

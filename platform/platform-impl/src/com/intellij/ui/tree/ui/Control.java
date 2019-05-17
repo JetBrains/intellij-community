@@ -20,6 +20,9 @@ public interface Control {
 
 
   interface Painter {
+    Control.Painter DEFAULT = new ClassicPainter(null, null, null, null);
+    Control.Painter COMPACT = new ClassicPainter(null, 0, 0, 0);
+
     JBColor LINE_COLOR = JBColor.namedColor("Tree.hash", new JBColor(0xE6E6E6, 0x505355));
 
     int getRendererOffset(@NotNull Control control, int depth, boolean leaf);

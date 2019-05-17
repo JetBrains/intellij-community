@@ -666,7 +666,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       int size = requiredPlugins.size();
       message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "", size));
+      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "required", size));
     }
 
     return message;

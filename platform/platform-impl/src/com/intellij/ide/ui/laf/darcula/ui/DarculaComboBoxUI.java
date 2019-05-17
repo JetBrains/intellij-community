@@ -305,15 +305,18 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       icon = cc.getIcon();
       cc.setIcon(OffsetIcon.getOriginalIcon(icon));
 
+      // the following trimMiddle approach is not good for smooth resizing:
+      // the text jumps as more or less space becomes available.
+      // a proper text layout algorithm on painting in DarculaLabelUI can fix that.
       String text = cc.getText();
-      int maxWidth = bounds.width - (padding == null ? 0 : padding.right);
+      int maxWidth = bounds.width - (padding == null || UIUtil.isUnderDarcula() ? 0 : padding.right);
       if (StringUtil.isNotEmpty(text) && cc.getPreferredSize().width > maxWidth) {
         int max0 = ObjectUtils.binarySearch(1, text.length() - 1, idx -> {
           cc.setText(StringUtil.trimMiddle(text, idx));
           return Comparing.compare(cc.getPreferredSize().width, maxWidth);
         });
         int max = max0 < 0 ? -max0 - 2 : max0;
-        if (max > 2 && max < text.length()) {
+        if (max > 7 && max < text.length()) {
           cc.setText(StringUtil.trimMiddle(text, max));
         }
       }

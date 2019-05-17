@@ -37,6 +37,7 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
     extend(CompletionType.BASIC, elementPattern(), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
+        if (endsWithDot(parameters)) return;
 
         Collection<String> kws = ContainerUtil.newSmartList();
         PsiElement original = parameters.getOriginalPosition();
@@ -96,7 +97,8 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
   private static PsiElementPattern.Capture<PsiElement> elementPattern() {
     return psiElement().andNot(psiElement().andOr(insideForClause(), insideIfDeclaration(), insideWhileDeclaration(),
         insideUntilDeclaration(), insideFunctionDefinition(), insideSelectDeclaration(), insideCaseDeclaration(),
-        insideCondition(), insideArithmeticExpansions(), insideOldArithmeticExpansions(), insideParameterExpansion()));
+        insideCondition(), insideArithmeticExpansions(), insideOldArithmeticExpansions(), insideParameterExpansion(),
+        insideComment()));
   }
 
   private static final List<String> BUILTIN = ContainerUtil.newSmartList(

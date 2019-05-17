@@ -173,10 +173,9 @@ public class JavacMain {
       };
 
       final StandardJavaFileManager fm = wrapWithCallDispatcher(fileManager);
-      final JavaCompiler.CompilationTask task = compiler.getTask(
+      final JavaCompiler.CompilationTask task = tryUnwrapFileManager(compiler.getTask(
         out, fm, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
-      );
-      tryUnwrapFileManager(task, fileManager);
+      ), fileManager);
       for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
         try {
           extension.beforeCompileTaskExecution(compilingTool, task, _options, diagnosticConsumer);
@@ -230,7 +229,7 @@ public class JavacMain {
   // Workaround for javac bug:
   // the internal ClientCodeWrapper class may not implement some interface-declared methods
   // which throw UnsupportedOperationException instead of delegating to our JpsFileManager instance
-  private static void tryUnwrapFileManager(JavaCompiler.CompilationTask task, JavaFileManager manager) {
+  private static JavaCompiler.CompilationTask tryUnwrapFileManager(JavaCompiler.CompilationTask task, JavaFileManager manager) {
     try {
       final Class<? extends JavaCompiler.CompilationTask> taskClass = task.getClass();
       final Field contextField = findFieldOfType(taskClass, Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader()));
@@ -246,6 +245,7 @@ public class JavacMain {
     }
     catch (Throwable ignored) {
     }
+    return task;
   }
 
   private static Field findFieldOfType(final Class<?> aClass, final Class<?> fieldType) {

@@ -84,9 +84,30 @@ class ObjectSerializer {
   }
 }
 
-// not finished concept because not required for object graph serialization
 interface SerializationFilter {
+  val skipEmptyCollection: Boolean
+    get() = false
+
+  val skipEmptyMap: Boolean
+    get() = false
+
+  val skipEmptyArray: Boolean
+    get() = false
+
   fun isSkipped(value: Any?): Boolean
+}
+
+object SkipNullAndEmptySerializationFilter : SerializationFilter {
+  override fun isSkipped(value: Any?) = value == null
+
+  override val skipEmptyCollection: Boolean
+    get() = true
+
+  override val skipEmptyMap: Boolean
+    get() = true
+
+  override val skipEmptyArray: Boolean
+    get() = true
 }
 
 class ObjectIdWriter {

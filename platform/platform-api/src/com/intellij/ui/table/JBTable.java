@@ -974,7 +974,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
        */
       JTable table = getTable();
       if (table != null) {
-        table.setCursor(cursor != null && cursor.getType() != Cursor.DEFAULT_CURSOR ? cursor : null);
+        table.setCursor(UIUtil.cursorIfNotDefault(cursor));
         myCursor = cursor;
       }
       else {

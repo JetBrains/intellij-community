@@ -658,6 +658,5 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val actual = VfsTestUtil.print(events).sorted()
     assertThat(actual).isEqualTo(expected)
   }
-
   //</editor-fold>
 }

@@ -134,6 +134,10 @@ public class ShVisitor extends PsiElementVisitor {
     visitBinaryExpression(o);
   }
 
+  public void visitEvalCommand(@NotNull ShEvalCommand o) {
+    visitCommand(o);
+  }
+
   public void visitExpExpression(@NotNull ShExpExpression o) {
     visitBinaryExpression(o);
   }

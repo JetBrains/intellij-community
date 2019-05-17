@@ -97,7 +97,8 @@ public class IdeaFreezeReporter {
                 if (lockName != null && lockName.contains("ReadMostlyRWLock")) {
                   for (ThreadInfo info : threadInfos) {
                     if (info.getThreadState() == Thread.State.RUNNABLE &&
-                        ContainerUtil.find(info.getStackTrace(), s -> "runReadAction".equals(s.getMethodName())) != null) {
+                        ContainerUtil.find(info.getStackTrace(), s ->
+                          "runReadAction".equals(s.getMethodName()) || "tryRunReadAction".equals(s.getMethodName())) != null) {
                       causeThreadId = info.getThreadId();
                       reasonStacks.add(info.getStackTrace());
                       break;

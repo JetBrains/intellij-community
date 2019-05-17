@@ -28,6 +28,8 @@ import java.util.StringTokenizer;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -1521,6 +1523,10 @@ public class StringUtil extends StringUtilRt {
       builder.append(string);
     }
     return builder.toString();
+  }
+
+  public static Collector<CharSequence, ?, String> joining() {
+    return Collectors.joining(", ");
   }
 
   /**

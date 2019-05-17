@@ -138,4 +138,9 @@ public class Patches {
    * Ultimately fixed by <a href="https://bugs.openjdk.java.net/browse/JDK-8147994">JDK-8147994</a>.
    */
   public static final boolean JDK_BUG_ID_8147994 = !(SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast(8, 0, 102));
+
+  /**
+   * https://bugs.openjdk.java.net/browse/JDK-8220231
+   */
+  public static final boolean TEXT_LAYOUT_IS_SLOW = !SystemInfo.isJetBrainsJvm && !SystemInfo.isJavaVersionAtLeast(13);
 }

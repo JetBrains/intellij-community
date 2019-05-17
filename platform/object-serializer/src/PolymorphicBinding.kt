@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
-internal class PolymorphicBinding(private val superClass: Class<*>) : RootBinding {
+internal class PolymorphicBinding(private val superClass: Class<*>) : Binding {
   override fun serialize(obj: Any, context: WriteContext) {
     val valueClass = obj.javaClass
     val writer = context.writer

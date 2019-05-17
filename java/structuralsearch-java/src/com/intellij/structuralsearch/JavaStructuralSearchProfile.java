@@ -423,7 +423,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public String getCodeFragmentText(PsiCodeFragment fragment) {
+  public String getCodeFragmentText(PsiFile fragment) {
     final List<String> imports = StringUtil.split(((JavaCodeFragment)fragment).importsToString(), ",");
     final Map<String, String> importMap =
       imports.stream().collect(Collectors.toMap(s -> s.substring(s.lastIndexOf('.') + 1), Function.identity()));

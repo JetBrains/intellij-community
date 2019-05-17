@@ -19,14 +19,17 @@ private val structReaderBuilder by lazy {
 
 private const val ID_FIELD_NAME = "@id"
 
-internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), RootBinding {
-  private lateinit var bindings: Array<NestedBinding>
+internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Binding {
+  private lateinit var bindings: Array<Binding>
   private lateinit var nameToBindingIndex: ObjectIntHashMap<String>
   private lateinit var properties: List<MutableAccessor>
 
   private val propertyMapping: Lazy<NonDefaultConstructorInfo?> = lazy {
     computeNonDefaultConstructorInfo(beanClass)
   }
+
+  // type parameters for bean binding doesn't play any role, should be the only binding for such class
+  override fun createCacheKey(aClass: Class<*>, type: Type) = aClass
 
   override fun init(originalType: Type, context: BindingInitializationContext) {
     val list = context.propertyCollector.collect(beanClass)

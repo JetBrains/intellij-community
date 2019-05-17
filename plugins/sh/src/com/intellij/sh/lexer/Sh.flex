@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
   private static final int PARENTHESES = 1;
 
   private boolean isArithmeticExpansion;
+  private boolean isBackquoteOpen;
   private boolean isQuoteOpen;
   private String heredocMarker;
   private boolean heredocWithWhiteSpaceIgnore;
@@ -67,6 +68,7 @@ import com.intellij.openapi.util.text.StringUtil;
     heredocMarker = null;
     isArithmeticExpansion = false;
     isQuoteOpen = false;
+    isBackquoteOpen = false;
   }
 %}
 
@@ -122,12 +124,13 @@ RegexWordWithWhiteSpace  = [^\"'] | {EscapedChar}
 RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteSpace}+\" | {RegexWord}+
 
 HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
-
 StringContent            = [^$\"`(] | {EscapedChar}
+EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
 
 %state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION
 %state LET_EXPRESSION
+%state EVAL_EXPRESSION
 %state CONDITIONAL_EXPRESSION
 
 %state IF_CONDITION
@@ -152,16 +155,30 @@ StringContent            = [^$\"`(] | {EscapedChar}
 
 <STRING_EXPRESSION> {
     {Quote}                       { popState(); return CLOSE_QUOTE; }
-    "$(("                         { isArithmeticExpansion = true; yypushback(2); return DOLLAR; }
-    "(("                          { if (isArithmeticExpansion) { pushState(ARITHMETIC_EXPRESSION);
-                                        pushParentheses(DOUBLE_PARENTHESES); isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; }
-                                    else return STRING_CONTENT; }
-    "$("                          { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
-    "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
-    "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
-    "`"                           { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); return OPEN_BACKQUOTE; }
-    {Variable}                    { return VAR; }
     "$" | "(" | {StringContent}+  { return STRING_CONTENT; }
+}
+
+<EVAL_EXPRESSION> {
+   {Quote}                       { pushState(STRING_EXPRESSION); return OPEN_QUOTE; }
+   "`"                           { if (isBackquoteOpen) { popState(); yypushback(yylength()); }
+                                   else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; } }
+   {WhiteSpace}+                 { return WHITESPACE; }
+   {RawString}                   { return RAW_STRING; }
+   ")"                           |
+   {LineTerminator}              { popState(); yypushback(yylength()); }
+   "$" | "(" | {EvalContent}+    { return EVAL_CONTENT; }
+}
+
+<STRING_EXPRESSION, EVAL_EXPRESSION> {
+   "$(("                         { isArithmeticExpansion = true; yypushback(2); return DOLLAR; }
+   "(("                          { if (isArithmeticExpansion) { pushState(ARITHMETIC_EXPRESSION);
+                                       pushParentheses(DOUBLE_PARENTHESES); isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; }
+                                   else return STRING_CONTENT; }
+   "$("                          { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
+   "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
+   "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
+   "`"                           { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; }
+   {Variable}                    { return VAR; }
 }
 
 <LET_EXPRESSION> {
@@ -302,6 +319,7 @@ StringContent            = [^$\"`(] | {EscapedChar}
     "until"                       { pushState(OTHER_CONDITIONS); return UNTIL; }
     "while"                       { pushState(OTHER_CONDITIONS); return WHILE; }
     "let"                         { pushState(LET_EXPRESSION); return LET; }
+    "eval"                        { pushState(EVAL_EXPRESSION); return EVAL; }
 }
 
 <YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_CONDITION,
@@ -340,8 +358,8 @@ StringContent            = [^$\"`(] | {EscapedChar}
     "}"                           { return RIGHT_CURLY; }
 
     "!"                           { return BANG; }
-    "`"                           { if (yystate() == BACKQUOTE_COMMAND_SUBSTITUTION) { popState(); return CLOSE_BACKQUOTE; }
-                                    else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); return OPEN_BACKQUOTE; } }
+    "`"                           { if (yystate() == BACKQUOTE_COMMAND_SUBSTITUTION) { popState(); isBackquoteOpen = false; return CLOSE_BACKQUOTE; }
+                                    else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; } }
 
     /***** Pipeline separators *****/
     "&&"                          { return AND_AND; }

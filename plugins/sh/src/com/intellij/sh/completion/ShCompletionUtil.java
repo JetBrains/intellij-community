@@ -1,9 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.completion;
 
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.sh.ShTypes;
+import com.intellij.sh.lexer.ShTokenTypes;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -55,6 +58,23 @@ class ShCompletionUtil {
 
   static PsiElementPattern.Capture<PsiElement> insideCaseDeclaration() {
     return psiElement().inside(false, psiElement(ShTypes.CASE_COMMAND), psiElement(ShTypes.CASE_CLAUSE));
+  }
+
+  static PsiElementPattern.Capture<PsiElement> insideString() {
+    return psiElement().inside(psiElement(ShTypes.STRING_CONTENT));
+  }
+
+  static PsiElementPattern.Capture<PsiElement> insideRawString() {
+    return psiElement().inside(psiElement(ShTypes.RAW_STRING));
+  }
+
+  static PsiElementPattern.Capture<PsiElement> insideComment() {
+    return psiElement().inside(psiElement(ShTokenTypes.COMMENT));
+  }
+
+  static boolean endsWithDot(@NotNull CompletionParameters parameters) {
+    PsiElement original = parameters.getOriginalPosition();
+    return original != null && original.getText().endsWith(".");
   }
 
   private static PsiElementPattern.Capture<PsiElement> blockExpression() {

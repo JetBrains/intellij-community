@@ -187,6 +187,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       else if (element instanceof IdeaVersion) {
         annotateIdeaVersion((IdeaVersion)element, holder);
       }
+      else if (element instanceof Dependency) {
+        annotateDependency((Dependency)element, holder);
+      }
       else if (element instanceof Extensions) {
         annotateExtensions((Extensions)element, holder);
       }
@@ -231,6 +234,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     VirtualFile virtualFile = DomUtil.getFile(domElement).getVirtualFile();
     return virtualFile != null &&
            ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION);
+  }
+
+  private static void annotateDependency(Dependency dependency, DomElementAnnotationHolder holder) {
+    final GenericAttributeValue<Boolean> optional = dependency.getOptional();
+    if (optional.getValue() == Boolean.FALSE) {
+      highlightRedundant(optional,
+                         DevKitBundle.message("inspections.plugin.xml.dependency.superfluous.optional"),
+                         ProblemHighlightType.WARNING, holder);
+    }
+    else if (optional.getValue() == Boolean.TRUE &&
+             !DomUtil.hasXml(dependency.getConfigFile())) {
+      holder.createProblem(dependency, DevKitBundle.message("inspections.plugin.xml.dependency.specify.config.file"),
+                           new AddDomElementQuickFix<>(dependency.getConfigFile())).highlightWholeElement();
+    }
   }
 
   private static void annotateIdeaPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, @NotNull Module module) {

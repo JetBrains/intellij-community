@@ -49,8 +49,6 @@ public class ShHighlighterColors {
 
   public static final TextAttributesKey GENERIC_COMMAND =
       TextAttributesKey.createTextAttributesKey("BASH.EXTERNAL_COMMAND", DefaultLanguageHighlighterColors.IDENTIFIER);
-  public static final TextAttributesKey LET_COMMAND =
-      TextAttributesKey.createTextAttributesKey("BASH.INTERNAL_COMMAND", GENERIC_COMMAND);
   public static final TextAttributesKey SUBSHELL_COMMAND =
       TextAttributesKey.createTextAttributesKey("BASH.SUBSHELL_COMMAND", GENERIC_COMMAND);
   public static final TextAttributesKey BACKQUOTE =
@@ -60,6 +58,8 @@ public class ShHighlighterColors {
 
 /*  public static final TextAttributesKey BINARY_DATA = TODO:: Add support for this color settings
       TextAttributesKey.createTextAttributesKey("BASH.BINARY_DATA");
+  public static final TextAttributesKey INTERNAL_BUILTINS_COMMAND =
+      TextAttributesKey.createTextAttributesKey("BASH.INTERNAL_COMMAND", GENERIC_COMMAND);  TODO:: Think about the support of this setting
   public static final TextAttributesKey FUNCTION_CALL =
       TextAttributesKey.createTextAttributesKey("BASH.FUNCTION_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);
   public static final TextAttributesKey VAR_USE_BUILTIN =

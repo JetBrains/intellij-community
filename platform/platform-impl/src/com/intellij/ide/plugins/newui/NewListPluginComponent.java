@@ -148,14 +148,14 @@ public class NewListPluginComponent extends CellPluginComponent {
     myLayout.addLineComponent(panel);
 
     if (myMarketplace) {
-      String rating = PluginManagerConfigurableNew.getRating(myPlugin);
-      if (rating != null) {
-        myRating = GridCellPluginComponent.createRatingLabel(panel, rating, AllIcons.Plugins.Rating);
-      }
-
       String downloads = PluginManagerConfigurableNew.getDownloads(myPlugin);
       if (downloads != null) {
         myDownloads = GridCellPluginComponent.createRatingLabel(panel, downloads, AllIcons.Plugins.Downloads);
+      }
+
+      String rating = PluginManagerConfigurableNew.getRating(myPlugin);
+      if (rating != null) {
+        myRating = GridCellPluginComponent.createRatingLabel(panel, rating, AllIcons.Plugins.Rating);
       }
     }
     else {

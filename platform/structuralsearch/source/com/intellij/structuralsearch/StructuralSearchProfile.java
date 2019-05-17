@@ -100,7 +100,6 @@ public abstract class StructuralSearchProfile {
     if (codeFragment != null) {
       final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
       assert doc != null : "code fragment element should be physical";
-      //DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
       return doc;
     }
 
@@ -148,7 +147,7 @@ public abstract class StructuralSearchProfile {
   /**
    * This method is called while holding a read action.
    */
-  public String getCodeFragmentText(PsiCodeFragment fragment) {
+  public String getCodeFragmentText(PsiFile fragment) {
     return fragment.getText();
   }
 

@@ -1,23 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
-import com.amazon.ion.IonType
 import com.amazon.ion.Timestamp
-import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashMap
 import java.io.File
 import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Proxy
 import java.lang.reflect.Type
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.util.*
 
-internal typealias NestedBindingFactory = (accessor: MutableAccessor) -> NestedBinding
-internal typealias RootBindingFactory = () -> RootBinding
+internal typealias NestedBindingFactory = (accessor: MutableAccessor) -> Binding
+internal typealias RootBindingFactory = () -> Binding
 
-internal class IonBindingProducer(override val propertyCollector: PropertyCollector) : BindingProducer<RootBinding>(), BindingInitializationContext {
+internal class IonBindingProducer(override val propertyCollector: PropertyCollector) : BindingProducer() {
   companion object {
     private val classToNestedBindingFactory = THashMap<Class<*>, NestedBindingFactory>(32, ContainerUtil.identityStrategy())
     private val classToRootBindingFactory = THashMap<Class<*>, RootBindingFactory>(32, ContainerUtil.identityStrategy())
@@ -37,71 +36,52 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       registerPrimitiveBindings(classToRootBindingFactory, classToNestedBindingFactory)
 
       classToRootBindingFactory.forEachEntry { key, factory ->
-        classToNestedBindingFactory.put(key) { PropertyBinding(factory()) }
+        classToNestedBindingFactory.put(key) { factory() }
         true
       }
     }
   }
 
-  override val isResolveConstructorOnInit = SystemProperties.`is`("idea.serializer.resolve.ctor.on.init")
-
-  override val bindingProducer: BindingProducer<RootBinding>
-    get() = this
-
-  override fun createCacheKey(aClass: Class<*>, originalType: Type): Type {
-    if (aClass !== originalType && !Collection::class.java.isAssignableFrom(aClass) && !classToRootBindingFactory.contains(aClass)) {
-      // type parameters for bean binding doesn't play any role, should be the only binding for such class
-      return aClass
-    }
-    else {
-      return originalType
-    }
-  }
-
-  override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, RootBinding>): RootBinding {
-    val binding = doCreateRootBinding(aClass, type, cacheKey)
-    map.put(cacheKey, binding)
-    try {
-      binding.init(type, this)
-    }
-    catch (e: Throwable) {
-      map.remove(type)
-      throw e
-    }
-    return binding
-  }
-
-  private fun doCreateRootBinding(aClass: Class<*>, type: Type, cacheKey: Type): RootBinding {
+  override fun createRootBinding(aClass: Class<*>, type: Type): Binding {
     val customFactory = classToRootBindingFactory.get(aClass)
     if (customFactory != null) {
       return customFactory.invoke()
     }
 
     return when {
-      Collection::class.java.isAssignableFrom(aClass) -> createCollectionBinding(type)
+      Collection::class.java.isAssignableFrom(aClass) -> {
+        CollectionBinding(type as ParameterizedType, this)
+      }
       Map::class.java.isAssignableFrom(aClass) -> {
         val typeArguments = (type as ParameterizedType).actualTypeArguments
         MapBinding(typeArguments[0], typeArguments[1], this)
       }
-      aClass.isArray -> ArrayBinding(aClass.componentType, this)
+      aClass.isArray -> {
+        ArrayBinding(aClass.componentType, this)
+      }
       aClass.isEnum -> {
         @Suppress("UNCHECKED_CAST")
         EnumBinding(aClass as Class<out Enum<*>>)
       }
+      aClass.isInterface || Modifier.isAbstract(aClass.modifiers) -> {
+        PolymorphicBinding(aClass)
+      }
+      java.lang.Number::class.java.isAssignableFrom(aClass) -> NumberAsObjectBinding()
+      aClass is Proxy -> {
+        throw SerializationException("$aClass class is not supported")
+      }
+      aClass == Class::class.java -> {
+        // Class can be supported, but it will be implemented only when will be a real use case
+        throw SerializationException("$aClass class is not supported")
+      }
       else -> {
-        assert(cacheKey === aClass)
-        if (aClass.isInterface || Modifier.isAbstract(aClass.modifiers)) {
-          PolymorphicBinding(aClass)
-        }
-        else {
-          BeanBinding(aClass)
-        }
+        BeanBinding(aClass)
       }
     }
   }
 
   // note about field name - Ion binary writer interns string automatically, no need to intern (text writer doesn't support symbol tables)
-  override fun getNestedBinding(accessor: MutableAccessor): NestedBinding {
+  override fun getNestedBinding(accessor: MutableAccessor): Binding {
     val type = accessor.genericType
     val aClass = ClassUtil.typeToClass(type)
 
@@ -111,20 +91,12 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       return it(accessor)
     }
 
-    // CollectionBinding implements NestedBinding directly because can mutate property value directly
     return when {
-      Collection::class.java.isAssignableFrom(aClass) -> createCollectionBinding(type)
-      Map::class.java.isAssignableFrom(aClass) -> {
-        val typeArguments = (type as ParameterizedType).actualTypeArguments
-        MapBinding(typeArguments[0], typeArguments[1], this)
-      }
-      aClass.isArray -> ArrayBinding(aClass.componentType, this)
-      java.lang.Number::class.java.isAssignableFrom(aClass) -> PropertyBinding(NumberAsObjectBinding())
       aClass.isInterface || Modifier.isAbstract(aClass.modifiers) -> {
         val annotation = accessor.getAnnotation(Property::class.java)
         if (annotation == null) {
           // todo respect configuration
-          return PropertyBinding(getRootBinding(aClass, type))
+          return getRootBinding(aClass, type)
           // throw SerializationException("Allowed types are not specified", linkedMapOf("accessor" to accessor))
         }
 
@@ -136,17 +108,13 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
         InterfacePropertyBinding(allowedTypes)
       }
       else -> {
-        PropertyBinding(getRootBinding(aClass, type))
+        getRootBinding(aClass, type)
       }
     }
   }
-
-  private fun createCollectionBinding(type: Type): CollectionBinding {
-    return CollectionBinding(type as ParameterizedType, this)
-  }
 }
 
-private class FileBinding : RootBinding {
+private class FileBinding : Binding {
   override fun deserialize(context: ReadContext): Any {
     return File(context.reader.stringValue())
   }
@@ -156,7 +124,7 @@ private class FileBinding : RootBinding {
   }
 }
 
-private class PathBinding : RootBinding {
+private class PathBinding : Binding {
   override fun deserialize(context: ReadContext): Any {
     return FileSystems.getDefault().getPath(context.reader.stringValue())
   }
@@ -166,7 +134,7 @@ private class PathBinding : RootBinding {
   }
 }
 
-private class EnumBinding(private val valueClass: Class<out Enum<*>>) : RootBinding {
+private class EnumBinding(private val valueClass: Class<out Enum<*>>) : Binding {
   override fun deserialize(context: ReadContext): Any {
     val enumConstants = valueClass.enumConstants
     val value = context.reader.stringValue()
@@ -180,7 +148,7 @@ private class EnumBinding(private val valueClass: Class<out Enum<*>>) : RootBind
   }
 }
 
-private class DateBinding : RootBinding {
+private class DateBinding : Binding {
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeTimestamp(Timestamp.forDateZ(obj as Date))
   }
@@ -190,33 +158,7 @@ private class DateBinding : RootBinding {
   }
 }
 
-internal inline fun write(hostObject: Any, accessor: MutableAccessor, context: WriteContext, write: ValueWriter.(value: Any) -> Unit) {
-  val value = accessor.readUnsafe(hostObject)
-  if (context.filter.isSkipped(value)) {
-    return
-  }
-
-  val writer = context.writer
-  writer.setFieldName(accessor.name)
-  if (value == null) {
-    writer.writeNull()
-  }
-  else {
-    writer.write(value)
-  }
-}
-
-internal inline fun read(hostObject: Any, property: MutableAccessor, context: ReadContext, read: ValueReader.() -> Any) {
-  val type = context.reader.type
-  if (type == IonType.NULL) {
-    property.set(hostObject, null)
-  }
-  else {
-    property.set(hostObject, context.reader.read())
-  }
-}
-
-private class ByteArrayBinding : RootBinding {
+private class ByteArrayBinding : Binding {
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeBlob(obj as ByteArray)
   }
@@ -226,6 +168,6 @@ private class ByteArrayBinding : RootBinding {
   }
 }
 
-internal fun createElementBindingByType(type: Type, context: BindingInitializationContext): RootBinding {
+internal fun createElementBindingByType(type: Type, context: BindingInitializationContext): Binding {
   return context.bindingProducer.getRootBinding(ClassUtil.typeToClass(type), type)
 }

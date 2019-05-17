@@ -158,7 +158,7 @@ private val DEFAULT_FILTER = object : SerializationFilter {
 
 private data class ReadContextImpl(override val reader: ValueReader,
                                    override val objectIdReader: ObjectIdReader,
-                                   override val bindingProducer: BindingProducer<RootBinding>,
+                                   override val bindingProducer: BindingProducer,
                                    override val configuration: ReadConfiguration) : ReadContext {
   private var byteArrayOutputStream: BufferExposingByteArrayOutputStream? = null
 

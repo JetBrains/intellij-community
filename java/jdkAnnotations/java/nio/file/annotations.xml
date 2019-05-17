@@ -242,12 +242,6 @@
   <item name='java.nio.file.Files java.util.Set&lt;java.nio.file.attribute.PosixFilePermission&gt; getPosixFilePermissions(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='java.nio.file.Files long copy(java.io.InputStream, java.io.OutputStream) 0'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.nio.file.Files long copy(java.io.InputStream, java.io.OutputStream) 1'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
   <item name='java.nio.file.Files long copy(java.io.InputStream, java.nio.file.Path, java.nio.file.CopyOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

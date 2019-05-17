@@ -2,7 +2,7 @@
 package com.intellij.serialization
 
 @Suppress("ArrayInDataClass")
-internal data class InterfacePropertyBinding(private val allowedTypes: Array<Class<*>>) : NestedBinding {
+internal data class InterfacePropertyBinding(private val allowedTypes: Array<Class<*>>) : Binding {
   override fun serialize(obj: Any, context: WriteContext) = throw IllegalStateException("InterfacePropertyBinding cannot be used as root binding")
 
   override fun deserialize(context: ReadContext) = throw IllegalStateException("InterfacePropertyBinding cannot be used as root binding")

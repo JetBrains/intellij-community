@@ -21,6 +21,7 @@ import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.shellcheck.intention.DisableInspectionIntention;
 import com.intellij.sh.shellcheck.intention.SuppressInspectionIntention;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +36,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Collection<ShShellcheckExternalAnnotator.Result>> {
-  private static final List<String> KNOWN_SHELLS = ContainerUtil.list("bash", "dash", "ksh", "sh");
+import static java.util.Arrays.asList;
+
+public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, ShShellcheckExternalAnnotator.ShellcheckResponse> {
+  private static final List<String> KNOWN_SHELLS = asList("bash", "dash", "ksh", "sh");
   private static final String DEFAULT_SHELL = "bash";
 
   @Override
@@ -58,7 +61,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Co
 
   @Nullable
   @Override
-  public Collection<ShShellcheckExternalAnnotator.Result> doAnnotate(@NotNull PsiFile file) {
+  public ShellcheckResponse doAnnotate(@NotNull PsiFile file) {
     String shellcheckExecutable = ShSettings.getShellcheckPath();
     if (!ShShellcheckUtil.isValidPath(shellcheckExecutable)) return null;
 
@@ -68,12 +71,14 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Co
           .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
           .withExePath(shellcheckExecutable)
           .withParameters(getShellcheckExecutionParams(file));
+      long timestamp = file.getModificationStamp();
       Process process = commandLine.createProcess();
       writeFileContentToStdin(process, fileContent, commandLine.getCharset());
       if (process.waitFor(10, TimeUnit.SECONDS)) {
         String output = StreamUtil.readText(process.getInputStream(), commandLine.getCharset());
         Type type = TypeToken.getParameterized(List.class, Result.class).getType();
-        return new Gson().fromJson(output, type);
+        Collection<Result> results = new Gson().fromJson(output, type);
+        return new ShellcheckResponse(results, timestamp);
       }
       return null;
     }
@@ -84,16 +89,16 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Co
   }
 
   @Override
-  public void apply(@NotNull PsiFile file, Collection<Result> annotationResult, @NotNull AnnotationHolder holder) {
-    super.apply(file, annotationResult, holder);
+  public void apply(@NotNull PsiFile file, ShellcheckResponse shellcheckResponse, @NotNull AnnotationHolder holder) {
+    super.apply(file, shellcheckResponse, holder);
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null) {
       return;
     }
-    for (Result result : annotationResult) {
+    for (Result result : shellcheckResponse.results) {
       CharSequence sequence = document.getCharsSequence();
-      int startOffset = calcOffset(sequence, document.getLineStartOffset(result.line - 1), result.column);
-      int endOffset = calcOffset(sequence, document.getLineStartOffset(result.endLine - 1), result.endColumn);
+      int startOffset = ShShellcheckUtil.calcOffset(sequence, document.getLineStartOffset(result.line - 1), result.column);
+      int endOffset = ShShellcheckUtil.calcOffset(sequence, document.getLineStartOffset(result.endLine - 1), result.endColumn);
       TextRange range = TextRange.create(startOffset, endOffset == startOffset ? endOffset + 1 : endOffset);
       long code = result.code;
       String message = result.message;
@@ -105,20 +110,15 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Co
               "</html>";
       Annotation annotation = holder.createAnnotation(severity(result.level), range, message, html);
 
-      String formattedMessage = getMessage(message);
-      annotation.registerFix(new SuppressInspectionIntention(formattedMessage, scCode, startOffset));
-      annotation.registerFix(new DisableInspectionIntention(formattedMessage, scCode));
+      String formattedMessage = format(message);
+      Fix fix = result.fix;
+      if (fix != null && !ArrayUtil.isEmpty(fix.replacements)) {
+        annotation.registerFix(new QuickFixIntention(formattedMessage, fix, shellcheckResponse.timestamp));
+      }
+      String quotedMessage = quote(formattedMessage);
+      annotation.registerFix(new SuppressInspectionIntention(quotedMessage, scCode, startOffset));
+      annotation.registerFix(new DisableInspectionIntention(quotedMessage, scCode));
     }
-  }
-
-  private static int calcOffset(CharSequence sequence, int startOffset, int column) {
-    int i = 1;
-    while (i < column) {
-      int c = Character.codePointAt(sequence, startOffset);
-      i += c == '\t' ? 8 : 1;
-      startOffset++;
-    }
-    return startOffset;
   }
 
   @NotNull
@@ -154,15 +154,29 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Co
   }
 
   @NotNull
-  private static String getMessage(@NotNull String originalMessage) {
-    String m = originalMessage.endsWith(".") ? originalMessage.substring(0, originalMessage.length() - 1) : originalMessage;
-    return "'" + StringUtil.first(m, 60, true) + "'";
+  private static String format(@NotNull String originalMessage) {
+    return originalMessage.endsWith(".") ? originalMessage.substring(0, originalMessage.length() - 1) : originalMessage;
+  }
+
+  @NotNull
+  private static String quote(@NotNull String originalMessage) {
+    return "'" + StringUtil.first(originalMessage, 60, true) + "'";
   }
 
   @NotNull
   private static String getInterpreter(@NotNull PsiFile file) {
     if (!(file instanceof ShFile)) return DEFAULT_SHELL;
     return ShShebangParserUtil.getInterpreter((ShFile) file, KNOWN_SHELLS, DEFAULT_SHELL);
+  }
+
+  class ShellcheckResponse {
+    final Collection<Result> results;
+    final long timestamp;
+
+    ShellcheckResponse(Collection<Result> results, long timestamp) {
+      this.results = results;
+      this.timestamp = timestamp;
+    }
   }
 
   class Result {
@@ -173,5 +187,19 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Co
     String level;
     String message;
     long code;
+    @Nullable Fix fix;
+  }
+
+  class Fix {
+    Replacement[] replacements;
+  }
+
+  @SuppressWarnings("InnerClassMayBeStatic")
+  class Replacement {
+    int line;
+    int column;
+    int endLine;
+    int endColumn;
+    String replacement;
   }
 }

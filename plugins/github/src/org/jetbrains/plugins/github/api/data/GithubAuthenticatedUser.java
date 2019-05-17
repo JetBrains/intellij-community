@@ -1,8 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data;
-
-import org.jetbrains.io.mandatory.Mandatory;
-import org.jetbrains.io.mandatory.RestModel;
 
 //https://developer.github.com/v3/users/
 //region GithubAuthenticatedUser
@@ -59,7 +56,6 @@ import org.jetbrains.io.mandatory.RestModel;
   }
 */
 //endregion
-@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubAuthenticatedUser extends GithubUserDetailed {
   private Integer totalPrivateRepos;
@@ -70,15 +66,14 @@ public class GithubAuthenticatedUser extends GithubUserDetailed {
   private Boolean twoFactorAuthentication;
   private UserPlan plan;
 
-  @RestModel
+  public boolean canCreatePrivateRepo() {
+    return plan == null || ownedPrivateRepos == null || plan.privateRepos > ownedPrivateRepos;
+  }
+
   static class UserPlan {
     private String name;
     private Long space;
-    @Mandatory private Long privateRepos;
+    private Long privateRepos;
     private Long collaborators;
-  }
-
-  public boolean canCreatePrivateRepo() {
-    return plan == null || ownedPrivateRepos == null || plan.privateRepos > ownedPrivateRepos;
   }
 }

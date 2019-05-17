@@ -592,7 +592,7 @@ public class PluginManagerConfigurableNewLayout
             @Override
             protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
               super.handleAttribute(name, value, invert);
-              queries.add(name + ":" + value);
+              queries.add(name + ":" + SearchQueryParser.wrapAttribute(value));
             }
           };
           if (removeAction != null) {
@@ -925,7 +925,7 @@ public class PluginManagerConfigurableNewLayout
             protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
               super.handleAttribute(name, value, invert);
               if (!updateAction.myState) {
-                queries.add("/" + name + (value.isEmpty() ? "" : ":" + value));
+                queries.add("/" + name + (value.isEmpty() ? "" : ":" + SearchQueryParser.wrapAttribute(value)));
               }
             }
           };

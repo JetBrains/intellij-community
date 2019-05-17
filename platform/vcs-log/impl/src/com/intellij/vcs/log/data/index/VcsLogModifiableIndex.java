@@ -2,8 +2,10 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface VcsLogModifiableIndex extends VcsLogIndex {
 
   void scheduleIndex(boolean full);

@@ -158,10 +158,7 @@ public abstract class SearchPopupController {
     createAndShow(true, new SearchPopupCallback(valuePrefix) {
       @Override
       public void consume(String value) {
-        if (StringUtil.containsAnyChar(value, " ,:")) {
-          value = "\"" + value + "\"";
-        }
-        appendSearchText(value, prefix);
+        appendSearchText(SearchQueryParser.wrapAttribute(value), prefix);
         handleAppendAttributeValue();
       }
     });

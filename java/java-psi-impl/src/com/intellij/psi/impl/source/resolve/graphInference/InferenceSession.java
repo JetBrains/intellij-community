@@ -26,7 +26,6 @@ import java.util.*;
 
 public class InferenceSession {
   private static final Logger LOG = Logger.getInstance(InferenceSession.class);
-  private static final Key<Boolean> ERASED = Key.create("UNCHECKED_CONVERSION");
   private static final Function<Pair<PsiType, PsiType>, PsiType> UPPER_BOUND_FUNCTION = pair -> GenericsUtil.getGreatestLowerBound(pair.first, pair.second);
 
   private static final String EQUALITY_CONSTRAINTS_PRESENTATION = "equality constraints";
@@ -315,8 +314,11 @@ public class InferenceSession {
         }
       }
 
-      if (currentMethod != null && myErrorMessages != null) {
-        currentMethod.setApplicabilityError(StringUtil.join(myErrorMessages, "\n"));
+      if (currentMethod != null) {
+        if (myErrorMessages != null) {
+          currentMethod.setApplicabilityError(StringUtil.join(myErrorMessages, "\n"));
+        }
+        currentMethod.setErased(myErased);
       }
     }
   }
@@ -355,12 +357,12 @@ public class InferenceSession {
         if (expectedActualErrorMessage != null && myErrorMessages != null) {
           myErrorMessages.add(0, expectedActualErrorMessage);
         }
-        if (isOverloadCheck()) {
+        if (isPertinentToApplicabilityCheckOnContainingCall(parent)) {
           return;
         }
       }
       //proceed to B3 constraints
-      else if (parameters != null && parameters.length > 0 && args != null && !isOverloadCheck()) {//todo
+      else if (parameters != null && parameters.length > 0 && args != null && !isPertinentToApplicabilityCheckOnContainingCall(parent)) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<>();
         final HashSet<ConstraintFormula> ignoredConstraints = new HashSet<>();
         collectAdditionalConstraints(parameters, args, method, mySiteSubstitutor, additionalConstraints,
@@ -373,22 +375,8 @@ public class InferenceSession {
     resolveBounds(myInferenceVariables, initialSubstitutor);
   }
 
-  private boolean isOverloadCheck() {
-    if (myContext != null) {
-      for (PsiElement o : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
-        //method references do not contain nested arguments anyway
-        if (o instanceof PsiExpressionList) {
-          final PsiExpressionList element = (PsiExpressionList)o;
-          for (PsiExpression expression : element.getExpressions()) {
-            if (PsiUtil.skipParenthesizedExprDown(expression) == myContext) {
-              return true;
-            }
-          }
-        }
-      }
-      return false;
-    }
-    return MethodCandidateInfo.isOverloadCheck();
+  private static boolean isPertinentToApplicabilityCheckOnContainingCall(@NotNull PsiElement parent) {
+    return LambdaUtil.getFunctionalTypeMap().containsKey(parent);
   }
 
   private void collectAdditionalConstraints(PsiParameter[] parameters,
@@ -1044,8 +1032,6 @@ public class InferenceSession {
       }
     }
 
-    setUncheckedInContext();
-
     final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
     for (PsiTypeParameter parameter : map.keySet()) {
       final PsiType mapping = map.get(parameter);
@@ -1062,12 +1048,6 @@ public class InferenceSession {
         param = parameter;
       }
       mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
-    }
-  }
-
-  public void setUncheckedInContext() {
-    if (myContext != null && !MethodCandidateInfo.isOverloadCheck(getArgumentList(myContext))) {//todo
-      myContext.putUserData(ERASED, myErased);
     }
   }
 
@@ -1901,11 +1881,6 @@ public class InferenceSession {
 
   boolean hasCapture(InferenceVariable inferenceVariable) {
     return myIncorporationPhase.hasCaptureConstraints(Collections.singletonList(inferenceVariable));
-  }
-
-  public static boolean wasUncheckedConversionPerformed(PsiElement call) {
-    final Boolean erased = call.getUserData(ERASED);
-    return erased != null && erased.booleanValue();
   }
 
   public PsiElement getContext() {

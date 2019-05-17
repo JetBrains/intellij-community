@@ -40,6 +40,10 @@ class ConvertTest extends LightGroovyTestCase {
     doTest()
   }
 
+  void testConvertGString() {
+    doTest()
+  }
+
   void testMultiAssignment() {
     doTest()
   }

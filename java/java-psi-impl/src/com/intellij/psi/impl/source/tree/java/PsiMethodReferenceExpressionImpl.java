@@ -77,7 +77,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   }
 
   @Override
-  public boolean isPotentiallyCompatible(final PsiType functionalInterfaceType) {
+  public boolean isPotentiallyCompatible(@Nullable PsiType functionalInterfaceType) {
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
     if (interfaceMethod == null) return false;
 

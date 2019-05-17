@@ -23,17 +23,16 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
-  private final List<MemoryStateChange> myHistory;
+  private MemoryStateChange myHistory;
 
   protected TrackingDfaMemoryState(DfaValueFactory factory) {
     super(factory);
-    myHistory = new ArrayList<>(1);
-    myHistory.add(null);
+    myHistory = null;
   }
 
   protected TrackingDfaMemoryState(TrackingDfaMemoryState toCopy) {
     super(toCopy);
-    myHistory = new ArrayList<>(toCopy.myHistory);
+    myHistory = toCopy.myHistory;
   }
 
   @NotNull
@@ -46,23 +45,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
   protected void afterMerge(DfaMemoryStateImpl other) {
     super.afterMerge(other);
     assert other instanceof TrackingDfaMemoryState;
-    for (MemoryStateChange change : ((TrackingDfaMemoryState)other).myHistory) {
-      if (!tryMerge(change)) {
-        myHistory.add(change);
-      }
-    }
-  }
-
-  private boolean tryMerge(MemoryStateChange change) {
-    for (ListIterator<MemoryStateChange> iterator = myHistory.listIterator(); iterator.hasNext(); ) {
-      MemoryStateChange myChange = iterator.next();
-      MemoryStateChange merge = myChange.tryMerge(change);
-      if (merge != null) {
-        iterator.set(merge);
-        return true;
-      }
-    }
-    return false;
+    myHistory = myHistory.merge(((TrackingDfaMemoryState)other).myHistory);
   }
 
   private Map<DfaVariableValue, Set<Relation>> getRelations() {
@@ -118,7 +101,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
   void recordChange(Instruction instruction, TrackingDfaMemoryState previous) {
     Map<DfaVariableValue, Change> result = getChangeMap(previous);
     DfaValue value = isEmptyStack() ? DfaUnknownValue.getInstance() : peek();
-    myHistory.replaceAll(prev -> MemoryStateChange.create(prev, instruction, result, value));
+    myHistory = MemoryStateChange.create(myHistory, instruction, result, value);
   }
 
   @NotNull
@@ -168,7 +151,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     return changeMap;
   }
 
-  List<MemoryStateChange> getHistory() {
+  MemoryStateChange getHistory() {
     return myHistory;
   }
 
@@ -211,8 +194,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       }
     }
     if (changeMap != null && !changeMap.isEmpty()) {
-      Map<DfaVariableValue, Change> finalChangeMap = changeMap;
-      myHistory.replaceAll(s -> s.withBridge(instruction, finalChangeMap));
+      myHistory = myHistory.withBridge(instruction, changeMap);
     }
   }
 
@@ -291,13 +273,14 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
   }
 
   static final class MemoryStateChange {
-    final @Nullable MemoryStateChange myPrevious;
+    private final @NotNull List<MemoryStateChange> myPrevious;
     final @NotNull Instruction myInstruction;
     final @NotNull Map<DfaVariableValue, Change> myChanges;
     final @NotNull DfaValue myTopOfStack;
     final @NotNull Map<DfaVariableValue, Change> myBridgeChanges;
+    int myCursor = 0;
 
-    private MemoryStateChange(@Nullable MemoryStateChange previous,
+    private MemoryStateChange(@NotNull List<MemoryStateChange> previous,
                               @NotNull Instruction instruction,
                               @NotNull Map<DfaVariableValue, Change> changes,
                               @NotNull DfaValue topOfStack,
@@ -307,6 +290,23 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       myChanges = changes;
       myTopOfStack = topOfStack;
       myBridgeChanges = bridgeChanges;
+    }
+    
+    void reset() {
+      for (MemoryStateChange change = this; change != null; change = change.getPrevious()) {
+        change.myCursor = 0;
+      }
+    }
+    
+    boolean advance() {
+      if (myCursor < myPrevious.size() && !myPrevious.get(myCursor).advance()) {
+        myCursor++;
+        MemoryStateChange previous = getPrevious();
+        if (previous != null) {
+          previous.reset();
+        }
+      }
+      return myCursor < myPrevious.size();
     }
 
     @Contract("null -> null")
@@ -343,19 +343,30 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     @NotNull
     <T> FactDefinition<T> findFact(DfaValue value, DfaFactType<T> type) {
       if (value instanceof DfaVariableValue) {
-        for (MemoryStateChange change = this; change != null; change = change.myPrevious) {
+        for (MemoryStateChange change = this; change != null; change = change.getPrevious()) {
           FactDefinition<T> factPair = factFromChange(type, change, change.myChanges.get(value));
           if (factPair != null) return factPair;
           factPair = factFromChange(type, change, change.myBridgeChanges.get(value));
           if (factPair != null) return factPair;
-          if (change.myInstruction instanceof AssignInstruction && change.myTopOfStack == value && change.myPrevious != null) {
-            FactDefinition<T> fact = change.myPrevious.findFact(value, type);
+          if (change.myInstruction instanceof AssignInstruction && change.myTopOfStack == value && change.getPrevious() != null) {
+            FactDefinition<T> fact = change.getPrevious().findFact(value, type);
             return new FactDefinition<>(change, fact.myFact);
           }
         }
         return new FactDefinition<>(null, ((DfaVariableValue)value).getInherentFacts().get(type));
       }
       return new FactDefinition<>(null, type.fromDfaValue(value));
+    }
+
+    @Nullable
+    MemoryStateChange getPrevious() {
+      return myCursor == myPrevious.size() ? null : myPrevious.get(myCursor);
+    }
+
+    public MemoryStateChange getNonMerge() {
+      MemoryStateChange change = myInstruction instanceof MergeInstruction ? getPrevious() : this;
+      assert change == null || !(change.myInstruction instanceof MergeInstruction);
+      return change;
     }
 
     @Nullable
@@ -374,7 +385,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
     @Nullable
     private MemoryStateChange findChange(@NotNull Predicate<MemoryStateChange> predicate, boolean startFromSelf) {
-      for (MemoryStateChange change = startFromSelf ? this : myPrevious; change != null; change = change.myPrevious) {
+      for (MemoryStateChange change = startFromSelf ? this : getPrevious(); change != null; change = change.getPrevious()) {
         if (predicate.test(change)) {
           return change;
         }
@@ -394,66 +405,25 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       return null;
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      MemoryStateChange change = (MemoryStateChange)o;
-      return myInstruction.equals(change.myInstruction) &&
-             myTopOfStack.equals(change.myTopOfStack) &&
-             myChanges.equals(change.myChanges) &&
-             myBridgeChanges.equals(change.myBridgeChanges) &&
-             Objects.equals(myPrevious, change.myPrevious);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myPrevious, myInstruction, myChanges, myBridgeChanges, myTopOfStack);
-    }
-
-    @Nullable
-    public MemoryStateChange tryMerge(MemoryStateChange change) {
-      MemoryStateChange[] thisFlat = flatten();
-      MemoryStateChange[] thatFlat = change.flatten();
-      MemoryStateChange result = null;
-      int thisIndex = 0, thatIndex = 0;
-      while (true) {
-        int curThis = thisIndex;
-        if (thisIndex == thisFlat.length && thatIndex == thatFlat.length) {
-          return result;
-        }
-        if (thisIndex == thisFlat.length || thatIndex == thatFlat.length) return null;
-        while (thisIndex < thisFlat.length) {
-          MemoryStateChange thisChange = thisFlat[thisIndex];
-          if (thisChange.myInstruction == thatFlat[thatIndex].myInstruction) break;
-          if (!thisChange.myChanges.isEmpty()) {
-            thisIndex = thisFlat.length;
-            break;
-          }
-          thisIndex++;
-        }
-        if (thisIndex == thisFlat.length) {
-          thisIndex = curThis;
-          while (thatIndex < thatFlat.length) {
-            MemoryStateChange thatChange = thatFlat[thatIndex];
-            if (thatChange.myInstruction == thisFlat[thisIndex].myInstruction) break;
-            if (!thatChange.myChanges.isEmpty()) return null;
-            thatIndex++;
-          }
-          if (thatIndex == thatFlat.length) return null;
-        }
-        MemoryStateChange thisChange = thisFlat[thisIndex];
-        MemoryStateChange thatChange = thatFlat[thatIndex];
-        if (thisChange == thatChange) {
-          result = thisChange;
-        } else {
-          assert thisChange.myInstruction == thatChange.myInstruction;
-          if (!thisChange.myChanges.equals(thatChange.myChanges)) return null;
-          result = create(result, thisChange.myInstruction, thisChange.myChanges, thisChange.myTopOfStack.unite(thatChange.myTopOfStack));
-        }
-        thisIndex++;
-        thatIndex++;
+    @NotNull
+    public MemoryStateChange merge(MemoryStateChange change) {
+      if (change == this) return this;
+      Set<MemoryStateChange> previous = new LinkedHashSet<>();
+      if (myInstruction instanceof MergeInstruction) {
+        previous.addAll(myPrevious);
+      } else {
+        previous.add(this);
       }
+      if (change.myInstruction instanceof MergeInstruction) {
+        previous.addAll(change.myPrevious);
+      } else {
+        previous.add(change);
+      }
+      if (previous.size() == 1) {
+        return previous.iterator().next();
+      }
+      return new MemoryStateChange(new ArrayList<>(previous), new MergeInstruction(), Collections.emptyMap(), DfaUnknownValue.getInstance(),
+                                   Collections.emptyMap());
     }
 
     MemoryStateChange withBridge(@NotNull Instruction instruction, @NotNull Map<DfaVariableValue, Change> bridge) {
@@ -462,7 +432,8 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
             getExpression() == ((ConditionalGotoInstruction)instruction).getPsiAnchor()) {
           instruction = myInstruction;
         } else {
-          return new MemoryStateChange(this, instruction, Collections.emptyMap(), DfaUnknownValue.getInstance(), bridge);
+          return new MemoryStateChange(
+            Collections.singletonList(this), instruction, Collections.emptyMap(), DfaUnknownValue.getInstance(), bridge);
         }
       }
       assert myBridgeChanges.isEmpty();
@@ -477,11 +448,11 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       if (result.isEmpty() && value == DfaUnknownValue.getInstance()) {
         return previous;
       }
-      return new MemoryStateChange(previous, instruction, result, value, Collections.emptyMap());
+      return new MemoryStateChange(ContainerUtil.createMaybeSingletonList(previous), instruction, result, value, Collections.emptyMap());
     }
 
     MemoryStateChange[] flatten() {
-      List<MemoryStateChange> changes = StreamEx.iterate(this, Objects::nonNull, change -> change.myPrevious).toList();
+      List<MemoryStateChange> changes = StreamEx.iterate(this, Objects::nonNull, change -> change.getPrevious()).toList();
       Collections.reverse(changes);
       return changes.toArray(new MemoryStateChange[0]);
     }
@@ -500,6 +471,18 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     }
   }
 
+  private static class MergeInstruction extends Instruction {
+    @Override
+    public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+      return DfaInstructionState.EMPTY_ARRAY;
+    }
+
+    @Override
+    public String toString() {
+      return "STATE_MERGE";
+    }
+  }
+  
   static class FactDefinition<T> {
     final @Nullable MemoryStateChange myChange;
     final @Nullable T myFact;

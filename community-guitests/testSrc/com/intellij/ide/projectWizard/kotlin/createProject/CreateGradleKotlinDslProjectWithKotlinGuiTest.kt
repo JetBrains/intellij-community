@@ -53,22 +53,10 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest(private val testParameters: 
     fun data(): Collection<TestParameters> {
       return listOf(
         TestParameters(
-          projectName = "gradle_k_with_jvm_explicit",
-          project = kotlinProjects.getValue(Projects.GradleKProjectJvm),
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18),
-          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.ExplicitModuleGroups
-        ),
-        TestParameters(
           projectName = "gradle_k_with_jvm_qualified",
           project = kotlinProjects.getValue(Projects.GradleKProjectJvm),
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18),
           gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.QualifiedNames
-        ),
-        TestParameters(
-          projectName = "gradle_k_with_js_explicit",
-          project = kotlinProjects.getValue(Projects.GradleKProjectJs),
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript),
-          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.ExplicitModuleGroups
         ),
         TestParameters(
           projectName = "gradle_k_with_js_qualified",

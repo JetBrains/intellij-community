@@ -223,15 +223,28 @@ public class PluginDetailsPageComponent extends MultiPanel {
     JPanel panel1 = new NonOpaquePanel(new TextHorizontalLayout(offset));
     centerPanel.add(panel1);
     if (myMarketplace) {
-      myRating =
-        GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, CellPluginComponent.GRAY_COLOR, false);
-
       myDownloads =
         GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, CellPluginComponent.GRAY_COLOR, false);
+
+      myRating =
+        GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, CellPluginComponent.GRAY_COLOR, false);
     }
     myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
 
-    JPanel panel2 = new NonOpaquePanel(new HorizontalLayout(myMarketplace ? offset : JBUI.scale(7)));
+    JPanel panel2 = new NonOpaquePanel(new HorizontalLayout(myMarketplace ? offset : JBUI.scale(7)) {
+      @Override
+      public void layoutContainer(Container parent) {
+        super.layoutContainer(parent);
+        if (myTagPanel != null && myTagPanel.isVisible()) {
+          int baseline = myTagPanel.getBaseline(-1, -1);
+          if (baseline != -1) {
+            Rectangle bounds = myVersion.getBounds();
+            int newY = myTagPanel.getY() + baseline - myVersion.getBaseline(bounds.width, bounds.height);
+            myVersion.setBounds(bounds.x, newY, bounds.width, bounds.height);
+          }
+        }
+      }
+    });
     if (myMarketplace) {
       panel2.add(myTagPanel = new TagPanel(mySearchListener));
     }
@@ -249,6 +262,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
     myPanel.add(scrollPane);
+
+    myHomePage = new LinkPanel(bottomPanel, true, null, null);
+    bottomPanel.add(new JLabel());
 
     myDescriptionComponent = new JEditorPane();
     HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
@@ -271,8 +287,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (myMarketplace) {
       bottomPanel.add(mySize = new JLabel());
     }
-
-    myHomePage = new LinkPanel(bottomPanel, true, null, null);
   }
 
   public void showPlugin(@Nullable CellPluginComponent component, boolean multiSelection) {

@@ -232,8 +232,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     boolean isPreviewMode = Boolean.TRUE == PreviewManager.SERVICE.preview(handler.getProject(), UsagesPreviewPanelProvider.ID, Pair.create(usageView, table), false);
     Runnable itemChosenCallback = table.prepareTable(editor, popupPosition, handler, maxUsages, options, isPreviewMode, this);
 
-    @Nullable final JBPopup popup = isPreviewMode ? null : createUsagePopup(usages, visibleNodes, handler, editor, popupPosition,
-                                           maxUsages, usageView, options, table, itemChosenCallback, presentation, processIcon);
+    JBPopup popup = isPreviewMode ? null : createUsagePopup(usages, visibleNodes, handler, editor, popupPosition,
+                                                            maxUsages, usageView, options, table, itemChosenCallback, presentation, processIcon);
     if (popup != null) {
       Disposer.register(popup, usageView);
 
@@ -462,7 +462,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     builder.setMovable(true).setResizable(true);
-    builder.setMovable(true).setResizable(true);
     builder.setItemChoosenCallback(itemChoseCallback);
     final JBPopup[] popup = new JBPopup[1];
 
@@ -500,6 +499,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     InplaceButton settingsButton = createSettingsButton(handler, popupPosition, editor, maxUsages, () -> cancel(popup[0]));
 
     ActiveComponent spinningProgress = new ActiveComponent.Adapter() {
+      @NotNull
       @Override
       public JComponent getComponent() {
         return processIcon;
@@ -546,6 +546,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return popup[0];
   }
 
+  @NotNull
   private ActiveComponent createPinButton(@NotNull final FindUsagesHandler handler,
                                           @NotNull final UsageViewImpl usageView,
                                           @NotNull final FindUsagesOptions options,
@@ -580,6 +581,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     pinToolBar.setOpaque(false);
 
     return new ActiveComponent.Adapter() {
+      @NotNull
       @Override
       public JComponent getComponent() {
         return pinToolBar;
@@ -694,7 +696,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return data;
   }
 
-  private static int calcMaxWidth(JTable table) {
+  private static int calcMaxWidth(@NotNull JTable table) {
     int colsNum = table.getColumnModel().getColumnCount();
 
     int totalWidth = 0;
@@ -837,6 +839,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     window.repaint();
   }
 
+  @NotNull
   private static Rectangle getPreferredBounds(@NotNull JTable table, @NotNull Point point, int width, int minHeight, int modelRows) {
     boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
     int visibleRows = Math.min(30, modelRows);
@@ -948,7 +951,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   static class StringNode extends UsageNode {
     @NotNull private final Object myString;
 
-    StringNode(@NotNull Object string) {
+    private StringNode(@NotNull Object string) {
       super(null, NullUsage.INSTANCE);
       myString = string;
     }

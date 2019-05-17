@@ -107,6 +107,9 @@ public class BaselinePanel extends NonOpaquePanel {
           }
         }
         parentWidth -= myButtonOffset.get() * (visibleCount - 1);
+        if (visibleCount > 0) {
+          parentWidth -= myOffset.get();
+        }
 
         if (myErrorComponent != null) {
           if (myErrorEnableComponent != null) {

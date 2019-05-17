@@ -3,13 +3,9 @@
   bean:{
     '@id':1,
     bean:0,
-    list:[
-    ],
-    children:[
-    ]
+    list:0,
+    children:0
   },
-  list:[
-  ],
-  children:[
-  ]
+  list:0,
+  children:0
 }

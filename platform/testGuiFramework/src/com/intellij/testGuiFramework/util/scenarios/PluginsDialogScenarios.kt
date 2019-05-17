@@ -73,7 +73,7 @@ fun PluginsDialogScenarios.installPluginFromDisk(pluginFileName: String) {
     if (isMac) {
       dialogWithTextComponent(Timeouts.seconds05, { it.text.contains("IDE and Plugin Updates") }) { button("Postpone").click() }
     } else {
-      dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
+      dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Not Now").click() }
     }
   }
 }
