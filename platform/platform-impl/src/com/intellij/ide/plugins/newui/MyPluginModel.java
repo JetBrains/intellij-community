@@ -57,6 +57,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private PluginUpdatesService myPluginUpdatesService;
 
+  private Runnable myInvalidFixCallback;
+
   protected MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
     myStatusBar = getStatusBar(window);
@@ -539,7 +541,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     if (!requiredPlugins.isEmpty()) {
       enablePlugins(requiredPlugins);
+
+      if (myInvalidFixCallback != null) {
+        ApplicationManager.getApplication().invokeLater(myInvalidFixCallback, ModalityState.any());
+      }
     }
+  }
+
+  public void setInvalidFixCallback(@Nullable Runnable invalidFixCallback) {
+    myInvalidFixCallback = invalidFixCallback;
   }
 
   private void updateAfterEnableDisable() {

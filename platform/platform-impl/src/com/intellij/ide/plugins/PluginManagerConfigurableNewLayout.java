@@ -868,6 +868,7 @@ public class PluginManagerConfigurableNewLayout
             ((InstalledSearchOptionAction)action).setState(null);
           }
         }
+        myPluginModel.setInvalidFixCallback(null);
       }
 
       @NotNull
@@ -963,6 +964,8 @@ public class PluginManagerConfigurableNewLayout
         myInstalledSearchPanel = new SearchResultPanel(installedController, panel, 0, 0) {
           @Override
           protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
+            myPluginModel.setInvalidFixCallback(null);
+
             SearchQueryParser.InstalledWithVendor parser = new SearchQueryParser.InstalledWithVendor(query);
 
             if (myInstalledSearchSetState) {
@@ -1002,6 +1005,31 @@ public class PluginManagerConfigurableNewLayout
               }
 
               if (!result.descriptors.isEmpty()) {
+                if (parser.invalid) {
+                  myPluginModel.setInvalidFixCallback(() -> {
+                    PluginsGroup group = myInstalledSearchPanel.getGroup();
+                    if (group.ui == null) {
+                      myPluginModel.setInvalidFixCallback(null);
+                      return;
+                    }
+
+                    PluginsGroupComponent resultPanel = myInstalledSearchPanel.getPanel();
+
+                    for (IdeaPluginDescriptor descriptor : new ArrayList<>(group.descriptors)) {
+                      if (!myPluginModel.hasErrors(descriptor)) {
+                        resultPanel.removeFromGroup(group, descriptor);
+                      }
+                    }
+
+                    group.titleWithCount();
+                    myInstalledSearchPanel.fullRepaint();
+
+                    if (group.descriptors.isEmpty()) {
+                      myPluginModel.setInvalidFixCallback(null);
+                    }
+                  });
+                }
+
                 Collection<PluginDownloader> updates = PluginUpdatesService.getUpdates();
                 if (!ContainerUtil.isEmpty(updates)) {
                   myPostFillGroupCallback = () -> {
