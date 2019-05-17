@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.roots.TestSourcesFilter
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.xml.XmlFile
@@ -63,7 +64,9 @@ class MissingRecentApiInspection : LocalInspectionTool() {
     get() = untilBuildString?.let { BuildNumber.fromStringOrNull(it) }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    if (PsiUtil.isIdeaProject(holder.project)) {
+    val project = holder.project
+    val virtualFile = holder.file.virtualFile
+    if (PsiUtil.isIdeaProject(project) || virtualFile != null && TestSourcesFilter.isTestSources(virtualFile, project)) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
     val module = ModuleUtil.findModuleForPsiElement(holder.file) ?: return PsiElementVisitor.EMPTY_VISITOR
