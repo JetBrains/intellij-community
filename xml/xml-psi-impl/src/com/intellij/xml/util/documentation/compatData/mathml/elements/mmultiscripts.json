@@ -142,7 +142,7 @@
             }
           }
         },
-        "mathsize": {
+        "mathcolor": {
           "__compat": {
             "support": {
               "chrome": {
@@ -158,10 +158,10 @@
                 "version_added": false
               },
               "firefox": {
-                "version_added": "1"
+                "version_added": "28"
               },
               "firefox_android": {
-                "version_added": "4"
+                "version_added": "28"
               },
               "ie": {
                 "version_added": false
@@ -189,7 +189,7 @@
             }
           }
         },
-        "mathcolor": {
+        "mathsize": {
           "__compat": {
             "support": {
               "chrome": {
@@ -205,10 +205,10 @@
                 "version_added": false
               },
               "firefox": {
-                "version_added": "28"
+                "version_added": "1"
               },
               "firefox_android": {
-                "version_added": "28"
+                "version_added": "4"
               },
               "ie": {
                 "version_added": false

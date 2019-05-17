@@ -48,7 +48,7 @@
                   "version_added": "2",
                   "version_removed": "4.4",
                   "partial_implementation": true,
-                  "notes": "Android WebView recognizes the <code>range</code> type, but doesn't implement a range-specific control."
+                  "notes": "Pre-Chromium Android WebView recognizes the <code>range</code> type, but doesn't implement a range-specific control."
                 }
               ]
             },
