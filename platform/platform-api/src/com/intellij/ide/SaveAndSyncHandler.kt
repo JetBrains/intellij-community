@@ -34,6 +34,8 @@ abstract class SaveAndSyncHandler {
   @ApiStatus.Experimental
   abstract fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean = false)
 
+  fun scheduleProjectSave(project: Project) = scheduleSave(SaveTask(project, saveDocuments = false))
+
   @Deprecated("", ReplaceWith("FileDocumentManager.getInstance().saveAllDocuments()", "com.intellij.openapi.fileEditor.FileDocumentManager"))
   fun saveProjectsAndDocuments() {
     // used only by https://plugins.jetbrains.com/plugin/11072-openjml-esc
