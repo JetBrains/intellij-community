@@ -16,10 +16,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Observable;
+import java.util.*;
 
 /**
  * @author traff
@@ -111,24 +108,33 @@ public abstract class ListTableWithButtons<T> extends Observable {
   }
 
   protected void removeSelected() {
-    List<T> selected = getSelection();
-    if (!selected.isEmpty()) {
-      myTableView.stopEditing();
-      setModified();
-      int selectedIndex = myTableView.getSelectionModel().getLeadSelectionIndex();
-      myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
-      selected = ContainerUtil.filter(selected, this::canDeleteElement);
-      myElements.removeAll(selected);
-      myTableView.getSelectionModel().clearSelection();
-      myTableView.getTableViewModel().setItems(myElements);
+    int[] selectedRows = myTableView.getComponent().getSelectedRows();
+    if(selectedRows.length == 0)
+      return;
+    myTableView.stopEditing();
+    setModified();
+    int selectedIndex = myTableView.getSelectionModel().getLeadSelectionIndex();
+    myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
 
-      int prev = selectedIndex - 1;
-      if (prev >= 0) {
-        myTableView.getComponent().getSelectionModel().setSelectionInterval(prev, prev);
+    List<T> aliveElements = new ArrayList<>(myElements.size() - selectedRows.length);
+    for(int row = 0; row < myTableView.getRowCount(); ++row) {
+      T selectedElement = myElements.get(row);
+      if(!myTableView.isRowSelected(row) || !canDeleteElement(selectedElement)) {
+        aliveElements.add(selectedElement);
       }
-      else if (selectedIndex < myElements.size()) {
-        myTableView.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
-      }
+    }
+    myElements.clear();
+    myElements.addAll(aliveElements);
+
+    myTableView.getSelectionModel().clearSelection();
+    myTableView.getTableViewModel().setItems(myElements);
+
+    int prev = selectedIndex - 1;
+    if (prev >= 0) {
+      myTableView.getComponent().getSelectionModel().setSelectionInterval(prev, prev);
+    }
+    else if (selectedIndex < myElements.size()) {
+      myTableView.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
     }
   }
 
