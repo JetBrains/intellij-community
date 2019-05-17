@@ -28,6 +28,9 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
     computeNonDefaultConstructorInfo(beanClass)
   }
 
+  // type parameters for bean binding doesn't play any role, should be the only binding for such class
+  override fun createCacheKey(aClass: Class<*>, type: Type) = aClass
+
   override fun init(originalType: Type, context: BindingInitializationContext) {
     val list = context.propertyCollector.collect(beanClass)
     properties = list

@@ -43,46 +43,39 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
     }
   }
 
-  // type parameters for bean binding doesn't play any role, should be the only binding for such class
-  override fun createCacheKey(aClass: Class<*>, type: Type): Type {
-    when {
-      aClass !== type && !Collection::class.java.isAssignableFrom(aClass) && !classToRootBindingFactory.contains(aClass) -> return aClass
-      else -> return type
-    }
-  }
-
-  override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type): RootBinding {
+  override fun createRootBinding(aClass: Class<*>, type: Type): RootBinding {
     val customFactory = classToRootBindingFactory.get(aClass)
     if (customFactory != null) {
       return customFactory.invoke()
     }
 
     return when {
-      Collection::class.java.isAssignableFrom(aClass) -> CollectionBinding(type as ParameterizedType, this)
+      Collection::class.java.isAssignableFrom(aClass) -> {
+        CollectionBinding(type as ParameterizedType, this)
+      }
       Map::class.java.isAssignableFrom(aClass) -> {
         val typeArguments = (type as ParameterizedType).actualTypeArguments
         MapBinding(typeArguments[0], typeArguments[1], this)
       }
-      aClass.isArray -> ArrayBinding(aClass.componentType, this)
+      aClass.isArray -> {
+        ArrayBinding(aClass.componentType, this)
+      }
       aClass.isEnum -> {
         @Suppress("UNCHECKED_CAST")
         EnumBinding(aClass as Class<out Enum<*>>)
       }
+      aClass.isInterface || Modifier.isAbstract(aClass.modifiers) -> {
+        PolymorphicBinding(aClass)
+      }
+      aClass is Proxy -> {
+        throw SerializationException("$aClass class is not supported")
+      }
+      aClass == Class::class.java -> {
+        // Class can be supported, but it will be implemented only when will be a real use case
+        throw SerializationException("$aClass class is not supported")
+      }
       else -> {
-        assert(cacheKey === aClass)
-        if (aClass.isInterface || Modifier.isAbstract(aClass.modifiers)) {
-          PolymorphicBinding(aClass)
-        }
-        else if (aClass is Proxy) {
-          throw SerializationException("$aClass class is not supported")
-        }
-        else if (aClass == Class::class.java) {
-          // Class can be supported, but it will be implemented only when will be a real use case
-          throw SerializationException("$aClass class is not supported")
-        }
-        else {
-          BeanBinding(aClass)
-        }
+        BeanBinding(aClass)
       }
     }
   }
@@ -98,12 +91,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       return it(accessor)
     }
 
-    // CollectionBinding implements NestedBinding directly because can mutate property value directly
     return when {
-      Map::class.java.isAssignableFrom(aClass) -> {
-        val typeArguments = (type as ParameterizedType).actualTypeArguments
-        MapBinding(typeArguments[0], typeArguments[1], this)
-      }
       aClass.isArray -> ArrayBinding(aClass.componentType, this)
       java.lang.Number::class.java.isAssignableFrom(aClass) -> PropertyBinding(NumberAsObjectBinding())
       aClass.isInterface || Modifier.isAbstract(aClass.modifiers) -> {

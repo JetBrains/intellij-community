@@ -10,6 +10,7 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.util.function.Consumer
 
+// CollectionBinding implements NestedBinding directly because can mutate property value directly
 internal abstract class BaseCollectionBinding(itemType: Type, context: BindingInitializationContext) : RootBinding, NestedBinding {
   private val itemBinding = createElementBindingByType(itemType, context)
 

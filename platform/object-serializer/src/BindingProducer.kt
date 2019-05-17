@@ -25,18 +25,27 @@ abstract class BindingProducer : BindingInitializationContext {
   abstract fun getNestedBinding(accessor: MutableAccessor): NestedBinding
 
   fun getRootBinding(aClass: Class<*>, type: Type = aClass): RootBinding {
-    val cacheKey = createCacheKey(aClass, type)
-    return cacheLock.read {
-      // create cache only under write lock
-      cache.get(cacheKey)
-    } ?: cacheLock.write {
-      cache.get(cacheKey)?.let {
+    fun getByTypeOrByClass(): RootBinding? {
+      var result = cache.get(type)
+      if (result == null && aClass !== type) {
+        result = cache.get(aClass)
+      }
+      return result
+    }
+
+    cacheLock.read {
+      getByTypeOrByClass()?.let {
+        return it
+      }
+    }
+
+    cacheLock.write {
+      getByTypeOrByClass()?.let {
         return it
       }
 
-      createRootBinding(aClass, type, cacheKey)
-      val binding = createRootBinding(aClass, type, cacheKey)
-      cache.put(cacheKey, binding)
+      val binding = createRootBinding(aClass, type)
+      cache.put(binding.createCacheKey(aClass, type), binding)
       try {
         binding.init(type, this)
       }
@@ -48,9 +57,7 @@ abstract class BindingProducer : BindingInitializationContext {
     }
   }
 
-  protected open fun createCacheKey(aClass: Class<*>, type: Type) = type
-
-  protected abstract fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type): RootBinding
+  protected abstract fun createRootBinding(aClass: Class<*>, type: Type): RootBinding
 
   @Suppress("unused")
   fun clearBindingCache() {

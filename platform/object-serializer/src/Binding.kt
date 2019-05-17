@@ -22,6 +22,8 @@ interface NestedBinding : RootBinding {
  * Binding that can read and write data of root object.
  */
 interface RootBinding : Binding {
+  fun createCacheKey(aClass: Class<*>, type: Type = aClass) = type
+
   fun init(originalType: Type, context: BindingInitializationContext) {
   }
 
