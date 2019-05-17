@@ -88,7 +88,9 @@ class ObjectSerializerTest {
     val bean2 = TestObjectBean()
     bean.bean = bean2
     bean2.bean = bean
-    test(bean)
+
+    // test SkipNullAndEmptySerializationFilter
+    test(bean, defaultTestWriteConfiguration.copy(filter = SkipNullAndEmptySerializationFilter))
   }
 
   @Test

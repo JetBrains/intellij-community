@@ -89,7 +89,7 @@ class ListTest {
 
   @Test
   fun `versioned file`() {
-    val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42)
+    val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42, isCompressed = false)
     val list = listOf("foo", "bar")
     val configuration = WriteConfiguration(binary = false)
     file.writeList(list, String::class.java, configuration = configuration)

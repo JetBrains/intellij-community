@@ -43,7 +43,7 @@ class NonDefaultConstructorTest {
 
   @Test
   fun `remove versioned file on parameter error`() {
-    val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42)
+    val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42, isCompressed = false)
     file.file.write("""
       {
         version:42,
@@ -53,7 +53,7 @@ class NonDefaultConstructorTest {
       }
     """.trimIndent())
     assertThatThrownBy {
-      assertThat(file.read(NoDefaultConstructorBean::class.java)).isNull()
+      file.read(NoDefaultConstructorBean::class.java)
     }
       .isInstanceOf(AssertionError::class.java)
       .hasCauseInstanceOf(InvocationTargetException::class.java)

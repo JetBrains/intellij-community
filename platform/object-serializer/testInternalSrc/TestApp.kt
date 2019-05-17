@@ -4,7 +4,6 @@ package com.intellij.serialization
 import com.amazon.ion.system.IonReaderBuilder
 import com.amazon.ion.system.IonTextWriterBuilder
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import java.nio.file.Paths
 
@@ -14,10 +13,12 @@ class TestApp {
     fun main(args: Array<String>) {
       val inputFile = Paths.get(args[0])
       val outFile = inputFile.parent.resolve(FileUtilRt.getNameWithoutExtension(inputFile.fileName.toString()) + "-text.ion")
-      IonReaderBuilder.standard().build(inputFile.inputStream().buffered()).use { reader ->
-        IonTextWriterBuilder.pretty().build(outFile.outputStream().buffered()).use { writer ->
-          reader.next()
-          writer.writeValue(reader)
+      readPossiblyCompressedIonFile(inputFile) { input ->
+        IonReaderBuilder.standard().build(input).use { reader ->
+          IonTextWriterBuilder.pretty().build(outFile.outputStream().buffered()).use { writer ->
+            reader.next()
+            writer.writeValue(reader)
+          }
         }
       }
     }

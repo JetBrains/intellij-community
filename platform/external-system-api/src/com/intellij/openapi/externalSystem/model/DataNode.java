@@ -8,7 +8,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -117,14 +116,17 @@ public class DataNode<T> implements UserDataHolderEx {
     if (rawData.length == 0) {
       return;
     }
-    if (dataClassName == null) {
-      throw new IllegalStateException(String.format("Data node of key '%s' does not contain data class name", key));
+
+
+    String className = dataClassName;
+    if (className == null) {
+      className = key.getDataType();
     }
 
     try {
       MultiLoaderWrapper classLoader = new MultiLoaderWrapper(getClass().getClassLoader(), classLoaders);
       //noinspection unchecked
-      data = SerializationKt.readDataNodeData(((Class<T>)classLoader.findClass(dataClassName)), rawData, classLoader);
+      data = SerializationKt.readDataNodeData(((Class<T>)classLoader.findClass(className)), rawData, classLoader);
       clearRawData();
     }
     catch (Exception e) {
@@ -229,8 +231,10 @@ public class DataNode<T> implements UserDataHolderEx {
       rawData = ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     else {
-      LOG.assertTrue(!(data instanceof Proxy));
       dataClassName = data.getClass().getName();
+      if (dataClassName.equals(key.getDataType())) {
+        dataClassName = null;
+      }
       rawData = SerializationKt.serializeDataNodeData(data, buffer);
     }
   }

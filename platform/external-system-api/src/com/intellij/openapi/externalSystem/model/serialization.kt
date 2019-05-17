@@ -2,10 +2,7 @@
 package com.intellij.openapi.externalSystem.model
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.serialization.BeanConstructed
-import com.intellij.serialization.ObjectSerializer
-import com.intellij.serialization.ReadConfiguration
-import com.intellij.serialization.WriteConfiguration
+import com.intellij.serialization.*
 import net.jpountz.lz4.LZ4CompressorWithLength
 import net.jpountz.lz4.LZ4DecompressorWithLength
 import net.jpountz.lz4.LZ4Factory
@@ -30,7 +27,7 @@ fun <T : Any> readDataNodeData(dataClass: Class<T>, data: ByteArray, classLoader
 }
 
 fun serializeDataNodeData(data: Any, buffer: WriteAndCompressSession): ByteArray {
-  ObjectSerializer.instance.write(data, buffer.resetAndGetOutputStream(), WriteConfiguration(allowAnySubTypes = true))
+  ObjectSerializer.instance.write(data, buffer.resetAndGetOutputStream(), WriteConfiguration(allowAnySubTypes = true, filter = SkipNullAndEmptySerializationFilter))
   return buffer.compress()
 }
 

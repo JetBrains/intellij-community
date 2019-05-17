@@ -2,14 +2,6 @@
   '@id':0,
   bean:{
     '@id':1,
-    bean:0,
-    list:[
-    ],
-    children:[
-    ]
-  },
-  list:[
-  ],
-  children:[
-  ]
+    bean:0
+  }
 }
