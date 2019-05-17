@@ -871,6 +871,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != UIUtil.getWindow(owner);
       if (isHeavyWeightPopup) {
         UIUtil.markAsTypeAheadAware(window);
+        window.setMinimumSize(null); // clear min-size from prev invocations on JBR11
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
         final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();

@@ -53,7 +53,12 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
   @Override
   public void show() {
     myJustClosedViaClick = false;
-    if (myPopup != null) return;
+    if (myPopup != null) {
+      if (myPopup.isVisible()) return;
+      // onClosed() was not called for some reason
+      myPopup.cancel();
+    }
+
     ArrayList<T> items = new ArrayList<>(myComboBox.getModel().getSize());
     for (int i = 0, size = myComboBox.getModel().getSize(); i < size; i++) {
       items.add(myComboBox.getModel().getElementAt(i));
