@@ -55,7 +55,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private volatile boolean myApplicabilityError;
 
   private final LanguageLevel myLanguageLevel;
-  private boolean myErased;
+  private volatile boolean myErased;
 
   public MethodCandidateInfo(@NotNull PsiElement candidate,
                              @NotNull PsiSubstitutor substitutor,
