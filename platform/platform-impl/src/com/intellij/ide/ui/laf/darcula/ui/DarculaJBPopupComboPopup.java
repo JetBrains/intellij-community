@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ui.JBUI;
@@ -40,6 +41,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
   private final JComboBox<T> myComboBox;
   private final JList<T> myProxyList = new JBList<>();
   private ListPopupImpl myPopup;
+  private boolean myJustClosedViaClick;
 
   public DarculaJBPopupComboPopup(@NotNull JComboBox<T> comboBox) {
     myComboBox = comboBox;
@@ -50,6 +52,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
 
   @Override
   public void show() {
+    myJustClosedViaClick = false;
     if (myPopup != null) return;
     ArrayList<T> items = new ArrayList<>(myComboBox.getModel().getSize());
     for (int i = 0, size = myComboBox.getModel().getSize(); i < size; i++) {
@@ -91,7 +94,19 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     };
     step.setDefaultOptionIndex(myComboBox.getSelectedIndex());
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComboBox));
-    myPopup = new ListPopupImpl(project, step);
+    myPopup = new ListPopupImpl(project, step) {
+      @Override
+      public void cancel(InputEvent e) {
+        if (e instanceof MouseEvent) {
+          // we want the second click on combo-box just to close
+          // and not to instantly show the popup again in the following
+          // DarculaJBPopupComboPopup#mousePressed()
+          Point point = new RelativePoint((MouseEvent)e).getPoint(myComboBox);
+          myJustClosedViaClick = new Rectangle(myComboBox.getSize()).contains(point);
+        }
+        super.cancel(e);
+      }
+    };
     myPopup.setMaxRowCount(10);
     myPopup.setRequestFocus(false);
     myPopup.addListener(new JBPopupListener() {
@@ -141,6 +156,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
 
   @Override
   public void hide() {
+    myJustClosedViaClick = false;
     if (myPopup == null) return;
     myPopup.cancel();
   }
@@ -209,6 +225,10 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     }
     else if (myComboBox.isRequestFocusEnabled()) {
       myComboBox.requestFocus();
+    }
+    if (myJustClosedViaClick) {
+      myJustClosedViaClick = false;
+      return;
     }
     if (isVisible()) {
       hide();
