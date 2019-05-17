@@ -93,7 +93,7 @@ class ListTest {
     val list = listOf("foo", "bar")
     val configuration = WriteConfiguration(binary = false)
     file.writeList(list, String::class.java, configuration = configuration)
-    assertThat(file.file.readChars().trim()).isEqualTo("""
+    assertThat(file.file.readChars().trim()).isEqualToIgnoringNewLines("""
       {
         version:42,
         formatVersion:1,
