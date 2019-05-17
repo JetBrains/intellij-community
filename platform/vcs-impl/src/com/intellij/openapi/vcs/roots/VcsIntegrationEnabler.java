@@ -54,8 +54,8 @@ public abstract class VcsIntegrationEnabler {
     if (roots.isEmpty()) {
       boolean succeeded = initOrNotifyError(projectDir);
       if (succeeded) {
-        VcsImplUtil.proposeUpdateIgnoreFile(myProject, myVcs, projectDir);
         addVcsRoots(Collections.singleton(projectDir));
+        VcsImplUtil.proposeUpdateIgnoreFile(myProject, myVcs, projectDir);
       }
     }
     else {
