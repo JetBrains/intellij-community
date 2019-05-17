@@ -4,6 +4,7 @@ package com.intellij.sh.rename;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,7 @@ public class ShRenameTest extends LightPlatformCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return "testData/rename/";
+    return PluginPathManager.getPluginHomePath("sh") + "/testData/rename/";
   }
 
   public void testBasic1() {
