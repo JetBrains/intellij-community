@@ -362,8 +362,6 @@ abstract class FileHistoryData(startPaths: Collection<FilePath>) {
     return result
   }
 
-  fun getChanges(filePath: FilePath, commit: Int) = affectedCommits[filePath]?.get(commit)
-
   fun forEach(action: (FilePath, Int, TIntObjectHashMap<ChangeKind>) -> Unit) = affectedCommits.forEach(action)
 
   fun removeAll(commits: List<Int>) {
