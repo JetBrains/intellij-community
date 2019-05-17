@@ -21,6 +21,11 @@ class ProductModulesLayout {
   String mainJarName
 
   /**
+   * Name of the platform implementation JAR file.
+   */
+  String platformImplementationJarName = "platform-impl.jar"
+
+  /**
    * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
    * @see CommunityRepositoryModules#PLATFORM_API_MODULES
    * @deprecated if you need to pack additional modules into the product, use {@link #productApiModules} instead; {@link CommunityRepositoryModules#PLATFORM_API_MODULES}
@@ -32,7 +37,7 @@ class ProductModulesLayout {
    * Names of the modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
    * @see CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES
    * @deprecated if you need to pack additional modules into the product, use {@link #productImplementationModules} instead; {@link CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES}
-   * will be packed into platform-impl.jar in the product's 'lib' directory automatically then.   */
+   * will be packed into {@link #platformImplementationJarName} in the product's 'lib' directory automatically then.   */
   List<String> platformImplementationModules = []
 
   /**

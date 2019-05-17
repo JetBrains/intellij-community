@@ -10,7 +10,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 
 public class EventLogWhitelistPersistence {
@@ -54,13 +57,17 @@ public class EventLogWhitelistPersistence {
   @Nullable
   public String getCachedWhiteList() {
     File file = getWhiteListFile();
-    if (file.exists()) {
-      try {
-        return FileUtil.loadFile(file);
+    try {
+      if (!file.exists()) {
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("resources/" + WHITE_LIST_DATA_FILE)) {
+          if (stream == null) return null;
+          Files.copy(stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
       }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      return FileUtil.loadFile(file);
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
     return null;
   }

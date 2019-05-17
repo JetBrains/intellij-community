@@ -39,12 +39,14 @@ class DistributionJARsBuilder {
   private final PlatformLayout platform
   private final File patchedApplicationInfo
   private final LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish
+  private final WhiteListService whiteListService
 
   DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo,
                           LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish = [:]) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
     this.pluginsToPublish = pluginsToPublish
+    this.whiteListService = new WhiteListService(buildContext)
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
       include(name: "**/*Messages.properties")
@@ -105,7 +107,7 @@ class DistributionJARsBuilder {
         withModule(it, "platform-api.jar")
       }
       getPlatformImplModules(productLayout).each {
-        withModule(it, "platform-impl.jar")
+        withModule(it, productLayout.platformImplementationJarName)
       }
       getProductApiModules(productLayout).each {
         withModule(it, "openapi.jar")
@@ -599,6 +601,11 @@ class DistributionJARsBuilder {
           def modules = it.value
           def jarPath = it.key
           jar(jarPath, true) {
+            if (this.whiteListService.shouldIncludeWhiteList(jarPath)) {
+              dir(this.whiteListService.includeInto) {
+                ant.fileset(file: this.whiteListService.whiteList().absolutePath)
+              }
+            }
             modules.each { moduleName ->
               modulePatches([moduleName]) {
                 if (layout.localizableResourcesJarName(moduleName) != null) {
