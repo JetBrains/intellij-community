@@ -989,15 +989,13 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private String getPattern(EditorTextField textField) {
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    assert profile != null;
     final Document document = textField.getDocument();
     return ReadAction.compute(() -> {
-      final PsiCodeFragment fragment = (PsiCodeFragment)PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-      if (fragment == null) {
-        return "";
-      }
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-      assert profile != null;
-      return profile.getCodeFragmentText(fragment);
+      final PsiFile file = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+      assert file != null;
+      return profile.getCodeFragmentText(file);
     });
   }
 
