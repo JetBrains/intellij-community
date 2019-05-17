@@ -15,12 +15,12 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.KeywordArgumentCompletionUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author yole
@@ -41,16 +40,17 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
   }
 
   public Object[] getVariants() {
-    final List<LookupElement> ret = new ArrayList<>();
-
     final PyKeywordArgument originalElement = CompletionUtil.getOriginalElement(myElement);
+    if (originalElement != null) {
+      final List<LookupElement> ret = new ArrayList<>();
 
-    TypeEvalContext evalCtx = TypeEvalContext.codeCompletion(Objects.requireNonNull(originalElement).getProject(),
-                                                             originalElement.getContainingFile());
-    KeywordArgumentCompletionUtil
-      .collectFunctionArgNames(originalElement, ret, evalCtx, false);
+      TypeEvalContext evalCtx = TypeEvalContext.codeCompletion(originalElement.getProject(), originalElement.getContainingFile());
+      KeywordArgumentCompletionUtil
+        .collectFunctionArgNames(originalElement, ret, evalCtx, false);
+      return ret.toArray();
+    }
 
-    return ret.toArray();
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
 
