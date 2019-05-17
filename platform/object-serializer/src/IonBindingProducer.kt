@@ -9,6 +9,7 @@ import gnu.trove.THashMap
 import java.io.File
 import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Proxy
 import java.lang.reflect.Type
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -92,6 +93,13 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
         assert(cacheKey === aClass)
         if (aClass.isInterface || Modifier.isAbstract(aClass.modifiers)) {
           PolymorphicBinding(aClass)
+        }
+        else if (aClass is Proxy) {
+          throw SerializationException("$aClass class is not supported")
+        }
+        else if (aClass == Class::class.java) {
+          // Class can be supported, but it will be implemented only when will be a real use case
+          throw SerializationException("$aClass class is not supported")
         }
         else {
           BeanBinding(aClass)
