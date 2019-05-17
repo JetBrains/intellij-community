@@ -12,14 +12,21 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -89,7 +96,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
   public void testDuplicateMethods() {
     int N = 1000;
-    StringBuilder text = new StringBuilder("class X {\n");
+    StringBuilder text = new StringBuilder(N * 100).append("class X {\n");
     for (int i = 0; i < N; i++) text.append("public void visit(C").append(i).append(" param) {}\n");
     for (int i = 0; i < N; i++) text.append("class C").append(i).append(" {}\n");
     text.append("}");
@@ -97,5 +104,32 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
     List<HighlightInfo> infos = startTest(3_300);
     assertEmpty(infos);
+  }
+
+
+  public void testGetProjectPerformance() {
+    configureByFile("/psi/resolve/ThinletBig.java");
+    // wait for default project to dispose, otherwise it will be very slow
+    while (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) {
+      UIUtil.dispatchAllInvocationEvents();
+      if (System.currentTimeMillis() % 10_000 < 100) {
+        System.out.println("waiting for default project dispose...");
+        TimeoutUtil.sleep(100);
+      }
+    }
+    assertNotNull(ProjectCoreUtil.theOnlyOpenProject());
+    getFile().accept(new PsiRecursiveElementVisitor() {});
+    Project myProject = getProject();
+    PlatformTestUtil.startPerformanceTest("getProject() for nested elements", 300, () -> {
+      getFile().accept(new PsiRecursiveElementVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          for (int i = 0; i < 10; i++) {
+            assertSame(myProject, element.getProject());
+          }
+          super.visitElement(element);
+        }
+      });
+    }).assertTiming();
   }
 }
