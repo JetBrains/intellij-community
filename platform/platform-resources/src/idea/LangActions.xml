@@ -943,6 +943,8 @@
     </group>
 
     <group id="RunnerLayoutActions">
+      <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
+              icon="AllIcons.Debugger.RestoreLayout"/>
       <group id="Runner.Layout">
       </group>
       <group id="Runner.View.Close.Group" popup="false">
