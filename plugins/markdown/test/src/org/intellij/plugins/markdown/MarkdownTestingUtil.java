@@ -13,8 +13,8 @@ public class MarkdownTestingUtil {
   }
 
   private static String findTestDataPath() {
-    if (new File(PathManager.getHomePath() + "/community").isDirectory()) {
-      return FileUtil.toSystemIndependentName(PathManager.getHomePath() + "/community/markdown/test/data");
+    if (new File(PathManager.getHomePath() + "/community/plugins").isDirectory()) {
+      return FileUtil.toSystemIndependentName(PathManager.getHomePath() + "/community/plugins/markdown/test/data");
     }
 
     final String parentPath = PathUtil.getParentPath(PathManager.getHomePath());
@@ -23,8 +23,8 @@ public class MarkdownTestingUtil {
       return FileUtil.toSystemIndependentName(parentPath + "/intellij-plugins/markdown/test/data");
     }
 
-    if (new File(parentPath + "/community").isDirectory()) {
-      return FileUtil.toSystemIndependentName(parentPath + "/community/markdown/test/data");
+    if (new File(parentPath + "/community/plugins").isDirectory()) {
+      return FileUtil.toSystemIndependentName(parentPath + "/community/plugins/markdown/test/data");
     }
 
     return "";
