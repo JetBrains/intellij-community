@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager;
@@ -32,11 +31,10 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   protected void setUp() throws Exception {
     super.setUp();
 
-    Disposable disposable = getTestRootDisposable();
-    Disposer.register(disposable, new BlockExtensions<>(Extensions.getRootArea().getExtensionPoint(LanguageAnnotators.EP_NAME)));
-    Disposer.register(disposable, new BlockExtensions<>(Extensions.getRootArea().getExtensionPoint(LineMarkerProviders.EP_NAME)));
-    Disposer.register(disposable, new BlockExtensions<>(ConcatenationInjectorManager.CONCATENATION_INJECTOR_EP_NAME.getPoint(getProject())));
-    Disposer.register(disposable, new BlockExtensions<>(Extensions.getArea(getProject()).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME)));
+    blockUntil(Extensions.getRootArea().getExtensionPoint(LanguageAnnotators.EP_NAME), getTestRootDisposable());
+    blockUntil(Extensions.getRootArea().getExtensionPoint(LineMarkerProviders.EP_NAME), getTestRootDisposable());
+    blockUntil(ConcatenationInjectorManager.CONCATENATION_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
+    blockUntil(Extensions.getArea(getProject()).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME), getTestRootDisposable());
 
     IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
     PathManagerEx.getTestDataPath(); // to cache stuff
@@ -47,14 +45,8 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     return IdeaTestUtil.getMockJdk17(); // has to have awt
   }
 
-  private static final class BlockExtensions<T> implements Disposable {
-    BlockExtensions(@NotNull ExtensionPoint<T> extensionPoint) {
-      ((ExtensionPointImpl<T>)extensionPoint).maskAll(Collections.emptyList(), this);
-    }
-
-    @Override
-    public void dispose() {
-    }
+  private static <T> void blockUntil(@NotNull ExtensionPoint<T> extensionPoint, @NotNull Disposable parent) {
+    ((ExtensionPointImpl<T>)extensionPoint).maskAll(Collections.emptyList(), parent);
   }
 
   private String getFilePath(String suffix) {
