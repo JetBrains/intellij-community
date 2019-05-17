@@ -71,18 +71,12 @@ public class IdeaFreezeReporter {
 
       @Nullable
       private IdeaLoggingEvent createEvent(int lengthInSeconds, Attachment[] attachments) {
-        boolean allInEdt = StreamEx.of(myCurrentDumps)
-          .flatArray(ThreadDump::getThreadInfos)
-          .filter(ThreadDumper::isEDT)
+        boolean allInEdt = edts(myCurrentDumps)
           .map(ThreadInfo::getThreadState)
           .allMatch(Thread.State.RUNNABLE::equals);
         List<StackTraceElement[]> reasonStacks;
         if (allInEdt) {
-          reasonStacks = StreamEx.of(myCurrentDumps)
-            .flatArray(ThreadDump::getThreadInfos)
-            .filter(ThreadDumper::isEDT)
-            .map(ThreadInfo::getStackTrace)
-            .toList();
+          reasonStacks = edts(myCurrentDumps).map(ThreadInfo::getStackTrace).toList();
         }
         else {
           reasonStacks = new ArrayList<>();
@@ -116,6 +110,9 @@ public class IdeaFreezeReporter {
             }
           }
         }
+        if (reasonStacks.isEmpty()) {
+          reasonStacks = edts(myCurrentDumps).map(ThreadInfo::getStackTrace).toList(); // fallback EDT threads
+        }
         List<StackTraceElement> commonStack = findDominantCommonStack(reasonStacks);
         if (ContainerUtil.isEmpty(commonStack)) {
           commonStack = myStacktraceCommonPart; // fallback to simple EDT common
@@ -129,6 +126,12 @@ public class IdeaFreezeReporter {
         return null;
       }
     });
+  }
+
+  private static StreamEx<ThreadInfo> edts(List<ThreadDump> dumps) {
+    return StreamEx.of(dumps)
+      .flatArray(ThreadDump::getThreadInfos)
+      .filter(ThreadDumper::isEDT);
   }
 
   @Nullable
