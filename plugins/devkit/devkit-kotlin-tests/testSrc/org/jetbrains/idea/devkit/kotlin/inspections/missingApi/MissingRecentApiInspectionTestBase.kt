@@ -13,10 +13,10 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
 import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection
 import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiUsageProcessor
+import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
 
 /**
@@ -61,7 +61,7 @@ class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
     }
   }
 
-  override fun getTestDataPath() = DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH + "inspections/missingApi"
+  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/missingApi"
 
   /**
    * "Library" classes are put to the same test source root as "client" one,
