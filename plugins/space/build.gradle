@@ -41,7 +41,7 @@ intellij {
 buildPlugin {
     doLast {
         def buildSettings = Build.buildSettings
-        if (!buildSettings.isCIRun()){
+        if (buildSettings.isCIRun()){
             def buildNumber = buildSettings.buildNumber
 
             new File("$projectDir/build/distributions/update.xml").write("""<!-- Plugin repository URL: "http://buildserver.labs.intellij.net/guestAuth/repository/download/Circlet_IdeaCircletIntegration/lastSuccessful/update.xml?redirectSupported=false" -->
