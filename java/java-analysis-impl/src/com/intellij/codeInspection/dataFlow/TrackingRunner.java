@@ -41,7 +41,7 @@ import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSupe
 
 @SuppressWarnings("SuspiciousNameCombination")
 public class TrackingRunner extends StandardDataFlowRunner {
-  private final List<MemoryStateChange> myHistoryForContext = new ArrayList<>();
+  private MemoryStateChange myHistoryForContext = null;
   private final PsiExpression myExpression;
   private final List<DfaInstructionState> afterStates = new ArrayList<>();
   private final List<TrackingDfaMemoryState> killedStates = new ArrayList<>();
@@ -98,7 +98,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
       ExpressionPushingInstruction pushing = (ExpressionPushingInstruction)instruction;
       if (pushing.getExpression() == myExpression && pushing.getExpressionRange() == null) {
         for (DfaInstructionState state : states) {
-          myHistoryForContext.addAll(((TrackingDfaMemoryState)state.getMemoryState()).getHistory());
+          MemoryStateChange history = ((TrackingDfaMemoryState)state.getMemoryState()).getHistory();
+          myHistoryForContext = myHistoryForContext == null ? history : myHistoryForContext.merge(history);
         }
       }
     }
@@ -171,19 +172,23 @@ public class TrackingRunner extends StandardDataFlowRunner {
    */
   @Nullable
   private CauseItem findProblemCause(PsiExpression expression, DfaProblemType type) {
+    if (myHistoryForContext == null) return null;
     CauseItem cause = null;
-    for (MemoryStateChange history : myHistoryForContext) {
+    do {
       CauseItem item = new CauseItem(type, expression);
+      MemoryStateChange history = myHistoryForContext.getNonMerge();
       if (history.getExpression() == expression) {
         item.addChildren(type.findCauses(this, expression, history));
       }
       if (cause == null) {
         cause = item;
-      } else {
+      }
+      else {
         cause = cause.merge(item);
         if (cause == null) return null;
       }
     }
+    while (myHistoryForContext.advance());
     return cause;
   }
 
@@ -693,7 +698,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     while (explanation != null) {
       MemoryStateChange causeLocation = fact.myChange;
       if (causeLocation == null) break;
-      MemoryStateChange prevHistory = causeLocation.myPrevious;
+      MemoryStateChange prevHistory = causeLocation.getPrevious();
       if (prevHistory == null) break;
       fact = prevHistory.findFact(operandValue, DfaFactType.TYPE_CONSTRAINT);
       TypeConstraint prevConstraint = fact.getFact(TypeConstraint.empty());
