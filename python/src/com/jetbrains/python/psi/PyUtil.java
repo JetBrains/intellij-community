@@ -1139,9 +1139,9 @@ public class PyUtil {
    * @return lookup element
    */
   @NotNull
-  public static LookupElement createNamedParameterLookup(@NotNull String name, @NotNull PsiFile settingsAnchor, boolean addSuffix) {
+  public static LookupElement createNamedParameterLookup(@NotNull String name, @NotNull PsiFile settingsAnchor, boolean addEquals) {
     final String suffix;
-    if (addSuffix) {
+    if (addEquals) {
       if (CodeStyle.getCustomSettings(settingsAnchor, PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
         suffix = " = ";
       }
@@ -1156,6 +1156,7 @@ public class PyUtil {
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
   }
 
+  @NotNull
   public static LookupElement createNamedParameterLookup(@NotNull String name, @NotNull PsiFile settingsAnchor) {
     return createNamedParameterLookup(name, settingsAnchor, true);
   }

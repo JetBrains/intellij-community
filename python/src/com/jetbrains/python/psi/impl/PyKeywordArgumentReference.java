@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yole
@@ -40,13 +41,14 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
   }
 
   public Object[] getVariants() {
-    final List<LookupElement> ret = Lists.newArrayList();
+    final List<LookupElement> ret = new ArrayList<>();
 
     final PyKeywordArgument originalElement = CompletionUtil.getOriginalElement(myElement);
-    final PyKeywordArgument element = originalElement != null ? originalElement : myElement;
 
+    TypeEvalContext evalCtx = TypeEvalContext.codeCompletion(Objects.requireNonNull(originalElement).getProject(),
+                                                             originalElement.getContainingFile());
     KeywordArgumentCompletionUtil
-      .collectFunctionArgNames(element, ret, TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile()), false);
+      .collectFunctionArgNames(originalElement, ret, evalCtx, false);
 
     return ret.toArray();
   }
