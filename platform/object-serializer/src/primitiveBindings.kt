@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
-private fun resolved(binding: NestedBinding): NestedBindingFactory = { binding }
+import java.lang.reflect.Type
+
+private fun resolved(binding: Binding): NestedBindingFactory = { binding }
 
 internal fun registerPrimitiveBindings(classToRootBindingFactory: MutableMap<Class<*>, RootBindingFactory>, classToNestedBindingFactory: MutableMap<Class<*>, NestedBindingFactory>) {
   classToRootBindingFactory.put(java.lang.String::class.java) { StringBinding() }
@@ -34,7 +36,7 @@ internal fun registerPrimitiveBindings(classToRootBindingFactory: MutableMap<Cla
   classToNestedBindingFactory.put(java.lang.Byte::class.java, byte)
 }
 
-private class FloatAsObjectBinding : RootBinding {
+private class FloatAsObjectBinding : Binding {
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeFloat((obj as Float).toDouble())
   }
@@ -42,7 +44,7 @@ private class FloatAsObjectBinding : RootBinding {
   override fun deserialize(context: ReadContext) = context.reader.doubleValue().toFloat()
 }
 
-private class DoubleAsObjectBinding : RootBinding {
+private class DoubleAsObjectBinding : Binding {
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeFloat(obj as Double)
   }
@@ -50,7 +52,9 @@ private class DoubleAsObjectBinding : RootBinding {
   override fun deserialize(context: ReadContext) = context.reader.doubleValue()
 }
 
-internal class NumberAsObjectBinding : RootBinding {
+internal class NumberAsObjectBinding : Binding {
+  override fun createCacheKey(aClass: Class<*>, type: Type) = aClass
+
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeInt((obj as Number).toLong())
   }
@@ -58,7 +62,7 @@ internal class NumberAsObjectBinding : RootBinding {
   override fun deserialize(context: ReadContext) = context.reader.intValue()
 }
 
-private class BooleanAsObjectBinding : RootBinding {
+private class BooleanAsObjectBinding : Binding {
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeBool(obj as Boolean)
   }
@@ -66,7 +70,7 @@ private class BooleanAsObjectBinding : RootBinding {
   override fun deserialize(context: ReadContext) = context.reader.booleanValue()
 }
 
-private class BooleanBinding : NestedBinding, RootBinding {
+private class BooleanBinding : Binding {
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeBool(obj as Boolean)
   }
@@ -84,7 +88,7 @@ private class BooleanBinding : NestedBinding, RootBinding {
   }
 }
 
-private open class IntBinding : NestedBinding, RootBinding {
+private open class IntBinding : Binding {
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeInt(obj as Long)
   }
@@ -108,7 +112,7 @@ private class ShortBinding : IntBinding() {
   }
 }
 
-private class LongBinding : NestedBinding, RootBinding {
+private class LongBinding : Binding {
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeInt(obj as Long)
   }
@@ -126,7 +130,7 @@ private class LongBinding : NestedBinding, RootBinding {
   }
 }
 
-private class FloatBinding : NestedBinding, RootBinding {
+private class FloatBinding : Binding {
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeFloat(obj as Double)
   }
@@ -144,7 +148,7 @@ private class FloatBinding : NestedBinding, RootBinding {
   }
 }
 
-private class DoubleBinding : NestedBinding, RootBinding {
+private class DoubleBinding : Binding {
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeFloat(obj as Double)
   }
@@ -162,7 +166,7 @@ private class DoubleBinding : NestedBinding, RootBinding {
   }
 }
 
-private class StringBinding : RootBinding {
+private class StringBinding : Binding {
   override fun deserialize(context: ReadContext): Any {
     return context.reader.stringValue()
   }

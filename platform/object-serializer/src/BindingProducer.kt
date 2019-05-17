@@ -9,8 +9,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-abstract class BindingProducer : BindingInitializationContext {
-  private val cache: MutableMap<Type, RootBinding> = THashMap()
+internal abstract class BindingProducer : BindingInitializationContext {
+  private val cache: MutableMap<Type, Binding> = THashMap()
   private val cacheLock = ReentrantReadWriteLock()
 
   @get:TestOnly
@@ -22,10 +22,10 @@ abstract class BindingProducer : BindingInitializationContext {
 
   override val isResolveConstructorOnInit = SystemProperties.`is`("idea.serializer.resolve.ctor.on.init")
 
-  abstract fun getNestedBinding(accessor: MutableAccessor): NestedBinding
+  abstract fun getNestedBinding(accessor: MutableAccessor): Binding
 
-  fun getRootBinding(aClass: Class<*>, type: Type = aClass): RootBinding {
-    fun getByTypeOrByClass(): RootBinding? {
+  fun getRootBinding(aClass: Class<*>, type: Type = aClass): Binding {
+    fun getByTypeOrByClass(): Binding? {
       var result = cache.get(type)
       if (result == null && aClass !== type) {
         result = cache.get(aClass)
@@ -57,7 +57,7 @@ abstract class BindingProducer : BindingInitializationContext {
     }
   }
 
-  protected abstract fun createRootBinding(aClass: Class<*>, type: Type): RootBinding
+  protected abstract fun createRootBinding(aClass: Class<*>, type: Type): Binding
 
   @Suppress("unused")
   fun clearBindingCache() {

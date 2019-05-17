@@ -1,27 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
+import com.amazon.ion.IonType
 import java.lang.reflect.Type
 
-interface Binding {
-}
+internal interface Binding {
+  fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
+    write(hostObject, property, context) {
+      serialize(it, context)
+    }
+  }
 
-/**
- * Binding that can read and write data of object properties.
- *
- * Each NestedBinding also is a [RootBinding] not only because of ability to serialize any type as root (including primitives),
- * but because of support for non-default class constructors - for this case BeanBinding will use nested binding as root binding (read value without passing property).
- */
-interface NestedBinding : RootBinding {
-  fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext)
+  fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
+    read(hostObject, property, context) {
+      deserialize(context)
+    }
+  }
 
-  fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext)
-}
-
-/**
- * Binding that can read and write data of root object.
- */
-interface RootBinding : Binding {
   fun createCacheKey(aClass: Class<*>, type: Type = aClass) = type
 
   fun init(originalType: Type, context: BindingInitializationContext) {
@@ -32,10 +27,35 @@ interface RootBinding : Binding {
   fun deserialize(context: ReadContext): Any
 }
 
-interface BindingInitializationContext {
+internal interface BindingInitializationContext {
   val propertyCollector: PropertyCollector
   val bindingProducer: BindingProducer
 
   val isResolveConstructorOnInit: Boolean
     get() = false
+}
+
+internal inline fun write(hostObject: Any, accessor: MutableAccessor, context: WriteContext, write: ValueWriter.(value: Any) -> Unit) {
+  val value = accessor.readUnsafe(hostObject)
+  if (context.filter.isSkipped(value)) {
+    return
+  }
+
+  val writer = context.writer
+  writer.setFieldName(accessor.name)
+  if (value == null) {
+    writer.writeNull()
+  }
+  else {
+    writer.write(value)
+  }
+}
+
+internal inline fun read(hostObject: Any, property: MutableAccessor, context: ReadContext, read: ValueReader.() -> Any) {
+  if (context.reader.type == IonType.NULL) {
+    property.set(hostObject, null)
+  }
+  else {
+    property.set(hostObject, context.reader.read())
+  }
 }

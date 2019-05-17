@@ -23,9 +23,9 @@ class ObjectSerializerTest {
 
   @Test
   fun `same bean binding regardless of type parameters`() {
-    val bindingProducer = getBindingProducer(ObjectSerializer())
-    bindingProducer.getRootBinding(TestGenericBean::class.java)
-    assertThat(getBindingCount(bindingProducer)).isEqualTo(1)
+    val serializer = ObjectSerializer()
+    getBinding(TestGenericBean::class.java, serializer)
+    assertThat(getBindingCount(getBindingProducer(serializer))).isEqualTo(1)
   }
 
   @Test

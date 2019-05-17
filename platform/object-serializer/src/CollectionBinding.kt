@@ -10,15 +10,8 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.util.function.Consumer
 
-// CollectionBinding implements NestedBinding directly because can mutate property value directly
-internal abstract class BaseCollectionBinding(itemType: Type, context: BindingInitializationContext) : RootBinding, NestedBinding {
+internal abstract class BaseCollectionBinding(itemType: Type, context: BindingInitializationContext) : Binding {
   private val itemBinding = createElementBindingByType(itemType, context)
-
-  final override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    write(hostObject, property, context) {
-      serialize(it, context)
-    }
-  }
 
   protected fun createItemConsumer(context: WriteContext): Consumer<Any?> {
     val writer = context.writer
@@ -118,12 +111,6 @@ internal class ArrayBinding(private val itemClass: Class<*>, context: BindingIni
     val consumer = createItemConsumer(context)
     (obj as Array<*>).forEach { consumer.accept(it) }
     writer.stepOut()
-  }
-
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    read(hostObject, property, context) {
-      readArray(context)
-    }
   }
 
   private fun readArray(context: ReadContext): Array<out Any> {

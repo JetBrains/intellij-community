@@ -14,13 +14,13 @@ data class WriteConfiguration(val binary: Boolean = true,
                               val orderMapEntriesByKeys: Boolean = false,
                               val allowAnySubTypes: Boolean = false)
 
-data class WriteContext(val writer: ValueWriter,
-                        val filter: SerializationFilter,
-                        val objectIdWriter: ObjectIdWriter?,
-                        val configuration: WriteConfiguration,
-                        val bindingProducer: BindingProducer)
+internal data class WriteContext(val writer: ValueWriter,
+                                 val filter: SerializationFilter,
+                                 val objectIdWriter: ObjectIdWriter?,
+                                 val configuration: WriteConfiguration,
+                                 val bindingProducer: BindingProducer)
 
-interface ReadContext {
+internal interface ReadContext {
   val reader: ValueReader
   val objectIdReader: ObjectIdReader
   val bindingProducer: BindingProducer

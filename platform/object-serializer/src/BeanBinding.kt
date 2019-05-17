@@ -19,8 +19,8 @@ private val structReaderBuilder by lazy {
 
 private const val ID_FIELD_NAME = "@id"
 
-internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), RootBinding {
-  private lateinit var bindings: Array<NestedBinding>
+internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Binding {
+  private lateinit var bindings: Array<Binding>
   private lateinit var nameToBindingIndex: ObjectIntHashMap<String>
   private lateinit var properties: List<MutableAccessor>
 
