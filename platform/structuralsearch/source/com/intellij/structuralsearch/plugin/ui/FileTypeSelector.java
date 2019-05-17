@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.EmptyIcon;
@@ -28,7 +27,7 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
   public FileTypeSelector() {
     super(createModel());
     setRenderer(new MyCellRenderer());
-    new MySpeedSearch(this);
+    setSwingPopup(false);
   }
 
   @Nullable
@@ -158,15 +157,6 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
         layeredIcon.setIcon(icon, 1);
       }
       return layeredIcon;
-    }
-  }
-
-  private static class MySpeedSearch extends ComboboxSpeedSearch {
-    MySpeedSearch(FileTypeSelector comboBox) {super(comboBox);}
-
-    @Override
-    protected String getElementText(Object element) {
-      return ((FileTypeInfo)element).getSearchText();
     }
   }
 }
