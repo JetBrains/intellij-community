@@ -22,7 +22,6 @@ import com.jetbrains.python.psi.impl.*;
 public interface PyElementTypes extends PyStubElementTypes {
 
   TokenSet PARAMETER_LIST_SET = TokenSet.create(PARAMETER_LIST);
-  PyElementType SLASH_PARAMETER = new PyElementType("SLASH_PARAMETER", PySlashParameterImpl.class);
 
   TokenSet FORMAL_PARAMETER_SET = TokenSet.create(NAMED_PARAMETER);
 

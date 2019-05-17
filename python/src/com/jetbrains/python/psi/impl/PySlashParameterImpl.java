@@ -2,16 +2,22 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.stubs.PySlashParameterStub;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 @ApiStatus.AvailableSince("2019.2")
-public class PySlashParameterImpl extends PyBaseElementImpl implements PySlashParameter {
+public class PySlashParameterImpl extends PyBaseElementImpl<PySlashParameterStub> implements PySlashParameter {
 
   public PySlashParameterImpl(ASTNode node) {
     super(node);
+  }
+
+  public PySlashParameterImpl(PySlashParameterStub stub) {
+    super(stub, PyStubElementTypes.SLASH_PARAMETER);
   }
 
   @Override

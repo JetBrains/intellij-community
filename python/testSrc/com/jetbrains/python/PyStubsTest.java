@@ -990,6 +990,21 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-35512
+  public void testPositionalOnlyParameters() {
+    final PyFile file = getTestFile();
+
+    final PyParameter[] parameters = file.findTopLevelFunction("f").getParameterList().getParameters();
+    assertSize(5, parameters);
+    assertInstanceOf(parameters[0], PyNamedParameter.class);
+    assertInstanceOf(parameters[1], PySlashParameter.class);
+    assertInstanceOf(parameters[2], PyNamedParameter.class);
+    assertInstanceOf(parameters[3], PySingleStarParameter.class);
+    assertInstanceOf(parameters[4], PyNamedParameter.class);
+
+    assertNotParsed(file);
+  }
+
   private static class DataclassFieldChecker {
 
     @NotNull

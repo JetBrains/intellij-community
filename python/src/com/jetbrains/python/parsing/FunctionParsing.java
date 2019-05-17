@@ -203,7 +203,7 @@ public class FunctionParsing extends Parsing {
 
     if (myBuilder.getTokenType() == PyTokenTypes.DIV) {
       myBuilder.advanceLexer();
-      parameter.done(PyElementTypes.SLASH_PARAMETER);
+      parameter.done(PyStubElementTypes.SLASH_PARAMETER);
       return true;
     }
 
