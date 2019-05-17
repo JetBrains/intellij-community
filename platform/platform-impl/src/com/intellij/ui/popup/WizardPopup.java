@@ -180,7 +180,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  public void show(final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
+  public void show(@NotNull final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
     LOG.assertTrue (!isDisposed());
 
     Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), getContent().getPreferredSize());

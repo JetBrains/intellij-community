@@ -23,23 +23,33 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class RelativePoint {
+  @NotNull
+  private final Component myComponent;
+  @NotNull
+  private final Point myPointOnComponent;
 
-  private Component myComponent;
-  private Point myPointOnComponent;
-
-  private Component myOriginalComponent;
-  private Point myOriginalPoint;
+  @NotNull
+  private final Component myOriginalComponent;
+  @NotNull
+  private final Point myOriginalPoint;
 
   public RelativePoint(@NotNull MouseEvent event) {
-    init(event.getComponent(), event.getPoint());
-  }
-
-  public RelativePoint(@NotNull Component aComponent, Point aPointOnComponent) {
-    init(aComponent, aPointOnComponent);
+    this(event.getComponent(), event.getPoint());
   }
 
   public RelativePoint(@NotNull Point screenPoint) {
+    this(getTargetWindow(), calcPoint(screenPoint));
+  }
+
+  @NotNull
+  private static Point calcPoint(@NotNull Point screenPoint) {
     Point p = new Point(screenPoint.x, screenPoint.y);
+    SwingUtilities.convertPointFromScreen(p, getTargetWindow());
+    return p;
+  }
+
+  @NotNull
+  private static Window getTargetWindow() {
     Window[] windows = Window.getWindows();
     Window targetWindow = null;
     for (Window each : windows) {
@@ -52,12 +62,10 @@ public class RelativePoint {
     if (targetWindow == null) {
       targetWindow = JOptionPane.getRootFrame();
     }
-
-    SwingUtilities.convertPointFromScreen(p, targetWindow);
-    init(targetWindow, p);
+    return targetWindow;
   }
 
-  private void init(@NotNull Component aComponent, Point aPointOnComponent) {
+  public RelativePoint(@NotNull Component aComponent, @NotNull Point aPointOnComponent) {
     if (aComponent.isShowing()) {
       myComponent = SwingUtilities.getRootPane(aComponent);
       myPointOnComponent = SwingUtilities.convertPoint(aComponent, aPointOnComponent, myComponent);
@@ -70,6 +78,7 @@ public class RelativePoint {
     myOriginalPoint = aPointOnComponent;
   }
 
+  @NotNull
   public Component getComponent() {
     return myComponent;
   }
@@ -162,11 +171,12 @@ public class RelativePoint {
     return new RelativePoint(root, screenPoint);
   }
 
+  @NotNull
   public Component getOriginalComponent() {
     return myOriginalComponent;
   }
 
-  @SuppressWarnings("unused")
+  @NotNull
   public Point getOriginalPoint() {
     return myOriginalPoint;
   }
