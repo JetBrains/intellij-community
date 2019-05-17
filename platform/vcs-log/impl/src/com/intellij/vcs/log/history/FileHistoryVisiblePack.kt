@@ -22,19 +22,22 @@ import com.intellij.vcs.log.data.DataPackBase
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.visible.VisiblePack
 
-class FileHistoryVisiblePack(dataPack: DataPackBase,
-                             graph: VisibleGraph<Int>,
-                             canRequestMore: Boolean,
-                             filters: VcsLogFilterCollection,
-                             commitsToPaths: Map<Int, MaybeDeletedFilePath>) : VisiblePack(dataPack, graph, canRequestMore,
-                                                                                           filters, commitsToPaths) {
+internal class FileHistoryVisiblePack(dataPack: DataPackBase, graph: VisibleGraph<Int>, canRequestMore: Boolean,
+                                      filters: VcsLogFilterCollection,
+                                      fileHistory: FileHistory) : VisiblePack(dataPack, graph, canRequestMore, filters, fileHistory) {
+
+  constructor(dataPack: DataPackBase, graph: VisibleGraph<Int>, canRequestMore: Boolean, filters: VcsLogFilterCollection,
+              commitsToPaths: Map<Int, MaybeDeletedFilePath>) : this(dataPack, graph, canRequestMore, filters, FileHistory(commitsToPaths))
+
   companion object {
-    private val VcsLogDataPack.commitsToPathsMap: Map<Int, MaybeDeletedFilePath>
+    internal val VcsLogDataPack.fileHistory: FileHistory
       get() {
-        if (this !is VisiblePack) return emptyMap()
-        val data = this.getAdditionalData<Any>() as? Map<*, *> ?: return emptyMap()
-        return data as Map<Int, MaybeDeletedFilePath>
+        if (this !is VisiblePack) return EMPTY_HISTORY
+        return this.getAdditionalData<Any>() as? FileHistory ?: EMPTY_HISTORY
       }
+
+    private val VcsLogDataPack.commitsToPathsMap: Map<Int, MaybeDeletedFilePath>
+      get() = fileHistory.commitsToPathsMap
 
     @JvmStatic
     fun VcsLogDataPack.filePath(commit: Int): FilePath? = this.commitsToPathsMap[commit]?.filePath

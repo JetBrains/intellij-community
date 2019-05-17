@@ -23,10 +23,16 @@ import gnu.trove.*
 import java.util.*
 import java.util.function.BiConsumer
 
+internal class FileHistory(val commitsToPathsMap: Map<Int, MaybeDeletedFilePath>)
+internal val EMPTY_HISTORY = FileHistory(emptyMap())
+
 internal class FileHistoryBuilder(private val startCommit: Int?,
                                   private val startPath: FilePath,
                                   private val fileHistoryData: FileHistoryData) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
-  val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
+  private val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
+
+  val fileHistory: FileHistory
+    get() = FileHistory(pathsMap)
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
     val needToRepeat = removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)

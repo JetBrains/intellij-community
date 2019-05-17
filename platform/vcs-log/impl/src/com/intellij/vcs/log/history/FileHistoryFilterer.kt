@@ -180,7 +180,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       val visibleGraph = permanentGraph.createVisibleGraph(sortType, matchingHeads, data.getCommits(), historyBuilder)
 
       reindexFirstCommitsIfNeeded(visibleGraph)
-      return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, historyBuilder.pathsMap)
+      return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, historyBuilder.fileHistory)
     }
 
     private fun reindexFirstCommitsIfNeeded(graph: VisibleGraph<Int>) {
