@@ -191,6 +191,10 @@ public class SystemInfo extends SystemInfoRt {
     }
   }
 
+  public static boolean isJavaVersionAtLeast(int major) {
+    return isJavaVersionAtLeast(major, 0, 0);
+  }
+
   public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
     return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
   }
