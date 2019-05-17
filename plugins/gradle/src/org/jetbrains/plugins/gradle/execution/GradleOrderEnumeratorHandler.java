@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -112,7 +113,7 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
       return false;
     }
 
-    boolean isDelegatedBuildEnabled = GradleProjectSettings.isDelegatedBuildEnabled(rootModel.getModule());
+    boolean isDelegatedBuildEnabled = GradleSettingsService.isDelegatedBuildEnabled(rootModel.getModule());
     for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
       if (includeTests) {
         if (isDelegatedBuildEnabled) {

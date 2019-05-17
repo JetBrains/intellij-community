@@ -8,7 +8,6 @@ import com.intellij.util.io.write
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
-import java.lang.reflect.InvocationTargetException
 
 class NonDefaultConstructorTest {
   @Rule
@@ -61,10 +60,48 @@ class NonDefaultConstructorTest {
       file.read(NoDefaultConstructorBean::class.java)
     }
       .isInstanceOf(AssertionError::class.java)
-      .hasCauseInstanceOf(InvocationTargetException::class.java)
+      .hasCauseInstanceOf(SerializationException::class.java)
     assertThat(file.file).doesNotExist()
   }
+
+  @Test
+  fun `nested list`() {
+    val ionText = """
+      {
+        '@id':0,
+        gradleHomeDir:'/Volumes/data/.gradle/wrapper/dists/gradle-5.4.1-bin/e75iq110yv9r9wt1a6619x2xm/gradle-5.4.1',
+        classpathEntries:[
+          {
+            '@id':1,
+            classesFile:[
+              "/Volumes/data/.gradle/caches/modules-2/files-2.1/com.gradle/build-scan-plugin/2.1/bade2a9009f96169d2b25d3f2023afb2cdf8119f/build-scan-plugin-2.1.jar"
+            ],
+            sourcesFile:0,
+            javadocFile:0
+          }
+        ],
+        owner:{
+          '@id':93,
+          id:GRADLE,
+          readableName:Gradle
+        }
+      }
+    """.trimIndent()
+
+    objectSerializer.read(BuildScriptClasspathData::class.java, ionText)
+  }
 }
+
+@Suppress("unused")
+private class ProjectSystemId @PropertyMapping("id", "readableName") constructor(@JvmField val id: String, @JvmField val readableName: String)
+
+@Suppress("unused")
+private class ClasspathEntry @PropertyMapping("classesFile", "sourcesFile", "javadocFile") constructor(@JvmField val classesFile: MutableSet<String>,
+                                                                                                       @JvmField val sourcesFile: MutableSet<String>,
+                                                                                                       @JvmField val javadocFile: MutableSet<String>)
+
+@Suppress("unused")
+private class BuildScriptClasspathData @PropertyMapping("owner", "classpathEntries") constructor(@JvmField val owner: ProjectSystemId, @JvmField val classpathEntries: MutableList<ClasspathEntry>)
 
 private class ContainingBean {
   @JvmField

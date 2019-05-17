@@ -130,12 +130,18 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
           initArgs[argIndex] = binding.deserialize(subReadContext)
         }
         catch (e: Exception) {
-          context.errors.parameters.add(ReadError("Cannot deserialize parameter value (fieldName=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e))
+          throw SerializationException("Cannot deserialize parameter value (fieldName=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e)
         }
       }
     }
 
-    val instance = constructorInfo.constructor.newInstance(*initArgs)
+    val instance = try {
+      constructorInfo.constructor.newInstance(*initArgs)
+    }
+    catch (e: Exception) {
+      throw SerializationException("Cannot create instance (beanClass=${beanClass.name}, initArgs=${initArgs.joinToString()})", e)
+    }
+
     if (id != -1) {
       context.objectIdReader.registerObject(instance, id)
     }
@@ -210,6 +216,9 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
       try {
         binding.deserialize(instance, accessors[bindingIndex], context)
       }
+      catch (e: SerializationException) {
+        throw e
+      }
       catch (e: Exception) {
         context.errors.fields.add(ReadError("Cannot deserialize field value (field=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e))
       }
@@ -221,7 +230,11 @@ private inline fun readStruct(reader: IonReader, read: (fieldName: String, type:
   reader.stepIn()
   while (true) {
     val type = reader.next() ?: break
-    read(reader.fieldName, type)
+    val fieldName = reader.fieldName
+    if (fieldName == null) {
+      throw IllegalStateException("No valid current value or the current value is not a field of a struct.")
+    }
+    read(fieldName, type)
   }
   reader.stepOut()
 }

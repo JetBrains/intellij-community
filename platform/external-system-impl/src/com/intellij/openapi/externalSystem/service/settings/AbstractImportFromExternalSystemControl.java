@@ -81,8 +81,6 @@ public abstract class AbstractImportFromExternalSystemControl<
     myExternalSystemId = externalSystemId;
     mySystemSettings = systemSettings;
     myProjectSettings = projectSettings;
-    myProjectSettings.setupNewProjectDefault();
-
     myProjectSettingsControl = createProjectSettingsControl(projectSettings);
     mySystemSettingsControl = createSystemSettingsControl(systemSettings);
     myShowProjectFormatPanel = showProjectFormatPanel;
@@ -131,7 +129,7 @@ public abstract class AbstractImportFromExternalSystemControl<
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(mySystemSettingsControlPanel, BorderLayout.CENTER);
       hideableSystemSettingsPanel = new HideableTitledPanel(
-        ExternalSystemBundle.message("settings.title.system.settings"), false);
+        ExternalSystemBundle.message("settings.title.system.settings", myExternalSystemId.getReadableName()), false);
       hideableSystemSettingsPanel.setContentComponent(panel);
       hideableSystemSettingsPanel.setOn(false);
       myComponent.add(hideableSystemSettingsPanel, ExternalSystemUiUtil.getFillLineConstraints(0));

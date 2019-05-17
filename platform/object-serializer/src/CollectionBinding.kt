@@ -47,7 +47,7 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
   override fun deserialize(context: ReadContext): Collection<Any?> {
     if (context.reader.type == IonType.INT) {
       LOG.assertTrue(context.reader.intValue() == 0)
-      return emptyList()
+      return if (Set::class.java.isAssignableFrom(collectionClass)) emptySet() else emptyList()
     }
 
     val result = createCollection()
