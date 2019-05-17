@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 @SuppressWarnings({"HardCodedStringLiteral", "ConstantConditions", "JUnitTestCaseInProductSource"})
-@NonNls public abstract class TestSourceBasedTestCase extends IdeaTestCase {
+@NonNls public abstract class TestSourceBasedTestCase extends JavaProjectTestCase {
   private File myTempDirectory;
 
   @Override

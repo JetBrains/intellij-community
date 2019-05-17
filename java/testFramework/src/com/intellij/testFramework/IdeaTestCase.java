@@ -2,7 +2,8 @@
 package com.intellij.testFramework;
 
 /**
- * @author mike
+ * @deprecated name of this class may be confusing, extend {@link JavaProjectTestCase} instead
  */
+@Deprecated
 public abstract class IdeaTestCase extends JavaProjectTestCase {
 }

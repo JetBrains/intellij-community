@@ -6,14 +6,14 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public abstract class Eclipse2ModulesTest extends IdeaTestCase {
+public abstract class Eclipse2ModulesTest extends JavaProjectTestCase {
   @NonNls
   protected static final String DEPEND_MODULE_NAME = "ws-internals";
   private String myDependantModulePath = "ws-internals";
