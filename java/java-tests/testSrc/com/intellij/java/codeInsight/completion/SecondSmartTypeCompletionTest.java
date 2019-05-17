@@ -24,6 +24,10 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 @SuppressWarnings({"ALL"})
 public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
@@ -165,6 +169,11 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
   }
 
   public void testEmptyListInMethodCall() throws Throwable {
+    List<String> abc = new ArrayList<>();
+    for (Iterator<String> iterator = abc.iterator(); iterator.hasNext(); ) {
+      String s = iterator.next();
+      System.out.println(s);
+    }
     configure();
     selectItem(myItems[0]);
     checkResult();

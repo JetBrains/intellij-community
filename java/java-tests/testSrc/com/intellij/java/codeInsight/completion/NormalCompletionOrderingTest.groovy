@@ -879,4 +879,80 @@ class Foo {
     myFixture.checkResult 'class Foo { { System.out.println(<caret>); } }'
   }
 
+  void testPreferOverrideAnnotationBeforeField() {
+    configureByTestName()
+    checkPreferMissingOverrideOverGetterOverSetter(1)
+    typeOutAtOverrideOnEmptyLine()
+  }
+
+  void testPreferOverrideAnnotationAfterBeginBeforeField() {
+    configureByTestName()
+    checkPreferMissingOverrideOverGetterOverSetter(1)
+    typeOutAtOverrideOnEmptyLine()
+  }
+
+
+  void testPreferOverrideAnnotationAfterBeginBeforeMethod() {
+    configureByTestName()
+    checkPreferMissingOverrideOverGetterOverSetter(0)
+    typeOutAtOverrideOnEmptyLine()
+  }
+
+  void testPreferOverrideAnnotationAfterFieldBeforeEnd() {
+    configureByTestName()
+    checkPreferMissingOverrideOverGetterOverSetter(1)
+    typeOutAtOverrideOnEmptyLine()
+  }
+
+  void testPreferOverrideAnnotationAfterFieldBeforeField() {
+    configureByTestName()
+    checkPreferMissingOverrideOverGetterOverSetter(2)
+    typeOutAtOverrideOnEmptyLine()
+  }
+
+  void testPreferOverrideAnnotationAfterBeginBeforeUnannotatedMethod() {
+    configureByTestName()
+    checkPreferMissingOverrideOverGetterOverSetter(0)
+    typeOutAtOverrideOnEmptyLine()
+  }
+
+  private void typeOutAtOverrideOnEmptyLine() {
+    type "@O"
+    complete()
+    assertPreferredItems 0, 'Override', 'String firstOverride'
+    type "verride"
+    assertPreferredItems 0, 'Override', 'String firstOverride'
+    type " "
+    complete()
+    assertPreferredItems 0, 'String firstOverride'
+  }
+
+  private void checkPreferMissingOverrideOverGetterOverSetter(int dummyFieldCount) {
+    complete()
+    if (dummyFieldCount == 0) {
+      assertPreferredItems (0, 'String firstOverride',
+                            'protected Object clone', 'public boolean equals', 'public int hashCode', 'public String toString', 'protected void finalize',
+                            'final')
+    } else if (dummyFieldCount == 1) {
+      assertPreferredItems (0, 'String firstOverride',
+                            'public int getDummyField1',
+                            'public void setDummyField1',
+                            'protected Object clone', 'public boolean equals', 'public int hashCode', 'public String toString', 'protected void finalize',
+                            'final')
+    }
+    else if (dummyFieldCount == 2) {
+      assertPreferredItems (0, 'String firstOverride',
+                            'public int getDummyField1',
+                            'public int getDummyField2',
+                            'public void setDummyField1',
+                            'public void setDummyField2',
+                            'protected Object clone', 'public boolean equals', 'public int hashCode', 'public String toString', 'protected void finalize',
+                            'final')
+    } else {
+      throw new IllegalArgumentException("Unsupported dummyFieldCount: $dummyFieldCount")
+    }
+    assertNotNull("Lookup should still be visible", getLookup())
+    // Closing the completions menu to get back to the initial state
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
+  }
 }
