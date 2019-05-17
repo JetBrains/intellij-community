@@ -106,7 +106,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @NonNls private static final String USE_STATIC_IMPORT_STATE = "structural.search.use.static.import";
   @NonNls private static final String FILTERS_VISIBLE_STATE = "structural.search.filters.visible";
 
-  public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH = Key.create("STRUCTURAL_SEARCH_AREA");
+  public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH_DIALOG = Key.create("STRUCTURAL_SEARCH_DIALOG");
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
@@ -201,7 +201,7 @@ public class StructuralSearchDialog extends DialogWrapper {
           DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
         }
         TextCompletionUtil.installCompletionHint(editor);
-        editor.putUserData(STRUCTURAL_SEARCH, StructuralSearchDialog.this);
+        editor.putUserData(STRUCTURAL_SEARCH_DIALOG, StructuralSearchDialog.this);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
       }
