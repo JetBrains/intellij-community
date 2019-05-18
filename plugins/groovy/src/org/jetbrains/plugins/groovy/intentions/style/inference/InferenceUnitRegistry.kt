@@ -5,7 +5,6 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.util.containers.BidirectionalMap
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -39,6 +38,8 @@ class InferenceUnitRegistry {
 
   fun createUnit(typeParameter: PsiTypeParameter): InferenceUnit = InferenceUnit.create(typeParameter, this)
 
+  fun createUnit(variable: InferenceVariable): InferenceUnit = InferenceUnit.create(variable.parameter, this, variable.instantiation)
+
   internal fun register(unit: InferenceUnit) {
     units.add(unit)
   }
@@ -46,8 +47,8 @@ class InferenceUnitRegistry {
   fun setUpUnits(variables: List<InferenceVariable>, session: GroovyInferenceSession) {
     val map = BidirectionalMap<InferenceUnit, InferenceVariable>()
     for (variable in variables) {
-      val unit = createUnit(variable.parameter)
-      unit.typeInstantiation = variable.instantiation.run { if (this.equalsToText(GroovyCommonClassNames.GROOVY_OBJECT)) PsiType.NULL else this }
+      val unit = createUnit(variable)
+//      unit.typeInstantiation = variable.instantiation.run { if (this.equalsToText(GroovyCommonClassNames.GROOVY_OBJECT)) PsiType.NULL else this }
       map[unit] = variable
     }
     val entries = map.entries.sortedBy { (unit, _) -> unit.toString() }

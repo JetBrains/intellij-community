@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
-import com.intellij.psi.PsiIntersectionType
-import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 
 /**
@@ -13,38 +11,17 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrd
  * Represents graph which is used for determining [InferenceUnit] dependencies.
  */
 class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
-
   private val representativeMap: MutableMap<InferenceUnit, InferenceUnit> = LinkedHashMap()
-  val initialInstantiations: MutableMap<InferenceUnit, PsiType> = LinkedHashMap()
 
   /**
    * Runs inference between nodes in the graph/
    */
   init {
-    flushInstantiations(registry)
     condensate(registry)
     val order = topologicalOrder()
     setTreeStructure(order)
-    propagatePossibleInstantiations(order)
     collapseTreeEdges(order)
-    adjustFlexibleVariables()
-  }
-
-
-  /**
-   * All known instantiations are removed, because we may find some dependencies between units and therefore overwrite instantiations.
-   */
-  private fun flushInstantiations(registry: InferenceUnitRegistry) {
-    registry.getUnits().forEach {
-      initialInstantiations[it] = if (it.initialTypeParameter.extendsList.referencedTypes.size > 1) {
-        PsiIntersectionType.createIntersection(it.initialTypeParameter.extendsList.referencedTypes.toList())
-      }
-      else {
-        it.initialTypeParameter.extendsList.referencedTypes.firstOrNull() ?: it.typeInstantiation
-      }
-      it.typeInstantiation = PsiType.NULL
-    }
-
+    propagatePossibleInstantiations(order)
   }
 
   /**
@@ -175,11 +152,18 @@ class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
    */
   private fun propagatePossibleInstantiations(order: List<InferenceUnit>) {
     for (unit in order) {
-      if (unit.unitInstantiation == null && unit.subtypes.isEmpty()) {
-        unit.typeInstantiation = initialInstantiations[unit]!!
-      }
-      if (unit.unitInstantiation != null && (unit.subtypes + unit.weakSubtypes).isEmpty()) {
-        unit.typeInstantiation = unit.unitInstantiation!!.type
+      unit.run {
+        val mayBeInstantiatedToSupertype = unitInstantiation != null && (subtypes + weakSubtypes).isEmpty()
+        val isDetached = flexible && (subtypes + supertypes + weakSupertypes + weakSubtypes).isEmpty()
+        val hasNoDependencies = unitInstantiation == null && subtypes.isEmpty()
+        when {
+          mayBeInstantiatedToSupertype -> {
+            typeInstantiation = unitInstantiation!!.type
+          }
+          !(isDetached || hasNoDependencies) -> {
+            forbidInstantiation = true
+          }
+        }
       }
     }
   }
@@ -212,19 +196,6 @@ class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
     val children = LinkedHashSet<InternalNode>()
   }
 
-  /**
-   * Sets up actual instantiation for flexible nodes
-   */
-  private fun adjustFlexibleVariables() {
-    for (unit in registry.getUnits().filter { it.flexible }.map { getRepresentative(it) }) {
-      if ((unit.subtypes + unit.supertypes + unit.weakSupertypes + unit.weakSubtypes).isEmpty()) {
-        unit.typeInstantiation = initialInstantiations[unit]!!
-      }
-      else if (unit.unitInstantiation != null) {
-        unit.typeInstantiation = unit.unitInstantiation!!.type
-      }
-    }
-  }
 
   fun getRepresentative(unit: InferenceUnit): InferenceUnit {
     return representativeMap[unit]!!

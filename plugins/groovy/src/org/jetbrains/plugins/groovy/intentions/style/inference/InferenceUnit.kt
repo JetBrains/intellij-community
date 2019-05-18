@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
+import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -13,11 +14,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
  * An analogue for inference variable.
  * This class is a wrapper for [PsiTypeParameter] and widely used in inference process.
  */
-class InferenceUnit private constructor(val initialTypeParameter: PsiTypeParameter) {
+class InferenceUnit(val initialTypeParameter: PsiTypeParameter, basicType: PsiType, var flexible: Boolean = false, var constant: Boolean = false) {
 
   companion object {
-    fun create(typeParameter: PsiTypeParameter, registry: InferenceUnitRegistry): InferenceUnit {
-      val unit = InferenceUnit(typeParameter)
+    fun create(typeParameter: PsiTypeParameter, registry: InferenceUnitRegistry, basicType: PsiType = PsiType.NULL): InferenceUnit {
+      val unit = InferenceUnit(typeParameter, basicType)
       registry.register(unit)
       return unit
     }
@@ -43,7 +44,12 @@ class InferenceUnit private constructor(val initialTypeParameter: PsiTypeParamet
   /**
    * Endpoint type instantiation for this unit.
    */
-  var typeInstantiation: PsiType = PsiType.NULL
+  var typeInstantiation: PsiType = if (initialTypeParameter.extendsList.referencedTypes.size > 1) {
+    PsiIntersectionType.createIntersection(initialTypeParameter.extendsList.referencedTypes.toList())
+  }
+  else {
+    initialTypeParameter.extendsList.referencedTypes.firstOrNull() ?: basicType
+  }
 
   /**
    * Direct dependency on other unit.
@@ -57,14 +63,14 @@ class InferenceUnit private constructor(val initialTypeParameter: PsiTypeParamet
    * For example, we knew before inference process that some type parameters were already existed.
    * We need units for these type parameters, but their instantiation must not change.
    */
-  var constant: Boolean = false
+//  var constant: Boolean = false
 
   /**
    * Unit is flexible if it represents direct method parameter.
    * For example:
    * `def <T, U> foo(List<U> us, T ts){}`. Here is T flexible and U not.
    */
-  var flexible: Boolean = false
+//  var flexible: Boolean = false
 
   var forbidInstantiation: Boolean = false
 

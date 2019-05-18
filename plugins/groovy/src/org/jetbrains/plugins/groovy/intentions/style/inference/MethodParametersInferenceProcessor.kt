@@ -75,10 +75,10 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
                                 representativeSubstitutor: PsiSubstitutor,
                                 resultSubstitutor: PsiSubstitutor): PsiType {
     val equalTypeParameters = graph.getEqualUnits(unit).filter { it.typeInstantiation == PsiType.NULL }
-    val mayBeDirectlyInstantiated = equalTypeParameters.isEmpty() &&
+    val mayBeDirectlyInstantiated = equalTypeParameters.isEmpty() && !unit.forbidInstantiation &&
                                     when {
                                       unit.flexible -> (unit.typeInstantiation !is PsiIntersectionType)
-                                      else -> !unit.forbidInstantiation && unit.subtypes.size <= 1
+                                      else -> unit.subtypes.size <= 1
                                     }
     when {
       mayBeDirectlyInstantiated -> {
@@ -91,7 +91,7 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
       }
       else -> {
         val parent = unit.unitInstantiation
-        val advice = parent?.type ?: graph.initialInstantiations[unit]!!
+        val advice = parent?.type ?: unit.typeInstantiation
         val newTypeParam = driver.createBoundedTypeParameterElement(unit.initialTypeParameter.name!!, representativeSubstitutor,
                                                                     resultSubstitutor,
                                                                     advice)
