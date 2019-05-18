@@ -1,50 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.checkin;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package git4idea.checkin
 
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.CommitSession;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitSession
+import org.jetbrains.annotations.Nls
 
-/**
- * @author yole
- */
-public class GitCommitAndPushExecutor implements CommitExecutor {
-  public static final String ID = "Git.Commit.And.Push.Executor";
-
-  @NotNull private final GitCheckinEnvironment myCheckinEnvironment;
-
-  public GitCommitAndPushExecutor(@NotNull GitCheckinEnvironment checkinEnvironment) {
-    myCheckinEnvironment = checkinEnvironment;
-  }
-
-  @Override
+class GitCommitAndPushExecutor(private val myCheckinEnvironment: GitCheckinEnvironment) : CommitExecutor {
   @Nls
-  public String getActionText() {
-    return "Commit and &Push...";
+  override fun getActionText(): String = "Commit and &Push..."
+
+  override fun useDefaultAction(): Boolean = false
+
+  override fun getId(): String = ID
+
+  override fun supportsPartialCommit(): Boolean = true
+
+  override fun createCommitSession(): CommitSession {
+    myCheckinEnvironment.setNextCommitIsPushed(true)
+    return CommitSession.VCS_COMMIT
   }
 
-  @Override
-  public boolean useDefaultAction() {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public String getId() {
-    return ID;
-  }
-
-  @Override
-  public boolean supportsPartialCommit() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public CommitSession createCommitSession() {
-    myCheckinEnvironment.setNextCommitIsPushed(true);
-    return CommitSession.VCS_COMMIT;
+  companion object {
+    internal const val ID = "Git.Commit.And.Push.Executor"
   }
 }

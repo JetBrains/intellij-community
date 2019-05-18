@@ -1,45 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.zmlx.hg4idea.provider.commit;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.zmlx.hg4idea.provider.commit
 
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.CommitSession;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitSession
+import org.jetbrains.annotations.Nls
 
-/**
- * @author Kirill Likhodedov
- */
-public class HgCommitAndPushExecutor implements CommitExecutor {
-  public static final String ID = "Hg.Commit.And.Push.Executor";
-
-  private final HgCheckinEnvironment myCheckinEnvironment;
-
-  public HgCommitAndPushExecutor(HgCheckinEnvironment checkinEnvironment) {
-    myCheckinEnvironment = checkinEnvironment;
-  }
-
-  @Override
+class HgCommitAndPushExecutor(private val myCheckinEnvironment: HgCheckinEnvironment) : CommitExecutor {
   @Nls
-  public String getActionText() {
-    return "Commit and &Push...";
+  override fun getActionText(): String = "Commit and &Push..."
+
+  override fun useDefaultAction(): Boolean = false
+
+  override fun getId(): String = ID
+
+  override fun createCommitSession(): CommitSession {
+    myCheckinEnvironment.setNextCommitIsPushed()
+    return CommitSession.VCS_COMMIT
   }
 
-  @Override
-  public boolean useDefaultAction() {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public String getId() {
-    return ID;
-  }
-
-  @Override
-  @NotNull
-  public CommitSession createCommitSession() {
-    myCheckinEnvironment.setNextCommitIsPushed();
-    return CommitSession.VCS_COMMIT;
+  companion object {
+    internal const val ID = "Hg.Commit.And.Push.Executor"
   }
 }
