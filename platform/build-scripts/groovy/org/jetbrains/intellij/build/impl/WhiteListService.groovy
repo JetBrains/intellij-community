@@ -13,9 +13,10 @@ import org.jetbrains.intellij.build.BuildContext
 @CompileStatic
 class WhiteListService {
   private final BuildContext context
-  private final String providerUri = 'https://resources.jetbrains.com/storage/fus/config/FUS/lion-v3-assistant.xml'
+  private final String recorderId = 'FUS'
+  private final String providerUri = "https://resources.jetbrains.com/storage/fus/config/$recorderId/lion-v3-assistant.xml"
   private final String whiteListJson = 'white-list.json'
-  String includeInto = 'resources'
+  String includeInto = "resources/event-log-whitelist/$recorderId"
 
   WhiteListService(BuildContext context) {
     this.context = context

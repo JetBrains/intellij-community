@@ -58,17 +58,24 @@ public class EventLogWhitelistPersistence {
   public String getCachedWhiteList() {
     File file = getWhiteListFile();
     try {
-      if (!file.exists()) {
-        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("resources/" + WHITE_LIST_DATA_FILE)) {
-          if (stream == null) return null;
-          Files.copy(stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        }
-      }
-      return FileUtil.loadFile(file);
+      if (!file.exists()) initBuiltinWhiteList(file);
+      if (file.exists()) return FileUtil.loadFile(file);
     }
     catch (IOException e) {
       LOG.error(e);
     }
     return null;
+  }
+
+  private void initBuiltinWhiteList(File file) throws IOException {
+    try (InputStream stream = getClass().getClassLoader().getResourceAsStream(builtinWhiteListPath())) {
+      if (stream == null) return;
+      if (!file.mkdirs()) throw new IOException("Unable to create " + file.getAbsolutePath());
+      Files.copy(stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+  }
+
+  private String builtinWhiteListPath() {
+    return "resources/" + FUS_WHITELIST_PATH + "/" + myRecorderId + "/" + WHITE_LIST_DATA_FILE;
   }
 }
