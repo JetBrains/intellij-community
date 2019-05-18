@@ -124,7 +124,7 @@ RegexWordWithWhiteSpace  = [^\"'] | {EscapedChar}
 RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteSpace}+\" | {RegexWord}+
 
 HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
-StringContent            = [^$\"`(] | {EscapedChar}
+StringContent            = [^$\"`(\\] | {EscapedChar}
 EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
 
 %state ARITHMETIC_EXPRESSION
