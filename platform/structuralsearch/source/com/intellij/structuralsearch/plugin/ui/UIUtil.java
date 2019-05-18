@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.icons.AllIcons;
@@ -25,13 +26,16 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TooltipWithClickableLinks;
+import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +66,9 @@ public class UIUtil {
   @NonNls public static final String EXPECTED_TYPE = "EXPECTED TYPE";
   @NonNls public static final String MINIMUM_ZERO = "MINIMUM ZERO";
   @NonNls public static final String MAXIMUM_UNLIMITED = "MAXIMUM UNLIMITED";
+
+  private UIUtil() {
+  }
 
   @NotNull
   public static Editor createEditor(Document doc, final Project project, boolean editable, @Nullable TemplateContextType contextType) {
@@ -280,5 +287,53 @@ public class UIUtil {
       }
     }
     return StructuralSearchUtil.getDefaultFileType();
+  }
+
+  @NotNull
+  public static Document createDocument(@NotNull Project project, @NotNull FileType fileType, Language dialect, @NotNull String text,
+                                        @NotNull StructuralSearchProfile profile) {
+    PsiFile codeFragment = profile.createCodeFragment(project, text, null);
+    if (codeFragment == null) {
+      codeFragment = createFileFragment(project, fileType, dialect, text);
+    }
+
+    if (codeFragment != null) {
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+      assert doc != null : "code fragment element should be physical";
+      return doc;
+    }
+
+    return EditorFactory.getInstance().createDocument(text);
+  }
+
+  @NotNull
+  public static Editor createEditor(@NotNull Project project, @NotNull FileType fileType, Language dialect, @NotNull String text,
+                                    @NotNull StructuralSearchProfile profile) {
+    PsiFile codeFragment = profile.createCodeFragment(project, text, null);
+    if (codeFragment == null) {
+      codeFragment = createFileFragment(project, fileType, dialect, text);
+    }
+
+    if (codeFragment != null) {
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+      assert doc != null : "code fragment element should be physical";
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
+      return createEditor(doc, project, true, true, profile.getTemplateContextType());
+    }
+
+    final EditorFactory factory = EditorFactory.getInstance();
+    final Document document = factory.createDocument(text);
+    final EditorEx editor = (EditorEx)factory.createEditor(document, project);
+    editor.getSettings().setFoldingOutlineShown(false);
+    return editor;
+  }
+
+  private static PsiFile createFileFragment(@NotNull Project project, @NotNull FileType fileType, Language dialect, @NotNull String text) {
+    final String name = "__dummy." + fileType.getDefaultExtension();
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+
+    return dialect == null
+           ? factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), true, true)
+           : factory.createFileFromText(name, dialect, text, true, true);
   }
 }

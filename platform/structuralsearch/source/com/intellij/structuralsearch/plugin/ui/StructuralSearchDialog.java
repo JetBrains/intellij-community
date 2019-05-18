@@ -177,7 +177,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   private EditorTextField createEditor(String text) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
-    final Document document = profile.createDocument(getProject(), myFileType, myDialect, text);
+    final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, text, profile);
 
     final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
       @Override
@@ -490,9 +490,11 @@ public class StructuralSearchDialog extends DialogWrapper {
           myContext = item.getContext();
           final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
           assert profile != null;
-          final Document searchDocument = profile.createDocument(getProject(), myFileType, myDialect, mySearchCriteriaEdit.getText());
+          final Document searchDocument =
+            UIUtil.createDocument(getProject(), myFileType, myDialect, mySearchCriteriaEdit.getText(), profile);
           mySearchCriteriaEdit.setNewDocumentAndFileType(myFileType, searchDocument);
-          final Document replaceDocument = profile.createDocument(getProject(), myFileType, myDialect, myReplaceCriteriaEdit.getText());
+          final Document replaceDocument =
+            UIUtil.createDocument(getProject(), myFileType, myDialect, myReplaceCriteriaEdit.getText(), profile);
           myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
           myFilterPanel.setProfile(profile);
           initiateValidation();

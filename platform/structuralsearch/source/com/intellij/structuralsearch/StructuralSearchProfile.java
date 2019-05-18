@@ -1,14 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -88,55 +83,6 @@ public abstract class StructuralSearchProfile {
                                         @NotNull Project project,
                                         boolean physical) {
     return createPatternTree(text, context, fileType, null, null, null, project, physical);
-  }
-
-  @NotNull
-  public Document createDocument(@NotNull Project project, @NotNull FileType fileType, Language dialect, String text) {
-    PsiFile codeFragment = createCodeFragment(project, text, null);
-    if (codeFragment == null) {
-      codeFragment = createFileFragment(project, fileType, dialect, text);
-    }
-
-    if (codeFragment != null) {
-      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
-      assert doc != null : "code fragment element should be physical";
-      return doc;
-    }
-
-    return EditorFactory.getInstance().createDocument(text);
-  }
-
-  @NotNull
-  public Editor createEditor(@NotNull Project project,
-                             @NotNull FileType fileType,
-                             Language dialect,
-                             String text) {
-    PsiFile codeFragment = createCodeFragment(project, text, null);
-    if (codeFragment == null) {
-      codeFragment = createFileFragment(project, fileType, dialect, text);
-    }
-
-    if (codeFragment != null) {
-      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
-      assert doc != null : "code fragment element should be physical";
-      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
-      return UIUtil.createEditor(doc, project, true, true, getTemplateContextType());
-    }
-
-    final EditorFactory factory = EditorFactory.getInstance();
-    final Document document = factory.createDocument(text);
-    final EditorEx editor = (EditorEx)factory.createEditor(document, project);
-    editor.getSettings().setFoldingOutlineShown(false);
-    return editor;
-  }
-
-  private static PsiFile createFileFragment(Project project, FileType fileType, Language dialect, String text) {
-    final String name = "__dummy." + fileType.getDefaultExtension();
-    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-
-    return dialect == null ?
-           factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), true, true) :
-           factory.createFileFromText(name, dialect, text, true, true);
   }
 
   @Nullable

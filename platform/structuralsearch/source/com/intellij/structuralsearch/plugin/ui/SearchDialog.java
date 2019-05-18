@@ -139,7 +139,7 @@ public class SearchDialog extends DialogWrapper {
 
         final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
         if (profile != null) {
-          editor = profile.createEditor(searchContext.getProject(), fileType, dialect, text);
+          editor = UIUtil.createEditor(searchContext.getProject(), fileType, dialect, text, profile);
         }
       }
     }
