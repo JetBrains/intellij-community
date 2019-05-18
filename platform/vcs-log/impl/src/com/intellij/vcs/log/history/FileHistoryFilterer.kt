@@ -177,8 +177,9 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       val commit = (hash ?: getHead(dataPack))?.let { storage.getCommitIndex(it, root) }
       val historyBuilder = FileHistoryBuilder(commit, filePath, data)
       val visibleGraph = permanentGraph.createVisibleGraph(sortType, matchingHeads, data.getCommits(), historyBuilder)
+      val fileHistory = historyBuilder.fileHistory
 
-      return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, historyBuilder.fileHistory)
+      return FileHistoryVisiblePack(dataPack, visibleGraph, fileHistory.unmatchedAdditionsDeletions.isNotEmpty(), filters, fileHistory)
     }
 
     private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<Int>, Rename> {
