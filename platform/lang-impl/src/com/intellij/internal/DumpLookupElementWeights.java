@@ -29,7 +29,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +70,19 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
   }
 
   public static List<String> getLookupElementWeights(LookupImpl lookup, boolean hideSingleValued) {
+    return getLookupElementWeights(lookup, hideSingleValued, false);
+  }
+
+  public static List<String> getLookupElementWeights(LookupImpl lookup,
+                                                     boolean hideSingleValued,
+                                                     boolean trimLeadingSpaces) {
     final Map<LookupElement, List<Pair<String, Object>>> weights = lookup.getRelevanceObjects(lookup.getItems(), hideSingleValued);
-    return ContainerUtil.map(weights.entrySet(), entry -> entry.getKey().getLookupString() + "\t" + StringUtil.join(entry.getValue(), pair -> pair.first + "=" + pair.second, ", "));
+    return ContainerUtil.map(weights.entrySet(), entry -> {
+      String lookupString = entry.getKey().getLookupString();
+      if (trimLeadingSpaces) {
+        lookupString = StringUtil.trimLeading(lookupString);
+      }
+      return lookupString + "\t" + StringUtil.join(entry.getValue(), pair -> pair.first + "=" + pair.second, ", ");
+    });
   }
 }

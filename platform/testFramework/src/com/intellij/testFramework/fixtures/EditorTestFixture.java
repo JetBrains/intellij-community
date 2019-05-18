@@ -256,14 +256,18 @@ public class EditorTestFixture {
     reportLeadingSpacesInLookupExpectations(expected);
 
     final JList list = lookup.getList();
-    List<String> strings = getLookupElementStrings();
-    assertNotNull(strings);
+    List<String> originalLookups = getLookupElementStrings();
+    assertNotNull(originalLookups);
     // JavaGenerateMemberCompletionContributor uses leading spaces in the lookup string to cleverly control sorting
     // We just care about the order of the individual sort items, we don't want to depend on this implementation detail in our tests
-    List<String> lookupsNoLeadingSpace = ContainerUtil.map(strings, StringUtil::trimLeading);
+    List<String> lookupsNoLeadingSpace = ContainerUtil.map(originalLookups, StringUtil::trimLeading);
     final List<String> actual = ContainerUtil.getFirstItems(lookupsNoLeadingSpace, expected.length);
     if (!actual.equals(Arrays.asList(expected))) {
-      UsefulTestCase.assertOrderedEquals(DumpLookupElementWeights.getLookupElementWeights(lookup, false), expected);
+      if (!lookupsNoLeadingSpace.equals(originalLookups)) {
+        //noinspection UseOfSystemOutOrSystemErr
+        System.err.println("Leading spaces of lookup strings have been trimmed!");
+      }
+      UsefulTestCase.assertOrderedEquals(DumpLookupElementWeights.getLookupElementWeights(lookup, false, true), expected);
     }
     if (selected != list.getSelectedIndex()) {
       //noinspection UseOfSystemOutOrSystemErr
