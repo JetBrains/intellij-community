@@ -629,7 +629,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(topDir);
     Set<VirtualFile> files = new HashSet<>();
     VfsUtilCore.processFilesRecursively(topDir, file -> { if (!file.isDirectory()) files.add(file); return true; });
-    assertEquals(39, files.size());  // 13 dirs of 3 files
+    assertThat(files).hasSize(39);  // 13 dirs of 3 files
     topDir.refresh(false, true);
 
     Set<VirtualFile> processed = new HashSet<>();
