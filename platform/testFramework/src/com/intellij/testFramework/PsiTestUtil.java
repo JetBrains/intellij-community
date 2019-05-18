@@ -161,7 +161,10 @@ public class PsiTestUtil {
 
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       if (Comparing.equal(entry.getFile(), vDir)) {
-        Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
+        if (entry instanceof ContentEntryImpl) {
+          Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
+        }
+
         return entry;
       }
     }
