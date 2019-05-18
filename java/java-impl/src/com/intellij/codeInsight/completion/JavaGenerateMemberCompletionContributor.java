@@ -65,15 +65,7 @@ public class JavaGenerateMemberCompletionContributor {
       if (modifierList != null) {
         String fileText = position.getContainingFile().getText();
         String prefix = fileText.substring(modifierList.getTextRange().getStartOffset(), parameters.getOffset());
-        PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(modifierList, PsiAnnotation.class);
-        if (annotations != null) {
-          for (PsiAnnotation annotation : annotations) {
-            if (Override.class.getName().equals(annotation.getQualifiedName())) {
-              hasOverrideAnnotation = true;
-              break;
-            }
-          }
-        }
+        hasOverrideAnnotation = modifierList.hasAnnotation(Override.class.getName());
         result = result.withPrefixMatcher(new NoMiddleMatchesAfterSpace(
           prefix));
       }
