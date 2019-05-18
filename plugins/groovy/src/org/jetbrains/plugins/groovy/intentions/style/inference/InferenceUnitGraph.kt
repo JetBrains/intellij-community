@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.PsiIntersectionType
-import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 
 /**
@@ -176,29 +174,16 @@ class InferenceUnitGraph(private val registry: InferenceUnitRegistry) {
    * If node has no dependencies, it is possible to remove parametrized type.
    */
   private fun propagatePossibleInstantiations(order: List<InferenceUnit>) {
-    var instantiationSubstitutor = PsiSubstitutor.EMPTY
-    for (unit in order.filter { it.unitInstantiation == null && it.subtypes.isEmpty() }) {
-      val validInstantiation =
-        when {
-          unit.supertypes.isNotEmpty() -> createExtendsBoundForTypeParameter(unit.initialTypeParameter)
-          else -> initialInstantiations[unit]!!
-        }
-      unit.typeInstantiation = instantiationSubstitutor.substitute(validInstantiation)
-      if (unit.typeInstantiation != PsiType.NULL) {
-        instantiationSubstitutor = instantiationSubstitutor.put(unit.initialTypeParameter, unit.typeInstantiation)
+    for (unit in order) {
+      if (unit.unitInstantiation == null && unit.subtypes.isEmpty()) {
+        unit.typeInstantiation = initialInstantiations[unit]!!
+      }
+      if (unit.unitInstantiation != null && (unit.subtypes + unit.weakSubtypes).isEmpty()) {
+        unit.typeInstantiation = unit.unitInstantiation!!.type
       }
     }
   }
 
-  private fun createExtendsBoundForTypeParameter(typeParameter: PsiTypeParameter): PsiType {
-    val supertypes = typeParameter.extendsList.referencedTypes
-    if (supertypes.size > 1) {
-      return PsiIntersectionType.createIntersection(*supertypes)
-    }
-    else {
-      return supertypes[0]
-    }
-  }
 
   /**
    * Tree branches may be shortened, if some node has only one child.
