@@ -14,16 +14,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
-
 public class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   public static final ShRenameAllOccurrencesHandler INSTANCE = new ShRenameAllOccurrencesHandler();
 
   @Override
   public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-    return editor.getProject() != null
-        && editor.getCaretModel().supportsMultipleCarets()
-        && !SEARCH_DISABLED.get(editor, false);
+    return editor.getProject() != null;
   }
 
   @Override
