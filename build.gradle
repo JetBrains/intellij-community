@@ -20,8 +20,8 @@ import org.jetbrains.grammarkit.tasks.GenerateParser
 plugins {
     id 'idea'
     id 'java'
-    id 'org.jetbrains.intellij' version '0.4.4'
-    id 'org.jetbrains.grammarkit' version '2018.3'
+    id 'org.jetbrains.intellij' version '0.4.8'
+    id 'org.jetbrains.grammarkit' version '2019.1'
     id 'com.github.ManifestClasspath' version '0.1.0-RELEASE' // required in Windows
 }
 
