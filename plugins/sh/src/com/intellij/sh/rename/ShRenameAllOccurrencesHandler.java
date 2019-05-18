@@ -17,6 +17,9 @@ import java.util.List;
 public class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   public static final ShRenameAllOccurrencesHandler INSTANCE = new ShRenameAllOccurrencesHandler();
 
+  private ShRenameAllOccurrencesHandler() {
+  }
+
   @Override
   public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     return editor.getProject() != null;

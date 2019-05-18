@@ -15,7 +15,10 @@ import org.jetbrains.annotations.NotNull;
 public class ShRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
-    return dataContext.getData(CommonDataKeys.PSI_FILE) instanceof ShFile;
+    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+    return editor != null
+           && ShRenameAllOccurrencesHandler.INSTANCE.isEnabled(editor, editor.getCaretModel().getPrimaryCaret(), dataContext)
+           && dataContext.getData(CommonDataKeys.PSI_FILE) instanceof ShFile;
   }
 
   @Override
