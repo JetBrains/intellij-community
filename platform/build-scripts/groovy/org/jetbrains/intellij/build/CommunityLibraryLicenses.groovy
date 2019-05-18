@@ -239,8 +239,12 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "ISO RELAX", libraryName: "isorelax", license: "MIT License",
                        url: "http://sourceforge.net/projects/iso-relax/",
                        licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
-    new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.9.5", license: "Apache 2.0",
+
+    new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.9.9", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson"),
+    new LibraryLicense(name: "Jackson Databind", libraryName: "jackson-databind", version: "2.9.9", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson-databind"),
+
     new LibraryLicense(name: "Jakarta ORO", libraryName: "OroMatcher", version: "2.0.8", license: "Apache",
                        url: "http://jakarta.apache.org/oro/", licenseUrl: "http://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE"),
     new LibraryLicense(name: "Java Compatibility", version: "1.0.1", license: "GPL 2.0 + Classpath",
