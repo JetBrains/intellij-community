@@ -42,8 +42,10 @@ public class SessionDialog extends DialogWrapper {
     mySession = session;
     myChanges = changes;
     myCommitMessage = commitMessage;
-    myConfigurationComponent =
-      configurationComponent == null ? createConfigurationUI(mySession, myChanges, myCommitMessage) : configurationComponent;
+    //noinspection unchecked
+    myConfigurationComponent = configurationComponent == null
+                               ? mySession.getAdditionalConfigurationUI((Collection<Change>)myChanges, myCommitMessage)
+                               : configurationComponent;
     String configurationComponentName =
       myConfigurationComponent != null ? (String)myConfigurationComponent.getClientProperty(VCS_CONFIGURATION_UI_TITLE) : null;
     setTitle(StringUtil.isEmptyOrSpaces(configurationComponentName) ? removeEllipsisSuffix(title) : configurationComponentName);
@@ -57,17 +59,6 @@ public class SessionDialog extends DialogWrapper {
                        @NotNull List<? extends Change> changes,
                        @Nullable String commitMessage) {
     this(title, project, session, changes, commitMessage, null);
-  }
-
-  @Nullable
-  public static JComponent createConfigurationUI(@NotNull CommitSession session, @NotNull List<? extends Change> changes, @Nullable String commitMessage) {
-    try {
-      //noinspection unchecked
-      return session.getAdditionalConfigurationUI((Collection<Change>)changes, commitMessage);
-    }
-    catch (AbstractMethodError e) {
-      return session.getAdditionalConfigurationUI();
-    }
   }
 
   @Override
@@ -96,11 +87,6 @@ public class SessionDialog extends DialogWrapper {
 
   @Override
   protected String getHelpId() {
-    try {
-      return mySession.getHelpId();
-    }
-    catch (AbstractMethodError e) {
-      return null;
-    }
+    return mySession.getHelpId();
   }
 }

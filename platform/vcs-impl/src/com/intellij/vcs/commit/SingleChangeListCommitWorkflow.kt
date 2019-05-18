@@ -14,12 +14,12 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.SessionDialog
-import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.moveToFailedList
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.util.ui.UIUtil.removeMnemonic
+import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.moveToFailedList
 
 private val LOG = logger<SingleChangeListCommitWorkflow>()
 
@@ -84,7 +84,7 @@ open class SingleChangeListCommitWorkflow(
                                      session: CommitSession,
                                      changes: List<Change>,
                                      commitMessage: String): Boolean {
-    val sessionConfigurationUi = SessionDialog.createConfigurationUI(session, changes, commitMessage) ?: return true
+    val sessionConfigurationUi = session.getAdditionalConfigurationUI(changes, commitMessage) ?: return true
     val sessionDialog = SessionDialog(executor.getPresentableText(), project, session, changes, commitMessage, sessionConfigurationUi)
 
     if (sessionDialog.showAndGet()) return true

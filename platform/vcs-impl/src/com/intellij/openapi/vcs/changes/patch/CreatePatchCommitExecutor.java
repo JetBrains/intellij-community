@@ -90,12 +90,6 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     }
 
     @Override
-    @Nullable
-    public JComponent getAdditionalConfigurationUI() {
-      return myPanel.getPanel();
-    }
-
-    @Override
     public JComponent getAdditionalConfigurationUI(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
       String patchPath = StringUtil.nullize(PropertiesComponent.getInstance(myProject).getValue(VCS_PATCH_PATH_KEY));
       if (patchPath == null) {
