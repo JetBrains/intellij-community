@@ -1,92 +1,54 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.CommitSession;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitSession
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
+import com.intellij.vcs.commit.removeEllipsisSuffix
+import org.jetbrains.annotations.NonNls
+import java.awt.BorderLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Collection;
-import java.util.List;
+class SessionDialog @JvmOverloads constructor(
+  title: String,
+  project: Project,
+  private val mySession: CommitSession,
+  private val myChanges: List<Change>,
+  private val myCommitMessage: String?,
+  private val myConfigurationComponent: JComponent? = mySession.getAdditionalConfigurationUI(myChanges, myCommitMessage)
+) : DialogWrapper(project, true) {
 
-import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.removeEllipsisSuffix;
+  private val myCenterPanel = JPanel(BorderLayout())
 
-public class SessionDialog extends DialogWrapper {
-
-  @NonNls public static final String VCS_CONFIGURATION_UI_TITLE = "Vcs.SessionDialog.title";
-
-  private final CommitSession mySession;
-  private final List<? extends Change> myChanges;
-
-  private final String myCommitMessage;
-
-  private final JPanel myCenterPanel = new JPanel(new BorderLayout());
-  private final JComponent myConfigurationComponent;
-
-  public SessionDialog(String title,
-                       Project project,
-                       @NotNull CommitSession session,
-                       @NotNull List<? extends Change> changes,
-                       @Nullable String commitMessage,
-                       @Nullable JComponent configurationComponent) {
-    super(project, true);
-    mySession = session;
-    myChanges = changes;
-    myCommitMessage = commitMessage;
-    //noinspection unchecked
-    myConfigurationComponent = configurationComponent == null
-                               ? mySession.getAdditionalConfigurationUI((Collection<Change>)myChanges, myCommitMessage)
-                               : configurationComponent;
-    String configurationComponentName =
-      myConfigurationComponent != null ? (String)myConfigurationComponent.getClientProperty(VCS_CONFIGURATION_UI_TITLE) : null;
-    setTitle(StringUtil.isEmptyOrSpaces(configurationComponentName) ? removeEllipsisSuffix(title) : configurationComponentName);
-    init();
-    initValidation();
+  init {
+    val configurationComponentName = myConfigurationComponent?.getClientProperty(VCS_CONFIGURATION_UI_TITLE) as? String
+    setTitle(if (configurationComponentName.isNullOrBlank()) removeEllipsisSuffix(title) else configurationComponentName)
+    init()
+    initValidation()
   }
 
-  public SessionDialog(String title,
-                       Project project,
-                       @NotNull CommitSession session,
-                       @NotNull List<? extends Change> changes,
-                       @Nullable String commitMessage) {
-    this(title, project, session, changes, commitMessage, null);
+  override fun createCenterPanel(): JComponent? {
+    myConfigurationComponent?.let { myCenterPanel.add(it, BorderLayout.CENTER) }
+    return myCenterPanel
   }
 
-  @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
-    myCenterPanel.add(myConfigurationComponent, BorderLayout.CENTER);
-    return myCenterPanel;
+  override fun getPreferredFocusedComponent(): JComponent? =
+    myConfigurationComponent?.let { IdeFocusTraversalPolicy.getPreferredFocusedComponent(it) }
+
+  override fun doValidate(): ValidationInfo? {
+    isOKActionEnabled = mySession.canExecute(myChanges, myCommitMessage)
+    return mySession.validateFields()
   }
 
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myConfigurationComponent);
-  }
+  override fun getHelpId(): String? = mySession.helpId
 
-  @Nullable
-  @Override
-  protected ValidationInfo doValidate() {
-    updateButtons();
-    return mySession.validateFields();
-  }
-
-  private void updateButtons() {
-    //noinspection unchecked
-    setOKActionEnabled(mySession.canExecute((Collection<Change>)myChanges, myCommitMessage));
-  }
-
-  @Override
-  protected String getHelpId() {
-    return mySession.getHelpId();
+  companion object {
+    @NonNls
+    const val VCS_CONFIGURATION_UI_TITLE = "Vcs.SessionDialog.title"
   }
 }
