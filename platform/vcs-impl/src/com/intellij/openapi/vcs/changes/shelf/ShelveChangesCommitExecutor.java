@@ -25,6 +25,7 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     myProject = project;
   }
 
+  @NotNull
   @Override
   @Nls
   public String getActionText() {

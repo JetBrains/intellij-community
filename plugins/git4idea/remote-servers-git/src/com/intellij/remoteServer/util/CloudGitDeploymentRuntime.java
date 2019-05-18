@@ -58,6 +58,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
   private static final List<CommitExecutor> ourCommitExecutors = Arrays.asList(
     new CommitExecutor() {
+      @NotNull
       @Nls
       @Override
       public String getActionText() {
@@ -77,6 +78,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     },
     new CommitExecutorBase() {
 
+      @NotNull
       @Nls
       @Override
       public String getActionText() {

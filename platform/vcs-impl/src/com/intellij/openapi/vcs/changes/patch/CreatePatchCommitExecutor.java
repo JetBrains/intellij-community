@@ -50,6 +50,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     myChangeListManager = changeListManager;
   }
 
+  @NotNull
   @Override
   @Nls
   public String getActionText() {
