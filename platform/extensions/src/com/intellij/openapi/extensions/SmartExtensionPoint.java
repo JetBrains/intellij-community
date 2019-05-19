@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,13 +12,49 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class SmartExtensionPoint<Extension,V> implements ExtensionPointAndAreaListener<Extension> {
+public abstract class SmartExtensionPoint<Extension, V> {
   private final Collection<V> myExplicitExtensions;
-  private ExtensionPoint<Extension> myExtensionPoint;
-  private List<V> myCache;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private volatile ExtensionPoint<Extension> myExtensionPoint;
+  private volatile List<V> myCache;
+  private final ExtensionPointAndAreaListener<Extension> myExtensionPointAndAreaListener;
 
   protected SmartExtensionPoint(@NotNull final Collection<V> explicitExtensions) {
     myExplicitExtensions = explicitExtensions;
+
+    myExtensionPointAndAreaListener = new ExtensionPointAndAreaListener<Extension>() {
+      @Override
+      public void areaReplaced(@NotNull ExtensionsArea oldArea) {
+        dropCache();
+      }
+
+      @Override
+      public final void extensionRemoved(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
+        dropCache();
+      }
+
+      @Override
+      public final void extensionAdded(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
+        dropCache();
+      }
+
+      private void dropCache() {
+        if (myCache == null) {
+          return;
+        }
+
+        synchronized (myExplicitExtensions) {
+          if (myCache != null) {
+            myCache = null;
+            ExtensionPoint<Extension> extensionPoint = myExtensionPoint;
+            if (extensionPoint != null) {
+              extensionPoint.removeExtensionPointListener(this);
+              myExtensionPoint = null;
+            }
+          }
+        }
+      }
+    };
   }
 
   @NotNull
@@ -57,39 +79,32 @@ public abstract class SmartExtensionPoint<Extension,V> implements ExtensionPoint
 
   @NotNull
   public final List<V> getExtensions() {
-    synchronized (myExplicitExtensions) {
-      if (myCache == null) {
-        myExtensionPoint = getExtensionPoint();
-        myExtensionPoint.addExtensionPointListener(this);
-        myCache = new ArrayList<>(myExplicitExtensions);
-        myCache.addAll(ContainerUtil.mapNotNull(myExtensionPoint.getExtensions(), this::getExtension));
-      }
-      return myCache;
+    List<V> result = myCache;
+    if (result != null) {
+      return result;
     }
-  }
 
-  @Override
-  public final void extensionAdded(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
-    dropCache();
-  }
-
-  public final void dropCache() {
-    synchronized (myExplicitExtensions) {
-      if (myCache != null) {
-        myCache = null;
-        myExtensionPoint.removeExtensionPointListener(this);
-        myExtensionPoint = null;
-      }
+    // it is ok to call getExtensionPoint several times - call is cheap and implementation is thread-safe
+    ExtensionPoint<Extension> extensionPoint = myExtensionPoint;
+    if (extensionPoint == null) {
+      extensionPoint = getExtensionPoint();
+      myExtensionPoint = extensionPoint;
     }
-  }
 
-  @Override
-  public final void extensionRemoved(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
-    dropCache();
-  }
+    List<V> registeredExtensions = ContainerUtilRt.mapNotNull(extensionPoint.getExtensionList(), this::getExtension);
+    synchronized (myExplicitExtensions) {
+      result = myCache;
+      if (result != null) {
+        return result;
+      }
 
-  @Override
-  public void areaReplaced(@NotNull final ExtensionsArea area) {
-    dropCache();
+      // EP will not add duplicated listener, so, it is safe to not care about is already added
+      extensionPoint.addExtensionPointListener(myExtensionPointAndAreaListener, false, null);
+      result = new ArrayList<>(myExplicitExtensions.size() + registeredExtensions.size());
+      result.addAll(myExplicitExtensions);
+      result.addAll(registeredExtensions);
+      myCache = result;
+      return result;
+    }
   }
 }

@@ -15,21 +15,21 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
+
 public class AnActionEventVisitor {
-
-  public void visitEvent(AnActionEvent e) {
-
+  public void visitEvent(@NotNull AnActionEvent e) {
   }
 
-  public void visitGestureInitEvent(AnActionEvent e) {
+  public void visitGestureInitEvent(@NotNull AnActionEvent e) {
     visitEvent(e);
   }
 
-  public void visitGesturePerformedEvent(AnActionEvent e) {
+  public void visitGesturePerformedEvent(@NotNull AnActionEvent e) {
     visitEvent(e);
   }
 
-  public void visitGestureFinishEvent(AnActionEvent e) {
+  public void visitGestureFinishEvent(@NotNull AnActionEvent e) {
     visitEvent(e);
   }
 

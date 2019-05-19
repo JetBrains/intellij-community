@@ -91,7 +91,6 @@ public abstract class Injectable implements Comparable<Injectable> {
       @Override
       public Icon getIcon() {
         final FileType ft = language.getAssociatedFileType();
-        //noinspection ConstantConditions
         return ft != null && ft.getIcon() != null ? ft.getIcon() : EmptyIcon.ICON_16;
       }
 

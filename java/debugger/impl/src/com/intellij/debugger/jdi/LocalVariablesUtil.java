@@ -177,7 +177,7 @@ public class LocalVariablesUtil {
   }
 
   private static Map<DecompiledLocalVariable, Value> fetchSlotValues(Map<DecompiledLocalVariable, Value> map,
-                                                                     List<DecompiledLocalVariable> vars,
+                                                                     List<? extends DecompiledLocalVariable> vars,
                                                                      StackFrame frame) throws Exception {
     final Long frameId = ReflectionUtil.getField(frame.getClass(), frame, long.class, "id");
     final VirtualMachine vm = frame.virtualMachine();
@@ -237,7 +237,7 @@ public class LocalVariablesUtil {
     return arrayInstance;
   }
 
-  private static Object createSlotInfoArray(Collection<DecompiledLocalVariable> vars) throws Exception {
+  private static Object createSlotInfoArray(Collection<? extends DecompiledLocalVariable> vars) throws Exception {
     final Object arrayInstance = Array.newInstance(ourSlotInfoClass, vars.size());
 
     int idx = 0;
@@ -307,8 +307,16 @@ public class LocalVariablesUtil {
     }
     catch (UnsupportedOperationException ignored) {
     }
+    catch (VMDisconnectedException e) {
+      throw e;
+    }
     catch (Exception e) {
-      LOG.error(e);
+      if (vm.canBeModified()) { // do not care in read only vms
+        LOG.debug(e);
+      }
+      else {
+        LOG.warn(e);
+      }
     }
     return Collections.emptyList();
   }
@@ -354,7 +362,7 @@ public class LocalVariablesUtil {
     private final Deque<Integer> myIndexStack = new LinkedList<>();
     private boolean myReached = false;
 
-    public LocalVariableNameFinder(int startSlot, MultiMap<Integer, String> names, PsiElement element) {
+    LocalVariableNameFinder(int startSlot, MultiMap<Integer, String> names, PsiElement element) {
       myNames = names;
       myCurrentSlotIndex = startSlot;
       myElement = element;
@@ -382,6 +390,7 @@ public class LocalVariablesUtil {
       }
     }
 
+    @Override
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
       if (shouldVisit(statement)) {
         myIndexStack.push(myCurrentSlotIndex);

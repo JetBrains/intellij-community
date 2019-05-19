@@ -12,12 +12,13 @@
  */
 package org.netbeans.lib.cvsclient.command.reservedcheckout;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
 import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.*;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.FileObject;
@@ -26,9 +27,9 @@ import org.netbeans.lib.cvsclient.progress.RangeProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author  Thomas Singer
@@ -49,7 +50,8 @@ public final class EditCommand extends AbstractCommand {
 
 	// Implemented ============================================================
 
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+	@Override
+        public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                                  AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
@@ -79,7 +81,7 @@ public final class EditCommand extends AbstractCommand {
 
 			if (parser.isFilesEdited()) {
                           final String message = JavaCvsSrcBundle.message("cannot.edit.files.they.are.edited.error.message");
-                          eventSender.notifyMessageListeners(message.getBytes(),true, false);
+                          eventSender.notifyMessageListeners(message.getBytes(StandardCharsets.UTF_8), true, false);
 				return false;
 			}
 
@@ -97,7 +99,8 @@ public final class EditCommand extends AbstractCommand {
 		return requestProcessor.processRequests(requests, FileStateRequestsProgressHandler.create(progressViewer, cvsFiles));
 	}
 
-	protected void addRequestForFile(FileObject fileObject, Entry entry, boolean fileExists, Requests requests, IClientEnvironment clientEnvironment) {
+	@Override
+        protected void addRequestForFile(FileObject fileObject, Entry entry, boolean fileExists, Requests requests, IClientEnvironment clientEnvironment) {
 		if (editors) {
 			super.addRequestForFile(fileObject, entry, fileExists, requests, clientEnvironment);
 			return;
@@ -120,7 +123,8 @@ public final class EditCommand extends AbstractCommand {
 	/**
 	 * This method returns how the tag command would looklike when typed on the command line.
 	 */
-	public String getCvsCommandLine() {
+	@Override
+        public String getCvsCommandLine() {
 		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("edit ");
 		cvsCommandLine.append(getCvsArguments());
 		appendFileArguments(cvsCommandLine);
@@ -132,7 +136,8 @@ public final class EditCommand extends AbstractCommand {
 	 * After calling this method, the command should have no switches defined
 	 * and should behave defaultly.
 	 */
-	public void resetCvsCommand() {
+	@Override
+        public void resetCvsCommand() {
 		super.resetCvsCommand();
 		setRecursive(true);
 		setCheckThatUnedited(false);

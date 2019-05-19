@@ -26,6 +26,7 @@ import java.util.Map;
 
 public interface AntBuildFileBase extends AntBuildFile {
 
+  @Override
   AntBuildModelBase getModel();
 
   @Nullable
@@ -34,9 +35,9 @@ public interface AntBuildFileBase extends AntBuildFile {
   AbstractProperty.AbstractPropertyContainer getAllOptions();
 
   boolean shouldExpand();
-  
+
   void setShouldExpand(boolean expand);
-  
+
   void updateProperties();
 
   void updateConfig();
@@ -50,7 +51,7 @@ public interface AntBuildFileBase extends AntBuildFile {
   boolean isRunInBackground();
 
   boolean isColoredOutputMessages();
-  
+
   boolean isCollapseFinishedTargets();
 
   void readWorkspaceProperties(final Element element) throws InvalidDataException;

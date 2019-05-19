@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,15 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -470,33 +471,38 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
       }
     };
   }
-  
+
+  @Nullable
   public static AnActionButton findAddButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.ADD);
   }
 
+  @Nullable
   public static AnActionButton findEditButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.EDIT);
   }
 
+  @Nullable
   public static AnActionButton findRemoveButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.REMOVE);
   }
 
+  @Nullable
   public static AnActionButton findUpButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.UP);
   }
 
+  @Nullable
   public static AnActionButton findDownButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.DOWN);
   }
 
+  @Nullable
   private static AnActionButton findButton(JComponent comp, CommonActionsPanel.Buttons type) {
     final CommonActionsPanel panel = UIUtil.findComponentOfType(comp, CommonActionsPanel.class);
     if (panel != null) {
       return panel.getAnActionButton(type);
     }
-    //noinspection ConstantConditions
     return null;
   }
 
@@ -504,18 +510,20 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * Marker interface, button will be disabled if no selected element
    */
   public abstract static class ElementActionButton extends AnActionButton {
-    public ElementActionButton(String text, String description, @Nullable Icon icon) {
+    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                               @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                               @Nullable Icon icon) {
       super(text, description, icon);
     }
 
-    public ElementActionButton(String text, Icon icon) {
+    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text, Icon icon) {
       super(text, icon);
     }
 
     public ElementActionButton() {
     }
 
-    public ElementActionButton(String text) {
+    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text) {
       super(text);
     }
   }

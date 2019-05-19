@@ -29,6 +29,7 @@ import java.awt.*;
 public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private JComponent myWrapperPanel;
   @NonNls public static final String NAV_BAR = "NavBar";
+  @SuppressWarnings("StatefulEp")
   private Project myProject;
   private NavBarPanel myNavigationBar;
   private JPanel myRunPanel;

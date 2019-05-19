@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
@@ -9,8 +7,21 @@ import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
 interface StreamProvider {
+  /**
+   * Whether is enabled.
+   */
   val enabled: Boolean
     get() = true
+
+  /**
+   * Whether is exclusive and cannot be used alongside another provider.
+   *
+   * Doesn't imply [enabled], callers should check [enabled] also if need.
+   */
+  val isExclusive: Boolean
+
+  val isDisableExportAction: Boolean
+    get() = enabled && isExclusive
 
   /**
    * Called only on `write`

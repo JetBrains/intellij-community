@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * @since 24-Dec-2008
  */
 public class JavaRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
   public JavaRerunFailedTestsAction(@NotNull ComponentContainer componentContainer, @NotNull TestConsoleProperties consoleProperties) {

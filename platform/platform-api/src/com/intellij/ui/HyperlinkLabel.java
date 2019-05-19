@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
@@ -21,8 +7,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleAction;
@@ -36,6 +24,7 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -70,7 +59,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   public HyperlinkLabel(String text) {
     this(text, UIUtil.getLabelBackground());
   }
-  
+
   public HyperlinkLabel(String text, Color background) {
     this(text, PlatformColors.BLUE, background, PlatformColors.BLUE);
   }
@@ -118,7 +107,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   protected void processComponentKeyEvent(KeyEvent event) {
     if (event.getModifiers() == 0 && event.getKeyCode() == KeyEvent.VK_SPACE) {
       event.consume();
-      fireHyperlinkEvent();
+      fireHyperlinkEvent(event);
     }
   }
 
@@ -128,12 +117,12 @@ public class HyperlinkLabel extends HighlightableComponent {
       myMouseHover = true;
       repaint();
     } else if (e.getID() == MouseEvent.MOUSE_EXITED) {
-      setCursor(Cursor.getDefaultCursor());
+      setCursor(null);
       myMouseHover = false;
       myMousePressed = false;
       repaint();
     } else if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnLink(e.getX())) {
-      fireHyperlinkEvent();
+      fireHyperlinkEvent(e);
       myMousePressed = true;
       repaint();
     } else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
@@ -149,7 +138,7 @@ public class HyperlinkLabel extends HighlightableComponent {
       boolean onLink = isOnLink(e.getX());
       boolean needRepaint = myMouseHover != onLink;
       myMouseHover = onLink;
-      setCursor(myMouseHover ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
+      setCursor(myMouseHover ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null);
 
       if (needRepaint) {
         repaint();
@@ -177,7 +166,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   @Override
-  public void setText(String text) {
+  public void setText(@Nullable String text) {
     applyFont();
     myUseIconAsLink = false;
     super.setText(text);
@@ -202,19 +191,20 @@ public class HyperlinkLabel extends HighlightableComponent {
     myListeners.remove(listener);
   }
 
+  @NotNull
   public String getText() {
     return myHighlightedText.getText();
   }
 
-  protected void fireHyperlinkEvent() {
-    HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null);
+  protected void fireHyperlinkEvent(@Nullable InputEvent inputEvent) {
+    HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null, null, inputEvent);
     for (HyperlinkListener listener : myListeners) {
       listener.hyperlinkUpdate(e);
     }
   }
 
   public void doClick() {
-    fireHyperlinkEvent();
+    fireHyperlinkEvent(null);
   }
 
   public void setHtmlText(String text) {
@@ -332,9 +322,9 @@ public class HyperlinkLabel extends HighlightableComponent {
 
     @Override public Color getForegroundColor() {
       return !isEnabled() ? UIManager.getColor("Label.disabledForeground") :
-             myMousePressed ? UIManager.getColor("link.pressed.foreground") :
-             myMouseHover ? UIManager.getColor("link.hover.foreground") :
-             UIManager.getColor("link.foreground");
+             myMousePressed ? JBUI.CurrentTheme.Link.linkPressedColor() :
+             myMouseHover ? JBUI.CurrentTheme.Link.linkHoverColor() :
+             JBUI.CurrentTheme.Link.linkColor();
     }
 
     @Override public Color getEffectColor() {

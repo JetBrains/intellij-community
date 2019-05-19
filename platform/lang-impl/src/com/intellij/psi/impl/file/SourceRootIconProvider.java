@@ -24,7 +24,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 
@@ -66,19 +65,14 @@ public class SourceRootIconProvider {
         }
       }
       else {
-        JpsModuleSourceRootType<?> rootType = index.getSourceRootType(vFile);
-        if (rootType != null) {
-          JpsModuleSourceRootType<?> parentRootType = parent == null ? null : index.getSourceRootType(parent);
+        SourceFolder sourceFolder = index.getSourceFolder(vFile);
+        if (sourceFolder != null && vFile.equals(sourceFolder.getFile())) {
+          SourceFolder parentSourceFolder = parent == null ? null : index.getSourceFolder(parent);
 
           // do not mark files under folder of the same root type (e.g. test root file under test root dir)
           // but mark file if they are under different root type (e.g. test root file under source root dir)
-          if (parentRootType == null || !rootType.equals(parentRootType)) {
-            // calculating getModuleSourceRoot is O(M), where M - number of source folder entries in the module,
-            // so it should be only called when absolutely needed.
-            SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
-            if (sourceFolder != null) {
-              return SourceRootPresentation.getSourceRootFileLayerIcon(sourceFolder);
-            }
+          if (parentSourceFolder == null || !sourceFolder.equals(parentSourceFolder)) {
+            return SourceRootPresentation.getSourceRootFileLayerIcon(sourceFolder);
           }
         }
       }

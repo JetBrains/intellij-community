@@ -22,11 +22,18 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+/**
+ * This interface specifies that the element corresponds to several virtual files.
+ * For example, a package may correspond to several folders in a project,
+ * or a resource bundle may correspond to several properties files.
+ */
 public interface RootsProvider {
-
+  @Deprecated
   Set<VirtualFile> EMPTY_ROOTS = Collections.emptySet();
 
+  /**
+   * @return a collection of corresponding virtual files
+   */
   @NotNull
   Collection<VirtualFile> getRoots();
-
 }

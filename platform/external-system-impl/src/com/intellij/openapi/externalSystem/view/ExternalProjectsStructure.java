@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.openapi.Disposable;
@@ -22,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -30,35 +15,34 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/22/2014
  */
 public class ExternalProjectsStructure extends SimpleTreeStructure implements Disposable  {
   private final Project myProject;
+  private final SimpleTree myTree;
   private ExternalProjectsView myExternalProjectsView;
-  private final SimpleTreeBuilder myTreeBuilder;
+  private SimpleTreeBuilder myTreeBuilder;
   private RootNode myRoot;
 
   private final Map<String, ExternalSystemNode> myNodeMapping = new THashMap<>();
 
   public ExternalProjectsStructure(Project project, SimpleTree tree) {
     myProject = project;
-
+    myTree = tree;
     configureTree(tree);
-
-    myTreeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null);
-    Disposer.register(myProject, myTreeBuilder);
   }
 
   public void init(ExternalProjectsView externalProjectsView) {
     myExternalProjectsView = externalProjectsView;
     myRoot = new RootNode();
+
+    myTreeBuilder = new SimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), this, null) {
+      // unique class to simplify search through the logs
+    };
+    Disposer.register(myProject, myTreeBuilder);
     myTreeBuilder.initRoot();
     myTreeBuilder.expand(myRoot, null);
   }
@@ -68,7 +52,9 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
   }
 
   public void updateFrom(SimpleNode node) {
-    myTreeBuilder.addSubtreeToUpdateByElement(node);
+    if (node != null) {
+      myTreeBuilder.addSubtreeToUpdateByElement(node);
+    }
   }
 
   public void updateUpTo(SimpleNode node) {
@@ -79,6 +65,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRoot;
@@ -103,7 +90,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     return null;
   }
 
-  public void updateProjects(Collection<DataNode<ProjectData>> toImport) {
+  public void updateProjects(Collection<? extends DataNode<ProjectData>> toImport) {
     List<String> orphanProjects = ContainerUtil.mapNotNull(
       myNodeMapping.entrySet(), entry -> entry.getValue() instanceof ProjectNode ? entry.getKey() : null);
     for (DataNode<ProjectData> each : toImport) {
@@ -151,8 +138,8 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     final ExternalSystemNode[] cached = currentNode.getCached();
     if (cached != null) {
 
-      final List<Object> duplicates = ContainerUtil.newArrayList();
-      final Map<Object, ExternalSystemNode> oldDataMap = ContainerUtil.newLinkedHashMap();
+      final List<Object> duplicates = new ArrayList<>();
+      final Map<Object, ExternalSystemNode> oldDataMap = new LinkedHashMap<>();
       for (ExternalSystemNode node : cached) {
         Object key = node.getData() != null ? node.getData() : node.getName();
         final Object systemNode = oldDataMap.put(key, node);
@@ -161,8 +148,8 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
         }
       }
 
-      Map<Object, ExternalSystemNode> newDataMap = ContainerUtil.newLinkedHashMap();
-      Map<Object, ExternalSystemNode> unchangedNewDataMap = ContainerUtil.newLinkedHashMap();
+      Map<Object, ExternalSystemNode> newDataMap = new LinkedHashMap<>();
+      Map<Object, ExternalSystemNode> unchangedNewDataMap = new LinkedHashMap<>();
       for (ExternalSystemNode node : newNode.getChildren()) {
         Object key = node.getData() != null ? node.getData() : node.getName();
         if (oldDataMap.remove(key) == null) {
@@ -215,18 +202,17 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
-  @SuppressWarnings("SuspiciousMethodCalls")
   private ExternalSystemNode findNodeFor(String projectPath) {
     return myNodeMapping.get(projectPath);
   }
 
-  public <T extends ExternalSystemNode> void updateNodes(@NotNull Class<T> nodeClass) {
+  public <T extends ExternalSystemNode> void updateNodes(@NotNull Class<? extends T> nodeClass) {
     for (T node : getNodes(nodeClass)) {
       updateFrom(node);
     }
   }
 
-  public <T extends ExternalSystemNode> void visitNodes(@NotNull Class<T> nodeClass, @NotNull Consumer<T> consumer) {
+  public <T extends ExternalSystemNode> void visitNodes(@NotNull Class<? extends T> nodeClass, @NotNull Consumer<? super T> consumer) {
     for (T node : getNodes(nodeClass)) {
       consumer.consume(node);
     }

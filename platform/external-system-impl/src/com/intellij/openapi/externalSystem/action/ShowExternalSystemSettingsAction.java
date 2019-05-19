@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/20/2014
  */
 public class ShowExternalSystemSettingsAction extends ExternalSystemAction {
 
@@ -34,7 +34,7 @@ public class ShowExternalSystemSettingsAction extends ExternalSystemAction {
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
 
     ProjectSystemId systemId = getSystemId(e);
@@ -46,10 +46,12 @@ public class ShowExternalSystemSettingsAction extends ExternalSystemAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ProjectSystemId systemId = getSystemId(e);
     if (systemId != null) {
-      showSettingsFor(getProject(e), systemId);
+      Project project = getProject(e);
+      ExternalSystemActionsCollector.trigger(project, systemId, this, e);
+      showSettingsFor(project, systemId);
     }
   }
 

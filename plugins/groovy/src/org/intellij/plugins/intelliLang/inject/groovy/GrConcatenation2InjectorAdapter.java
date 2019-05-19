@@ -1,12 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.injection.MultiHostInjector;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager;
+import com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -23,9 +22,9 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorManager.BaseConcatenation2InjectorAdapter implements MultiHostInjector {
-  public GrConcatenation2InjectorAdapter(JavaConcatenationInjectorManager manager) {
-    super(manager);
+public class GrConcatenation2InjectorAdapter extends ConcatenationInjectorManager.BaseConcatenation2InjectorAdapter implements MultiHostInjector {
+  public GrConcatenation2InjectorAdapter(@NotNull Project project) {
+    super(project);
   }
 
   @Override
@@ -76,22 +75,22 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
   }
 
   private static PsiElement[] collectGStringOperands(GrString grString) {
-    final ArrayList<PsiElement> operands = ContainerUtil.newArrayList();
+    final ArrayList<PsiElement> operands = new ArrayList<>();
     processGString(grString, operands);
     return operands.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  private static void processGString(GrString string, ArrayList<PsiElement> operands) {
+  private static void processGString(GrString string, ArrayList<? super PsiElement> operands) {
     ContainerUtil.addAll(operands, string.getAllContentParts());
   }
 
   private static PsiElement[] collectBinaryOperands(GrBinaryExpression expression) {
-    final ArrayList<PsiElement> operands = ContainerUtil.newArrayList();
+    final ArrayList<PsiElement> operands = new ArrayList<>();
     processBinary(expression, operands);
     return operands.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  private static void processBinary(GrBinaryExpression expression, ArrayList<PsiElement> operands) {
+  private static void processBinary(GrBinaryExpression expression, ArrayList<? super PsiElement> operands) {
     final GrExpression left = expression.getLeftOperand();
     final GrExpression right = expression.getRightOperand();
     if (left instanceof GrBinaryExpression) {

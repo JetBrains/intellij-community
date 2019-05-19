@@ -27,15 +27,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -43,6 +42,16 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * @author peter
  */
 public class WordCompletionContributor extends CompletionContributor implements DumbAware {
+  @Override
+  public void beforeCompletion(@NotNull CompletionInitializationContext context) {
+    if (context.getCompletionType() == CompletionType.BASIC && isWordCompletionDefinitelyEnabled(context.getFile())) {
+      context.setDummyIdentifier("");
+    }
+  }
+
+  private static boolean isWordCompletionDefinitelyEnabled(@NotNull PsiFile file) {
+    return DumbService.isDumb(file.getProject()) || file instanceof PsiPlainTextFile;
+  }
 
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
@@ -54,23 +63,23 @@ public class WordCompletionContributor extends CompletionContributor implements 
   public static void addWordCompletionVariants(CompletionResultSet result, final CompletionParameters parameters, Set<String> excludes) {
     final Set<String> realExcludes = new HashSet<>(excludes);
     for (String exclude : excludes) {
-      String[] words = exclude.split("[ \\.-]");
+      String[] words = exclude.split("[ .-]");
       if (words.length > 0 && StringUtil.isNotEmpty(words[0])) {
         realExcludes.add(words[0]);
       }
     }
-    
+
     int startOffset = parameters.getOffset();
     final PsiElement position = parameters.getPosition();
     final CompletionResultSet javaResultSet = result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters));
     final CompletionResultSet plainResultSet = result.withPrefixMatcher(CompletionUtil.findAlphanumericPrefix(parameters));
-    for (final String word : getAllWords(position, startOffset)) {
+    consumeAllWords(position, startOffset, word -> {
       if (!realExcludes.contains(word)) {
         final LookupElement item = LookupElementBuilder.create(word);
         javaResultSet.addElement(item);
         plainResultSet.addElement(item);
       }
-    }
+    });
 
     addValuesFromOtherStringLiterals(result, parameters, realExcludes, position);
   }
@@ -93,7 +102,8 @@ public class WordCompletionContributor extends CompletionContributor implements 
     }
     int offset = manipulator.getRangeInElement(localString).getStartOffset();
     PsiFile file = position.getContainingFile();
-    final CompletionResultSet fullStringResult = result.withPrefixMatcher( file.getText().substring(offset + localString.getTextRange().getStartOffset(), parameters.getOffset()));
+    String prefix = file.getText().substring(offset + localString.getTextRange().getStartOffset(), parameters.getOffset());
+    CompletionResultSet fullStringResult = result.withPrefixMatcher(new PlainPrefixMatcher(prefix));
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -119,19 +129,16 @@ public class WordCompletionContributor extends CompletionContributor implements 
   }
 
   private static boolean shouldPerformWordCompletion(CompletionParameters parameters) {
-    final PsiElement insertedElement = parameters.getPosition();
-    final boolean dumb = DumbService.getInstance(insertedElement.getProject()).isDumb();
-    if (dumb) {
-      return true;
-    }
-
     if (parameters.getInvocationCount() == 0) {
       return false;
     }
 
+    PsiElement insertedElement = parameters.getPosition();
+    PsiFile file = insertedElement.getContainingFile();
+    if (isWordCompletionDefinitelyEnabled(file)) {
+      return true;
+    }
 
-
-    final PsiFile file = insertedElement.getContainingFile();
     final CompletionData data = CompletionUtil.getCompletionDataByElement(insertedElement, file);
     if (data != null) {
       Set<CompletionVariant> toAdd = new HashSet<>();
@@ -154,8 +161,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
 
     ASTNode textContainer = element != null ? element.getNode() : null;
     while (textContainer != null) {
-      final IElementType elementType = textContainer.getElementType();
-      if (LanguageWordCompletion.INSTANCE.isEnabledIn(elementType) || elementType == PlainTextTokenTypes.PLAIN_TEXT) {
+      if (LanguageWordCompletion.INSTANCE.isEnabledIn(textContainer.getElementType())) {
         return true;
       }
       textContainer = textContainer.getTreeParent();
@@ -163,21 +169,16 @@ public class WordCompletionContributor extends CompletionContributor implements 
     return false;
   }
 
-  public static Set<String> getAllWords(final PsiElement context, final int offset) {
-    final Set<String> words = new LinkedHashSet<>();
-    if (StringUtil.isEmpty(CompletionUtil.findJavaIdentifierPrefix(context, offset))) {
-      return words;
-    }
-
-    final CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
-    IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
-      @Override
-      public void run(final CharSequence chars, @Nullable char[] charsArray, final int start, final int end) {
-        if (start > offset || offset > end) {
-          words.add(chars.subSequence(start, end).toString());
-        }
+  private static void consumeAllWords(@NotNull PsiElement context, int offset, @NotNull Consumer<? super String> consumer) {
+    if (StringUtil.isEmpty(CompletionUtil.findJavaIdentifierPrefix(context, offset))) return;
+    CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
+    Set<CharSequence> words = new THashSet<>(chars.length()/8);
+    IdTableBuilding.scanWords((charSeq, charsArray, start, end) -> {
+      if (start > offset || offset > end) {
+        CharSequence sequence = charSeq.subSequence(start, end);
+        String str = sequence.toString();
+        if (words.add(str)) consumer.accept(str);
       }
     }, chars, 0, chars.length());
-    return words;
   }
 }

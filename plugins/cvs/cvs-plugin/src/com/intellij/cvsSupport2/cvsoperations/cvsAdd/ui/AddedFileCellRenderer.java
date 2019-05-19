@@ -28,6 +28,7 @@ import java.io.File;
  */
 public class AddedFileCellRenderer extends FileLabel implements TreeCellRenderer{
 
+  @Override
   public Component getTreeCellRendererComponent(JTree tree,
                                                 Object value,
                                                 boolean selected,

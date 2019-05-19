@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.ui.ImageComponentDecorator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Editor actions utility.
@@ -44,7 +45,7 @@ public final class ImageEditorActionUtil {
     //    return null;
     //}
 
-    public static ImageComponentDecorator getImageComponentDecorator(AnActionEvent e) {
+    public static ImageComponentDecorator getImageComponentDecorator(@NotNull AnActionEvent e) {
         DataContext dataContext = e.getDataContext();
         return ImageComponentDecorator.DATA_KEY.getData(dataContext);
     }
@@ -55,7 +56,7 @@ public final class ImageEditorActionUtil {
      * @param e Action event
      * @return Enabled value
      */
-    public static boolean setEnabled(AnActionEvent e) {
+    public static boolean setEnabled(@NotNull AnActionEvent e) {
         ImageComponentDecorator decorator = getImageComponentDecorator(e);
         Presentation presentation = e.getPresentation();
         presentation.setEnabled(decorator != null);

@@ -39,10 +39,15 @@ public class JavaCodeFoldingOptionsProvider extends BeanConfigurable<JavaCodeFol
 
     checkBox(ApplicationBundle.message("checkbox.collapse.generic.constructor.parameters"), settings::isCollapseConstructorGenericParameters, settings::setCollapseConstructorGenericParameters);
 
+    checkBox(ApplicationBundle.message("checkbox.collapse.inferred.type"), settings::isReplaceVarWithInferredType, settings::setReplaceVarWithInferredType);
+
     checkBox(ApplicationBundle.message("checkbox.collapse.i18n.messages"), settings::isCollapseI18nMessages, settings::setCollapseI18nMessages);
 
     checkBox(ApplicationBundle.message("checkbox.collapse.suppress.warnings"), settings::isCollapseSuppressWarnings, settings::setCollapseSuppressWarnings);
 
     checkBox(ApplicationBundle.message("checkbox.collapse.end.of.line.comments"), settings::isCollapseEndOfLineComments, settings::setCollapseEndOfLineComments);
+
+    checkBox(ApplicationBundle.message("checkbox.collapse.multiline.comments"), settings::isCollapseMultilineComments,
+             settings::setCollapseMultilineComments);
   }
 }

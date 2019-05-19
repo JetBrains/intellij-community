@@ -38,27 +38,20 @@ import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import static com.intellij.openapi.actionSystem.Presentation.PROP_TEXT;
 
 public class PopupFactoryImpl extends JBPopupFactory {
 
@@ -75,7 +68,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<T> list) {
+  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<? extends T> list) {
     return new PopupChooserBuilder<>(new JBList<>(new CollectionListModel<>(list)));
   }
 
@@ -94,7 +87,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @NotNull
   @Override
   public JBPopup createMessage(String text) {
-    return createListPopup(new BaseListPopupStep<>(null, new String[]{text}));
+    return createListPopup(new BaseListPopupStep<>(null, text));
   }
 
   @Override
@@ -177,7 +170,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean honorActionMnemonics,
                             final Runnable disposeCallback,
                             final int maxRowCount,
-                            final Condition<AnAction> preselectActionCondition,
+                            final Condition<? super AnAction> preselectActionCondition,
                             @Nullable final String actionPlace) {
       this(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
            maxRowCount, preselectActionCondition, actionPlace, false);
@@ -192,7 +185,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean honorActionMnemonics,
                             final Runnable disposeCallback,
                             final int maxRowCount,
-                            final Condition<AnAction> preselectActionCondition,
+                            final Condition<? super AnAction> preselectActionCondition,
                             @Nullable final String actionPlace,
                             boolean autoSelection) {
       this(null, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
@@ -205,7 +198,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                @NotNull DataContext dataContext,
                                @Nullable String actionPlace,
                                int maxRowCount) {
-      super(aParent, step, maxRowCount);
+      super(CommonDataKeys.PROJECT.getData(dataContext), aParent, step, null);
+      setMaxRowCount(maxRowCount);
       myDisposeCallback = disposeCallback;
       myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       myActionPlace = actionPlace == null ? ActionPlaces.UNKNOWN : actionPlace;
@@ -217,15 +211,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
         }
       });
 
-      addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          final JList list = (JList)e.getSource();
-          final ActionItem actionItem = (ActionItem)list.getSelectedValue();
-          if (actionItem == null) return;
-          Presentation presentation = updateActionItem(actionItem);
-          ActionMenu.showDescriptionInStatusBar(true, myComponent, presentation.getDescription());
-        }
+      addListSelectionListener(e -> {
+        final JList list = (JList)e.getSource();
+        final ActionItem actionItem = (ActionItem)list.getSelectedValue();
+        if (actionItem == null) return;
+        Presentation presentation = updateActionItem(actionItem);
+        ActionMenu.showDescriptionInStatusBar(true, myComponent, presentation.getDescription());
       });
     }
 
@@ -250,7 +241,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                             boolean useAlphaAsNumbers,
                                             boolean showDisabledActions,
                                             boolean honorActionMnemonics,
-                                            Condition<AnAction> preselectActionCondition,
+                                            Condition<? super AnAction> preselectActionCondition,
                                             @Nullable String actionPlace,
                                             boolean autoSelection) {
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
@@ -343,6 +334,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return () -> DataManager.getInstance().getDataContext(component);
   }
 
+  @Override
   @NotNull
   public ListPopup createActionGroupPopup(String title,
                                           @NotNull ActionGroup actionGroup,
@@ -351,7 +343,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           boolean showDisabledActions,
                                           Runnable disposeCallback,
                                           int maxRowCount,
-                                          Condition<AnAction> preselectActionCondition,
+                                          Condition<? super AnAction> preselectActionCondition,
                                           @Nullable String actionPlace) {
     return new ActionGroupPopup(title,
                                 actionGroup,
@@ -376,7 +368,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           boolean honorActionMnemonics,
                                           final Runnable disposeCallback,
                                           final int maxRowCount,
-                                          final Condition<AnAction> preselectActionCondition) {
+                                          final Condition<? super AnAction> preselectActionCondition) {
     return new ActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
                                   disposeCallback, maxRowCount, preselectActionCondition, null);
   }
@@ -400,18 +392,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
       actionPlace, null, defaultOptionIndex);
   }
 
-  private static boolean itemsHaveMnemonics(final List<ActionItem> items) {
+  private static boolean itemsHaveMnemonics(final List<? extends ActionItem> items) {
     for (ActionItem item : items) {
       if (item.getAction().getTemplatePresentation().getMnemonic() != 0) return true;
     }
 
     return false;
-  }
-
-  @NotNull
-  @Override
-  public ListPopup createWizardStep(@NotNull PopupStep step) {
-    return new ListPopupImpl((ListPopupStep)step);
   }
 
   @NotNull
@@ -423,25 +409,27 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @NotNull
   @Override
   public ListPopup createListPopup(@NotNull ListPopupStep step, int maxRowCount) {
-    return new ListPopupImpl(step, maxRowCount);
+    ListPopupImpl popup = new ListPopupImpl(step);
+    popup.setMaxRowCount(maxRowCount);
+    return popup;
   }
 
   @NotNull
   @Override
   public TreePopup createTree(JBPopup parent, @NotNull TreePopupStep aStep, Object parentValue) {
-    return new TreePopupImpl(parent, aStep, parentValue);
+    return new TreePopupImpl(aStep.getProject(), parent, aStep, parentValue);
   }
 
   @NotNull
   @Override
   public TreePopup createTree(@NotNull TreePopupStep aStep) {
-    return new TreePopupImpl(aStep);
+    return new TreePopupImpl(aStep.getProject(), null, aStep, null);
   }
 
   @NotNull
   @Override
-  public ComponentPopupBuilder createComponentPopupBuilder(@NotNull JComponent content, JComponent prefferableFocusComponent) {
-    return new ComponentPopupBuilderImpl(content, prefferableFocusComponent);
+  public ComponentPopupBuilder createComponentPopupBuilder(@NotNull JComponent content, JComponent preferableFocusComponent) {
+    return new ComponentPopupBuilderImpl(content, preferableFocusComponent);
   }
 
 
@@ -469,9 +457,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     if (editor != null && focusOwner == editor.getContentComponent()) {
       return guessBestPopupLocation(editor);
     }
-    else {
-      return guessBestPopupLocation(focusOwner);
-    }
+    return guessBestPopupLocation(focusOwner);
   }
 
   @NotNull
@@ -487,7 +473,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       for (int index : selectedIndices) {
         if (firstVisibleIndex <= index && index <= lastVisibleIndex) {
           Rectangle cellBounds = list.getCellBounds(index, index);
-          popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height);
+          popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height - 1);
           break;
         }
       }
@@ -508,12 +494,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
           Point visibleCenter = new Point(visibleRect.x + visibleRect.width / 2, visibleRect.y + visibleRect.height / 2);
           double minDistance = Double.POSITIVE_INFINITY;
           int bestRow = -1;
-          Point rowCenter;
-          double distance;
           for (int row : selectionRows) {
             Rectangle rowBounds = tree.getRowBounds(row);
-            rowCenter = new Point(rowBounds.x + rowBounds.width / 2, rowBounds.y + rowBounds.height / 2);
-            distance = visibleCenter.distance(rowCenter);
+            Point rowCenter = new Point(rowBounds.x + rowBounds.width / 2, rowBounds.y + rowBounds.height / 2);
+            double distance = visibleCenter.distance(rowCenter);
             if (minDistance > distance) {
               minDistance = distance;
               bestRow = row;
@@ -537,7 +521,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (!visibleRect.intersects(rect)) {
         table.scrollRectToVisible(rect);
       }
-      popupMenuPoint = new Point(rect.x, rect.y + rect.height);
+      popupMenuPoint = new Point(rect.x, rect.y + rect.height - 1);
     }
     else if (component instanceof PopupOwner) {
       popupMenuPoint = ((PopupOwner)component).getBestPopupPosition();
@@ -596,17 +580,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @Override
   @NotNull
   public List<JBPopup> getChildPopups(@NotNull final Component component) {
-
-    return AbstractPopup.all.toStrongList().stream().filter(popup -> {
-      Component owner = popup.getOwner();
-      while (owner != null) {
-        if (owner.equals(component)) {
-          return true;
-        }
-        owner = owner.getParent();
-      }
-      return false;
-    }).collect(Collectors.toList());
+    return AbstractPopup.getChildPopups(component);
   }
 
   @Override
@@ -642,9 +616,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull final String htmlContent, @Nullable final Icon icon, final Color fillColor,
+  public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull final String htmlContent,
+                                                     @Nullable final Icon icon,
+                                                     Color textColor,
+                                                     final Color fillColor,
                                                      @Nullable final HyperlinkListener listener) {
-    JEditorPane text = IdeTooltipManager.initPane(htmlContent, new HintHint().setAwtTooltip(true), null);
+    JEditorPane text = IdeTooltipManager.initPane(htmlContent, new HintHint().setTextFg(textColor).setAwtTooltip(true), null);
 
     if (listener != null) {
       text.addHyperlinkListener(listener);
@@ -663,12 +640,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
     scrolledText.getViewport().setBackground(fillColor);
     textWrapper.add(scrolledText);
     content.add(textWrapper, BorderLayout.CENTER);
+    if (icon != null) {
+      final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
+      north.add(new JLabel(icon), BorderLayout.NORTH);
+      content.add(north, BorderLayout.WEST);
+    }
 
-    final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
-    north.add(new JLabel(icon), BorderLayout.NORTH);
-    content.add(north, BorderLayout.WEST);
-
-    content.setBorder(new EmptyBorder(2, 4, 2, 4));
+    content.setBorder(JBUI.Borders.empty(2, 4));
 
     final BalloonBuilder builder = createBalloonBuilder(content);
 
@@ -713,12 +691,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myPrependWithSeparator = prependWithSeparator;
       mySeparatorText = separatorText;
       myDescription = description;
-      myAction.getTemplatePresentation().addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName() == PROP_TEXT) {
-            myText = myAction.getTemplatePresentation().getText();
-          }
+      myAction.getTemplatePresentation().addPropertyChangeListener(evt -> {
+        if (evt.getPropertyName() == Presentation.PROP_TEXT) {
+          myText = myAction.getTemplatePresentation().getText();
         }
       });
     }

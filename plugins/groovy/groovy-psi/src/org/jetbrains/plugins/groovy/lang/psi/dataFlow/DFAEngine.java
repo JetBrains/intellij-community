@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,12 +19,12 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.revers
 public class DFAEngine<E> {
 
   private final Instruction[] myFlow;
-  private final DfaInstance<E> myDfa;
+  private final DfaInstance<? super E> myDfa;
   private final Semilattice<E> mySemilattice;
 
   private WorkCounter myCounter = null;
 
-  public DFAEngine(@NotNull Instruction[] flow, @NotNull DfaInstance<E> dfa, @NotNull Semilattice<E> semilattice) {
+  public DFAEngine(@NotNull Instruction[] flow, @NotNull DfaInstance<? super E> dfa, @NotNull Semilattice<E> semilattice) {
     myFlow = flow;
     myDfa = dfa;
     mySemilattice = semilattice;
@@ -81,21 +67,22 @@ public class DFAEngine<E> {
   @Nullable
   private List<E> performDFA(boolean timeout) {
     final int n = myFlow.length;
-    final List<E> info = new ArrayList<>(Collections.nCopies(n, myDfa.initial()));
+    final List<E> info = new ArrayList<>(Collections.nCopies(n, mySemilattice.initial()));
     final CallEnvironment env = new MyCallEnvironment(n);
 
-    final WorkList workList = new WorkList(getFlowOrder());
+    final WorkList workList = new WorkList(n, getFlowOrder());
 
     while (!workList.isEmpty()) {
       ProgressManager.checkCanceled();
       if (timeout && checkCounter()) return null;
       final int num = workList.next();
       final Instruction curr = myFlow[num];
-      final E oldE = info.get(num);                     // saved outbound state
-      final E newE = getInboundState(curr, info, env);  // inbound state
-      myDfa.fun(newE, curr);                            // newly modified outbound state
-      if (!mySemilattice.eq(newE, oldE)) {              // if outbound state changed
-        info.set(num, newE);                            // save new state
+      final E oldE = info.get(num);                      // saved outbound state
+      final List<E> ins = getPrevInfos(curr, info, env); // states from all inbound edges
+      final E newE = mySemilattice.join(ins);            // inbound state
+      myDfa.fun(newE, curr);                             // newly modified outbound state
+      if (!mySemilattice.eq(newE, oldE)) {               // if outbound state changed
+        info.set(num, newE);                             // save new state
         for (Instruction next : getNext(curr, env)) {
           workList.offer(next.num());
         }
@@ -108,20 +95,20 @@ public class DFAEngine<E> {
   @NotNull
   private int[] getFlowOrder() {
     if (myDfa.isForward()) {
-      return reversedPostOrder(myFlow);
+      return reversedPostOrder(myFlow, myDfa.isReachable());
     }
     else {
-      return postOrder(myFlow);
+      return postOrder(myFlow, myDfa.isReachable());
     }
   }
 
   @NotNull
-  private E getInboundState(@NotNull Instruction instruction, @NotNull List<E> info, @NotNull CallEnvironment env) {
+  private List<E> getPrevInfos(@NotNull Instruction instruction, @NotNull List<E> info, @NotNull CallEnvironment env) {
     List<E> prevInfos = new ArrayList<>();
     for (Instruction i : getPrevious(instruction, env)) {
       prevInfos.add(info.get(i.num()));
     }
-    return mySemilattice.join(prevInfos);
+    return prevInfos;
   }
 
   @NotNull

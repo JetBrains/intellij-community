@@ -1,5 +1,6 @@
 package com.intellij.dvcs.repo;
 
+import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -59,7 +60,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   /**
-   * @Deprecated to delete in 2017.X
+   * @deprecated to delete in 2017.X
    */
   @Nullable
   @Deprecated
@@ -122,6 +123,14 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   @NotNull
   public AbstractVcs getVcs() {
     return myVcs;
+  }
+
+  /**
+   * Returns true if the synchronous branch control should be proposed for this project,
+   * if the setting was not defined yet, and all repositories are on the same branch.
+   */
+  public boolean shouldProposeSyncControl() {
+    return !MultiRootBranches.diverged(getRepositories());
   }
 
 }

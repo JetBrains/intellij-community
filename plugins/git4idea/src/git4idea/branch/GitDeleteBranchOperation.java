@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.google.common.collect.Maps;
@@ -49,7 +35,6 @@ import java.util.regex.Pattern;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.containers.ContainerUtil.exists;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
 
 /**
  * Deletes a branch.
@@ -77,7 +62,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     myBranchName = branchName;
     myNotifier = VcsNotifier.getInstance(myProject);
     myTrackedBranches = findTrackedBranches(repositories, branchName);
-    myUnmergedToBranches = newHashMap();
+    myUnmergedToBranches = new HashMap<>();
     myDeletedBranchTips = ContainerUtil.map2MapNotNull(repositories, (GitRepository repo) -> {
       GitBranchesCollection branches = repo.getBranches();
       GitLocalBranch branch = branches.findLocalBranch(myBranchName);
@@ -150,7 +135,10 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     if (!myTrackedBranches.isEmpty() &&
         hasNoOtherTrackingBranch(myTrackedBranches, myBranchName) &&
         trackedBranchIsNotProtected()) {
-      notification.addAction(NotificationAction.createSimple(DELETE_TRACKED_BRANCH, () -> deleteTrackedBranchInBackground()));
+      notification.addAction(NotificationAction.createSimple(DELETE_TRACKED_BRANCH, () -> {
+        notification.hideBalloon();
+        deleteTrackedBranchInBackground();
+      }));
     }
     myNotifier.notify(notification);
   }
@@ -224,6 +212,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     return String.format("Branch %s wasn't deleted", myBranchName);
   }
 
+  @Override
   @NotNull
   public String getSuccessMessage() {
     return String.format("Deleted branch %s", formatBranchName(myBranchName));
@@ -288,7 +277,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   @NotNull
   private static Map<GitRepository, GitRemoteBranch> findTrackedBranches(@NotNull Collection<GitRepository> repositories,
                                                                          @NotNull String localBranchName) {
-    Map<GitRepository, GitRemoteBranch> trackedBranches = newHashMap();
+    Map<GitRepository, GitRemoteBranch> trackedBranches = new HashMap<>();
     for (GitRepository repository : repositories) {
       GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfo(repository, localBranchName);
       if (trackInfo != null) trackedBranches.put(repository, trackInfo.getRemoteBranch());
@@ -313,14 +302,6 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       }
     }
 
-    @Override
-    public void processTerminated(int exitCode) {
-    }
-
-    @Override
-    public void startFailed(Throwable exception) {
-    }
-
     @Nullable
     public String getBaseBranch() {
       return myBaseBranch;
@@ -331,23 +312,18 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     @NotNull private final String myTipOfDeletedUnmergedBranch;
     @NotNull private final String myBaseBranch;
 
-    public UnmergedBranchInfo(@NotNull String tipOfDeletedUnmergedBranch, @NotNull String baseBranch) {
+    UnmergedBranchInfo(@NotNull String tipOfDeletedUnmergedBranch, @NotNull String baseBranch) {
       myTipOfDeletedUnmergedBranch = tipOfDeletedUnmergedBranch;
       myBaseBranch = baseBranch;
     }
   }
 
   private void deleteTrackedBranchInBackground() {
-    new Task.Backgroundable(myProject, "Deleting Remote Branch " + myBranchName + "...") {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        GitBrancher brancher = GitBrancher.getInstance(getProject());
-        MultiMap<String, GitRepository> grouped = groupTrackedBranchesByName();
-        for (String remoteBranch : grouped.keySet()) {
-          brancher.deleteRemoteBranch(remoteBranch, new ArrayList<>(grouped.get(remoteBranch)));
-        }
-      }
-    }.queue();
+    GitBrancher brancher = GitBrancher.getInstance(myProject);
+    MultiMap<String, GitRepository> grouped = groupTrackedBranchesByName();
+    for (String remoteBranch : grouped.keySet()) {
+      brancher.deleteRemoteBranch(remoteBranch, new ArrayList<>(grouped.get(remoteBranch)));
+    }
   }
 
   @NotNull

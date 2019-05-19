@@ -38,7 +38,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
   }
 
   @NotNull
-  public T getProcess() {
+  public final T getProcess() {
     return myProcess;
   }
 
@@ -77,14 +77,11 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
 
   @Override
   protected void detachProcessImpl() {
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        closeStreams();
+    final Runnable runnable = () -> {
+      closeStreams();
 
-        myWaitFor.detach();
-        notifyProcessDetached();
-      }
+      myWaitFor.detach();
+      notifyProcessDetached();
     };
 
     executeTask(runnable);

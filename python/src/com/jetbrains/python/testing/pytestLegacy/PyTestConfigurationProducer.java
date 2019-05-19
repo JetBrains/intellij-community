@@ -1,9 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pytestLegacy;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -33,16 +35,25 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 
-public class PyTestConfigurationProducer extends PythonTestLegacyConfigurationProducer<PyTestRunConfiguration> {
+import static com.jetbrains.python.testing.PyTestLegacyInteropKt.isNewTestsModeEnabled;
 
+public final class PyTestConfigurationProducer extends PythonTestLegacyConfigurationProducer<PyTestRunConfiguration> {
   public PyTestConfigurationProducer() {
-    super(PythonTestConfigurationType.getInstance().LEGACY_PYTEST_FACTORY);
+    if (isNewTestsModeEnabled()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+  }
+
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return PythonTestConfigurationType.getInstance().LEGACY_PYTEST_FACTORY;
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration<PyTestRunConfiguration> configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull AbstractPythonLegacyTestRunConfiguration<PyTestRunConfiguration> configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     final PsiElement element = sourceElement.get();
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (!(configuration instanceof PyTestRunConfiguration)) {
@@ -89,10 +100,10 @@ public class PyTestConfigurationProducer extends PythonTestLegacyConfigurationPr
     if (keywords != null) {
       ((PyTestRunConfiguration)configuration).useKeyword(true);
       ((PyTestRunConfiguration)configuration).setKeywords(keywords);
-      configuration.setName("py.test in " + keywords);
+      configuration.setName("pytest in " + keywords);
     }
     else {
-      configuration.setName("py.test in " + file.getName());
+      configuration.setName("pytest in " + file.getName());
     }
     return true;
   }
@@ -134,7 +145,8 @@ public class PyTestConfigurationProducer extends PythonTestLegacyConfigurationPr
   }
 
   @Override
-  public boolean isConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration configuration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(@NotNull AbstractPythonLegacyTestRunConfiguration configuration,
+                                            @NotNull ConfigurationContext context) {
     final Location location = context.getLocation();
     if (location == null) return false;
     if (!(configuration instanceof PyTestRunConfiguration)) return false;

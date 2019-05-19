@@ -54,9 +54,7 @@ public class PyActiveSdkModuleConfigurable extends ModuleAwareProjectConfigurabl
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk != null) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          VFSTestFrameworkListener.getInstance().updateAllTestFrameworks(sdk);
-        });
+        ApplicationManager.getApplication().executeOnPooledThread(() -> VFSTestFrameworkListener.getInstance().updateAllTestFrameworks(sdk));
         break;
       }
     }

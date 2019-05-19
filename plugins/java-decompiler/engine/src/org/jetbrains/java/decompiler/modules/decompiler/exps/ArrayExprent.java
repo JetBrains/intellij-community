@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -44,10 +42,12 @@ public class ArrayExprent extends Exprent {
     }
   }
 
+  @Override
   public int getExprentUse() {
     return array.getExprentUse() & index.getExprentUse() & Exprent.MULTIPLE_USES;
   }
 
+  @Override
   public CheckTypesResult checkExprTypeBounds() {
     CheckTypesResult result = new CheckTypesResult();
     result.addMinTypeExprent(index, VarType.VARTYPE_BYTECHAR);
@@ -55,6 +55,7 @@ public class ArrayExprent extends Exprent {
     return result;
   }
 
+  @Override
   public List<Exprent> getAllExprents() {
     List<Exprent> lst = new ArrayList<>();
     lst.add(array);

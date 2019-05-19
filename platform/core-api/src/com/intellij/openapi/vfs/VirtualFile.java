@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.Application;
@@ -8,11 +8,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,24 +24,23 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 /**
- * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by equal
- * {@code VirtualFile} instances for the entire lifetime of the IntelliJ IDEA process, unless the file
+ * Represents a file in {@link VirtualFileSystem}. A particular file is represented by equal
+ * {@code VirtualFile} instances for the entire lifetime of the IDE process, unless the file
  * is deleted, in which case {@link #isValid()} will return {@code false}.
  * <p/>
  * VirtualFile instances are created on request, so there can be several instances corresponding to the same file.
- * All of them are equal, have the same hashCode and use shared storage for all related data, including user data (see {@link UserDataHolder}).
+ * All of them are equal, have the same {@code hashCode} and use shared storage for all related data, including user data (see {@link UserDataHolder}).
  * <p/>
  * If an in-memory implementation of VirtualFile is required, {@link LightVirtualFile}
  * can be used.
  * <p/>
- * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">IntelliJ IDEA Virtual File System</a>
+ * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">Virtual File System</a>
  * for high-level overview.
  *
  * @see VirtualFileSystem
  * @see VirtualFileManager
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
-  public static final Key<Object> REQUESTOR_MARKER = Key.create("REQUESTOR_MARKER");
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
   /**
@@ -90,8 +89,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public static final String PROP_SYMLINK_TARGET = "symlink";
 
   /**
-   * Acceptable values for "propertyName" argument in
-   * {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent(Object, VirtualFile, String, Object, Object, boolean)}
+   * Acceptable values for "propertyName" argument of {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent VFilePropertyChangeEvent()}.
    */
   @MagicConstant(stringValues = {PROP_NAME, PROP_ENCODING, PROP_HIDDEN, PROP_WRITABLE, PROP_SYMLINK_TARGET})
   public @interface PropName {}
@@ -125,13 +123,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Gets the path of this file. Path is a string which uniquely identifies file within given
-   * <code>{@link VirtualFileSystem}</code>. Format of the path depends on the concrete file system.
-   * For <code>{@link com.intellij.openapi.vfs.LocalFileSystem}</code> it is an absolute file path with file separator characters
-   * (File.separatorChar) replaced to the forward slash ('/').
+   * {@link VirtualFileSystem}. Format of the path depends on the concrete file system.
+   * For {@link LocalFileSystem} it is an absolute file path with file separator characters
+   * ({@link File#separatorChar}) replaced to the forward slash ({@code '/'}).
    *
    * @return the path
    */
-  @SuppressWarnings("JavadocReference")
   @NotNull
   public abstract String getPath();
 
@@ -167,7 +164,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Gets the extension of this file. If file name contains '.' extension is the substring from the last '.'
-   * to the end of the name, otherwise extension is null.
+   * to the end of the name (not including the '.'), otherwise extension is null.
    *
    * @return the extension or null if file name doesn't contain '.'
    */
@@ -233,7 +230,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Checks whether this file has a specific property.
    *
    * @return {@code true} if the file has a specific property, {@code false} otherwise
-   * @since 13.0
    */
   public boolean is(@NotNull VFileProperty property) {
     return false;
@@ -248,7 +244,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code getPath()} if there are no symbolic links in a file's path;
    *         {@code getCanonicalFile().getPath()} if the link was successfully resolved;
    *         {@code null} otherwise
-   * @since 11.1
    */
   @Nullable
   public String getCanonicalPath() {
@@ -264,7 +259,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code this} if there are no symbolic links in a file's path;
    *         instance of {@code VirtualFile} if the link was successfully resolved;
    *         {@code null} otherwise
-   * @since 11.1
    */
   @Nullable
   public VirtualFile getCanonicalFile() {
@@ -274,7 +268,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Checks whether this {@code VirtualFile} is valid. File can be invalidated either by deleting it or one of its
    * parents with {@link #delete} method or by an external change.
-   * If file is not valid only {@link #equals}, {@link #hashCode}, 
+   * If file is not valid only {@link #equals}, {@link #hashCode},
    * {@link #getName()}, {@link #getPath()}, {@link #getUrl()}, {@link #getPresentableUrl()} and methods from
    * {@link UserDataHolder} can be called for it. Using any other methods for an invalid {@link VirtualFile} instance
    * produce unpredictable results.
@@ -323,11 +317,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * @return the {@link FileType} of this file.
-   *         When IDEA has no idea what the file type is (i.e. file type is not registered via {@link FileTypeRegistry}),
-   *         it returns {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN}
+   * Returns the {@link FileType} of this file, or {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN} if a type cannot be determined
+   * (i.e. file type is not registered via {@link FileTypeRegistry}).
    */
-  @SuppressWarnings("JavadocReference")
   @NotNull
   public FileType getFileType() {
     return FileTypeRegistry.getInstance().getFileTypeByFile(this);
@@ -341,35 +333,30 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   @Nullable
   public VirtualFile findFileByRelativePath(@NotNull String relPath) {
-    if (relPath.isEmpty()) return this;
-    relPath = StringUtil.trimStart(relPath, "/");
+    VirtualFile child = this;
 
-    int index = relPath.indexOf('/');
-    if (index < 0) index = relPath.length();
-    String name = relPath.substring(0, index);
+    int off = CharArrayUtil.shiftForward(relPath, 0, "/");
+    while (child != null && off < relPath.length()) {
+      int nextOff = relPath.indexOf('/', off);
+      if (nextOff < 0) nextOff = relPath.length();
+      String name = relPath.substring(off, nextOff);
 
-    VirtualFile child;
-    if (name.equals(".")) {
-      child = this;
-    }
-    else if (name.equals("..")) {
-      if (is(VFileProperty.SYMLINK)) {
-        final VirtualFile canonicalFile = getCanonicalFile();
-        child = canonicalFile != null ? canonicalFile.getParent() : null;
+      if (name.equals("..")) {
+        if (child.is(VFileProperty.SYMLINK)) {
+          VirtualFile canonicalFile = child.getCanonicalFile();
+          child = canonicalFile != null ? canonicalFile.getParent() : null;
+        }
+        else {
+          child = child.getParent();
+        }
       }
-      else {
-        child = getParent();
+      else if (!name.equals(".")) {
+        child = child.findChild(name);
       }
-    }
-    else {
-      child = findChild(name);
+
+      off = CharArrayUtil.shiftForward(relPath, nextOff, "/");
     }
 
-    if (child == null) return null;
-
-    if (index < relPath.length()) {
-      return child.findFileByRelativePath(relPath.substring(index + 1));
-    }
     return child;
   }
 
@@ -502,7 +489,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   @Nullable
-  protected Charset getStoredCharset() {
+  private Charset getStoredCharset() {
     return getUserData(CHARSET_KEY);
   }
 
@@ -563,7 +550,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if {@code requestor} is {@code null}.
-   *                  See {@link VirtualFileEvent#getRequestor} and {@link com.intellij.openapi.vfs.SafeWriteRequestor}.
+   *                  See {@link VirtualFileEvent#getRequestor} and {@link SafeWriteRequestor}.
    * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
@@ -576,12 +563,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * after closing the stream.<p>
    * <p/>
    * Normally you should not use this method.
-   *
+   * <p>
    * Writes BOM first, if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.
    *
    * @param requestor            any object to control who called this method. Note that
    *                             it is considered to be an external change if {@code requestor} is {@code null}.
-   *                             See {@link VirtualFileEvent#getRequestor} and {@link com.intellij.openapi.vfs.SafeWriteRequestor}.
+   *                             See {@link VirtualFileEvent#getRequestor} and {@link SafeWriteRequestor}.
    * @param newModificationStamp new modification stamp or -1 if no special value should be set
    * @param newTimeStamp         new time stamp or -1 if no special value should be set
    * @return {@code OutputStream}
@@ -684,7 +671,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *         result depends on the filesystem specifics
    */
   protected boolean nameEquals(@NotNull String name) {
-    return getName().equals(name);
+    return Comparing.equal(getNameSequence(), name);
   }
 
   /**
@@ -720,6 +707,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /** @deprecated use {@link VirtualFileSystem#isValidName(String)} (to be removed in IDEA 18) */
+  @Deprecated
   public static boolean isValidName(@NotNull String name) {
     return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
@@ -741,4 +729,27 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public void setPreloadedContentHint(byte[] preloadedContentHint) { }
+
+  /**
+   * @return true if this file is a symlink which is
+   * - recursive, i.e. points to this file' parent or
+   * - circular, i.e. has a loop. It means its path has a form of "/.../linkX/.../linkX"
+   */
+  public boolean isRecursiveOrCircularSymLink() {
+    if (!is(VFileProperty.SYMLINK)) return false;
+    VirtualFile resolved = getCanonicalFile();
+    // invalid symlink
+    if (resolved == null) return false;
+    // if it's recursive
+    if (VfsUtilCore.isAncestor(resolved, this, false)) return true;
+
+    // check if it's circular - any symlink above resolves to my target too
+    for (VirtualFile p = getParent(); p != null ; p = p.getParent()) {
+      if (p.is(VFileProperty.SYMLINK)) {
+        VirtualFile parentResolved = p.getCanonicalFile();
+        if (resolved.equals(parentResolved)) return true;
+      }
+    }
+    return false;
+  }
 }

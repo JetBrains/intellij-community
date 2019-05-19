@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,14 +48,14 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
 
   /**
    * Returns minimal selection length for given element.
-   * 
-   * Sometimes the length of word selection should be bounded below. 
+   *
+   * Sometimes the length of word selection should be bounded below.
    * E.g. it is useful in languages that requires prefixes for variable (php, less, etc.).
    * By default this kind of variables will be selected without prefix: @<selection>variable</selection>,
-   * but it make sense to exclude this range from selection list. 
+   * but it make sense to exclude this range from selection list.
    * So if this method returns 9 as a minimal length of selection
    * then first selection range for @variable will be: <selection>@variable</selection>.
-   * 
+   *
    * @param element element at caret
    * @param text text in editor
    * @param cursorOffset current caret offset in editor
@@ -66,7 +65,8 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     return 0;
   }
 
-  public static List<TextRange> expandToWholeLine(CharSequence text, @Nullable TextRange range, boolean isSymmetric) {
+  @NotNull
+  public static List<TextRange> expandToWholeLine(@NotNull CharSequence text, @Nullable TextRange range, boolean isSymmetric) {
     List<TextRange> result = new ArrayList<>();
 
     if (range == null) {
@@ -88,7 +88,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
   }
 
   @Nullable
-  private static TextRange getExpandedRange(CharSequence text, TextRange range, boolean isSymmetric) {
+  private static TextRange getExpandedRange(@NotNull CharSequence text, @NotNull TextRange range, boolean isSymmetric) {
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     int index1 = CharArrayUtil.shiftBackward(text, startOffset - 1, " \t");
@@ -128,8 +128,9 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     return null;
   }
 
-  public static List<TextRange> expandToWholeLinesWithBlanks(CharSequence text, TextRange range) {
-    List<TextRange> result = ContainerUtil.newArrayList();
+  @NotNull
+  public static List<TextRange> expandToWholeLinesWithBlanks(@NotNull CharSequence text, @NotNull TextRange range) {
+    List<TextRange> result = new ArrayList<>();
     result.addAll(expandToWholeLine(text, range, true));
 
     TextRange last = result.isEmpty() ? range : result.get(result.size() - 1);
@@ -158,7 +159,8 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     return result;
   }
 
-  public static List<TextRange> expandToWholeLine(CharSequence text, TextRange range) {
+  @NotNull
+  public static List<TextRange> expandToWholeLine(@NotNull CharSequence text, @Nullable TextRange range) {
     return expandToWholeLine(text, range, true);
   }
 }

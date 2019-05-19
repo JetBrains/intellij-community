@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.problems;
 
@@ -25,17 +25,17 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   @Override
-  public void weHaveGotProblems(@NotNull final VirtualFile virtualFile, @NotNull final List<Problem> problems) {
+  public void weHaveGotProblems(@NotNull final VirtualFile virtualFile, @NotNull final List<? extends Problem> problems) {
     if (myDelegate != null) myDelegate.weHaveGotProblems(virtualFile, problems);
   }
 
   @Override
-  public void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems) {
+  public void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems) {
     if (myDelegate != null) myDelegate.weHaveGotNonIgnorableProblems(virtualFile, problems);
   }
 
   @Override
-  public boolean hasProblemFilesBeneath(@NotNull final Condition<VirtualFile> condition) {
+  public boolean hasProblemFilesBeneath(@NotNull final Condition<? super VirtualFile> condition) {
     return false;
   }
 
@@ -46,16 +46,12 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
 
   @Override
   public boolean hasProblemFilesBeneath(@NotNull Module scope) {
-    return false;
+    return myDelegate != null && myDelegate.hasProblemFilesBeneath(scope);
   }
 
   @Override
   public void addProblemListener(@NotNull WolfTheProblemSolver.ProblemListener listener, @NotNull Disposable parentDisposable) {
     if (myDelegate != null) myDelegate.addProblemListener(listener, parentDisposable);
-  }
-
-  @Override
-  public void registerFileHighlightFilter(@NotNull Condition<VirtualFile> filter, @NotNull Disposable parentDisposable) {
   }
 
   @Override
@@ -78,7 +74,17 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   @Override
-  public void reportProblems(final VirtualFile file, Collection<Problem> problems) {
+  public void reportProblems(final VirtualFile file, Collection<? extends Problem> problems) {
     if (myDelegate != null) myDelegate.reportProblems(file,problems);
+  }
+
+  @Override
+  public void reportProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source) {
+    if (myDelegate != null) myDelegate.reportProblemsFromExternalSource(file, source);
+  }
+
+  @Override
+  public void clearProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source) {
+    if (myDelegate != null) myDelegate.clearProblemsFromExternalSource(file, source);
   }
 }

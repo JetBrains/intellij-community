@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +28,16 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
+ * Status bar shown on the bottom of IDE frame.
+ * <p>
+ * Displays {@link Info#set(String, Project) status text} and
+ * a number of {@link StandardWidgets builtin} and custom {@link StatusBarWidget widgets}.
+ *
  * @author spleaner
+ * @see WindowManager#getStatusBar(Project)
  */
 public interface StatusBar extends StatusBarInfo, Disposable {
+
   @SuppressWarnings({"AbstractClassNeverImplemented"})
   abstract class Info implements StatusBarInfo {
     public static final Topic<StatusBarInfo> TOPIC = Topic.create("IdeStatusBar.Text", StatusBarInfo.class);
@@ -58,8 +64,19 @@ public interface StatusBar extends StatusBarInfo, Disposable {
     }
   }
 
+  /**
+   * Adds the given widget on the right.
+   *
+   * @param widget Widget to add.
+   */
   void addWidget(@NotNull StatusBarWidget widget);
 
+  /**
+   * Adds the given widget positioned according to given anchor.
+   *
+   * @param widget Widget to add.
+   * @param anchor Anchor, see {@link Anchors}.
+   */
   void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor);
 
   void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable);
@@ -67,13 +84,13 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated use addWidget instead
+   * @deprecated use {@link #addWidget(StatusBarWidget)} instead
    */
   @Deprecated
   void addCustomIndicationComponent(@NotNull JComponent c);
 
   /**
-   * @deprecated use removeWidget instead
+   * @deprecated use {@link #removeWidget(String)} instead
    */
   @Deprecated
   void removeCustomIndicationComponent(@NotNull JComponent c);
@@ -98,9 +115,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   void install(IdeFrame frame);
 
   class Anchors {
-    public static final String DEFAULT_ANCHOR = after(SystemInfo.isMac
-                                                      ? StandardWidgets.ENCODING_PANEL
-                                                      : StandardWidgets.INSERT_OVERWRITE_PANEL);
+    public static final String DEFAULT_ANCHOR = after(StandardWidgets.COLUMN_SELECTION_MODE_PANEL);
 
     public static String before(String widgetId) {
       return "before " + widgetId;
@@ -112,7 +127,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
 
   class StandardWidgets {
     public static final String ENCODING_PANEL = "Encoding";
-    public static final String INSERT_OVERWRITE_PANEL = "InsertOverwrite";
+    public static final String COLUMN_SELECTION_MODE_PANEL = "InsertOverwrite"; // Keep the old ID for backwards compatibility
     public static final String READONLY_ATTRIBUTE_PANEL = "ReadOnlyAttribute";
     public static final String POSITION_PANEL = "Position";
   }

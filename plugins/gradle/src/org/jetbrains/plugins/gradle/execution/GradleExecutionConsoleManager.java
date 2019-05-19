@@ -34,7 +34,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/27/2015
  */
 public class GradleExecutionConsoleManager extends DefaultExternalSystemExecutionConsoleManager {
 

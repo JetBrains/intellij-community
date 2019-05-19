@@ -25,12 +25,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import java.util.HashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.actions.generate.DomTemplateRunner;
 import com.intellij.util.xml.ui.actions.generate.CreateDomElementAction;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -78,9 +78,7 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
                                      PsiClass selectedClass) {
     final Map<String, String> map = new HashMap<>();
     map.put("CLASS_NAME", selectedClass.getQualifiedName());
-    WriteCommandAction.writeCommandAction(project, file).run(() -> {
-      DomTemplateRunner.getInstance(project).runTemplate(createElement(context), myTemplate, editor, map);
-    });
+    WriteCommandAction.writeCommandAction(project, file).run(() -> DomTemplateRunner.getInstance(project).runTemplate(createElement(context), myTemplate, editor, map));
     return null;
   }
 

@@ -29,10 +29,6 @@ public class Java8MapForEachInspectionTest extends LightQuickFixParameterizedTes
     return new LocalInspectionTool[]{inspection};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/java8MapForEach";

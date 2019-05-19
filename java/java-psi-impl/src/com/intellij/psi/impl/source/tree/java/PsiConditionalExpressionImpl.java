@@ -67,15 +67,19 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     if (type1.equals(type2)) return type1;
 
     if (PsiUtil.isLanguageLevel8OrHigher(this) &&
-        PsiPolyExpressionUtil.isPolyExpression(this) &&
-        !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(this.getParent()))) {
+        PsiPolyExpressionUtil.isPolyExpression(this)) {
       //15.25.3 Reference Conditional Expressions 
       // The type of a poly reference conditional expression is the same as its target type.
-      final PsiType targetType = InferenceSession.getTargetType(this);
-      if (targetType instanceof PsiClassType) {
-        return ((PsiClassType)targetType).setLanguageLevel(PsiUtil.getLanguageLevel(this));
+      PsiType targetType = InferenceSession.getTargetType(this);
+      if (MethodCandidateInfo.isOverloadCheck(PsiUtil.skipParenthesizedExprUp(this.getParent()))) {
+        return targetType != null && 
+               targetType.isAssignableFrom(type1) && 
+               targetType.isAssignableFrom(type2) ? targetType : null;
       }
-      return targetType;
+      //for standalone conditional expression try to detect target type by type of the sides
+      if (targetType != null) {
+        return targetType;
+      }
     }
 
     final int typeRank1 = TypeConversionUtil.getTypeRank(type1);
@@ -185,6 +189,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     }
   }
 
+  @Override
   public String toString() {
     return "PsiConditionalExpression:" + getText();
   }

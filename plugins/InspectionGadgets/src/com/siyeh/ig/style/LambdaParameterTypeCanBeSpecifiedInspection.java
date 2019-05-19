@@ -89,7 +89,7 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
   private static class InferLambdaParameterTypeFix extends InspectionGadgetsFix {
     private final Object[] myInfos;
 
-    public InferLambdaParameterTypeFix(Object... infos) {
+    InferLambdaParameterTypeFix(Object... infos) {
       myInfos = infos;
     }
 

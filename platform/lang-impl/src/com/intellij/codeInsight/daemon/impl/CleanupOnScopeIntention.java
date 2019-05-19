@@ -44,11 +44,9 @@ public class CleanupOnScopeIntention extends CleanupIntention {
     }
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
       AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
-      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
-      project,
-      analysisScope,
-      module,
-      true, AnalysisUIOptions.getInstance(project), file);
+      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), project, BaseAnalysisActionDialog.standardItems(
+      project, analysisScope, module, file),
+      AnalysisUIOptions.getInstance(project), true);
     if (!dlg.showAndGet()) {
       return null;
     }

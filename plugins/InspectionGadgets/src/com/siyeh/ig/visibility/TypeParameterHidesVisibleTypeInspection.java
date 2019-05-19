@@ -15,12 +15,93 @@
  */
 package com.siyeh.ig.visibility;
 
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
-public class TypeParameterHidesVisibleTypeInspection extends TypeParameterHidesVisibleTypeInspectionBase {
+public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("type.parameter.hides.visible.type.display.name");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiClass aClass = (PsiClass)infos[0];
+    if (aClass instanceof PsiTypeParameter) {
+      return InspectionGadgetsBundle.message("type.parameter.hides.type.parameter.problem.descriptor", aClass.getName());
+    }
+    else {
+      String name = aClass.getQualifiedName();
+      if (name == null) {
+        name = aClass.getName();
+      }
+      return InspectionGadgetsBundle.message("type.parameter.hides.visible.type.problem.descriptor", name);
+    }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new TypeParameterHidesVisibleTypeVisitor();
+  }
+
+  private static class TypeParameterHidesVisibleTypeVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitTypeParameter(PsiTypeParameter parameter) {
+      super.visitTypeParameter(parameter);
+      final String unqualifiedClassName = parameter.getName();
+      PsiTypeParameterListOwner context = parameter.getOwner();
+      if (context == null) {
+        return;
+      }
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(parameter.getProject()).getResolveHelper();
+      while (true) {
+        if (context.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
+        }
+        context = PsiTreeUtil.getParentOfType(context, PsiTypeParameterListOwner.class);
+        if (context == null) {
+          return;
+        }
+        final PsiClass aClass = resolveHelper.resolveReferencedClass(unqualifiedClassName, context);
+        if (aClass instanceof PsiTypeParameter) {
+          final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
+          final PsiTypeParameterListOwner owner = typeParameter.getOwner();
+          if (owner == null) {
+            return;
+          }
+          if (!owner.equals(context)) {
+            continue;
+          }
+        }
+        if (aClass != null) {
+          registerClassError(parameter, aClass);
+          return;
+        }
+      }
+    }
   }
 }

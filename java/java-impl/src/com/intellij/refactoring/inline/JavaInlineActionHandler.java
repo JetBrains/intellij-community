@@ -26,6 +26,10 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 public abstract class JavaInlineActionHandler extends InlineActionHandler {
   @Override
   public boolean isEnabledForLanguage(Language l) {
+    return isJavaLanguage(l);
+  }
+
+  protected static boolean isJavaLanguage(Language l) {
     return l instanceof JavaLanguage ||
            l.equals(StdFileTypes.JSPX.getLanguage()) ||
            l.equals(StdFileTypes.JSP.getLanguage());

@@ -75,9 +75,7 @@ public class XsltNamespaceContext implements NamespaceContext {
                     for (Map.Entry<String,String> entry : localPrefixes) {
                         final String prefix = entry.getKey();
                         if (!prefix.isEmpty() && entry.getValue().equals(uri)) {
-                            if (!allPrefixes.contains(prefix)) {
-                                allPrefixes.add(prefix);
-                            }
+                          allPrefixes.add(prefix);
                         }
                     }
                 }
@@ -163,7 +161,7 @@ public class XsltNamespaceContext implements NamespaceContext {
     private final SmartPsiElementPointer<XmlFile> myXmlFile;
 
     // TODO: verify API
-    public MyCreateNSDeclarationAction(@NotNull XmlElement xmlElement, String prefix, @NotNull XmlFile xmlFile) {
+    MyCreateNSDeclarationAction(@NotNull XmlElement xmlElement, String prefix, @NotNull XmlFile xmlFile) {
       super(xmlElement, prefix);
       myXmlFile = SmartPointerManager.createPointer(xmlFile);
     }

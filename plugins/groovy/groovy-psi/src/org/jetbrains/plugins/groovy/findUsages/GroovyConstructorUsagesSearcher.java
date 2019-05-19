@@ -115,7 +115,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   public static void processGroovyClassUsages(final PsiClass clazz,
                                               final SearchScope scope,
                                               SearchRequestCollector collector,
-                                              final Processor<GrNewExpression> newExpressionProcessor,
+                                              final Processor<? super GrNewExpression> newExpressionProcessor,
                                               final LiteralConstructorSearcher literalProcessor) {
     ReferencesSearch.searchOptimized(clazz, scope, false, collector, true, (ref, collector1) -> {
       final PsiElement element = ref.getElement();
@@ -131,7 +131,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   }
 
   private static boolean processGroovyConstructorUsages(GrCodeReferenceElement element,
-                                                        final Processor<GrNewExpression> newExpressionProcessor,
+                                                        final Processor<? super GrNewExpression> newExpressionProcessor,
                                                         final LiteralConstructorSearcher literalProcessor) {
     PsiElement parent = element.getParent();
 

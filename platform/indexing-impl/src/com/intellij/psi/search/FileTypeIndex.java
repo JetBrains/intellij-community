@@ -45,7 +45,7 @@ public class FileTypeIndex {
     return !processFiles(type, CommonProcessors.alwaysFalse(), scope);
   }
 
-  public static boolean processFiles(@NotNull FileType fileType, @NotNull Processor<VirtualFile> processor, @NotNull GlobalSearchScope scope) {
+  public static boolean processFiles(@NotNull FileType fileType, @NotNull Processor<? super VirtualFile> processor, @NotNull GlobalSearchScope scope) {
     return FilenameIndex.getService().processFilesWithFileType(fileType, processor, scope);
   }
 }

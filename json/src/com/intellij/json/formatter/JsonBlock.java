@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.formatter;
 
 import com.intellij.formatting.*;
@@ -12,10 +13,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.json.JsonElementTypes.*;
@@ -39,7 +40,7 @@ public class JsonBlock implements ASTBlock {
   private final Alignment myAlignment;
   private final Indent myIndent;
   private final Wrap myWrap;
-  private final CodeStyleSettings mySettings;
+  private final JsonCodeStyleSettings myCustomSettings;
   private final SpacingBuilder mySpacingBuilder;
   // lazy initialized on first call to #getSubBlocks()
   private List<Block> mySubBlocks = null;
@@ -47,27 +48,43 @@ public class JsonBlock implements ASTBlock {
   private final Alignment myPropertyValueAlignment;
   private final Wrap myChildWrap;
 
+  /**
+   * @deprecated Please use overload with settings JsonCodeStyleSettings and spacingBuilder.
+   * Getting settings should be done only for the root block.
+   */
+  @Deprecated
+  @SuppressWarnings("unused") //used externally
   public JsonBlock(@Nullable JsonBlock parent,
                    @NotNull ASTNode node,
                    @NotNull CodeStyleSettings settings,
                    @Nullable Alignment alignment,
                    @NotNull Indent indent,
                    @Nullable Wrap wrap) {
+    this(parent, node, settings.getCustomSettings(JsonCodeStyleSettings.class), alignment, indent, wrap,
+         JsonFormattingBuilderModel.createSpacingBuilder(settings));
+  }
+
+  public JsonBlock(@Nullable JsonBlock parent,
+                   @NotNull ASTNode node,
+                   @NotNull JsonCodeStyleSettings customSettings,
+                   @Nullable Alignment alignment,
+                   @NotNull Indent indent,
+                   @Nullable Wrap wrap,
+                   @NotNull SpacingBuilder spacingBuilder) {
     myParent = parent;
     myNode = node;
     myPsiElement = node.getPsi();
     myAlignment = alignment;
     myIndent = indent;
     myWrap = wrap;
-    mySettings = settings;
-
-    mySpacingBuilder = JsonFormattingBuilderModel.createSpacingBuilder(settings);
+    mySpacingBuilder = spacingBuilder;
+    myCustomSettings = customSettings;
 
     if (myPsiElement instanceof JsonObject) {
-      myChildWrap = Wrap.createWrap(getCustomSettings().OBJECT_WRAPPING, true);
+      myChildWrap = Wrap.createWrap(myCustomSettings.OBJECT_WRAPPING, true);
     }
     else if (myPsiElement instanceof JsonArray) {
-      myChildWrap = Wrap.createWrap(getCustomSettings().ARRAY_WRAPPING, true);
+      myChildWrap = Wrap.createWrap(myCustomSettings.ARRAY_WRAPPING, true);
     }
     else {
       myChildWrap = null;
@@ -91,9 +108,9 @@ public class JsonBlock implements ASTBlock {
   @Override
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      int propertyAlignment = getCustomSettings().PROPERTY_ALIGNMENT;
+      int propertyAlignment = myCustomSettings.PROPERTY_ALIGNMENT;
       ASTNode[] children = myNode.getChildren(null);
-      mySubBlocks = ContainerUtil.newArrayListWithCapacity(children.length);
+      mySubBlocks = new ArrayList<>(children.length);
       for (ASTNode child: children) {
         if (isWhitespaceOrEmpty(child)) continue;
         mySubBlocks.add(makeSubBlock(child, propertyAlignment));
@@ -136,7 +153,7 @@ public class JsonBlock implements ASTBlock {
         }
       }
     }
-    return new JsonBlock(this, childNode, mySettings, alignment, indent, wrap);
+    return new JsonBlock(this, childNode, myCustomSettings, alignment, indent, wrap, mySpacingBuilder);
   }
 
   @Nullable
@@ -201,9 +218,5 @@ public class JsonBlock implements ASTBlock {
 
   private static boolean isWhitespaceOrEmpty(ASTNode node) {
     return node.getElementType() == TokenType.WHITE_SPACE || node.getTextLength() == 0;
-  }
-
-  private JsonCodeStyleSettings getCustomSettings() {
-    return mySettings.getCustomSettings(JsonCodeStyleSettings.class);
   }
 }

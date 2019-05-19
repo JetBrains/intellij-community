@@ -66,8 +66,8 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         if (context != null || object != null) {
           requestModelUpdateFromContextOrObject(context, object);
         } else {
-          DataManager.getInstance().getDataContextFromFocus().doWhenDone(
-            (Consumer<DataContext>)dataContext -> requestModelUpdateFromContextOrObject(dataContext, null));
+          DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(
+            dataContext -> requestModelUpdateFromContextOrObject(dataContext, null));
         }
       }
 

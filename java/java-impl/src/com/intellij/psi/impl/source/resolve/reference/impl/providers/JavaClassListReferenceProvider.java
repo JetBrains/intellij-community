@@ -103,7 +103,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
         ProgressManager.checkCanceled();
       }
     }
-    return ContainerUtil.toArray(results, new PsiReference[results.size()]);
+    return results.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   @Override

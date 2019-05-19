@@ -24,7 +24,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 3/12/13 11:09 AM
  */
 public class ArrangementLabelUiComponent extends AbstractArrangementUiComponent {
 

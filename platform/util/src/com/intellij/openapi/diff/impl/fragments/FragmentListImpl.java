@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 
@@ -34,7 +33,7 @@ public class FragmentListImpl implements FragmentList {
   }
 
   private void init() {
-    Collections.sort(myFragments, FRAGMENT_COMPARATOR);
+    myFragments.sort(FRAGMENT_COMPARATOR);
     myFragments.trimToSize();
   }
 
@@ -61,7 +60,7 @@ public class FragmentListImpl implements FragmentList {
   }
 
   @Override
-  public Fragment getFragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {
+  public Fragment getFragmentAt(int offset, FragmentSide side, Condition<? super Fragment> condition) {
     for (Iterator<Fragment> iterator = iterator(); iterator.hasNext();) {
       Fragment fragment = iterator.next();
       TextRange range = fragment.getRange(side);
@@ -72,24 +71,20 @@ public class FragmentListImpl implements FragmentList {
     return null;
   }
 
-  public static ArrayList<Fragment> shift(ArrayList<Fragment> fragments, TextRange rangeShift1, TextRange rangeShift2,
-                                     int startLine1, int startLine2) {
-    ArrayList<Fragment> newFragments = new ArrayList<Fragment>(fragments.size());
-    for (Iterator<Fragment> iterator = fragments.iterator(); iterator.hasNext();) {
-      Fragment fragment = iterator.next();
+  public static ArrayList<Fragment> shift(ArrayList<? extends Fragment> fragments, TextRange rangeShift1, TextRange rangeShift2,
+                                          int startLine1, int startLine2) {
+    ArrayList<Fragment> newFragments = new ArrayList<>(fragments.size());
+    for (Fragment fragment : fragments) {
       newFragments.add(fragment.shift(rangeShift1, rangeShift2, startLine1, startLine2));
     }
     return newFragments;
   }
 
-  private static final Comparator<Fragment> FRAGMENT_COMPARATOR = new Comparator<Fragment>() {
-    @Override
-    public int compare(Fragment fragment1, Fragment fragment2) {
-      int result = compareBySide(fragment1, fragment2, FragmentSide.SIDE1);
-      int check = compareBySide(fragment1, fragment2, FragmentSide.SIDE2);
-      LOG.assertTrue(result == 0 || check == 0 || sign(result) == sign(check));
-      return result;
-    }
+  private static final Comparator<Fragment> FRAGMENT_COMPARATOR = (fragment1, fragment2) -> {
+    int result = compareBySide(fragment1, fragment2, FragmentSide.SIDE1);
+    int check = compareBySide(fragment1, fragment2, FragmentSide.SIDE2);
+    LOG.assertTrue(result == 0 || check == 0 || sign(result) == sign(check));
+    return result;
   };
 
   private static int sign(int n) {

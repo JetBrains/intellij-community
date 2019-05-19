@@ -33,12 +33,12 @@ public class TestFailedLineInspection extends LocalInspectionTool {
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
 
-        TestStateStorage.Record state = TestFailedLineManager.getInstance(call.getProject()).getFailedLineState(call);
+        TestStateStorage.Record state = TestFailedLineManager.getInstance(holder.getProject()).getFailedLineState(call);
         if (state == null) return;
 
         LocalQuickFix[] fixes = {new DebugFailedTestFix(call, state.topStacktraceLine),
           new RunActionFix(call, DefaultRunExecutor.EXECUTOR_ID)};
-        ProblemDescriptor descriptor = InspectionManager.getInstance(call.getProject())
+        ProblemDescriptor descriptor = InspectionManager.getInstance(holder.getProject())
                                                         .createProblemDescriptor(nameElement, state.errorMessage, isOnTheFly, fixes,
                                                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         descriptor.setTextAttributes(CodeInsightColors.RUNTIME_ERROR);
@@ -51,7 +51,7 @@ public class TestFailedLineInspection extends LocalInspectionTool {
 
     private final String myTopStacktraceLine;
 
-    public DebugFailedTestFix(PsiElement element, String topStacktraceLine) {
+    DebugFailedTestFix(PsiElement element, String topStacktraceLine) {
       super(element, DefaultDebugExecutor.EXECUTOR_ID);
       myTopStacktraceLine = topStacktraceLine;
     }
@@ -75,7 +75,7 @@ public class TestFailedLineInspection extends LocalInspectionTool {
     private final Executor myExecutor;
     private final RunnerAndConfigurationSettings myConfiguration;
 
-    public RunActionFix(PsiElement element, String executorId) {
+    RunActionFix(PsiElement element, String executorId) {
       myExecutor = ExecutorRegistry.getInstance().getExecutorById(executorId);
       myContext = new ConfigurationContext(element);
       myConfiguration = myContext.getConfiguration();

@@ -24,8 +24,8 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.ExpressionUtil;
+import com.intellij.codeInsight.template.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -204,32 +204,38 @@ public class CreateFromUsageUtils {
     }
   }
 
-  public static void setupEditor(PsiMethod method, final Editor newEditor) {
+  public static void setupEditor(@NotNull PsiMethod method, @NotNull Editor newEditor) {
     PsiCodeBlock body = method.getBody();
     if (body != null) {
-      PsiElement l = PsiTreeUtil.skipWhitespacesForward(body.getLBrace());
-      PsiElement r = PsiTreeUtil.skipWhitespacesBackward(body.getRBrace());
-      if (l != null && r != null) {
-        int start = l.getTextRange().getStartOffset();
-        int end = r.getTextRange().getEndOffset();
-        newEditor.getCaretModel().moveToOffset(Math.max(start, end));
-        if (end < start) {
-          newEditor.getCaretModel().moveToOffset(end + 1);
-          CodeStyleManager styleManager = CodeStyleManager.getInstance(method.getProject());
-          PsiFile containingFile = method.getContainingFile();
-          final String lineIndent = styleManager.getLineIndent(containingFile, Math.min(start, end));
-          PsiDocumentManager manager = PsiDocumentManager.getInstance(method.getProject());
-          manager.doPostponedOperationsAndUnblockDocument(manager.getDocument(containingFile));
-          EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
-          EditorModificationUtil.insertStringAtCaret(newEditor, "\n", false, false);
-        }
-        else {
-          //correct position caret for groovy and java methods
-          final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(method);
+      setupEditor(body, newEditor);
+    }
+  }
+
+  public static void setupEditor(@NotNull PsiCodeBlock body, @NotNull Editor newEditor) {
+    PsiElement l = PsiTreeUtil.skipWhitespacesForward(body.getLBrace());
+    PsiElement r = PsiTreeUtil.skipWhitespacesBackward(body.getRBrace());
+    if (l != null && r != null) {
+      int start = l.getTextRange().getStartOffset();
+      int end = r.getTextRange().getEndOffset();
+      newEditor.getCaretModel().moveToOffset(Math.max(start, end));
+      if (end < start) {
+        newEditor.getCaretModel().moveToOffset(end + 1);
+        CodeStyleManager styleManager = CodeStyleManager.getInstance(body.getProject());
+        PsiFile containingFile = body.getContainingFile();
+        final String lineIndent = styleManager.getLineIndent(containingFile, Math.min(start, end));
+        PsiDocumentManager manager = PsiDocumentManager.getInstance(body.getProject());
+        manager.doPostponedOperationsAndUnblockDocument(manager.getDocument(containingFile));
+        EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
+        EditorModificationUtil.insertStringAtCaret(newEditor, "\n", false, false);
+      }
+      else {
+        //correct position caret for groovy and java methods
+        if (body.getParent() instanceof PsiMethod) {
+          final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo((PsiMethod)body.getParent());
           info.positionCaret(newEditor, true);
         }
-        newEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
+      newEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
 
@@ -247,7 +253,7 @@ public class CreateFromUsageUtils {
   }
 
   static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
-                                    final PsiSubstitutor substitutor, final List<Pair<PsiExpression, PsiType>> arguments)
+                                    final PsiSubstitutor substitutor, final List<? extends Pair<PsiExpression, PsiType>> arguments)
     throws IncorrectOperationException {
 
     final PsiManager psiManager = method.getManager();
@@ -387,7 +393,7 @@ public class CreateFromUsageUtils {
                                                  String name,
                                                  PsiJavaCodeReferenceElement referenceElement) {
     PsiManager manager = psiClass.getManager();
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
     PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
                       classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
                       classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
@@ -500,7 +506,8 @@ public class CreateFromUsageUtils {
     final List<PsiReferenceExpression> result = new ArrayList<>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
-        if (expression instanceof PsiReferenceExpression) {
+        if (expression instanceof PsiReferenceExpression && 
+            (expr.getParent() instanceof PsiMethodCallExpression == expression.getParent() instanceof PsiMethodCallExpression)) {
           if (Comparing.equal(expr.getReferenceName(), ((PsiReferenceExpression)expression).getReferenceName()) && !isValidReference(expr, false)) {
             result.add(expr);
           }
@@ -511,7 +518,8 @@ public class CreateFromUsageUtils {
       @Override public void visitMethodCallExpression(PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
-          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName())) {
+          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName()) && 
+              methodExpression.resolve() == ((PsiMethodCallExpression)expression).resolveMethod()) {
             result.add(expr.getMethodExpression());
           }
         }
@@ -585,11 +593,11 @@ public class CreateFromUsageUtils {
 
   private static void getExpectedInformation(final PsiExpression expression,
                                              List<ExpectedTypeInfo[]> types,
-                                             List<String> expectedMethodNames,
-                                             List<String> expectedFieldNames) {
+                                             List<? super String> expectedMethodNames,
+                                             List<? super String> expectedFieldNames) {
     Comparator<ExpectedTypeInfo> expectedTypesComparator = (o1, o2) -> compareExpectedTypes(o1, o2, expression);
     for (PsiExpression expr : collectExpressions(expression, PsiMember.class, PsiFile.class)) {
-      PsiElement parent = expr.getParent();
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr.getParent());
 
       if (!(parent instanceof PsiReferenceExpression)) {
         boolean isAssignmentToFunctionalExpression = PsiUtil.isOnAssignmentLeftHand(expr) &&
@@ -618,7 +626,7 @@ public class CreateFromUsageUtils {
         continue;
       }
 
-      PsiElement pparent = parent.getParent();
+      PsiElement pparent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
       if (pparent instanceof PsiMethodCallExpression) {
         expectedMethodNames.add(refName);
         if (refName.equals("equals")) {
@@ -631,8 +639,7 @@ public class CreateFromUsageUtils {
         continue;
       }
 
-      if (pparent instanceof PsiReferenceExpression ||
-          pparent instanceof PsiVariable ||
+      if (pparent instanceof PsiVariable ||
           pparent instanceof PsiExpression) {
         expectedFieldNames.add(refName);
       }
@@ -804,9 +811,7 @@ public class CreateFromUsageUtils {
 
       PsiType[] types = ExpectedTypesProvider.processExpectedTypes(expectedTypes, visitor, manager.getProject());
       if (types.length == 0) {
-        return allowVoidType
-               ? new PsiType[]{PsiType.VOID}
-               : new PsiType[]{PsiType.getJavaLangObject(manager, resolveScope)};
+        return Arrays.stream(expectedTypes).map(type -> type.getType()).toArray(PsiType[]::new);
       }
 
       return types;
@@ -891,12 +896,12 @@ public class CreateFromUsageUtils {
     return isInNamedElement || element.getTextRange().contains(offset-1);
   }
 
-  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<String> possibleClassNames, final boolean method,
+  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<? super String> possibleClassNames, final boolean method,
                                           final boolean staticAccess) {
     addClassesWithMember(memberName, file, possibleClassNames, method, staticAccess, true);
   }
 
-  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<String> possibleClassNames, final boolean method,
+  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<? super String> possibleClassNames, final boolean method,
                                           final boolean staticAccess,
                                           final boolean addObjectInheritors) {
     final Project project = file.getProject();
@@ -936,7 +941,7 @@ public class CreateFromUsageUtils {
     }
   }
 
-  private static boolean handleObjectMethod(Set<String> possibleClassNames, final JavaPsiFacade facade, final GlobalSearchScope searchScope, final boolean method, final String memberName, final boolean staticAccess, boolean addInheritors) {
+  private static boolean handleObjectMethod(Set<? super String> possibleClassNames, final JavaPsiFacade facade, final GlobalSearchScope searchScope, final boolean method, final String memberName, final boolean staticAccess, boolean addInheritors) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(facade.getProject());
     final boolean[] allClasses = {false};
     ReadAction.run(() -> {

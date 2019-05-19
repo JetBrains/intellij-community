@@ -5,12 +5,14 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteMultiCatchFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
@@ -19,7 +21,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -48,10 +54,31 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     new CharsetMethodMatcher("java.nio.channels.Channels", "newReader", "java.nio.channels.ReadableByteChannel", ""),
     new CharsetMethodMatcher("java.nio.channels.Channels", "newWriter", "java.nio.channels.WritableByteChannel", ""),
     new CharsetMethodMatcher(JAVA_UTIL_PROPERTIES, "storeToXML", "java.io.OutputStream", JAVA_LANG_STRING, ""),
+    
+    // Apache IO
+    new CharsetMethodMatcher("org.apache.commons.io.IOUtils", "toString", "java.io.InputStream", ""),
+    new CharsetMethodMatcher("org.apache.commons.io.IOUtils", "toString", "java.net.URI", ""),
+    new CharsetMethodMatcher("org.apache.commons.io.IOUtils", "toString", "java.net.URL", ""),
   };
 
-  private static final Set<String> SUPPORTED_CHARSETS =
-    ContainerUtil.immutableSet("US-ASCII", "ISO-8859-1", "UTF-8", "UTF-16BE", "UTF-16LE", "UTF-16");
+  private static final CallMatcher FOR_NAME_MATCHER =
+    CallMatcher.staticCall("java.nio.charset.Charset", "forName").parameterTypes(JAVA_LANG_STRING);
+
+  private static final Map<String, String> SUPPORTED_CHARSETS =
+    ContainerUtil.<String, String>immutableMapBuilder()
+      .put("US-ASCII", "US_ASCII")
+      .put("ASCII", "US_ASCII")
+      .put("ISO646-US", "US_ASCII")
+      .put("ISO-8859-1", "ISO_8859_1")
+      .put("UTF-8", "UTF_8")
+      .put("UTF8", "UTF_8")
+      .put("UTF-16BE", "UTF_16BE")
+      .put("UTF16BE", "UTF_16BE")
+      .put("UTF-16LE", "UTF_16LE")
+      .put("UTF16LE", "UTF_16LE")
+      .put("UTF-16", "UTF_16")
+      .put("UTF16", "UTF_16")
+      .build();
 
   @NotNull
   @Override
@@ -61,29 +88,43 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       @Override
       public void visitCallExpression(PsiCallExpression call) {
         CharsetMatch match = StreamEx.of(MATCHERS)
-                                     .map(matcher -> matcher.extractCharsetMatch(call))
-                                     .nonNull()
-                                     .findFirst().orElse(null);
+          .map(matcher -> matcher.extractCharsetMatch(call))
+          .nonNull()
+          .findFirst().orElse(null);
         if (match == null) return;
-        String charsetString = getCharsetString(match.myStringCharset);
+        addCharsetReplacement(match.myStringCharset, match.myStringCharset);
+      }
+
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        super.visitMethodCallExpression(call);
+        if (!FOR_NAME_MATCHER.matches(call)) return;
+        PsiExpressionList arguments = call.getArgumentList();
+        PsiExpression charset = arguments.getExpressions()[0];
+        addCharsetReplacement(call, charset);
+      }
+
+      private void addCharsetReplacement(@NotNull PsiElement place, @NotNull PsiExpression charset) {
+        String charsetString = getCharsetString(charset);
         if (charsetString == null) return;
-        String constantName = "StandardCharsets." + charsetString.replace('-', '_');
-        holder
-          .registerProblem(match.myStringCharset, InspectionsBundle.message("inspection.charset.object.can.be.used.message", constantName),
-                           new CharsetObjectCanBeUsedFix(constantName));
+        String constantName = "StandardCharsets." + SUPPORTED_CHARSETS.get(charsetString);
+        holder.registerProblem(place, InspectionsBundle.message("inspection.charset.object.can.be.used.message", constantName),
+                               new CharsetObjectCanBeUsedFix(constantName));
       }
 
       @Nullable
       private String getCharsetString(PsiExpression charsetExpression) {
         charsetExpression = PsiUtil.skipParenthesizedExprDown(charsetExpression);
         String charsetString = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(charsetExpression), String.class);
-        if (charsetString == null || !SUPPORTED_CHARSETS.contains(charsetString)) return null;
+        if (charsetString == null) return null;
+        charsetString = StringUtil.toUpperCase(charsetString);
+        if (!SUPPORTED_CHARSETS.containsKey(charsetString)) return null;
         if (charsetExpression instanceof PsiLiteralExpression) return charsetString;
         if (charsetExpression instanceof PsiReferenceExpression) {
           String name = ((PsiReferenceExpression)charsetExpression).getReferenceName();
           if (name == null) return null;
-          String baseName = name.replaceAll("[^A-Z0-9]", "").toLowerCase(Locale.ENGLISH);
-          String baseCharset = charsetString.replaceAll("[^A-Z0-9]", "").toLowerCase(Locale.ENGLISH);
+          String baseName = StringUtil.toLowerCase(name.replaceAll("[^A-Z0-9]", ""));
+          String baseCharset = StringUtil.toLowerCase(charsetString.replaceAll("[^A-Z0-9]", ""));
           // Do not report constants which name is not based on charset name (like "ENCODING", "DEFAULT_ENCODING", etc.)
           // because replacement might not be well-suitable
           if (!baseName.contains(baseCharset)) return null;
@@ -142,8 +183,8 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
 
       PsiMethod[] candidates = method.isConstructor() ? aClass.getConstructors() : aClass.findMethodsByName(method.getName(), false);
       PsiMethod charsetMethod = Arrays.stream(candidates)
-                                      .filter(psiMethod -> checkMethod(psiMethod, "java.nio.charset.Charset"))
-                                      .findFirst().orElse(null);
+        .filter(psiMethod -> checkMethod(psiMethod, "java.nio.charset.Charset"))
+        .findFirst().orElse(null);
       if (charsetMethod == null) return null;
       return new CharsetMatch(argument, method, charsetMethod);
     }
@@ -205,7 +246,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   static class CharsetObjectCanBeUsedFix implements LocalQuickFix {
     private final String myConstantName;
 
-    public CharsetObjectCanBeUsedFix(String constantName) {
+    CharsetObjectCanBeUsedFix(String constantName) {
       myConstantName = constantName;
     }
 
@@ -227,11 +268,12 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
       if (expression == null) return;
-      PsiElement anchor = PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
-      if (anchor == null) return;
+      PsiElement anchor = FOR_NAME_MATCHER.matches(expression) ? null : PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
       CommentTracker ct = new CommentTracker();
-      JavaCodeStyleManager.getInstance(project)
-                          .shortenClassReferences(ct.replaceAndRestoreComments(expression, "java.nio.charset." + myConstantName));
+      String replacement = "java.nio.charset." + myConstantName;
+      PsiReferenceExpression ref = (PsiReferenceExpression)ct.replaceAndRestoreComments(expression, replacement);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
+      if (anchor == null) return;
       while (true) {
         PsiTryStatement tryStatement =
           PsiTreeUtil.getParentOfType(anchor, PsiTryStatement.class, true, PsiMember.class, PsiLambdaExpression.class);
@@ -245,6 +287,11 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
               if (type.equalsToText("java.io.UnsupportedEncodingException") ||
                   type.equalsToText("java.io.IOException")) {
                 Collection<PsiClassType> unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
+                PsiResourceList resourceList = tryStatement.getResourceList();
+                if (resourceList != null) {
+                  Collection<PsiClassType> resourceExceptions = ExceptionUtil.collectUnhandledExceptions(resourceList, resourceList);
+                  unhandledExceptions = StreamEx.of(unhandledExceptions, resourceExceptions).toFlatList(Function.identity());
+                }
                 if(unhandledExceptions.stream().noneMatch(ue -> ue.isAssignableFrom(type) || type.isAssignableFrom(ue))) {
                   if(parameter.getType() instanceof PsiDisjunctionType) {
                     DeleteMultiCatchFix.deleteCaughtExceptionType(element);

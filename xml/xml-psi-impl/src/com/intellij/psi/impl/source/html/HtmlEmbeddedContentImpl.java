@@ -60,6 +60,7 @@ public class HtmlEmbeddedContentImpl extends ASTWrapperPsiElement implements Xml
     return true;
   }
 
+  @Override
   public String toString() {
     String s = super.toString();
     final IElementType type = getNode().getElementType();

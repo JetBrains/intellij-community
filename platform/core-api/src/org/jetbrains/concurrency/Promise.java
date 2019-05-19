@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency;
 
 import com.intellij.util.Consumer;
@@ -6,6 +6,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Method;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -32,16 +33,19 @@ public interface Promise<T> {
   }
 
   /**
-   * Create a promise that is resolved with the given value.
+   * @deprecated Use Promises.resolvedPromise
    */
+  @Deprecated
   @NotNull
   static <T> Promise<T> resolve(@Nullable T result) {
-    if (result == null) {
+    try {
+      Method method = Promise.class.getClassLoader().loadClass("org.jetbrains.concurrency.Promises").getMethod("resolvedPromise", Object.class);
+      method.setAccessible(true);
       //noinspection unchecked
-      return (Promise<T>)InternalPromiseUtil.FULFILLED_PROMISE.getValue();
+      return (Promise<T>)method.invoke(null, result);
     }
-    else {
-      return new DonePromise<>(InternalPromiseUtil.PromiseValue.createFulfilled(result));
+    catch (ReflectiveOperationException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -72,7 +76,7 @@ public interface Promise<T> {
    * </pre>
    */
   @NotNull
-  <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, Promise<SUB_RESULT>> done);
+  <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, ? extends Promise<SUB_RESULT>> done);
 
   /**
    * Execute passed handler on promise resolve.
@@ -94,14 +98,14 @@ public interface Promise<T> {
    * Execute passed handler on promise reject.
    */
   @NotNull
-  Promise<T> onError(@NotNull java.util.function.Consumer<Throwable> rejected);
+  Promise<T> onError(@NotNull java.util.function.Consumer<? super Throwable> rejected);
 
   /**
    * @deprecated Use {@link #onError(java.util.function.Consumer)}
    */
   @Deprecated
   @NotNull
-  default Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
+  default Promise<T> rejected(@NotNull Consumer<? super Throwable> rejected) {
     return onError(it -> rejected.consume(it));
   }
 
@@ -115,6 +119,7 @@ public interface Promise<T> {
    * Execute passed handler on promise resolve (result value will be passed),
    * or on promise reject (null as result value will be passed).
    */
+  @NotNull
   Promise<T> onProcessed(@NotNull java.util.function.Consumer<? super T> processed);
 
   /**
@@ -122,6 +127,7 @@ public interface Promise<T> {
    * or on promise reject (null as result value will be passed).
    */
   @Deprecated
+  @NotNull
   default Promise<T> processed(@NotNull Consumer<? super T> action) {
     return onProcessed(it -> action.consume(it));
   }

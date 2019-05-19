@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.ui;
 
 import com.google.common.primitives.Ints;
@@ -53,6 +39,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -217,7 +205,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (MQ_PATCHES.is(dataId)) {
       return this;
     }
@@ -239,7 +227,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
   private class MqDeleteAction extends DumbAwareAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final List<String> names = getSelectedPatchNames();
       if (names.isEmpty()) return;
 
@@ -256,13 +244,14 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedRowsCount() != 0 && !myPatchTable.isEditing());
     }
   }
 
   private class MqRefreshAction extends DumbAwareAction {
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       refreshAll();
     }
   }
@@ -279,11 +268,11 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   private class MyPatchModel extends AbstractTableModel implements MultiReorderedModel {
 
     @NotNull private final MqPatchDetails.MqPatchEnum[] myColumnNames = MqPatchDetails.MqPatchEnum.values();
-    @NotNull private final Map<String, MqPatchDetails> myPatchesWithDetails = ContainerUtil.newHashMap();
+    @NotNull private final Map<String, MqPatchDetails> myPatchesWithDetails = new HashMap<>();
     @NotNull private final List<String> myPatches;
 
-    public MyPatchModel(@NotNull List<String> names) {
-      myPatches = ContainerUtil.newArrayList(names);
+    MyPatchModel(@NotNull List<String> names) {
+      myPatches = new ArrayList<>(names);
       readMqPatchesDetails();
     }
 
@@ -369,10 +358,11 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   }
 
   private class MyPatchTable extends JBTable {
-    public MyPatchTable(MyPatchModel model) {
+    MyPatchTable(MyPatchModel model) {
       super(model);
     }
 
+    @Override
     public MyPatchModel getModel() {
       return (MyPatchModel)dataModel;
     }

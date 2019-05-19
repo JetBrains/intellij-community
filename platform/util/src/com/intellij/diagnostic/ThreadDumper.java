@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.NonNls;
@@ -27,18 +13,25 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class ThreadDumper {
+  private static final Comparator<ThreadInfo> THREAD_INFO_COMPARATOR =
+    Comparator.comparing((ThreadInfo o1) -> isEDT(o1.getThreadName()))
+      .thenComparing(o -> o.getThreadState() == Thread.State.RUNNABLE)
+      .thenComparingInt(o -> o.getStackTrace().length)
+      .reversed();
+
   private ThreadDumper() {
   }
 
   @NotNull
   public static String dumpThreadsToString() {
     StringWriter writer = new StringWriter();
-    dumpThreadsToFile(ManagementFactory.getThreadMXBean(), writer);
+    dumpThreadInfos(getThreadInfos(ManagementFactory.getThreadMXBean()), writer);
     return writer.toString();
   }
   
@@ -61,38 +54,36 @@ public class ThreadDumper {
   @NotNull
   public static ThreadDump getThreadDumpInfo(@NotNull final ThreadMXBean threadMXBean) {
     StringWriter writer = new StringWriter();
-    StackTraceElement[] edtStack = dumpThreadsToFile(threadMXBean, writer);
-    return new ThreadDump(writer.toString(), edtStack);
+    ThreadInfo[] threadInfos = getThreadInfos(threadMXBean);
+    StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
+    return new ThreadDump(writer.toString(), edtStack, threadInfos);
   }
 
-  @Nullable
-  private static StackTraceElement[] dumpThreadsToFile(@NotNull ThreadMXBean threadMXBean, @NotNull Writer f) {
-    StackTraceElement[] edtStack = null;
-    boolean dumpSuccessful = false;
-
+  @NotNull
+  private static ThreadInfo[] getThreadInfos(@NotNull ThreadMXBean threadMXBean) {
+    ThreadInfo[] threads;
     try {
-      ThreadInfo[] threads = sort(threadMXBean.dumpAllThreads(false, false));
-      edtStack = dumpThreadInfos(threads, f);
-      dumpSuccessful = true;
+      threads = sort(threadMXBean.dumpAllThreads(false, false));
     }
     catch (Exception ignored) {
-
+      threads = sort(threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), Integer.MAX_VALUE));
     }
+    return threads;
+  }
 
-    if (!dumpSuccessful) {
-      final long[] threadIds = threadMXBean.getAllThreadIds();
-      final ThreadInfo[] threadInfo = sort(threadMXBean.getThreadInfo(threadIds, Integer.MAX_VALUE));
-      edtStack = dumpThreadInfos(threadInfo, f);
-    }
+  public static boolean isEDT(@NotNull ThreadInfo info) {
+    return isEDT(info.getThreadName());
+  }
 
-    return edtStack;
+  public static boolean isEDT(@NotNull String threadName) {
+    return threadName.startsWith("AWT-EventQueue");
   }
 
   private static StackTraceElement[] dumpThreadInfos(@NotNull ThreadInfo[] threadInfo, @NotNull Writer f) {
     StackTraceElement[] edtStack = null;
     for (ThreadInfo info : threadInfo) {
       if (info != null) {
-        if (info.getThreadName().equals("AWT-EventQueue-1")) {
+        if (isEDT(info)) {
           edtStack = info.getStackTrace();
         }
         dumpThreadInfo(info, f);
@@ -103,21 +94,7 @@ public class ThreadDumper {
 
   @NotNull
   private static ThreadInfo[] sort(@NotNull ThreadInfo[] threads) {
-    Arrays.sort(threads, new Comparator<ThreadInfo>() {
-      @Override
-      public int compare(ThreadInfo o1, ThreadInfo o2) {
-        final String t1 = o1.getThreadName();
-        final String t2 = o2.getThreadName();
-        if (t1.startsWith("AWT-EventQueue")) return -1;
-        if (t2.startsWith("AWT-EventQueue")) return 1;
-        final boolean r1 = o1.getThreadState() == Thread.State.RUNNABLE;
-        final boolean r2 = o2.getThreadState() == Thread.State.RUNNABLE;
-        if (r1 && !r2) return -1;
-        if (r2 && !r1) return 1;
-        return 0;
-      }
-    });
-
+    Arrays.sort(threads, THREAD_INFO_COMPARATOR);
     return threads;
   }
 
@@ -152,15 +129,86 @@ public class ThreadDumper {
     }
   }
 
+  public static void dumpCallStack(@NotNull Thread thread, @NotNull Writer f, @NotNull StackTraceElement[] stackTraceElements) {
+    try {
+      @NonNls StringBuilder sb = new StringBuilder("\"").append(thread.getName()).append("\"");
+      sb.append(" prio=0 tid=0x0 nid=0x0 ").append(getReadableState(thread.getState())).append("\n");
+      sb.append("     java.lang.Thread.State: ").append(thread.getState()).append("\n");
+
+      f.write(sb + "\n");
+      printStackTrace(f, stackTraceElements);
+      f.write("\n");
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private static void printStackTrace(@NotNull Writer f, @NotNull StackTraceElement[] stackTraceElements) {
     try {
       for (StackTraceElement element : stackTraceElements) {
-        f.write("\tat " + element.toString() + "\n");
+        f.write("\tat " + element + "\n");
       }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+  /**
+   * Returns the EDT stack in a form that Google Crash understands, or null if the EDT stack cannot be determined.
+   *
+   * @param fullThreadDump lines comprising a thread dump as formatted by {@link #dumpCallStack(ThreadInfo, Writer, StackTraceElement[])}
+   */
+  @Nullable
+  public static String getEdtStackForCrash(@NotNull String fullThreadDump, @NotNull String exceptionType) {
+    // We know that the AWT-EventQueue-* thread is dumped out first (see #sort above), and for each thread, there are at the very least
+    // 3 lines printed out before the stack trace. If we don't see any of this, then return early
+    List<String> threadDump = Arrays.asList(fullThreadDump.split("\n"));
+
+    if (threadDump.size() < 3) {
+      return null;
+    }
+
+    String line = threadDump.get(0); // e.g. "AWT-EventQueue-0 ...
+    int i = line.indexOf(' ');
+    if (i <= 1) {
+      return null;
+    }
+
+    StringBuilder sb = new StringBuilder(200);
+    sb.append(exceptionType + ": ");
+    sb.append(line.substring(1, i)); // append thread name (e.g. AWT-EventQueue-0)
+
+    line = threadDump.get(1); // e.g. " java.lang.Thread.State: RUNNABLE"
+    String[] words = line.trim().split(" ");
+    if (words.length < 2) {
+      return null;
+    }
+
+    sb.append(' ');
+    sb.append(words[1]); // e.g. "RUNNABLE"
+
+    // the 3rd line contains lock information (or is empty)
+    line = threadDump.get(2);
+    if (!line.trim().isEmpty()) {
+      sb.append(' ');
+      sb.append(line.trim());
+    }
+
+    sb.append('\n');
+
+    // the rest of the lines correspond to the stack trace until we reach an empty line
+    for (i = 3; i < threadDump.size(); i++) {
+      line = threadDump.get(i);
+      if (line.trim().isEmpty()) {
+        break;
+      }
+
+      sb.append(line);
+      sb.append('\n');
+    }
+
+    return sb.toString().trim();
   }
 
   private static String getReadableState(@NotNull Thread.State state) {

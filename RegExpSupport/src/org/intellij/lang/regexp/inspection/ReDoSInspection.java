@@ -48,7 +48,7 @@ public class ReDoSInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public ReDoSVisitor(ProblemsHolder holder) {
+    ReDoSVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 

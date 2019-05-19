@@ -33,10 +33,6 @@ public class SimplifyStreamApiCallChainsInspectionTest extends LightQuickFixPara
     return new LocalInspectionTool[]{new SimplifyStreamApiCallChainsInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk9();

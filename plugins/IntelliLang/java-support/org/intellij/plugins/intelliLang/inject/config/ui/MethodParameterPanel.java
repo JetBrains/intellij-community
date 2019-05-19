@@ -79,7 +79,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       final Document document = PsiUtilEx.createDocument(s, project);
       document.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(final DocumentEvent e) {
+        public void documentChanged(@NotNull final DocumentEvent e) {
           updateParamTree();
           updateTree();
         }
@@ -123,7 +123,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     });
     new AnAction("Toggle") {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         performToggleAction();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myParamsTable);
@@ -274,7 +274,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     myLanguagePanel = new LanguagePanel(myProject, myOrigInjection);
     myRootNode = new DefaultMutableTreeNode(null, true);
     myParamsTable = new MyView(new ListTreeTableModelOnColumns(myRootNode, createColumnInfos()));
-    myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);    
+    myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);
   }
 
   @Nullable
@@ -359,7 +359,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   private class BrowseClassListener implements ActionListener {
     private final Project myProject;
 
-    public BrowseClassListener(Project project) {
+    BrowseClassListener(Project project) {
       myProject = project;
     }
 
@@ -378,12 +378,12 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   }
 
   private static class MyView extends TreeTableView implements TypeSafeDataProvider {
-    public MyView(ListTreeTableModelOnColumns treeTableModel) {
+    MyView(ListTreeTableModelOnColumns treeTableModel) {
       super(treeTableModel);
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (CommonDataKeys.PSI_ELEMENT.equals(key)) {
         final Collection selection = getSelection();
         if (!selection.isEmpty()) {

@@ -15,16 +15,14 @@
  */
 package com.intellij.java.refactoring;
 
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.JavaTestUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-public class TurnRefsToSuperTest extends MultiFileTestCase {
+public class TurnRefsToSuperTest extends LightMultiFileTestCase {
   public void testSuperClass() { doTest("AClass", "ASuper", true); }
   public void testMethodFromSuper() { doTest("AClass", "ASuper", true); }
   public void testRemoveImport() { doTest("pack1.AClass", "pack1.AnInterface", true); }
@@ -67,22 +65,20 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
   //public void testForEach2() throws Exception { doTest("Test.MyIterableImpl", "Test.MyIterable", false); }
 
   private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) {
-    doTest((rootDir, rootAfter) -> this.performAction(className, superClassName, replaceInstanceOf), true);
+    doTest(() -> this.performAction(className, superClassName, replaceInstanceOf), true);
   }
 
-  @NotNull
   @Override
-  public String getTestRoot() {
-    return "/refactoring/turnRefsToSuper/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/turnRefsToSuper/";
   }
 
   private void performAction(final String className, final String superClassName, boolean replaceInstanceOf) {
-    final PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
+    final PsiClass aClass = myFixture.findClass(className);
     assertNotNull("Class " + className + " not found", aClass);
-    PsiClass superClass = myJavaFacade.findClass(superClassName, GlobalSearchScope.allScope(myProject));
+    PsiClass superClass = myFixture.findClass(superClassName);
     assertNotNull("Class " + superClassName + " not found", superClass);
 
-    new TurnRefsToSuperProcessor(myProject, aClass, superClass, replaceInstanceOf).run();
-    FileDocumentManager.getInstance().saveAllDocuments();
+    new TurnRefsToSuperProcessor(getProject(), aClass, superClass, replaceInstanceOf).run();
   }
 }

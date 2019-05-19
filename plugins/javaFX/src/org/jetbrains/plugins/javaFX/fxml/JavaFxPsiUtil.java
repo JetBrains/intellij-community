@@ -38,6 +38,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import gnu.trove.THashMap;
@@ -274,7 +275,6 @@ public class JavaFxPsiUtil {
   }
 
   private static final Key<CachedValue<PsiClass>> INJECTED_CONTROLLER = Key.create("javafx.injected.controller");
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("javafx.controller");
 
   public static PsiClass getControllerClass(final PsiFile containingFile) {
     if (containingFile instanceof XmlFile) {
@@ -384,13 +384,13 @@ public class JavaFxPsiUtil {
             final PsiType type = parameters[0].getType();
             if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
               if (psiClass.equals(PsiUtil.resolveClassInType(method.getReturnType()))) {
-                return CachedValueProvider.Result.create(method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+                return CachedValueProvider.Result.create(method, PsiModificationTracker.MODIFICATION_COUNT);
               }
             }
           }
         }
       }
-      return CachedValueProvider.Result.create(null, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -450,11 +450,11 @@ public class JavaFxPsiUtil {
           final PsiMethod getter = findPropertyGetter(aClass, propertyName);
           if (getter != null) {
             final PsiType propertyType = eraseFreeTypeParameters(getter.getReturnType(), getter);
-            return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+            return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.MODIFICATION_COUNT);
           }
         }
       }
-      return CachedValueProvider.Result.create(null, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -479,7 +479,7 @@ public class JavaFxPsiUtil {
     });
   }
 
-  public static boolean isAbleToInstantiate(@NotNull PsiClass psiClass, @NotNull Consumer<String> messageConsumer) {
+  public static boolean isAbleToInstantiate(@NotNull PsiClass psiClass, @NotNull Consumer<? super String> messageConsumer) {
     if (psiClass.isEnum() || hasNamedArgOrNoArgConstructor(psiClass)) return true;
     final PsiMethod valueOf = findValueOfMethod(psiClass);
     if (valueOf == null) {
@@ -497,7 +497,7 @@ public class JavaFxPsiUtil {
       for (PsiMethod constructor : psiClass.getConstructors()) {
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();
         if (parameters.length == 0) {
-          return CachedValueProvider.Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
         }
         boolean annotated = true;
         for (PsiParameter parameter : parameters) {
@@ -506,9 +506,9 @@ public class JavaFxPsiUtil {
             break;
           }
         }
-        if (annotated) return CachedValueProvider.Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        if (annotated) return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
       }
-      return CachedValueProvider.Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(false, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -528,11 +528,11 @@ public class JavaFxPsiUtil {
             }
             return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
           })) {
-            return CachedValueProvider.Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+            return CachedValueProvider.Result.create(false, PsiModificationTracker.MODIFICATION_COUNT);
           }
         }
       }
-      return CachedValueProvider.Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -542,7 +542,7 @@ public class JavaFxPsiUtil {
   }
 
   public static boolean isClassAcceptable(@Nullable XmlTag targetTag, @Nullable final PsiClass fromClass,
-                                          @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                          @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     if (targetTag == null || fromClass == null || !fromClass.isValid()) {
       return true;
     }
@@ -572,14 +572,14 @@ public class JavaFxPsiUtil {
     return true;
   }
 
-  private static boolean noDefaultPropertyError(@NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+  private static boolean noDefaultPropertyError(@NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     messageConsumer.accept("Parent tag has no default property",
                            Validator.ValidationHost.ErrorType.ERROR);
     return false;
   }
 
   private static boolean canCoerce(@Nullable PsiType targetType, @NotNull PsiClass fromClass, @NotNull PsiElement context,
-                                   @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                   @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     if (targetType == null) return true;
     PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(targetType, fromClass.getResolveScope());
     if (collectionItemType == null && InheritanceUtil.isInheritor(targetType, JavaFxCommonNames.JAVAFX_BEANS_PROPERTY)) {
@@ -604,7 +604,7 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean canCoerceImpl(@NotNull PsiType targetType, @NotNull PsiClass fromClass, @NotNull PsiElement context,
-                                       @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                       @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     if (targetType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ||
         targetType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
         targetType.isAssignableFrom(PsiTypesUtil.getClassType(fromClass))) {
@@ -639,14 +639,14 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean unableToCoerceError(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
-                                             @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                             @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     messageConsumer.accept("Unable to coerce " + HighlightUtil.formatClass(fromClass) + " to " + targetType.getCanonicalText(),
                            Validator.ValidationHost.ErrorType.ERROR);
     return false;
   }
 
   private static boolean unrelatedTypesWarning(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
-                                               @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                               @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     messageConsumer.accept("Conversion between unrelated types, " + HighlightUtil.formatClass(fromClass) +
                            " to " + targetType.getCanonicalText(),
                            Validator.ValidationHost.ErrorType.WARNING);
@@ -671,7 +671,7 @@ public class JavaFxPsiUtil {
       final PsiClass fieldClass = resolveResult.getElement();
       if (fieldClass == null) {
         final PsiType propertyType = eraseFreeTypeParameters(fieldType, field);
-        return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.MODIFICATION_COUNT);
       }
       PsiType substitute = null;
       for (String typeName : typeMap.keySet()) {
@@ -683,7 +683,7 @@ public class JavaFxPsiUtil {
       if (substitute == null) {
         if (!InheritanceUtil.isInheritor(fieldType, JavaFxCommonNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE)) {
           final PsiType propertyType = eraseFreeTypeParameters(fieldType, field);
-          return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.MODIFICATION_COUNT);
         }
         final PsiClass aClass = JavaPsiFacade.getInstance(project)
           .findClass(JavaFxCommonNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE, GlobalSearchScope.allScope(project));
@@ -696,7 +696,7 @@ public class JavaFxPsiUtil {
       }
 
       final PsiType propertyType = eraseFreeTypeParameters(substitute, field);
-      return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -731,16 +731,16 @@ public class JavaFxPsiUtil {
       final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
       if (isStatic && parameters.length == 2 || !isStatic && parameters.length == 1) {
         final PsiType argumentType = eraseFreeTypeParameters(parameters[parameters.length - 1].getType(), method);
-        return CachedValueProvider.Result.create(argumentType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return CachedValueProvider.Result.create(argumentType, PsiModificationTracker.MODIFICATION_COUNT);
       }
-      return CachedValueProvider.Result.create(null, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
   private static PsiType getGetterReturnType(@NotNull PsiMethod method) {
     return CachedValuesManager.getCachedValue(method, () -> {
       final PsiType returnType = eraseFreeTypeParameters(method.getReturnType(), method);
-      return CachedValueProvider.Result.create(returnType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(returnType, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -863,7 +863,7 @@ public class JavaFxPsiUtil {
   public static Map<String, PsiMember> getReadableProperties(@Nullable PsiClass psiClass) {
     if (psiClass != null) {
       return CachedValuesManager.getCachedValue(psiClass, () ->
-        CachedValueProvider.Result.create(prepareReadableProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+        CachedValueProvider.Result.create(prepareReadableProperties(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
     }
     return Collections.emptyMap();
   }
@@ -886,7 +886,7 @@ public class JavaFxPsiUtil {
   public static Map<String, PsiMember> getWritableProperties(@Nullable PsiClass psiClass) {
     if (psiClass != null) {
       return CachedValuesManager.getCachedValue(psiClass, () ->
-        CachedValueProvider.Result.create(prepareWritableProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+        CachedValueProvider.Result.create(prepareWritableProperties(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
     }
     return Collections.emptyMap();
   }
@@ -964,7 +964,7 @@ public class JavaFxPsiUtil {
   public static Set<String> getConstructorNamedArgProperties(@Nullable PsiClass psiClass) {
     if (psiClass != null) {
       return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result.create(
-        prepareConstructorNamedArgProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+        prepareConstructorNamedArgProperties(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
     }
     return Collections.emptySet();
   }
@@ -1125,10 +1125,10 @@ public class JavaFxPsiUtil {
       CachedValueProvider.Result.create(Arrays.stream(enumClass.getFields())
                                           .filter(PsiEnumConstant.class::isInstance)
                                           .map(PsiField::getName)
-                                          .map(String::toUpperCase)
+                                          .map(StringUtil::toUpperCase)
                                           .collect(Collectors.toCollection(THashSet::new)),
-                                        PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
-    if (!constantNames.contains(name.toUpperCase())) {
+                                        PsiModificationTracker.MODIFICATION_COUNT));
+    if (!constantNames.contains(StringUtil.toUpperCase(name))) {
       return "No enum constant '" + name + "' in " + enumClass.getQualifiedName();
     }
     return null;
@@ -1193,7 +1193,7 @@ public class JavaFxPsiUtil {
 
   @Nullable
   private static CachedValueProvider.Result<PsiClass> computeInjectedControllerClass(PsiFile containingFile) {
-    return ourGuard.doPreventingRecursion(containingFile, true, () -> {
+    return RecursionManager.doPreventingRecursion(containingFile, true, () -> {
       final Project project = containingFile.getProject();
       final Ref<PsiClass> injectedController = new Ref<>();
       final PsiClass fxmlLoader =
@@ -1238,7 +1238,7 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean findControllerClassInjection(@NotNull PsiReference loaderReference,
-                                                      @NotNull Ref<PsiClass> injectedController,
+                                                      @NotNull Ref<? super PsiClass> injectedController,
                                                       PsiMethod injectControllerMethod) {
     final PsiElement element = loaderReference.getElement();
     if (element instanceof PsiReferenceExpression) {
@@ -1258,24 +1258,14 @@ public class JavaFxPsiUtil {
   }
 
   public static boolean isJavaFxPackageImported(@NotNull PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
-    final PsiJavaFile javaFile = (PsiJavaFile)file;
-
-    return CachedValuesManager.getCachedValue(
-      javaFile, () -> {
-        final PsiImportList importList = javaFile.getImportList();
-        if (importList != null) {
-          for (PsiImportStatementBase statementBase : importList.getAllImportStatements()) {
-            final PsiJavaCodeReferenceElement importReference = statementBase.getImportReference();
-            if (importReference != null) {
-              final String qualifiedName = importReference.getQualifiedName();
-              if (qualifiedName != null && qualifiedName.startsWith("javafx.")) {
-                return CachedValueProvider.Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-              }
-            }
-          }
-        }
-        return CachedValueProvider.Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    return file instanceof PsiJavaFile && CachedValuesManager.getCachedValue(file, () -> {
+      PsiImportList importList = ((PsiJavaFile)file).getImportList();
+      boolean javafx = importList != null && ContainerUtil.exists(importList.getAllImportStatements(), s -> {
+        PsiJavaCodeReferenceElement ref = s.getImportReference();
+        String qualifiedName = ref != null ? ref.getQualifiedName() : null;
+        return qualifiedName != null && qualifiedName.startsWith("javafx.") && ref.resolve() != null;
       });
+      return CachedValueProvider.Result.create(javafx, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 }

@@ -19,6 +19,7 @@ import org.netbeans.lib.cvsclient.io.IStreamLogger;
 import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
@@ -57,11 +58,13 @@ public final class ConnectionStreams
 		setOutputStream(connection.getOutputStream());
 	}
 
-	public Reader createReader(InputStream inputStream) {
-		return new InputStreamReader(inputStream);
+	@Override
+        public Reader createReader(InputStream inputStream) {
+		return new InputStreamReader(inputStream, StandardCharsets.UTF_8);
 	}
 
-	public Writer createWriter(OutputStream outputStream) {
+	@Override
+        public Writer createWriter(OutputStream outputStream) {
 		try {
 			return new OutputStreamWriter(outputStream, myCharset);
 		}
@@ -72,38 +75,47 @@ public final class ConnectionStreams
 
 	// Accessing ==============================================================
 
-	public IReaderFactory getReaderFactory() {
+	@Override
+        public IReaderFactory getReaderFactory() {
 		return this;
 	}
 
-	public IWriterFactory getWriterFactory() {
+	@Override
+        public IWriterFactory getWriterFactory() {
 		return this;
 	}
 
-	public InputStream getLoggedInputStream() {
+	@Override
+        public InputStream getLoggedInputStream() {
 		return loggedInputStream;
 	}
 
-	public OutputStream getLoggedOutputStream() {
+	@Override
+        public OutputStream getLoggedOutputStream() {
 		return loggedOutputStream;
 	}
 
-	public Reader getLoggedReader() {
+	@Override
+        public Reader getLoggedReader() {
 		return loggedReader;
 	}
 
-	public Writer getLoggedWriter() {
+	@Override
+        public Writer getLoggedWriter() {
 		return loggedWriter;
 	}
 
-	public InputStream getInputStream() {
+	@Override
+        public InputStream getInputStream() {
 		return inputStream;
 	}
 
-	public OutputStream getOutputStream() {
+	@Override
+        public OutputStream getOutputStream() {
 		return outputStream;
 	}
 
+  @Override
   public void flushForReading() throws IOException {
     loggedWriter.flush();
     if (deflaterOutputStream != null) {
@@ -112,7 +124,8 @@ public final class ConnectionStreams
     loggedOutputStream.flush();
   }
 
-	public void close() {
+	@Override
+        public void close() {
 		try {
 			if (loggedOutputStream != null) {
 				try {

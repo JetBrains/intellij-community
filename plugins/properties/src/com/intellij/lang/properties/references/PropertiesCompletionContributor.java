@@ -50,7 +50,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
     extend(null, psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         doAdd(parameters, result);
       }
@@ -59,7 +59,8 @@ public class PropertiesCompletionContributor extends CompletionContributor {
 
   private static void doAdd(CompletionParameters parameters, final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
-    PsiReference[] references = ArrayUtil.mergeArrays(position.getReferences(), position.getParent().getReferences());
+    PsiElement parent = position.getParent();
+    PsiReference[] references = parent == null ? position.getReferences() : ArrayUtil.mergeArrays(position.getReferences(), parent.getReferences());
     PropertyReference propertyReference = ContainerUtil.findInstance(references, PropertyReference.class);
     if (propertyReference != null && !hasMoreImportantReference(references, propertyReference)) {
       final int startOffset = parameters.getOffset();

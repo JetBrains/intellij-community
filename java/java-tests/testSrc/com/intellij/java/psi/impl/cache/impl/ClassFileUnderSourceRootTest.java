@@ -22,7 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -30,7 +30,7 @@ import java.io.File;
 /**
  * @author max
  */
-public class ClassFileUnderSourceRootTest extends IdeaTestCase {
+public class ClassFileUnderSourceRootTest extends JavaProjectTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -41,6 +41,9 @@ public class ClassFileUnderSourceRootTest extends IdeaTestCase {
 
     FileUtil.writeToFile(new File(dir, "p/A.java"), "package p;\npublic class A { }");
     FileUtil.copy(new File(PathManagerEx.getTestDataPath() + "/psi/cls/repo/pack/MyClass.class"), new File(dir, "pack/MyClass.class"));
+
+    root.refresh(false, true);
+    assertSize(2, root.getChildren());
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       PsiTestUtil.addSourceRoot(myModule, root);

@@ -30,9 +30,9 @@ import java.util.List;
 
 public class DeleteRepeatedInterfaceFix implements IntentionAction {
   private final PsiTypeElement myConjunct;
-  private final List<PsiTypeElement> myConjList;
+  private final List<? extends PsiTypeElement> myConjList;
 
-  public DeleteRepeatedInterfaceFix(PsiTypeElement conjunct, List<PsiTypeElement> conjList) {
+  public DeleteRepeatedInterfaceFix(PsiTypeElement conjunct, List<? extends PsiTypeElement> conjList) {
     myConjunct = conjunct;
     myConjList = conjList;
   }

@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,14 +58,21 @@ public class UnnecessaryBreakInspection extends BaseInspection {
     @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
       super.visitBreakStatement(statement);
-      final PsiIdentifier identifier = statement.getLabelIdentifier();
-      if (identifier == null) {
+      final PsiElement exitedStatement = statement.findExitedElement();
+      if (exitedStatement == null) {
         return;
       }
-      final PsiStatement exitedStatement = statement.findExitedStatement();
-      if (exitedStatement == null  || exitedStatement instanceof PsiSwitchStatement) {
-        return;
+      if (exitedStatement instanceof PsiSwitchBlock) {
+        if (!SwitchUtils.isRuleFormatSwitch((PsiSwitchBlock)exitedStatement) || statement.getExpression() != null) {
+          return;
+        }
       }
+      else {
+          final PsiExpression expression = statement.getExpression();
+          if (expression == null) {
+            return;
+          }
+        }
       if (exitedStatement instanceof PsiBlockStatement) {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)exitedStatement;
         final PsiCodeBlock block = blockStatement.getCodeBlock();
@@ -72,8 +80,13 @@ public class UnnecessaryBreakInspection extends BaseInspection {
           registerStatementError(statement);
         }
       }
-      else if (ControlFlowUtils.statementCompletesWithStatement(exitedStatement, statement)) {
-        registerStatementError(statement);
+      else if (exitedStatement instanceof PsiSwitchStatement) {
+        if (ControlFlowUtils.statementCompletesWithStatement((PsiStatement)exitedStatement, statement)) {
+          registerStatementError(statement);
+        }
+      }
+      else if (exitedStatement instanceof PsiSwitchExpression) {
+        registerError(statement);
       }
     }
   }

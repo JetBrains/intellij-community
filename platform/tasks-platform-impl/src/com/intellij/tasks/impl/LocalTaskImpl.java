@@ -69,7 +69,7 @@ public class LocalTaskImpl extends LocalTask {
   private List<BranchInfo> myBranches = new ArrayList<>();
 
   /** for serialization */
-  public LocalTaskImpl() {    
+  public LocalTaskImpl() {
   }
 
   public LocalTaskImpl(@NotNull String id, @NotNull String summary) {
@@ -92,15 +92,18 @@ public class LocalTaskImpl extends LocalTask {
       myWorkItems = ((LocalTaskImpl)origin).getWorkItems();
       myRunning = ((LocalTaskImpl)origin).isRunning();
       myLastPost = ((LocalTaskImpl)origin).getLastPost();
+      myPresentableName = ((LocalTaskImpl)origin).myPresentableName;
     }
   }
 
+  @Override
   @Attribute("id")
   @NotNull
   public String getId() {
     return myId;
   }
 
+  @Override
   @Attribute("summary")
   @NotNull
   public String getSummary() {
@@ -118,11 +121,13 @@ public class LocalTaskImpl extends LocalTask {
     return myComments;
   }
 
+  @Override
   @Tag("updated")
   public Date getUpdated() {
     return myUpdated == null ? getCreated() : myUpdated;
   }
 
+  @Override
   @Tag("created")
   public Date getCreated() {
     if (myCreated == null) {
@@ -131,6 +136,7 @@ public class LocalTaskImpl extends LocalTask {
     return myCreated;
   }
 
+  @Override
   @Attribute("active")
   public boolean isActive() {
     return myActive;
@@ -170,6 +176,7 @@ public class LocalTaskImpl extends LocalTask {
     mySummary = summary;
   }
 
+  @Override
   public void setActive(boolean active) {
     myActive = active;
   }
@@ -207,10 +214,12 @@ public class LocalTaskImpl extends LocalTask {
     myCreated = created;
   }
 
+  @Override
   public void setUpdated(Date updated) {
     myUpdated = updated;
   }
 
+  @Override
   @NotNull
   @Property(surroundWithTag = false)
   @XCollection(elementName="changelist")
@@ -268,6 +277,7 @@ public class LocalTaskImpl extends LocalTask {
     myShelfName = shelfName;
   }
 
+  @Override
   public boolean isClosed() {
     return myClosed;
   }
@@ -322,10 +332,12 @@ public class LocalTaskImpl extends LocalTask {
     return myPresentableName != null ? myPresentableName : toString();
   }
 
+  @Override
   public String getCustomIcon() {
     return myCustomIcon;
   }
 
+  @Override
   public long getTotalTimeSpent() {
     long timeSpent = 0;
     for (WorkItem item : myWorkItems) {
@@ -340,6 +352,7 @@ public class LocalTaskImpl extends LocalTask {
     return myRunning;
   }
 
+  @Override
   public void setRunning(final boolean running) {
     myRunning = running;
   }

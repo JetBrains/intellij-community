@@ -170,7 +170,10 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
     if (myPluginNameById == null) {
       myPluginNameById = new HashMap<>();
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-        myPluginNameById.put(descriptor.getPluginId().getIdString(), descriptor.getName());
+        String idString = descriptor.getPluginId().getIdString();
+        //todo[nik] change 'name' tag of the core plugin instead
+        String name = PluginManagerCore.CORE_PLUGIN_ID.equals(idString) ? "IDE Core" : descriptor.getName();
+        myPluginNameById.put(idString, name);
       }
     }
     return myPluginNameById;
@@ -191,12 +194,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
     Collections.sort(pluginIds, (o1, o2) -> getPluginNameById(o1).compareToIgnoreCase(getPluginNameById(o2)));
 
     ComboBox<String> pluginChooser = new ComboBox<>(ArrayUtilRt.toStringArray(pluginIds), 250);
-    pluginChooser.setRenderer(new ListCellRendererWrapper<String>() {
-      @Override
-      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-        setText(getPluginNameById(value));
-      }
-    });
+    pluginChooser.setRenderer(SimpleListCellRenderer.create("", this::getPluginNameById));
     new ComboboxSpeedSearch(pluginChooser) {
       @Override
       protected String getElementText(Object element) {

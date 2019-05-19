@@ -37,8 +37,41 @@ class LessThanRelations {
   void list(List<String> list, int index) {
     if(index >= list.size()) {
       System.out.println("Big index");
-    } else if(index > 0 && <warning descr="Condition '!list.isEmpty()' is always 'true' when reached">!<warning descr="Condition 'list.isEmpty()' is always 'false' when reached">list.isEmpty()</warning></warning>) {
+    } else if(index > 0 && <warning descr="Condition '!list.isEmpty()' is always 'true' when reached">!<warning descr="Result of 'list.isEmpty()' is always 'false'">list.isEmpty()</warning></warning>) {
       System.out.println("ok");
     }
   }
+}
+final class Range {
+  final long myFrom; // inclusive
+  final long myTo; // inclusive
+
+  public Object smth(Object other) {
+    if (other instanceof Range) {
+      long from = ((Range)other).myFrom;
+      long to = ((Range)other).myTo;
+      if (to < myFrom || from > myTo) return this;
+      if (from <= myFrom && to >= myTo) return new Object();
+      if (from > myFrom && to < myTo) {
+        return new RangeSet(new long[]{myFrom, from - 1, to + 1, myTo});
+      }
+      if (from <= myFrom) {
+        return new Range(to + 1, myTo);
+      }
+      if (<warning descr="Condition 'to >= myTo' is always 'true'">to >= myTo</warning>) {
+        return new Range(myFrom, from - 1);
+      }
+      throw new RuntimeException("Impossible: " + this + ":" + other);
+    }
+    return this;
+  }
+
+  Range(long from, long to) {
+    myFrom = from;
+    myTo = to;
+  }
+}
+
+final class RangeSet {
+  RangeSet(long[] arr) {}
 }

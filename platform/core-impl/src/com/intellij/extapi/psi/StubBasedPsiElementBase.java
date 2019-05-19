@@ -34,6 +34,7 @@ import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SubstrateRef;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -44,11 +45,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -338,7 +339,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       return stub.getParentStub().getPsi();
     }
 
-    return SharedImplUtil.getParent(getNode());
+    return SourceTreeToPsiMap.treeElementToPsi(getNode().getTreeParent());
   }
 
   @NotNull
@@ -403,7 +404,9 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @NotNull
   public <S extends StubElement, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(@NotNull IStubElementType<S, Psi> elementType) {
     Psi result = getStubOrPsiChild(elementType);
-    assert result != null: "Missing required child of type " + elementType + "; tree: "+DebugUtil.psiToString(this, false);
+    if (result == null) {
+      throw new AssertionError("Missing required child of type " + elementType + "; tree: " + DebugUtil.psiToString(this, false));
+    }
     return result;
   }
 
@@ -419,8 +422,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     }
     else {
       final ASTNode[] nodes = SharedImplUtil.getChildrenOfType(getNode(), elementType);
-      //noinspection unchecked
-      Psi[] psiElements = (Psi[])Array.newInstance(array.getClass().getComponentType(), nodes.length);
+      Psi[] psiElements = ArrayUtil.newArray(ArrayUtil.getComponentType(array), nodes.length);
       for (int i = 0; i < nodes.length; i++) {
         //noinspection unchecked
         psiElements[i] = (Psi)nodes[i].getPsi();
@@ -433,7 +435,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    * @return children of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
   @NotNull
-  public <S extends StubElement, Psi extends PsiElement> Psi[] getStubOrPsiChildren(@NotNull IStubElementType<S, ? extends Psi> elementType, @NotNull ArrayFactory<Psi> f) {
+  public <S extends StubElement, Psi extends PsiElement> Psi[] getStubOrPsiChildren(@NotNull IStubElementType<S, ? extends Psi> elementType, @NotNull ArrayFactory<? extends Psi> f) {
     T stub = getGreenStub();
     if (stub != null) {
       //noinspection unchecked
@@ -462,8 +464,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     }
     else {
       final ASTNode[] nodes = getNode().getChildren(filter);
-      //noinspection unchecked
-      Psi[] psiElements = (Psi[])Array.newInstance(array.getClass().getComponentType(), nodes.length);
+      Psi[] psiElements = ArrayUtil.newArray(ArrayUtil.getComponentType(array), nodes.length);
       for (int i = 0; i < nodes.length; i++) {
         //noinspection unchecked
         psiElements[i] = (Psi)nodes[i].getPsi();
@@ -476,7 +477,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    * @return children of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
   @NotNull
-  public <Psi extends PsiElement> Psi[] getStubOrPsiChildren(@NotNull TokenSet filter, @NotNull ArrayFactory<Psi> f) {
+  public <Psi extends PsiElement> Psi[] getStubOrPsiChildren(@NotNull TokenSet filter, @NotNull ArrayFactory<? extends Psi> f) {
     T stub = getGreenStub();
     if (stub != null) {
       //noinspection unchecked

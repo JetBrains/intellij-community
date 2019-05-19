@@ -30,20 +30,24 @@ import java.util.Set;
 
 public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return PatternValidator.PATTERN_VALIDATION;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Non-annotated Method overrides @Pattern Method";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -70,6 +74,7 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
     };
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {

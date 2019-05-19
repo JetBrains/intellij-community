@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -33,7 +33,7 @@ public class PluginManagerConfigurable implements SearchableConfigurable, Config
   public PluginManagerConfigurable(final PluginManagerUISettings UISettings) {
     myUISettings = UISettings;
   }
-  
+
   public PluginManagerConfigurable(final PluginManagerUISettings UISettings, boolean available) {
     myUISettings = UISettings;
     myAvailable = available;
@@ -97,7 +97,7 @@ public class PluginManagerConfigurable implements SearchableConfigurable, Config
   }
 
   protected PluginManagerMain createPanel() {
-    return new InstalledPluginsManagerMain(myUISettings);
+    return new InstalledPluginsManagerMain();
   }
 
   @Override
@@ -145,7 +145,7 @@ public class PluginManagerConfigurable implements SearchableConfigurable, Config
   public static int showRestartDialog(@NotNull String title) {
     String action = IdeBundle.message(ApplicationManagerEx.getApplicationEx().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
     String message = IdeBundle.message("ide.restart.required.message", action, ApplicationNamesInfo.getInstance().getFullProductName());
-    return Messages.showYesNoDialog(message, title, action, IdeBundle.message("ide.postpone.action"), Messages.getQuestionIcon());
+    return Messages.showYesNoDialog(message, title, action, IdeBundle.message("ide.notnow.action"), Messages.getQuestionIcon());
   }
 
   public static void shutdownOrRestartApp() {

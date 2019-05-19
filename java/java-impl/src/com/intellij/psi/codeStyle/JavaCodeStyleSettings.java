@@ -16,21 +16,29 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.configurationStore.Property;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements ImportsLayoutSettings {
-  @NonNls private static final String REPEAT_ANNOTATIONS = "REPEAT_ANNOTATIONS";
+  private static final String REPEAT_ANNOTATIONS = "REPEAT_ANNOTATIONS";
+  private static final String REPEAT_ANNOTATIONS_ITEM = "ANNO";
+  private static final String DO_NOT_IMPORT_INNER = "DO_NOT_IMPORT_INNER";
+  private static final String DO_NOT_IMPORT_INNER_ITEM = "CLASS";
+  private static final String COLLECTION_ITEM_ATTRIBUTE = "name";
 
   public JavaCodeStyleSettings(CodeStyleSettings container) {
     super("JavaCodeStyleSettings", container);
@@ -79,9 +87,29 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     myRepeatAnnotations.addAll(repeatAnnotations);
   }
 
+  private List<String> myDoNotImportInner = new ArrayList<>();
+
+  public List<String> getDoNotImportInner() {
+    return myDoNotImportInner;
+  }
+
+  public void setDoNotImportInner(List<String> doNotImportInner) {
+    myDoNotImportInner = doNotImportInner;
+  }
+
+  /** @deprecated Use {@link #REPLACE_INSTANCEOF_AND_CAST} */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public boolean REPLACE_INSTANCEOF = false;
+  /** @deprecated Use {@link #REPLACE_INSTANCEOF_AND_CAST} */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public boolean REPLACE_CAST = false;
+  public boolean REPLACE_INSTANCEOF_AND_CAST = false;
   public boolean REPLACE_NULL_CHECK = true;
+
+  @Property(externalName = "replace_sum_lambda_with_method_ref")
+  public boolean REPLACE_SUM = true;
 
   public boolean SPACES_WITHIN_ANGLE_BRACKETS;
 
@@ -94,17 +122,20 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION;
 
+  @WrapConstant
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
   public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS;
 
   public int BLANK_LINES_AROUND_INITIALIZER = 1;
-  
+
   public static final int FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED = 1;
   public static final int FULLY_QUALIFY_NAMES_ALWAYS = 2;
   public static final int SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT = 3;
 
   public int CLASS_NAMES_IN_JAVADOC = FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED;
-  
+  public boolean SPACE_BEFORE_COLON_IN_FOREACH = true;
+  public boolean SPACE_INSIDE_ONE_LINE_ENUM_BRACES = false;
+
   public boolean useFqNamesInJavadocAlways() {
     return CLASS_NAMES_IN_JAVADOC == FULLY_QUALIFY_NAMES_ALWAYS;
   }
@@ -117,35 +148,53 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
   public PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
+  @Property(externalName = "imports_layout")
   public PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
   // region JavaDoc
+  @Property(externalName = "doc_enable_formatting")
   public boolean ENABLE_JAVADOC_FORMATTING = true;
+  @Property(externalName = "doc_align_param_comments")
   public boolean JD_ALIGN_PARAM_COMMENTS = true;
+  @Property(externalName = "doc_align_exception_comments")
   public boolean JD_ALIGN_EXCEPTION_COMMENTS = true;
+  @Property(externalName = "doc_add_blank_line_after_param_comments")
   public boolean JD_ADD_BLANK_AFTER_PARM_COMMENTS;
+  @Property(externalName = "doc_add_blank_line_after_return")
   public boolean JD_ADD_BLANK_AFTER_RETURN;
+  @Property(externalName = "doc_add_blank_line_after_description")
   public boolean JD_ADD_BLANK_AFTER_DESCRIPTION = true;
+  @Property(externalName = "doc_add_p_tag_on_empty_lines")
   public boolean JD_P_AT_EMPTY_LINES = true;
 
+  @Property(externalName = "doc_keep_invalid_tags")
   public boolean JD_KEEP_INVALID_TAGS = true;
+  @Property(externalName = "doc_keep_empty_lines")
   public boolean JD_KEEP_EMPTY_LINES = true;
+  @Property(externalName = "doc_do_not_wrap_if_one_line")
   public boolean JD_DO_NOT_WRAP_ONE_LINE_COMMENTS;
 
+  @Property(externalName = "doc_use_throws_not_exception_tag")
   public boolean JD_USE_THROWS_NOT_EXCEPTION = true;
+  @Property(externalName = "doc_keep_empty_parameter_tag")
   public boolean JD_KEEP_EMPTY_PARAMETER = true;
+  @Property(externalName = "doc_keep_empty_throws_tag")
   public boolean JD_KEEP_EMPTY_EXCEPTION = true;
+  @Property(externalName = "doc_keep_empty_return_tag")
   public boolean JD_KEEP_EMPTY_RETURN = true;
 
-
+  @Property(externalName = "doc_enable_leading_asterisks")
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+  @Property(externalName = "doc_preserve_line_breaks")
   public boolean JD_PRESERVE_LINE_FEEDS;
+  @Property(externalName = "doc_param_description_on_new_line")
   public boolean JD_PARAM_DESCRIPTION_ON_NEW_LINE;
 
+  @Property(externalName = "doc_indent_on_continuation")
   public boolean JD_INDENT_ON_CONTINUATION = false;
-  
+
   // endregion
-  
+
   @Override
   public boolean isLayoutStaticImportsSeparately() {
     return LAYOUT_STATIC_IMPORTS_SEPARATELY;
@@ -185,6 +234,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @Override
   public void setInsertInnerClassImports(boolean value) {
     INSERT_INNER_CLASS_IMPORTS = value;
+  }
+
+  public boolean isInsertInnerClassImportsFor(String className) {
+    return INSERT_INNER_CLASS_IMPORTS && !myDoNotImportInner.contains(className);
   }
 
   @Override
@@ -274,9 +327,6 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = rootSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(rootSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
     IMPORT_LAYOUT_TABLE.copyFrom(rootSettings.IMPORT_LAYOUT_TABLE);
-    REPLACE_INSTANCEOF = rootSettings.REPLACE_INSTANCEOF;
-    REPLACE_CAST = rootSettings.REPLACE_CAST;
-    REPLACE_NULL_CHECK = rootSettings.REPLACE_NULL_CHECK;
     FIELD_NAME_PREFIX = rootSettings.FIELD_NAME_PREFIX;
     STATIC_FIELD_NAME_PREFIX = rootSettings.STATIC_FIELD_NAME_PREFIX;
     PARAMETER_NAME_PREFIX = rootSettings.PARAMETER_NAME_PREFIX;
@@ -297,28 +347,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     STATIC_FIELD_TYPE_TO_NAME.copyFrom(rootSettings.STATIC_FIELD_TYPE_TO_NAME);
 
     ENABLE_JAVADOC_FORMATTING = rootSettings.ENABLE_JAVADOC_FORMATTING;
-    JD_ALIGN_PARAM_COMMENTS = rootSettings.JD_ALIGN_PARAM_COMMENTS;
-    JD_ALIGN_EXCEPTION_COMMENTS = rootSettings.JD_ALIGN_EXCEPTION_COMMENTS;
-    JD_ADD_BLANK_AFTER_PARM_COMMENTS = rootSettings.JD_ADD_BLANK_AFTER_PARM_COMMENTS;
-    JD_ADD_BLANK_AFTER_RETURN = rootSettings.JD_ADD_BLANK_AFTER_RETURN;
-    JD_ADD_BLANK_AFTER_DESCRIPTION = rootSettings.JD_ADD_BLANK_AFTER_DESCRIPTION;
-    JD_P_AT_EMPTY_LINES = rootSettings.JD_P_AT_EMPTY_LINES;
-
-    JD_KEEP_INVALID_TAGS = rootSettings.JD_KEEP_INVALID_TAGS;
-    JD_KEEP_EMPTY_LINES = rootSettings.JD_KEEP_EMPTY_LINES;
-    JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = rootSettings.JD_DO_NOT_WRAP_ONE_LINE_COMMENTS;
-
-    JD_USE_THROWS_NOT_EXCEPTION = rootSettings.JD_USE_THROWS_NOT_EXCEPTION;
-    JD_KEEP_EMPTY_PARAMETER = rootSettings.JD_KEEP_EMPTY_PARAMETER;
-    JD_KEEP_EMPTY_EXCEPTION = rootSettings.JD_KEEP_EMPTY_EXCEPTION;
-    JD_KEEP_EMPTY_RETURN = rootSettings.JD_KEEP_EMPTY_RETURN;
-
 
     JD_LEADING_ASTERISKS_ARE_ENABLED = rootSettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
-    JD_PRESERVE_LINE_FEEDS = rootSettings.JD_PRESERVE_LINE_FEEDS;
-    JD_PARAM_DESCRIPTION_ON_NEW_LINE = rootSettings.JD_PARAM_DESCRIPTION_ON_NEW_LINE;
-
-    JD_INDENT_ON_CONTINUATION = rootSettings.JD_INDENT_ON_CONTINUATION;
 
     if (rootSettings.WRAP_COMMENTS) {
       rootSettings.getCommonSettings(JavaLanguage.INSTANCE).WRAP_COMMENTS = rootSettings.WRAP_COMMENTS;
@@ -348,32 +378,15 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @Override
   public void readExternal(Element parentElement) throws InvalidDataException {
     super.readExternal(parentElement);
-    Element child = parentElement.getChild(getTagName());
-    if (child != null) {
-      myRepeatAnnotations.clear();
-      Element annotations = child.getChild(REPEAT_ANNOTATIONS);
-      if (annotations != null) {
-        for (Element anno : annotations.getChildren("ANNO")) {
-          myRepeatAnnotations.add(anno.getAttributeValue("name"));
-        }
-      }
-    }
+    readExternalCollection(parentElement, myRepeatAnnotations, REPEAT_ANNOTATIONS, REPEAT_ANNOTATIONS_ITEM);
+    readExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
   }
 
   @Override
   public void writeExternal(Element parentElement, @NotNull CustomCodeStyleSettings parentSettings) throws WriteExternalException {
     super.writeExternal(parentElement, parentSettings);
-    if (!myRepeatAnnotations.isEmpty()) {
-      Element child = parentElement.getChild(getTagName());
-      if (child == null) {
-        child = new Element(getTagName());
-      }
-      Element annos = new Element(REPEAT_ANNOTATIONS);
-      for (String annotation : myRepeatAnnotations) {
-        annos.addContent(new Element("ANNO").setAttribute("name", annotation));
-      }
-      child.addContent(annos);
-    }
+    writeExternalCollection(parentElement, myRepeatAnnotations, REPEAT_ANNOTATIONS, REPEAT_ANNOTATIONS_ITEM);
+    writeExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
   }
 
   public static JavaCodeStyleSettings getInstance(@NotNull PsiFile file) {
@@ -386,5 +399,57 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @TestOnly
   public static JavaCodeStyleSettings getInstance(@NotNull Project project) {
     return CodeStyle.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
+  }
+
+  private void readExternalCollection(Element parentElement, Collection<? super String> collection, String collectionName, String itemName) {
+    Element child = parentElement.getChild(getTagName());
+    if (child != null) {
+      collection.clear();
+      Element item = child.getChild(collectionName);
+      if (item != null) {
+        for (Element element : item.getChildren(itemName)) {
+          collection.add(element.getAttributeValue(COLLECTION_ITEM_ATTRIBUTE));
+        }
+      }
+    }
+  }
+
+  private void writeExternalCollection(Element parentElement,
+                                       Collection<String> collection,
+                                       String collectionName,
+                                       String itemName) {
+    if (!collection.isEmpty()) {
+      Element child = parentElement.getChild(getTagName());
+      if (child == null) {
+        child = new Element(getTagName());
+        parentElement.addContent(child);
+      }
+      Element element = new Element(collectionName);
+      for (String item : collection) {
+        element.addContent(new Element(itemName).setAttribute(COLLECTION_ITEM_ATTRIBUTE, item));
+      }
+      child.addContent(element);
+    }
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  protected void afterLoaded() {
+    REPLACE_INSTANCEOF_AND_CAST |= REPLACE_CAST || REPLACE_INSTANCEOF;
+    REPLACE_CAST = REPLACE_INSTANCEOF = false;
+  }
+
+  @NotNull
+  @Override
+  public List<String> getKnownTagNames() {
+    return Arrays.asList(getTagName(), REPEAT_ANNOTATIONS, DO_NOT_IMPORT_INNER);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!super.equals(obj)) return false;
+    JavaCodeStyleSettings otherSettings = (JavaCodeStyleSettings)obj;
+    if (!myRepeatAnnotations.equals(otherSettings.getRepeatAnnotations())) return false;
+    return myDoNotImportInner.equals(otherSettings.getDoNotImportInner());
   }
 }

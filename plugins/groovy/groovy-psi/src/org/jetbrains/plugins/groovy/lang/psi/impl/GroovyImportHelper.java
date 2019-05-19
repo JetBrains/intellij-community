@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.PsiClass;
@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
-import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport;
 
 import java.util.LinkedHashSet;
@@ -44,7 +43,7 @@ public class GroovyImportHelper {
     final LinkedHashSet<String> result = new LinkedHashSet<>();
     ContainerUtil.addAll(result, GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES);
 
-    final GroovyFileImports fileImports = GroovyImports.getImports(file);
+    final GroovyFileImports fileImports = file.getImports();
     for (StarImport starImport : fileImports.getStarImports()) {
       if (!fileImports.isImplicit(starImport)) continue;
       result.add(starImport.getPackageFqn());

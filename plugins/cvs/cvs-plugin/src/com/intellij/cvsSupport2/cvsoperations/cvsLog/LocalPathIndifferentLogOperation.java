@@ -71,12 +71,14 @@ public class LocalPathIndifferentLogOperation extends LocalPathIndifferentOperat
     addFile(new File(repository, file.getName()));
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     LogCommand command = new LogCommand();
     myHelper.addFilesTo(command);
     return command;
   }
 
+  @Override
   public void fileInfoGenerated(Object info) {
     super.fileInfoGenerated(info);
     if (info instanceof LogInformation) {
@@ -100,18 +102,22 @@ public class LocalPathIndifferentLogOperation extends LocalPathIndifferentOperat
     myHelper.addFile(file);
   }
 
+  @Override
   public Collection<String> getAllBranches() {
     return TagsHelper.getAllBranches(myLogInformationList);
   }
 
+  @Override
   public Collection<CvsRevisionNumber> getAllRevisions() {
     return TagsHelper.getAllRevisions(myLogInformationList);
   }
 
+  @Override
   protected String getOperationName() {
     return "log";
   }
 
+  @Override
   public boolean runInReadThread() {
     return false;
   }

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
  * @author Maxim.Mossienko
  * @deprecated use InsertHandler
  */
+@Deprecated
 public interface DeferredUserLookupValue<T> extends PresentableLookupValue {
   boolean handleUserSelection(LookupItem<T> item, Project project);
 }

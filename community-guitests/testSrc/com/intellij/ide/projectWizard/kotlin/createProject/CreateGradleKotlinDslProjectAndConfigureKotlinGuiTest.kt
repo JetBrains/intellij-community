@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.util.*
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import org.junit.Test
 
 class CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
@@ -11,13 +12,13 @@ class CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase(
   @JvmName("gradle_k_cfg_jvm")
   fun createGradleAndConfigureKotlinJvmActualVersion() {
     testCreateGradleAndConfigureKotlin(
-      kotlinKind = KotlinKind.JVM,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinLibs[KotlinKind.JVM]!!.gradleKProject,
+      project = kotlinProjects.getValue(Projects.GradleKProjectJvm),
       expectedFacet = defaultFacetSettings[TargetPlatform.JVM18]!!,
-      gradleOptions = BuildGradleOptions().build(),
-      isJavaUsed = true,
-      isKotlinDslUsed = true
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName,
+        useKotlinDsl = kotlinProjects.getValue(Projects.GradleKProjectJvm).isKotlinDsl
+      )
     )
   }
 
@@ -25,13 +26,13 @@ class CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase(
   @JvmName("gradle_k_cfg_js")
   fun createGradleAndConfigureKotlinJsActualVersion() {
     testCreateGradleAndConfigureKotlin(
-      kotlinKind = KotlinKind.JS,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinLibs[KotlinKind.JS]!!.gradleKProject,
+      project = kotlinProjects.getValue(Projects.GradleKProjectJs),
       expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!,
-      gradleOptions = BuildGradleOptions().build(),
-      isJavaUsed = true,
-      isKotlinDslUsed = true
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName,
+        useKotlinDsl = kotlinProjects.getValue(Projects.GradleKProjectJs).isKotlinDsl
+      )
     )
   }
 

@@ -1,14 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.compound;
 
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.impl.RunConfigurationSelector;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunManagerImplKt;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
@@ -29,7 +29,7 @@ import java.util.Map;
 
 public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<CompoundRunConfiguration> {
   private final Project myProject;
-  private final JBList myList;
+  private final JBList<Pair<RunConfiguration, ExecutionTarget>> myList;
   private final RunManagerImpl myRunManager;
   private final SortedListModel<Pair<RunConfiguration, ExecutionTarget>> myModel;
   private CompoundRunConfiguration mySnapshot;
@@ -38,24 +38,18 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
     myProject = project;
     myRunManager = RunManagerImpl.getInstanceImpl(project);
     myModel = new SortedListModel<>((o1, o2) -> CompoundRunConfiguration.COMPARATOR.compare(o1.first, o2.first));
-    myList = new JBList(myModel);
-    myList.setCellRenderer(new ColoredListCellRenderer() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        RunConfiguration configuration = myModel.get(index).first;
-        ExecutionTarget target = myModel.get(index).second;
-        
-        setIcon(configuration.getType().getIcon());
-        append(ConfigurationSelectionUtil.getDisplayText(configuration, target));
-      }
-    });
+    myList = new JBList<>(myModel);
+    myList.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      label.setIcon(value.first.getType().getIcon());
+      label.setText(ConfigurationSelectionUtil.getDisplayText(value.first, value.second));
+    }));
     myList.setVisibleRowCount(15);
   }
-  
+
 
   private boolean canBeAdded(@NotNull RunConfiguration candidate, @NotNull final CompoundRunConfiguration root) {
     if (candidate.getType() == root.getType() && candidate.getName().equals(root.getName())) return false;
-    List<BeforeRunTask<?>> tasks = myRunManager.getBeforeRunTasks(candidate);
+    List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(candidate);
     for (BeforeRunTask task : tasks) {
       if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
         RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runTask
@@ -67,7 +61,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
       }
     }
     if (candidate instanceof CompoundRunConfiguration) {
-      for (RunConfiguration configuration : ((CompoundRunConfiguration)candidate).getConfigurationsWithTargets().keySet()) {
+      for (RunConfiguration configuration : ((CompoundRunConfiguration)candidate).getConfigurationsWithTargets(myRunManager).keySet()) {
         if (!canBeAdded(configuration, root)) {
           return false;
         }
@@ -79,7 +73,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   @Override
   protected void resetEditorFrom(@NotNull CompoundRunConfiguration compoundRunConfiguration) {
     myModel.clear();
-    myModel.addAll(ContainerUtil.map2List(compoundRunConfiguration.getConfigurationsWithTargets()));
+    myModel.addAll(ContainerUtil.map2List(compoundRunConfiguration.getConfigurationsWithTargets(myRunManager)));
     mySnapshot = compoundRunConfiguration;
   }
 
@@ -107,16 +101,14 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
     return decorator.disableUpDownActions().setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        final List<RunConfiguration> all = new ArrayList<>();
-        for (ConfigurationType type : myRunManager.getConfigurationFactoriesWithoutUnknown()) {
-          for (RunnerAndConfigurationSettings settings : myRunManager.getConfigurationSettingsList(type)) {
-            all.add(settings.getConfiguration());
+        List<RunConfiguration> configurations = new ArrayList<>();
+        for (RunnerAndConfigurationSettings settings : myRunManager.getAllSettings()) {
+          RunConfiguration configuration = settings.getConfiguration();
+          if (!mySnapshot.getConfigurationsWithTargets(myRunManager).keySet().contains(configuration) && canBeAdded(configuration, mySnapshot)) {
+            configurations.add(configuration);
           }
         }
 
-        final List<RunConfiguration> configurations = ContainerUtil.filter(all,
-                                                                           configuration -> !mySnapshot.getConfigurationsWithTargets().keySet().contains(configuration) && canBeAdded(configuration, mySnapshot));
-        
         ConfigurationSelectionUtil.createPopup(myProject, myRunManager, configurations, (selectedConfigs, selectedTarget) -> {
           for (RunConfiguration each : selectedConfigs) {
             myModel.add(Pair.create(each, selectedTarget));

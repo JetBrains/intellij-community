@@ -2,6 +2,7 @@
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -46,7 +47,7 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
   @NotNull
   private Collection<VirtualFile> getSortedFiles() {
     List<VirtualFile> sortedFiles = new ArrayList<>(myFiles);
-    Collections.sort(sortedFiles, Comparator.comparing(file -> file.getPath().toLowerCase()));
+    Collections.sort(sortedFiles, Comparator.comparing(file -> StringUtil.toLowerCase(file.getPath())));
     return sortedFiles;
   }
   
@@ -64,6 +65,7 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
 
   @Override
   public void loadState(@NotNull Element state) {
+    myFiles.clear();
     final VirtualFileManager vfManager = VirtualFileManager.getInstance();
     for (Object child : state.getChildren(FILE_ELEMENT)) {
       if (child instanceof Element) {

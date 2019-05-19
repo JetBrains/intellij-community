@@ -28,7 +28,6 @@ import java.util.Arrays;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 3/14/12 3:52 PM
  */
 public class MatrixControlBuilder {
   

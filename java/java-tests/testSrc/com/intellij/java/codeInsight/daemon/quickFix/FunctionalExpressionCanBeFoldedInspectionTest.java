@@ -30,8 +30,6 @@ public class FunctionalExpressionCanBeFoldedInspectionTest extends LightQuickFix
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/trivialMethodReference";

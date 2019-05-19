@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ExecutionManager;
@@ -72,14 +58,14 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(RunIdeConsoleAction.class);
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     IdeScriptEngineManager manager = IdeScriptEngineManager.getInstance();
     e.getPresentation().setVisible(e.getProject() != null);
     e.getPresentation().setEnabled(manager.isInitialized() && !manager.getLanguages().isEmpty());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     List<String> languages = IdeScriptEngineManager.getInstance().getLanguages();
     if (languages.size() == 1) {
       runConsole(e, languages.iterator().next());
@@ -147,7 +133,6 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     catch (Throwable e) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       Throwable ex = ExceptionUtil.getRootCause(e);
       consoleView.print(ex.getClass().getSimpleName() + ": " + ex.getMessage(), ConsoleViewContentType.ERROR_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.ERROR_OUTPUT);
@@ -250,18 +235,18 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     private IdeScriptEngine engine;
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
-      Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-      VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
       e.getPresentation().setEnabledAndVisible(project != null && editor != null && virtualFile != null);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
-      Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-      VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
       if (project == null || editor == null || virtualFile == null) return;
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 

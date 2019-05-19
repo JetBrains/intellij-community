@@ -86,9 +86,6 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
 
     if (existingLibrary == library) {
       myRemovedLibraries.add(library);
-    } else {
-      // dispose uncommitted library
-      Disposer.dispose(library);
     }
   }
 
@@ -145,10 +142,13 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
   }
 
   public ExistingLibraryEditor getLibraryEditor(Library library){
-    final Library source = ((LibraryImpl)library).getSource();
-    if (source != null) {
-      return getLibraryEditor(source);
+    if (library instanceof LibraryImpl) {
+      final Library source = ((LibraryImpl)library).getSource();
+      if (source != null) {
+        return getLibraryEditor(source);
+      }
     }
+
     ExistingLibraryEditor libraryEditor = myLibrary2EditorMap.get(library);
     if (libraryEditor == null){
       libraryEditor = createLibraryEditor(library);

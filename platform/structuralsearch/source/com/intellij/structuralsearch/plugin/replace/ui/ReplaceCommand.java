@@ -16,24 +16,28 @@ public class ReplaceCommand extends SearchCommand {
     super(configuration, searchContext);
   }
 
+  @Override
   protected UsageViewContext createUsageViewContext() {
     final Runnable searchStarter = () -> new ReplaceCommand(myConfiguration, mySearchContext).startSearching();
     myReplaceUsageViewContext = new ReplaceUsageViewContext(mySearchContext, myConfiguration, searchStarter);
     return myReplaceUsageViewContext;
   }
 
+  @Override
   protected void findStarted() {
     super.findStarted();
 
     StructuralSearchPlugin.getInstance(mySearchContext.getProject()).setReplaceInProgress(true);
   }
 
+  @Override
   protected void findEnded() {
     StructuralSearchPlugin.getInstance(mySearchContext.getProject()).setReplaceInProgress( false );
 
     super.findEnded();
   }
 
+  @Override
   protected void foundUsage(MatchResult result, Usage usage) {
     super.foundUsage(result, usage);
 

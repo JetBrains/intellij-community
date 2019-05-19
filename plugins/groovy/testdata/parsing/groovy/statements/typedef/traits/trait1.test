@@ -22,10 +22,9 @@ Groovy script
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('foo')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
+          PsiElement(()('(')
+          PsiElement())(')')
         Throw clause
           <empty list>
         PsiWhiteSpace(' ')
@@ -38,7 +37,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Command arguments
               Literal
-                PsiElement(Gstring)('"I'm a trait"')
+                PsiElement(double quoted string)('"I'm a trait"')
           PsiWhiteSpace(' ')
           PsiElement(})('}')
       PsiElement(new line)('\n')

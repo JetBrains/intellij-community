@@ -1,6 +1,6 @@
 <idea-plugin>
   <id>hg4idea</id>
-  <name>Mercurial Integration</name>
+  <name>Mercurial</name>
   <description>
     <![CDATA[
       Allows working with <a href="http://www.mercurial-scm.org/">Mercurial version control system</a>.
@@ -13,20 +13,18 @@
       ]]>
   </description>
   <category>VCS Integration</category>
-  <version>10.0</version>
-  <vendor email="victor.iacoban@gmail.com, willem.verstraeten@gmail.com" url="http://www.bitbucket.org/willemv/hg4idea">Victor Iacoban and
-    Willem Verstraeten, JetBrains
-  </vendor>
+  <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <search.topHitProvider implementation="org.zmlx.hg4idea.HgOptionsTopHitProvider"/>
+    <search.projectOptionsTopHitProvider implementation="org.zmlx.hg4idea.HgOptionsTopHitProvider"/>
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
     <vcsRepositoryCreator implementation="org.zmlx.hg4idea.repo.HgRepositoryCreator"/>
     <pushSupport implementation="org.zmlx.hg4idea.push.HgPushSupport"/>
     <vcsChangesViewRefresher implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder$Provider"/>
+    <vcs.branchStateProvider implementation="org.zmlx.hg4idea.branch.HgBranchStateProvider"/>
     <cherryPicker implementation="org.zmlx.hg4idea.cherrypick.HgCherryPicker"/>
     <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
     <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
@@ -34,25 +32,19 @@
     <vcs.ignoredFilesHolder implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder$Provider"/>
     <vcsRepositoryInitializer implementation="org.zmlx.hg4idea.repo.HgRepositoryInitializer"/>
 
-    <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
-                        serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
-    <applicationService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
-                        serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
-    <applicationService serviceInterface="org.zmlx.hg4idea.HgExecutableManager"
-                        serviceImplementation="org.zmlx.hg4idea.HgExecutableManager"/>
+    <applicationService serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
+    <applicationService serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
+    <applicationService serviceImplementation="org.zmlx.hg4idea.HgExecutableManager"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.branch.HgBranchManager"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.repo.HgRepositoryManager"/>
-    <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"
-                    serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
-    <projectService serviceInterface="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"
-                    serviceImplementation="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"/>
-    <projectService serviceInterface="org.zmlx.hg4idea.HgRootsHandler"
-                    serviceImplementation="org.zmlx.hg4idea.HgRootsHandler"/>
+    <projectService serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
+    <projectService serviceImplementation="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"/>
   </extensions>
 
   <actions>
     <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit" text="Create Mercurial Repository">
       <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
     </action>
 
     <group id="hg4idea.file.menu" popup="true" class="org.zmlx.hg4idea.action.HgMercurialMenu">
@@ -123,7 +115,7 @@
         <keyboard-shortcut first-keystroke="alt shift G" keymap="$default"/>
       </action>
       <action class="org.zmlx.hg4idea.action.mq.HgQPushActionFromPatches" id="hg4idea.QPushAction" text="Move and Push"
-              description="Apply only selected patch" icon="AllIcons.Actions.MoveToAnotherChangelist">
+              description="Apply only selected patch" icon="AllIcons.Actions.MoveTo2">
         <keyboard-shortcut first-keystroke="alt shift P" keymap="$default"/>
       </action>
       <action class="org.zmlx.hg4idea.action.mq.HgQFoldActionFromPatches" id="hg4idea.QFold" text="Fold"
@@ -131,7 +123,7 @@
         <keyboard-shortcut first-keystroke="alt shift D" keymap="$default"/>
       </action>
       <action class="com.intellij.openapi.actionSystem.EmptyAction" id="hg4idea.QDelete" text="Delete"
-              description="Delete selected patches" icon="AllIcons.Vcs.Remove" use-shortcut-of="$Delete"/>
+              description="Delete selected patches" icon="AllIcons.General.Remove" use-shortcut-of="$Delete"/>
     </group>
 
 

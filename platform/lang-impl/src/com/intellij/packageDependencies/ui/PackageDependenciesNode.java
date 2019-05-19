@@ -63,7 +63,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return myEquals;
   }
 
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile vFile : getRegisteredFiles()) {
       final PsiFile psiFile = psiManager.findFile(vFile);

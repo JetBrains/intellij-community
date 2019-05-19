@@ -26,15 +26,18 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public class PsiPackageConverter extends Converter<PsiPackage> implements CustomReferenceConverter<PsiPackage> {
+  @Override
   public PsiPackage fromString(@Nullable @NonNls String s, final ConvertContext context) {
     if (s == null) return null;
     return JavaPsiFacade.getInstance(context.getPsiManager().getProject()).findPackage(s);
   }
 
+  @Override
   public String toString(@Nullable PsiPackage psiPackage, final ConvertContext context) {
     return psiPackage == null ? null : psiPackage.getQualifiedName();
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(GenericDomValue<PsiPackage> genericDomValue, PsiElement element, ConvertContext context) {
     final String s = genericDomValue.getStringValue();

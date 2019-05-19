@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,15 +25,19 @@ import javax.swing.*;
  * @author gregsh
  */
 public abstract class DumbAwareActionButton extends AnActionButton implements DumbAware {
-  public DumbAwareActionButton(String text) {
+
+  public DumbAwareActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text) {
     super(text);
   }
 
-  public DumbAwareActionButton(String text, String description, @Nullable Icon icon) {
+  public DumbAwareActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                               @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                               @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public DumbAwareActionButton(String text, Icon icon) {
+  public DumbAwareActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                               Icon icon) {
     super(text, icon);
   }
 

@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -111,6 +112,29 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
   // PY-28626
   public void testFunctionDecoratedAsContextManager() {
     doMultiFileTest();
+  }
+
+  // PY-24161
+  public void testGenericClassObjectTypeAnnotation() {
+    doTest();
+  }
+
+  // PY-24161
+  public void testExplicitClassObjectTypeAnnotation() {
+    doTest();
+  }
+
+  // PY-31943
+  public void testTypeVarBoundedWithCallable() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import TypeVar, Callable, Any\n" +
+                         "\n" +
+                         "F = TypeVar('F', bound=Callable[[], Any])\n" +
+                         "\n" +
+                         "def deco(func: F):\n" +
+                         "    func()")
+    );
   }
 
   @NotNull

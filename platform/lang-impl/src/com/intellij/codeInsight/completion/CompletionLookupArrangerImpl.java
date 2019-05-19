@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
@@ -11,10 +11,7 @@ import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -32,6 +29,7 @@ import java.util.*;
 public class CompletionLookupArrangerImpl extends LookupArranger implements CompletionLookupArranger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionLookupArranger");
   private static final Key<PresentationInvariant> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
+  public static final Key<Object> FORCE_MIDDLE_MATCH = Key.create("FORCE_MIDDLE_MATCH");
   private final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = (o1, o2) -> {
     PresentationInvariant invariant = PRESENTATION_INVARIANT.get(o1);
     assert invariant != null;
@@ -46,21 +44,18 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
 
   @Nullable private CompletionLocation myLocation;
   private final CompletionProcessEx myProcess;
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
   private final Key<CompletionSorterImpl> mySorterKey = Key.create("SORTER_KEY");
   private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter();
   private int myPrefixChanges;
 
+  private String myLastLookupPrefix;
+
   public CompletionLookupArrangerImpl(CompletionProcessEx process) {
     myProcess = process;
   }
 
-  public CompletionLookupArrangerImpl(CompletionParameters parameters) {
-    myProcess = (CompletionProcessEx) parameters.getProcess();
-  }
-
-  private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(Iterable<LookupElement> source) {
+  private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(Iterable<? extends LookupElement> source) {
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = MultiMap.createLinked();
     for (LookupElement element : source) {
       inputBySorter.putValue(obtainSorter(element), element);
@@ -122,7 +117,7 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     element.putUserData(mySorterKey, sorter);
   }
 
-  private static boolean haveSameWeights(List<Pair<LookupElement, Object>> pairs) {
+  private static boolean haveSameWeights(List<? extends Pair<LookupElement, Object>> pairs) {
     if (pairs.isEmpty()) return true;
 
     for (int i = 1; i < pairs.size(); i++) {
@@ -222,9 +217,9 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     classifier.removeElement(element, context);
   }
 
-  private List<LookupElement> sortByPresentation(Iterable<LookupElement> source) {
-    ArrayList<LookupElement> startMatches = ContainerUtil.newArrayList();
-    ArrayList<LookupElement> middleMatches = ContainerUtil.newArrayList();
+  private List<LookupElement> sortByPresentation(Iterable<? extends LookupElement> source) {
+    ArrayList<LookupElement> startMatches = new ArrayList<>();
+    ArrayList<LookupElement> middleMatches = new ArrayList<>();
     for (LookupElement element : source) {
       (itemMatcher(element).isStartMatch(element) ? startMatches : middleMatches).add(element);
     }
@@ -302,23 +297,14 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
     LOG.assertTrue(toSelect >= 0);
 
-    addDummyItems(items.size() - listModel.size(), listModel);
-
     return new Pair<>(listModel, toSelect);
   }
 
-  private static void addDummyItems(int count, List<LookupElement> listModel) {
-    EmptyLookupItem dummy = new EmptyLookupItem("loading...", true);
-    for (int i = count; i > 0; i--) {
-      listModel.add(dummy);
-    }
-  }
-
   private List<LookupElement> fillModelByRelevance(LookupElementListPresenter lookup,
-                                                   Set<LookupElement> items,
-                                                   Iterable<LookupElement> sortedElements,
+                                                   Set<? extends LookupElement> items,
+                                                   Iterable<? extends LookupElement> sortedElements,
                                                    @Nullable LookupElement relevantSelection) {
-    Iterator<LookupElement> byRelevance = sortedElements.iterator();
+    Iterator<? extends LookupElement> byRelevance = sortedElements.iterator();
 
     final LinkedHashSet<LookupElement> model = new LinkedHashSet<>();
 
@@ -333,33 +319,27 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
 
     ensureItemAdded(items, model, byRelevance, lookup.getCurrentItem());
     ensureItemAdded(items, model, byRelevance, relevantSelection);
-    ensureEverythingVisibleAdded(lookup, model, byRelevance);
+    ContainerUtil.addAll(model, byRelevance);
 
     return new ArrayList<>(model);
   }
 
-  private static void ensureEverythingVisibleAdded(LookupElementListPresenter lookup, final LinkedHashSet<LookupElement> model, Iterator<LookupElement> byRelevance) {
-    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
-    final int limit = Math.max(lookup.getLastVisibleIndex(), model.size()) + ourUISettings.getMaxLookupListHeight() * 3;
-    addSomeItems(model, byRelevance, lastAdded -> !testMode && model.size() >= limit);
-  }
-
-  private static void ensureItemAdded(Set<LookupElement> items,
-                                      LinkedHashSet<LookupElement> model,
-                                      Iterator<LookupElement> byRelevance, @Nullable final LookupElement item) {
+  private static void ensureItemAdded(Set<? extends LookupElement> items,
+                                      LinkedHashSet<? super LookupElement> model,
+                                      Iterator<? extends LookupElement> byRelevance, @Nullable final LookupElement item) {
     if (item != null && items.contains(item) && !model.contains(item)) {
       addSomeItems(model, byRelevance, lastAdded -> lastAdded == item);
     }
   }
 
-  private void freezeTopItems(LookupElementListPresenter lookup, LinkedHashSet<LookupElement> model) {
+  private void freezeTopItems(LookupElementListPresenter lookup, LinkedHashSet<? extends LookupElement> model) {
     myFrozenItems.clear();
     if (lookup.isShown()) {
       myFrozenItems.addAll(model);
     }
   }
 
-  private void addFrozenItems(Set<LookupElement> items, LinkedHashSet<LookupElement> model) {
+  private void addFrozenItems(Set<? extends LookupElement> items, LinkedHashSet<? super LookupElement> model) {
     for (Iterator<LookupElement> iterator = myFrozenItems.iterator(); iterator.hasNext(); ) {
       LookupElement element = iterator.next();
       if (!element.isValid() || !items.contains(element)) {
@@ -369,12 +349,12 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     model.addAll(myFrozenItems);
   }
 
-  private void addPrefixItems(LinkedHashSet<LookupElement> model) {
+  private void addPrefixItems(LinkedHashSet<? super LookupElement> model) {
     ContainerUtil.addAll(model, sortByRelevance(groupItemsBySorter(getPrefixItems(true))));
     ContainerUtil.addAll(model, sortByRelevance(groupItemsBySorter(getPrefixItems(false))));
   }
 
-  private static void addCurrentlySelectedItemToTop(LookupElementListPresenter lookup, Set<LookupElement> items, LinkedHashSet<LookupElement> model) {
+  private static void addCurrentlySelectedItemToTop(LookupElementListPresenter lookup, Set<? extends LookupElement> items, LinkedHashSet<? super LookupElement> model) {
     if (!lookup.isSelectionTouched()) {
       LookupElement lastSelection = lookup.getCurrentItem();
       if (items.contains(lastSelection)) {
@@ -383,7 +363,7 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     }
   }
 
-  private static void addSomeItems(LinkedHashSet<LookupElement> model, Iterator<LookupElement> iterator, Condition<LookupElement> stopWhen) {
+  private static void addSomeItems(LinkedHashSet<? super LookupElement> model, Iterator<? extends LookupElement> iterator, Condition<? super LookupElement> stopWhen) {
     while (iterator.hasNext()) {
       LookupElement item = iterator.next();
       model.add(item);
@@ -395,8 +375,8 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
 
   private Iterable<LookupElement> sortByRelevance(MultiMap<CompletionSorterImpl, LookupElement> inputBySorter) {
     if (inputBySorter.isEmpty()) return Collections.emptyList();
-    
-    final List<Iterable<LookupElement>> byClassifier = ContainerUtil.newArrayList();
+
+    final List<Iterable<LookupElement>> byClassifier = new ArrayList<>();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
       ProcessingContext context = createContext();
       byClassifier.add(myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context));
@@ -405,7 +385,7 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     Iterable<LookupElement> result = ContainerUtil.concat(byClassifier.toArray(new Iterable[0]));
     return myFinalSorter.sort(result, Objects.requireNonNull(myProcess.getParameters()));
   }
-  
+
   private ProcessingContext createContext() {
     ProcessingContext context = new ProcessingContext();
     context.put(PREFIX_CHANGES, myPrefixChanges);
@@ -413,13 +393,19 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     return context;
   }
 
+  void setLastLookupPrefix(String lookupPrefix) {
+    myLastLookupPrefix = lookupPrefix;
+  }
+  public String getLastLookupPrefix() {
+    return myLastLookupPrefix;
+  }
 
   @Override
   public LookupArranger createEmptyCopy() {
     return new CompletionLookupArrangerImpl(myProcess);
   }
 
-  private int getItemToSelect(LookupElementListPresenter lookup, List<LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
+  private int getItemToSelect(LookupElementListPresenter lookup, List<? extends LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
     if (items.isEmpty() || lookup.getFocusDegree() == LookupImpl.FocusDegree.UNFOCUSED) {
       return 0;
     }
@@ -451,7 +437,7 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     return Math.max(0, ContainerUtil.indexOfIdentity(items, exactMatch != null ? exactMatch : mostRelevant));
   }
 
-  private List<LookupElement> getExactMatches(List<LookupElement> items) {
+  private List<LookupElement> getExactMatches(List<? extends LookupElement> items) {
     String selectedText = InjectedLanguageUtil.getTopLevelEditor(myProcess.getParameters().getEditor()).getSelectionModel().getSelectedText();
     List<LookupElement> exactMatches = new SmartList<>();
     for (int i = 0; i < items.size(); i++) {
@@ -472,7 +458,7 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
   }
 
   @Nullable
-  private LookupElement getBestExactMatch(List<LookupElement> items) {
+  private LookupElement getBestExactMatch(List<? extends LookupElement> items) {
     List<LookupElement> exactMatches = getExactMatches(items);
     if (exactMatches.isEmpty()) return null;
 
@@ -484,15 +470,15 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
   }
 
   @Nullable
-  private LookupElement findMostRelevantItem(Iterable<LookupElement> sorted) {
+  private LookupElement findMostRelevantItem(Iterable<? extends LookupElement> sorted) {
     final CompletionPreselectSkipper[] skippers = CompletionPreselectSkipper.EP_NAME.getExtensions();
-    
+
     for (LookupElement element : sorted) {
       if (!shouldSkip(skippers, element)) {
         return element;
       }
     }
-    
+
     return null;
   }
 
@@ -522,6 +508,21 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     myPrefixChanges++;
     myFrozenItems.clear();
     super.prefixChanged(lookup);
+  }
+
+  @Override
+  public void prefixTruncated(@NotNull LookupImpl lookup, int hideOffset) {
+    if (hideOffset < lookup.getEditor().getCaretModel().getOffset()) {
+      myProcess.scheduleRestart();
+      return;
+    }
+    myProcess.prefixUpdated();
+    lookup.hideLookup(false);
+  }
+
+  @Override
+  public boolean isCompletion() {
+    return true;
   }
 
   private static class EmptyClassifier extends Classifier<LookupElement> {

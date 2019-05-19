@@ -19,9 +19,8 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.dashboard.RunDashboardContributor;
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
+import com.intellij.execution.dashboard.*;
+import com.intellij.execution.dashboard.RunDashboardManager.RunDashboardService;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
@@ -36,47 +35,46 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author konstantin.aleev
  */
-class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, Content>>
+public class RunConfigurationNode extends AbstractTreeNode<RunDashboardService>
   implements RunDashboardRunConfigurationNode {
 
-  @Nullable private final RunDashboardContributor myContributor;
+  private final List<RunDashboardCustomizer> myCustomizers;
   private final UserDataHolder myUserDataHolder = new UserDataHolderBase();
 
-  RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value,
-                       @Nullable RunDashboardContributor contributor) {
-    super(project, Pair.create(value.first, value.second == null ? null : value.second.getAttachedContent()));
-    myContributor = contributor;
+  public RunConfigurationNode(Project project, @NotNull RunDashboardService service,
+                              @NotNull List<RunDashboardCustomizer> customizers) {
+    super(project, service);
+    myCustomizers = customizers;
   }
 
   @Override
   @NotNull
   public RunnerAndConfigurationSettings getConfigurationSettings() {
     //noinspection ConstantConditions ???
-    return getValue().first;
+    return getValue().getSettings();
   }
 
   @Nullable
   @Override
   public RunContentDescriptor getDescriptor() {
-    Content content = getContent();
-    if (content == null) return null;
-
-    return RunContentManagerImpl.getRunContentDescriptorByContent(content);
+    //noinspection ConstantConditions ???
+    return getValue().getDescriptor();
   }
 
   @Nullable
   @Override
   public Content getContent() {
     //noinspection ConstantConditions ???
-    return getValue().second;
+    return getValue().getContent();
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     RunnerAndConfigurationSettings configurationSettings = getConfigurationSettings();
     //noinspection ConstantConditions
     boolean isStored = RunManager.getInstance(getProject()).hasSettings(configurationSettings);
@@ -101,14 +99,22 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
     }
     presentation.setIcon(isStored ? icon : IconLoader.getDisabledIcon(icon));
 
-    if (myContributor != null) {
-      myContributor.updatePresentation(presentation, this);
+    for (RunDashboardCustomizer customizer : myCustomizers) {
+      if (customizer.updatePresentation(presentation, this)) {
+        return;
+      }
     }
   }
 
   @NotNull
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
+    for (RunDashboardCustomizer customizer : myCustomizers) {
+      Collection<? extends AbstractTreeNode> children = customizer.getChildren(this);
+      if (children != null) {
+        return children;
+      }
+    }
     return Collections.emptyList();
   }
 
@@ -123,16 +129,22 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
     myUserDataHolder.putUserData(key, value);
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public RunDashboardContributor getContributor() {
-    return myContributor;
+  public List<RunDashboardCustomizer> getCustomizers() {
+    return myCustomizers;
   }
 
   @NotNull
   @Override
   public RunDashboardRunConfigurationStatus getStatus() {
-    return myContributor != null ? myContributor.getStatus(this) : RunDashboardRunConfigurationStatus.getStatus(this);
+    for (RunDashboardCustomizer customizer : myCustomizers) {
+      RunDashboardRunConfigurationStatus status = customizer.getStatus(this);
+      if (status != null) {
+        return status;
+      }
+    }
+    return RunDashboardRunConfigurationStatus.getStatus(this);
   }
 
   @Nullable

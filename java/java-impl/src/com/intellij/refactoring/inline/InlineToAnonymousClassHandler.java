@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -62,7 +63,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     if (element.getLanguage() != StdLanguages.JAVA) return false;
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
-      if (method.isConstructor() && !InlineMethodHandler.isChainingConstructor(method)) {
+      if (method.isConstructor() && !InlineUtil.isChainingConstructor(method)) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) return false;
         return findClassInheritors(containingClass);
@@ -96,7 +97,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       if (!InlineMethodHandler.isThisReference(reference)) {
         if (element instanceof PsiMethod && reference != null) {
           final PsiElement referenceElement = reference.getElement();
-          return referenceElement != null && !PsiTreeUtil.isAncestor(((PsiMethod)element).getContainingClass(), referenceElement, false);
+          return !PsiTreeUtil.isAncestor(((PsiMethod)element).getContainingClass(), referenceElement, false);
         }
         return true;
       }
@@ -252,7 +253,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     final PsiClass[] innerClasses = psiClass.getInnerClasses();
     for(PsiClass innerClass: innerClasses) {
       PsiModifierList classModifiers = innerClass.getModifierList();
-      if (classModifiers.hasModifierProperty(PsiModifier.STATIC)) {
+      if (classModifiers != null && classModifiers.hasModifierProperty(PsiModifier.STATIC)) {
         return "Class cannot be inlined because it has static inner classes";
       }
       if (!ReferencesSearch.search(innerClass, searchScope).forEach(new AllowedUsagesProcessor(psiClass))) {
@@ -309,7 +310,6 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     boolean hasUsages = false;
     for(PsiReference reference : ReferencesSearch.search(aClass, GlobalSearchScope.projectScope(aClass.getProject()))) {
       final PsiElement element = reference.getElement();
-      if (element == null) continue;
       if (!PsiTreeUtil.isAncestor(aClass, element, false)) {
         hasUsages = true;
       }
@@ -355,14 +355,14 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   private static class AllowedUsagesProcessor implements Processor<PsiReference> {
     private final PsiElement myPsiElement;
 
-    public AllowedUsagesProcessor(final PsiElement psiElement) {
+    AllowedUsagesProcessor(final PsiElement psiElement) {
       myPsiElement = psiElement;
     }
 
     @Override
     public boolean process(final PsiReference psiReference) {
       PsiElement element = psiReference.getElement();
-      if (element != null && PsiTreeUtil.isAncestor(myPsiElement, element.getNavigationElement(), false)) {
+      if (PsiTreeUtil.isAncestor(myPsiElement, element.getNavigationElement(), false)) {
         return true;
       }
       if (element instanceof PsiReferenceExpression) {
@@ -380,5 +380,11 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
       return false;
     }
+  }
+
+  @Nullable
+  @Override
+  public String getActionName(PsiElement element) {
+    return "Inline to Anonymous Class";
   }
 }

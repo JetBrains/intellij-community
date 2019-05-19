@@ -31,22 +31,26 @@ public class ArchiveAntCopyInstructionCreator implements AntCopyInstructionCreat
     myPrefix = prefix;
   }
 
+  @Override
   @NotNull
   public Tag createDirectoryContentCopyInstruction(@NotNull String dirPath) {
     return new ZipFileSet(dirPath, myPrefix, true);
   }
 
+  @Override
   @NotNull
   public Tag createFileCopyInstruction(@NotNull String filePath, String outputFileName) {
     final String relativePath = myPrefix + "/" + outputFileName;
     return new ZipFileSet(filePath, relativePath, false);
   }
 
+  @Override
   @NotNull
   public AntCopyInstructionCreator subFolder(@NotNull String directoryName) {
     return new ArchiveAntCopyInstructionCreator(myPrefix + "/" + directoryName);
   }
 
+  @Override
   public Generator createSubFolderCommand(@NotNull String directoryName) {
     return null;
   }

@@ -48,7 +48,7 @@ public class VoidConversionRule extends TypeConversionRule {
           final Project project = expression.getProject();
           if (parent instanceof PsiReturnStatement) {
             final PsiReturnStatement replaced = (PsiReturnStatement)parent.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText("return;", null));
-            if (UnnecessaryReturnInspection.isReturnRedundant(replaced, false, null)) {
+            if (UnnecessaryReturnInspection.isReturnRedundant(replaced, false, false, null)) {
               DeleteUnnecessaryStatementFix.deleteUnnecessaryStatement(replaced);
             }
           }

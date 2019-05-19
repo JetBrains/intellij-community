@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.javaFX;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.InheritanceUtil;
@@ -14,12 +15,14 @@ public class JavaFxMainMethodRunConfigurationProvider implements JavaMainMethodP
 
   @Override
   public boolean isApplicable(PsiClass clazz) {
-    return InheritanceUtil.isInheritor(clazz, true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
+    return !DumbService.isDumb(clazz.getProject()) &&
+           InheritanceUtil.isInheritor(clazz, true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
   }
 
   @Override
   public boolean hasMainMethod(PsiClass clazz) {
-    return InheritanceUtil.isInheritor(clazz, true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
+    return !DumbService.isDumb(clazz.getProject()) &&
+           InheritanceUtil.isInheritor(clazz, true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
   }
 
   @Override

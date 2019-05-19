@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.google.protobuf.Message;
@@ -22,7 +22,6 @@ import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
-import org.jetbrains.jps.javac.OptimizedFileManagerUtil;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
@@ -52,7 +51,7 @@ public class ClasspathBootstrap {
   };
 
   public static List<String> getBuildProcessApplicationClasspath() {
-    final Set<String> cp = ContainerUtil.newHashSet();
+    final Set<String> cp = new HashSet<>();
 
     cp.add(getResourcePath(BuildMain.class));
     cp.add(getResourcePath(ExternalJavacProcess.class));  // intellij.platform.jps.build.javac.rt part
@@ -86,15 +85,10 @@ public class ClasspathBootstrap {
     catch (Throwable ignored) {
     }
 
-    return ContainerUtil.newArrayList(cp);
+    return new ArrayList<>(cp);
   }
 
-  public static void appendJavaCompilerClasspath(Collection<String> cp, boolean includeEcj) {
-    final Class<StandardJavaFileManager> optimizedFileManagerClass = OptimizedFileManagerUtil.getManagerClass();
-    if (optimizedFileManagerClass != null) {
-      cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
-    }
-
+  public static void appendJavaCompilerClasspath(Collection<? super String> cp, boolean includeEcj) {
     if (includeEcj) {
       File file = EclipseCompilerTool.findEcjJarFile();
       if (file != null) {
@@ -113,18 +107,6 @@ public class ClasspathBootstrap {
 
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourceFile(aClass));
-    }
-
-    final Class<StandardJavaFileManager> optimizedFileManagerClass = OptimizedFileManagerUtil.getManagerClass();
-    if (optimizedFileManagerClass != null) {
-      cp.add(getResourceFile(optimizedFileManagerClass));  // optimizedFileManager, if applicable
-    }
-    else {
-      // last resort
-      final File f = new File(PathManager.getLibPath(), "optimizedFileManager.jar");
-      if (f.exists()) {
-        cp.add(f);
-      }
     }
 
     try {

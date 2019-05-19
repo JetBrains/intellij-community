@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
@@ -105,7 +91,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
     `make rebase fail after resolving conflicts`()
   }
 
-  protected fun GitRepository.`make rebase fail after resolving conflicts`() {
+  private fun GitRepository.`make rebase fail after resolving conflicts`() {
     vcsHelper.onMerge {
       this.resolveConflicts()
       git.setShouldRebaseFail { true }
@@ -126,13 +112,13 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   protected fun assertRebased(repository: GitRepository, feature: String, master: String) {
     cd(repository)
-    assertEquals("$feature is not rebased on $master!", git("rev-parse " + master), git("merge-base $feature $master"))
+    assertEquals("$feature is not rebased on $master!", git("rev-parse $master"), git("merge-base $feature $master"))
   }
 
   protected fun assertNotRebased(feature: String, master: String, repository: GitRepository) {
     cd(repository)
     assertFalse("$feature is unexpectedly rebased on $master" + GitUtil.mention(repository),
-                git("rev-parse " + master) == git("merge-base $feature $master"))
+                git("rev-parse $master") == git("merge-base $feature $master"))
   }
 
   protected fun assertNoRebaseInProgress(repository: GitRepository) {
@@ -154,7 +140,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   protected fun GitRepository.hasConflict(file: String) : Boolean {
-    return ("UU " + file).equals(gitStatus());
+    return ("UU $file") == gitStatus()
   }
 
   protected fun GitRepository.assertConflict(file: String) {
@@ -183,7 +169,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   protected fun `assert unknown error notification with link to abort`(afterContinue : Boolean = false) {
-    val expectedTitle = if (afterContinue) "Continue Rebase Failed" else "Rebase Failed";
+    val expectedTitle = if (afterContinue) "Continue Rebase Failed" else "Rebase Failed"
     assertErrorNotification(expectedTitle,
         """
         $UNKNOWN_ERROR_TEXT<br/>
@@ -199,7 +185,8 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   protected fun `assert error about unstaged file before continue rebase`(file : String) {
-    val fileLine = if (vcs.version.isLaterOrEqual(GitVersion(1, 7, 3, 0))) "$file: needs update" else ""
+    val fileLine = if (vcs.version.isLaterOrEqual(GitVersion(1, 7, 3, 0)) &&
+                       vcs.version.isOlderOrEqual(GitVersion(2, 19, 2, 0))) "$file: needs update" else ""
     assertErrorNotification("Continue Rebase Failed",
           """
           $fileLine
@@ -208,7 +195,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
           """)
   }
 
-  inner class LocalChange(val repository: GitRepository, val filePath: String, val content: String = "Some content") {
+  inner class LocalChange(val repository: GitRepository, private val filePath: String, val content: String = "Some content") {
     fun generate() : LocalChange {
       cd(repository)
       repository.file(filePath).create(content).add()
@@ -219,9 +206,9 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
       assertNewFile(repository, filePath, content)
     }
 
-    fun assertNewFile(repository: GitRepository, file: String, content: String) {
+    private fun assertNewFile(repository: GitRepository, file: String, content: String) {
       cd(repository)
-      assertEquals("Incorrect git status output", "A  " + file, git("status --porcelain"))
+      assertEquals("Incorrect git status output", "A  $file", git("status --porcelain"))
       assertEquals("Incorrect content of the file [$file]", content, Executor.cat(file))
     }
   }
@@ -235,8 +222,8 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
       return repositories.filter { it.isDirty() }
     }
 
-    protected fun GitRepository.isDirty(): Boolean {
-      return !gitStatus().isEmpty();
+    private fun GitRepository.isDirty(): Boolean {
+      return !gitStatus().isEmpty()
     }
   }
 }

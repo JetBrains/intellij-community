@@ -7,21 +7,24 @@ YAML file
         PsiElement(indent)('  ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('name:')
+            PsiElement(scalar key)('name')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Mark McGwire')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('hr:')
+            PsiElement(scalar key)('hr')
+            PsiElement(:)(':')
             PsiWhiteSpace('   ')
             YAML plain scalar text
               PsiElement(text)('65')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('avg:')
+            PsiElement(scalar key)('avg')
+            PsiElement(:)(':')
             PsiWhiteSpace('  ')
             YAML plain scalar text
               PsiElement(text)('0.278')
@@ -32,21 +35,24 @@ YAML file
         PsiElement(indent)('  ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('name:')
+            PsiElement(scalar key)('name')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Sammy Sosa')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('hr:')
+            PsiElement(scalar key)('hr')
+            PsiElement(:)(':')
             PsiWhiteSpace('   ')
             YAML plain scalar text
               PsiElement(text)('63')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('avg:')
+            PsiElement(scalar key)('avg')
+            PsiElement(:)(':')
             PsiWhiteSpace('  ')
             YAML plain scalar text
               PsiElement(text)('0.288')

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 /**
  * @author Dmitry Batkovich
  */
 @TestDataPath("$CONTENT_ROOT/testData/inspections/getFamilyNameViolation")
-public class QuickFixGetFamilyNameViolationInspectionTest extends JavaCodeInsightFixtureTestCase {
+public class QuickFixGetFamilyNameViolationInspectionTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

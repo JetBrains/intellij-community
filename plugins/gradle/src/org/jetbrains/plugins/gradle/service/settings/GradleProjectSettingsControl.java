@@ -13,7 +13,6 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 
 /**
  * @author Denis Zhdanov
- * @since 4/24/13 1:45 PM
  */
 public class GradleProjectSettingsControl extends AbstractExternalProjectSettingsControl<GradleProjectSettings> {
   private final GradleProjectSettingsControlBuilder myBuilder;
@@ -75,6 +74,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   /**
    * see {@linkplain AbstractImportFromExternalSystemControl#setCurrentProject(Project)}
    */
+  @Override
   public void setCurrentProject(@Nullable Project project) {
     super.setCurrentProject(project);
   }

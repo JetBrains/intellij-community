@@ -21,7 +21,7 @@ package com.intellij.util.graph;
 class TestNode {
   private final String myMark;
 
-  public TestNode(String mark) {
+  TestNode(String mark) {
     myMark = mark;
   }
 

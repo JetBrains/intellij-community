@@ -36,7 +36,7 @@ public class FontUtil {
    *
    * If the character should be shown in editor, the method might return incorrect result,
    * since the editor will try to use fallback fonts if the base one cannot display the character.
-   * In this case use {@link com.intellij.openapi.editor.ex.util.EditorUtil#displayCharInEditor()} instead.
+   * In this case use {@link com.intellij.openapi.editor.ex.util.EditorUtil#displayCharInEditor(char, com.intellij.openapi.editor.colors.TextAttributesKey, String)} instead.
    */
   @NotNull
   public static String canDisplay(@NotNull Font font, char value, @NotNull String defaultValue) {

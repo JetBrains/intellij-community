@@ -70,9 +70,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
     commits.reverse()
 
-    val vFile = VcsUtil.getVirtualFileWithRefresh(commits.first().file)
-    TestCase.assertNotNull(vFile)
-    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(vFile!!))
+    updateChangeListManager()
+    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(commits.first().file))
     assertSameHistory(commits, history)
   }
 
@@ -115,6 +114,28 @@ class GitFileHistoryTest : GitSingleRepoTest() {
                                Consumer { exception: VcsException ->
                                  TestCase.fail("No exception expected " + ExceptionUtil.getThrowableText(exception))
                                })
+    assertSameHistory(commits, history)
+  }
+
+  @Throws(Exception::class)
+  fun `test history through merged rename`() {
+    val commits = ArrayList<TestCommit>()
+
+    val branchingPoint = last()
+    add("unrelated.txt", ourCurrentDir())
+
+    repo.checkoutNew("newBranch", branchingPoint)
+
+    commits.add(add("a.txt", ourCurrentDir()))
+    commits.add(modify(commits.last().file))
+
+    repo.checkout("master")
+    git.merge(repo, "newBranch", mutableListOf("--no-ff", "--no-commit"))
+
+    commits.add(rename(commits.last().file, File(Executor.mkdir("dir"), "b.txt")))
+    commits.reverse()
+    
+    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(commits.first().file))
     assertSameHistory(commits, history)
   }
 

@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.completion.CompletionConfidenceEP;
 import com.intellij.codeInsight.completion.CompletionContributorEP;
 import com.intellij.codeInspection.dataFlow.StringExpressionHelper;
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -46,10 +31,7 @@ import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class LanguageResolvingUtil {
   private static final String ANY_LANGUAGE_DEFAULT_ID = Language.ANY.getID();
@@ -86,7 +68,7 @@ class LanguageResolvingUtil {
       ContainerUtil.filter(allLanguages, aClass -> PsiSearchScopeUtil.isInScope(projectProductionScope, aClass));
     final List<LanguageDefinition> projectDefinitions = collectProjectLanguages(projectLanguages, libraryDefinitions);
 
-    final List<LanguageDefinition> all = ContainerUtil.newArrayList(libraryDefinitions);
+    final List<LanguageDefinition> all = new ArrayList<>(libraryDefinitions);
     all.addAll(projectDefinitions);
     return all;
   }
@@ -94,7 +76,7 @@ class LanguageResolvingUtil {
   private static List<LanguageDefinition> collectLibraryLanguages(final ConvertContext context,
                                                                   final Collection<PsiClass> allLanguages) {
     return ContainerUtil.mapNotNull(Language.getRegisteredLanguages(), (NullableFunction<Language, LanguageDefinition>)language -> {
-      if (language.getID().isEmpty() || language instanceof DependentLanguage) {
+      if (language.getID().isEmpty()) {
         return null;
       }
       final PsiClass psiClass = DomJavaUtil.findClass(language.getClass().getName(), context.getInvocationElement(), true);
@@ -204,7 +186,7 @@ class LanguageResolvingUtil {
   @Nullable
   private static String getStringConstantExpression(PsiElement psiElement) {
     final Pair<PsiElement, String> pair = StringExpressionHelper.evaluateConstantExpression(psiElement);
-    return pair != null ? pair.second : null;
+    return Pair.getSecond(pair);
   }
 
   @Nullable

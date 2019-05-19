@@ -28,17 +28,21 @@ public enum RectanglePainter implements RegionPainter<Integer> {
   DRAW {
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, @Nullable Integer round) {
-      Object valueAA = round != null && round >= 0 ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_DEFAULT;
-      RectanglePainter2D.DRAW.paint(g, x, y, width, height, round == null ? null : Double.valueOf(round), StrokeType.INSIDE, 1, valueAA);
+      paint2D(RectanglePainter2D.DRAW, g, x, y, width, height, round);
     }
   },
   FILL {
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, @Nullable Integer round) {
-      Object valueAA = round != null && round >= 0 ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_DEFAULT;
-      RectanglePainter2D.FILL.paint(g, x, y, width, height, round == null ? null : Double.valueOf(round), StrokeType.INSIDE, 1, valueAA);
+      paint2D(RectanglePainter2D.FILL, g, x, y, width, height, round);
     }
   };
+
+  private static void paint2D(RectanglePainter2D p, Graphics2D g, int x, int y, int width, int height, @Nullable Integer round) {
+    Double arc = round == null || round <= 0 ? null : Double.valueOf(round);
+    Object valueAA = arc != null ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_DEFAULT;
+    p.paint(g, x, y, width, height, arc, StrokeType.INSIDE, 1, valueAA);
+  }
 
   public static void paint(Graphics2D g, int x, int y, int width, int height, int arc, @Nullable Paint fill, @Nullable Paint draw) {
     if (fill != null) {

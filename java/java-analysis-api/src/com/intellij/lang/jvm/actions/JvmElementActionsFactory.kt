@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifiersOwner
 
 /**
@@ -12,21 +13,24 @@ import com.intellij.lang.jvm.JvmModifiersOwner
  * If method returns empty list this means that operation on given elements is not supported or not yet implemented for a language.
  *
  * Every new added method should return empty list by default and then be overridden in implementations for each language if it is possible.
- *
- * @since 2017.3
  */
 abstract class JvmElementActionsFactory {
 
-  open fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = emptyList()
+  open fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> =
+    createChangeModifierActions(target, MemberRequest.Modifier(request.modifier, request.shouldBePresent()))
+
+  // could be removed when Kotlin 1.3.40 is bundled (IDEA-209379)
+  @Deprecated(message = "use createChangeModifierActions(JvmModifiersOwner, ChangeModifierRequest)")
+  protected open fun createChangeModifierActions(target: JvmModifiersOwner,
+                                                 request: MemberRequest.Modifier): List<IntentionAction> = emptyList()
 
   open fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
-
-  @Deprecated(message = "use createAddMethodActions with proper request")
-  open fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> = emptyList()
 
   open fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> = emptyList()
 
   open fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> = emptyList()
 
   open fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> = emptyList()
+
+  open fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> = emptyList()
 }

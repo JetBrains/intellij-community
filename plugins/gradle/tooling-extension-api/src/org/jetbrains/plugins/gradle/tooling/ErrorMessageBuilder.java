@@ -20,10 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/13/2014
  */
 public class ErrorMessageBuilder {
   public static final String GROUP_TAG = "<ij_msg_gr>";
@@ -71,6 +72,12 @@ public class ErrorMessageBuilder {
 
 
   private static String getErrorMessage(@NotNull Throwable e) {
+    if (Boolean.valueOf(System.getProperty("idea.tooling.debug"))) {
+      StringWriter sw = new StringWriter();
+      e.printStackTrace(new PrintWriter(sw));
+      return sw.toString();
+    }
+
     StringBuilder buf = new StringBuilder();
     Throwable cause = e;
     while (cause != null) {

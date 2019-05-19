@@ -19,10 +19,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class CreateParameterFix extends AddParamBase {
     private final XPathVariableReference myReference;
@@ -31,19 +30,23 @@ public class CreateParameterFix extends AddParamBase {
         myReference = reference;
     }
 
+    @Override
     @NotNull
     public String getText() {
         return "Create parameter '" + myReference.getReferencedName() + "'";
     }
 
+    @Override
     protected String getParamName() {
         return myReference.getReferencedName();
     }
 
+    @Override
     protected XmlTag findTemplateTag() {
         return XsltCodeInsightUtil.getTemplateTag(myReference, true);
     }
 
+    @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         return myReference.isValid() && XsltCodeInsightUtil.getTemplateTag(myReference, true) != null;
     }

@@ -24,7 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
 /**
@@ -35,7 +35,9 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(1).asUIResource();
+    return isTableCellEditor(c) || isCompact(c) ?
+           JBUI.insets(1, 1, 1, 4).asUIResource() :
+           JBUI.insets(1).asUIResource();
   }
 
   @Override
@@ -46,17 +48,16 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       Rectangle r = new Rectangle(x, y, width, height);
-
       WinIntelliJTextFieldUI.adjustInWrapperRect(r, c);
 
+      boolean isCellRenderer = isTableCellEditor(c);
       int bw = 1;
       Object op = jc.getClientProperty("JComponent.outline");
-      if (op != null) {
+      if (c.isEnabled() && op != null) {
         Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
-        bw = 2;
+        bw = isCellRenderer ? 1 : 2;
       }
       else {
-        //boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
         if (c.hasFocus()) {
           g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
         }
@@ -64,14 +65,16 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
           g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
         }
         else {
-          g2.setColor(UIManager.getColor(jc.isEnabled() ? "TextField.borderColor" : "Button.intellij.native.borderColor"));
+          g2.setColor(UIManager.getColor(c.isEnabled() ? "TextField.borderColor" : "Button.intellij.native.borderColor"));
         }
 
-        if (!jc.isEnabled()) {
+        if (!c.isEnabled()) {
           g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
         }
 
-        JBInsets.removeFrom(r, JBUI.insets(1));
+        if (!isCellRenderer) {
+          JBInsets.removeFrom(r, JBUI.insets(1));
+        }
       }
 
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

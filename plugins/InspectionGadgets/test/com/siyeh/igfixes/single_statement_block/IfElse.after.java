@@ -1,6 +1,7 @@
 class X {
   {
-    if (true) System.out.println();
+    if (true) //c1
+        System.out.println();
     else {
       System.out.println();
     }

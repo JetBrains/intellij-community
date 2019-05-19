@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.structuralsearch.impl.matcher.strategies.JavaMatchingStrategy;
-import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Eugene.Kudelevsky
@@ -33,10 +21,12 @@ public class JavaCompiledPattern extends CompiledPattern {
     setStrategy(JavaMatchingStrategy.getInstance());
   }
 
+  @Override
   public String[] getTypedVarPrefixes() {
     return new String[] {TYPED_VAR_PREFIX};
   }
 
+  @Override
   public boolean isTypedVar(final String str) {
     if (str.isEmpty()) return false;
     if (str.charAt(0)=='@') {
@@ -50,31 +40,6 @@ public class JavaCompiledPattern extends CompiledPattern {
   public boolean isToResetHandler(PsiElement element) {
     return !(element instanceof PsiJavaToken) &&
            !(element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiAnnotation);
-  }
-
-  @Nullable
-  @Override
-  public String getAlternativeTextToMatch(PsiElement node, String previousText) {
-    // Short class name is matched with fully qualified name
-    if(node instanceof PsiJavaCodeReferenceElement || node instanceof PsiClass) {
-      PsiElement element = (node instanceof PsiJavaCodeReferenceElement)?
-                           ((PsiJavaCodeReferenceElement)node).resolve():
-                           node;
-
-      if (element instanceof PsiClass) {
-        String text = ((PsiClass)element).getQualifiedName();
-        if (text != null && text.equals(previousText)) {
-          text = ((PsiClass)element).getName();
-        }
-
-        if (text != null) {
-          return text;
-        }
-      }
-    } else if (node instanceof PsiLiteralExpression) {
-      return node.getText();
-    }
-    return null;
   }
 
   public boolean isRequestsSuperFields() {

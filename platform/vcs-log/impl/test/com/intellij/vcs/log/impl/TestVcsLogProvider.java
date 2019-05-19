@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -31,8 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -73,12 +59,12 @@ public class TestVcsLogProvider implements VcsLogProvider {
                                          SAMPLE_SUBJECT, DEFAULT_USER, commit.getTimestamp());
       }
     };
-  private Function<VcsLogFilterCollection, List<TimedVcsCommit>> myFilteredCommitsProvider;
+  private Function<? super VcsLogFilterCollection, ? extends List<TimedVcsCommit>> myFilteredCommitsProvider;
 
   public TestVcsLogProvider(@NotNull VirtualFile root) {
     myRoot = root;
-    myCommits = ContainerUtil.newArrayList();
-    myRefs = ContainerUtil.newHashSet();
+    myCommits = new ArrayList<>();
+    myRefs = new HashSet<>();
     myRefManager = new MockRefManager();
     myFullLogSemaphore = new ReducibleSemaphore();
     myRefreshSemaphore = new ReducibleSemaphore();
@@ -106,7 +92,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<TimedVcsCommit> commitConsumer) {
+  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<? super TimedVcsCommit> commitConsumer) {
     LOG.debug("readAllHashes");
     try {
       myFullLogSemaphore.acquire();
@@ -123,15 +109,9 @@ public class TestVcsLogProvider implements VcsLogProvider {
   }
 
   @Override
-  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
-                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                              boolean isForIndexing) {
+                              @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) {
     throw new UnsupportedOperationException();
   }
 
@@ -141,7 +121,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) {
+  public List<? extends VcsCommitMetadata> readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes) {
     throw new UnsupportedOperationException();
   }
 
@@ -159,11 +139,11 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public Disposable subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
+  public Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
     throw new UnsupportedOperationException();
   }
 
-  public void setFilteredCommitsProvider(@NotNull Function<VcsLogFilterCollection, List<TimedVcsCommit>> provider) {
+  public void setFilteredCommitsProvider(@NotNull Function<? super VcsLogFilterCollection, ? extends List<TimedVcsCommit>> provider) {
     myFilteredCommitsProvider = provider;
   }
 
@@ -188,7 +168,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
     throw new UnsupportedOperationException();
   }
 
-  public void appendHistory(@NotNull List<TimedVcsCommit> commits) {
+  public void appendHistory(@NotNull List<? extends TimedVcsCommit> commits) {
     myCommits.addAll(0, commits);
   }
 
@@ -232,12 +212,6 @@ public class TestVcsLogProvider implements VcsLogProvider {
     return null;
   }
 
-  @Nullable
-  @Override
-  public VcsLogDiffHandler getDiffHandler() {
-    return null;
-  }
-
   private static class MockRefManager implements VcsLogRefManager {
 
     public static final Comparator<VcsRef> FAKE_COMPARATOR = (o1, o2) -> 0;
@@ -250,13 +224,13 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
     @NotNull
     @Override
-    public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
+    public List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs) {
       return ContainerUtil.map(refs, SingletonRefGroup::new);
     }
 
     @NotNull
     @Override
-    public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> refs, boolean compact, boolean showTagNames) {
+    public List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> refs, boolean compact, boolean showTagNames) {
       return groupForBranchFilter(refs);
     }
 
@@ -289,7 +263,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
   private static class ReducibleSemaphore extends Semaphore {
     private volatile boolean myBlocked;
 
-    public ReducibleSemaphore() {
+    ReducibleSemaphore() {
       super(1);
     }
 

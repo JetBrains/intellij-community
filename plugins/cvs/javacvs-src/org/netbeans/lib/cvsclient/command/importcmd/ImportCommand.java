@@ -61,7 +61,8 @@ public final class ImportCommand extends Command {
 
 	// Implemented ============================================================
 
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+	@Override
+        public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                                   AuthenticationException {
 		// check necessary fields
 		BugLog.getInstance().assertNotNull(getModule());
@@ -91,7 +92,8 @@ public final class ImportCommand extends Command {
 		return requestProcessor.processRequests(requests, new DummyRequestsProgressHandler());
 	}
 
-	public void resetCvsCommand() {
+	@Override
+        public void resetCvsCommand() {
 		super.resetCvsCommand();
 		setLogMessage(null);
 		setModule(null);
@@ -104,7 +106,8 @@ public final class ImportCommand extends Command {
 		}
 	}
 
-	public String getCvsCommandLine() {
+	@Override
+        public String getCvsCommandLine() {
 		@NonNls final StringBuilder cvsArguments = new StringBuilder("import ");
 		cvsArguments.append(getCvsArguments());
 

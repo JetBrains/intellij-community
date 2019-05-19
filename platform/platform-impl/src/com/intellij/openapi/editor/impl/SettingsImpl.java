@@ -5,7 +5,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -13,12 +12,16 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.PatternUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +34,11 @@ public class SettingsImpl implements EditorSettings {
   private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
 
   @Nullable private final EditorEx myEditor;
-  @Nullable private final Language myLanguage;
+  @Nullable private Language myLanguage;
   private Boolean myIsCamelWords;
 
   // This group of settings does not have UI
-  private SoftWrapAppliancePlaces mySoftWrapAppliancePlace        = SoftWrapAppliancePlaces.MAIN_EDITOR;
+  private final SoftWrapAppliancePlaces mySoftWrapAppliancePlace;
   private int                     myAdditionalLinesCount          = Registry.intValue("editor.virtual.lines", 5);
   private int                     myAdditionalColumnsCount        = 3;
   private int                     myLineCursorWidth               = EditorUtil.getDefaultCaretWidth();
@@ -47,6 +50,7 @@ public class SettingsImpl implements EditorSettings {
   private Integer myTabSize         = null;
   private Integer myCachedTabSize   = null;
   private Boolean myUseTabCharacter = null;
+  private final Object myTabSizeLock = new Object();
 
   // These comes from EditorSettingsExternalizable defaults.
   private Boolean myIsVirtualSpace                        = null;
@@ -74,7 +78,6 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRenameVariablesInplace              = null;
   private Boolean myIsRefrainFromScrolling                = null;
   private Boolean myUseSoftWraps                          = null;
-  private final Boolean myIsAllSoftWrapsShown                   = null;
   private Boolean myUseCustomSoftWrapIndent               = null;
   private Integer myCustomSoftWrapIndent                  = null;
   private Boolean myRenamePreselect                       = null;
@@ -82,20 +85,21 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myShowIntentionBulb                     = null;
 
   private List<Integer> mySoftMargins = null;
-  
+
   public SettingsImpl() {
-    this(null, null, null);
+    this(null, null);
   }
 
-  SettingsImpl(@Nullable EditorEx editor, @Nullable Project project, @Nullable EditorKind kind) {
+  SettingsImpl(@Nullable EditorEx editor, @Nullable EditorKind kind) {
     myEditor = editor;
-    myLanguage = editor != null && project != null ? getDocumentLanguage(project, editor.getDocument()) : null;
-    
     if (EditorKind.CONSOLE.equals(kind)) {
       mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.CONSOLE;
     }
     else if (EditorKind.PREVIEW.equals(kind)) {
       mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.PREVIEW;
+    }
+    else {
+      mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.MAIN_EDITOR;
     }
   }
   
@@ -216,19 +220,6 @@ public class SettingsImpl implements EditorSettings {
            : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(myLanguage);
   }
 
-  @Nullable
-  private static Language getDocumentLanguage(@NotNull Project project, @NotNull Document document) {
-    if (!project.isDisposed()) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      PsiFile file = documentManager.getPsiFile(document);
-      if (file != null) return file.getLanguage();
-    }
-    else {
-      LOG.warn("Attempting to get a language for document on a disposed project: " + project.getName());
-    }
-    return null;
-  }
-
   @Override
   public boolean isWrapWhenTypingReachesRightMargin(Project project) {
     if (myWrapWhenTypingReachesRightMargin != null) return myWrapWhenTypingReachesRightMargin.booleanValue();
@@ -346,18 +337,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   /**
-   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
-   */
-  @Deprecated
-  public void setSoftWrapAppliancePlace(SoftWrapAppliancePlaces softWrapAppliancePlace) {
-    if (softWrapAppliancePlace != mySoftWrapAppliancePlace) {
-      mySoftWrapAppliancePlace = softWrapAppliancePlace;
-      fireEditorRefresh();
-    }
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
+   * @deprecated use {@link EditorKind}
    */
   @Deprecated
   public SoftWrapAppliancePlaces getSoftWrapAppliancePlace() {
@@ -365,8 +345,10 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void reinitSettings() {
-    myCachedTabSize = null;
-    reinitDocumentIndentOptions();
+    synchronized (myTabSizeLock) {
+      myCachedTabSize = null;
+      reinitDocumentIndentOptions();
+    }
   }
 
   private void reinitDocumentIndentOptions() {
@@ -385,31 +367,38 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public int getTabSize(Project project) {
-    if (myTabSize != null) return myTabSize.intValue();
-    if (myCachedTabSize != null) return myCachedTabSize.intValue();
-    int tabSize;
-    try {
-      if (project == null || project.isDisposed()) {
-        tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
-      }
-      else  {
-        PsiFile file = getPsiFile(project);
-        if (myEditor != null && myEditor.isViewer()) {
-          FileType fileType = file != null ? file.getFileType() : null;
-          tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
-        } else {
-          tabSize = file != null ?
-                    CodeStyle.getIndentOptions(file).TAB_SIZE :
-                    CodeStyle.getSettings(project).getTabSize(null);
+    synchronized (myTabSizeLock) { // getTabSize can be called from a background thread (e.g. from IndentsPass)
+      if (myTabSize != null) return myTabSize.intValue();
+      if (myCachedTabSize == null) {
+        int tabSize;
+        try {
+          if (project == null || project.isDisposed()) {
+            tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
+          }
+          else {
+            PsiFile file = getPsiFile(project);
+            if (myEditor != null && myEditor.isViewer()) {
+              FileType fileType = file != null ? file.getFileType() : null;
+              tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+            }
+            else {
+              tabSize = file != null ?
+                        CodeStyle.getIndentOptions(file).TAB_SIZE :
+                        CodeStyle.getSettings(project).getTabSize(null);
+            }
+          }
         }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error("Error determining tab size", e);
+          tabSize = new CommonCodeStyleSettings.IndentOptions().TAB_SIZE;
+        }
+        myCachedTabSize = Integer.valueOf(Math.max(1, tabSize));
       }
+      return myCachedTabSize;
     }
-    catch (Exception e) {
-      LOG.error("Error determining tab size", e);
-      tabSize = new CommonCodeStyleSettings.IndentOptions().TAB_SIZE;
-    }
-    myCachedTabSize = Integer.valueOf(Math.max(1, tabSize));
-    return tabSize;
   }
 
   @Nullable
@@ -423,8 +412,10 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setTabSize(int tabSize) {
     final Integer newValue = Integer.valueOf(Math.max(1, tabSize));
-    if (newValue.equals(myTabSize)) return;
-    myTabSize = newValue;
+    synchronized (myTabSizeLock) {
+      if (newValue.equals(myTabSize)) return;
+      myTabSize = newValue;
+    }
     fireEditorRefresh();
   }
 
@@ -647,8 +638,24 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isUseSoftWraps() {
-    return myUseSoftWraps != null ? myUseSoftWraps.booleanValue()
-                                  : EditorSettingsExternalizable.getInstance().isUseSoftWraps(mySoftWrapAppliancePlace);
+    if (myUseSoftWraps != null) return myUseSoftWraps.booleanValue();
+
+    boolean softWrapsEnabled = EditorSettingsExternalizable.getInstance().isUseSoftWraps(mySoftWrapAppliancePlace);
+    if (!softWrapsEnabled || mySoftWrapAppliancePlace != SoftWrapAppliancePlaces.MAIN_EDITOR || myEditor == null) return softWrapsEnabled;
+
+    String masks = EditorSettingsExternalizable.getInstance().getSoftWrapFileMasks();
+    if (masks.trim().equals("*")) return true;
+
+    VirtualFile file = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+    return file != null && fileNameMatches(file.getName(), masks);
+  }
+
+  private static boolean fileNameMatches(@NotNull String fileName, @NotNull String globPatterns) {
+    for (String p : globPatterns.split(";")) {
+      String pTrimmed = p.trim();
+      if (!pTrimmed.isEmpty() && PatternUtil.fromMask(pTrimmed).matcher(fileName).matches()) return true;
+    }
+    return false;
   }
 
   @Override
@@ -665,8 +672,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isAllSoftWrapsShown() {
-    return myIsAllSoftWrapsShown != null ? myIsWhitespacesShown.booleanValue()
-                                      : EditorSettingsExternalizable.getInstance().isAllSoftWrapsShown();
+    return EditorSettingsExternalizable.getInstance().isAllSoftWrapsShown();
   }
 
   @Override
@@ -724,5 +730,10 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setShowIntentionBulb(boolean show) {
     myShowIntentionBulb = show; 
+  }
+
+  @Override
+  public void setLanguage(@Nullable Language language) {
+    myLanguage = language;
   }
 }

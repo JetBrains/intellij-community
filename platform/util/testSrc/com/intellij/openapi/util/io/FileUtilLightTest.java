@@ -1,34 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -117,14 +98,6 @@ public class FileUtilLightTest {
   }
 
   @Test
-  public void testRemoveAncestors() {
-    List<String> data = Arrays.asList("/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/b/c/ttt", "/a/ewq.euq");
-    String[] expected = {"/a","/b/c","/d/e"};
-    @SuppressWarnings("unchecked") Collection<String> result = FileUtil.removeAncestors(data, Convertor.SELF, PairProcessor.TRUE);
-    assertArrayEquals(expected, ArrayUtil.toStringArray(result));
-  }
-
-  @Test
   public void testCheckImmediateChildren() {
     String root = "/a";
     String[] data = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/a/b/c/d/e"};
@@ -166,7 +139,7 @@ public class FileUtilLightTest {
   public void testLoadProperties() throws IOException {
     String data = "key2=value2\nkey1=value1\nkey3=value3";
     Map<String, String> map = FileUtil.loadProperties(new StringReader(data));
-    assertEquals(ContainerUtil.newArrayList("key2", "key1", "key3"), ContainerUtil.newArrayList(map.keySet()));
+    assertEquals(ContainerUtil.newArrayList("key2", "key1", "key3"), new ArrayList<>(map.keySet()));
   }
 
   @Test
@@ -230,5 +203,25 @@ public class FileUtilLightTest {
     assertFalse(FileUtil.containsWindowsShortName("C:/dir/file~1.extension"));
     assertFalse(FileUtil.containsWindowsShortName("C:/dir/file.~1"));
     assertFalse(FileUtil.containsWindowsShortName("C:/dir/file.ext~1"));
+  }
+
+  @Test
+  public void windowsAbsolutePath() {
+    assertTrue(FileUtil.isWindowsAbsolutePath("C:\\Users"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("C:/Users"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("X:/Users"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("X:/"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("X:"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("X:\\"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("X:\\Users\\user.data.txt"));
+
+    assertFalse(FileUtil.isWindowsAbsolutePath(""));
+    assertFalse(FileUtil.isWindowsAbsolutePath("/"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("/home"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("C"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("1"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("1:"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("C:C"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("C?"));
   }
 }

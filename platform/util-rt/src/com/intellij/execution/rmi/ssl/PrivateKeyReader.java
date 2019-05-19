@@ -224,7 +224,7 @@ class DerParser {
    *
    * @param in The DER encoded stream
    */
-  public DerParser(InputStream in) throws IOException {
+  DerParser(InputStream in) throws IOException {
     this.in = in;
   }
 
@@ -234,7 +234,7 @@ class DerParser {
    * @param bytes The encoded bytes
    * @throws IOException
    */
-  public DerParser(byte[] bytes) throws IOException {
+  DerParser(byte[] bytes) throws IOException {
     this(new ByteArrayInputStream(bytes));
   }
 
@@ -349,7 +349,7 @@ class Asn1Object {
    * @param length Length of the field
    * @param value  Encoded octet string for the field.
    */
-  public Asn1Object(int tag, int length, byte[] value) {
+  Asn1Object(int tag, int length, byte[] value) {
     this.tag = tag;
     this.type = tag & 0x1F;
     this.length = length;

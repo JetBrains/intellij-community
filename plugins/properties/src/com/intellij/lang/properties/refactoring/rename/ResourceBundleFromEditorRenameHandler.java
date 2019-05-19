@@ -1,17 +1,12 @@
 /*
  * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-
-/**
- * @author Alexey
- */
 package com.intellij.lang.properties.refactoring.rename;
 
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.*;
 import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
-import com.intellij.lang.properties.structureView.PropertiesStructureViewElement;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -49,7 +44,7 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
       return false;
     }
     final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    return !(!(virtualFile instanceof ResourceBundleAsVirtualFile));
+    return virtualFile instanceof ResourceBundleAsVirtualFile;
   }
 
   @Override
@@ -69,8 +64,8 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
           ResourceBundleRenameUtil.renameResourceBundleKeySection(getPsiElementsFromGroup(group),
                                                                   group.getPresentableName(),
                                                                   group.getPrefix().length() - group.getPresentableName().length());
-        } else if (selectedElement instanceof ResourceBundlePropertyStructureViewElement) {
-          final PsiElement psiElement = ((ResourceBundlePropertyStructureViewElement)selectedElement).getPsiElement();
+        } else if (selectedElement instanceof PropertyStructureViewElement) {
+          final PsiElement psiElement = ((PropertyStructureViewElement)selectedElement).getPsiElement();
           ResourceBundleRenameUtil.renameResourceBundleKey(psiElement, project);
         } else if (selectedElement instanceof ResourceBundleFileStructureViewElement) {
           ResourceBundleRenameUtil.renameResourceBundleBaseName(((ResourceBundleFileStructureViewElement)selectedElement).getValue(), project);
@@ -88,11 +83,8 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
 
   private static List<PsiElement> getPsiElementsFromGroup(final PropertiesPrefixGroup propertiesPrefixGroup) {
     return ContainerUtil.mapNotNull(propertiesPrefixGroup.getChildren(), (NullableFunction<TreeElement, PsiElement>)treeElement -> {
-      if (treeElement instanceof PropertiesStructureViewElement) {
-        return ((PropertiesStructureViewElement)treeElement).getValue().getPsiElement();
-      }
-      if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
-        return ((ResourceBundlePropertyStructureViewElement)treeElement).getPsiElement();
+      if (treeElement instanceof PropertyStructureViewElement) {
+        return ((PropertyStructureViewElement)treeElement).getPsiElement();
       }
       return null;
     });

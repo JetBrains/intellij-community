@@ -10,7 +10,7 @@ if __name__ == '__main__':
             t.switch()
             if t.is_stopped():
                 #print('Will settrace in: %s' % (t,))
-                gdb.execute("call SetSysTraceFunc(%s, %s)" % (
+                gdb.execute("call (int)SetSysTraceFunc(%s, %s)" % (
                     show_debug_info, is_debug))
     except:
         import traceback;traceback.print_exc()

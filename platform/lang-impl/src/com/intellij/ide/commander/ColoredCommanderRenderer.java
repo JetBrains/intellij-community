@@ -23,9 +23,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +35,7 @@ import java.awt.*;
 final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   private final CommanderPanel myCommanderPanel;
 
-  public ColoredCommanderRenderer(@NotNull final CommanderPanel commanderPanel) {
+  ColoredCommanderRenderer(@NotNull final CommanderPanel commanderPanel) {
     myCommanderPanel = commanderPanel;
   }
 
@@ -52,11 +52,6 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
 
   @Override
   protected void customizeCellRenderer(@NotNull final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
-    // Fix GTK background
-    if (UIUtil.isUnderGTKLookAndFeel()){
-      final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-      UIUtil.changeBackGround(this, background);
-    }
     Color color = UIUtil.getListForeground();
     SimpleTextAttributes attributes = null;
     String locationString = null;
@@ -74,18 +69,18 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
 
       if (descriptor instanceof AbstractTreeNode) {
         final AbstractTreeNode treeNode = (AbstractTreeNode)descriptor;
-        final TextAttributesKey attributesKey = treeNode.getAttributesKey();
+        final TextAttributesKey attributesKey = treeNode.getPresentation().getTextAttributesKey();
 
         if (attributesKey != null) {
           final TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
 
           if (textAttributes != null) attributes =  SimpleTextAttributes.fromTextAttributes(textAttributes);
         }
-        locationString = treeNode.getLocationString();
+        locationString = treeNode.getPresentation().getLocationString();
 
         final PresentationData presentation = treeNode.getPresentation();
         if (presentation.hasSeparatorAbove() && !selected) {
-          setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND),
+          setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
                                                        BorderFactory.createEmptyBorder(0, 0, 1, 0)));
         }
       }

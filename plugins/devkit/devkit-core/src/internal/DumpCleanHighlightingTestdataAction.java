@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,12 +40,8 @@ import java.io.IOException;
 public class DumpCleanHighlightingTestdataAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#" + DumpCleanHighlightingTestdataAction.class);
 
-  public DumpCleanHighlightingTestdataAction() {
-    super("Dump Highlighting-markup-free Data");
-  }
-
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     if (psiFile != null) {
@@ -94,7 +91,7 @@ public class DumpCleanHighlightingTestdataAction extends AnAction implements Dum
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getProject() != null);
   }
 }

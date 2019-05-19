@@ -11,9 +11,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
 import java.io.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 public class JavacFileData {
+  public static final String CUSTOM_DATA_PLUGIN_ID = "ast.reference.collector"; // fake plugin name to fit into customOutputData API
+  public static final String CUSTOM_DATA_KIND = "JavacFileData";
+
   private static final byte CLASS_MARKER = 0;
   private static final byte METHOD_MARKER = 1;
   private static final byte FIELD_MARKER = 2;
@@ -136,7 +142,7 @@ public class JavacFileData {
     return deserialized;
   }
 
-  private static void saveDefs(final DataOutput out, List<JavacDef> defs) throws IOException {
+  private static void saveDefs(final DataOutput out, List<? extends JavacDef> defs) throws IOException {
     DataInputOutputUtilRt.writeSeq(out, defs, new ThrowableConsumer<JavacDef, IOException>() {
       @Override
       public void consume(JavacDef def) throws IOException {
@@ -254,7 +260,7 @@ public class JavacFileData {
     return modifierList.isEmpty() ? Collections.<Modifier>emptySet() : EnumSet.copyOf(modifierList);
   }
 
-  private static void saveCasts(@NotNull final DataOutput output, @NotNull List<JavacTypeCast> casts) throws IOException {
+  private static void saveCasts(@NotNull final DataOutput output, @NotNull List<? extends JavacTypeCast> casts) throws IOException {
     DataInputOutputUtilRt.writeSeq(output, casts, new ThrowableConsumer<JavacTypeCast, IOException>() {
       @Override
       public void consume(JavacTypeCast cast) throws IOException {
@@ -284,7 +290,7 @@ public class JavacFileData {
     return result;
   }
 
-  private static void saveImplicitToString(@NotNull DataOutputStream out, @NotNull Set<JavacRef> refs) throws IOException {
+  private static void saveImplicitToString(@NotNull DataOutputStream out, @NotNull Set<? extends JavacRef> refs) throws IOException {
     DataInputOutputUtilRt.writeINT(out, refs.size());
     for (JavacRef ref : refs) {
       writeJavacRef(out, ref);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -83,6 +69,9 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
         fail("Only one refresh should have happened, an error happened instead: " + myDataWaiter.getExceptionText());
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -130,7 +119,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     myLoader.refresh(Collections.singletonList(projectRoot));
     DataPack result = myDataWaiter.get();
 
-    List<String> allCommits = ContainerUtil.newArrayList();
+    List<String> allCommits = new ArrayList<>();
     allCommits.add(newCommit);
     allCommits.addAll(myCommits);
     assertDataPack(log(allCommits), result.getPermanentGraph().getAllCommits());
@@ -197,7 +186,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     assertNull(message, myDataWaiter.myQueue.poll(500, TimeUnit.MILLISECONDS));
   }
 
-  private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
+  private VcsLogRefresherImpl createLoader(Consumer<? super DataPack> dataPackConsumer) {
     myLogData = new VcsLogData(myProject, myLogProviders, new FatalErrorHandler() {
       @Override
       public void consume(@Nullable Object source, @NotNull Throwable throwable) {
@@ -210,7 +199,8 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
       }
     }, myProject);
     VcsLogRefresherImpl refresher =
-      new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(), myLogData.getIndex(),
+      new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(),
+                              myLogData.getModifiableIndex(),
                               new VcsLogProgress(myProject, myLogData),
                               myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT
       ) {
@@ -227,13 +217,13 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     return refresher;
   }
 
-  private void assertDataPack(@NotNull List<TimedVcsCommit> expectedLog, @NotNull List<GraphCommit<Integer>> actualLog) {
+  private void assertDataPack(@NotNull List<TimedVcsCommit> expectedLog, @NotNull List<? extends GraphCommit<Integer>> actualLog) {
     List<TimedVcsCommit> convertedActualLog = convert(actualLog);
     assertOrderedEquals(convertedActualLog, expectedLog);
   }
 
   @NotNull
-  private List<TimedVcsCommit> convert(@NotNull List<GraphCommit<Integer>> actualLog) {
+  private List<TimedVcsCommit> convert(@NotNull List<? extends GraphCommit<Integer>> actualLog) {
     return ContainerUtil.map(actualLog, commit -> {
       Function<Integer, Hash> convertor = integer -> myLogData.getCommitId(integer).getHash();
       return new TimedVcsCommitImpl(convertor.fun(commit.getId()), ContainerUtil.map(commit.getParents(), convertor),

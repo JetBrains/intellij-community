@@ -2,79 +2,38 @@
 package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.RunDashboardContributor;
-import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.execution.services.ServiceViewTreeCellRendererBase;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.AccessibleContext;
-import javax.accessibility.AccessibleRole;
 import javax.swing.*;
-import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.util.Map;
+
+import static com.intellij.execution.dashboard.RunDashboardCustomizer.NODE_LINKS;
 
 /**
  * @author Konstantin Aleev
  */
-public class RunDashboardTreeCellRenderer extends JPanel implements TreeCellRenderer {
-  private final ColoredTreeCellRenderer myNodeRender = new NodeRenderer();
-  private final JLabel myLabel = new JLabel();
+public class RunDashboardTreeCellRenderer extends ServiceViewTreeCellRendererBase {
+  private RunDashboardRunConfigurationNode myNode;
 
-  public RunDashboardTreeCellRenderer() {
-    super(new BorderLayout());
-    add(myLabel, BorderLayout.EAST);
+  @Override
+  public void customizeCellRenderer(@NotNull JTree tree,
+                                    Object value,
+                                    boolean selected,
+                                    boolean expanded,
+                                    boolean leaf,
+                                    int row,
+                                    boolean hasFocus) {
+    myNode = TreeUtil.getUserObject(RunDashboardRunConfigurationNode.class, value);
+    super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
   }
 
   @Override
-  public Component getTreeCellRendererComponent(JTree tree,
-                                                Object value,
-                                                boolean selected,
-                                                boolean expanded,
-                                                boolean leaf,
-                                                int row,
-                                                boolean hasFocus) {
-    myNodeRender.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-    RunDashboardRunConfigurationNode node = TreeUtil.getUserObject(RunDashboardRunConfigurationNode.class, value);
-    if (node != null) {
-      RunDashboardContributor contributor = node.getContributor();
-      if (contributor != null) {
-        if (contributor.customizeCellRenderer(myNodeRender, myLabel, node, selected, expanded, leaf, row, hasFocus)) {
-          this.add(myNodeRender, BorderLayout.CENTER);
-          return this;
-        }
-      }
-    }
-    return myNodeRender;
-  }
+  protected Object getTag(String fragment) {
+    if (myNode == null) return null;
 
-  @Override
-  public String getToolTipText(MouseEvent event) {
-    return myNodeRender.getToolTipText(event);
-  }
-
-  @Override
-  public AccessibleContext getAccessibleContext() {
-    if (accessibleContext == null) {
-      accessibleContext = new MyAccessibleContext();
-    }
-    return accessibleContext;
-  }
-
-  private class MyAccessibleContext extends JPanel.AccessibleJPanel {
-    @Override
-    public String getAccessibleName() {
-      return myNodeRender.getAccessibleContext().getAccessibleName();
-    }
-
-    @Override
-    public String getAccessibleDescription() {
-      return myNodeRender.getAccessibleContext().getAccessibleDescription();
-    }
-
-    @Override
-    public AccessibleRole getAccessibleRole() {
-      return myNodeRender.getAccessibleContext().getAccessibleRole();
-    }
+    Map<Object, Object> links = myNode.getUserData(NODE_LINKS);
+    return links == null ? null : links.get(fragment);
   }
 }

@@ -26,7 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class AntClasspathEditorPanel extends JPanel {
   private ListProperty<AntClasspathEntry> myClasspathProperty;
@@ -47,21 +46,26 @@ public class AntClasspathEditorPanel extends JPanel {
     classpathBinding.addAddManyFacility(myForm.myAddAllInDir,
                                         new AllJarsUnderDirEntry.AddEntriesFactory(myForm.myClasspathList));
     myBinding.addBinding(new UIPropertyBinding() {
+      @Override
       public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
       }
 
+      @Override
       public void apply(AbstractProperty.AbstractPropertyContainer container) {
       }
 
+      @Override
       public void beDisabled() {
         myForm.enableButtons(false);
       }
 
+      @Override
       public void beEnabled() {
         myForm.enableButtons(true);
       }
 
-      public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
+      @Override
+      public void addAllPropertiesTo(Collection<? super AbstractProperty> properties) {
       }
     });
     return myBinding;
@@ -86,8 +90,7 @@ public class AntClasspathEditorPanel extends JPanel {
     }
 
     public void enableButtons(boolean enable) {
-      for (Iterator<ListUtil.Updatable> iterator = myUpdatables.iterator(); iterator.hasNext();) {
-        ListUtil.Updatable updatable = iterator.next();
+      for (ListUtil.Updatable updatable : myUpdatables) {
         updatable.enable(enable);
       }
     }

@@ -65,6 +65,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     folder = isMarkedType(modelElement.getDomElementType(), FOLDER_NODES_KEY);
   }
 
+  @NotNull
   @Override
   public SimpleNode[] getChildren() {
     return doGetChildren(myDomElement);

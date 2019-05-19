@@ -125,7 +125,7 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
                                                            @NotNull String pathInJar,
                                                            @NotNull SourceFileFilter filter,
                                                            @NotNull DestinationInfo destinationInfo,
-                                                           @NotNull Condition<String> pathInJarFilter) {
+                                                           @NotNull Condition<? super String> pathInJarFilter) {
     return new JarBasedArtifactRootDescriptor(jarFile, pathInJar, filter, myRootIndex++, myBuildTarget, destinationInfo, pathInJarFilter);
   }
 }

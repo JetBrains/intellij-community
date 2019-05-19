@@ -1,16 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,15 +22,19 @@ import java.util.Set;
 @State(name = "EditorSettings", storages = @Storage("editor.xml"))
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   @NonNls
-  public static String PROP_VIRTUAL_SPACE = "VirtualSpace";
+  public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
 
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
   public static final UINumericRange QUICK_DOC_DELAY_RANGE = new UINumericRange(500, 1, 5000);
+
+  private static final String SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT = "*";
+  private static final String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
 
   //Q: make it interface?
   public static final class OptionSet {
     public String LINE_SEPARATOR;
     public String USE_SOFT_WRAPS;
+    public String SOFT_WRAP_FILE_MASKS;
     public boolean USE_CUSTOM_SOFT_WRAP_INDENT = false;
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
     public boolean IS_VIRTUAL_SPACE = false;
@@ -62,6 +63,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     @SuppressWarnings("SpellCheckingInspection")
     public boolean IS_ALL_SOFTWRAPS_SHOWN = false;
     public boolean IS_INDENT_GUIDES_SHOWN = true;
+    public boolean IS_FOCUS_MODE = false;
     public boolean IS_ANIMATED_SCROLLING = true;
     public boolean IS_CAMEL_WORDS = false;
     public boolean ADDITIONAL_PAGE_AT_BOTTOM = false;
@@ -74,12 +76,12 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean RENAME_VARIABLES_INPLACE = true;
     public boolean PRESELECT_RENAME = true;
     public boolean SHOW_INLINE_DIALOG = true;
-    
+
     public boolean REFRAIN_FROM_SCROLLING = false;
 
     public boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
     public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
-    
+
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
     public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
@@ -90,7 +92,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     private final Map<String, Boolean> mapLanguageBreadcrumbs = new HashMap<>();
 
-    @SuppressWarnings("unused")
     public Map<String, Boolean> getLanguageBreadcrumbsMap() {
       return mapLanguageBreadcrumbs;
     }
@@ -104,7 +105,20 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     }
   }
 
+  @State(name = "OsSpecificEditorSettings", storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS))
+  public static final class OsSpecificState implements PersistentStateComponent<OsSpecificState> {
+    public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions();
+
+    @Override
+    public OsSpecificState getState() { return this; }
+
+    @Override
+    public void loadState(@NotNull OsSpecificState state) { XmlSerializerUtil.copyBean(state, this); }
+  }
+
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
+
+  @NotNull private final OsSpecificState myOsSpecificState;
 
   private final Set<SoftWrapAppliancePlaces> myPlacesToUseSoftWraps = EnumSet.noneOf(SoftWrapAppliancePlaces.class);
   private OptionSet myOptions = new OptionSet();
@@ -124,6 +138,12 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
   public @interface StripTrailingSpaces {}
+
+  public EditorSettingsExternalizable() { this(new OsSpecificState()); }
+
+  public EditorSettingsExternalizable(@NotNull OsSpecificState state) {
+    myOsSpecificState = state;
+  }
 
   public static EditorSettingsExternalizable getInstance() {
     if (ApplicationManager.getApplication().isDisposed()) {
@@ -223,19 +243,35 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myAdditionalLinesCount = additionalLinesCount;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
   public int getAdditinalColumnsCount() {
     return myAdditionalColumnsCount;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   public void setAdditionalColumnsCount(int value) {
     myAdditionalColumnsCount = value;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   public boolean isLineMarkerAreaShown() {
     return myLineMarkerAreaShown;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   public void setLineMarkerAreaShown(boolean lineMarkerAreaShown) {
     myLineMarkerAreaShown = lineMarkerAreaShown;
   }
@@ -289,6 +325,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public boolean isBreadcrumbsShownFor(String languageID) {
     Boolean visible = myOptions.mapLanguageBreadcrumbs.get(languageID);
     return visible == null || visible;
+  }
+
+  public boolean hasBreadcrumbSettings(String languageID) {
+    return myOptions.mapLanguageBreadcrumbs.containsKey(languageID);
   }
 
   /**
@@ -354,6 +394,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
       myPlacesToUseSoftWraps.remove(place);
     }
     storeRawSoftWraps();
+    if (place == SoftWrapAppliancePlaces.MAIN_EDITOR) setSoftWrapFileMasks(getSoftWrapFileMasks());
   }
 
   public boolean isUseCustomSoftWrapIndent() {
@@ -504,6 +545,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.IS_INDENT_GUIDES_SHOWN = val;
   }
 
+  public boolean isFocusMode() {
+    return myOptions.IS_FOCUS_MODE;
+  }
+
+  public void setFocusMode(boolean val) {
+    myOptions.IS_FOCUS_MODE = val;
+  }
+
   public boolean isSmoothScrolling() {
     return myOptions.IS_ANIMATED_SCROLLING;
   }
@@ -567,7 +616,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public void setPreselectRename(final boolean val) {
     myOptions.PRESELECT_RENAME = val;
   }
-  
+
   public boolean isShowInlineLocalDialog() {
     return myOptions.SHOW_INLINE_DIALOG;
   }
@@ -575,11 +624,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public void setShowInlineLocalDialog(final boolean val) {
     myOptions.SHOW_INLINE_DIALOG = val;
   }
-  
+
   public boolean addCaretsOnDoubleCtrl() {
     return myOptions.ADD_CARETS_ON_DOUBLE_CTRL;
   }
-  
+
   public void setAddCaretsOnDoubleCtrl(boolean val) {
     myOptions.ADD_CARETS_ON_DOUBLE_CTRL = val;
   }
@@ -603,8 +652,28 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public boolean isKeepTrailingSpacesOnCaretLine() {
     return myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE;
   }
-  
+
   public void setKeepTrailingSpacesOnCaretLine(boolean keep) {
     myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE = keep;
+  }
+
+  @NotNull
+  public String getSoftWrapFileMasks() {
+    String storedValue = myOptions.SOFT_WRAP_FILE_MASKS;
+    if (storedValue != null) return storedValue;
+    return isUseSoftWraps() ? SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT : SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT;
+  }
+
+  public void setSoftWrapFileMasks(@NotNull String value) {
+    myOptions.SOFT_WRAP_FILE_MASKS = value;
+  }
+
+  @NotNull
+  public CaretStopOptions getCaretStopOptions() {
+    return myOsSpecificState.CARET_STOP_OPTIONS;
+  }
+
+  public void setCaretStopOptions(@NotNull CaretStopOptions options) {
+    myOsSpecificState.CARET_STOP_OPTIONS = options;
   }
 }

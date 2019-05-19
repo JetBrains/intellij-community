@@ -1,7 +1,7 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev.transport;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.jetbrains.python.debugger.pydev.RemoteDebugger;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Alexander Koshevoy
@@ -32,7 +33,6 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   public void waitForConnect() throws IOException {
-    //noinspection SocketOpenedButNotSafelyClosed
     myServerSocket.setSoTimeout(myConnectionTimeout);
 
     synchronized (mySocketObject) {
@@ -126,7 +126,7 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
 
   public static class DebuggerReader extends BaseDebuggerReader {
     public DebuggerReader(@NotNull RemoteDebugger debugger, @NotNull InputStream stream) throws IOException {
-      super(stream, CharsetToolkit.UTF8_CHARSET, debugger); //TODO: correct encoding?
+      super(stream, StandardCharsets.UTF_8, debugger); //TODO: correct encoding?
       start(getClass().getName());
     }
 

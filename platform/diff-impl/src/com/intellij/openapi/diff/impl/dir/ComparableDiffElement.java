@@ -8,4 +8,7 @@ import org.jetbrains.annotations.Nullable;
 public interface ComparableDiffElement {
   @Nullable
   Boolean isContentEqual(@NotNull DiffElement<?> other);
+
+  default void prepare(@Nullable DiffElement<?> other) {
+  }
 }

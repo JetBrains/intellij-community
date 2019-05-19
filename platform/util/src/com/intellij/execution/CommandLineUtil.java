@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +8,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -57,7 +46,7 @@ public class CommandLineUtil {
   // please keep an implementation in sync with [junit-rt] ProcessBuilder.createProcess()
   @NotNull
   public static List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
-    List<String> commandLine = ContainerUtil.newArrayListWithCapacity(parameters.size() + 1);
+    List<String> commandLine = new ArrayList<>(parameters.size() + 1);
 
     commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
 
@@ -97,6 +86,10 @@ public class CommandLineUtil {
    *              [C:\Program Files\] ["backslash quote\"]
    *
    *                   -> ["C:\Program Files\\" "\"backslash quote\\\""]
+   *
+   *
+   *   *** A command (i.e. a name of / a path to an executable file) may not contain double quotes (OS limitation),
+   *       so no escaping is needed.
    *
    *
    *   *** Besides the rules above, double quotes escaping is also used to prevent CRT from glob-expanding the arguments
@@ -212,7 +205,7 @@ public class CommandLineUtil {
    *   http://stackoverflow.com/a/4095133/545027  How does the Windows Command Interpreter (CMD.EXE) parse scripts?
    *   https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
    */
-  private static void addToWindowsCommandLine(String command, List<String> parameters, List<String> commandLine) {
+  private static void addToWindowsCommandLine(String command, List<String> parameters, List<? super String> commandLine) {
     boolean isCmdParam = isWinShell(command);
     int cmdInvocationDepth = isWinShellScript(command) ? 2 : isCmdParam ? 1 : 0;
 
@@ -419,7 +412,7 @@ public class CommandLineUtil {
 
     return numTrailingBackslashes / 2;
   }
-  
+
   @NotNull
   public static String getWinShellName() {
     return "cmd.exe";
@@ -497,5 +490,14 @@ public class CommandLineUtil {
 
   public static boolean hasWinShellSpecialChars(@NotNull String parameter) {
     return WIN_CARET_SPECIAL.matcher(parameter).find();
+  }
+
+  /**
+   * If {@code stringToQuote} is unquoted, quotes it with single quotes, according to the bash rules, replacing single quotes
+   * with badly readable but recursion safe {@code '"'"'}
+   */
+  @NotNull
+  public static String posixQuote(@NotNull String stringToQuote) {
+    return isQuotedString(stringToQuote) ? stringToQuote : "'" + replace(stringToQuote, "'", "'\"'\"'") + "'";
   }
 }

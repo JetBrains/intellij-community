@@ -66,7 +66,7 @@ public class PyOperatorReference extends PyReferenceImpl {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (element instanceof PyParameter || element instanceof PyTargetExpression) {
       return false;
     }

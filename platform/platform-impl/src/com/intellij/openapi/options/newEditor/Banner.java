@@ -1,20 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeUICustomization;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.components.labels.SwingActionLink;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Sergey.Malenkov
@@ -22,6 +24,7 @@ import java.util.Collection;
 final class Banner extends SimpleBanner {
   private final JLabel myProjectIcon = new JLabel();
   private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
+    @Override
     protected int getFontStyle(Crumb crumb) {
       return Font.BOLD;
     }
@@ -29,20 +32,20 @@ final class Banner extends SimpleBanner {
 
   Banner(Action action) {
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
-    myProjectIcon.setIcon(AllIcons.General.ProjectConfigurableBanner);
-    myProjectIcon.setForeground(JBColor.GRAY);
+    myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
+    myProjectIcon.setForeground(UIUtil.getContextHelpForeground());
     myProjectIcon.setVisible(false);
     myLeftPanel.add(myBreadcrumbs, 0);
     add(BorderLayout.CENTER, myProjectIcon);
     add(BorderLayout.EAST, RelativeFont.BOLD.install(new SwingActionLink(action)));
   }
 
-  void setText(Collection<String> names) {
-    ArrayList<Crumb> crumbs = new ArrayList<>();
-    if (names != null && !names.isEmpty()) {
-      CopyAction action = new CopyAction(() -> CopyAction.createTransferable(names));
+  void setText(@NotNull Collection<String> names) {
+    List<Crumb> crumbs = new ArrayList<>();
+    if (!names.isEmpty()) {
+      List<Action> actions = CopySettingsPathAction.createSwingActions(() -> names);
       for (String name : names) {
-        crumbs.add(new Crumb.Impl(null, name, null, action));
+        crumbs.add(new Crumb.Impl(null, name, null, actions));
       }
     }
     myBreadcrumbs.setCrumbs(crumbs);
@@ -75,5 +78,14 @@ final class Banner extends SimpleBanner {
   void setLeftComponent(Component component) {
     super.setLeftComponent(component);
     myBreadcrumbs.setVisible(component == null);
+  }
+
+  @Override
+  void updateProgressBorder() {
+  }
+
+  @Override
+  Component getBaselineTemplate() {
+    return myBreadcrumbs;
   }
 }

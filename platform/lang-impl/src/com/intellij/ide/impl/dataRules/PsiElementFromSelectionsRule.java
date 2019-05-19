@@ -16,25 +16,40 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiAwareObject;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiElementFromSelectionsRule implements GetDataRule {
-  @Override
-  public Object getData(DataProvider dataProvider) {
-    final Object[] objects = (Object[])dataProvider.getData(PlatformDataKeys.SELECTED_ITEMS.getName());
-    if (objects != null) {
-      final PsiElement[] elements = new PsiElement[objects.length];
-      for (int i = 0, objectsLength = objects.length; i < objectsLength; i++) {
-        Object object = objects[i];
-        if (!(object instanceof PsiElement)) return null;
-        if (!((PsiElement)object).isValid()) return null;
-        elements[i] = (PsiElement)object;
-      }
+  private static final Logger LOG = Logger.getInstance(PsiElementFromSelectionsRule.class);
 
-      return elements;
+  @Override
+  public Object getData(@NotNull DataProvider dataProvider) {
+    Object items = PlatformDataKeys.SELECTED_ITEMS.getData(dataProvider);
+    if (items == null) return null;
+
+    if (!(items instanceof Object[])) {
+      String errorMessage = "Value of type Object[] is expected, but " + items.getClass() + " is returned by " + dataProvider.getClass();
+      PluginException.logPluginError(LOG, errorMessage, null, dataProvider.getClass());
+      return null;
     }
-    return null;
+    Project project = CommonDataKeys.PROJECT.getData(dataProvider);
+    Object[] objects = (Object[])items;
+    PsiElement[] elements = new PsiElement[objects.length];
+    for (int i = 0, len = objects.length; i < len; i++) {
+      Object o = objects[i];
+      PsiElement element = o instanceof PsiElement ? (PsiElement)o :
+                           o instanceof PsiAwareObject && project != null ? ((PsiAwareObject)o).findElement(project) : null;
+      if (element == null || !element.isValid()) return null;
+      elements[i] = element;
+    }
+
+    return elements;
   }
 }

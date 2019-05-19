@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl;
 
 import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
@@ -33,12 +31,14 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     super(project, null, true, true, rerunAction);
   }
 
+  @Override
   protected void fillRightToolbarGroup(DefaultActionGroup group) {
     super.fillRightToolbarGroup(group);
     group.addSeparator();
     group.add(new CompilerPropertiesAction());
   }
 
+  @Override
   protected void addExtraPopupMenuActions(DefaultActionGroup group) {
     group.addSeparator();
     group.add(new ExcludeFromCompileAction(myProject, this));
@@ -52,12 +52,14 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     }
   }
 
+  @Override
   protected boolean shouldShowFirstErrorInEditor() {
     return CompilerWorkspaceConfiguration.getInstance(myProject).AUTO_SHOW_ERRORS_IN_EDITOR;
   }
 
   private class SuppressJavacWarningsAction extends AnAction {
-    public void actionPerformed(final AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final NavigatableMessageElement messageElement = (NavigatableMessageElement)getSelectedErrorTreeElement();
       final String[] text = messageElement.getText();
       final String id = text[0].substring(1, text[0].indexOf("]"));
@@ -78,10 +80,9 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       final Project project = e.getProject();
       if (project == null) {
         return;
@@ -120,8 +121,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
               final String id = text[0].substring(1, text[0].indexOf("]"));
               final SuppressFix suppressInspectionFix = getSuppressAction(id);
               final boolean available = suppressInspectionFix.isAvailable(project, context);
-              presentation.setEnabled(available);
-              presentation.setVisible(available);
+              presentation.setEnabledAndVisible(available);
               if (available) {
                 presentation.setText(suppressInspectionFix.getText());
               }

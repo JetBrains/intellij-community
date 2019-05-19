@@ -4,24 +4,27 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.DocumentUtil.isLineEmpty;
 
 /**
  * Emulates Emacs 'backward-paragraph' action
  */
 public class BackwardParagraphAction extends EditorAction {
   public BackwardParagraphAction() {
-    super(new MyHandler());
+    super(new Handler(false));
   }
 
-  private static class MyHandler extends EditorActionHandler {
-    private MyHandler() {
+  static class Handler extends EditorActionHandler {
+    private final boolean myWithSelection;
+
+    Handler(boolean withSelection) {
       super(true);
+      myWithSelection = withSelection;
     }
 
     @Override
@@ -58,14 +61,7 @@ public class BackwardParagraphAction extends EditorAction {
         }
       }
 
-      caret.removeSelection();
-      caret.moveToOffset(targetOffset);
-      EditorModificationUtil.scrollToCaret(editor);
-    }
-
-    private static boolean isLineEmpty(Document document, int line) {
-      return StringUtil.equalsIgnoreWhitespaces(
-        document.getImmutableCharSequence().subSequence(document.getLineStartOffset(line), document.getLineEndOffset(line)), "");
+      EditorActionUtil.moveCaret(caret, targetOffset, myWithSelection);
     }
   }
 }

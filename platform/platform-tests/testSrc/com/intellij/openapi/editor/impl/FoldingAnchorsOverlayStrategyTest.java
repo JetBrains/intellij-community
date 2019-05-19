@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 import java.util.*;
@@ -73,12 +74,27 @@ public class FoldingAnchorsOverlayStrategyTest extends LightPlatformCodeInsightF
   }
 
   public void testWithEmptyLastLine() {
-    myFixture.configureByText(FileTypes.PLAIN_TEXT, "some text\n");
+    configureByText("some text\n");
     final FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
     foldingModel.runBatchFoldingOperation(() -> foldingModel.addFoldRegion(0, 10, "..."));
     verifyAnchors(null,
                   0, Type.EXPANDED_TOP,
                   1, Type.EXPANDED_BOTTOM);
+  }
+
+  public void testSingleLineBasicCase() {
+    configureByText("abc");
+    FoldRegion region = EditorTestUtil.addFoldRegion(myFixture.getEditor(), 0, 3, "...", false);
+    region.setGutterMarkEnabledForSingleLine(true);
+    verifyAnchors(null,
+                  0, Type.EXPANDED_SINGLE_LINE);
+    myFixture.getEditor().getFoldingModel().runBatchFoldingOperation(() -> region.setExpanded(false));
+    verifyAnchors(null,
+                  0, Type.COLLAPSED_SINGLE_LINE);
+  }
+
+  private void configureByText(String text) {
+    myFixture.configureByText(FileTypes.PLAIN_TEXT, text);
   }
 
   private void prepareEditor(String text) {
@@ -94,7 +110,7 @@ public class FoldingAnchorsOverlayStrategyTest extends LightPlatformCodeInsightF
 
   private void verifyAnchors(FoldRegion activeFoldRegion, Object... expectedAnchorParameters) {
     Collection<DisplayedFoldingAnchor> actualAnchors = new FoldingAnchorsOverlayStrategy((EditorImpl)myFixture.getEditor())
-      .getAnchorsToDisplay(0, myFixture.getEditor().getDocument().getTextLength(), activeFoldRegion);
+      .getAnchorsToDisplay(0, myFixture.getEditor().getDocument().getTextLength(), Collections.singletonList(activeFoldRegion));
     List<DisplayedFoldingAnchor> sortedActualAnchors = new ArrayList<>(actualAnchors);
     Collections.sort(sortedActualAnchors, (o1, o2) -> o1.visualLine - o2.visualLine);
 

@@ -66,7 +66,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   }
 
   @Override
-  public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
+  public void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
     final ExpectedTypeInfo[] infos = JavaSmartCompletionContributor.getExpectedTypes(parameters);
 
     final List<ExpectedTypeInfo> infoCollection = Arrays.asList(infos);
@@ -74,12 +74,12 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
                      lookupElement -> result.addElement(JavaSmartCompletionContributor.decorate(lookupElement, infoCollection)));
   }
 
-  public void generateVariants(final CompletionParameters parameters, final PrefixMatcher prefixMatcher, final Consumer<LookupElement> consumer) {
+  public void generateVariants(final CompletionParameters parameters, final PrefixMatcher prefixMatcher, final Consumer<? super LookupElement> consumer) {
     generateVariants(parameters, prefixMatcher, JavaSmartCompletionContributor.getExpectedTypes(parameters), consumer);
   }
 
   private void generateVariants(final CompletionParameters parameters, final PrefixMatcher prefixMatcher,
-                                final ExpectedTypeInfo[] infos, final Consumer<LookupElement> consumer) {
+                                final ExpectedTypeInfo[] infos, final Consumer<? super LookupElement> consumer) {
 
     addArrayTypes(parameters.getPosition(), infos, consumer);
 
@@ -99,7 +99,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   }
 
   private static void addArrayTypes(PsiElement identifierCopy,
-                                    ExpectedTypeInfo[] infos, final Consumer<LookupElement> consumer) {
+                                    ExpectedTypeInfo[] infos, final Consumer<? super LookupElement> consumer) {
 
     for (final PsiType type : ExpectedTypesGetter.extractTypes(infos, true)) {
       if (type instanceof PsiArrayType) {
@@ -134,7 +134,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   @Nullable
   private LookupElement addExpectedType(final PsiType type,
                                         final CompletionParameters parameters) {
-    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return null;
+    if (!JavaCompletionUtil.hasAccessibleConstructor(type, parameters.getPosition())) return null;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null || psiClass.getName() == null) return null;
@@ -226,11 +226,12 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   }
 
   public static void processInheritors(final CompletionParameters parameters,
-                                       Collection<PsiClassType> expectedClassTypes,
-                                       final PrefixMatcher matcher, final Consumer<PsiType> consumer) {
+                                       Collection<? extends PsiClassType> expectedClassTypes,
+                                       final PrefixMatcher matcher, final Consumer<? super PsiType> consumer) {
     final PsiElement context = parameters.getPosition();
     GlobalSearchScope scope = context.getResolveScope();
-    expectedClassTypes = ContainerUtil.mapNotNull(expectedClassTypes, type -> PsiClassImplUtil.correctType(type, scope));
+    expectedClassTypes = ContainerUtil.mapNotNull(expectedClassTypes, type -> 
+      type.resolve() instanceof PsiTypeParameter ? null : PsiClassImplUtil.correctType(type, scope));
 
     //quick
     if (!processMostProbableInheritors(parameters.getOriginalFile(), context, expectedClassTypes, consumer)) return;
@@ -243,8 +244,8 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
 
   private static boolean processMostProbableInheritors(PsiFile contextFile,
                                                        PsiElement context,
-                                                       Collection<PsiClassType> expectedClassTypes,
-                                                       Consumer<PsiType> consumer) {
+                                                       Collection<? extends PsiClassType> expectedClassTypes,
+                                                       Consumer<? super PsiType> consumer) {
     for (final PsiClassType type : expectedClassTypes) {
       consumer.consume(type);
 

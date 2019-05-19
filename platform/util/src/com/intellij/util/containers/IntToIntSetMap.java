@@ -31,7 +31,7 @@ public class IntToIntSetMap {
 
   public IntToIntSetMap(int initialCapacity, float loadfactor) {
     mySingle = new TIntIntHashMap(initialCapacity, loadfactor);
-    myMulti = new TIntObjectHashMap<TIntHashSet>(initialCapacity, loadfactor);
+    myMulti = new TIntObjectHashMap<>(initialCapacity, loadfactor);
   }
 
   public void addOccurence(int key, int value) {

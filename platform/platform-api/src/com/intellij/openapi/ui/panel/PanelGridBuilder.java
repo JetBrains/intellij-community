@@ -38,6 +38,7 @@ public class PanelGridBuilder implements PanelBuilder {
   }
 
 
+  @Override
   @NotNull
   public JPanel createPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
@@ -48,6 +49,7 @@ public class PanelGridBuilder implements PanelBuilder {
     return panel;
   }
 
+  @Override
   public boolean constrainsValid() {
     return builders.stream().allMatch(b -> b.constrainsValid());
   }

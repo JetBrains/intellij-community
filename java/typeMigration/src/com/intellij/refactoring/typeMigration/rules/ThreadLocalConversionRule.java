@@ -89,7 +89,9 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     if (parent instanceof PsiAssignmentExpression) {
       final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
       if (operationSign == JavaTokenType.EQ) {
-        return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set(" + toBoxed("$val$", from, context)+")", (PsiAssignmentExpression)parent);
+        boolean rightInfected = ((PsiAssignmentExpression)parent).getLExpression() == context;
+        String replacement = rightInfected ? "$qualifier$ = $val$.get()" : "$qualifier$.set(" + toBoxed("$val$", from, context) + ")";
+        return new TypeConversionDescriptor("$qualifier$ = $val$", replacement, (PsiAssignmentExpression)parent);
       }
     }
 
@@ -260,12 +262,12 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
   }
 
   private static class WrappingWithInnerClassOrLambdaDescriptor extends ArrayInitializerAwareConversionDescriptor {
-    private final List<PsiVariable> myVariablesToMakeFinal;
+    private final List<? extends PsiVariable> myVariablesToMakeFinal;
 
     private WrappingWithInnerClassOrLambdaDescriptor(@NonNls final String stringToReplace,
                                                      @NonNls final String replaceByString,
                                                      final PsiExpression expression,
-                                                     @NotNull List<PsiVariable> toMakeFinal) {
+                                                     @NotNull List<? extends PsiVariable> toMakeFinal) {
       super(stringToReplace, replaceByString, expression);
       myVariablesToMakeFinal = toMakeFinal;
     }

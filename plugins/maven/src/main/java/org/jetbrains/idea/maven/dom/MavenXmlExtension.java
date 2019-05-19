@@ -29,7 +29,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/4/2017
  */
 public class MavenXmlExtension extends DefaultXmlExtension {
   @Override

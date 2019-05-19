@@ -42,6 +42,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     myArtifactPointer = artifactPointer;
   }
 
+  @Override
   public List<? extends PackagingElement<?>> getSubstitution(@NotNull PackagingElementResolvingContext context, @NotNull ArtifactType artifactType) {
     final Artifact artifact = findArtifact(context);
     if (artifact != null) {
@@ -80,11 +81,13 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     return Collections.emptyList();
   }
 
+  @Override
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ArtifactElementPresentation(myArtifactPointer, context));
   }
 
+  @Override
   public ArtifactPackagingElementState getState() {
     final ArtifactPackagingElementState state = new ArtifactPackagingElementState();
     if (myArtifactPointer != null) {
@@ -93,6 +96,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     return state;
   }
 
+  @Override
   public void loadState(@NotNull ArtifactPackagingElementState state) {
     final String name = state.getArtifactName();
     myArtifactPointer = name != null ? ArtifactPointerManager.getInstance(myProject).createPointer(name) : null;

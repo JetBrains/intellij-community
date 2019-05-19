@@ -28,6 +28,8 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcs.log.impl.VcsFileStatusInfo;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.commands.Git;
@@ -81,17 +83,19 @@ public class GitFileHistory {
   private GitFileHistory(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath path, @NotNull VcsRevisionNumber revision) {
     myProject = project;
     myRoot = root;
-    myPath = GitHistoryUtils.getLastCommitName(myProject, path);
+    myPath = VcsUtil.getLastCommitPath(myProject, path);
     myStartingRevision = revision;
   }
 
   private void load(@NotNull Consumer<GitFileRevision> consumer,
                     @NotNull Consumer<VcsException> exceptionConsumer,
                     String... parameters) {
-    GitLogParser logParser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS,
-                                              HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
-                                              SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
-    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(consumer, exceptionConsumer);
+    GitLogParser<GitLogFullRecord> logParser = GitLogParser.createDefaultParser(myProject, GitLogParser.NameStatus.STATUS,
+                                                                                HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL,
+                                                                                COMMITTER_NAME,
+                                                                                COMMITTER_EMAIL, PARENTS,
+                                                                                SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
+    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(consumer);
 
     String firstCommitParent = myStartingRevision.asString();
     FilePath currentPath = myPath;
@@ -100,7 +104,7 @@ public class GitFileHistory {
       recordConsumer.reset(currentPath);
 
       GitLineHandler handler = createLogHandler(logParser, currentPath, firstCommitParent, parameters);
-      GitLogOutputSplitter splitter = new GitLogOutputSplitter(handler, logParser, recordConsumer);
+      GitLogOutputSplitter<GitLogFullRecord> splitter = new GitLogOutputSplitter<>(handler, logParser, recordConsumer);
 
       Git.getInstance().runCommandWithoutCollectingOutput(handler);
       if (splitter.hasErrors()) {
@@ -136,9 +140,10 @@ public class GitFileHistory {
     // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
     // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
     GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.SHOW);
-    GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
+    GitLogParser<GitLogFullRecord> parser = GitLogParser.createDefaultParser(myProject, GitLogParser.NameStatus.STATUS,
+                                                                             HASH, COMMIT_TIME, PARENTS);
     h.setStdoutSuppressed(true);
-    h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
+    h.addParameters("-M", "-m", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
     if (!GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(myProject)) {
       h.addParameters("--follow");
       h.endOptions();
@@ -148,17 +153,19 @@ public class GitFileHistory {
       h.endOptions();
     }
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-    List<GitLogRecord> records = parser.parse(output);
+    List<GitLogFullRecord> records = parser.parse(output);
 
     if (records.isEmpty()) return null;
     // we have information about all changed files of the commit. Extracting information about the file we need.
-    GitLogRecord record = records.get(0);
-    List<Change> changes = record.parseChanges(myProject, myRoot);
-    for (Change change : changes) {
-      if ((change.isMoved() || change.isRenamed()) && filePath.equals(notNull(change.getAfterRevision()).getFile())) {
-        String[] parents = record.getParentsHashes();
-        String parent = parents.length > 0 ? parents[0] : null;
-        return Pair.create(parent, notNull(change.getBeforeRevision()).getFile());
+    for (int i = 0; i < records.size(); i++) {
+      GitLogFullRecord record = records.get(i);
+      List<Change> changes = record.parseChanges(myProject, myRoot);
+      for (Change change : changes) {
+        if ((change.isMoved() || change.isRenamed()) && filePath.equals(notNull(change.getAfterRevision()).getFile())) {
+          String[] parents = record.getParentsHashes();
+          String parent = parents.length > 0 ? parents[i] : null;
+          return Pair.create(parent, notNull(change.getBeforeRevision()).getFile());
+        }
       }
     }
     return null;
@@ -251,16 +258,13 @@ public class GitFileHistory {
     return collectHistoryForRevision(project, path, GitRevisionNumber.HEAD, parameters);
   }
 
-  private class GitLogRecordConsumer implements Consumer<GitLogRecord> {
+  private class GitLogRecordConsumer implements Consumer<GitLogFullRecord> {
     @NotNull private final AtomicBoolean mySkipFurtherOutput = new AtomicBoolean();
     @NotNull private final AtomicReference<String> myFirstCommit = new AtomicReference<>();
     @NotNull private final AtomicReference<FilePath> myCurrentPath = new AtomicReference<>();
-    @NotNull private final Consumer<VcsException> myExceptionConsumer;
     @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
 
-    public GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer,
-                                @NotNull Consumer<VcsException> exceptionConsumer) {
-      myExceptionConsumer = exceptionConsumer;
+    GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer) {
       myRevisionConsumer = revisionConsumer;
     }
 
@@ -270,43 +274,40 @@ public class GitFileHistory {
     }
 
     @Override
-    public void consume(@NotNull GitLogRecord record) {
+    public void consume(@NotNull GitLogFullRecord record) {
       if (mySkipFurtherOutput.get()) {
         return;
       }
 
       myFirstCommit.set(record.getHash());
 
-      try {
-        myRevisionConsumer.consume(createGitFileRevision(record));
-        List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
-        if (statusInfos.isEmpty()) {
-          // can safely be empty, for example, for simple merge commits that don't change anything.
-          return;
-        }
-        if (statusInfos.get(0).getType() == GitChangeType.ADDED && !myPath.isDirectory()) {
-          mySkipFurtherOutput.set(true);
-        }
+      myRevisionConsumer.consume(createGitFileRevision(record));
+      List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      if (statusInfos.isEmpty()) {
+        // can safely be empty, for example, for simple merge commits that don't change anything.
+        return;
       }
-      catch (VcsException e) {
-        myExceptionConsumer.consume(e);
+      if (statusInfos.get(0).getType() == Change.Type.NEW && !myPath.isDirectory()) {
+        mySkipFurtherOutput.set(true);
       }
     }
 
     @NotNull
-    private GitFileRevision createGitFileRevision(@NotNull GitLogRecord record) throws VcsException {
+    private GitFileRevision createGitFileRevision(@NotNull GitLogFullRecord record) {
       GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
       FilePath revisionPath = getRevisionPath(record);
       Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
       Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
       Collection<String> parents = Arrays.asList(record.getParentsHashes());
+      List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      boolean deleted = !statusInfos.isEmpty() && statusInfos.get(0).getType() == Change.Type.DELETED;
       return new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair),
                                  record.getFullMessage(),
-                                 null, new Date(record.getAuthorTimeStamp()), parents);
+                                 null, new Date(record.getAuthorTimeStamp()), parents, deleted);
     }
 
     @NotNull
-    private FilePath getRevisionPath(@NotNull GitLogRecord record) throws VcsException {
+    private FilePath getRevisionPath(@NotNull GitLogFullRecord record) {
       List<FilePath> paths = record.getFilePaths(myRoot);
       if (paths.size() > 0) {
         return paths.get(0);

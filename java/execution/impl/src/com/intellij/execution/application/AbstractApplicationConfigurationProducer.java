@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -17,16 +15,26 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractApplicationConfigurationProducer<T extends ApplicationConfiguration> extends JavaRunConfigurationProducerBase<T> {
+  public AbstractApplicationConfigurationProducer() {
+    super();
+  }
 
-  public AbstractApplicationConfigurationProducer(final ApplicationConfigurationType configurationType) {
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
+  public AbstractApplicationConfigurationProducer(@NotNull ApplicationConfigurationType configurationType) {
     super(configurationType);
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull T configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     final Location contextLocation = context.getLocation();
     if (contextLocation == null) {
       return false;
@@ -76,7 +84,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
   }
 
   @Override
-  public boolean isConfigurationFromContext(T appConfiguration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(@NotNull T appConfiguration, @NotNull ConfigurationContext context) {
     final PsiElement location = context.getPsiLocation();
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(location);
     if (aClass != null && Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.getMainClassName())) {

@@ -57,7 +57,7 @@ public interface JpsDependenciesEnumerator {
    * @return this instance
    */
   @NotNull
-  JpsDependenciesEnumerator satisfying(@NotNull Condition<JpsDependencyElement> condition);
+  JpsDependenciesEnumerator satisfying(@NotNull Condition<? super JpsDependencyElement> condition);
 
   /**
    * @return all modules processed by enumerator
@@ -74,15 +74,15 @@ public interface JpsDependenciesEnumerator {
   /**
    * Runs {@code consumer.consume()} for each module processed by this enumerator
    */
-  void processModules(@NotNull Consumer<JpsModule> consumer);
+  void processModules(@NotNull Consumer<? super JpsModule> consumer);
 
   /**
    * Runs {@code consumer.consume()} for each library processed by this enumerator
    */
-  void processLibraries(@NotNull Consumer<JpsLibrary> consumer);
+  void processLibraries(@NotNull Consumer<? super JpsLibrary> consumer);
 
   /**
    * Runs {@code moduleConsumer.consume()} for each module and {@code libraryConsumer.consume()} for each library processed by this enumerator
    */
-  void processModuleAndLibraries(@NotNull Consumer<JpsModule> moduleConsumer, @NotNull Consumer<JpsLibrary> libraryConsumer);
+  void processModuleAndLibraries(@NotNull Consumer<? super JpsModule> moduleConsumer, @NotNull Consumer<? super JpsLibrary> libraryConsumer);
 }

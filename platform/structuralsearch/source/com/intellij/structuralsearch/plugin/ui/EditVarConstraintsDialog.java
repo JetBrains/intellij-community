@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.impl.RegExHelpPopup;
@@ -44,8 +44,6 @@ import com.intellij.ui.TextAccessor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.IntegerField;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,8 +53,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -117,7 +115,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     regexp.getDocument().addDocumentListener(new MyDocumentListener(notRegexp, wholeWordsOnly));
     regexp.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         applyWithinTypeHierarchy.setEnabled(e.getDocument().getTextLength() > 0 && fileType == StdFileTypes.JAVA);
       }
     });
@@ -197,10 +195,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
       }
     );
 
-    customScriptCode.getButton().addActionListener(new ActionListener() {
+    customScriptCode.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
-        final List<String> variableNames = ContainerUtil.newArrayList(matchOptions.getVariableConstraintNames());
+        final List<String> variableNames = new ArrayList<>(matchOptions.getVariableConstraintNames());
         variableNames.add(ScriptLog.SCRIPT_LOG_VAR_NAME);
         final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText(), variableNames);
         dialog.show();
@@ -234,8 +232,12 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   boolean validateParameters() {
-    return validateRegExp(regexp) && validateWithin() && validateCounts() && validateRegExp(regexprForExprType) &&
-           validateRegExp(formalArgType) && validateScript();
+    if (Registry.is("ssr.use.regexp.to.specify.type")) {
+      if (!validateRegExp(regexprForExprType) || !validateRegExp(formalArgType)) {
+        return false;
+      }
+    }
+    return validateRegExp(regexp) && validateWithin() && validateCounts() && validateScript();
   }
 
   @Override
@@ -299,11 +301,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
                                    ? referenceTargetConstraint
                                    : '"' + referenceTargetConstraint + '"');
     varInfo.setInvertReference(invertReferenceTarget.isSelected());
-
   }
 
   private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
-    final ReplaceOptions replaceOptions = ((ReplaceConfiguration)configuration).getReplaceOptions();
+    final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
     final String realVariableName = stripReplacementVarDecoration(varName);
     ReplacementVariableDefinition variableDefinition = replaceOptions.getVariableDefinition(realVariableName);
 
@@ -323,7 +324,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     if (varName == null) return;
     if (isReplacementVariable(varName)) {
       final ReplacementVariableDefinition definition =
-        ((ReplaceConfiguration)myConfiguration).getReplaceOptions().getVariableDefinition(stripReplacementVarDecoration(varName));
+        myConfiguration.getReplaceOptions().getVariableDefinition(stripReplacementVarDecoration(varName));
 
       restoreScriptCode(definition);
       textConstraintsPanel.setVisible(false);
@@ -360,8 +361,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
       expectedTypeConstraints.setVisible(typeComponent &&
                                          myProfile.isApplicableConstraint(UIUtil.EXPECTED_TYPE, nodes, completePattern, false));
       referenceTargetConstraints.setVisible(myProfile.isApplicableConstraint(UIUtil.REFERENCE, nodes, completePattern, false));
+      partOfSearchResults.setVisible(true);
       containedInConstraints.setVisible(completePattern);
-      scriptConstraints.setVisible(Registry.is("ssr.enable.script.constraint.on.all.variables") || completePattern);
+      scriptConstraints.setVisible(true);
 
       partOfSearchResults.setEnabled(!completePattern);
     }
@@ -438,7 +440,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private boolean validateRegExp(EditorTextField field) {
     try {
-      //noinspection ResultOfMethodCallIgnored
       Pattern.compile(field.getText());
     } catch (PatternSyntaxException e) {
       return showError(field, e.getDescription());
@@ -505,8 +506,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private void createUIComponents() {
     regexp = createRegexComponent();
-    regexprForExprType = createRegexComponent();
-    formalArgType = createRegexComponent();
+    if (Registry.is("ssr.use.regexp.to.specify.type")) {
+      regexprForExprType = createRegexComponent();
+      formalArgType = createRegexComponent();
+    }
+    else {
+      regexprForExprType = createTextComponent();
+      formalArgType = createTextComponent();
+    }
     customScriptCode = new ComponentWithBrowseButton<>(createScriptComponent(), null);
 
     myRegExHelpLabel = RegExHelpPopup.createRegExLink(SSRBundle.message("regular.expression.help.label"), regexp, LOG);
@@ -515,15 +522,20 @@ class EditVarConstraintsDialog extends DialogWrapper {
     referenceTargetTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
   }
 
+  private EditorTextField createTextComponent() {
+    return createEditorComponent("1.txt");
+  }
+
   private EditorTextField createRegexComponent() {
-    @NonNls final String fileName = "1.regexp";
-    final FileType fileType = getFileType(fileName);
-    final Document doc = createDocument(fileName, fileType, "");
-    return new EditorTextField(doc, myProject, fileType);
+    return createEditorComponent("1.regexp");
   }
 
   private EditorTextField createScriptComponent() {
-    @NonNls final String fileName = "1.groovy";
+    return createEditorComponent("1.groovy");
+  }
+
+  @NotNull
+  private EditorTextField createEditorComponent(String fileName) {
     final FileType fileType = getFileType(fileName);
     final Document doc = createDocument(fileName, fileType, "");
     return new EditorTextField(doc, myProject, fileType);
@@ -549,7 +561,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     }
 
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       final boolean enable = e.getDocument().getTextLength() > 0;
       for (JComponent component : components) {
         component.setEnabled(enable);
@@ -636,7 +648,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     private final Project myProject;
     private final TextAccessor myTextField;
 
-    public SelectTemplateListener(Project project, TextAccessor textField) {
+    SelectTemplateListener(Project project, TextAccessor textField) {
       myProject = project;
       myTextField = textField;
     }

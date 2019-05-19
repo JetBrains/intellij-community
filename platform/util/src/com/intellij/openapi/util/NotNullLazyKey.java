@@ -23,10 +23,9 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("NotNullLazyKey");
-  private final NotNullFunction<H,T> myFunction;
+  private final NotNullFunction<? super H, ? extends T> myFunction;
 
-  private NotNullLazyKey(@NotNull @NonNls String name, @NotNull NotNullFunction<H, T> function) {
+  private NotNullLazyKey(@NotNull @NonNls String name, @NotNull NotNullFunction<? super H, ? extends T> function) {
     super(name);
     myFunction = function;
   }
@@ -35,7 +34,7 @@ public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
   public final T getValue(@NotNull H h) {
     T data = h.getUserData(this);
     if (data == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       data = myFunction.fun(h);
       if (stamp.mayCacheNow()) {
         if (h instanceof UserDataHolderEx) {
@@ -50,7 +49,7 @@ public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
   }
 
   @NotNull
-  public static <T,H extends UserDataHolder> NotNullLazyKey<T,H> create(@NonNls @NotNull String name, @NotNull NotNullFunction<H, T> function) {
-    return new NotNullLazyKey<T,H>(name, function);
+  public static <T,H extends UserDataHolder> NotNullLazyKey<T,H> create(@NonNls @NotNull String name, @NotNull NotNullFunction<? super H, ? extends T> function) {
+    return new NotNullLazyKey<>(name, function);
   }
 }

@@ -27,7 +27,7 @@ class SubiterableDiffIterable extends ChangeDiffIterableBase {
   private final int myEnd1;
   private final int myEnd2;
 
-  public SubiterableDiffIterable(@NotNull DiffIterable iterable, int start1, int end1, int start2, int end2) {
+  SubiterableDiffIterable(@NotNull DiffIterable iterable, int start1, int end1, int start2, int end2) {
     super(end1 - start1, end2 - start2);
     myIterable = iterable;
     myStart1 = start1;
@@ -46,7 +46,7 @@ class SubiterableDiffIterable extends ChangeDiffIterableBase {
     private final Iterator<Range> myIterator;
     private Range myLast;
 
-    public SubiterableChangeIterable() {
+    SubiterableChangeIterable() {
       myIterator = myIterable.changes();
 
       next();

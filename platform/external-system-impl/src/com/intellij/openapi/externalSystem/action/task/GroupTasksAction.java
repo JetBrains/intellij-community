@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/31/2014
  */
 public class GroupTasksAction extends ExternalSystemViewGearAction {
   @Override

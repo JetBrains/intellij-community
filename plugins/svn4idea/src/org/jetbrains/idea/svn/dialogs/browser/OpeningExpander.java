@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.util.NotNullFunction;
@@ -42,7 +42,7 @@ public class OpeningExpander extends AbstractOpeningExpander {
   protected boolean checkChild(@NotNull Url childUrl) {
     return pathElements.contains(childUrl);
   }
-  
+
   public static class Factory implements NotNullFunction<RepositoryBrowserComponent, Expander> {
     private final TreeNode[] myPath;
     private final RepositoryTreeNode mySelectionPath;
@@ -52,6 +52,7 @@ public class OpeningExpander extends AbstractOpeningExpander {
       mySelectionPath = selectionPath;
     }
 
+    @Override
     @NotNull
     public Expander fun(final RepositoryBrowserComponent repositoryBrowserComponent) {
       return new OpeningExpander(myPath, repositoryBrowserComponent, mySelectionPath);

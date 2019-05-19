@@ -33,7 +33,7 @@ class PerformScriptAction : AnAction(null, "Run GUI Script", AllIcons.Actions.Ex
     val LOG: Logger = Logger.getInstance(PerformScriptAction::class.java)
   }
 
-  override fun actionPerformed(p0: AnActionEvent?) {
+  override fun actionPerformed(p0: AnActionEvent) {
     LOG.info("Compile and evaluate current script buffer")
     Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Compiling and performing current script")
     val editor = GuiRecorderManager.getEditor()

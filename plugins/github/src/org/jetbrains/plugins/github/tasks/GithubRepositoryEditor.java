@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.openapi.project.Project;
@@ -12,6 +13,7 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog;
 
 import javax.swing.*;
@@ -32,7 +34,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   private JBLabel myRepositoryLabel;
   private JBLabel myTokenLabel;
 
-  public GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<GithubRepository> changeListener) {
+  public GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<? super GithubRepository> changeListener) {
     super(project, repository, changeListener);
     myUrlLabel.setVisible(false);
     myUsernameLabel.setVisible(false);
@@ -43,13 +45,12 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
 
     myRepoAuthor.setText(repository.getRepoAuthor());
     myRepoName.setText(repository.getRepoName());
-    myToken.setText(repository.getToken());
-    myToken.setText(repository.getToken());
+    myToken.setText(repository.getPassword());
     myShowNotAssignedIssues.setSelected(!repository.isAssignedIssuesOnly());
 
     DocumentListener buttonUpdater = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateTokenButton();
       }
     };
@@ -111,17 +112,18 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
 
   @Override
   public void apply() {
+    super.apply();
     myRepository.setRepoName(getRepoName());
     myRepository.setRepoAuthor(getRepoAuthor());
-    myRepository.setToken(getToken());
+    myRepository.setPassword(getToken());
+    myRepository.storeCredentials();
     myRepository.setAssignedIssuesOnly(isAssignedIssuesOnly());
-    super.apply();
   }
 
   private void generateToken() {
-    GithubLoginDialog dialog = new GithubLoginDialog(myProject);
+    GithubLoginDialog dialog = new GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), myProject);
     dialog.withServer(getHost(), false);
-    dialog.setTokenNote("IntelliJ tasks plugin");
+    dialog.setClientName("Tasks Plugin");
     if (dialog.showAndGet()) {
       myToken.setText(dialog.getToken());
     }

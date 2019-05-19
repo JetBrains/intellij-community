@@ -19,7 +19,7 @@ Groovy script
             PsiElement(regex content)('fg')
             PsiElement(regex end)('/')
         PsiElement(.)('.')
-        PsiElement(Gstring)('"sfg"')
+        PsiElement(double quoted string)('"sfg"')
       PsiElement(.)('.')
       Compound regular expression
         PsiElement(regex begin)('/')

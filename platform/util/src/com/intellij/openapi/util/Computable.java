@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ *  Please use {@link java.util.function.Supplier} instead
  *  @author dsl
  */
+@FunctionalInterface
 public interface Computable <T> {
 
   T compute();
@@ -37,6 +38,11 @@ public interface Computable <T> {
     @Override
     public T compute() {
       return myValue;
+    }
+
+    @Override
+    public String toString() {
+      return "PredefinedValueComputable{" + myValue + "}";
     }
   }
 
@@ -57,29 +63,6 @@ public interface Computable <T> {
         myValue = internalCompute();
       }
       return myValue;
-    }
-  }
-
-  /**
-   * @deprecated Use {@link NullableLazyValue}::getValue instead
-   */
-  @Deprecated
-  abstract class NullableCachedComputable<T> implements NullableComputable<T> {
-    private static final Object NULL_VALUE = ObjectUtils.sentinel("NullableCachedComputable.NULL_VALUE");
-    private Object myValue;
-
-    @Nullable
-    protected abstract T internalCompute();
-
-    @Nullable
-    @Override
-    public final T compute() {
-      if (myValue == null) {
-        final T value = internalCompute();
-        myValue = value != null ? value : NULL_VALUE;
-      }
-      //noinspection unchecked
-      return myValue != NULL_VALUE ? (T)myValue : null;
     }
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
@@ -50,16 +51,8 @@ public abstract class YAMLMappingImpl extends YAMLCompoundValueImpl implements Y
       throw new IllegalArgumentException("KeyValue should be the child of this");
     }
 
-    if (keyValueToDelete.getPrevSibling() != null) {
-      while (keyValueToDelete.getPrevSibling() != null && !(keyValueToDelete.getPrevSibling() instanceof YAMLKeyValue)) {
-        keyValueToDelete.getPrevSibling().delete();
-      }
-    }
-    else {
-      while (keyValueToDelete.getNextSibling() != null && !(keyValueToDelete.getNextSibling() instanceof YAMLKeyValue)) {
-        keyValueToDelete.getNextSibling().delete();
-      }
-    }
+    YAMLUtil.deleteSurroundingWhitespace(keyValueToDelete);
+
     keyValueToDelete.delete();
   }
 

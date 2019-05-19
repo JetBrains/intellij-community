@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -21,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule>
+public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
   private ShortenCommandLine myShortenCommandLine = null;
 
@@ -31,12 +29,9 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
     super(name, configurationModule, factory);
   }
 
-  public JavaTestConfigurationBase(JavaRunConfigurationModule configurationModule,
-                                   ConfigurationFactory factory) {
+  public JavaTestConfigurationBase(@NotNull JavaRunConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
     super(configurationModule, factory);
   }
-
-  public abstract byte getTestFrameworkId();
 
   public abstract void bePatternConfiguration(List<PsiClass> classes, PsiMethod method);
 
@@ -45,7 +40,7 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   public abstract void beClassConfiguration(PsiClass aClass);
 
   public abstract boolean isConfiguredByElement(PsiElement element);
-  
+
   public abstract String getTestType();
 
   public String prepareParameterizedParameter(String paramSetName) {
@@ -66,7 +61,7 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   }
 
   @Override
-  public void setShortenCommandLine(ShortenCommandLine shortenCommandLine) {
+  public void setShortenCommandLine(@Nullable ShortenCommandLine shortenCommandLine) {
     myShortenCommandLine = shortenCommandLine;
   }
 

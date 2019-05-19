@@ -26,9 +26,9 @@ import java.util.*;
  * @author peter
 */
 class GetCompositeCollectionInvocation implements Invocation {
-  private final Set<CollectionChildDescriptionImpl> myQnames;
+  private final Set<? extends CollectionChildDescriptionImpl> myQnames;
 
-  public GetCompositeCollectionInvocation(final Set<CollectionChildDescriptionImpl> qnames) {
+  GetCompositeCollectionInvocation(final Set<? extends CollectionChildDescriptionImpl> qnames) {
     myQnames = qnames;
   }
 

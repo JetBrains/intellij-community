@@ -19,6 +19,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -26,26 +27,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 public class SLRUMap<K,V> {
-  protected final LinkedHashMap<K,V> myProtectedQueue;
-  protected final LinkedHashMap<K,V> myProbationalQueue;
+  private final LinkedHashMap<K,V> myProtectedQueue;
+  private final LinkedHashMap<K,V> myProbationalQueue;
 
   private final int myProtectedQueueSize;
   private final int myProbationalQueueSize;
 
-  private int probationalHits = 0;
-  private int protectedHits = 0;
-  private int misses = 0;
+  private int probationalHits;
+  private int protectedHits;
+  private int misses;
   private static final int FACTOR = Integer.getInteger("idea.slru.factor", 1);
 
   public SLRUMap(final int protectedQueueSize, final int probationalQueueSize) {
-    this(protectedQueueSize, probationalQueueSize, (EqualityPolicy)EqualityPolicy.CANONICAL);
+    this(protectedQueueSize, probationalQueueSize, (EqualityPolicy<? super K>)EqualityPolicy.CANONICAL);
   }
 
-  public SLRUMap(final int protectedQueueSize, final int probationalQueueSize, EqualityPolicy hashingStrategy) {
+  public SLRUMap(final int protectedQueueSize, final int probationalQueueSize, @NotNull EqualityPolicy<? super K> hashingStrategy) {
     myProtectedQueueSize = protectedQueueSize * FACTOR;
     myProbationalQueueSize = probationalQueueSize * FACTOR;
 
@@ -92,7 +94,7 @@ public class SLRUMap<K,V> {
     return null;
   }
 
-  protected void putToProtectedQueue(K key, V value) {
+  protected void putToProtectedQueue(K key, @NotNull V value) {
     myProtectedQueue.put(getStableKey(key), value);
   }
 
@@ -108,7 +110,7 @@ public class SLRUMap<K,V> {
     }
   }
 
-  protected void onDropFromCache(K key, V value) {}
+  protected void onDropFromCache(K key, @NotNull V value) {}
 
   public boolean remove(K key) {
     V value = myProtectedQueue.remove(key);
@@ -126,7 +128,7 @@ public class SLRUMap<K,V> {
     return false;
   }
 
-  public void iterateKeys(final Consumer<K> keyConsumer) {
+  public void iterateKeys(final Consumer<? super K> keyConsumer) {
     for (K key : myProtectedQueue.keySet()) {
       keyConsumer.consume(key);
     }
@@ -139,6 +141,22 @@ public class SLRUMap<K,V> {
     Set<Map.Entry<K, V>> set = new HashSet<Map.Entry<K,V>>(myProtectedQueue.entrySet());
     set.addAll(myProbationalQueue.entrySet());
     return set;
+  }
+
+  public void clearByCondition(@NotNull Condition<? super V> condition) {
+    clearByCondition(condition, myProtectedQueue);
+    clearByCondition(condition, myProbationalQueue);
+  }
+
+  private void clearByCondition(@NotNull Condition<? super V> condition, @NotNull LinkedHashMap<K, V> queue) {
+    Iterator<Map.Entry<K, V>> iterator = queue.entrySet().iterator();
+    while (iterator.hasNext()) {
+      Map.Entry<K, V> entry = iterator.next();
+      if (condition.value(entry.getValue())) {
+        onDropFromCache(entry.getKey(), entry.getValue());
+        iterator.remove();
+      }
+    }
   }
 
   public void clear() {
@@ -161,7 +179,7 @@ public class SLRUMap<K,V> {
     }
   }
 
-  protected K getStableKey(K key) {
+  private K getStableKey(K key) {
     if (key instanceof ShareableKey) {
       return (K)((ShareableKey)key).getStableCopy();
     }

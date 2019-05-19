@@ -4,11 +4,13 @@ package com.intellij.internal.statistic.collectors.fus.ui;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
@@ -44,6 +46,9 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     add(set, "Recent.Files[15_30]", 15 < recent() && recent() < 31 ? 1 : 0);
     add(set, "Recent.Files[30_50]", 30 < recent() && recent() < 51 ? 1 : 0);
     add(set, "Recent.Files[more.than.50]", 50 < recent() ? 1 : 0);
+
+    set.add(new UsageDescriptor("recent.files", 1, new FeatureUsageData().addData("grouped", recentPeriod(recent()))));
+
     add(set, "Block.cursor", EditorSettingsExternalizable.getInstance().isBlockCursor() ? 1 : 0);
     add(set, "Line.Numbers", EditorSettingsExternalizable.getInstance().isLineNumbersShown() ? 1 : 0);
     add(set, "Gutter.Icons", EditorSettingsExternalizable.getInstance().areGutterIconsShown() ? 1 : 0);
@@ -60,13 +65,20 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     return set;
   }
 
+  private static String recentPeriod(int recent) {
+    if (recent < 15) return "less.than.15";
+    if (16 < recent && recent < 31) return "[15_30]";
+    if (30 < recent && recent < 51) return "[30_50]";
+    return "[more.than.50]";
+  }
+
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.ui.info.features";
+    return "ui.info.features";
   }
 
-  private static void add(Set<UsageDescriptor> set, String key, int value) {
+  private static void add(Set<? super UsageDescriptor> set, String key, int value) {
     set.add(new UsageDescriptor(key, value));
   }
 
@@ -92,5 +104,11 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   private static boolean navbar() {
     return UISettings.getInstance().getShowNavigationBar();
+  }
+
+  @Nullable
+  @Override
+  public FeatureUsageData getData() {
+    return new FeatureUsageData().addOS();
   }
 }

@@ -16,6 +16,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class CompareWithBranchAction extends DumbAwareAction {
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);

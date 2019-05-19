@@ -31,7 +31,7 @@ import java.util.List;
 
 public class MockFileTypeManager extends FileTypeManager {
   @Override
-  public void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations) {
+  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations) {
     throw new UnsupportedOperationException();
   }
 
@@ -90,13 +90,8 @@ public class MockFileTypeManager extends FileTypeManager {
   }
 
   @Override
-  public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) {
-    return file.getFileType();
-  }
-
-  @Override
   public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project) {
-    return getKnownFileTypeOrAssociate(file);
+    return file.getFileType();
   }
 
   @NotNull
@@ -126,12 +121,6 @@ public class MockFileTypeManager extends FileTypeManager {
   @Override
   public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
     return false;
-  }
-
-  @NotNull
-  @Override
-  public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
-    return UnknownFileType.INSTANCE;
   }
 
   @Nullable

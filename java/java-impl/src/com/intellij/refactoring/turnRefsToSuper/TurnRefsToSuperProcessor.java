@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
@@ -21,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -51,12 +36,14 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     mySuper = aSuper;
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("turn.refs.to.super.command",
                                      DescriptiveNameUtil.getDescriptiveName(myClass), DescriptiveNameUtil.getDescriptiveName(mySuper));
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new RefsToSuperViewDescriptor(myClass, mySuper);
@@ -67,6 +54,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     mySuper = aSuper;
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(
@@ -84,6 +72,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     setClasses ((PsiClass) elements[0], (PsiClass) elements[1]);
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && refUsages.get().length == 0) {
       String message = RefactoringBundle.message("no.usages.can.be.replaced", myClass.getQualifiedName(), mySuper.getQualifiedName());
@@ -94,11 +83,13 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     return super.preprocessUsages(refUsages);
   }
 
+  @Override
   protected boolean canTurnToSuper(final PsiElement refElement) {
     return super.canTurnToSuper(refElement) &&
            JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible(mySuper, refElement, null);
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     try {
       final PsiClass aSuper = mySuper;
@@ -111,15 +102,14 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     performVariablesRenaming();
   }
 
+  @Override
   protected boolean isInSuper(PsiElement member) {
     if (!(member instanceof PsiMember)) return false;
-    final PsiManager manager = member.getManager();
     if (InheritanceUtil.isInheritorOrSelf(mySuper, ((PsiMember)member).getContainingClass(), true)) return true;
 
     if (member instanceof PsiField) {
       final PsiClass containingClass = ((PsiField) member).getContainingClass();
-      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(member);
-      if (manager.areElementsEquivalent(containingClass, JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().getArrayClass(languageLevel))) {
+      if (PsiUtil.isArrayClass(containingClass)) {
         return true;
       }
     } else if (member instanceof PsiMethod) {
@@ -129,6 +119,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     return false;
   }
 
+  @Override
   protected boolean isSuperInheritor(PsiClass aClass) {
     return InheritanceUtil.isInheritorOrSelf(mySuper, aClass, true);
   }

@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.usageView.impl.UsageViewManagerImpl;
-import com.intellij.util.JdomKt;
+import com.intellij.usageView.impl.UsageViewContentManagerImpl;
 
 import java.util.Arrays;
 
@@ -25,18 +24,17 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
 
   public void testHiddenButton() throws Exception {
     DesktopLayout layout = myManager.getLayout();
-    layout.readExternal(JdomKt.loadElement(LAYOUT));
+    layout.readExternal(JDOMUtil.load(LAYOUT));
     for (String ID : IDS) {
       assertFalse(layout.isToolWindowRegistered(ID));
     }
 
-    ToolWindowEP[] extensions = Extensions.getExtensions(ToolWindowEP.EP_NAME);
-    for (ToolWindowEP extension : extensions) {
+    for (ToolWindowEP extension : ToolWindowEP.EP_NAME.getExtensionList()) {
       if (Arrays.asList(ToolWindowId.TODO_VIEW, ToolWindowId.FIND, ToolWindowId.PROJECT_VIEW).contains(extension.id)) {
         myManager.initToolWindow(extension);
       }
     }
-    new UsageViewManagerImpl(myManager.getProject(), myManager);
+    new UsageViewContentManagerImpl(myManager.getProject(), myManager);
 
     for (int i = 0; i < IDS.length; i++) {
       assertTrue(layout.isToolWindowRegistered(IDS[i]));

@@ -65,6 +65,10 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
       }
     }
 
+    if (!element.isQualified() && "__builtins__".equals(referencedName)) {
+      result.add(new ImportedResolveResult(PyBuiltinCache.getInstance(element).getBuiltinsFile(), RatedResolveResult.RATE_NORMAL, null));
+    }
+
     return result;
   }
 }

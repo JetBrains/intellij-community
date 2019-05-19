@@ -2,7 +2,9 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,20 +12,22 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,27 +55,34 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private int myMaxRowCount = 30;
   private boolean myAutoHandleBeforeShow;
 
+  @Deprecated
   public ListPopupImpl(@NotNull ListPopupStep aStep, int maxRowCount) {
-    this(null, aStep, null, maxRowCount);
+    this(aStep);
+    setMaxRowCount(maxRowCount);
   }
 
+  @Deprecated
   public ListPopupImpl(@NotNull ListPopupStep aStep) {
-    this(aStep, -1);
+    this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep, null);
   }
 
-  public ListPopupImpl(WizardPopup aParent, @NotNull ListPopupStep aStep, Object parentValue) {
-    this(aParent, aStep, parentValue, -1);
+  public ListPopupImpl(@Nullable Project project,
+                       @NotNull ListPopupStep aStep) {
+    this(project, null, aStep, null);
   }
 
-  public ListPopupImpl(WizardPopup aParent, @NotNull ListPopupStep aStep, Object parentValue, int maxRowCount) {
-    super(aParent, aStep);
+  public ListPopupImpl(@Nullable Project project,
+                       @Nullable WizardPopup aParent,
+                       @NotNull ListPopupStep aStep,
+                       Object parentValue) {
+    super(project, aParent, aStep);
     setParentValue(parentValue);
-    if (maxRowCount != -1){
-      myMaxRowCount = maxRowCount;
-    }
     replacePasteAction();
+  }
 
-    TouchBarsManager.attachPopupBar(this);
+  public void setMaxRowCount(int maxRowCount) {
+    if (maxRowCount <= 0) return;
+    myMaxRowCount = maxRowCount;
   }
 
   public void showUnderneathOfLabel(@NotNull JLabel label) {
@@ -244,9 +255,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     myList.setCellRenderer(getListElementRenderer());
 
-    myList.getActionMap().get("selectNextColumn").setEnabled(false);
-    myList.getActionMap().get("selectPreviousColumn").setEnabled(false);
-
     registerAction("handleSelection1", KeyEvent.VK_ENTER, 0, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -254,14 +262,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     });
 
-    registerAction("handleSelection2", KeyEvent.VK_RIGHT, 0, new AbstractAction() {
+    myList.getActionMap().put(ListActions.Right.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         handleSelect(false);
       }
     });
 
-    registerAction("goBack2", KeyEvent.VK_LEFT, 0, new AbstractAction() {
+    myList.getActionMap().put(ListActions.Left.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (isClosableByLeftArrow()) {
@@ -411,6 +419,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
   }
 
+  @Override
   public void handleNextStep(final PopupStep nextStep, Object parentValue) {
     handleNextStep(nextStep, parentValue, null);
   }
@@ -427,7 +436,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
       final JComponent container = getContent();
       assert container != null : "container == null";
-      
+
       int y = point.y;
       if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {
         SeparatorWithText swt = new SeparatorWithText();
@@ -513,6 +522,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private boolean isOnNextStepButton(MouseEvent e) {
     final int index = myList.getSelectedIndex();
     final Rectangle bounds = myList.getCellBounds(index, index);
+    if (bounds != null) {
+      JBInsets.removeFrom(bounds, UIUtil.getListCellPadding());
+    }
     final Point point = e.getPoint();
     return bounds != null && point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth();
   }
@@ -531,7 +543,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private class MyList extends JBList implements DataProvider {
-    public MyList() {
+    MyList() {
       super(myListModel);
       HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }
@@ -556,7 +568,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
        if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
         return myList.getSelectedValue();
       }

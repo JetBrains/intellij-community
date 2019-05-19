@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
@@ -10,7 +9,6 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,17 +29,18 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
 @SuppressWarnings({"StaticFieldReferencedViaSubclass"})
-public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> implements GrModifierList, StubBasedPsiElement<GrModifierListStub> {
+public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
+  implements GrModifierList, StubBasedPsiElement<GrModifierListStub>, PsiListLikeElement {
+
   public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<>();
-  public static final Map<String, IElementType> NAME_TO_MODIFIER_ELEMENT_TYPE = ContainerUtil.newHashMap();
+  public static final Map<String, IElementType> NAME_TO_MODIFIER_ELEMENT_TYPE = new HashMap<>();
 
   private static final TObjectIntHashMap<String> PRIORITY = new TObjectIntHashMap<>(16);
 
@@ -97,7 +96,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   }
 
   public GrModifierListImpl(GrModifierListStub stub) {
-    this(stub, GroovyElementTypes.MODIFIERS);
+    this(stub, GroovyElementTypes.MODIFIER_LIST);
   }
 
   public GrModifierListImpl(GrModifierListStub stub, IStubElementType nodeType) {
@@ -105,10 +104,11 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitModifierList(this);
   }
 
+  @Override
   public String toString() {
     return "Modifiers";
   }
@@ -283,7 +283,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   @Nullable
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     for (GrAnnotation annotation : getAnnotations()) {
-      if (qualifiedName.equals(annotation.getQualifiedName())) {
+      if (annotation.hasQualifiedName(qualifiedName)) {
         return annotation;
       }
     }
@@ -317,5 +317,11 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     }
 
     return annotation;
+  }
+
+  @NotNull
+  @Override
+  public List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getModifiers());
   }
 }

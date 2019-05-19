@@ -166,7 +166,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       });
     }
     if (dirstateFileChanged || hgIgnoreChanged) {
-      myRepository.getLocalIgnoredHolder().startRescan();
+      myRepository.getIgnoredFilesHolder().startRescan();
       final VirtualFile root = myRepository.getRoot();
       myDirtyScopeManager.dirDirtyRecursively(root);
       if (dirstateFileChanged) {
@@ -177,7 +177,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   }
 
   private class MyUpdater extends Update {
-    public MyUpdater(String name) {
+    MyUpdater(String name) {
       super(name);
     }
 

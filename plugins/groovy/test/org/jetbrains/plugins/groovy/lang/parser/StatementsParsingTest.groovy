@@ -1,7 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
-
-import com.intellij.idea.Bombed
 
 /**
  * @author peter
@@ -20,6 +18,58 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testBlocks$clos5() throws Throwable { doTest() }
 
   void testBlocks$clos6() throws Throwable { doTest() }
+
+  void testBlocks$nested1() throws Throwable { doTest() }
+
+  void testBlocks$nested2() throws Throwable { doTest() }
+
+  void testBlocks$nested3() throws Throwable { doTest() }
+
+  void testBlocks$nested4() throws Throwable { doTest() }
+
+  void testBlocks$nested5() throws Throwable { doTest() }
+
+  void testBlocks$nested6() throws Throwable { doTest() }
+
+  void testBlocks$nested7() throws Throwable { doTest() }
+
+  void testBlocks$nested8() throws Throwable { doTest() }
+
+  void testBlocks$nested9() throws Throwable { doTest() }
+
+  void testBlocks$nested10() throws Throwable { doTest() }
+
+  void testBlocks$nested11() throws Throwable { doTest() }
+
+  void testBlocks$nested12() throws Throwable { doTest() }
+
+  void testBlocks$nested13() throws Throwable { doTest() }
+
+  void testBlocks$nested14() throws Throwable { doTest() }
+
+  void testBlocks$nested15() throws Throwable { doTest() }
+
+  void testBlocks$nested16() throws Throwable { doTest() }
+
+  void testBlocks$nested17() throws Throwable { doTest() }
+
+  void testBlocks$nested18() throws Throwable { doTest() }
+
+  //IDEA-209352
+  void _testBlocks$nested19() throws Throwable { doTest() }
+
+  void testBlocks$nested20() throws Throwable { doTest() }
+
+  //IDEA-209353
+  void _testBlocks$nested21() throws Throwable { doTest() }
+
+  void testBlocks$nested22() throws Throwable { doTest() }
+
+  void testBlocks$nested23() throws Throwable { doTest() }
+
+  void testBlocks$nested24() throws Throwable { doTest() }
+
+  void testBlocks$closureWithCall() throws Throwable { doTest() }
 
   void testBlocks$form() throws Throwable { doTest() }
 
@@ -101,9 +151,6 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$for1() throws Throwable { doTest() }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
-  void testFor$for10() throws Throwable { doTest() }
-
   void testFor$for11() throws Throwable { doTest() }
 
   void testFor$for12() throws Throwable { doTest() }
@@ -116,7 +163,6 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$for4() throws Throwable { doTest() }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testFor$for5() throws Throwable { doTest() }
 
   void testFor$for6() throws Throwable { doTest() }
@@ -125,8 +171,35 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$for8() throws Throwable { doTest() }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testFor$for9() throws Throwable { doTest() }
+
+  void testFor$for14() throws Throwable { doTest() }
+
+  void testFor$idenfierAfterLParen() { doTest() }
+
+  void testFor$keywordOnly() { doTest() }
+
+  void testFor$lParen() { doTest() }
+
+  void testFor$identifierAfterParameter() { doTest() }
+
+  void testFor$multiDeclaration() { doTest() }
+
+  void testFor$multiDeclaration2() { doTest() }
+
+  void testFor$multiDeclaration3() { doTest() }
+
+  void testFor$multiDeclaration4() { doTest() }
+
+  void testFor$tupleDeclaration() { doTest() }
+
+  void testFor$tupleDeclarationCommaAfterVar() { doTest() }
+
+  void testFor$tupleDeclarationNoInitializer() { doTest() }
+
+  void testFor$tupleDeclarationNoInitializerValue() { doTest() }
+
+  void testFor$tupleDeclarationSingleVariable() { doTest() }
 
   void testIfstmt$if1() throws Throwable { doTest() }
 
@@ -139,6 +212,28 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testIfstmt$if5() throws Throwable { doTest() }
 
   void testIfstmt$if6() throws Throwable { doTest() }
+
+  void testIfstmt$applicaitonCondition() { doTest() }
+
+  void testIfstmt$keywordOnly() { doTest() }
+
+  void testIfstmt$keywordLParen() { doTest() }
+
+  void testIfstmt$noCondition() { doTest() }
+
+  void testIfstmt$noRParen() { doTest() }
+
+  void testIfstmt$noThen() { doTest() }
+
+  void testIfstmt$noThenNL() { doTest() }
+
+  void testIfstmt$noElse() { doTest() }
+
+  void testIfstmt$noThenWithElse() { doTest() }
+
+  void testIfstmt$nls() { doTest() }
+
+  void testIfstmt$separatorsBeforeElse() { doTest() }
 
   void testImports$imp0() throws Throwable { doTest() }
 
@@ -157,6 +252,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testImports$imp7() throws Throwable { doTest() }
 
   void testImports$imp8() throws Throwable { doTest() }
+
+  void testImports$typeArguments() { doTest() }
 
   void testKing_regex$king1() throws Throwable { doTest() }
 
@@ -183,6 +280,22 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testLoop$while6() throws Throwable { doTest() }
 
   void testLoop$while7() throws Throwable { doTest() }
+
+  void testLoop$whileEmptyBody() { doTest() }
+
+  void testLoop$dowhile0() { doTest() }
+
+  void testLoop$dowhile1() { doTest() }
+
+  void testLoop$dowhile2() { doTest() }
+
+  void testLoop$dowhile3() { doTest() }
+
+  void testLoop$dowhile4() { doTest() }
+
+  void testLoop$dowhile5() { doTest() }
+
+  void testLoop$dowhile6() { doTest() }
 
   void testMethods$method1() throws Throwable { doTest() }
 
@@ -228,6 +341,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testSyn$syn1() throws Throwable { doTest() }
 
+  void testSyn$newLineBeforeBlock() { doTest() }
+
   void testTop_methods$method1() throws Throwable { doTest() }
 
   void testTop_methods$method2() throws Throwable { doTest() }
@@ -250,6 +365,24 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testTry_catch$try7() throws Throwable { doTest() }
 
+  void testTry_catch$newLineBeforeCatchBlock() throws Throwable { doTest() }
+
+  void testTry_catch$newLineBeforeFinallyBlock() { doTest() }
+
+  void testTry_catch$tryResources() { doTest() }
+
+  void testTry_catch$tryResourcesEmpty() { doTest() }
+
+  void testTry_catch$tryResourcesNoRparen() { doTest() }
+
+  void testTry_catch$tryResourcesNoRparenAfterResource() { doTest() }
+
+  void testTry_catch$tryResourcesNLAfterResource() { doTest() }
+
+  void testTry_catch$tryResourcesSeparators() { doTest() }
+
+  void testTry_catch$tryResourcesTyped() { doTest() }
+
   void testTuples$doubleParens() throws Throwable { doTest() }
 
   void testTuples$methCallNotTuple() throws Throwable { doTest() }
@@ -262,6 +395,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testTuples$tupleNotInit() throws Throwable { doTest() }
 
+  void testTuples$tupleNotInit2() { doTest() }
+
   void testTuples$tupleOneVarInLine() throws Throwable { doTest() }
 
   void testTuples$tupleTypeErr() throws Throwable { doTest() }
@@ -269,6 +404,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testTuples$tupleWithoutDef() throws Throwable { doTest() }
 
   void testTuples$tupleWithoutVariables() { doTest() }
+
+  void testTuples$differentModifiers() { doTest() }
 
   void testTypedef$classes$abstr() throws Throwable { doTest() }
 

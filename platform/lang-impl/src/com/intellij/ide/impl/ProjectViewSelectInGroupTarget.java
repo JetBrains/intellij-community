@@ -48,9 +48,9 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
       }
     }
     targetsToCheck.addAll(targets);
-    targetsToCheck.stream().filter(t -> t.canSelect(context)).findFirst().ifPresent(target -> {
-      target.selectIn(context, requestFocus);
-    });
+    for (SelectInTarget target : targetsToCheck) {
+      if (context.selectIn(target, requestFocus)) break;
+    }
   }
 
   @Override
@@ -65,6 +65,6 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
 
   @Override
   public String toString() {
-    return IdeUICustomization.getInstance().getProjectViewTitle() + " View";
+    return IdeUICustomization.getInstance().getProjectViewSelectInTitle();
   }
 }

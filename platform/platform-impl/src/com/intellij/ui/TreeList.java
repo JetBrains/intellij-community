@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ui.components.JBList;
@@ -84,6 +70,7 @@ public class TreeList extends JBList implements TreeModelListener {
    *   attribute: visualUpdate true
    * description: The object that contains the data to be drawn by this JList.
    */
+  @Override
   public void setModel(@NotNull ListModel model) {
     throw new UnsupportedOperationException("TreeList accepts only TreeModel as a model");
   }
@@ -103,6 +90,7 @@ public class TreeList extends JBList implements TreeModelListener {
    * {@code e.getChildIndices()}
    * returns the index(es) of the changed node(s).</p>
    */
+  @Override
   public void treeNodesChanged(TreeModelEvent e) {
     //To change body of implemented methods use Options | File Templates.
   }
@@ -116,6 +104,7 @@ public class TreeList extends JBList implements TreeModelListener {
    * returns the index(es) of the new node(s)
    * in ascending order.</p>
    */
+  @Override
   public void treeNodesInserted(TreeModelEvent e) {
     //To change body of implemented methods use Options | File Templates.
   }
@@ -132,6 +121,7 @@ public class TreeList extends JBList implements TreeModelListener {
    * returns, in ascending order, the index(es)
    * the node(s) had before being deleted.</p>
    */
+  @Override
   public void treeNodesRemoved(TreeModelEvent e) {
     //To change body of implemented methods use Options | File Templates.
   }
@@ -147,6 +137,7 @@ public class TreeList extends JBList implements TreeModelListener {
    * {@code e.getChildIndices()}
    * returns null.</p>
    */
+  @Override
   public void treeStructureChanged(TreeModelEvent e) {
     //To change body of implemented methods use Options | File Templates.
   }
@@ -164,6 +155,7 @@ public class TreeList extends JBList implements TreeModelListener {
            * Invoked when a window is in the process of being closed.
            * The close operation can be overridden at this point.
            */
+          @Override
           public void windowClosing(WindowEvent e) {
             System.exit(0);
           }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
@@ -29,6 +30,7 @@ public interface SdkModel {
    * Returns the list of SDKs in the table.
    * @return the SDK list.
    */
+  @NotNull
   Sdk[] getSdks();
 
   /**
@@ -45,7 +47,7 @@ public interface SdkModel {
    *
    * @param sdk the SDK to add
    */
-  void addSdk(Sdk sdk);
+  void addSdk(@NotNull Sdk sdk);
 
   /**
    * Allows to receive notifications when the JDK list has been changed by the
@@ -58,30 +60,29 @@ public interface SdkModel {
      *
      * @param sdk the added JDK.
      */
-    default void sdkAdded(Sdk sdk) {}
+    default void sdkAdded(@NotNull Sdk sdk) {}
 
     /**
      * Called before a JDK is removed.
      *
      * @param sdk the removed JDK.
      */
-    default void beforeSdkRemove(Sdk sdk) {}
+    default void beforeSdkRemove(@NotNull Sdk sdk) {}
 
     /**
      * Called when a JDK has been changed or renamed.
      *
      * @param sdk          the changed or renamed JDK.
      * @param previousName the old name of the changed or renamed JDK.
-     * @since 5.0.1
      */
-    default void sdkChanged(Sdk sdk, String previousName) {}
+    default void sdkChanged(@NotNull Sdk sdk, String previousName) {}
 
     /**
      * Called when the home directory of a JDK has been changed.
      * @param sdk        the changed JDK.
      * @param newSdkHome the new home directory.
      */
-    default void sdkHomeSelected(Sdk sdk, String newSdkHome) {}
+    default void sdkHomeSelected(@NotNull Sdk sdk, @NotNull String newSdkHome) {}
 
   }
 
@@ -90,14 +91,15 @@ public interface SdkModel {
    *
    * @param listener the listener instance.
    */
-  void addListener(Listener listener);
+  void addListener(@NotNull Listener listener);
 
   /**
    * Removes a listener for receiving notifications about changes in the list.
    *
    * @param listener the listener instance.
    */
-  void removeListener(Listener listener);
+  void removeListener(@NotNull Listener listener);
 
+  @NotNull
   Listener getMulticaster();
 }

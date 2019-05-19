@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.google.common.collect.ImmutableMap;
@@ -9,14 +9,12 @@ import com.google.gson.stream.JsonReader;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -39,20 +37,20 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.*;
 
 public class PluginsAdvertiser implements StartupActivity {
-  @NonNls public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
   private static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
   private static final String CASHED_EXTENSIONS = "extensions.xml";
 
+  public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
   public static final String IDEA_ULTIMATE_EDITION = "IntelliJ IDEA Ultimate Edition";
   public static final String ULTIMATE_EDITION_SUGGESTION = "Do not suggest Ultimate Edition";
   public static final String CHECK_ULTIMATE_EDITION_TITLE = "Check " + IDEA_ULTIMATE_EDITION;
@@ -66,12 +64,9 @@ public class PluginsAdvertiser implements StartupActivity {
     final String featureType = unknownFeature.getFeatureType();
     final String implementationName = unknownFeature.getImplementationName();
     final String buildNumber = ApplicationInfo.getInstance().getApiVersion();
-    return processFeatureRequest(ImmutableMap.of("featureType", featureType,
-                                                 "implementationName", implementationName,
-                                                 "build", buildNumber),
-                                 new HttpRequests.RequestProcessor<List<Plugin>>() {
-      @Override
-      public List<Plugin> process(@NotNull HttpRequests.Request request) throws IOException {
+    return processFeatureRequest(
+      ImmutableMap.of("featureType", featureType, "implementationName", implementationName, "build", buildNumber),
+      request -> {
         final JsonReader jsonReader = new JsonReader(request.getReader());
         jsonReader.setLenient(true);
         final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
@@ -86,20 +81,17 @@ public class PluginsAdvertiser implements StartupActivity {
                                 Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
         }
         return result;
-      }
-    }, null, LOG);
+      });
   }
 
-  @Nullable
-  private static Map<String, Set<Plugin>> loadSupportedExtensions(@NotNull List<IdeaPluginDescriptor> allPlugins) {
+  private static void loadSupportedExtensions(@NotNull List<? extends IdeaPluginDescriptor> allPlugins) {
     final Map<String, IdeaPluginDescriptor> availableIds = new HashMap<>();
     for (IdeaPluginDescriptor plugin : allPlugins) {
       availableIds.put(plugin.getPluginId().getIdString(), plugin);
     }
-    return processFeatureRequest(ImmutableMap.of("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName()),
-                                 new HttpRequests.RequestProcessor<Map<String, Set<Plugin>>>() {
-      @Override
-      public Map<String, Set<Plugin>> process(@NotNull HttpRequests.Request request) throws IOException {
+    processFeatureRequest(
+      ImmutableMap.of("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName()),
+      request -> {
         final JsonReader jsonReader = new JsonReader(request.getReader());
         jsonReader.setLenient(true);
         final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
@@ -131,29 +123,22 @@ public class PluginsAdvertiser implements StartupActivity {
             result.put(extension, pluginIds);
           }
           final JsonElement pluginNameElement = jsonObject.get("pluginName");
-          pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null, isBundled));
+          String pluginName = pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null;
+          pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginName, isBundled));
         }
         saveExtensions(result);
         return result;
-      }
-    }, null, LOG);
+      });
   }
 
-  private static <K> K processFeatureRequest(Map<String, String> params,
-                                             HttpRequests.RequestProcessor<K> requestProcessor,
-                                             K errorValue,
-                                             Logger log) {
+  private static <K> K processFeatureRequest(Map<String, String> params, HttpRequests.RequestProcessor<K> requestProcessor) {
     String baseUrl = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() + "/feature/getImplementations?";
     Url url = Urls.parseEncoded(baseUrl);
     if (url == null) {
-      log.error("Cannot parse URL: " + baseUrl);
-      return errorValue;
+      LOG.error("Cannot parse URL: " + baseUrl);
+      return null;
     }
-
-    return HttpRequests.request(url.addParameters(params))
-                       .forceHttps(IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection())
-                       .productNameAsUserAgent()
-                       .connect(requestProcessor, errorValue, LOG);
+    return HttpRequests.request(url.addParameters(params)).productNameAsUserAgent().connect(requestProcessor, null, LOG);
   }
 
   public static void ensureDeleted() {
@@ -194,27 +179,20 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   static void enablePlugins(Project project, final Collection<IdeaPluginDescriptor> disabledPlugins) {
-    final PluginManagerConfigurable managerConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
-    final PluginManagerMain createPanel = managerConfigurable.getOrCreatePanel();
-    ShowSettingsUtil.getInstance()
-      .editConfigurable(project, managerConfigurable, () -> {
-        final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)createPanel.getPluginsModel();
-        final IdeaPluginDescriptor[] descriptors = disabledPlugins.toArray(new IdeaPluginDescriptor[0]);
-        pluginsModel.enableRows(descriptors, Boolean.TRUE);
-        createPanel.getPluginTable().select(descriptors);
-      });
+    PluginManagerConfigurableProxy.showPluginConfigurableAndEnable(project, disabledPlugins.toArray(new IdeaPluginDescriptor[0]));
   }
 
   @Nullable
-  static IdeaPluginDescriptor getDisabledPlugin(Set<Plugin> plugins) {
-    final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
+  static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
     for (Plugin plugin : plugins) {
-      if (disabledPlugins.contains(plugin.myPluginId)) return PluginManager.getPlugin(PluginId.getId(plugin.myPluginId));
+      if (PluginManagerCore.isDisabled(plugin.myPluginId)) {
+        return PluginManager.getPlugin(PluginId.getId(plugin.myPluginId));
+      }
     }
     return null;
   }
 
-  static List<String> hasBundledPluginToInstall(Collection<Plugin> plugins) {
+  static List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
     if (PlatformUtils.isIdeaUltimate()) return null;
     final List<String> bundled = new ArrayList<>();
     for (Plugin plugin : plugins) {
@@ -319,11 +297,10 @@ public class PluginsAdvertiser implements StartupActivity {
             }
           }
 
-          final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
           //include disabled plugins
           for (String id : ids.keySet()) {
             Plugin plugin = ids.get(id);
-            if (disabledPlugins.contains(id)) {
+            if (PluginManagerCore.isDisabled(id)) {
               final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(PluginId.getId(id));
               if (pluginDescriptor != null) {
                 myDisabledPlugins.put(plugin, pluginDescriptor);
@@ -334,15 +311,18 @@ public class PluginsAdvertiser implements StartupActivity {
           myBundledPlugin = hasBundledPluginToInstall(ids.values());
 
           for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-            final PluginId pluginId = loadedPlugin.getPluginId();
+            PluginId pluginId = loadedPlugin.getPluginId();
             if (ids.containsKey(pluginId.getIdString()) &&
-                !disabledPlugins.contains(pluginId.getIdString()) &&
+                !PluginManagerCore.isDisabled(pluginId.getIdString()) &&
                 !PluginManagerCore.isBrokenPlugin(loadedPlugin)) {
               myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
             }
           }
 
           ApplicationManager.getApplication().invokeLater(this::onSuccess, ModalityState.NON_MODAL);
+        }
+        catch (UnknownHostException e) {
+          LOG.warn("Host name could not be resolved: " + e.getMessage());
         }
         catch (Exception e) {
           LOG.info(e);
@@ -407,8 +387,7 @@ public class PluginsAdvertiser implements StartupActivity {
     public Map<String, PluginSet> myExtensions = new HashMap<>();
 
     @SuppressWarnings("unused")
-    public KnownExtensions() {
-    }
+    public KnownExtensions() { }
 
     public KnownExtensions(Map<String, Set<Plugin>> extensions) {
       for (String ext : extensions.keySet()) {
@@ -430,10 +409,9 @@ public class PluginsAdvertiser implements StartupActivity {
     public Set<Plugin> myPlugins = new HashSet<>();
 
     @SuppressWarnings("unused")
-    public PluginSet() {
-    }
+    public PluginSet() { }
 
-    public PluginSet(Set<Plugin> plugins) {
+    public PluginSet(Set<? extends Plugin> plugins) {
       myPlugins.addAll(plugins);
     }
   }
@@ -484,17 +462,17 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   private static class ConfigurePluginsListener implements NotificationListener {
-    private final Set<UnknownFeature> myUnknownFeatures;
+    private final Set<? extends UnknownFeature> myUnknownFeatures;
     private final Project myProject;
-    private final List<IdeaPluginDescriptor> myAllPlugins;
+    private final List<? extends IdeaPluginDescriptor> myAllPlugins;
     private final Set<PluginDownloader> myPlugins;
     private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins;
 
-    public ConfigurePluginsListener(Set<UnknownFeature> unknownFeatures,
-                                    Project project,
-                                    List<IdeaPluginDescriptor> allPlugins,
-                                    Set<PluginDownloader> plugins,
-                                    Map<Plugin, IdeaPluginDescriptor> disabledPlugins) {
+    ConfigurePluginsListener(Set<? extends UnknownFeature> unknownFeatures,
+                             Project project,
+                             List<? extends IdeaPluginDescriptor> allPlugins,
+                             Set<PluginDownloader> plugins,
+                             Map<Plugin, IdeaPluginDescriptor> disabledPlugins) {
       myUnknownFeatures = unknownFeatures;
       myProject = project;
       myAllPlugins = allPlugins;
@@ -534,4 +512,3 @@ public class PluginsAdvertiser implements StartupActivity {
     }
   }
 }
-

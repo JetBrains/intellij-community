@@ -2,10 +2,12 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconLoader.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
+import com.intellij.util.ui.JBCachingScalableIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -13,10 +15,10 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
-public class RowIcon extends CachingScalableJBIcon<RowIcon> {
+public class RowIcon extends JBCachingScalableIcon<RowIcon> implements DarkIconProvider, CompositeIcon {
   private final Alignment myAlignment;
 
   private int myWidth;
@@ -59,8 +61,18 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
 
   @NotNull
   @Override
-  protected RowIcon copy() {
+  public RowIcon copy() {
     return new RowIcon(this);
+  }
+
+  @NotNull
+  @Override
+  public RowIcon deepCopy() {
+    RowIcon icon = new RowIcon(this);
+    for (int i = 0; i < icon.myIcons.length; i++) {
+      icon.myIcons[i] = IconUtil.copy(icon.myIcons[i], null);
+    }
+    return icon;
   }
 
   @NotNull
@@ -96,6 +108,7 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
     return obj instanceof RowIcon && Arrays.equals(((RowIcon)obj).myIcons, myIcons);
   }
 
+  @Override
   public int getIconCount() {
     return myIcons.length;
   }
@@ -106,6 +119,7 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
     updateSize();
   }
 
+  @Override
   public Icon getIcon(int index) {
     return myIcons[index];
   }
@@ -154,6 +168,15 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
     }
     myWidth = width;
     myHeight = height;
+  }
+
+  @Override
+  public Icon getDarkIcon(boolean isDark) {
+    RowIcon newIcon = copy();
+    for (int i=0; i<newIcon.myIcons.length; i++) {
+      newIcon.myIcons[i] = IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
+    }
+    return newIcon;
   }
 
   @Override

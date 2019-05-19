@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 
 public class MoveModulesOutsideGroupAction extends AnAction {
 
@@ -30,12 +31,12 @@ public class MoveModulesOutsideGroupAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY) != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
     MoveModulesToGroupAction.doMove(modules, null, dataContext);

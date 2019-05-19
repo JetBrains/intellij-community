@@ -1,11 +1,12 @@
 <idea-plugin>
 
   <module value="org.jetbrains.plugins.gradle.java"/>
+  <module value="com.intellij.modules.gradle.java"/>
 
   <depends>com.intellij.modules.java</depends>
 
   <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
-  <depends optional="true" config-file="gradle-coverage-integration.xml">com.intellij.modules.coverage</depends>
+  <depends optional="true" config-file="gradle-coverage-integration.xml">Coverage</depends>
   <depends optional="true" config-file="gradle-groovy-integration.xml">org.intellij.groovy</depends>
 
   <extensionPoints>
@@ -16,6 +17,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.JavaGradleProjectResolver"/>
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.MavenRepositoriesProjectResolver"/>
     <executionEnvironmentProvider implementation="org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProvider"/>
 
     <settingsControlProvider implementation="org.jetbrains.plugins.gradle.service.settings.JavaGradleSettingsControlProvider"/>
@@ -34,8 +36,6 @@
     <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner" id="gradle" order="first"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.gradle.compiler.GradleBuildProcessParametersProvider"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationJavaExtension"/>
-    <externalSystemOutputParserProvider implementation="org.jetbrains.plugins.gradle.execution.build.output.GradleJavaOutputParserProvider"
-                                        id="gradle-jvm"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager"/>
 
@@ -45,10 +45,8 @@
         implementation="org.jetbrains.plugins.gradle.execution.build.GradleUpdateResourcesBuildContributor"/>
 
     <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider"/>
-    <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder"/>
-    <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
-    <projectOpenProcessor id="java" order="before gradle" implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaProjectOpenProcessor"/>
+    <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.JavaGradleProjectImportProvider"/>
 
     <!--Gradle Test Runner-->
     <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>
@@ -57,16 +55,25 @@
         implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager" id="gradleTest" order="before gradle"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer"
                               order="last"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInDirectoryGradleConfigurationProducer"
+                              order="last"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer"
                               order="last"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer"
                               order="last"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer"
                               order="last"/>
-    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
-                              order="last"/>
 
-    <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"
-                              implementationClass="org.jetbrains.plugins.gradle.execution.GradleGroovyRunLineMarkerProvider"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsModuleLibrariesService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.MavenRepositoriesDataService"/>
   </extensions>
+  <actions>
+    <action id="Gradle.ImportExternalProject" class = "org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction"
+            text="Import Gradle Project" description="Import Gradle project described by this file"
+            icon="GradleIcons.Gradle">
+      <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="last"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

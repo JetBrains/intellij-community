@@ -16,7 +16,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -55,11 +54,11 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   private boolean myInitialized;
   private CustomDomChildrenDescriptionImpl myCustomDescription;
 
-  public StaticGenericInfo(Class clazz) {
+  StaticGenericInfo(Class clazz) {
     myClass = clazz;
   }
 
-  public final synchronized boolean buildMethodMaps() {
+  final synchronized boolean buildMethodMaps() {
     if (!myInitialized) {
       final StaticGenericInfoBuilder builder = new StaticGenericInfoBuilder(myClass);
       final JavaMethod customChildrenGetter = builder.getCustomChildrenGetter();
@@ -119,8 +118,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     return buildMethodMaps();
   }
 
-  @Override
-  public final Invocation createInvocation(final JavaMethod method) {
+  Invocation createInvocation(JavaMethod method) {
     buildMethodMaps();
 
     final JavaMethodSignature signature = method.getSignature();
@@ -143,13 +141,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     }
 
     if (myCustomDescription != null && method.equals(myCustomDescription.getGetterMethod())) {
-      return new Invocation() {
-        @Override
-        @Nullable
-        public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
-          return myCustomDescription.getValues(handler);
-        }
-      };
+      return (handler, args) -> myCustomDescription.getValues(handler);
     }
 
     final Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>> pair = myCompositeCollectionAdditionMethods.get(signature);
@@ -195,22 +187,6 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     }
 
     return new ConstantFunction<>(Integer.MAX_VALUE);
-  }
-
-  @Override
-  @Nullable
-  public XmlElement getNameElement(DomElement element) {
-    buildMethodMaps();
-
-    Object o = getNameObject(element);
-    if (o instanceof GenericAttributeValue) {
-      return ((GenericAttributeValue)o).getXmlAttributeValue();
-    } else if (o instanceof DomElement) {
-      return ((DomElement)o).getXmlTag();
-    }
-    else {
-      return null;
-    }
   }
 
   @Override
@@ -281,7 +257,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  public boolean processAttributeChildrenDescriptions(Processor<AttributeChildDescriptionImpl> processor) {
+  public boolean processAttributeChildrenDescriptions(Processor<? super AttributeChildDescriptionImpl> processor) {
     List<AttributeChildDescriptionImpl> descriptions = getAttributeChildrenDescriptions();
     return ContainerUtil.process(descriptions, processor);
   }

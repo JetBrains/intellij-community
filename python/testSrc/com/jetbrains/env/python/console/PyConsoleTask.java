@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
@@ -11,12 +11,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -89,7 +92,6 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   public void tearDown() throws Exception {
     // Prevents thread leak, see its doc
     killRpcThread();
-
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
         if (myConsoleView != null) {
@@ -138,8 +140,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   @NotNull
-  private Future<Void> disposeConsoleAsync() {
-    Future<Void> shutdownFuture;
+  private Future<?> disposeConsoleAsync() {
+    Future<?> shutdownFuture;
     if (myCommunication != null) {
       shutdownFuture = UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
@@ -163,6 +165,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     if (myConsoleView != null) {
       WriteAction.runAndWait(() -> {
+        ((UndoManagerImpl)UndoManager.getInstance(myFixture.getProject())).clearUndoRedoQueueInTests(myConsoleView.getEditorDocument());
+        ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearUndoRedoQueueInTests(myConsoleView.getEditorDocument());
         Disposer.dispose(myConsoleView);
         myConsoleView = null;
       });
@@ -183,7 +187,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     consoleRunner.addConsoleListener(new PydevConsoleRunnerImpl.ConsoleListener() {
       @Override
-      public void handleConsoleInitialized(LanguageConsoleView consoleView) {
+      public void handleConsoleInitialized(@NotNull LanguageConsoleView consoleView) {
         myConsoleInitSemaphore.release();
       }
     });
@@ -195,6 +199,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myCommandSemaphore = new Semaphore(1);
 
     myConsoleView = consoleRunner.getConsoleView();
+    assert myConsoleView != null: "No console view created";
     Disposer.register(myFixture.getProject(), myConsoleView);
     myProcessHandler = consoleRunner.getProcessHandler();
 

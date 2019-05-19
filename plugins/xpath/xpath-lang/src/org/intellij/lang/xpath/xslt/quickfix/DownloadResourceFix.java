@@ -39,6 +39,7 @@ public class DownloadResourceFix implements LocalQuickFix {
     myLocation = location;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Download External Resource";
@@ -81,11 +82,11 @@ public class DownloadResourceFix implements LocalQuickFix {
   }
 
   private static class MyDownloadManager extends DownloadManager {
-    public MyDownloadManager(Project project, ProgressIndicator progress) {
+    MyDownloadManager(Project project, ProgressIndicator progress) {
       super(project, progress);
     }
 
-    private static void processReferences(XmlTag[] subTags, Set<String> list) {
+    private static void processReferences(XmlTag[] subTags, Set<? super String> list) {
       for (XmlTag xmlTag : subTags) {
         final String href = xmlTag.getAttributeValue("href");
         // TODO: Handle relative dependencies!
@@ -95,10 +96,12 @@ public class DownloadResourceFix implements LocalQuickFix {
       }
     }
 
+    @Override
     protected boolean isAccepted(PsiFile psiFile) {
       return XsltSupport.isXsltFile(psiFile);
     }
 
+    @Override
     protected Set<String> getResourceDependencies(PsiFile psiFile) {
       final XmlDocument document = ((XmlFile)psiFile).getDocument();
       if (document != null) {

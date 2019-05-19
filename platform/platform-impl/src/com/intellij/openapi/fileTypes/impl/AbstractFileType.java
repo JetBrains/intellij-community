@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.FileTypeRegistrator;
@@ -177,7 +177,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return table;
   }
 
-  private static void loadKeywords(Element element, Set<String> keywords) {
+  private static void loadKeywords(Element element, Set<? super String> keywords) {
     String value = element.getAttributeValue(ELEMENT_KEYWORDS);
     if (value != null) {
       StringTokenizer tokenizer = new StringTokenizer(value, SEMICOLON);
@@ -331,12 +331,12 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
 
   @NotNull
   public static List<Trinity<FileNameMatcher, String, Boolean>> readRemovedAssociations(@NotNull Element element) {
-    List<Trinity<FileNameMatcher, String, Boolean>> result = new SmartList<>();
     List<Element> children = element.getChildren(ELEMENT_REMOVED_MAPPING);
     if (children.isEmpty()) {
       return Collections.emptyList();
     }
 
+    List<Trinity<FileNameMatcher, String, Boolean>> result = new SmartList<>();
     for (Element mapping : children) {
       String ext = mapping.getAttributeValue(ATTRIBUTE_EXT);
       FileNameMatcher matcher = ext == null ? FileTypeManager.parseFromString(mapping.getAttributeValue(ATTRIBUTE_PATTERN)) : new ExtensionFileNameMatcher(ext);
@@ -362,16 +362,16 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return mapping;
   }
 
-  static Element writeRemovedMapping(final FileType type, final FileNameMatcher matcher, final boolean specifyTypeName, boolean approved) {
+  static Element writeRemovedMapping(@NotNull FileType type, @NotNull FileNameMatcher matcher, boolean specifyTypeName, boolean approved) {
     Element mapping = new Element(ELEMENT_REMOVED_MAPPING);
     if (matcher instanceof ExtensionFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());
-      if (approved) {
-        mapping.setAttribute(ATTRIBUTE_APPROVED, "true");
-      }
     }
     else if (writePattern(matcher, mapping)) {
       return null;
+    }
+    if (approved) {
+      mapping.setAttribute(ATTRIBUTE_APPROVED, "true");
     }
     if (specifyTypeName) {
       mapping.setAttribute(ATTRIBUTE_TYPE, type.getName());

@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.editorActions
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
 @CompileStatic
 class GroovyMoveLeftRightHandlerTest extends LightGroovyTestCase {
 
-  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
 
   private void doTest(String before, String after = null) {
     fixture.with {
@@ -113,5 +113,13 @@ class GroovyMoveLeftRightHandlerTest extends LightGroovyTestCase {
   void 'test binary expression'() {
     doTest '<caret>1 + 2 + 3'
     doTest '1 + <caret>2 + 3'
+  }
+
+  void 'test for update'() {
+    doTest 'for (;; <caret>1, 2, 3) {}', 'for (;; 2, <caret>1, 3) {}'
+  }
+
+  void 'test array initializer'() {
+    doTest 'new int[]{<caret>1, 2, 3}', 'new int[]{2, <caret>1, 3}'
   }
 }

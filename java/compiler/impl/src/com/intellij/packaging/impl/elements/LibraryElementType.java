@@ -52,6 +52,7 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
     return !getAllLibraries(context).isEmpty();
   }
 
+  @Override
   @NotNull
   public List<? extends LibraryPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                   @NotNull CompositePackagingElement<?> parent) {
@@ -70,6 +71,7 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
     return libraries;
   }
 
+  @Override
   @NotNull
   public LibraryPackagingElement createEmpty(@NotNull Project project) {
     return new LibraryPackagingElement();

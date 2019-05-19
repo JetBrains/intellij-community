@@ -38,7 +38,7 @@ abstract class ProjectSdkStubsGenerator {
 
   abstract val moduleTypeId: String
 
-  abstract fun createSdkProducer(sdkPath: String): (Project, Module) -> Sdk?
+  abstract fun createSdkProducer(sdkPath: String): (Project, Module) -> Sdk
 
   open val root: String? = System.getenv("SDK_ROOT")
 
@@ -90,7 +90,7 @@ abstract class ProjectSdkStubsGenerator {
         ProjectManager.getInstance().closeProject(project!!)
         WriteAction.run<Throwable> {
           Disposer.dispose(project)
-          SdkConfigurationUtil.removeSdk(sdk)
+          SdkConfigurationUtil.removeSdk(sdk!!)
         }
       })
     }

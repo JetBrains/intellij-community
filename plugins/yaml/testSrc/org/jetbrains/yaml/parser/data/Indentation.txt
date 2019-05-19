@@ -2,29 +2,32 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('name:')
+        PsiElement(scalar key)('name')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('Mark McGwire')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('accomplishment:')
+        PsiElement(scalar key)('accomplishment')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML scalar text
           PsiElement(scalar text)('>')
-          PsiElement(Eol)('\n')
+          PsiElement(block scalar EOL)('\n')
           PsiElement(indent)('  ')
           PsiElement(scalar text)('Mark set a major league')
           PsiElement(block scalar EOL)('\n')
           PsiElement(indent)('  ')
           PsiElement(scalar text)('home run record in 1998.')
-          PsiElement(block scalar EOL)('\n')
+      PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('stats:')
+        PsiElement(scalar key)('stats')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML scalar list
           PsiElement(scalar list)('|')
-          PsiElement(Eol)('\n')
+          PsiElement(block scalar EOL)('\n')
           PsiElement(indent)('  ')
           PsiElement(scalar list)('65 Home Runs')
           PsiElement(block scalar EOL)('\n')

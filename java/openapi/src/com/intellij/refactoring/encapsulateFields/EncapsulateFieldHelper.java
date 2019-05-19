@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class EncapsulateFieldHelper {
   private static class Extension extends LanguageExtension<EncapsulateFieldHelper> {
 
-    public Extension() {
+    Extension() {
       super("com.intellij.encapsulateFields.Helper");
     }
   }

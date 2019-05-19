@@ -111,7 +111,6 @@ public class JavaMethodResolveHelper {
 
     if (!info.isApplicable()) {
       boolean hasNulls = false;
-      //noinspection ConstantConditions
       final PsiParameter[] parameters = info.getElement().getParameterList().getParameters();
       if (myArgumentTypes.length == parameters.length) {
         for (int i = 0; i < myArgumentTypes.length; i++) {

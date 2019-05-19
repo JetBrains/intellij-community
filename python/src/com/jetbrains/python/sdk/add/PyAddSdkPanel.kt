@@ -50,7 +50,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
   override fun complete(): Unit = Unit
 
-  override abstract val panelName: String
+  abstract override val panelName: String
   override val icon: Icon = PythonIcons.Python.Python
   open val sdk: Sdk? = null
   open val nameExtensionComponent: JComponent? = null

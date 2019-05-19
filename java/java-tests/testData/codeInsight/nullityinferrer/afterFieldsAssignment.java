@@ -37,6 +37,14 @@ class Test {
   final String myFoo12;
   @Nullable
   final String myFoo13 = null;
+  final Runnable myFoo14 = new Runnable() {
+    {foo();}
+    @Nullable
+    Object foo() {
+      return null;
+    }
+    public void run() {}
+  };
 
   /**
    * {@link #myFoo6}

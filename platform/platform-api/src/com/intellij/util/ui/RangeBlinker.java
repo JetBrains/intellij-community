@@ -45,7 +45,7 @@ public class RangeBlinker {
     myTimeToLive = timeToLive;
   }
 
-  public void resetMarkers(final List<Segment> markers) {
+  public void resetMarkers(final List<? extends Segment> markers) {
     removeHighlights();
     myMarkers.clear();
     stopBlinking();

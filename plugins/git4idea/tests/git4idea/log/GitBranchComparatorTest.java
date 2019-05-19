@@ -32,8 +32,8 @@ public class GitBranchComparatorTest extends GitRefManagerTest {
     check("origin/139", given("feature", "origin/139", "139"));
   }
 
-  public void test_untracked_remote_branch_is_less_important_than_any_local_branch() {
-    check("feature", given("feature", "origin/139"));
+  public void test_untracked_remote_branch_is_more_important_than_any_local_branch() {
+    check("origin/139", given("feature", "origin/139"));
   }
 
   public void test_master_is_more_important_than_other_local_branches() {
@@ -52,14 +52,14 @@ public class GitBranchComparatorTest extends GitRefManagerTest {
     check("feature", given("zoo", "feature"));
   }
 
-  public void test_tracking_local_branch_is_more_important_than_nontracking_local_branch() {
+  public void test_tracked_local_branch_is_not_special() {
     Collection<VcsRef> refs = given("zoo", "origin/zoo", "feature");
     refs = ContainerUtil.filter(refs, ref -> !ref.getName().equals("origin/zoo"));
-    assertEquals("zoo", getTheMostPowerfulRef(refs).getName());
+    assertEquals("feature", getTheMostPowerfulRef(refs).getName());
   }
 
-  public void test_two_remote_non_tracking_branches_are_compared_lexicographically() {
-    check("github/zoo", given("origin/feature", "origin/zoo", "github/zoo"));
+  public void test_remote_branches_are_compared_lexicographically() {
+    check("origin/feature", given("origin/feature", "origin/zoo", "zoo"));
   }
 
   public void test_local_branch_is_more_important_than_HEAD() {

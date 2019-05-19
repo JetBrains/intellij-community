@@ -75,7 +75,7 @@ public final class Strings {
     if (word.length() < 2) return false;
 
     String tail = word.substring(1);
-    String lowerCase = tail.toLowerCase();
+    String lowerCase = StringUtil.toLowerCase(tail);
     return !tail.equals(lowerCase) && !isUpperCase(word);
   }
 
@@ -87,7 +87,7 @@ public final class Strings {
 
   public static void upperCase(List<String> words) {
     for (int i = 0; i < words.size(); i++) {
-      words.set(i, words.get(i).toUpperCase());
+      words.set(i, StringUtil.toUpperCase(words.get(i)));
     }
   }
 

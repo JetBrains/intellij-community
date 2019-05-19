@@ -1,4 +1,4 @@
-// "Extract common part from if " "false"
+// "Extract common part from 'if'" "false"
 
 public class Main {
 

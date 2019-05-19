@@ -20,7 +20,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/21/13
  */
 public class MultipleRepositoryUrlsFix extends GroovyFix {
   private final SmartPsiElementPointer<GrClosableBlock> myClosure;

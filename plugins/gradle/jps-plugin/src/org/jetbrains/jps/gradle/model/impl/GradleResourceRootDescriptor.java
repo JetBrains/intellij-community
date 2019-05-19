@@ -24,7 +24,6 @@ import java.io.FileFilter;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class GradleResourceRootDescriptor extends BuildRootDescriptor {
   private final GradleResourcesTarget myTarget;

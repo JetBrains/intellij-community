@@ -26,8 +26,6 @@ public class StringConcatenationInLoopsInspectionFixTest extends LightQuickFixPa
     return new LocalInspectionTool[]{new StringConcatenationInLoopsInspection()};
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/stringConcatInLoop";

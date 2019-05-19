@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +9,6 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -39,7 +24,7 @@ public class ModifiableModelCommitter {
     multiCommit(Arrays.asList(rootModels), moduleModel);
   }
 
-  public static void multiCommit(@NotNull Collection<ModifiableRootModel> rootModels, @NotNull ModifiableModuleModel moduleModel) {
+  public static void multiCommit(@NotNull Collection<? extends ModifiableRootModel> rootModels, @NotNull ModifiableModuleModel moduleModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     final List<RootModelImpl> modelsToCommit = getSortedChangedModels(rootModels, moduleModel);
@@ -61,7 +46,7 @@ public class ModifiableModelCommitter {
   }
 
   @NotNull
-  private static List<RootModelImpl> getSortedChangedModels(Collection<ModifiableRootModel> rootModels, ModifiableModuleModel moduleModel) {
+  private static List<RootModelImpl> getSortedChangedModels(@NotNull Collection<? extends ModifiableRootModel> rootModels, @NotNull ModifiableModuleModel moduleModel) {
     List<RootModelImpl> result = null;
     for (ModifiableRootModel model : rootModels) {
       RootModelImpl rootModel = (RootModelImpl)model;
@@ -82,8 +67,9 @@ public class ModifiableModelCommitter {
     return result;
   }
 
-  private static DFSTBuilder<RootModelImpl> createDFSTBuilder(List<RootModelImpl> rootModels, final ModifiableModuleModel moduleModel) {
-    final Map<String, RootModelImpl> nameToModel = ContainerUtil.newHashMap();
+  @NotNull
+  private static DFSTBuilder<RootModelImpl> createDFSTBuilder(@NotNull List<? extends RootModelImpl> rootModels, @NotNull ModifiableModuleModel moduleModel) {
+    final Map<String, RootModelImpl> nameToModel = new HashMap<>();
     for (RootModelImpl rootModel : rootModels) {
       String name = rootModel.getModule().getName();
       LOG.assertTrue(!nameToModel.containsKey(name), name);
@@ -101,11 +87,13 @@ public class ModifiableModelCommitter {
 
     final Collection<RootModelImpl> allRootModels = nameToModel.values();
     InboundSemiGraph<RootModelImpl> graph = new InboundSemiGraph<RootModelImpl>() {
+      @NotNull
       @Override
       public Collection<RootModelImpl> getNodes() {
         return allRootModels;
       }
 
+      @NotNull
       @Override
       public Iterator<RootModelImpl> getIn(RootModelImpl rootModel) {
         OrderEnumerator entries = rootModel.orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries();

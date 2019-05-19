@@ -36,7 +36,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.GenerateToStringClassFilter;
@@ -76,6 +76,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
     }
 
 
+    @Override
     public void executeActionQuickFix(final Project project, final PsiClass clazz) {
         doExecuteAction(project, clazz, null);
     }
@@ -147,7 +148,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
           .toArray(PsiElementClassMember[]::new);
     }
 
-    public static void updateDialog(PsiClass clazz, MemberChooser<PsiElementClassMember> dialog) {
+    public static void updateDialog(PsiClass clazz, MemberChooser<? super PsiElementClassMember> dialog) {
         final PsiElementClassMember[] members = buildMembersToShow(clazz);
         dialog.resetElements(members);
         dialog.selectElements(getPreselection(clazz, members));
@@ -210,18 +211,17 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             comboBox = new ComboBox<>(all);
             final JavaPsiFacade instance = JavaPsiFacade.getInstance(clazz.getProject());
             final GlobalSearchScope resolveScope = clazz.getResolveScope();
-            final ListCellRendererWrapper<TemplateResource> renderer = new ListCellRendererWrapper<TemplateResource>() {
-              @Override
-              public void customize(JList list, TemplateResource value, int index, boolean selected, boolean hasFocus) {
-                setText(value.getName());
-                final String className = value.getClassName();
-                if (className != null && instance.findClass(className, resolveScope) == null) {
-                  setForeground(JBColor.RED);
-                }
+          final ListCellRenderer<TemplateResource> renderer =
+            SimpleListCellRenderer.create((label, value, index) -> {
+              label.setText(value.getName());
+              final String className = value.getClassName();
+              if (className != null && instance.findClass(className, resolveScope) == null) {
+                setForeground(JBColor.RED);
               }
-            };
+            });
             comboBox.setRenderer(renderer);
             settingsButton.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                   final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());
                   Configurable composite = new TabbedConfigurable() {
@@ -234,6 +234,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                             return res;
                         }
 
+                        @Override
                         public String getDisplayName() {
                             return "toString() Generation Settings";
                         }

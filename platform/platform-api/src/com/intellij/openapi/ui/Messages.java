@@ -22,6 +22,7 @@ import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -56,6 +57,10 @@ public class Messages {
     if (application != null) {
       LOG.assertTrue(application.isUnitTestMode(), "This method is available for tests only");
     }
+    if (newValue == null) {
+      ourTestImplementation = TestDialog.DEFAULT;
+      throw new IllegalArgumentException("Attempt to set TestDialog to null: default implementation was restored instead");
+    }
     TestDialog oldValue = ourTestImplementation;
     ourTestImplementation = newValue;
     return oldValue;
@@ -67,9 +72,21 @@ public class Messages {
     if (application != null) {
       LOG.assertTrue(application.isUnitTestMode(), "This method is available for tests only");
     }
+    if (newValue == null) {
+      ourTestInputImplementation = TestInputDialog.DEFAULT;
+      throw new IllegalArgumentException("Attempt to set TestInputDialog to null: default implementation was restored instead");
+    }
     TestInputDialog oldValue = ourTestInputImplementation;
     ourTestInputImplementation = newValue;
     return oldValue;
+  }
+
+  public static TestDialog getTestImplementation() {
+    return ourTestImplementation;
+  }
+
+  public static TestInputDialog getTestInputImplementation() {
+    return ourTestInputImplementation;
   }
 
   @NotNull
@@ -161,7 +178,7 @@ public class Messages {
     return showDialog(project, message, title, options, defaultOptionIndex, icon, null);
   }
 
-  static boolean isApplicationInUnitTestOrHeadless() {
+  public static boolean isApplicationInUnitTestOrHeadless() {
     final Application application = ApplicationManager.getApplication();
     return application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment());
   }
@@ -169,7 +186,8 @@ public class Messages {
   @NotNull
   public static Runnable createMessageDialogRemover(@Nullable Project project) {
     Window projectWindow = project == null ? null : WindowManager.getInstance().suggestParentWindow(project);
-    return () -> UIUtil.invokeLaterIfNeeded(() -> makeCurrentMessageDialogGoAway(
+    //noinspection SSBasedInspection
+    return () -> SwingUtilities.invokeLater(() -> makeCurrentMessageDialogGoAway(
       projectWindow != null ? projectWindow.getOwnedWindows() : Window.getWindows()));
   }
 
@@ -197,9 +215,6 @@ public class Messages {
                                int defaultOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
     return MessagesService.getInstance()
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false);
   }
@@ -219,7 +234,7 @@ public class Messages {
   }
 
   public static boolean canShowMacSheetPanel() {
-    return SystemInfo.isMac && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
+    return SystemInfo.isMac && ApplicationManager.getApplication() != null && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
   }
 
   public static boolean isMacSheetEmulation() {
@@ -237,9 +252,6 @@ public class Messages {
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                Icon icon) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
     return MessagesService.getInstance()
       .showMoreInfoMessageDialog(project, message, title, moreInfo, options, defaultOptionIndex, focusedOptionIndex, icon);
   }
@@ -254,12 +266,7 @@ public class Messages {
                                @NotNull String[] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    else {
-      return MessagesService.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false);
-    }
+    return MessagesService.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false);
   }
 
   /**
@@ -277,9 +284,6 @@ public class Messages {
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
 
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
     return MessagesService.getInstance()
       .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false);
   }
@@ -631,8 +635,10 @@ public class Messages {
 
   /**
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
+   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Project, String, String, String, String, Icon)} instead
    */
   @OkCancelResult
+  @Deprecated
   public static int showOkCancelDialog(Project project,
                                        String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
@@ -667,8 +673,10 @@ public class Messages {
 
   /**
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
+   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Component, String, String, String, String, Icon)} instead
    */
   @OkCancelResult
+  @Deprecated
   public static int showOkCancelDialog(@NotNull Component parent,
                                        String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
@@ -680,10 +688,10 @@ public class Messages {
    * Use this method only if you do not know project or component
    *
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
-   * @see #showOkCancelDialog(Project, String, String, Icon)
-   * @see #showOkCancelDialog(Component, String, String, Icon)
+   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(String, String, String, String, Icon)} instead
    */
   @OkCancelResult
+  @Deprecated
   public static int showOkCancelDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, Icon icon) {
     return showOkCancelDialog(message, title, OK_BUTTON, CANCEL_BUTTON, icon, null);
   }
@@ -740,12 +748,8 @@ public class Messages {
                                                final int focusedOptionIndex,
                                                Icon icon) {
     return showCheckboxMessageDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, checkboxText, checked, defaultOptionIndex,
-                                     focusedOptionIndex, icon, new PairFunction<Integer, JCheckBox, Integer>() {
-        @Override
-        public Integer fun(final Integer exitCode, final JCheckBox cb) {
-          return exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0);
-        }
-      });
+                                     focusedOptionIndex, icon,
+                                     (exitCode, cb) -> exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0));
   }
 
   public static int showCheckboxMessageDialog(String message,
@@ -756,15 +760,10 @@ public class Messages {
                                               final int defaultOptionIndex,
                                               final int focusedOptionIndex,
                                               Icon icon,
-                                              @Nullable final PairFunction<Integer, JCheckBox, Integer> exitFunc) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    else {
-      return MessagesService.getInstance()
-        .showTwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
-                                       exitFunc);
-    }
+                                              @Nullable final PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
+    return MessagesService.getInstance()
+      .showTwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
+                                     exitFunc);
   }
 
 
@@ -1067,10 +1066,6 @@ public class Messages {
                                           @Nls(capitalization = Nls.Capitalization.Title) String title,
                                           @Nullable Icon icon,
                                           @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-
     return MessagesService.getInstance().showPasswordDialog(project, message, title, icon, validator);
   }
 
@@ -1114,12 +1109,7 @@ public class Messages {
                                        @Nullable Icon icon,
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-    else {
-      return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, null, null);
-    }
+    return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, null, null);
   }
 
   @Nullable
@@ -1143,12 +1133,7 @@ public class Messages {
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection,
                                        @Nullable String comment) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-    else {
-      return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, selection, comment);
-    }
+    return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, selection, comment);
   }
 
   @Nullable
@@ -1158,12 +1143,7 @@ public class Messages {
                                        @Nullable Icon icon,
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-    else {
-      return MessagesService.getInstance().showInputDialog(null, parent, message, title, icon, initialValue, validator, null, null);
-    }
+    return MessagesService.getInstance().showInputDialog(null, parent, message, title, icon, initialValue, validator, null, null);
   }
 
   /**
@@ -1178,12 +1158,7 @@ public class Messages {
                                        @Nullable Icon icon,
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-    else {
-      return MessagesService.getInstance().showInputDialog(null, null, message, title, icon, initialValue, validator, null, null);
-    }
+    return MessagesService.getInstance().showInputDialog(null, null, message, title, icon, initialValue, validator, null, null);
   }
 
   @Nullable
@@ -1193,9 +1168,6 @@ public class Messages {
                                                 @Nullable String initialValue,
                                                 @Nullable Icon icon,
                                                 @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
     return MessagesService.getInstance().showMultilineInputDialog(project, message, title, initialValue, icon, validator);
   }
 
@@ -1208,13 +1180,8 @@ public class Messages {
                                                                   @Nullable Icon icon,
                                                                   @NonNls String initialValue,
                                                                   @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return new Pair<>(ourTestInputImplementation.show(message), checked);
-    }
-    else {
-      return MessagesService.getInstance()
-        .showInputDialogWithCheckBox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
-    }
+    return MessagesService.getInstance()
+      .showInputDialogWithCheckBox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
   }
 
   @Nullable
@@ -1224,12 +1191,7 @@ public class Messages {
                                                 String[] values,
                                                 String initialValue,
                                                 @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-    else {
-      return MessagesService.getInstance().showEditableChooseDialog(message, title, icon, values, initialValue, validator);
-    }
+    return MessagesService.getInstance().showEditableChooseDialog(message, title, icon, values, initialValue, validator);
   }
 
   /**
@@ -1241,12 +1203,7 @@ public class Messages {
                                      String[] values,
                                      String initialValue,
                                      @Nullable Icon icon) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    else {
-      return MessagesService.getInstance().showChooseDialog(null, null, message, title, values, initialValue, icon);
-    }
+    return MessagesService.getInstance().showChooseDialog(null, null, message, title, values, initialValue, icon);
   }
 
   /**
@@ -1259,12 +1216,7 @@ public class Messages {
                                      String[] values,
                                      String initialValue,
                                      Icon icon) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    else {
-      return MessagesService.getInstance().showChooseDialog(null, parent, message, title, values, initialValue, icon);
-    }
+    return MessagesService.getInstance().showChooseDialog(null, parent, message, title, values, initialValue, icon);
   }
 
   /**
@@ -1278,12 +1230,7 @@ public class Messages {
                                      Icon icon,
                                      String[] values,
                                      String initialValue) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    else {
-      return MessagesService.getInstance().showChooseDialog(project, null, message, title, values, initialValue, icon);
-    }
+    return MessagesService.getInstance().showChooseDialog(project, null, message, title, values, initialValue, icon);
   }
 
   /**
@@ -1355,14 +1302,9 @@ public class Messages {
   public static void showTextAreaDialog(final JTextField textField,
                                         @Nls(capitalization = Nls.Capitalization.Title) final String title,
                                         @NonNls final String dimensionServiceKey,
-                                        final Function<String, List<String>> parser,
-                                        final Function<List<String>, String> lineJoiner) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      ourTestImplementation.show(title);
-    }
-    else {
-      MessagesService.getInstance().showTextAreaDialog(textField, title, dimensionServiceKey, parser, lineJoiner);
-    }
+                                        final Function<? super String, ? extends List<String>> parser,
+                                        final Function<? super List<String>, String> lineJoiner) {
+    MessagesService.getInstance().showTextAreaDialog(textField, title, dimensionServiceKey, parser, lineJoiner);
   }
 
   public static void showTextAreaDialog(final JTextField textField,
@@ -1455,7 +1397,7 @@ public class Messages {
           actions[0].putValue(DEFAULT_ACTION, Boolean.TRUE);
           myField.getDocument().addDocumentListener(new DocumentAdapter() {
             @Override
-            public void textChanged(DocumentEvent event) {
+            public void textChanged(@NotNull DocumentEvent event) {
               final String text = myField.getText().trim();
               actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(text));
               if (myValidator instanceof InputValidatorEx) {
@@ -1544,7 +1486,9 @@ public class Messages {
     }
 
     protected JTextComponent createTextFieldComponent() {
-      return new JTextField(30);
+      JTextField field = new JTextField(30);
+      field.setMargin(JBUI.insets(0, 5));
+      return field;
     }
 
     @Override
@@ -1581,6 +1525,24 @@ public class Messages {
     @Override
     protected JComponent createScrollableTextComponent() {
       return new JBScrollPane(myField);
+    }
+
+    @Override
+    protected JComponent createNorthPanel() {
+      return null;
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      JPanel messagePanel = new JPanel(new BorderLayout());
+      if (myMessage != null) {
+        JComponent textComponent = createTextComponent();
+        messagePanel.add(textComponent, BorderLayout.NORTH);
+      }
+
+      myField = createTextFieldComponent();
+      messagePanel.add(createScrollableTextComponent(), BorderLayout.CENTER);
+      return messagePanel;
     }
   }
 

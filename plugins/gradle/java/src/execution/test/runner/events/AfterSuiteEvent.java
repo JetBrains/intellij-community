@@ -21,7 +21,6 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionCo
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/14
  */
 public class AfterSuiteEvent extends AbstractTestEvent {
   public AfterSuiteEvent(GradleTestsExecutionConsole executionConsole) {
@@ -33,26 +32,24 @@ public class AfterSuiteEvent extends AbstractTestEvent {
     final String testId = eventXml.getTestId();
     final TestEventResult result = TestEventResult.fromValue(eventXml.getTestEventResultType());
 
-    addToInvokeLater(() -> {
-      final SMTestProxy testProxy = findTestProxy(testId);
-      if (testProxy == null) return;
+    final SMTestProxy testProxy = findTestProxy(testId);
+    if (testProxy == null) return;
 
-      if (testProxy != getResultsViewer().getTestsRootNode()) {
-        switch (result) {
-          case SUCCESS:
-            testProxy.setFinished();
-            break;
-          case FAILURE:
-            testProxy.setTestFailed("", null, false);
-            break;
-          case SKIPPED:
-            testProxy.setTestIgnored(null, null);
-            break;
-          case UNKNOWN_RESULT:
-            break;
-        }
-        getResultsViewer().onSuiteFinished(testProxy);
+    if (testProxy != getResultsViewer().getTestsRootNode()) {
+      switch (result) {
+        case SUCCESS:
+          testProxy.setFinished();
+          break;
+        case FAILURE:
+          testProxy.setTestFailed("", null, false);
+          break;
+        case SKIPPED:
+          testProxy.setTestIgnored(null, null);
+          break;
+        case UNKNOWN_RESULT:
+          break;
       }
-    });
+      getResultsViewer().onSuiteFinished(testProxy);
+    }
   }
 }

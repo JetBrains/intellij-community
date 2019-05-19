@@ -7,6 +7,6 @@ public class Main {
     public static long test() {
         List<String> s = new ArrayList<>();
         /* unused parameter */
-        return (long) s.size();
+        return s.size();
     }
 }

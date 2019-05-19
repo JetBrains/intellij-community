@@ -33,14 +33,11 @@ import static org.mockito.Mockito.when;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/2017
  */
 public class GradleProjectResolverUtilTest {
 
   @Test
   public void testGetGradlePath() {
-    assertNull(GradleProjectResolverUtil.getGradlePath(null));
-
     final Module rootModule = createModuleMock("rootModule");
     assertEquals(":", GradleProjectResolverUtil.getGradlePath(rootModule));
 

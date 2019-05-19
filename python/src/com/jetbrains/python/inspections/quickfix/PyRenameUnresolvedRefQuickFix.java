@@ -139,7 +139,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
     return items.toArray(LookupElement.EMPTY_ARRAY);
   }
 
-  private class ReferenceNameExpression extends Expression {
+  private static class ReferenceNameExpression extends Expression {
     class HammingComparator implements Comparator<LookupElement> {
       @Override
       public int compare(LookupElement lookupItem1, LookupElement lookupItem2) {

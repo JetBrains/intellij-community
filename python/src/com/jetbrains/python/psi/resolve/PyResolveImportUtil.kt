@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 @file:JvmName("PyResolveImportUtil")
 package com.jetbrains.python.psi.resolve
@@ -20,7 +6,6 @@ package com.jetbrains.python.psi.resolve
 import com.google.common.base.Preconditions
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -34,6 +19,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
+import com.jetbrains.python.codeInsight.typing.filterTopPriorityResults
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil
 import com.jetbrains.python.facet.PythonPathContributingFacet
 import com.jetbrains.python.psi.LanguageLevel
@@ -105,7 +91,7 @@ private fun resolveQualifiedName(name: QualifiedName,
                              resultsFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
   val allResults = pythonResults + foreignResults
-  val results = if (name.componentCount > 0) findFirstResults(pythonResults, context.module) + foreignResults else allResults
+  val results = if (name.componentCount > 0) filterTopPriorityResults(pythonResults, context.module) + foreignResults else allResults
 
   if (mayCache) {
     cache?.put(key, results)
@@ -121,7 +107,7 @@ private fun resolveModuleFromRoots(name: QualifiedName, context: PyQualifiedName
   val head = name.removeTail(name.componentCount - 1)
   val nameNoHead = name.removeHead(1)
   return nameNoHead.components.fold(resultsFromRoots(head, context)) { results, component ->
-    findFirstResults(results, context.module)
+    filterTopPriorityResults(results, context.module)
       .asSequence()
       .filterIsInstance<PsiFileSystemItem>()
       .flatMap { resolveModuleAt(QualifiedName.fromComponents(component), it, context).asSequence() }
@@ -200,7 +186,7 @@ private fun foreignResults(name: QualifiedName, context: PyQualifiedNameResolveC
     if (context.withoutForeign)
       emptyList()
     else
-      Extensions.getExtensions(PyImportResolver.EP_NAME)
+      PyImportResolver.EP_NAME.extensionList
           .asSequence()
           .map { it.resolveImportReference(name, context, !context.withoutRoots) }
           .filterNotNull()
@@ -239,40 +225,6 @@ fun relativeResultsForStubsFromRoots(name: QualifiedName, context: PyQualifiedNa
   }
   val absoluteName = containingName.append(name)
   return resultsFromRoots(absoluteName, context.copyWithRelative(-1).copyWithRoots())
-}
-
-/**
- * Filters the results according to their import priority in sys.path.
- */
-private fun findFirstResults(results: List<PsiElement>, module: Module?) =
-    if (results.all(::isNamespacePackage))
-      results
-    else {
-      val result = results.firstOrNull { !isNamespacePackage(it) }
-      val stubFile = results.firstOrNull { it is PyiFile || PyUtil.turnDirIntoInit(it) is PyiFile }
-
-      val resultVFile = (result as? PsiFileSystemItem)?.virtualFile
-      val stubVFile = (stubFile as? PsiFileSystemItem)?.virtualFile
-
-      if (stubFile == null ||
-          module != null &&
-          stubVFile != null && PyTypeShed.isInside(stubVFile) &&
-          resultVFile != null && ModuleUtilCore.moduleContainsFile(module, resultVFile, false)) {
-        listOfNotNull(result)
-      }
-      else {
-        listOfNotNull(stubFile)
-      }
-    }
-
-private fun isNamespacePackage(element: PsiElement): Boolean {
-  if (element is PsiDirectory) {
-    val level = PyUtil.getLanguageLevelForVirtualFile(element.project, element.virtualFile)
-    if (!level.isPython2) {
-      return PyUtil.turnDirIntoInit(element) == null
-    }
-  }
-  return false
 }
 
 private fun resolveWithRelativeLevel(name: QualifiedName, context : PyQualifiedNameResolveContext): List<PsiElement> {

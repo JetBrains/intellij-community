@@ -46,7 +46,7 @@ public class BinaryPatchWriter {
   private final static String LITERAL_HEADER = "literal %d";
 
   public static void writeBinaries(@Nullable String basePath,
-                                   @NotNull List<BinaryFilePatch> patches,
+                                   @NotNull List<? extends BinaryFilePatch> patches,
                                    @NotNull Writer writer) throws IOException {
     String lineSeparator = "\n"; //use it for git headers&binary content, otherwise git won't parse&apply it properly                           
     for (FilePatch patch : patches) {

@@ -1,42 +1,27 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
 public class GrMapTypeImpl extends GrMapType {
-  private final LinkedHashMap<String, PsiType> myStringEntries;
-  private final List<Couple<PsiType>> myOtherEntries;
+
+  private final @NotNull LinkedHashMap<String, PsiType> myStringEntries;
+  private final @NotNull List<Couple<PsiType>> myOtherEntries;
 
   GrMapTypeImpl(JavaPsiFacade facade,
                 GlobalSearchScope scope,
-                LinkedHashMap<String, PsiType> stringEntries,
-                List<Couple<PsiType>> otherEntries,
+                @NotNull LinkedHashMap<String, PsiType> stringEntries,
+                @NotNull List<Couple<PsiType>> otherEntries,
                 @NotNull LanguageLevel languageLevel) {
     super(facade, scope, languageLevel);
     myStringEntries = stringEntries;
@@ -53,31 +38,6 @@ public class GrMapTypeImpl extends GrMapType {
   @NotNull
   public Set<String> getStringKeys() {
     return myStringEntries.keySet();
-  }
-
-  @Override
-  @NotNull
-  protected PsiType[] getAllKeyTypes() {
-    Set<PsiType> result = new HashSet<>();
-    if (!myStringEntries.isEmpty()) {
-      result.add(GroovyPsiManager.getInstance(myFacade.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, getResolveScope()));
-    }
-    for (Couple<PsiType> entry : myOtherEntries) {
-      result.add(entry.first);
-    }
-    result.remove(null);
-    return result.toArray(createArray(result.size()));
-  }
-
-  @Override
-  @NotNull
-  protected PsiType[] getAllValueTypes() {
-    Set<PsiType> result = new HashSet<>(myStringEntries.values());
-    for (Couple<PsiType> entry : myOtherEntries) {
-      result.add(entry.second);
-    }
-    result.remove(null);
-    return result.toArray(createArray(result.size()));
   }
 
   @NotNull
@@ -114,5 +74,26 @@ public class GrMapTypeImpl extends GrMapType {
   @Override
   public boolean isEmpty() {
     return myStringEntries.isEmpty() && myOtherEntries.isEmpty();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GrMapTypeImpl type = (GrMapTypeImpl)o;
+
+    if (!myStringEntries.equals(type.myStringEntries)) return false;
+    if (!myOtherEntries.equals(type.myOtherEntries)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + myStringEntries.hashCode();
+    result = 31 * result + myOtherEntries.hashCode();
+    return result;
   }
 }

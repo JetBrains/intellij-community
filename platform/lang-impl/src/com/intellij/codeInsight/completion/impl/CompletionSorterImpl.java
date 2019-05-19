@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.CompletionSorter;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,10 +27,10 @@ import java.util.List;
  * @author peter
  */
 public class CompletionSorterImpl extends CompletionSorter {
-  private final List<ClassifierFactory<LookupElement>> myMembers;
+  private final List<? extends ClassifierFactory<LookupElement>> myMembers;
   private final int myHashCode;
 
-  CompletionSorterImpl(List<ClassifierFactory<LookupElement>> members) {
+  CompletionSorterImpl(List<? extends ClassifierFactory<LookupElement>> members) {
     myMembers = members;
     myHashCode = myMembers.hashCode();
   }
@@ -89,7 +88,7 @@ public class CompletionSorterImpl extends CompletionSorter {
 
 
   private int idIndex(final String id) {
-    return ContainerUtil.indexOf(myMembers, (Condition<ClassifierFactory<LookupElement>>)factory -> id.equals(factory.getId()));
+    return ContainerUtil.indexOf(myMembers, factory -> id.equals(factory.getId()));
   }
 
   @Override
@@ -110,7 +109,7 @@ public class CompletionSorterImpl extends CompletionSorter {
   }
 
   private static Classifier<LookupElement> createClassifier(final int index,
-                                                            final List<ClassifierFactory<LookupElement>> components,
+                                                            final List<? extends ClassifierFactory<LookupElement>> components,
                                                             Classifier<LookupElement> tail) {
     if (index == components.size()) {
       return tail;

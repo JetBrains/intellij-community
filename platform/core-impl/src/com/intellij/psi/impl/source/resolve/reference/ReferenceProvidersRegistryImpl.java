@@ -17,7 +17,10 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
@@ -117,10 +120,14 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   //  we create priorities map: "priority" ->  non-empty references from providers
   //  if provider returns EMPTY_ARRAY or array with "null" references then this provider isn't added in priorities map.
   private static MultiMap<Double, PsiReference[]> mapNotEmptyReferencesFromProviders(@NotNull PsiElement context,
-                                                                                     @NotNull List<ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
+                                                                                     @NotNull List<? extends ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
     MultiMap<Double, PsiReference[]> map = new MultiMap<>();
     for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
       final PsiReference[] refs = getReferences(context, trinity);
+      if ((ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())
+          && Registry.is("ide.check.reference.provider.underlying.element")) {
+        assertReferenceUnderlyingElement(context, refs, trinity.provider);
+      }
       if (refs.length > 0) {
         map.putValue(trinity.priority, refs);
       }
@@ -128,9 +135,23 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     return map;
   }
 
+  private static void assertReferenceUnderlyingElement(@NotNull PsiElement context,
+                                                       PsiReference[] refs, PsiReferenceProvider provider) {
+    for (PsiReference reference : refs) {
+      if (reference == null) continue;
+      assert reference.getElement() == context : "reference " +
+                                                 reference +
+                                                 " was created for " +
+                                                 context +
+                                                 " but target " +
+                                                 reference.getElement() +
+                                                 ", provider " + provider;
+    }
+  }
+
   @NotNull
   private static PsiReference[] getReferences(@NotNull PsiElement context,
-                                              @NotNull ProviderBinding.ProviderInfo<ProcessingContext> providerInfo) {
+                                              @NotNull ProviderBinding.ProviderInfo<? extends ProcessingContext> providerInfo) {
     try {
       return providerInfo.provider.getReferencesByElement(context, providerInfo.processingContext);
     }
@@ -142,7 +163,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   @NotNull
   private static List<PsiReference> getLowerPriorityReferences(@NotNull MultiMap<Double, PsiReference[]> allReferencesMap,
                                                                double maxPriority,
-                                                               @NotNull List<PsiReference> maxPriorityRefs) {
+                                                               @NotNull List<? extends PsiReference> maxPriorityRefs) {
     List<PsiReference> result = ContainerUtil.newSmartList();
     for (Map.Entry<Double, Collection<PsiReference[]>> entry : allReferencesMap.entrySet()) {
       if (maxPriority != entry.getKey().doubleValue()) {
@@ -156,7 +177,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     return result;
   }
 
-  private static boolean haveNotIntersectedTextRanges(@NotNull List<PsiReference> higherPriorityRefs,
+  private static boolean haveNotIntersectedTextRanges(@NotNull List<? extends PsiReference> higherPriorityRefs,
                                                       @NotNull  PsiReference[] lowerPriorityRefs) {
     for (PsiReference ref : lowerPriorityRefs) {
       if (ref != null) {
@@ -188,5 +209,13 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
       if (aDouble.doubleValue() > maxPriority) maxPriority = aDouble.doubleValue();
     }
     return maxPriority;
+  }
+
+  /**
+   * @deprecated to attract attention and motivate to fix tests which fail these checks
+   */
+  @Deprecated
+  public static void disableUnderlyingElementChecks(@NotNull Disposable parentDisposable) {
+    Registry.get("ide.check.reference.provider.underlying.element").setValue(false, parentDisposable);
   }
 }

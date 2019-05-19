@@ -29,6 +29,7 @@ public class GrAdditiveExpressionImpl extends GrBinaryExpressionImpl {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Additive expression";
   }

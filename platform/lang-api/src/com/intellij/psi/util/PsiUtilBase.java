@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
-import java.awt.*;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -98,10 +98,9 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     return getPsiFileAtOffset(file, mostProbablyCorrectLanguageOffset);
   }
 
-  public static PsiFile getPsiFileAtOffset(final PsiFile file, final int offset) {
+  public static PsiFile getPsiFileAtOffset(@NotNull PsiFile file, final int offset) {
     PsiElement elt = getElementAtOffset(file, offset);
-
-    assert elt.isValid() : elt + "; file: "+file + "; isvalid: "+file.isValid();
+    ensureValid(elt);
     return elt.getContainingFile();
   }
 
@@ -144,7 +143,10 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     while (true) {
       PsiElement parent = elt.getParent();
       TextRange range = elt.getTextRange();
-      assert range != null : "Range is null for " + elt + "; " + elt.getClass();
+      if (range == null) {
+        LOG.error("Range is null for " + elt + "; " + elt.getClass());
+        return file.getLanguage();
+      }
       if (range.contains(selectionRange) || parent == null || elt instanceof PsiFile) {
         return elt.getLanguage();
       }
@@ -186,9 +188,6 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
    */
   @Nullable
   public static Editor findEditor(@NotNull PsiElement element) {
-    if (!EventQueue.isDispatchThread()) {
-      LOG.warn("Invoke findEditor() from EDT only. Otherwise, it causes deadlocks.");
-    }
     PsiFile psiFile = element.getContainingFile();
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     if (virtualFile == null) {
@@ -198,7 +197,8 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     Project project = psiFile.getProject();
     if (virtualFile.isInLocalFileSystem() || virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) {
       // Try to find editor for the real file.
-      final FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
+      FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+      final FileEditor[] editors = fileEditorManager != null ? fileEditorManager.getEditors(virtualFile) : new FileEditor[0];
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           return ((TextEditor)editor).getEditor();
@@ -210,7 +210,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     if (asyncResult.isSucceeded()) {
       Editor editor = null;
       try {
-        editor = CommonDataKeys.EDITOR.getData(asyncResult.blockingGet(-1));
+        editor = CommonDataKeys.EDITOR.getData(Objects.requireNonNull(asyncResult.blockingGet(-1)));
       }
       catch (TimeoutException | ExecutionException e) {
         LOG.error(e);

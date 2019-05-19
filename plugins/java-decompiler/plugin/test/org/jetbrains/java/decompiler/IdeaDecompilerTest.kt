@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
 import com.intellij.JavaTestUtil
@@ -20,12 +20,15 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.*
 import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
-import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.util.lang.JavaVersion
 
 class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   override fun setUp() {
@@ -44,7 +47,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   }
 
   fun testSimple() {
-    val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/java/lang/String.class")
+    val file = getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang/String.class")
     val decompiled = IdeaDecompiler().getText(file).toString()
     assertTrue(decompiled, decompiled.startsWith("${IdeaDecompiler.BANNER}package java.lang;\n"))
     assertTrue(decompiled, decompiled.contains("public final class String"))
@@ -58,7 +61,8 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     val visitor = MyFileVisitor(psiManager)
     Registry.get("decompiler.dump.original.lines").withValue(true) {
       VfsUtilCore.visitChildrenRecursively(getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror"), visitor)
-      VfsUtilCore.visitChildrenRecursively(getTestFile("${PlatformTestUtil.getRtJarPath()}!/java/lang"), visitor)
+      VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/classes"), visitor)
+      VfsUtilCore.visitChildrenRecursively(getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang"), visitor)
     }
   }
 
@@ -117,32 +121,50 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
 
   fun testPerformance() {
     val decompiler = IdeaDecompiler()
-    val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/javax/swing/JTable.class")
+    val jrt = JavaVersion.current().feature >= 9
+    val base = if (jrt) "jrt://${SystemProperties.getJavaHome()}!/java.desktop/" else "jar://${SystemProperties.getJavaHome()}/lib/rt.jar!/"
+    val file = VirtualFileManager.getInstance().findFileByUrl(base + "javax/swing/JTable.class")!!
     PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 10000) { decompiler.getText(file) }.assertTiming()
   }
 
   fun testStructureView() {
     val file = getTestFile("StructureView.class")
     file.parent.children ; file.parent.refresh(false, true)  // inner classes
+    checkStructure(file, """
+      -StructureView.class
+       -StructureView
+        -B
+         B()
+         build(int): StructureView
+        StructureView()
+        getData(): int
+        setData(int): void
+        data: int""")
 
+    (PsiManager.getInstance(project).findFile(file) as? PsiCompiledFile)?.decompiledPsiFile
+
+    checkStructure(file, """
+      -StructureView.java
+       -StructureView
+        -B
+         B()
+         -build(int): StructureView
+          -${'$'}1
+           class initializer
+        StructureView()
+        getData(): int
+        setData(int): void
+        data: int""")
+  }
+
+  private fun checkStructure(file: VirtualFile, s: String) {
     val editor = FileEditorManager.getInstance(project).openFile(file, false)[0]
     val builder = StructureViewBuilder.PROVIDER.getStructureViewBuilder(StdFileTypes.CLASS, file, project)!!
     val svc = builder.createStructureView(editor, project) as StructureViewComponent
     Disposer.register(myFixture.testRootDisposable, svc)
     svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
-    TreeUtil.expandAll(svc.tree)
-    PlatformTestUtil.assertTreeStructureEquals(svc.tree.model, """
-      StructureView.java
-       StructureView
-        B
-         B()
-         build(int): StructureView
-          $1
-           class initializer
-        StructureView()
-        getData(): int
-        setData(int): void
-        data: int""".trimIndent())
+    PlatformTestUtil.expandAll(svc.tree)
+    PlatformTestUtil.assertTreeEqual(svc.tree, s.trimIndent())
   }
 
 

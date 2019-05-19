@@ -1,18 +1,4 @@
-/*
- * Copyright 2010-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -21,17 +7,27 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
 
-public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClassAccessInspectionBase implements CleanupLocalInspectionTool{
+/**
+ * @author Bas Leijdekkers
+ */
+public class UnqualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool{
+
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreReferencesToLocalInnerClasses = true;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -42,6 +38,24 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new UnqualifiedInnerClassAccessFix();
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("unqualified.inner.class.access.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("unqualified.inner.class.access.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnqualifiedInnerClassAccessVisitor();
   }
 
   private static class UnqualifiedInnerClassAccessFix extends InspectionGadgetsFix {
@@ -243,6 +257,44 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
 
     public Collection<PsiJavaCodeReferenceElement> getReferences() {
       return references;
+    }
+  }
+
+  private class UnqualifiedInnerClassAccessVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+      if (reference.isQualified()) {
+        return;
+      }
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)target;
+      if (!aClass.hasModifierProperty(PsiModifier.STATIC) && reference.getParent() instanceof PsiNewExpression) {
+          return;
+      }
+      final PsiClass containingClass = aClass.getContainingClass();
+      if (containingClass == null || containingClass instanceof PsiAnonymousClass) {
+        return;
+      }
+      if (ignoreReferencesToLocalInnerClasses) {
+        if (PsiTreeUtil.isAncestor(containingClass, reference, true)) {
+          return;
+        }
+        final PsiClass referenceClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
+        if (referenceClass != null && referenceClass.isInheritor(containingClass, true)) {
+          return;
+        }
+      }
+      registerError(reference, containingClass.getName());
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
     }
   }
 }

@@ -56,7 +56,7 @@ public class VcsInitialization implements Disposable {
 
   VcsInitialization(@NotNull final Project project) {
     myProject = project;
-    if (project.isDefault()) return;
+    LOG.assertTrue(!project.isDefault());
 
     StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> {
       if (project.isDisposed()) return;
@@ -142,7 +142,7 @@ public class VcsInitialization implements Disposable {
     waitFor(status -> status == Status.FINISHED);
   }
 
-  private void waitFor(@NotNull Predicate<Status> predicate) {
+  private void waitFor(@NotNull Predicate<? super Status> predicate) {
     LOG.debug("waitFor() status=" + myStatus);
     // have to wait for task completion to avoid running it in background for closed project
     long start = System.currentTimeMillis();

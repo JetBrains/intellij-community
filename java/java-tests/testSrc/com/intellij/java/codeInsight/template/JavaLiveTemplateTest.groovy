@@ -1,32 +1,27 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.template.JavaCodeContextType
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.codeInsight.template.impl.ConstantNode
-import com.intellij.codeInsight.template.impl.EmptyNode
-import com.intellij.codeInsight.template.impl.MacroCallNode
-import com.intellij.codeInsight.template.impl.TemplateImpl
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInsight.template.impl.TemplateSettings
-import com.intellij.codeInsight.template.impl.TextExpression
-import com.intellij.codeInsight.template.macro.ClassNameCompleteMacro
-import com.intellij.codeInsight.template.macro.CompleteMacro
-import com.intellij.codeInsight.template.macro.CompleteSmartMacro
-import com.intellij.codeInsight.template.macro.MethodReturnTypeMacro
-import com.intellij.codeInsight.template.macro.VariableOfTypeMacro
+import com.intellij.codeInsight.template.actions.SaveAsTemplateAction
+import com.intellij.codeInsight.template.impl.*
+import com.intellij.codeInsight.template.macro.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.psi.PsiDocumentManager
+import groovy.transform.CompileStatic
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
 
 /**
  * @author peter
  */
+@CompileStatic
 class JavaLiveTemplateTest extends LiveTemplateTestCase {
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"
   
@@ -235,6 +230,12 @@ class Outer {
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {
     myFixture.configureByText("a.java", text)
     return TemplateManagerImpl.isApplicable(myFixture.getFile(), getEditor().getCaretModel().getOffset(), inst)
+  }
+
+  void 'test generic type argument is declaration context'() {
+    myFixture.configureByText "a.java","class Foo {{ List<Pair<X, <caret>Y>> l; }}"
+    assert TemplateManagerImpl.getApplicableContextTypes(myFixture.file, myFixture.caretOffset).collect { it.class } ==
+           [JavaCodeContextType.Declaration]
   }
 
   void testJavaStatementContext() {
@@ -482,6 +483,37 @@ java.util.List<? extends Integer> list;
         
     }
 }}'''
+  }
 
+  void "test overtyping suggestion with a quote"() {
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = true
+
+    myFixture.configureByText 'a.java', '''
+class A {
+  {
+    String s;
+    <caret>s.toString();
+  }
+}'''
+    myFixture.doHighlighting()
+    myFixture.launchAction(myFixture.findSingleIntention('Initialize variable'))
+    myFixture.type('"')
+    myFixture.checkResult '''
+class A {
+  {
+    String s = "null";
+    s.toString();
+  }
+}'''
+    assert !myFixture.lookup
+  }
+
+  void "test save as live template for annotation values"() {
+    myFixture.addClass("package foo; public @interface Anno { String value(); }")
+    myFixture.configureByText "a.java", 'import foo.*; <selection>@Anno("")</selection> class T {}'
+    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file) == '@foo.Anno("")'
+
+    myFixture.configureByText "b.java", 'import foo.*; <selection>@Anno(value="")</selection> class T {}'
+    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file) == '@foo.Anno(value="")'
   }
 }

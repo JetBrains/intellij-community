@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.template.expressions;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -25,7 +11,6 @@ import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -34,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,7 +28,7 @@ import java.util.List;
 public class ChooseTypeExpression extends Expression {
   public static final InsertHandler<PsiTypeLookupItem> IMPORT_FIXER = new InsertHandler<PsiTypeLookupItem>() {
     @Override
-    public void handleInsert(InsertionContext context, PsiTypeLookupItem item) {
+    public void handleInsert(@NotNull InsertionContext context, @NotNull PsiTypeLookupItem item) {
       GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
     }
   };
@@ -79,7 +65,7 @@ public class ChooseTypeExpression extends Expression {
 
   @NotNull
   private static List<SmartTypePointer> createItems(@NotNull TypeConstraint[] constraints, @NotNull SmartTypePointerManager typePointerManager) {
-    List<SmartTypePointer> result = ContainerUtil.newArrayList();
+    List<SmartTypePointer> result = new ArrayList<>();
 
     for (TypeConstraint constraint : constraints) {
       if (constraint instanceof SubtypeConstraint) {
@@ -150,7 +136,7 @@ public class ChooseTypeExpression extends Expression {
 
   @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
-    List<LookupElement> result = ContainerUtil.newArrayList();
+    List<LookupElement> result = new ArrayList<>();
 
     for (SmartTypePointer item : myItems) {
       PsiType type = TypesUtil.unboxPrimitiveTypeWrapper(item.getType());

@@ -1,0 +1,8 @@
+{
+  "properties": {
+    "qwertyuiop": {}
+  },
+  "patternProperties": {
+    "^boo.*moo$": {}
+  }
+}

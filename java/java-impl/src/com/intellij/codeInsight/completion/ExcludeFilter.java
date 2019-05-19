@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 class ExcludeFilter implements ElementFilter {
   private final PsiElement myExcluded;
 
-  public ExcludeFilter(@NotNull PsiVariable excluded) {
+  ExcludeFilter(@NotNull PsiVariable excluded) {
     myExcluded = excluded;
   }
 

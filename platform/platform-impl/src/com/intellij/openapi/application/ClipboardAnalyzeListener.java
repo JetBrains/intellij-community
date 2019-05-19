@@ -28,7 +28,7 @@ public abstract class ClipboardAnalyzeListener implements ApplicationActivationL
   @Nullable private String myCachedClipboardValue;
 
   @Override
-  public void applicationActivated(final IdeFrame ideFrame) {
+  public void applicationActivated(@NotNull final IdeFrame ideFrame) {
     final Runnable processClipboard = () -> {
       final String clipboard = ClipboardUtil.getTextInClipboard();
       if (clipboard != null && clipboard.length() < MAX_SIZE && !clipboard.equals(myCachedClipboardValue)) {
@@ -52,7 +52,7 @@ public abstract class ClipboardAnalyzeListener implements ApplicationActivationL
   protected abstract void handle(@NotNull Project project, @NotNull String value);
 
   @Override
-  public void applicationDeactivated(IdeFrame ideFrame) {
+  public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
     myCachedClipboardValue = ClipboardUtil.getTextInClipboard();
   }
 

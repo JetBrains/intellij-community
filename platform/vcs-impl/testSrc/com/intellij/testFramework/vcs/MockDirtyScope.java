@@ -107,12 +107,12 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
   }
 
   @Override
-  public void iterate(Processor<FilePath> iterator) {
+  public void iterate(Processor<? super FilePath> iterator) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void iterateExistingInsideScope(Processor<VirtualFile> vf) {
+  public void iterateExistingInsideScope(Processor<? super VirtualFile> vf) {
     throw new UnsupportedOperationException();
   }
 
@@ -127,7 +127,7 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
   }
 
   @Override
-  public boolean belongsTo(FilePath path, Consumer<AbstractVcs> vcsConsumer) {
+  public boolean belongsTo(FilePath path, Consumer<? super AbstractVcs> vcsConsumer) {
     throw new UnsupportedOperationException();
   }
 }

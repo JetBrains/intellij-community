@@ -1,29 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.FontComboBox;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.MappingListCellRenderer;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,8 +15,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.Map;
 
 class PrintDialog extends DialogWrapper {
   private JRadioButton myRbCurrentFile = null;
@@ -40,7 +22,7 @@ class PrintDialog extends DialogWrapper {
   private JRadioButton myRbCurrentPackage = null;
   private JCheckBox myCbIncludeSubpackages = null;
 
-  private JComboBox myPaperSizeCombo = null;
+  private JComboBox<Object> myPaperSizeCombo = null;
 
   private JCheckBox myCbColorPrinting = null;
   private JCheckBox myCbSyntaxPrinting = null;
@@ -50,7 +32,7 @@ class PrintDialog extends DialogWrapper {
   private JRadioButton myRbLandscape = null;
 
   private FontComboBox myFontNameCombo = null;
-  private JComboBox myFontSizeCombo = null;
+  private JComboBox<Integer> myFontSizeCombo = null;
 
   private JCheckBox myCbLineNumbers = null;
 
@@ -66,33 +48,20 @@ class PrintDialog extends DialogWrapper {
   private JCheckBox myCbEvenNumberOfPages = null;
 
   private JTextField myLineTextField1 = null;
-  private JComboBox myLinePlacementCombo1 = null;
-  private JComboBox myLineAlignmentCombo1 = null;
+  private JComboBox<PrintSettings.Placement> myLinePlacementCombo1 = null;
+  private JComboBox<PrintSettings.Alignment> myLineAlignmentCombo1 = null;
   private JTextField myLineTextField2 = null;
-  private JComboBox myLinePlacementCombo2 = null;
-  private JComboBox myLineAlignmentCombo2 = null;
-  private JComboBox myFooterFontSizeCombo = null;
+  private JComboBox<PrintSettings.Placement> myLinePlacementCombo2 = null;
+  private JComboBox<PrintSettings.Alignment> myLineAlignmentCombo2 = null;
+  private JComboBox<Integer> myFooterFontSizeCombo = null;
   private FontComboBox myFooterFontNameCombo = null;
-  private String myFileName = null;
-  private String myDirectoryName = null;
+  private final String myFileName;
+  private final String myDirectoryName;
   private final boolean isSelectedTextEnabled;
   private final int mySelectedFileCount;
-
-  private static final Map<Object, String> PLACEMENT_MAP = new HashMap<>();
-  private static final Map<Object, String> ALIGNMENT_MAP = new HashMap<>();
   private final String mySelectedText;
 
-  static {
-    PLACEMENT_MAP.put(PrintSettings.HEADER, CodeEditorBundle.message("print.header.placement.header"));
-    PLACEMENT_MAP.put(PrintSettings.FOOTER, CodeEditorBundle.message("print.header.placement.footer"));
-
-    ALIGNMENT_MAP.put(PrintSettings.LEFT, CodeEditorBundle.message("print.header.alignment.left"));
-    ALIGNMENT_MAP.put(PrintSettings.CENTER, CodeEditorBundle.message("print.header.alignment.center"));
-    ALIGNMENT_MAP.put(PrintSettings.RIGHT, CodeEditorBundle.message("print.header.alignment.right"));
-  }
-
-
-  public PrintDialog(String fileName, String directoryName, String selectedText, int selectedFileCount, Project project) {
+  PrintDialog(String fileName, String directoryName, String selectedText, int selectedFileCount, Project project) {
     super(project, true);
     mySelectedText = selectedText;
     setOKButtonText(CodeEditorBundle.message("print.print.button"));
@@ -117,7 +86,7 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.weightx = 1;
 
     gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.insets = new Insets(0,0,0,0);
+    gbConstraints.insets = JBUI.emptyInsets();
 
     myRbCurrentFile = new JRadioButton(mySelectedFileCount > 1 ? CodeEditorBundle.message("print.files.radio", mySelectedFileCount)
                                                                : CodeEditorBundle.message("print.file.name.radio",
@@ -126,18 +95,18 @@ class PrintDialog extends DialogWrapper {
 
     myRbSelectedText = new JRadioButton(mySelectedText != null ? mySelectedText : CodeEditorBundle.message("print.selected.text.radio"));
     gbConstraints.gridy++;
-    gbConstraints.insets = new Insets(0,0,0,0);
+    gbConstraints.insets = JBUI.emptyInsets();
     panel.add(myRbSelectedText, gbConstraints);
 
     myRbCurrentPackage = new JRadioButton(
       CodeEditorBundle.message("print.all.files.in.directory.radio", (myDirectoryName != null ? myDirectoryName : "")));
     gbConstraints.gridy++;
-    gbConstraints.insets = new Insets(0,0,0,0);
+    gbConstraints.insets = JBUI.emptyInsets();
     panel.add(myRbCurrentPackage, gbConstraints);
 
     myCbIncludeSubpackages = new JCheckBox(CodeEditorBundle.message("print.include.subdirectories.checkbox"));
     gbConstraints.gridy++;
-    gbConstraints.insets = new Insets(0,20,0,0);
+    gbConstraints.insets = JBUI.insetsLeft(20);
     panel.add(myCbIncludeSubpackages, gbConstraints);
 
     ButtonGroup buttonGroup = new ButtonGroup();
@@ -178,7 +147,7 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.gridheight = 1;
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 0;
-    gbConstraints.insets = new Insets(0, 8, 6, 4);
+    gbConstraints.insets = JBUI.insets(0, 8, 6, 4);
     gbConstraints.fill = GridBagConstraints.BOTH;
 
     JLabel paperSizeLabel = new MyLabel(CodeEditorBundle.message("print.settings.paper.size.label"));
@@ -216,7 +185,7 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.gridy++;
     panel.add(myCbEvenNumberOfPages, gbConstraints);
 
-    gbConstraints.insets = new Insets(0, 0, 6, 4);
+    gbConstraints.insets = JBUI.insets(0, 0, 6, 4);
     gbConstraints.gridx = 0;
     gbConstraints.gridwidth = 3;
     gbConstraints.gridy++;
@@ -239,7 +208,7 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 0;
     gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.insets = new Insets(0, 0, 6, 4);
+    gbConstraints.insets = JBUI.insets(0, 0, 6, 4);
 
     panel.add(createWrappingPanel(), gbConstraints);
 
@@ -396,23 +365,23 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.gridheight = 1;
     gbConstraints.weightx = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.insets = new Insets(0, 0, 6, 4);
+    gbConstraints.insets = JBUI.insets(0, 0, 6, 4);
 
     gbConstraints.gridwidth = 3;
     myLineTextField1 = new MyTextField(30);
-    myLinePlacementCombo1 = new ComboBox();
-    myLineAlignmentCombo1 = new ComboBox();
+    myLinePlacementCombo1 = new ComboBox<>();
+    myLineAlignmentCombo1 = new ComboBox<>();
     JPanel linePanel1 = createLinePanel(CodeEditorBundle.message("print.header.line.1.label"), myLineTextField1, myLinePlacementCombo1, myLineAlignmentCombo1);
     panel.add(linePanel1, gbConstraints);
 
     myLineTextField2 = new MyTextField(30);
-    myLinePlacementCombo2 = new ComboBox();
-    myLineAlignmentCombo2 = new ComboBox();
+    myLinePlacementCombo2 = new ComboBox<>();
+    myLineAlignmentCombo2 = new ComboBox<>();
     JPanel linePanel2 = createLinePanel(CodeEditorBundle.message("print.header.line.2.label"), myLineTextField2, myLinePlacementCombo2, myLineAlignmentCombo2);
     gbConstraints.gridy++;
     panel.add(linePanel2, gbConstraints);
 
-    gbConstraints.insets = new Insets(0, 8, 6, 4);
+    gbConstraints.insets = JBUI.insets(0, 8, 6, 4);
     gbConstraints.gridy++;
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
@@ -428,7 +397,10 @@ class PrintDialog extends DialogWrapper {
     return panel;
   }
 
-  private static JPanel createLinePanel(String name, JTextField lineTextField, JComboBox linePlacementCombo, JComboBox lineAlignmentCombo) {
+  private static JPanel createLinePanel(String name,
+                                        JTextField lineTextField,
+                                        JComboBox<PrintSettings.Placement> linePlacementCombo,
+                                        JComboBox<PrintSettings.Alignment> lineAlignmentCombo) {
     JPanel panel = new JPanel();
     panel.setBorder(IdeBorderFactory.createTitledBorder(name, true));
     panel.setLayout(new GridBagLayout());
@@ -439,7 +411,7 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.gridheight = 1;
     gbConstraints.weightx = 0;
     gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.insets = new Insets(0, 0, 6, 0);
+    gbConstraints.insets = JBUI.insetsBottom(6);
 
     panel.add(new MyLabel(CodeEditorBundle.message("print.header.text.line.editbox")), gbConstraints);
     gbConstraints.gridx = 1;
@@ -452,9 +424,8 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.gridx = 0;
     gbConstraints.weightx = 0;
     panel.add(new MyLabel(CodeEditorBundle.message("print.header.placement.combobox")), gbConstraints);
-    linePlacementCombo.addItem(PrintSettings.HEADER);
-    linePlacementCombo.addItem(PrintSettings.FOOTER);
-    linePlacementCombo.setRenderer(new MappingListCellRenderer(linePlacementCombo.getRenderer(), PLACEMENT_MAP));
+    linePlacementCombo.addItem(PrintSettings.Placement.Header);
+    linePlacementCombo.addItem(PrintSettings.Placement.Footer);
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 0;
     panel.add(linePlacementCombo, gbConstraints);
@@ -466,10 +437,9 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.gridx = 3;
     gbConstraints.weightx = 0;
     panel.add(new MyLabel(CodeEditorBundle.message("print.header.alignment.combobox")), gbConstraints);
-    linePlacementCombo.setRenderer(new MappingListCellRenderer(linePlacementCombo.getRenderer(), ALIGNMENT_MAP));
-    lineAlignmentCombo.addItem(PrintSettings.LEFT);
-    lineAlignmentCombo.addItem(PrintSettings.CENTER);
-    lineAlignmentCombo.addItem(PrintSettings.RIGHT);
+    lineAlignmentCombo.addItem(PrintSettings.Alignment.Left);
+    lineAlignmentCombo.addItem(PrintSettings.Alignment.Center);
+    lineAlignmentCombo.addItem(PrintSettings.Alignment.Right);
     gbConstraints.gridx = 4;
     gbConstraints.weightx = 0;
     panel.add(lineAlignmentCombo, gbConstraints);
@@ -477,25 +447,24 @@ class PrintDialog extends DialogWrapper {
     return panel;
   }
 
-  private static JComboBox createFontSizesComboBox() {
-    JComboBox comboBox = new ComboBox();
-    for(int i = 6; i < 40; i++) {
-      comboBox.addItem(String.valueOf(i));
+  private static JComboBox<Integer> createFontSizesComboBox() {
+    JComboBox<Integer> comboBox = new ComboBox<>();
+    for (int i = 6; i < 40; i++) {
+      comboBox.addItem(Integer.valueOf(i));
     }
     return comboBox;
   }
 
-  private static JComboBox createPageSizesCombo() {
-    JComboBox pageSizesCombo = new ComboBox();
-    String[] names = PageSizes.getNames();
-    for (String name : names) {
+  private static JComboBox<Object> createPageSizesCombo() {
+    JComboBox<Object> pageSizesCombo = new ComboBox<>();
+    for (String name : PageSizes.getNames()) {
       pageSizesCombo.addItem(PageSizes.getItem(name));
     }
     return pageSizesCombo;
   }
 
   private static class MyTailPanel extends JPanel {
-    public MyTailPanel(){
+    MyTailPanel(){
       setFocusable(false);
     }
 
@@ -538,7 +507,7 @@ class PrintDialog extends DialogWrapper {
       myRbLandscape.setSelected(true);
     }
     myFontNameCombo.setFontName(printSettings.FONT_NAME);
-    myFontSizeCombo.setSelectedItem(String.valueOf(printSettings.FONT_SIZE));
+    myFontSizeCombo.setSelectedItem(Integer.valueOf(printSettings.FONT_SIZE));
 
     myCbLineNumbers.setSelected(printSettings.PRINT_LINE_NUMBERS);
 
@@ -565,7 +534,7 @@ class PrintDialog extends DialogWrapper {
     myLinePlacementCombo2.setSelectedItem(printSettings.FOOTER_HEADER_PLACEMENT2);
     myLineAlignmentCombo2.setSelectedItem(printSettings.FOOTER_HEADER_ALIGNMENT2);
 
-    myFooterFontSizeCombo.setSelectedItem(String.valueOf(printSettings.FOOTER_HEADER_FONT_SIZE));
+    myFooterFontSizeCombo.setSelectedItem(Integer.valueOf(printSettings.FOOTER_HEADER_FONT_SIZE));
     myFooterFontNameCombo.setFontName(printSettings.FOOTER_HEADER_FONT_NAME);
   }
 
@@ -591,12 +560,7 @@ class PrintDialog extends DialogWrapper {
     printSettings.PORTRAIT_LAYOUT = myRbPortrait.isSelected();
 
     printSettings.FONT_NAME = myFontNameCombo.getFontName();
-
-    try {
-      String fontSizeStr = (String)myFontSizeCombo.getSelectedItem();
-      printSettings.FONT_SIZE = Integer.parseInt(fontSizeStr);
-    }
-    catch(NumberFormatException ignored) { }
+    printSettings.FONT_SIZE = ObjectUtils.notNull((Integer)myFontSizeCombo.getSelectedItem(), printSettings.FONT_SIZE);
 
     printSettings.PRINT_LINE_NUMBERS = myCbLineNumbers.isSelected();
 
@@ -625,36 +589,33 @@ class PrintDialog extends DialogWrapper {
 
     printSettings.DRAW_BORDER = myCbDrawBorder.isSelected();
     printSettings.EVEN_NUMBER_OF_PAGES = myCbEvenNumberOfPages.isSelected();
+
     printSettings.FOOTER_HEADER_TEXT1 = myLineTextField1.getText();
-    printSettings.FOOTER_HEADER_ALIGNMENT1 = (String)myLineAlignmentCombo1.getSelectedItem();
-    printSettings.FOOTER_HEADER_PLACEMENT1 = (String)myLinePlacementCombo1.getSelectedItem();
+    printSettings.FOOTER_HEADER_ALIGNMENT1 = (PrintSettings.Alignment)myLineAlignmentCombo1.getSelectedItem();
+    printSettings.FOOTER_HEADER_PLACEMENT1 = (PrintSettings.Placement)myLinePlacementCombo1.getSelectedItem();
 
     printSettings.FOOTER_HEADER_TEXT2 = myLineTextField2.getText();
-    printSettings.FOOTER_HEADER_ALIGNMENT2 = (String)myLineAlignmentCombo2.getSelectedItem();
-    printSettings.FOOTER_HEADER_PLACEMENT2 = (String)myLinePlacementCombo2.getSelectedItem();
-
-    try {
-      printSettings.FOOTER_HEADER_FONT_SIZE = Integer.parseInt((String)myFooterFontSizeCombo.getSelectedItem());
-    }
-    catch(NumberFormatException ignored) { }
+    printSettings.FOOTER_HEADER_ALIGNMENT2 = (PrintSettings.Alignment)myLineAlignmentCombo2.getSelectedItem();
+    printSettings.FOOTER_HEADER_PLACEMENT2 = (PrintSettings.Placement)myLinePlacementCombo2.getSelectedItem();
 
     printSettings.FOOTER_HEADER_FONT_NAME = myFooterFontNameCombo.getFontName();
-
+    printSettings.FOOTER_HEADER_FONT_SIZE =
+      ObjectUtils.notNull((Integer)myFooterFontSizeCombo.getSelectedItem(), printSettings.FOOTER_HEADER_FONT_SIZE);
   }
 
-  @Override
   @NotNull
+  @Override
   protected Action[] createActions() {
-    return new Action[]{getOKAction(),getCancelAction(), new ApplyAction(), getHelpAction()};
+    return new Action[]{getOKAction(), getCancelAction(), new ApplyAction(), getHelpAction()};
   }
 
   @Override
-  public void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.PRINT);
+  protected String getHelpId() {
+    return HelpID.PRINT;
   }
 
-  class ApplyAction extends AbstractAction{
-    public ApplyAction(){
+  private class ApplyAction extends AbstractAction{
+    ApplyAction(){
       putValue(Action.NAME, CodeEditorBundle.message("print.apply.button"));
     }
 
@@ -664,11 +625,11 @@ class PrintDialog extends DialogWrapper {
     }
   }
 
-
   private static class MyTextField extends JTextField {
-    public MyTextField(int size) {
+    MyTextField(int size) {
      super(size);
     }
+
     @Override
     public Dimension getMinimumSize() {
       return super.getPreferredSize();
@@ -676,14 +637,13 @@ class PrintDialog extends DialogWrapper {
   }
 
   private static class MyLabel extends JLabel {
-    public MyLabel(String text) {
+    MyLabel(String text) {
      super(text);
     }
+
     @Override
     public Dimension getMinimumSize() {
       return super.getPreferredSize();
     }
   }
-
-
 }

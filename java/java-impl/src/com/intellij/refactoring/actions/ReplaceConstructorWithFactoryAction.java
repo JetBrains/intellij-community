@@ -29,7 +29,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author dsl
  */
-public class ReplaceConstructorWithFactoryAction extends BaseRefactoringAction {
+public class ReplaceConstructorWithFactoryAction extends BaseJavaRefactoringAction {
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return false;
   }
@@ -44,9 +45,10 @@ public class ReplaceConstructorWithFactoryAction extends BaseRefactoringAction {
                                                         @NotNull Editor editor,
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context) {
-    return (element instanceof PsiMethod &&
-            ((PsiMethod)element).isConstructor() &&
-            acceptClass(((PsiMethod)element).getContainingClass())  ||
+    PsiMethod method = RefactoringActionContextUtil.getJavaMethodHeader(element);
+    return (method != null &&
+            method.isConstructor() &&
+            acceptClass(method.getContainingClass())  ||
             acceptClass(element))
            && element.getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
@@ -55,6 +57,7 @@ public class ReplaceConstructorWithFactoryAction extends BaseRefactoringAction {
     return element instanceof PsiClass && !((PsiClass)element).isEnum();
   }
 
+  @Override
   protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new ReplaceConstructorWithFactoryHandler();
   }

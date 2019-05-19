@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.module.Module;
@@ -27,7 +13,7 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +29,7 @@ import java.util.Arrays;
 public class JarArtifactFromModulesDialog extends DialogWrapper {
   private JPanel myMainPanel;
   private TextFieldWithBrowseButton myMainClassField;
-  private JComboBox myModuleComboBox;
+  private JComboBox<Module> myModuleComboBox;
   private JLabel myMainClassLabel;
   private TextFieldWithBrowseButton myManifestDirField;
   private JLabel myManifestDirLabel;
@@ -63,7 +49,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     ManifestFileUtil.setupMainClassField(project, myMainClassField);
     myMainClassField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateManifestDirField();
       }
     });
@@ -92,7 +78,10 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     for (Module module : modules) {
       myModuleComboBox.addItem(module);
     }
-    myModuleComboBox.setRenderer(new ModuleListRenderer(myModuleComboBox));
+    myModuleComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      label.setIcon(value != null ? ModuleType.get(value).getIcon() : null);
+      label.setText(value != null ? value.getName() : "<All Modules>");
+    }));
     new ComboboxSpeedSearch(myModuleComboBox) {
       @Override
       protected String getElementText(Object element) {
@@ -156,23 +145,5 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return "reference.project.structure.artifacts.jar.from.module";
-  }
-
-  private static class ModuleListRenderer extends ListCellRendererWrapper<Module> {
-    public ModuleListRenderer(JComboBox comboBox) {
-      super();
-    }
-
-    @Override
-    public void customize(JList list, Module value, int index, boolean selected, boolean hasFocus) {
-      if (value != null) {
-        setIcon(ModuleType.get(value).getIcon());
-        setText(value.getName());
-      }
-      else {
-        setText("<All Modules>");
-        setIcon(null);
-      }
-    }
   }
 }

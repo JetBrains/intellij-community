@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.psi;
 
 import com.intellij.json.JsonElementTypes;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -220,7 +222,7 @@ public class JsonPsiUtil {
     if (property == null) return Collections.emptySet();
     JsonObject object = ObjectUtils.tryCast(property.getParent(), JsonObject.class);
     if (object == null) return Collections.emptySet();
-    Set<String> result = ContainerUtil.newHashSet();
+    Set<String> result = new HashSet<>();
     for (JsonProperty jsonProperty : object.getPropertyList()) {
       if (jsonProperty != property) {
         result.add(jsonProperty.getName());

@@ -1,7 +1,8 @@
 REGEXP_FILE
-  PsiErrorElement:Dangling metacharacter
-    <empty list>
-  PsiElement(STAR)('*')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(CHARACTER)('a')
+  RegExpPatternImpl: <*a>
+    RegExpBranchImpl: <*a>
+      PsiErrorElement:Dangling metacharacter
+        <empty list>
+      PsiElement(STAR)('*')
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')

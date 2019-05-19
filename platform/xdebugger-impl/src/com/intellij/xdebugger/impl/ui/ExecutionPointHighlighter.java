@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +9,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -168,7 +154,7 @@ public class ExecutionPointHighlighter {
 
   private void removeHighlighter() {
     if (myEditor != null) {
-      adjustCounter(myEditor, -1);
+      disableMouseHoverPopups(myEditor, false);
     }
 
     //if (myNotTopFrame && myEditor != null) {
@@ -182,7 +168,7 @@ public class ExecutionPointHighlighter {
   }
 
   private void addHighlighter() {
-    adjustCounter(myEditor, 1);
+    disableMouseHoverPopups(myEditor, true);
     int line = mySourcePosition.getLine();
     Document document = myEditor.getDocument();
     if (line < 0 || line >= document.getLineCount()) return;
@@ -222,16 +208,18 @@ public class ExecutionPointHighlighter {
     return myRangeHighlighter != null && myRangeHighlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
   }
 
-  private static void adjustCounter(@NotNull final Editor editor, final int increment) {
+  private static void disableMouseHoverPopups(@NotNull final Editor editor, final boolean disable) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    // need to always invoke later to maintain order of increment/decrement
+    // need to always invoke later to maintain order of enabling/disabling
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
-      JComponent component = editor.getComponent();
-      Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
-      Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
-      component.putClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
+      if (disable) {
+        EditorMouseHoverPopupControl.disablePopups(editor.getDocument());
+      }
+      else {
+        EditorMouseHoverPopupControl.enablePopups(editor.getDocument());
+      }
     });
   }
 

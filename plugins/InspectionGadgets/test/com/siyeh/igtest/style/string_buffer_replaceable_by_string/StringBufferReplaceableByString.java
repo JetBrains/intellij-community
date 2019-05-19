@@ -29,6 +29,11 @@ public class StringBufferReplaceableByString {
 
   public void exceptions(String pcdata, int i) {
     StringBuilder b = new StringBuilder();
+    String s = new <warning descr="'StringBuilder' can be replaced with 'String'">StringBuilder</warning>().append(pcdata, 0, i).toString();
+  }
+
+  public void exceptions(CharSequence pcdata, int i) {
+    StringBuilder b = new StringBuilder();
     String s = new StringBuilder().append(pcdata, 0, i).toString();
   }
 

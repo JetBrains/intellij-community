@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.lang.Language;
@@ -46,6 +32,7 @@ import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -60,10 +47,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
   private final LanguageInjectionSupport mySupport;
 
 
-  public ConcatenationInjector(Configuration configuration, Project project, TemporaryPlacesRegistry temporaryPlacesRegistry) {
-    myConfiguration = configuration;
+  public ConcatenationInjector(Project project) {
+    myConfiguration = Configuration.getProjectInstance(project);
     myProject = project;
-    myTemporaryPlacesRegistry = temporaryPlacesRegistry;
+    myTemporaryPlacesRegistry = TemporaryPlacesRegistry.getInstance(project);
     mySupport = InjectorUtils.findNotNullInjectionSupport(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
 
   }
@@ -86,19 +73,32 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
     }
     if (!hasLiteral) return;
+    processOperandsInjection(registrar, containingFile, tempInjectedLanguage, operands);
+  }
+
+  private void processOperandsInjection(@NotNull MultiHostRegistrar registrar,
+                                        @NotNull PsiFile containingFile, @Nullable InjectedLanguage tempInjectedLanguage,
+                                        @NotNull PsiElement[] operands) {
     Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
-    PsiFile finalContainingFile = containingFile;
-    InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, mySupport, operands) {
+    LanguageInjectionSupport injectionSupport = tempLanguage == null
+                                                ? mySupport
+                                                : TemporaryPlacesRegistry.getInstance(myProject).getLanguageInjectionSupport();
+    InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, injectionSupport, operands) {
       @Override
       protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
-                                                                          List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                                                          List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                                                           boolean settingsAvailable,
                                                                           boolean unparsable) {
-        InjectorUtils.registerInjection(language, list, finalContainingFile, registrar);
-        InjectorUtils.registerSupport(mySupport, settingsAvailable, list.get(0).getFirst(), language);
+        InjectorUtils.registerInjection(language, list, containingFile, registrar);
+        InjectorUtils.registerSupport(getLanguageInjectionSupport(), settingsAvailable, list.get(0).getFirst(), language);
         PsiLanguageInjectionHost host = list.get(0).getFirst();
-        InjectorUtils.putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable ? Boolean.TRUE : null);
-        return Pair.create(host,language);
+        if (tempLanguage != null) {
+          InjectorUtils
+            .putInjectedFileUserData(host, language, LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, tempInjectedLanguage);
+        }
+        InjectorUtils
+          .putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable ? Boolean.TRUE : null);
+        return Pair.create(host, language);
       }
 
       @Override
@@ -424,7 +424,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
-                                                                        List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                                                        List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                                                         boolean xmlInjection,
                                                                         boolean unparsable) {
       return null;
@@ -432,6 +432,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
     protected boolean areThereInjectionsWithName(String methodName, boolean annoOnly) {
       return true;
+    }
+
+    public LanguageInjectionSupport getLanguageInjectionSupport() {
+      return mySupport;
     }
   }
 
@@ -444,7 +448,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         return true;
       }
     }
-    else if (parent instanceof PsiPolyadicExpression || 
+    else if (parent instanceof PsiPolyadicExpression ||
              parent instanceof PsiParenthesizedExpression ||
              parent instanceof PsiConditionalExpression) {
       return true;

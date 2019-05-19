@@ -8,6 +8,7 @@ import sys
 
 _T = TypeVar('_T')
 _ActionT = TypeVar('_ActionT', bound='Action')
+_N = TypeVar('_N')
 
 if sys.version_info >= (3,):
     _Text = str
@@ -61,9 +62,10 @@ class _ActionsContainer:
                      choices: Iterable[_T] = ...,
                      required: bool = ...,
                      help: Optional[_Text] = ...,
-                     metavar: Union[_Text, Tuple[_Text, ...]] = ...,
+                     metavar: Optional[Union[_Text, Tuple[_Text, ...]]] = ...,
                      dest: Optional[_Text] = ...,
-                     version: _Text = ...) -> Action: ...
+                     version: _Text = ...,
+                     **kwargs: Any) -> Action: ...
     def add_argument_group(self, *args: Any, **kwargs: Any) -> _ArgumentGroup: ...
     def add_mutually_exclusive_group(self, **kwargs: Any) -> _MutuallyExclusiveGroup: ...
     def _add_action(self, action: _ActionT) -> _ActionT: ...
@@ -120,17 +122,42 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
                      argument_default: Optional[_Text] = ...,
                      conflict_handler: _Text = ...,
                      add_help: bool = ...) -> None: ...
-    def parse_args(self, args: Optional[Sequence[_Text]] = ...,
-                   namespace: Optional[Namespace] = ...) -> Namespace: ...
-    def add_subparsers(self, title: _Text = ...,
-                       description: Optional[_Text] = ...,
-                       prog: _Text = ...,
-                       parser_class: Type[ArgumentParser] = ...,
-                       action: Type[Action] = ...,
-                       option_string: _Text = ...,
-                       dest: Optional[_Text] = ...,
-                       help: Optional[_Text] = ...,
-                       metavar: Optional[_Text] = ...) -> _SubParsersAction: ...
+
+    # The type-ignores in these overloads should be temporary.  See:
+    # https://github.com/python/typeshed/pull/2643#issuecomment-442280277
+    @overload
+    def parse_args(self, args: Optional[Sequence[_Text]] = ...) -> Namespace: ...
+    @overload
+    def parse_args(self, args: Optional[Sequence[_Text]], namespace: None) -> Namespace: ...  # type: ignore
+    @overload
+    def parse_args(self, args: Optional[Sequence[_Text]], namespace: _N) -> _N: ...
+    @overload
+    def parse_args(self, *, namespace: None) -> Namespace: ...  # type: ignore
+    @overload
+    def parse_args(self, *, namespace: _N) -> _N: ...
+
+    if sys.version_info >= (3, 7):
+        def add_subparsers(self, title: _Text = ...,
+                           description: Optional[_Text] = ...,
+                           prog: _Text = ...,
+                           parser_class: Type[ArgumentParser] = ...,
+                           action: Type[Action] = ...,
+                           option_string: _Text = ...,
+                           dest: Optional[_Text] = ...,
+                           required: bool = ...,
+                           help: Optional[_Text] = ...,
+                           metavar: Optional[_Text] = ...) -> _SubParsersAction: ...
+    else:
+        def add_subparsers(self, title: _Text = ...,
+                           description: Optional[_Text] = ...,
+                           prog: _Text = ...,
+                           parser_class: Type[ArgumentParser] = ...,
+                           action: Type[Action] = ...,
+                           option_string: _Text = ...,
+                           dest: Optional[_Text] = ...,
+                           help: Optional[_Text] = ...,
+                           metavar: Optional[_Text] = ...) -> _SubParsersAction: ...
+
     def print_usage(self, file: Optional[IO[str]] = ...) -> None: ...
     def print_help(self, file: Optional[IO[str]] = ...) -> None: ...
     def format_usage(self) -> str: ...
@@ -221,7 +248,7 @@ class Action(_AttributeHolder):
     choices: Optional[Iterable[Any]]
     required: bool
     help: Optional[_Text]
-    metavar: Union[_Text, Tuple[_Text, ...]]
+    metavar: Optional[Union[_Text, Tuple[_Text, ...]]]
 
     def __init__(self,
                  option_strings: Sequence[_Text],
@@ -356,6 +383,7 @@ class _SubParsersAction(Action):
     _prog_prefix: _Text
     _parser_class: Type[ArgumentParser]
     _name_parser_map: Dict[_Text, ArgumentParser]
+    choices: Dict[_Text, ArgumentParser]
     _choices_actions: List[Action]
     def __init__(self,
                  option_strings: Sequence[_Text],

@@ -3,8 +3,6 @@ package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -84,14 +82,13 @@ class SheetMessage implements Disposable {
     myWindow.setFocusable(true);
     myWindow.setFocusableWindowState(true);
     myWindow.setSize(myController.SHEET_NC_WIDTH, 0);
-
-    setWindowOpacity(0.0f);
+    myWindow.setOpacity(0.0f);
 
     ComponentAdapter componentListener = new ComponentAdapter() {
       @Override
       public void componentShown(@NotNull ComponentEvent e) {
         super.componentShown(e);
-        setWindowOpacity(1.0f);
+        myWindow.setOpacity(1.0f);
         myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
       }
     };
@@ -140,10 +137,8 @@ class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
-    final Runnable closer = _showTouchBar(buttons, defaultButton);
+    _showTouchBar();
     myWindow.setVisible(true);
-    if (closer != null)
-      closer.run();
     LaterInvocator.leaveModal(myWindow);
 
     Component focusCandidate = beforeShowFocusOwner.get();
@@ -167,17 +162,13 @@ class SheetMessage implements Disposable {
     myWindow.dispose();
   }
 
-  private Runnable _showTouchBar(String[] buttons, String defaultButton) {
+  private void _showTouchBar() {
     if (!TouchBarsManager.isTouchBarAvailable())
-      return null;
+      return;
 
-    final Runnable[] actions = new Runnable[buttons.length];
-    final ModalityState ms = LaterInvocator.getCurrentModalityState();
-    for (int c = 0; c < buttons.length; ++c) {
-      final String sb = buttons[c];
-      actions[c] = () -> ApplicationManager.getApplication().invokeLater(() -> myController.setResultAndStartClose(sb), ms);
-    }
-    return TouchBarsManager.showMessageDlgBar(buttons, actions, defaultButton);
+    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myController.getSheetPanel());
+    if (tb != null)
+      Disposer.register(this, tb);
   }
 
   private static void maximizeIfNeeded(final Window owner) {
@@ -187,16 +178,6 @@ class SheetMessage implements Disposable {
       if (f.getState() == Frame.ICONIFIED) {
         f.setState(Frame.NORMAL);
       }
-    }
-  }
-
-  private void setWindowOpacity(float opacity) {
-    try {
-      Method setOpacityMethod = myWindow.getClass().getMethod("setOpacity", Float.TYPE);
-      setOpacityMethod.invoke(myWindow, opacity);
-    }
-    catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-      LOG.error(e);
     }
   }
 

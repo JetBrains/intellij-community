@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.icons.AllIcons;
@@ -21,6 +7,7 @@ import com.intellij.ide.favoritesTreeView.FavoritesViewTreeBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -33,9 +20,10 @@ public class FavoritesCompactEmptyMiddlePackagesAction extends FavoritesToolbarB
   }
 
   @Override
-  public void updateButton(AnActionEvent e) {
+  public void updateButton(@NotNull AnActionEvent e) {
     super.updateButton(e);
     Presentation presentation = e.getPresentation();
+    // see com.intellij.ide.projectView.impl.ProjectViewImpl.HideEmptyMiddlePackagesAction.update
     if (getViewSettings().isFlattenPackages()) {
       presentation.setText(IdeBundle.message("action.hide.empty.middle.packages"));
       presentation.setDescription(IdeBundle.message("action.show.hide.empty.middle.packages"));

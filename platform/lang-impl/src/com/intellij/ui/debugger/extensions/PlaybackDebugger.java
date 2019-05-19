@@ -160,12 +160,12 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myChanged);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (pathToFile() == null) {
         VirtualFile selectedFile = FileChooser.chooseFile(FILE_DESCRIPTOR, myComponent, getEventProject(e), null);
         if (selectedFile != null) {
@@ -182,7 +182,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private static class ScriptFileChooserDescriptor extends FileChooserDescriptor {
-    public ScriptFileChooserDescriptor() {
+    ScriptFileChooserDescriptor() {
       super(true, false, false, false, false, false);
       putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
       putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
@@ -203,7 +203,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       VirtualFile selectedFile = FileChooser.chooseFile(FILE_DESCRIPTOR, myComponent, getEventProject(e), pathToFile());
       if (selectedFile != null) {
         myState.currentScript = selectedFile.getPresentableUrl();
@@ -219,7 +219,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myState.currentScript = "";
       myCurrentScript.setText(myState.currentScript);
       fillDocument("");
@@ -271,12 +271,12 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myRunner != null);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (myRunner != null) {
         myRunner.stop();
         SwingUtilities.invokeLater(() -> myRunner = null);
@@ -290,12 +290,12 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       activateAndRun();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myRunner == null);
     }
   }
@@ -303,16 +303,16 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private class RunOnFameActivationAction extends AnAction {
 
     private RunOnFameActivationAction() {
-      super("Run On Frame Activation", "", AllIcons.General.Run);
+      super("Run On Frame Activation", "", AllIcons.RunConfigurations.TestState.Run);
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myRunner == null);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       runOnFrame();
     }
   }

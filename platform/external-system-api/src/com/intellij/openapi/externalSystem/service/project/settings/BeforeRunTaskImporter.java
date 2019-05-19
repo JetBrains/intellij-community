@@ -14,6 +14,17 @@ import java.util.Map;
 public interface BeforeRunTaskImporter {
   ExtensionPointName<BeforeRunTaskImporter> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.beforeRunTaskImporter");
 
+  /**
+   * Given a map of configuration settings,
+   * optionally create relevant BeforeRunTask if it is missing from beforeRunTasks list
+   *
+   * @param project
+   * @param modelsProvider
+   * @param runConfiguration
+   * @param beforeRunTasks
+   * @param cfg
+   * @return
+   */
   List<BeforeRunTask> process(@NotNull Project project,
                @NotNull IdeModifiableModelsProvider modelsProvider,
                @NotNull RunConfiguration runConfiguration,

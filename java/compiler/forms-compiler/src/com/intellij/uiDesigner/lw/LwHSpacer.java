@@ -25,7 +25,8 @@ public final class LwHSpacer extends LwAtomicComponent {
   public LwHSpacer() throws Exception{
     super("com.intellij.uiDesigner.core.Spacer");
   }
-  
+
+  @Override
   public void read(final Element element, final PropertiesProvider provider) throws Exception{
     readBase(element);
     readConstraints(element);

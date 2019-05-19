@@ -26,6 +26,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
@@ -36,7 +37,7 @@ import javax.swing.tree.TreePath;
  */
 public abstract class ArrayFilterAction extends AnAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getFilterNode(e) != null);
   }
 
@@ -61,7 +62,7 @@ public abstract class ArrayFilterAction extends AnAction {
 
   public static class Edit extends ArrayFilterAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       MessageTreeNode node = getFilterNode(e);
       if (node != null) {
         ArrayFilterInplaceEditor.edit(node, false);
@@ -71,7 +72,7 @@ public abstract class ArrayFilterAction extends AnAction {
 
   public static class Delete extends ArrayFilterAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       MessageTreeNode node = getFilterNode(e);
       if (node != null) {
         TreeUtil.selectNode(node.getTree(), node.getParent());

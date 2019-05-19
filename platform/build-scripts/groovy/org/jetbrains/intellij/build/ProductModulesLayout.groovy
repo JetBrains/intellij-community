@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 import java.util.function.Consumer
+import java.util.function.Function
 
 /**
  * @author nik
@@ -19,8 +20,10 @@ class ProductModulesLayout {
    */
   String mainJarName
 
-  List<String> platformApiJarModules = []
-  List<String> platformImplJarModules = []
+  /**
+   * Name of the platform implementation JAR file.
+   */
+  String platformImplementationJarName = "platform-impl.jar"
 
   /**
    * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
@@ -34,7 +37,7 @@ class ProductModulesLayout {
    * Names of the modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
    * @see CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES
    * @deprecated if you need to pack additional modules into the product, use {@link #productImplementationModules} instead; {@link CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES}
-   * will be packed into platform-api.jar in the product's 'lib' directory automatically then.   */
+   * will be packed into {@link #platformImplementationJarName} in the product's 'lib' directory automatically then.   */
   List<String> platformImplementationModules = []
 
   /**
@@ -55,10 +58,56 @@ class ProductModulesLayout {
   List<String> bundledPluginModules = []
 
   /**
+   * Names of the main modules of the plugins which need to be bundled in windows distribution of the product.
+   *
+   * @deprecated specify supported OS in {@link PluginBundlingRestrictions#supportedOs bundlingRestrictions.supportedOs} property in
+   * {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#bundlingRestrictions the plugin layout} and add the plugin to
+   * the standard {@link #bundledPluginModules} instead
+   */
+  final Map<OsFamily, List<String>> bundledOsPluginModules = [:]
+
+  Set<String> getAllBundledPluginsModules() {
+    return (bundledOsPluginModules.values().flatten() as Set<String>) + bundledPluginModules
+  }
+
+  private LinkedHashMap<String, Function<PluginLayout, PluginPublishingSpec>> pluginsToPublish = []
+
+  /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
    * into it. Zip archives of these plugins will be built and placed under 'plugins' directory in the build artifacts.
+   * 
+   * @see #setPluginPublishingSpec
    */
-  List<String> pluginModulesToPublish = []
+  void setPluginModulesToPublish(List<String> plugins) {
+    pluginsToPublish = new LinkedHashMap<>()
+    for (String each : plugins) {
+      pluginsToPublish[each] = { PluginLayout layout -> layout.defaultPublishingSpec ?: new PluginPublishingSpec()} as Function<PluginLayout, PluginPublishingSpec>
+    }
+  }
+
+  /**
+   * @see #setPluginModulesToPublish 
+   */
+  List<String> getPluginModulesToPublish() {
+    return pluginsToPublish.keySet().toList()
+  }
+
+  /**
+   * Specifies that a plugin with main module name {@code mainModule} should be prepared for publishing under 'plugins' directory in the build
+   * artifacts. The passed {@code spec} overrides {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#setDefaultPublishingSpec the plugin's defaults}.
+   * @see #setPluginModulesToPublish
+   */
+  void setPluginPublishingSpec(String mainModule, PluginPublishingSpec spec) {
+    pluginsToPublish[mainModule] = {spec} as Function<PluginLayout, PluginPublishingSpec>
+  }
+
+  /**
+   * @see #setPluginPublishingSpec
+   * @see #setPluginModulesToPublish 
+   */
+  PluginPublishingSpec getPluginPublishingSpec(PluginLayout pluginLayout) {
+    return pluginsToPublish[pluginLayout.mainModule]?.apply(pluginLayout)
+  }
 
   /**
    * Describes non-trivial layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
@@ -98,18 +147,51 @@ class ProductModulesLayout {
 
   /**
    * Name of the module containing search/searchableOptions.xml file.
+   * @deprecated not used anymore as searchable options are split between modules
    */
-  String searchableOptionsModule = "intellij.platform.resources"
+  @Deprecated
+  String searchableOptionsModule = ""
 
   /**
-   * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #pluginModulesToPublish} plugins.
-   * This descriptor and the plugin *.zip files need to be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file.
+   * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #setPluginModulesToPublish} plugins.
+   * This descriptor and the plugin *.zip files can be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file
+   * to allow installing custom plugins directly from IDE. If {@link ProprietaryBuildTools#artifactsServer} is specified, {@code __BUILTIN_PLUGINS_URL__} in
+   * *ApplicationInfo.xml file will be automatically replaced by the plugin repository URL provided by the artifact server.
+   *
+   * @see #setPluginModulesToPublish
+   * @see #setPluginPublishingSpec
+   * @see org.jetbrains.intellij.build.PluginPublishingSpec#includeInCustomPluginRepository
    */
   boolean prepareCustomPluginRepositoryForPublishedPlugins = false
+  
 
   /**
-   * If {@code true} then all plugins that compatible with an IDE will be built.
-   * Otherwise only plugins from {@link #pluginModulesToPublish} will be considered.
+   * @deprecated use {@link #setPluginPublishingSpec} instead 
+   */
+  @Deprecated
+  List<String> getPluginModulesWithRestrictedCompatibleBuildRange() {
+    def error = "`ProductModulesLayout.pluginModulesWithRestrictedCompatibleBuildRange` property has been replaced with `ProductModulesLayout.setPluginPublishingSpec`"
+    System.err.println(error)
+    throw new UnsupportedOperationException(error)
+  }
+
+  /**
+   * @deprecated use {@link #setPluginPublishingSpec} instead 
+   */
+  @Deprecated
+  void setPluginModulesWithRestrictedCompatibleBuildRange(List<String> __) {
+    //noinspection GrDeprecatedAPIUsage
+    getPluginModulesWithRestrictedCompatibleBuildRange() // to rethrow
+  }
+
+  /**
+   * If {@code true} then all plugins that compatible with an IDE will be built. By default these plugins will be placed to "auto-uploading"
+   * subdirectory and may be automatically uploaded to plugins.jetbrains.com; use {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#setDefaultPublishingSpec}
+   * or {@link #setPluginPublishingSpec} to override this behavior for specific plugins if needed.
+   * <br>
+   * If {@code false} only plugins from {@link #setPluginModulesToPublish} will be considered.
+   * 
+   * @see #setPluginPublishingSpec
    */
   boolean buildAllCompatiblePlugins = false
 
@@ -117,14 +199,6 @@ class ProductModulesLayout {
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
    */
   List<String> compatiblePluginsToIgnore = []
-
-  /**
-   * Names of the main modules of plugins from {@link #pluginModulesToPublish} list where since-build/until-build range should be restricted.
-   * These plugins will be compatible with builds which number differ from the build which produces these plugins only in the last component,
-   * i.e. plugins produced in 163.1111.22 build will be compatible with 163.1111.* builds. The plugins not included into this list
-   * will be compatible with all builds from the same baseline, i.e. with 163.* builds.
-   */
-  List<String> pluginModulesWithRestrictedCompatibleBuildRange = []
 
   /**
    * Specifies path to a text file containing list of classes in order they are loaded by the product. Entries in the produces *.jar files

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -13,6 +11,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.Alarm
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.BDDAssertions.then
 import org.junit.After
 import org.junit.Before
@@ -21,7 +20,6 @@ import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.reflect.jvm.jvmName
 
 class ExternalProjectsDataStorageTest: UsefulTestCase() {
-
   lateinit var myFixture: IdeaProjectTestFixture
 
   @Before
@@ -38,9 +36,8 @@ class ExternalProjectsDataStorageTest: UsefulTestCase() {
   }
 
   @Test
-  fun `test external project data is saved and loaded`() {
-    val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
-    val dataStorage = ExternalProjectsDataStorage(myFixture.project, alarm)
+  fun `test external project data is saved and loaded`() = runBlocking<Unit> {
+    val dataStorage = ExternalProjectsDataStorage(myFixture.project)
 
     val testId = ProjectSystemId("Test")
     val externalName = "external_name"
@@ -54,7 +51,6 @@ class ExternalProjectsDataStorageTest: UsefulTestCase() {
 
     dataStorage.update(externalProjectInfo)
     dataStorage.save()
-    alarm.waitForAllExecuted(1, SECONDS)
     dataStorage.load()
 
     val list = dataStorage.list(testId)

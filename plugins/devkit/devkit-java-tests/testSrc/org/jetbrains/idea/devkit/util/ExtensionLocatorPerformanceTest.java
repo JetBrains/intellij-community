@@ -1,27 +1,27 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.execution.console.CustomizableConsoleFoldingBean;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByPsiClass;
+
+@SkipSlowTestLocally
 public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(Attribute.class));
-    moduleBuilder.addLibrary("jblist", PathUtil.getJarPathForClass(JBList.class));
-    moduleBuilder.addLibrary("javaUtil", PathUtil.getJarPathForClass(ArrayList.class));
     moduleBuilder.addLibrary("console", PathUtil.getJarPathForClass(CustomizableConsoleFoldingBean.class));
   }
 
@@ -31,7 +31,7 @@ public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestC
     PsiClass psiClass = myFixture.addClass(generateJavaClassText(randomMethodNames));
 
     PlatformTestUtil.startPerformanceTest("Locating extension tag by PsiClass", 2000, () -> {
-      List<ExtensionCandidate> result = ExtensionLocator.byPsiClass(psiClass).findCandidates();
+      List<ExtensionCandidate> result = locateExtensionsByPsiClass(psiClass);
       assertSize(1, result);
     }).attempts(1).assertTiming();
   }
@@ -65,7 +65,7 @@ public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestC
     sb.append("<myEp implementation=\"myPkg.MyClass\"/>"); // the only valid target for locating
     sb.append("</extensions>");
 
-    sb.append("  </extensions>\n</idea-plugin>");
+    sb.append("</idea-plugin>");
     return sb.toString();
   }
 }

@@ -19,13 +19,14 @@ import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -38,9 +39,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.ui.CommonActionsPanel;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
-import java.util.HashMap;
+import com.intellij.util.ui.StatusText;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.ExternalOptionHelper;
 import org.jetbrains.annotations.Nls;
@@ -48,28 +53,37 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CopyrightProfilesPanel extends MasterDetailsComponent implements SearchableConfigurable {
-
+class CopyrightProfilesPanel extends MasterDetailsComponent implements SearchableConfigurable {
   private final Project myProject;
-  private final CopyrightManager myManager;
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
   private Runnable myUpdate;
 
-  public CopyrightProfilesPanel(Project project) {
+  CopyrightProfilesPanel(Project project) {
     myProject = project;
-    myManager = CopyrightManager.getInstance(project);
     initTree();
   }
 
-  public void setUpdate(Runnable update) {
+  @Override
+  protected void initTree() {
+    super.initTree();
+    new TreeSpeedSearch(myTree, treePath ->
+      ObjectUtils.doIfNotNull((MyNode)treePath.getLastPathComponent(), c -> c.getDisplayName()), true);
+
+    StatusText emptyText = myTree.getEmptyText();
+    emptyText.setText("No copyright profiles added.");
+    emptyText.appendSecondaryText("Add profile", SimpleTextAttributes.LINK_ATTRIBUTES, __ -> doAddProfile());
+    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
+    if (!shortcutText.isEmpty()) {
+      emptyText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
+    }
+  }
+
+  void setUpdate(Runnable update) {
     myUpdate = update;
   }
 
@@ -86,16 +100,17 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @Override
   protected void processRemovedItems() {
     Map<String, CopyrightProfile> profiles = getAllProfiles();
-    for (CopyrightProfile profile : new ArrayList<>(myManager.getCopyrights())) {
+    CopyrightManager manager = CopyrightManager.getInstance(myProject);
+    for (CopyrightProfile profile : new ArrayList<>(manager.getCopyrights())) {
       if (!profiles.containsValue(profile)) {
-        myManager.removeCopyright(profile);
+        manager.removeCopyright(profile);
       }
     }
   }
 
   @Override
   protected boolean wasObjectStored(Object o) {
-    return myManager.getCopyrights().contains((CopyrightProfile)o);
+    return CopyrightManager.getInstance(myProject).getCopyrights().contains((CopyrightProfile)o);
   }
 
   @Override
@@ -132,10 +147,10 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     super.apply();
   }
 
-  public Map<String, CopyrightProfile> getAllProfiles() {
+  Map<String, CopyrightProfile> getAllProfiles() {
     final Map<String, CopyrightProfile> profiles = new HashMap<>();
     if (!myInitialized.get()) {
-      for (CopyrightProfile profile : myManager.getCopyrights()) {
+      for (CopyrightProfile profile : CopyrightManager.getInstance(myProject).getCopyrights()) {
         profiles.put(profile.getName(), profile);
       }
     }
@@ -155,31 +170,35 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     myInitialized.set(false);
   }
 
+  private void doAddProfile() {
+    String name = askForProfileName("Create Copyright Profile", "");
+    if (name != null) {
+      addProfileNode(new CopyrightProfile(name));
+    }
+  }
+
   @Override
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
     result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
       {
-        registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
+        registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent event) {
-        String name = askForProfileName("Create Copyright Profile", "");
-        if (name != null) {
-          addProfileNode(new CopyrightProfile(name));
-        }
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        doAddProfile();
       }
     });
     result.add(new MyDeleteAction());
     result.add(new DumbAwareAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
       {
-        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
+        registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent event) {
+      public void actionPerformed(@NotNull AnActionEvent event) {
         String profileName = askForProfileName("Copy Copyright Profile", "");
         if (profileName == null) {
           return;
@@ -192,14 +211,14 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
       }
 
       @Override
-      public void update(AnActionEvent event) {
+      public void update(@NotNull AnActionEvent event) {
         super.update(event);
         event.getPresentation().setEnabled(getSelectedObject() != null);
       }
     });
     result.add(new DumbAwareAction("Import", "Import", PlatformIcons.IMPORT_ICON) {
       @Override
-      public void actionPerformed(AnActionEvent event) {
+      public void actionPerformed(@NotNull AnActionEvent event) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
           .withFileFilter(file -> {
             final FileType fileType = file.getFileType();
@@ -280,7 +299,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
 
   private void reloadTree() {
     myRoot.removeAllChildren();
-    Collection<CopyrightProfile> collection = myManager.getCopyrights();
+    Collection<CopyrightProfile> collection = CopyrightManager.getInstance(myProject).getCopyrights();
     for (CopyrightProfile profile : collection) {
       CopyrightProfile clone = new CopyrightProfile();
       clone.copyFrom(profile);
@@ -300,16 +319,16 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     return "Select a profile to view or edit its details here";
   }
 
-  public void addItemsChangeListener(final Runnable runnable) {
+  void addItemsChangeListener(final Runnable runnable) {
     addItemsChangeListener(new ItemsChangeListener() {
       @Override
       public void itemChanged(@Nullable Object deletedItem) {
-        SwingUtilities.invokeLater(runnable);
+        ApplicationManager.getApplication().invokeLater(runnable);
       }
 
       @Override
       public void itemsExternallyChanged() {
-        SwingUtilities.invokeLater(runnable);
+        ApplicationManager.getApplication().invokeLater(runnable);
       }
     });
   }

@@ -425,6 +425,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
     myExpandedPopup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(component, expressionEditor.getPreferredFocusedComponent())
+      .setMayBeParent(true)
       .setFocusable(true)
       .setResizable(true)
       .setRequestFocus(true)
@@ -552,7 +553,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     static final Color ENABLED_COLOR = new Color(0x787878);
     static final Color DISABLED_COLOR = new JBColor(0xB2B2B2, 0x5C5D5F);
 
-    public LanguageChooser() {
+    LanguageChooser() {
       setHorizontalTextPosition(SwingConstants.LEFT);
       setIconTextGap(0);
       setToolTipText(XDebuggerBundle.message("xdebugger.evaluate.language.hint"));

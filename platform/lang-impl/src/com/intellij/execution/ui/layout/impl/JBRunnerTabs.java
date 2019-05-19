@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.openapi.Disposable;
@@ -21,26 +7,62 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.JBEditorTabs;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.newImpl.SameHeightTabs;
+import com.intellij.ui.tabs.newImpl.TabLabel;
+import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
+import com.intellij.ui.tabs.newImpl.singleRow.SingleRowLayout;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Map;
 
 /**
  * @author Dennis.Ushakov
  */
-public class JBRunnerTabs extends JBEditorTabs {
+public class JBRunnerTabs extends SameHeightTabs implements JBRunnerTabsBase {
+  public static JBRunnerTabsBase create(@Nullable Project project, @NotNull Disposable parentDisposable) {
+    IdeFocusManager focusManager = project != null ? IdeFocusManager.getInstance(project) : null;
+    return JBTabsFactory.getUseNewTabs()
+           ? new JBRunnerTabs(project, ActionManager.getInstance(), focusManager, parentDisposable)
+           : new JBRunnerTabsOld(project, ActionManager.getInstance(), focusManager, parentDisposable);
+  }
+
+  @Override
+  protected JBTabPainter createTabPainter() {
+    return JBTabPainter.getDEBUGGER();
+  }
+
   public JBRunnerTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
+  }
+
+  @Override
+  protected SingleRowLayout createSingleRowLayout() {
+    return new ScrollableSingleRowLayout(this);
+  }
+
+  @Override
+  protected JBTabsBorder createTabBorder() {
+    return new JBTabsBorder(this) {
+      @NotNull
+      @Override
+      public Insets getEffectiveBorder() {
+        return new Insets(getBorderThickness(), getBorderThickness(), 0, 0);
+      }
+
+      @Override
+      public void paintBorder(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height) {
+        if (isEmptyVisible()) return;
+        getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y), new Point(x, y + height));
+        getTabPainter()
+          .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + myHeaderFitSize.height),
+                           new Point(x + width, y + myHeaderFitSize.height));
+      }
+    };
   }
 
   @Override
@@ -54,10 +76,6 @@ public class JBRunnerTabs extends JBEditorTabs {
   }
 
   @Override
-  public int tabMSize() {
-    return 8;
-  }
-
   public boolean shouldAddToGlobal(Point point) {
     final TabLabel label = getSelectedLabel();
     if (label == null || point == null) {
@@ -91,46 +109,25 @@ public class JBRunnerTabs extends JBEditorTabs {
   }
 
   @Override
-  protected Color getEmptySpaceColor() {
-    return UIUtil.getBgFillColor(getParent());
-  }
-
-  @Override
   protected TabLabel createTabLabel(TabInfo info) {
-    return new MyTabLabel(this, info);
-  }
-
-  private static class MyTabLabel extends TabLabel {
-    public MyTabLabel(JBTabsImpl tabs, final TabInfo info) {
-      super(tabs, info);
-    }
-
-    @Override
-    public void apply(UiDecorator.UiDecoration decoration) {
-      setBorder(new EmptyBorder(5, 5, 7, 5));//Don't use JBUI here, it clips tab text in case of HiDPI
-    }
-
-    @Override
-    public void setTabActionsAutoHide(boolean autoHide) {
-      super.setTabActionsAutoHide(autoHide);
-      apply(null);
-    }
-
-    @Override
-    public void setTabActions(ActionGroup group) {
-      super.setTabActions(group);
-      if (myActionPanel != null) {
-        final JComponent wrapper = (JComponent)myActionPanel.getComponent(0);
-        wrapper.remove(0);
-        wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
+    return new SingleHeightLabel(this, info) {
+      @Override
+      public void setTabActionsAutoHide(boolean autoHide) {
+        super.setTabActionsAutoHide(autoHide);
+        apply(new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));
       }
-    }
 
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension result = super.getPreferredSize();
-      result.height += myTabs.getActiveTabUnderlineHeight() - 1;
-      return result;
-    }
+      @Override
+      public void setTabActions(ActionGroup group) {
+        super.setTabActions(group);
+        if (myActionPanel != null) {
+          final JComponent wrapper = (JComponent)myActionPanel.getComponent(0);
+          wrapper.remove(0);
+          wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
+        }
+      }
+    };
+
   }
+
 }

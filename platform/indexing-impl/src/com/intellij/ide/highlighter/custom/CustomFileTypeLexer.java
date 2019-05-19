@@ -36,9 +36,6 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
   }
 
   private static List<TokenParser> buildTokenParsers(SyntaxTable table, boolean forHighlighting) {
-    final LineCommentParser lineCommentParser = StringUtil.isEmpty(table.getLineComment()) ? null : new LineCommentParser(table.getLineComment(), table.lineCommentOnlyAtStart);
-    final MultilineCommentParser multilineCommentParser =
-            MultilineCommentParser.create(table.getStartComment(), table.getEndComment());
     final NumberParser numberParser = new NumberParser(table.getNumPostfixChars(), table.isIgnoreCase());
     final HexNumberParser hexNumberParser = HexNumberParser.create(table.getHexPrefix());
     
@@ -62,12 +59,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
 
     ArrayList<TokenParser> tokenParsers = new ArrayList<>();
     tokenParsers.add(new WhitespaceParser());
-    if (lineCommentParser != null) {
-      tokenParsers.add(lineCommentParser);
-    }
-    if (multilineCommentParser != null) {
-      tokenParsers.add(multilineCommentParser);
-    }
+    tokenParsers.add(new CommentParser(table));
     tokenParsers.add(keywordParser);
     tokenParsers.add(quotedStringParser);
     tokenParsers.add(quotedStringParser2);
@@ -94,4 +86,36 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
   }
 
 
+  private static class CommentParser extends TokenParser {
+    final LineCommentParser lineCommentParser;
+    final MultilineCommentParser blockCommentParser;
+    private final SyntaxTable myTable;
+
+    CommentParser(SyntaxTable table) {
+      myTable = table;
+      lineCommentParser = StringUtil.isEmpty(myTable.getLineComment()) ? null : new LineCommentParser(myTable.getLineComment(), myTable.lineCommentOnlyAtStart);
+      blockCommentParser = MultilineCommentParser.create(myTable.getStartComment(), myTable.getEndComment());
+    }
+
+    @Override
+    public void setBuffer(CharSequence buffer, int startOffset, int endOffset) {
+      super.setBuffer(buffer, startOffset, endOffset);
+      if (lineCommentParser != null) lineCommentParser.setBuffer(buffer, startOffset, endOffset);
+      if (blockCommentParser != null) blockCommentParser.setBuffer(buffer, startOffset, endOffset);
+    }
+
+    @Override
+    public boolean hasToken(int position) {
+      boolean hasBlock = blockCommentParser != null && blockCommentParser.hasToken(position);
+      boolean hasLine = lineCommentParser != null && lineCommentParser.hasToken(position);
+      if (hasBlock || hasLine) {
+        TokenParser chosen = hasBlock && hasLine && myTable.getLineComment().startsWith(myTable.getStartComment()) ? lineCommentParser :
+                             hasBlock ? blockCommentParser :
+                             lineCommentParser;
+        chosen.getTokenInfo(myTokenInfo);
+        return true;
+      }
+      return false;
+    }
+  }
 }

@@ -17,10 +17,15 @@ package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -32,6 +37,7 @@ import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateResult;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +59,7 @@ class GitPushResultNotification extends Notification {
 
   private static final Logger LOG = Logger.getInstance(GitPushResultNotification.class);
 
-  public GitPushResultNotification(@NotNull String groupDisplayId,
+  GitPushResultNotification(@NotNull String groupDisplayId,
                                    @NotNull String title,
                                    @NotNull String content,
                                    @NotNull NotificationType type) {
@@ -61,7 +67,10 @@ class GitPushResultNotification extends Notification {
   }
 
   @NotNull
-  static GitPushResultNotification create(@NotNull Project project, @NotNull GitPushResult pushResult, boolean multiRepoProject) {
+  static GitPushResultNotification create(@NotNull Project project,
+                                          @NotNull GitPushResult pushResult,
+                                          @Nullable GitPushOperation pushOperation,
+                                          boolean multiRepoProject) {
     GroupedPushResult grouped = GroupedPushResult.group(pushResult.getResults());
 
     String title;
@@ -96,6 +105,23 @@ class GitPushResultNotification extends Notification {
                               VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
     GitPushResultNotification notification = new GitPushResultNotification(group.getDisplayId(), title, description, type);
+
+    List<GitRepository> staleInfoRejected = EntryStream.of(pushResult.getResults())
+      .filterValues(result -> result.getType() == GitPushRepoResult.Type.REJECTED_STALE_INFO)
+      .keys().toList();
+    if (!staleInfoRejected.isEmpty()) {
+      notification.setContextHelpAction(new AnAction(
+        "What is force-with-lease?",
+        "Force-with-lease push prevents overriding remote changes that are unknown to local repository.<br>" +
+        "Fetch latest changes to verify that they can be safely discarded and repeat push operation.", null) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+        }
+      });
+      if (pushOperation != null) {
+        notification.addAction(new ForcePushNotificationAction(project, pushOperation, staleInfoRejected));
+      }
+    }
 
     UpdatedFiles updatedFiles = pushResult.getUpdatedFiles();
     if (!updatedFiles.isEmpty()) {
@@ -171,6 +197,9 @@ class GitPushResultNotification extends Notification {
       case REJECTED_NO_FF:
         description = formDescriptionBasedOnUpdateResult(result.getUpdateResult(), targetBranch);
         break;
+      case REJECTED_STALE_INFO:
+        description = String.format("force-with-lease push %s to %s was rejected", sourceBranch, targetBranch);
+        break;
       case REJECTED_OTHER:
         description = String.format("push %s to %s was rejected by remote", sourceBranch, targetBranch);
         break;
@@ -211,6 +240,35 @@ class GitPushResultNotification extends Notification {
     }
     else {
       return UPDATE_WITH_ERRORS;
+    }
+  }
+
+  private static class ForcePushNotificationAction extends NotificationAction {
+    @NotNull private final Project myProject;
+    @NotNull private final GitPushOperation myOperation;
+    @NotNull private final List<GitRepository> myRepositories;
+
+    private ForcePushNotificationAction(@NotNull Project project,
+                                        @NotNull GitPushOperation pushOperation,
+                                        @NotNull List<GitRepository> repositories) {
+      super("Force Push Anyway");
+      myProject = project;
+      myOperation = pushOperation;
+      myRepositories = repositories;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+      notification.expire();
+
+      Project project = myProject;
+      new Task.Backgroundable(project, "Pushing...", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          GitPushOperation forcePushOperation = myOperation.deriveForceWithoutLease(myRepositories);
+          GitPusher.pushAndNotify(project, forcePushOperation);
+        }
+      }.queue();
     }
   }
 }

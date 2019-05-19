@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.formatting.FormattingMode;
@@ -28,16 +14,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
  * Service for reformatting code fragments, getting names for elements
  * according to the user's code style and working with import statements and full-qualified names.
+ *
+ * @see com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
+ * @see com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
  */
 public abstract class CodeStyleManager  {
   /**
@@ -149,12 +138,12 @@ public abstract class CodeStyleManager  {
   public abstract void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException;
 
   public abstract void reformatTextWithContext(@NotNull PsiFile file, @NotNull ChangedRangesInfo info) throws IncorrectOperationException;
-  
+
   public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
-    List<TextRange> rangesList = ContainerUtil.newArrayList(ranges);
+    List<TextRange> rangesList = new ArrayList<>(ranges);
     reformatTextWithContext(file, new ChangedRangesInfo(rangesList, null));
   }
-  
+
   /**
    * Re-formats the specified range of a file, modifying only line indents and leaving
    * all other whitespace intact.
@@ -188,6 +177,7 @@ public abstract class CodeStyleManager  {
   /**
    * @deprecated this method is not intended to be used by plugins.
    */
+  @Deprecated
   public abstract boolean isLineToBeIndented(@NotNull PsiFile file, int offset);
 
   /**
@@ -232,16 +222,19 @@ public abstract class CodeStyleManager  {
   /**
    * @deprecated
    */
+  @Deprecated
   public abstract Indent getIndent(String text, FileType fileType);
 
   /**
    * @deprecated
    */
+  @Deprecated
   public abstract String fillIndent(Indent indent, FileType fileType);
 
   /**
    * @deprecated
    */
+  @Deprecated
   public abstract Indent zeroIndent();
 
   /**
@@ -305,7 +298,7 @@ public abstract class CodeStyleManager  {
 
   /**
    * Retrieves the current formatting mode.
-   * 
+   *
    * @param project The current project used to obtain {@code CodeStyleManager} instance.
    * @return The current formatting mode.
    * @see FormattingMode

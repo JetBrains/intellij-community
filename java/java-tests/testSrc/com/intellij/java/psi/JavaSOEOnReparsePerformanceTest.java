@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.java.psi;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.SkipSlowTestLocally;
 
@@ -28,17 +29,26 @@ public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myHugeExpr = new StringBuilder("\"-\"");
-    for (int i = 0; i < 100000; i++) myHugeExpr.append("+\"b\"");
+    int N = 100_000;
+    myHugeExpr = new StringBuilder(N * 4 + 10);
+    myHugeExpr.append("\"-\"");
+    myHugeExpr.append(StringUtil.repeat("+\"b\"", N));
   }
 
   @Override
   public void tearDown() throws Exception {
-    if (myHugeExpr != null) {
-      myHugeExpr.setLength(0);
-      myHugeExpr = null;
+    try {
+      if (myHugeExpr != null) {
+        myHugeExpr.setLength(0);
+        myHugeExpr = null;
+      }
     }
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testOnHugeBinaryExprInFile() {

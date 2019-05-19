@@ -56,7 +56,7 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
   }
 
   private static class AnnotationParser extends StatementParsing {
-    public AnnotationParser(ParsingContext context, @Nullable FUTURE futureFlag) {
+    AnnotationParser(ParsingContext context, @Nullable FUTURE futureFlag) {
       super(context, futureFlag);
     }
 

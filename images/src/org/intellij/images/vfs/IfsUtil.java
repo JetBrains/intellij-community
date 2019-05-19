@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/** $Id$ */
-
 package org.intellij.images.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,10 +27,11 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
 import com.intellij.util.SVGLoader;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
 import org.apache.commons.imaging.formats.ico.IcoImageParser;
+import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +50,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 
 /**
  * Image loader utility.
@@ -95,7 +93,7 @@ public final class IfsUtil {
           catch (ImageReadException ignore) { }
         }
 
-        if (isScalableImage(file)) {
+        if (isSVG(file)) {
           final Ref<URL> url = Ref.create();
           try {
             url.set(new File(file.getPath()).toURI().toURL());
@@ -114,23 +112,32 @@ public final class IfsUtil {
           }
 
           file.putUserData(FORMAT_KEY, SVG_FORMAT);
-          file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>((zoom, ancestor) -> {
-            try {
-              final ScaleContext ctx = ScaleContext.create(ancestor);
-              ctx.update(OBJ_SCALE.of(zoom));
-              return SVGLoader.loadHiDPI(url.get(), new ByteArrayInputStream(content), ctx);
+          file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(new ImageDocument.CachedScaledImageProvider() {
+            final ScaleContext.Cache<BufferedImage> cache = new ScaleContext.Cache<>((ctx) -> {
+              try {
+                return SVGLoader.loadHiDPI(url.get(), new ByteArrayInputStream(content), ctx);
+              }
+              catch (Throwable t) {
+                LOG.warn(url.get() + " " + t.getMessage());
+                return null;
+              }
+            });
+            @Override
+            public void clearCache() {
+              cache.clear();
             }
-            catch (Throwable t) {
-              LOG.warn(url.get() + " " + t.getMessage());
-              return null;
+            @Override
+            public BufferedImage apply(Double zoom, Component ancestor) {
+              ScaleContext ctx = ScaleContext.create(ancestor);
+              ctx.setScale(OBJ_SCALE.of(zoom));
+              return cache.getOrProvide(ctx);
             }
           }));
           return true;
         }
 
         InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
-        ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
-        try {
+        try (ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream)) {
           Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageInputStream);
           if (imageReaders.hasNext()) {
             ImageReader imageReader = imageReaders.next();
@@ -142,12 +149,11 @@ public final class IfsUtil {
               BufferedImage image = imageReader.read(minIndex, param);
               file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>((zoom, ancestor) -> image));
               return true;
-            } finally {
+            }
+            finally {
               imageReader.dispose();
             }
           }
-        } finally {
-          imageInputStream.close();
         }
       } finally {
         // We perform loading no more needed
@@ -176,8 +182,8 @@ public final class IfsUtil {
     return SoftReference.dereference(imageProviderRef);
   }
 
-  private static boolean isScalableImage(@NotNull VirtualFile file) {
-    return SVG_FORMAT.equalsIgnoreCase(file.getExtension());
+  public static boolean isSVG(@Nullable VirtualFile file) {
+    return file != null && SVG_FORMAT.equalsIgnoreCase(file.getExtension());
   }
 
   @Nullable

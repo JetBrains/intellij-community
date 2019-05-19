@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -17,7 +17,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -44,9 +43,7 @@ import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidat
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.canResolveToPackage;
 
@@ -109,7 +106,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       return (GrReferenceElement)parent;
     }
     if (couldContainReference(position)) {
-      return GroovyPsiElementFactory.getInstance(position.getProject()).createReferenceElementFromText("Foo", position);
+      return GroovyPsiElementFactory.getInstance(position.getProject()).createCodeReference("Foo", position);
     }
     return null;
   }
@@ -149,7 +146,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   }
 
   public static void addAllClasses(CompletionParameters parameters,
-                                   final Consumer<LookupElement> consumer,
+                                   final Consumer<? super LookupElement> consumer,
                                    final JavaCompletionSession inheritors, final PrefixMatcher matcher) {
     final PsiElement position = parameters.getPosition();
     final boolean afterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
@@ -167,9 +164,9 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
                                     final GrReferenceElement reference,
                                     final JavaCompletionSession inheritorsHolder,
                                     final PrefixMatcher matcher,
-                                    final Consumer<LookupElement> _consumer) {
+                                    final Consumer<? super LookupElement> _consumer) {
     final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
-      final Set<LookupElement> added = ContainerUtil.newHashSet();
+      final Set<LookupElement> added = new HashSet<>();
       @Override
       public void consume(LookupElement element) {
         if (added.add(element)) {
@@ -178,7 +175,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
     };
 
-    final Map<PsiModifierListOwner, LookupElement> staticMembers = ContainerUtil.newHashMap();
+    final Map<PsiModifierListOwner, LookupElement> staticMembers = new HashMap<>();
     final PsiElement qualifier = reference.getQualifier();
     final PsiType qualifierType = GroovyCompletionUtil.getQualifierType(qualifier);
 
@@ -194,7 +191,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
     }
 
-    final List<LookupElement> zeroPriority = ContainerUtil.newArrayList();
+    final List<LookupElement> zeroPriority = new ArrayList<>();
 
     PsiClass qualifierClass = com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly(qualifierType);
     final boolean honorExcludes = qualifierClass == null || !JavaCompletionUtil.isInExcludedPackage(qualifierClass, false);
@@ -259,7 +256,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
   private static Runnable addStaticMembers(CompletionParameters parameters,
                                        final PrefixMatcher matcher,
-                                       final Map<PsiModifierListOwner, LookupElement> staticMembers, final Consumer<LookupElement> consumer) {
+                                       final Map<PsiModifierListOwner, LookupElement> staticMembers, final Consumer<? super LookupElement> consumer) {
     final StaticMemberProcessor processor = completeStaticMembers(parameters);
     processor.processMembersOfRegisteredClasses(matcher, (member, psiClass) -> {
       if (member instanceof GrAccessorMethod) {
@@ -356,7 +353,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
 
       @Override
-      protected LookupElement createLookupElement(@NotNull List<PsiMethod> overloads,
+      protected LookupElement createLookupElement(@NotNull List<? extends PsiMethod> overloads,
                                                   @NotNull PsiClass containingClass,
                                                   boolean shouldImport) {
         shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
@@ -407,7 +404,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull final CompletionResultSet result) {
     GroovyCompletionData.addGroovyDocKeywords(parameters, result);
 

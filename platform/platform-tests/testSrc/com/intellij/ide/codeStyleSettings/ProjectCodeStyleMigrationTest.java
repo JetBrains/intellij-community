@@ -43,6 +43,9 @@ public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
     try {
       CodeStyle.getSettings(getProject()).copyFrom(CodeStyleSettings.getDefaults());
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

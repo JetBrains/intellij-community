@@ -51,19 +51,12 @@ public abstract class ModuleExtension implements Disposable {
    * @param writable  flag which identifies if resulting model is writable
    * @return          extension model
    */
+  @NotNull
   public abstract ModuleExtension getModifiableModel(final boolean writable);
 
   public abstract void commit();
 
   public abstract boolean isChanged();
-
-  /**
-   * Explicit comparator is used. To be deleted in 2018
-   */
-  @Deprecated
-  public int compareTo(@NotNull final ModuleExtension o) {
-    return getClass().getName().compareTo(o.getClass().getName());
-  }
 
   /**
    * @deprecated Please implement PersistentStateComponent instead.

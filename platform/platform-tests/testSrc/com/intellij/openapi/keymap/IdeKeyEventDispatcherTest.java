@@ -6,6 +6,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -42,6 +43,9 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
       KeymapManagerEx.getInstanceEx().getSchemeManager().removeScheme(myKeymap);
       KeymapManagerEx.getInstanceEx().setActiveKeymap(mySavedKeymap);
       ActionManager.getInstance().unregisterAction(ACTION_EMPTY);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -88,11 +92,11 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
   }
 
   private static class EmptyAction extends AnAction {
-    public EmptyAction() {
+    EmptyAction() {
       setEnabledInModalContext(true);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) { }
+    public void actionPerformed(@NotNull AnActionEvent e) { }
   }
 }

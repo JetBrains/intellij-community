@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://jetbrains.org/intellij/schema/product.schema.json",
+  "title": "IntelliJ-based IDE installation",
+  "description": "Meta-information about installation of an IDE based on IntelliJ Platform",
+  "version": "0.1",
+  "type": "object",
+  "required": [
+    "name", "version", "buildNumber", "productCode", "launch"
+  ],
+  "properties": {
+    "name": {
+      "description": "Full name of the product without edition, e.g. 'IntelliJ IDEA' or 'PyCharm'",
+      "type": "string"
+    },
+    "version": {
+      "description": "Marketing version of the product, e.g. '2018.3'",
+      "type": "string"
+    },
+    "buildNumber": {
+      "description": "Build number of the product, e.g. '183.239' or '183.SNAPSHOT'",
+      "type": "string"
+    },
+    "productCode": {
+      "description": "Product code (e.g. 'IC' for IntelliJ IDEA Community Edition) as used in full build number",
+      "type": "string"
+    },
+    "svgIconPath": {
+      "description": "Path to an svg file which contains the product icon (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea.svg'",
+      "type": "string"
+    },
+    "launch": {
+      "description": "Specifies how the IDE can be launched",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["os", "launcherPath", "vmOptionsFilePath"],
+        "minItems": 1,
+        "properties": {
+          "os": {
+            "description": "Operation system this launch method is supposed to be used for",
+            "type": "string",
+            "enum": ["Windows", "Linux", "macOS"]
+          },
+          "launcherPath": {
+            "description": "Path to an executable file which starts the IDE (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea.sh'",
+            "type": "string"
+          },
+          "javaExecutablePath": {
+            "description": "Path to an JRE executable file (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'jre64/bin/java'. May be missing if JRE isn't bundled with the product.",
+            "type": "string"
+          },
+          "vmOptionsFilePath": {
+            "description": "Path to a file containing JVM options which are used to start the IDE (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea64.vmoptions'",
+            "type": "string"
+          },
+          "startupWmClass": {
+            "description": "Value of 'WMClass' property used by some Linux desktop distributions to associate windows with the owning application, e.g. 'jetbrains-idea'. May be specified only if 'os' is 'Linux'.",
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

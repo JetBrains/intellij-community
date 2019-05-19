@@ -51,7 +51,7 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
+                                                                 @NotNull List<? extends RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
 
     final MavenRunnerParameters runnerParameters = createBuildParameters(location);
@@ -75,6 +75,7 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
     return new MavenRunnerParameters(true, f.getParent().getPath(), f.getName(), goals, profiles.getEnabledProfiles(), profiles.getDisabledProfiles());
   }
 
+  @Override
   public int compareTo(Object o) {
     return PREFERED;
   }

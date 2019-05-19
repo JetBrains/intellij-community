@@ -38,6 +38,7 @@ public class PsiEmptyStatementImpl extends CompositePsiElement implements PsiEmp
     }
   }
 
+  @Override
   public String toString(){
     return "PsiEmptyStatement";
   }

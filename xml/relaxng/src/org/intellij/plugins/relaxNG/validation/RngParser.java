@@ -224,7 +224,7 @@ public class RngParser {
   static class MySchemaReader extends SchemaReaderImpl {
     private final PsiFile myDescriptorFile;
 
-    public MySchemaReader(PsiFile descriptorFile) {
+    MySchemaReader(PsiFile descriptorFile) {
       myDescriptorFile = descriptorFile;
     }
 

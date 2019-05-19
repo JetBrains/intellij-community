@@ -18,7 +18,9 @@ package com.intellij.refactoring.util.duplicates;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,5 +30,10 @@ public interface ReturnValue {
   boolean isEquivalent(ReturnValue other);
 
   @Nullable
-  PsiStatement createReplacement(final PsiMethod extractedMethod, PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException;
+  PsiStatement createReplacement(@NotNull PsiMethod extractedMethod, @NotNull PsiMethodCallExpression methodCallExpression, @Nullable PsiType returnType) throws IncorrectOperationException;
+
+  static boolean areEquivalent(@Nullable ReturnValue value1, @Nullable ReturnValue value2) {
+    return value1 == null && value2 == null ||
+           value1 != null && value1.isEquivalent(value2);
+  }
 }

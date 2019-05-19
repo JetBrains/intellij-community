@@ -21,12 +21,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
-import java.util.HashMap;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -56,6 +56,7 @@ public class UnBoxingEvaluator implements Evaluator {
     myOperand = DisableGC.create(operand);
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     return unbox(myOperand.evaluate(context), context);
   }
@@ -73,7 +74,7 @@ public class UnBoxingEvaluator implements Evaluator {
     }
     return value;
   }
-                                          
+
   private static Value convertToPrimitive(EvaluationContextImpl context, ObjectReference value, final String conversionMethodName,
                                           String conversionMethodSignature) throws EvaluateException {
     // for speedup first try value field

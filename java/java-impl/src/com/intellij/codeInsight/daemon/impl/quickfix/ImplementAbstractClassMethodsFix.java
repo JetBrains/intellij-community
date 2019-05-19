@@ -68,7 +68,7 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
   @Override
   public void invoke(@NotNull final Project project,
                      @NotNull PsiFile file,
-                     @Nullable("is null when called from inspection") final Editor editor,
+                     @Nullable final Editor editor,
                      @NotNull final PsiElement startElement,
                      @NotNull PsiElement endElement) {
     if (editor == null) return;

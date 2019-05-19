@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors;
 
+import com.intellij.Patches;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
@@ -23,7 +10,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FontComboBox;
 import com.intellij.ui.FontInfoRenderer;
@@ -47,12 +33,6 @@ import java.util.Locale;
 import java.util.Set;
 
 public abstract class AbstractFontOptionsPanel extends JPanel implements OptionsPanel {
-  private static final FontInfoRenderer RENDERER = new FontInfoRenderer() {
-    @Override
-    protected boolean isEditorFont() {
-      return true;
-    }
-  };
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
@@ -145,7 +125,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
                                                ApplicationBundle.message("ligatures.jre.warning",
                                                                          ApplicationNamesInfo.getInstance().getFullProductName())));
     warningIcon.setBorder(JBUI.Borders.emptyLeft(5));
-    warningIcon.setVisible(!SystemInfo.isJetBrainsJvm);
+    warningIcon.setVisible(!areLigaturesAllowed());
     panel.add(warningIcon);
     c.gridx = 0;
     c.gridy = 4;
@@ -164,10 +144,16 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
       mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
     });
     myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-    myPrimaryCombo.setRenderer(RENDERER);
+    FontInfoRenderer renderer = new FontInfoRenderer() {
+      @Override
+      protected boolean isEditorFont() {
+        return true;
+      }
+    };
+    myPrimaryCombo.setRenderer(renderer);
 
     mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-    mySecondaryCombo.setRenderer(RENDERER);
+    mySecondaryCombo.setRenderer(renderer);
 
     ItemListener itemListener = this::syncFontFamilies;
     myPrimaryCombo.addItemListener(itemListener);
@@ -179,7 +165,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
     myEditorFontSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent event) {
+      public void textChanged(@NotNull DocumentEvent event) {
         if (myIsInSchemeChange || !SwingUtilities.isEventDispatchThread()) return;
         String selectedFont = myPrimaryCombo.getFontName();
         if (selectedFont != null) {
@@ -206,7 +192,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
     myLineSpacingField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent event) {
+      public void textChanged(@NotNull DocumentEvent event) {
         if (myIsInSchemeChange) return;
         float lineSpacing = getLineSpacingFromField();
         if (getLineSpacing() != lineSpacing) {
@@ -336,10 +322,14 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     myEditorFontSizeField.setEnabled(!readOnly);
     mySizeLabel.setEnabled(!readOnly);
 
-    myEnableLigaturesCheckbox.setEnabled(!readOnly && SystemInfo.isJetBrainsJvm);
+    myEnableLigaturesCheckbox.setEnabled(!readOnly && areLigaturesAllowed());
     myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());
 
     myIsInSchemeChange = false;
+  }
+
+  private static boolean areLigaturesAllowed() {
+    return !Patches.TEXT_LAYOUT_IS_SLOW;
   }
 
   protected void updateCustomOptions() {

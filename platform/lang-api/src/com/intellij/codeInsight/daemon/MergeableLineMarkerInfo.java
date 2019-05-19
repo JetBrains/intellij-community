@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.ide.IdeBundle;
@@ -35,6 +35,10 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   private static final Logger LOG = Logger.getInstance(MergeableLineMarkerInfo.class);
 
+  /**
+   * @deprecated Use the overload without updatePass
+   */
+  @Deprecated
   public MergeableLineMarkerInfo(@NotNull T element,
                                  @NotNull TextRange textRange,
                                  Icon icon,
@@ -43,6 +47,15 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
                                  @Nullable GutterIconNavigationHandler<T> navHandler,
                                  @NotNull GutterIconRenderer.Alignment alignment) {
     super(element, textRange, icon, updatePass, tooltipProvider, navHandler, alignment);
+  }
+
+  public MergeableLineMarkerInfo(@NotNull T element,
+                                 @NotNull TextRange textRange,
+                                 Icon icon,
+                                 @Nullable Function<? super T, String> tooltipProvider,
+                                 @Nullable GutterIconNavigationHandler<T> navHandler,
+                                 @NotNull GutterIconRenderer.Alignment alignment) {
+    super(element, textRange, icon, tooltipProvider, navHandler, alignment);
   }
 
   public abstract boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info);
@@ -87,13 +100,13 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   @NotNull
-  public static List<LineMarkerInfo<PsiElement>> merge(@NotNull List<MergeableLineMarkerInfo> markers) {
+  public static List<LineMarkerInfo<PsiElement>> merge(@NotNull List<? extends MergeableLineMarkerInfo<PsiElement>> markers) {
     List<LineMarkerInfo<PsiElement>> result = new SmartList<>();
     for (int i = 0; i < markers.size(); i++) {
-      MergeableLineMarkerInfo marker = markers.get(i);
-      List<MergeableLineMarkerInfo> toMerge = new SmartList<>();
+      MergeableLineMarkerInfo<PsiElement> marker = markers.get(i);
+      List<MergeableLineMarkerInfo<PsiElement>> toMerge = new SmartList<>();
       for (int k = markers.size() - 1; k > i; k--) {
-        MergeableLineMarkerInfo current = markers.get(k);
+        MergeableLineMarkerInfo<PsiElement> current = markers.get(k);
         boolean canMergeWith = marker.canMergeWith(current);
         if (ApplicationManager.getApplication().isUnitTestMode() && !canMergeWith && current.canMergeWith(marker)) {
           LOG.error(current.getClass() +
@@ -124,11 +137,11 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
-    private MyLineMarkerInfo(@NotNull List<MergeableLineMarkerInfo> markers) {
+    private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<PsiElement>> markers) {
       this(markers, markers.get(0));
     }
 
-    private MyLineMarkerInfo(@NotNull List<MergeableLineMarkerInfo> markers, @NotNull MergeableLineMarkerInfo template) {
+    private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo> markers, @NotNull MergeableLineMarkerInfo template) {
       //noinspection ConstantConditions
       super(template.getElement(),
             getCommonTextRange(markers),
@@ -140,7 +153,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
 
     @NotNull
-    private static TextRange getCommonTextRange(@NotNull List<MergeableLineMarkerInfo> markers) {
+    private static TextRange getCommonTextRange(@NotNull List<? extends MergeableLineMarkerInfo> markers) {
       int startOffset = Integer.MAX_VALUE;
       int endOffset = Integer.MIN_VALUE;
       for (MergeableLineMarkerInfo marker : markers) {
@@ -151,21 +164,22 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
 
     @NotNull
-    private static GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull final List<MergeableLineMarkerInfo> markers) {
+    private static GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull final List<? extends MergeableLineMarkerInfo> markers) {
       return new MergedGutterIconNavigationHandler(markers);
     }
   }
 
-  public static class MergedGutterIconNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
+  static class MergedGutterIconNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
     private final List<LineMarkerInfo> myInfos;
 
-    public MergedGutterIconNavigationHandler(List<MergeableLineMarkerInfo> markers) {
+    MergedGutterIconNavigationHandler(List<? extends MergeableLineMarkerInfo> markers) {
       final List<LineMarkerInfo> infos = new ArrayList<>(markers);
       Collections.sort(infos, Comparator.comparingInt(o -> o.startOffset));
       myInfos = Collections.unmodifiableList(infos);
     }
 
-    public List<LineMarkerInfo> getMergedLineMarkersInfos() {
+    @NotNull
+    List<LineMarkerInfo> getMergedLineMarkersInfos() {
       return myInfos;
     }
 

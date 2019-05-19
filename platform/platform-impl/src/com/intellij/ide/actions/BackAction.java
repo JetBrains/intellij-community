@@ -1,44 +1,50 @@
 
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.navigation.History;
+import org.jetbrains.annotations.NotNull;
 
 public class BackAction extends AnAction implements DumbAware {
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) return;
-    IdeDocumentHistory.getInstance(project).back();
+  public BackAction() {
+    setEnabledInModalContext(true);
   }
 
   @Override
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    Project project = event.getProject();
-    if (project == null || project.isDisposed()) {
-      presentation.setEnabled(false);
-      return;
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    History history = e.getData(History.KEY);
+
+    if (history != null) {
+      history.back();
     }
-    presentation.setEnabled(IdeDocumentHistory.getInstance(project).isBackAvailable());
+    else if (project != null) {
+      IdeDocumentHistory.getInstance(project).back();
+    }
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    History history = e.getData(History.KEY);
+    boolean isModalContext = e.getData(PlatformDataKeys.IS_MODAL_CONTEXT) == Boolean.TRUE;
+
+    Presentation presentation = e.getPresentation();
+    if (history != null) {
+      presentation.setEnabled(history.canGoBack());
+    }
+    else if (project != null && !project.isDisposed()) {
+      presentation.setEnabled(!isModalContext && IdeDocumentHistory.getInstance(project).isBackAvailable());
+    }
+    else {
+      presentation.setEnabled(false);
+    }
   }
 }

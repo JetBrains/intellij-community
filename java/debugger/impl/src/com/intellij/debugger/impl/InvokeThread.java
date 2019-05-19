@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ConcurrencyUtil;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,8 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       }
       ourWorkerRequest.set(this);
       try {
-        myOwner.run(this);
+        ConcurrencyUtil.runUnderThreadName("DebuggerManagerThread", ()->
+        myOwner.run(this));
       } 
       finally {
         ourWorkerRequest.set(null);
@@ -119,9 +121,6 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   }
 
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
-    String oldThreadName = Thread.currentThread().getName();
-    Thread.currentThread().setName("DebuggerManagerThread");
-
     try {
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
       while(true) {
@@ -132,7 +131,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
           final WorkerThreadRequest currentRequest = getCurrentRequest();
           if(currentRequest != threadRequest) {
-            reportCommandError(new IllegalStateException("Expected " + threadRequest + " instead of " + currentRequest));
+            reportCommandError(new IllegalStateException("Expected " + threadRequest + " instead of " + currentRequest + " closed=" + myEvents.isClosed()));
             break; // ensure events are processed by one thread at a time
           }
 
@@ -170,9 +169,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
       LOG.debug("Request " + toString() + " exited");
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
-      Thread.currentThread().setName(oldThreadName);
     }
-
   }
 
   private static void reportCommandError(Throwable e) {

@@ -111,35 +111,32 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
     final int lineEndOffset = document.getLineEndOffset(lineNumber);
 
+    final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
+    
     final String linePrefix = document.getText(TextRange.create(lineStartOffset, caretOffset));
     if (!StringUtil.isEmptyOrSpaces(linePrefix)) return text;
 
     final PsiElement element = file.findElementAt(caretOffset);
     if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
 
-    text = addLeadingSpacesToNormalizeSelection(project, text);
+    text = addLeadingSpacesToNormalizeSelection(file, text);
     final String fragmentIndent = PyIndentUtil.findCommonIndent(text, false);
     final String newIndent = inferBestIndent(file, document, caretOffset, lineNumber, fragmentIndent);
+    String newText = PyIndentUtil.changeIndent(text, false, newIndent);
 
-    final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
-    if (StringUtil.isEmptyOrSpaces(newIndent) && shouldPasteOnPreviousLine(file, text, caretOffset)) {
+    if (!selectionModel.hasSelection() && shouldPasteOnPreviousLine(file, text, caretOffset)) {
       caretModel.moveToOffset(lineStartOffset);
-      editor.getSelectionModel().setSelection(lineStartOffset, selectionModel.getSelectionEnd());
-
       if (StringUtil.isEmptyOrSpaces(line)) {
         ApplicationManager.getApplication().runWriteAction(() -> document.deleteString(lineStartOffset, lineEndOffset));
       }
     }
-
-    String newText;
-    if (StringUtil.isEmptyOrSpaces(newIndent)) {
-      newText = PyIndentUtil.changeIndent(text, false, newIndent);
-    }
     else {
-      newText = text;
+      // Don't duplicate the existing whitespace prefix of the line
+      newText = StringUtil.trimStart(newText, linePrefix);
     }
 
-    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(project);
+    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file);
+    // TODO Combine shouldPasteOnPreviousLine() check with addLineBreak() as they really complement each other
     if (addLinebreak(text, line, useTabs) && selectionModel.getSelectionStart() == selectionModel.getSelectionEnd()) {
       newText += "\n";
     }
@@ -147,12 +144,12 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   @NotNull
-  private static String addLeadingSpacesToNormalizeSelection(@NotNull Project project, @NotNull String text) {
+  private static String addLeadingSpacesToNormalizeSelection(@NotNull PsiFile file, @NotNull String text) {
     if (!fragmentBeginsWithBlockStatement(text)) {
       return text;
     }
 
-    final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "dummy.py", text, false);
+    final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(file.getProject(), "dummy.py", text, false);
     //fragment.setContext(file);
     final PyStatementListContainer statement = as(fragment.getFirstChild(), PyStatementListContainer.class);
     if (statement == null) {
@@ -164,7 +161,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       return text;
     }
     
-    final String indentStep = PyIndentUtil.getIndentFromSettings(project);
+    final String indentStep = PyIndentUtil.getIndentFromSettings(file);
     final String bodyIndent = PyIndentUtil.getElementIndent(statement.getStatementList());
     final String expectedBodyIndent = statementIndent + indentStep;
     if (bodyIndent.startsWith(expectedBodyIndent)) {
@@ -263,7 +260,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   private static boolean shouldPasteOnPreviousLine(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {
-    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file.getProject());
+    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file);
     final PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS == null || text.endsWith("\n")) {
       return true;

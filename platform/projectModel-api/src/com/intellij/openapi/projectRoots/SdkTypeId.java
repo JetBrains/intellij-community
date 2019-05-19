@@ -21,7 +21,7 @@ public interface SdkTypeId {
   void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional);
 
   @Nullable
-  SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, Element additional);
+  SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, @NotNull Element additional);
 
   /**
    * An SDK can be located on a local machine or on a remote or virtual machine. In the latter case this method returns false.
@@ -33,6 +33,7 @@ public interface SdkTypeId {
   /**
    * Note to implementors: you may need to override this method if SDKs of this type have non-trivial version strings.
    */
+  @NotNull
   default Comparator<Sdk> versionComparator() {
     return (sdk1, sdk2) -> {
       assert sdk1.getSdkType() == this : sdk1;

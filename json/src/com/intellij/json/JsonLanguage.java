@@ -10,7 +10,7 @@ public class JsonLanguage extends Language {
   }
 
   private JsonLanguage() {
-    super("JSON", "application/json", "application/vnd.api+json", "application/hal+json");
+    super("JSON", "application/json", "application/vnd.api+json", "application/hal+json", "application/ld+json");
   }
 
   @Override

@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -31,10 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
 public class PathUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.PathUtil");
 
   private PathUtil() { }
 
@@ -77,9 +59,7 @@ public class PathUtil {
 
   @Nullable
   public static String getFileExtension(@NotNull String name) {
-    int index = name.lastIndexOf('.');
-    if (index < 0) return null;
-    return name.substring(index + 1);
+    return PathUtilRt.getFileExtension(name);
   }
 
   @NotNull
@@ -115,43 +95,10 @@ public class PathUtil {
     return path == null ? null : FileUtilRt.toSystemDependentName(path);
   }
 
-  /**
-   * Ensures that the given argument doesn't contain {@code \} separators.
-   * <p>
-   * The violations are reported via the {@code LOG.error}.
-   * <p>
-   * TODO SystemIndependentInstrumentingBuilder now embeds assertions directly, so we can remove this method.
-   *
-   * @param className     Class name
-   * @param methodName    Method name
-   * @param parameterName Parameter name
-   * @param argument      Path
-   * @see org.jetbrains.annotations.SystemDependent
-   * @see org.jetbrains.annotations.SystemIndependent
-   */
-  @Deprecated
-  public static void assertArgumentIsSystemIndependent(String className, String methodName, String parameterName, String argument) {
-    if (argument != null && argument.contains("\\")) {
-      String message = String.format("Argument for @SystemIndependent parameter '%s' of %s.%s must be system-independent: %s",
-                                     parameterName, className, methodName, argument);
-
-      IllegalArgumentException exception = new IllegalArgumentException(message);
-
-      StackTraceElement[] stackTrace = new StackTraceElement[exception.getStackTrace().length - 1];
-      System.arraycopy(exception.getStackTrace(), 1, stackTrace, 0, stackTrace.length);
-      exception.setStackTrace(stackTrace);
-
-      LOG.error(exception);
-    }
-  }
-
   @NotNull
   public static String driveLetterToLowerCase(@NotNull String path) {
-    if (SystemInfo.isWindows && path.length() >= 2 && Character.isUpperCase(path.charAt(0)) && path.charAt(1) == ':') {
-      File file = new File(path);
-      if (file.isAbsolute()) {
-        return Character.toLowerCase(path.charAt(0)) + path.substring(1);
-      }
+    if (SystemInfo.isWindows && FileUtil.isWindowsAbsolutePath(path)) {
+      return Character.toLowerCase(path.charAt(0)) + path.substring(1);
     }
     return path;
   }
@@ -162,7 +109,8 @@ public class PathUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@code VfsUtil.getLocalFile(file)} instead (to be removed in IDEA 2019) */
+  /** @deprecated use {@link com.intellij.openapi.vfs.VfsUtil#getLocalFile(VirtualFile)} instead (to be removed in IDEA 2019) */
+  @Deprecated
   @NotNull
   public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
     if (file.isValid()) {

@@ -1,19 +1,5 @@
 
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -29,20 +15,45 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import org.jetbrains.annotations.Nullable;
 
-class InlineMethodHandler extends JavaInlineActionHandler {
+import java.util.Collections;
+import java.util.function.Supplier;
+
+public class InlineMethodHandler extends JavaInlineActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
 
   private InlineMethodHandler() {
   }
 
+  @Override
   public boolean canInlineElement(PsiElement element) {
     return element instanceof PsiMethod && element.getNavigationElement() instanceof PsiMethod && element.getLanguage() == JavaLanguage.INSTANCE;
   }
 
+  @Override
   public void inlineElement(final Project project, Editor editor, PsiElement element) {
-    PsiMethod method = (PsiMethod)element.getNavigationElement();
-    final PsiCodeBlock methodBody = method.getBody();
+    performInline(project, editor, (PsiMethod)element.getNavigationElement(), false);
+  }
+
+  /**
+   * Try to inline method, displaying UI or error message if necessary
+   * @param project project where method is declared
+   * @param editor active editor where cursor might point to the call site 
+   * @param method method to be inlined
+   * @param allowInlineThisOnly if true, only call-site at cursor will be suggested 
+   *                            (in this case caller must check that cursor points to the valid reference)
+   */
+  public static void performInline(Project project, Editor editor, PsiMethod method, boolean allowInlineThisOnly) {
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+
+    PsiCodeBlock methodBody = method.getBody();
+    Supplier<PsiCodeBlock> specialization = InlineMethodSpecialization.forReference(reference);
+    if (specialization != null) {
+      allowInlineThisOnly = true;
+      methodBody = specialization.get();
+    }
+
     if (methodBody == null){
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -58,23 +69,11 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       return;
     }
 
-    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
     if (reference != null) {
       final PsiElement refElement = reference.getElement();
-      if (!isEnabledForLanguage(refElement.getLanguage())) {
+      if (!isJavaLanguage(refElement.getLanguage())) {
         String message = RefactoringBundle
           .message("refactoring.is.not.supported.for.language", "Inline of Java method", refElement.getLanguage().getDisplayName());
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
-        return;
-      }
-    }
-    boolean allowInlineThisOnly = false;
-    if (InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method)) {
-      if (reference != null && InlineUtil.getTailCallType(reference) != InlineUtil.TailCallType.None) {
-        allowInlineThisOnly = true;
-      }
-      else {
-        String message = RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
         return;
       }
@@ -100,7 +99,7 @@ class InlineMethodHandler extends JavaInlineActionHandler {
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
         return;
       }
-      final boolean chainingConstructor = isChainingConstructor(method);
+      final boolean chainingConstructor = InlineUtil.isChainingConstructor(method);
       if (!chainingConstructor) {
         if (!isThisReference(reference)) {
           String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", REFACTORING_NAME);
@@ -128,7 +127,7 @@ class InlineMethodHandler extends JavaInlineActionHandler {
     final boolean invokedOnReference = reference != null;
     if (!invokedOnReference) {
       final VirtualFile vFile = method.getContainingFile().getVirtualFile();
-      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vFile);
+      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(vFile));
     }
 
     PsiJavaCodeReferenceElement refElement = null;
@@ -140,24 +139,6 @@ class InlineMethodHandler extends JavaInlineActionHandler {
     }
     InlineMethodDialog dialog = new InlineMethodDialog(project, method, refElement, editor, allowInlineThisOnly);
     dialog.show();
-  }
-
-  public static boolean isChainingConstructor(PsiMethod constructor) {
-    PsiCodeBlock body = constructor.getBody();
-    if (body != null) {
-      PsiStatement[] statements = body.getStatements();
-      if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
-        PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-        if (expression instanceof PsiMethodCallExpression) {
-          PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expression).getMethodExpression();
-            if ("this".equals(methodExpr.getReferenceName())) {
-              PsiElement resolved = methodExpr.resolve();
-              return resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor(); //delegated via "this" call
-            }
-        }
-      }
-    }
-    return false;
   }
 
   public static boolean checkRecursive(PsiMethod method) {
@@ -191,5 +172,11 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       }
     }
     return false;
+  }
+
+  @Nullable
+  @Override
+  public String getActionName(PsiElement element) {
+    return REFACTORING_NAME + "...";
   }
 }

@@ -21,11 +21,15 @@ import com.intellij.find.FindUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
 public class SearchBackAction extends AnAction implements DumbAware {
   public SearchBackAction() {
@@ -33,7 +37,7 @@ public class SearchBackAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final FileEditor editor = e.getData(PlatformDataKeys.FILE_EDITOR);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
@@ -52,14 +56,16 @@ public class SearchBackAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
-    final FileEditor editor = event.getData(PlatformDataKeys.FILE_EDITOR);
-    presentation.setEnabled(editor instanceof TextEditor);
+    FileEditor fileEditor = event.getData(PlatformDataKeys.FILE_EDITOR);
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
+    presentation.setEnabled(fileEditor instanceof TextEditor
+                            && !SEARCH_DISABLED.get(editor, false));
   }
 }

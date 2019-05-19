@@ -79,7 +79,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     if (!isInQualifiedNew() && !isDiamond(stub)) {
       final String refText = stub.getBaseClassReferenceText();
       assert refText != null : stub;
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
 
       final PsiElement context = calcBasesResolveContext(PsiNameHelper.getShortClassName(refText), getExtendsList());
       try {
@@ -110,7 +110,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   }
 
   private PsiClassType getTypeByTree() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getBaseClassReference());
+    return JavaPsiFacade.getElementFactory(getProject()).createType(getBaseClassReference());
   }
 
   @Override
@@ -183,6 +183,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     }
   }
 
+  @Override
   public String toString() {
     return "PsiAnonymousClass";
   }

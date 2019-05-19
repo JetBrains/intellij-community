@@ -15,7 +15,6 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +30,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
   private SortOrder mySortOrder = SortOrder.ASCENDING;
 
   public ListTableModel(@NotNull ColumnInfo... columnInfos) {
-    this(columnInfos, new ArrayList<Item>(), 0, SortOrder.ASCENDING);
+    this(columnInfos, new ArrayList<>(), 0, SortOrder.ASCENDING);
   }
 
   public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items, int selectedColumn) {
@@ -48,12 +47,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
     mySortByColumn = selectedColumn;
     mySortOrder = order;
 
-    setSortable(ContainerUtil.find(columnNames, new Condition<ColumnInfo>() {
-      @Override
-      public boolean value(ColumnInfo columnInfo) {
-        return columnInfo.isSortable();
-      }
-    }) != null);
+    setSortable(ContainerUtil.find(columnNames, ColumnInfo::isSortable) != null);
   }
 
   @Override
@@ -206,7 +200,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
     fireTableRowsInserted(index, index);
   }
 
-  public void addRows(@NotNull Collection<Item> items) {
+  public void addRows(@NotNull Collection<? extends Item> items) {
     myItems.addAll(items);
     if (!myItems.isEmpty()) {
       fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);

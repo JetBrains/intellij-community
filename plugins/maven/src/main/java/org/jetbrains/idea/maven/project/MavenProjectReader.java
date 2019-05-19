@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,8 +26,12 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static java.util.stream.Collectors.toMap;
 import static org.jetbrains.idea.maven.utils.MavenUtil.getBaseDir;
 
 public class MavenProjectReader {
@@ -422,6 +413,7 @@ public class MavenProjectReader {
 
       Pair<VirtualFile, RawModelReadResult> parentModelWithProblems =
         new MavenParentProjectFileProcessor<Pair<VirtualFile, RawModelReadResult>>() {
+          @Override
           @Nullable
           protected VirtualFile findManagedFile(@NotNull MavenId id) {
             return locator.findProjectFile(id);
@@ -486,13 +478,15 @@ public class MavenProjectReader {
     try {
       Collection<MavenServerExecutionResult> executionResults =
         embedder.resolveProject(files, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
+      Map<String, VirtualFile> filesMap = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+      filesMap.putAll(files.stream().collect(toMap(VirtualFile::getPath, Function.identity())));
 
-      Collection<MavenProjectReaderResult> readerResults = ContainerUtil.newArrayList();
+      Collection<MavenProjectReaderResult> readerResults = new ArrayList<>();
       for (MavenServerExecutionResult result : executionResults) {
         MavenServerExecutionResult.ProjectData projectData = result.projectData;
         if (projectData == null) {
-          if(files.size() == 1) {
-            final VirtualFile file = files.iterator().next();
+          VirtualFile file = detectPomFile(filesMap, result);
+          if (file != null) {
             MavenProjectReaderResult temp = readProject(generalSettings, file, explicitProfiles, locator);
             temp.readingProblems.addAll(result.problems);
             temp.unresolvedArtifactIds.addAll(result.unresolvedArtifacts);
@@ -534,6 +528,21 @@ public class MavenProjectReader {
   }
 
   @Nullable
+  private static VirtualFile detectPomFile(Map<String, VirtualFile> filesMap, MavenServerExecutionResult result) {
+    if (filesMap.size() == 1) {
+      return getFirstItem(filesMap.values());
+    }
+    if (!result.problems.isEmpty()) {
+      //noinspection ConstantConditions
+      String path = getFirstItem(result.problems).getPath();
+      if (path != null) {
+        return filesMap.get(toSystemIndependentName(path));
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public static MavenProjectReaderResult generateSources(MavenEmbedderWrapper embedder,
                                                          MavenImportingSettings importingSettings,
                                                          VirtualFile file,
@@ -563,11 +572,13 @@ public class MavenProjectReader {
                                  final Collection<MavenProjectProblem> problems,
                                  final MavenProjectProblem.ProblemType type) {
     return MavenJDOMUtil.read(file, new MavenJDOMUtil.ErrorHandler() {
+      @Override
       public void onReadError(IOException e) {
         MavenLog.LOG.warn("Cannot read the pom file: " + e);
         problems.add(MavenProjectProblem.createProblem(file.getPath(), e.getMessage(), type));
       }
 
+      @Override
       public void onSyntaxError() {
         problems.add(MavenProjectProblem.createSyntaxProblem(file.getPath(), type));
       }

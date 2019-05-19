@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -19,14 +19,16 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPostfixTemplateExpressionCondition> {
@@ -37,23 +39,17 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
   public JavaPostfixTemplateEditor(@NotNull PostfixTemplateProvider provider) {
     super(provider, createEditor(), true);
     myLanguageLevelCombo = new ComboBox<>(LanguageLevel.values());
-    myLanguageLevelCombo.setRenderer(new ColoredListCellRenderer<LanguageLevel>() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList list, LanguageLevel value, int index, boolean selected, boolean hasFocus) {
-        append(value.getPresentableText());
-      }
-    });
+    myLanguageLevelCombo.setRenderer(SimpleListCellRenderer.create("", LanguageLevel::getPresentableText));
 
     myPanel = FormBuilder.createFormBuilder()
                          .addLabeledComponent("Minimum language level:", myLanguageLevelCombo)
-                         .addComponent(myEditTemplateAndConditionsPanel)
+                         .addComponentFillVertically(myEditTemplateAndConditionsPanel, UIUtil.DEFAULT_VGAP)
                          .getPanel();
   }
 
   @NotNull
   private static Editor createEditor() {
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    return createEditor(defaultProject, createDocument(defaultProject));
+    return createEditor(null, createDocument(ProjectManager.getInstance().getDefaultProject()));
   }
 
   @NotNull
@@ -61,7 +57,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
   public JavaEditablePostfixTemplate createTemplate(@NotNull String templateId, @NotNull String templateName) {
     LanguageLevel selectedLanguageLevel = ObjectUtils.tryCast(myLanguageLevelCombo.getSelectedItem(), LanguageLevel.class);
     LanguageLevel languageLevel = ObjectUtils.notNull(selectedLanguageLevel, LanguageLevel.JDK_1_3);
-    Set<JavaPostfixTemplateExpressionCondition> conditions = ContainerUtil.newLinkedHashSet();
+    Set<JavaPostfixTemplateExpressionCondition> conditions = new LinkedHashSet<>();
     ContainerUtil.addAll(conditions, myExpressionTypesListModel.elements());
     String templateText = myTemplateEditor.getDocument().getText();
     boolean useTopmostExpression = myApplyToTheTopmostJBCheckBox.isSelected();
@@ -108,7 +104,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
       myLanguageLevelCombo.setSelectedItem(((JavaEditablePostfixTemplate)template).getMinimumLanguageLevel());
     }
   }
-  
+
   private class ChooseClassAction extends DumbAwareAction {
     @Nullable
     private final Project myProject;
@@ -119,7 +115,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       String fqn = getFqn();
       if (fqn != null) {
         myExpressionTypesListModel.addElement(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(fqn));

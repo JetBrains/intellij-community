@@ -46,6 +46,7 @@ public class CvsResultEx implements CvsResult {
     return errors;
   }
 
+  @Override
   public List<VcsException> getWarnings() {
     final ArrayList<VcsException> warnings = new ArrayList<>();
     for (VcsException error : myErrors) {

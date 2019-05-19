@@ -57,7 +57,7 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
     myTop = myBack = 0;
     myCache = new CacheEntry[cacheSize + 1];
     for (int i = 0; i < myCache.length; ++i) {
-      myCache[i] = new CacheEntry<T>();
+      myCache[i] = new CacheEntry<>();
     }
     myHashTableSize = getAdjustedTableSize(cacheSize);
     myHashTable = new int[myHashTableSize];
@@ -200,7 +200,7 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
   }
 
   public void resize(int newSize) {
-    final IntObjectCache<T> newCache = new IntObjectCache<T>(newSize);
+    final IntObjectCache<T> newCache = new IntObjectCache<>(newSize);
     final CacheEntry<T>[] cache = myCache;
     int back = myBack;
     while (back != 0) {

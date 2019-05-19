@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
@@ -34,19 +20,15 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-/**
- * @author Dmitry Batkovich
- */
 public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionTool {
   private static final String ADDITIONAL_LANGUAGES_ATTR_NAME = "additionalLanguages";
   private final static SoftLazyValue<Set<String>> JAVA_LOCALES = new SoftLazyValue<Set<String>>() {
@@ -62,13 +44,6 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
   };
 
   private final List<String> myAdditionalLanguages = new ArrayList<>();
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Suspicious resource bundle locale languages";
-  }
 
   @TestOnly
   public void setAdditionalLanguages(List<String> additionalLanguages) {
@@ -88,7 +63,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (!myAdditionalLanguages.isEmpty()) {
-      final ArrayList<String> uniqueLanguages = ContainerUtil.newArrayList(ContainerUtil.newHashSet(myAdditionalLanguages));
+      final ArrayList<String> uniqueLanguages = new ArrayList<>(new HashSet<>(myAdditionalLanguages));
       Collections.sort(uniqueLanguages);
       final String locales = StringUtil.join(uniqueLanguages, ",");
       node.setAttribute(ADDITIONAL_LANGUAGES_ATTR_NAME, locales);
@@ -157,7 +132,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
   private class MyOptions {
     private final JBList myAdditionalLocalesList;
 
-    public MyOptions() {
+    MyOptions() {
       myAdditionalLocalesList = new JBList(new MyListModel());
       myAdditionalLocalesList.setCellRenderer(new DefaultListCellRenderer());
     }

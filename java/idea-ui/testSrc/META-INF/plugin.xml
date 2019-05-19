@@ -1,0 +1,10 @@
+<idea-plugin>
+  <name>idea-tests</name>
+  <id>com.intellij.idea-tests</id>
+  <extensions defaultExtensionNs="com.intellij">
+    <facetType implementation="com.intellij.facet.mock.MockFacetType"/>
+    <facetType implementation="com.intellij.facet.mock.MockSubFacetType"/>
+    <framework.detector implementation="com.intellij.facet.mock.MockFacetDetector"/>
+    <framework.detector implementation="com.intellij.facet.mock.MockSubFacetDetector"/>
+  </extensions>
+</idea-plugin>

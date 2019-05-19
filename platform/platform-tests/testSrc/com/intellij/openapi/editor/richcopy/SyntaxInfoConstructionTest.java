@@ -34,7 +34,6 @@ import com.intellij.ui.JBColor;
 
 /**
  * @author Denis Zhdanov
- * @since 3/27/13 11:11 AM
  */
 public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testBlockSelection() {

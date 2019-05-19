@@ -40,6 +40,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
   private JCheckBox myCbDontIndentTopLevelMembers;
   private JCheckBox myCbUseRelativeIndent;
 
+  @Override
   protected void addComponents() {
     super.addComponents();
 
@@ -57,6 +58,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     add(myCbUseRelativeIndent);
   }
 
+  @Override
   public boolean isModified(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
     boolean isModified = super.isModified(settings, options);
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -69,6 +71,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     return isModified;
   }
 
+  @Override
   public void apply(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
     super.apply(settings, options);
     options.LABEL_INDENT_SIZE = myLabelIndent.getValue();
@@ -79,6 +82,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     options.USE_RELATIVE_INDENTS = myCbUseRelativeIndent.isSelected();
   }
 
+  @Override
   public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
     super.reset(settings, options);
     myLabelIndent.setValue(options.LABEL_INDENT_SIZE);
@@ -88,6 +92,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     myCbUseRelativeIndent.setSelected(options.USE_RELATIVE_INDENTS);
   }
 
+  @Override
   public void setEnabled(final boolean enabled) {
     super.setEnabled(enabled);
     myLabelIndent.setEnabled(enabled);

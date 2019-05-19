@@ -44,7 +44,7 @@ public class SurroundWithUtil {
   public static PsiElement[] moveDeclarationsOut(PsiElement block, PsiElement[] statements, boolean generateInitializers) {
     try{
       PsiManager psiManager = block.getManager();
-      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
       ArrayList<PsiElement> array = new ArrayList<>();
       for (PsiElement statement : statements) {
         if (statement instanceof PsiDeclarationStatement) {
@@ -78,6 +78,12 @@ public class SurroundWithUtil {
               PsiVariable var = (PsiVariable)element1;
               PsiExpression initializer = var.getInitializer();
               if (initializer != null) {
+                PsiTypeElement typeElement = var.getTypeElement();
+                if (typeElement != null && 
+                    typeElement.isInferredType() && 
+                    PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
+                  continue;
+                }
                 if (!generateInitializers || var.hasModifierProperty(PsiModifier.FINAL)) {
                   initializer.delete();
                 }

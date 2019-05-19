@@ -1,33 +1,29 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ui.list.ListCellBackgroundSupplier;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
+ * SimpleColoredComponent-based list cell renderer.
+ *
+ * @see SimpleListCellRenderer for a simpler JBLabel-based variant.
+ * @see ListCellBackgroundSupplier for different background color.
+ *
  * @author Vladimir Kondratyev
  */
 public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent implements ListCellRenderer<T> {
-  private final @Nullable JComboBox myComboBox;
-  private final @Nullable ListCellRenderer<? super T> myDefaultGtkRenderer;
 
   protected boolean mySelected;
   protected Color myForeground;
   protected Color mySelectionForeground;
 
   public ColoredListCellRenderer() {
-    this(null);
-  }
-
-  public ColoredListCellRenderer(@Nullable JComboBox comboBox) {
-    myComboBox = comboBox;
-    //noinspection UndesirableClassUsage
-    myDefaultGtkRenderer = UIUtil.isUnderGTKLookAndFeel() ? new JComboBox<T>().getRenderer() : null;
     setFocusBorderAroundIcon(true);
     getIpad().left = getIpad().right = UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUI.scale(UIUtil.getListCellHPadding());
   }
@@ -35,28 +31,12 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
   @Override
   public Component getListCellRendererComponent(JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
     clear();
-
-    if (myComboBox != null) {
-      setEnabled(myComboBox.isEnabled());
-    }
-
     setFont(list.getFont());
     mySelected = selected;
-    myForeground = isEnabled() ? list.getForeground() : UIManager.getColor("Label.disabledForeground");
+    myForeground = isEnabled() ? list.getForeground() : UIUtil.getLabelDisabledForeground();
     mySelectionForeground = list.getSelectionForeground();
 
-    if (UIUtil.isWinLafOnVista()) {
-      // the system draws a gradient background on the combobox selected item - don't overdraw it with our solid background
-      if (index == -1) {
-        setOpaque(false);
-        mySelected = false;
-      }
-      else {
-        setOpaque(true);
-        setBackground(selected ? list.getSelectionBackground() : null);
-      }
-    }
-    else if (UIUtil.isUnderWin10LookAndFeel()) {
+    if (UIUtil.isUnderWin10LookAndFeel()) {
       setBackground(selected ? list.getSelectionBackground() : list.getBackground());
     }
     else {
@@ -64,15 +44,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
     }
 
     setPaintFocusBorder(hasFocus);
-
     customizeCellRenderer(list, value, index, selected, hasFocus);
-
-    if (myDefaultGtkRenderer != null && list.getModel() instanceof ComboBoxModel) {
-      Component component = myDefaultGtkRenderer.getListCellRendererComponent(list, value, index, selected, hasFocus);
-      if (component instanceof JLabel) {
-        return formatToLabel((JLabel)component);
-      }
-    }
 
     return this;
   }
@@ -114,27 +86,25 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
       setFont(null);
     }
 
-    return result;
+    return UIUtil.updateListRowHeight(result);
   }
 
   protected abstract void customizeCellRenderer(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus);
 
-  /**
-   * Copied AS IS
-   *
-   * @see DefaultListCellRenderer#isOpaque()
-   */
-  @Override
-  public boolean isOpaque() {
-    Color back = getBackground();
-    Component p = getParent();
-    if (p != null) {
-      p = p.getParent();
-    }
-    // p should now be the JList.
-    boolean colorMatch = (back != null) && (p != null) &&
-                         back.equals(p.getBackground()) &&
-                         p.isOpaque();
-    return !colorMatch && super.isOpaque();
-  }
+  // @formatter:off
+  @Override public void validate() {}
+  @Override public void invalidate() {}
+  @Override public void repaint() {}
+  @Override public void revalidate() {}
+  @Override public void repaint(long tm, int x, int y, int width, int height) {}
+  @Override public void repaint(Rectangle r) {}
+  @Override public void firePropertyChange(String propertyName, byte oldValue, byte newValue) {}
+  @Override public void firePropertyChange(String propertyName, char oldValue, char newValue) {}
+  @Override public void firePropertyChange(String propertyName, short oldValue, short newValue) {}
+  @Override public void firePropertyChange(String propertyName, int oldValue, int newValue) {}
+  @Override public void firePropertyChange(String propertyName, long oldValue, long newValue) {}
+  @Override public void firePropertyChange(String propertyName, float oldValue, float newValue) {}
+  @Override public void firePropertyChange(String propertyName, double oldValue, double newValue) {}
+  @Override public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
+  // @formatter:on
 }

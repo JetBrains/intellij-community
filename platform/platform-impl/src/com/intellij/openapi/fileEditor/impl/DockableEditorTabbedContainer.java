@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -27,8 +13,8 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,13 +60,13 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
     return editors;
   }
 
-  void fireContentClosed(VirtualFile file) {
+  void fireContentClosed(@NotNull VirtualFile file) {
     for (Listener each : myListeners) {
       each.contentRemoved(file);
     }
   }
 
-  void fireContentOpen(VirtualFile file) {
+  void fireContentOpen(@NotNull VirtualFile file) {
     for (Listener each : myListeners) {
       each.contentAdded(file);
     }
@@ -90,7 +76,8 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   public RelativeRectangle getAcceptArea() {
     return new RelativeRectangle(mySplitters);
   }
-  
+
+  @Override
   public RelativeRectangle getAcceptAreaFallback() {
     JRootPane root = mySplitters.getRootPane();
     return root != null ? new RelativeRectangle(root) : new RelativeRectangle(mySplitters);
@@ -149,7 +136,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
 
     if (myCurrentOver != null) {
-      int index = ((JBTabsImpl)myCurrentOver).getDropInfoIndex();
+      int index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
       file.putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
     }
 

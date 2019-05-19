@@ -15,7 +15,6 @@
  */
 package org.zmlx.hg4idea.branch;
 
-import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -65,7 +64,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
   }
 
   @Nullable
-  private static Repository chooseRepository(@NotNull List<HgRepository> repositories) {
+  private static HgRepository chooseRepository(@NotNull List<? extends HgRepository> repositories) {
     assert !repositories.isEmpty();
     return repositories.size() > 1 ? null : repositories.get(0);
   }
@@ -75,6 +74,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return new AnAction[]{
       new UpdateAction(myProject, myRepositories, myBranchName),
+      new CompareAction(myProject, myRepositories, myBranchName),
       new MergeAction(myProject, myRepositories, myBranchName)
     };
   }
@@ -87,14 +87,14 @@ public class HgCommonBranchActions extends BranchActionGroup {
 
   private static class MergeAction extends HgBranchAbstractAction {
 
-    public MergeAction(@NotNull Project project,
+    MergeAction(@NotNull Project project,
                        @NotNull List<HgRepository> repositories,
                        @NotNull String branchName) {
       super(project, "Merge", repositories, branchName);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       FileDocumentManager.getInstance().saveAllDocuments();
       final UpdatedFiles updatedFiles = UpdatedFiles.create();
       for (final HgRepository repository : myRepositories) {
@@ -105,15 +105,31 @@ public class HgCommonBranchActions extends BranchActionGroup {
 
   private static class UpdateAction extends HgBranchAbstractAction {
 
-    public UpdateAction(@NotNull Project project,
+    UpdateAction(@NotNull Project project,
                         @NotNull List<HgRepository> repositories,
                         @NotNull String branchName) {
       super(project, "Update", repositories, branchName);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       HgUpdateCommand.updateTo(myBranchName, myRepositories, null);
+    }
+  }
+
+  private static class CompareAction extends HgBranchAbstractAction {
+    CompareAction(@NotNull Project project,
+                         @NotNull List<HgRepository> repositories,
+                         @NotNull String branchName) {
+      super(project, "Compare", repositories, branchName);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+
+      HgRepository repository = myRepositories.get(0);
+      new HgBrancher(myProject).compare(myBranchName, myRepositories, repository);
     }
   }
 }

@@ -13,6 +13,7 @@
 // limitations under the License.
 package com.intellij.ui;
 
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -24,10 +25,6 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 public abstract class GroupedElementsRenderer {
-  public static final Color POPUP_SEPARATOR_FOREGROUND = new JBColor(Color.gray.brighter(), Gray.x51);
-  public static final Color POPUP_SEPARATOR_TEXT_FOREGROUND = Color.gray;
-  public static final Color SELECTED_FRAME_FOREGROUND = Color.black;
-
   protected SeparatorWithText mySeparatorComponent = createSeparator();
 
   protected abstract JComponent createItemComponent();
@@ -67,19 +64,9 @@ public abstract class GroupedElementsRenderer {
     setSelected(myComponent, isSelected);
     setSelected(myTextLabel, isSelected);
 
-    myRendererComponent.setPrefereedWidth(preferredForcedWidth);
+    myRendererComponent.setPreferredWidth(preferredForcedWidth);
 
     return myRendererComponent;
-  }
-
-  /** @deprecated backgrounds are set uniformly via setSelected() / setDeselected() (to be removed in IDEA 16) */
-  @SuppressWarnings("UnusedDeclaration")
-  protected static void adjustOpacity(JComponent component, boolean selected) {
-    if (!selected) {
-      if (UIUtil.isUnderGTKLookAndFeel()) {
-        component.setOpaque(false);
-      }
-    }
   }
 
   protected final void setSelected(JComponent aComponent) {
@@ -107,10 +94,6 @@ public abstract class GroupedElementsRenderer {
     return getBorder();
   }
 
-  private static Border getSelectedBorder() {
-    return UIUtil.isToUseDottedCellBorder() ? new DottedBorder(UIUtil.getListCellPadding(), SELECTED_FRAME_FOREGROUND) : new EmptyBorder(UIUtil.getListCellPadding());
-  }
-
   private static Border getBorder() {
     return new EmptyBorder(UIUtil.getListCellPadding());
   }
@@ -119,7 +102,15 @@ public abstract class GroupedElementsRenderer {
     @Override
     protected void layout() {
       myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
-      myRendererComponent.add(myComponent, BorderLayout.CENTER);
+
+      JComponent centerComponent = new NonOpaquePanel(myComponent) {
+        @Override
+        public Dimension getPreferredSize() {
+          return UIUtil.updateListRowHeight(super.getPreferredSize());
+        }
+      };
+
+      myRendererComponent.add(centerComponent, BorderLayout.CENTER);
     }
 
     @Override
@@ -163,12 +154,12 @@ public abstract class GroupedElementsRenderer {
 
     @Override
     protected Color getBackground() {
-      return UIUtil.getTreeTextBackground();
+      return UIUtil.getTreeBackground();
     }
 
     @Override
     protected Color getForeground() {
-      return UIUtil.getTreeTextForeground();
+      return UIUtil.getTreeForeground();
     }
   }
 
@@ -180,7 +171,7 @@ public abstract class GroupedElementsRenderer {
       super(new BorderLayout(), GroupedElementsRenderer.this.getBackground());
     }
 
-    public void setPrefereedWidth(final int minWidth) {
+    public void setPreferredWidth(final int minWidth) {
       myPrefWidth = minWidth;
     }
 

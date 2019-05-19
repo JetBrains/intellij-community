@@ -24,34 +24,38 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UExpression;
 
 import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
+import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
+import static com.intellij.psi.UastReferenceRegistrar.registerUastReferenceProvider;
 
 /**
  * Provides references to Language-IDs and RegExp enums for completion.
  */
 public final class LanguageReferenceProvider extends PsiReferenceContributor {
 
+  @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final Configuration configuration = Configuration.getInstance();
-    registrar.registerReferenceProvider(
-      literalExpression().annotationParam(StandardPatterns.string().with(new PatternCondition<String>("isLanguageAnnotation") {
+    registerUastReferenceProvider(registrar, injectionHostUExpression().annotationParam(StandardPatterns.string().with(
+      new PatternCondition<String>(
+        "isLanguageAnnotation") {
         @Override
         public boolean accepts(@NotNull final String s, final ProcessingContext context) {
           return Comparing.equal(configuration.getAdvancedConfiguration().getLanguageAnnotationClass(), s);
         }
-      }), "value").and(literalExpression().with(new PatternCondition<PsiLiteralExpression>("isStringLiteral") {
-        @Override
-        public boolean accepts(@NotNull final PsiLiteralExpression expression, final ProcessingContext context) {
-          return PsiUtilEx.isStringOrCharacterLiteral(expression);
-        }
-      })), new PsiReferenceProvider() {
-        @NotNull
-        @Override
-        public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
-          return new PsiReference[]{new LanguageReference((PsiLiteralExpression)element)};
-        }
-      });
+      }), "value"), new UastInjectionHostReferenceProvider() {
+
+
+      @NotNull
+      @Override
+      public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression uExpression,
+                                                          @NotNull PsiLanguageInjectionHost host,
+                                                          @NotNull ProcessingContext context) {
+        return new PsiReference[]{new ULiteralLanguageReference(uExpression, host)};
+      }
+    }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
     registrar.registerReferenceProvider(literalExpression().with(new PatternCondition<PsiLiteralExpression>("isStringLiteral") {
       @Override
       public boolean accepts(@NotNull final PsiLiteralExpression expression, final ProcessingContext context) {

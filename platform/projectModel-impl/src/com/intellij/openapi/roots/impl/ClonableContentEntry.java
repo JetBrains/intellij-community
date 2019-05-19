@@ -17,10 +17,12 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.roots.ContentEntry;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
  */
 public interface ClonableContentEntry {
-  ContentEntry cloneEntry(RootModelImpl rootModel);
+  @NotNull
+  ContentEntry cloneEntry(@NotNull RootModelImpl rootModel);
 }

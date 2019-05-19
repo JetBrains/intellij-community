@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ public class JsonSchemaPatternComparator {
     String leftPath = left.getPath();
     String rightPath = right.getPath();
 
-    if (leftPath.startsWith("mock:///") || rightPath.startsWith("mock:///")) {
+    if (leftPath.startsWith(JsonSchemaObject.MOCK_URL) || rightPath.startsWith(JsonSchemaObject.MOCK_URL)) {
       return leftPath.equals(rightPath) ? ThreeState.YES : ThreeState.NO;
     }
     final File leftFile = new File(myProject.getBasePath(), leftPath);
@@ -53,6 +54,10 @@ public class JsonSchemaPatternComparator {
   private static ThreeState comparePatterns(@NotNull final UserDefinedJsonSchemaConfiguration.Item leftItem,
                                             @NotNull final UserDefinedJsonSchemaConfiguration.Item rightItem) {
     if (leftItem.getPath().equals(rightItem.getPath())) return ThreeState.YES;
+    if (leftItem.getPath().indexOf(File.separatorChar) >= 0 || rightItem.getPath().indexOf(File.separatorChar) >= 0) {
+      // todo: better heuristic
+      return ThreeState.NO;
+    }
     final BeforeAfter<String> left = getBeforeAfterAroundWildCards(leftItem.getPath());
     final BeforeAfter<String> right = getBeforeAfterAroundWildCards(rightItem.getPath());
     if (left == null || right == null) {

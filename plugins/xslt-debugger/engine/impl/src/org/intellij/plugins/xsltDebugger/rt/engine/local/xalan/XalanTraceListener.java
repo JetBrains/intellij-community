@@ -127,7 +127,7 @@ public class XalanTraceListener extends PrintTraceListener {
     private final int myMatchedNode;
     private final String myPath;
 
-    public MySourceFrame(Debugger.SourceFrame sourceFrame, DTM dtm, int node) {
+    MySourceFrame(Debugger.SourceFrame sourceFrame, DTM dtm, int node) {
       super(sourceFrame);
 
       final SourceLocator loc = dtm.getSourceLocatorFor(node);

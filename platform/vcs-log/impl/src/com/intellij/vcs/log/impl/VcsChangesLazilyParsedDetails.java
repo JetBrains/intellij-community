@@ -1,107 +1,77 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.LocalFilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.VcsStatusDescriptor.MergedStatusInfo;
+import com.intellij.vcs.log.impl.VcsStatusMerger.MergedStatusInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 
 /**
  * Allows to postpone changes parsing, which might take long for a large amount of commits,
  * because {@link Change} holds {@link LocalFilePath} which makes costly refreshes and type detections.
  */
-public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails, VcsIndexableDetails {
+@ApiStatus.Experimental
+public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails {
   private static final Logger LOG = Logger.getInstance(VcsChangesLazilyParsedDetails.class);
   protected static final Changes EMPTY_CHANGES = new EmptyChanges();
-  @NotNull protected final AtomicReference<Changes> myChanges = new AtomicReference<>();
+  @NotNull private final ChangesParser myChangesParser;
+  @NotNull private final AtomicReference<Changes> myChanges = new AtomicReference<>();
 
-  public VcsChangesLazilyParsedDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
+  public VcsChangesLazilyParsedDetails(@NotNull Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime,
+                                       @NotNull VirtualFile root,
                                        @NotNull String subject, @NotNull VcsUser author, @NotNull String message,
-                                       @NotNull VcsUser committer, long authorTime) {
+                                       @NotNull VcsUser committer, long authorTime,
+                                       @NotNull List<List<VcsFileStatusInfo>> reportedChanges,
+                                       @NotNull ChangesParser changesParser) {
     super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
-  }
-
-  @NotNull
-  @Override
-  public Collection<String> getModifiedPaths(int parent) {
-    return myChanges.get().getModifiedPaths(parent);
-  }
-
-  @NotNull
-  @Override
-  public Collection<Couple<String>> getRenamedPaths(int parent) {
-    return myChanges.get().getRenamedPaths(parent);
+    myChangesParser = changesParser;
+    myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges, (sources, parent) -> {
+      return myChangesParser.parseStatusInfo(project, this, sources, parent);
+    }));
   }
 
   @NotNull
   @Override
   public Collection<Change> getChanges() {
-    try {
-      return myChanges.get().getMergedChanges();
-    }
-    catch (VcsException e) {
-      LOG.error("Error happened when parsing changes", e);
-      return Collections.emptyList();
-    }
+    return myChanges.get().getMergedChanges();
   }
 
   @NotNull
   @Override
   public Collection<Change> getChanges(int parent) {
-    try {
-      return myChanges.get().getChanges(parent);
-    }
-    catch (VcsException e) {
-      LOG.error("Error happened when parsing changes", e);
-      return Collections.emptyList();
-    }
+    return myChanges.get().getChanges(parent);
   }
 
-  @Override
-  public boolean hasRenames() {
-    return true;
+  public int size() {
+    return myChanges.get().size();
   }
 
-  public interface Changes {
+  protected interface Changes {
     @NotNull
-    Collection<Change> getMergedChanges() throws VcsException;
+    Collection<Change> getMergedChanges();
 
     @NotNull
-    Collection<Change> getChanges(int parent) throws VcsException;
+    Collection<Change> getChanges(int parent);
 
-    @NotNull
-    Collection<String> getModifiedPaths(int parent);
-
-    @NotNull
-    Collection<Couple<String>> getRenamedPaths(int parent);
+    int size();
   }
 
   protected static class EmptyChanges implements Changes {
@@ -117,34 +87,28 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
       return ContainerUtil.emptyList();
     }
 
-    @NotNull
     @Override
-    public Collection<String> getModifiedPaths(int parent) {
-      return ContainerUtil.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public Collection<Couple<String>> getRenamedPaths(int parent) {
-      return ContainerUtil.emptyList();
+    public int size() {
+      return 0;
     }
   }
 
-  protected abstract class UnparsedChanges<S> implements Changes {
+  protected class UnparsedChanges implements Changes {
     @NotNull protected final Project myProject;
-    @NotNull protected final List<List<S>> myChangesOutput;
-    @NotNull private final VcsStatusDescriptor<S> myDescriptor;
+    @NotNull protected final List<List<VcsFileStatusInfo>> myChangesOutput;
+    @NotNull private final VcsStatusMerger<VcsFileStatusInfo> myStatusMerger = new VcsFileStatusInfoMerger();
+    @NotNull private final BiFunction<List<VcsFileStatusInfo>, Integer, List<Change>> myParser;
 
     public UnparsedChanges(@NotNull Project project,
-                           @NotNull List<List<S>> changesOutput,
-                           @NotNull VcsStatusDescriptor<S> descriptor) {
+                           @NotNull List<List<VcsFileStatusInfo>> changesOutput,
+                           @NotNull BiFunction<List<VcsFileStatusInfo>, Integer, List<Change>> parser) {
       myProject = project;
       myChangesOutput = changesOutput;
-      myDescriptor = descriptor;
+      myParser = parser;
     }
 
     @NotNull
-    protected ParsedChanges parseChanges() throws VcsException {
+    protected ParsedChanges parseChanges() {
       List<Change> mergedChanges = parseMergedChanges();
       List<Collection<Change>> changes = computeChanges(mergedChanges);
       ParsedChanges parsedChanges = new ParsedChanges(mergedChanges, changes);
@@ -153,79 +117,54 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     }
 
     @NotNull
-    private List<Change> parseMergedChanges() throws VcsException {
-      List<MergedStatusInfo<S>> statuses = getMergedStatusInfo();
-      List<Change> changes = parseStatusInfo(ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
+    private List<Change> parseMergedChanges() {
+      List<MergedStatusInfo<VcsFileStatusInfo>> statuses = getMergedStatusInfo();
+      List<Change> changes = myParser.apply(ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
       LOG.assertTrue(changes.size() == statuses.size(), "Incorrectly parsed statuses " + statuses + " to changes " + changes);
       if (getParents().size() <= 1) return changes;
 
       // each merge change knows about all changes to parents
       List<Change> wrappedChanges = new ArrayList<>(statuses.size());
       for (int i = 0; i < statuses.size(); i++) {
-        wrappedChanges.add(new MyMergedChange(changes.get(i), statuses.get(i)));
+        wrappedChanges.add(new MyMergedChange(changes.get(i), statuses.get(i), myParser));
       }
       return wrappedChanges;
     }
 
     @NotNull
     @Override
-    public Collection<Change> getMergedChanges() throws VcsException {
+    public Collection<Change> getMergedChanges() {
       return parseChanges().getMergedChanges();
     }
 
     @NotNull
     @Override
-    public Collection<Change> getChanges(int parent) throws VcsException {
+    public Collection<Change> getChanges(int parent) {
       return parseChanges().getChanges(parent);
     }
 
-    @NotNull
     @Override
-    public Collection<String> getModifiedPaths(int parent) {
-      Set<String> changes = ContainerUtil.newHashSet();
-      for (S status : myChangesOutput.get(parent)) {
-        if (myDescriptor.getSecondPath(status) == null) {
-          changes.add(absolutePath(myDescriptor.getFirstPath(status)));
-        }
+    public int size() {
+      int size = 0;
+      for (List<VcsFileStatusInfo> changesToParent: myChangesOutput) {
+        size += changesToParent.size();
       }
-      return changes;
+      return size;
     }
 
     @NotNull
-    @Override
-    public Collection<Couple<String>> getRenamedPaths(int parent) {
-      Set<Couple<String>> renames = ContainerUtil.newHashSet();
-      for (S status : myChangesOutput.get(parent)) {
-        String secondPath = myDescriptor.getSecondPath(status);
-        if (secondPath != null) {
-          renames.add(Couple.of(absolutePath(myDescriptor.getFirstPath(status)), absolutePath(secondPath)));
-        }
-      }
-      return renames;
-    }
-
-    @NotNull
-    protected String absolutePath(@NotNull String path) {
-      return getRoot().getPath() + "/" + path;
-    }
-
-    @NotNull
-    private List<Collection<Change>> computeChanges(@NotNull Collection<Change> mergedChanges)
-      throws VcsException {
+    private List<Collection<Change>> computeChanges(@NotNull Collection<Change> mergedChanges) {
       if (myChangesOutput.size() == 1) {
         return Collections.singletonList(mergedChanges);
       }
       else {
-        List<Collection<Change>> changes = ContainerUtil.newArrayListWithCapacity(myChangesOutput.size());
+        List<Collection<Change>> changes = new ArrayList<>(myChangesOutput.size());
         for (int i = 0; i < myChangesOutput.size(); i++) {
-          changes.add(parseStatusInfo(myChangesOutput.get(i), i));
+          changes.add(myParser.apply(myChangesOutput.get(i), i));
         }
         return changes;
       }
     }
-
-    @NotNull
-    protected abstract List<Change> parseStatusInfo(@NotNull List<S> changes, int parentIndex) throws VcsException;
 
     /*
      * This method mimics result of `-c` option added to `git log` command.
@@ -233,43 +172,38 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
      * If a commit is not a merge, all statuses are returned.
      */
     @NotNull
-    private List<MergedStatusInfo<S>> getMergedStatusInfo() {
-      return myDescriptor.getMergedStatusInfo(myChangesOutput);
-    }
-
-    private class MyMergedChange extends MergedChange {
-      @NotNull private final MergedStatusInfo<S> myStatusInfo;
-      @NotNull private final Supplier<List<Change>> mySourceChanges;
-
-      MyMergedChange(@NotNull Change change, @NotNull MergedStatusInfo<S> statusInfo) {
-        super(change);
-        myStatusInfo = statusInfo;
-        mySourceChanges = Suppliers.memoize(() -> {
-          List<Change> sourceChanges = ContainerUtil.newArrayList();
-          try {
-            for (int parent = 0; parent < myStatusInfo.getMergedStatusInfos().size(); parent++) {
-              sourceChanges.addAll(parseStatusInfo(Collections.singletonList(myStatusInfo.getMergedStatusInfos().get(parent)), parent));
-            }
-          }
-          catch (VcsException e) {
-            LOG.error(e);
-          }
-          return sourceChanges;
-        });
-      }
-
-      @Override
-      public List<Change> getSourceChanges() {
-        return mySourceChanges.get();
-      }
+    private List<MergedStatusInfo<VcsFileStatusInfo>> getMergedStatusInfo() {
+      return myStatusMerger.merge(myChangesOutput);
     }
   }
 
-  public static class ParsedChanges implements Changes {
-    @NotNull private final Collection<Change> myMergedChanges;
-    @NotNull private final List<Collection<Change>> myChanges;
+  private static class MyMergedChange extends MergedChange {
+    @NotNull private final Supplier<List<Change>> mySourceChanges;
 
-    ParsedChanges(@NotNull Collection<Change> mergedChanges, @NotNull List<Collection<Change>> changes) {
+    MyMergedChange(@NotNull Change change, @NotNull MergedStatusInfo<VcsFileStatusInfo> statusInfo,
+                   @NotNull BiFunction<List<VcsFileStatusInfo>, Integer, List<Change>> parser) {
+      super(change);
+      mySourceChanges = Suppliers.memoize(() -> {
+        List<Change> sourceChanges = new ArrayList<>();
+        for (int parent = 0; parent < statusInfo.getMergedStatusInfos().size(); parent++) {
+          List<VcsFileStatusInfo> statusInfos = Collections.singletonList(statusInfo.getMergedStatusInfos().get(parent));
+          sourceChanges.addAll(parser.apply(statusInfos, parent));
+        }
+        return sourceChanges;
+      });
+    }
+
+    @Override
+    public List<Change> getSourceChanges() {
+      return mySourceChanges.get();
+    }
+  }
+
+  protected static class ParsedChanges implements Changes {
+    @NotNull private final Collection<Change> myMergedChanges;
+    @NotNull private final List<? extends Collection<Change>> myChanges;
+
+    ParsedChanges(@NotNull Collection<Change> mergedChanges, @NotNull List<? extends Collection<Change>> changes) {
       myMergedChanges = mergedChanges;
       myChanges = changes;
     }
@@ -286,33 +220,20 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
       return myChanges.get(parent);
     }
 
-    @NotNull
     @Override
-    public Collection<String> getModifiedPaths(int parent) {
-      Set<String> changes = ContainerUtil.newHashSet();
-
-      for (Change change : getChanges(parent)) {
-        if (!change.getType().equals(Change.Type.MOVED)) {
-          if (change.getAfterRevision() != null) changes.add(change.getAfterRevision().getFile().getPath());
-          if (change.getBeforeRevision() != null) changes.add(change.getBeforeRevision().getFile().getPath());
-        }
+    public int size() {
+      int size = 0;
+      for (Collection<Change> changesToParent : myChanges) {
+        size += changesToParent.size();
       }
-
-      return changes;
+      return size;
     }
+  }
 
-    @NotNull
-    @Override
-    public Collection<Couple<String>> getRenamedPaths(int parent) {
-      Set<Couple<String>> renames = ContainerUtil.newHashSet();
-      for (Change change : getChanges(parent)) {
-        if (change.getType().equals(Change.Type.MOVED)) {
-          if (change.getAfterRevision() != null && change.getBeforeRevision() != null) {
-            renames.add(Couple.of(change.getBeforeRevision().getFile().getPath(), change.getAfterRevision().getFile().getPath()));
-          }
-        }
-      }
-      return renames;
-    }
+  public interface ChangesParser {
+    List<Change> parseStatusInfo(@NotNull Project project,
+                                 @NotNull VcsShortCommitDetails commit,
+                                 @NotNull List<VcsFileStatusInfo> changes,
+                                 int parentIndex);
   }
 }

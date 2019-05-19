@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.tasks.redmine.model.RedmineProject;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
@@ -26,13 +26,13 @@ import java.util.List;
  * @author Dennis.Ushakov
  */
 public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineRepository> {
-  private ComboBox myProjectCombo;
+  private ComboBox<RedmineProjectItem> myProjectCombo;
   private JTextField myAPIKey;
   private JCheckBox myAllAssigneesCheckBox;
   private JBLabel myProjectLabel;
   private JBLabel myAPIKeyLabel;
 
-  public RedmineRepositoryEditor(final Project project, final RedmineRepository repository, Consumer<RedmineRepository> changeListener) {
+  public RedmineRepositoryEditor(final Project project, final RedmineRepository repository, Consumer<? super RedmineRepository> changeListener) {
     super(project, repository, changeListener);
 
     myTestButton.setEnabled(myRepository.isConfigured());
@@ -94,28 +94,20 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
   @Override
   protected JComponent createCustomPanel() {
     myProjectLabel = new JBLabel("Project:", SwingConstants.RIGHT);
-    myProjectCombo = new ComboBox(300);
+    myProjectCombo = new ComboBox<>(300);
     //myProjectCombo.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer("Set URL and password/token first"));
-    myProjectCombo.setRenderer(new ListCellRendererWrapper<RedmineProjectItem>() {
-      @Override
-      public void customize(JList list, RedmineProjectItem value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) {
-          setText("Set URL and password/token first");
-        }
-        else {
-          if (myProjectCombo.isPopupVisible()) {
-            //if (value.myLevel == 0 && value.myProject != RedmineRepository.UNSPECIFIED_PROJECT) {
-              //setFont(UIUtil.getListFont().deriveFont(Font.BOLD));
-            //}
-            setText(StringUtil.repeat("   ", value.myLevel) + value.myProject.getName());
-          }
-          else {
-            // Do not indent selected project
-            setText(value.myProject.getName());
-          }
-        }
+    myProjectCombo.setRenderer(SimpleListCellRenderer.create("Set URL and password/token first", value -> {
+      if (myProjectCombo.isPopupVisible()) {
+        //if (value.myLevel == 0 && value.myProject != RedmineRepository.UNSPECIFIED_PROJECT) {
+        //setFont(UIUtil.getListFont().deriveFont(Font.BOLD));
+        //}
+        return StringUtil.repeat("   ", value.myLevel) + value.myProject.getName();
       }
-    });
+      else {
+        // Do not indent selected project
+        return value.myProject.getName();
+      }
+    }));
 
     myAPIKeyLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
     myAPIKey = new JPasswordField();
@@ -139,7 +131,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     public final RedmineProject myProject;
     public final int myLevel;
 
-    public RedmineProjectItem(@NotNull RedmineProject project, int level) {
+    RedmineProjectItem(@NotNull RedmineProject project, int level) {
       myProject = project;
       myLevel = level;
     }

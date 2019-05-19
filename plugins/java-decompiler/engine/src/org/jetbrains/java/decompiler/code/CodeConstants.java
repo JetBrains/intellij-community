@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code;
 
 @SuppressWarnings({"unused", "SpellCheckingInspection"})
@@ -9,12 +7,16 @@ public interface CodeConstants {
   // BYTECODE VERSIONS
   // ----------------------------------------------------------------------
 
-  int BYTECODE_JAVA_LE_4 = 1;
-  int BYTECODE_JAVA_5 = 2;
-  int BYTECODE_JAVA_6 = 3;
-  int BYTECODE_JAVA_7 = 4;
-  int BYTECODE_JAVA_8 = 5;
-  int BYTECODE_JAVA_9 = 6;
+  int BYTECODE_JAVA_LE_4 = 48;
+  int BYTECODE_JAVA_5 = 49;
+  int BYTECODE_JAVA_6 = 50;
+  int BYTECODE_JAVA_7 = 51;
+  int BYTECODE_JAVA_8 = 52;
+  int BYTECODE_JAVA_9 = 53;
+  int BYTECODE_JAVA_10 = 54;
+  int BYTECODE_JAVA_11 = 55;
+  int BYTECODE_JAVA_12 = 56;
+  int BYTECODE_JAVA_13 = 57;
 
   // ----------------------------------------------------------------------
   // VARIABLE TYPES

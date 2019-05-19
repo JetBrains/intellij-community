@@ -47,10 +47,12 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     new ContentManagerWatcher(toolWindow, myContentManager);
   }
 
+  @Override
   public StateBean getState() {
     return myStateBean;
   }
 
+  @Override
   public void loadState(@NotNull StateBean state) {
     myStateBean = state;
   }
@@ -59,7 +61,7 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     return myViews.get(getDisplayName(suitesBundle));
   }
 
-  public void activateToolwindow(CoverageView view, boolean requestFocus) {
+  public void activateToolwindow(@NotNull CoverageView view, boolean requestFocus) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
     if (requestFocus) {
       myContentManager.setSelectedContent(myContentManager.getContent(view));

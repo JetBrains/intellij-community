@@ -116,7 +116,7 @@ public class Util {
         i++;
       }
     }
-    id = id.toUpperCase();
+    id = StringUtil.toUpperCase(id);
     id = id.replace('.', '_').replace('-', '_');
     if (id.length() < 2 || !Character.isJavaIdentifierStart(id.charAt(0))) {
       id = typeName + "_" + id;
@@ -136,7 +136,7 @@ public class Util {
   public static String toJavaName(String xmlName) {
     xmlName = xmlName.substring(xmlName.lastIndexOf(':') + 1);
     StringTokenizer st = new StringTokenizer(xmlName, "-");
-    StringBuffer sb = new StringBuffer(st.nextToken());
+    StringBuilder sb = new StringBuilder(st.nextToken());
     while (st.hasMoreTokens()) {
       sb.append(capitalize(st.nextToken()));
     }

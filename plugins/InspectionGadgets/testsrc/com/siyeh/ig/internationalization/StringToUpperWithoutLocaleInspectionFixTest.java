@@ -29,8 +29,6 @@ public class StringToUpperWithoutLocaleInspectionFixTest extends LightQuickFixPa
     return LanguageLevel.JDK_1_8;
   }
 
-  public void test() { doAllTests(); }
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

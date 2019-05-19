@@ -25,18 +25,16 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface RecentTestRunner {
-  enum Mode { 
-    RUN, 
-    DEBUG 
+  enum Mode {
+    RUN,
+    DEBUG
   }
-  
+
   void setMode(Mode mode);
-  
+
   void run(RecentTestsPopupEntry entry);
 }
 
@@ -47,7 +45,8 @@ class RecentTestRunnerImpl implements RecentTestRunner {
   private final TestLocator myTestLocator;
 
   protected AnAction myCurrentAction = RUN;
-  
+
+  @Override
   public void setMode(Mode mode) {
     switch (mode) {
       case RUN:
@@ -59,7 +58,7 @@ class RecentTestRunnerImpl implements RecentTestRunner {
     }
   }
 
-  public RecentTestRunnerImpl(TestLocator testLocator) {
+  RecentTestRunnerImpl(TestLocator testLocator) {
     myTestLocator = testLocator;
   }
 
@@ -84,9 +83,9 @@ class RecentTestRunnerImpl implements RecentTestRunner {
   }
 
   private void run(RunnerAndConfigurationSettings configuration) {
-    Executor executor = myCurrentAction == RUN ? DefaultRunExecutor.getRunExecutorInstance() 
+    Executor executor = myCurrentAction == RUN ? DefaultRunExecutor.getRunExecutorInstance()
                                                : DefaultDebugExecutor.getDebugExecutorInstance();
-    
+
     ProgramRunnerUtil.executeConfiguration(configuration, executor);
   }
 
@@ -96,17 +95,13 @@ class RecentTestRunnerImpl implements RecentTestRunner {
       return;
     }
 
-    DataContext data = new DataContext() {
-      @Nullable
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (Location.DATA_KEY.is(dataId)) {
-          return location;
-        }
-        return null;
+    DataContext data = dataId -> {
+      if (Location.DATA_KEY.is(dataId)) {
+        return location;
       }
+      return null;
     };
-    
+
     myCurrentAction.actionPerformed(AnActionEvent.createFromAnAction(myCurrentAction, null, "", data));
   }
 }

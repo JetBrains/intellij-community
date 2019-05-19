@@ -26,6 +26,7 @@ public class BaseDecompiler {
   }
 
   /** @deprecated use {@link #addSource(File)} / {@link #addLibrary(File)} instead */
+  @Deprecated
   public void addSpace(File file, boolean own) {
     if (own) {
       addSource(file);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.server.BuildManager
@@ -11,7 +11,6 @@ import com.intellij.execution.process.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.module.ModuleGroupTestsKt
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Result
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
@@ -36,10 +35,11 @@ import com.intellij.util.io.PathKt
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
+import org.jetbrains.plugins.groovy.bundled.BundledGroovy
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
-import org.jetbrains.plugins.groovy.util.Slow 
+import org.jetbrains.plugins.groovy.util.Slow
+
 /**
  * @author aalmiray
  * @author peter
@@ -55,16 +55,17 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     return super.getProject()
   }
 
+  @NotNull
   @Override
-  Disposable disposeOnTearDown(Disposable disposable) {
+  Disposable disposeOnTearDown(@NotNull Disposable disposable) {
     return super.disposeOnTearDown(disposable)
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    edt { ModuleGroupTestsKt.renameModule(myModule, "mainModule") }
-    myCompilerTester = new CompilerTester(myModule)
+    edt { ModuleGroupTestsKt.renameModule(module, "mainModule") }
+    myCompilerTester = new CompilerTester(module)
   }
 
   @Override
@@ -82,8 +83,8 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     super.runTest()
   }
 
-  protected static void addGroovyLibrary(final Module to) {
-    File jar = GroovyFacetUtil.getBundledGroovyJar()
+  protected void addGroovyLibrary(final Module to) {
+    File jar = BundledGroovy.getBundledGroovyFile()
     PsiTestUtil.addLibrary(to, "groovy", jar.getParent(), jar.getName())
   }
 
@@ -109,23 +110,20 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   }
 
   protected void setupTestSources() {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule)
+    WriteCommandAction.runWriteCommandAction(getProject(), {
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module)
         final ModifiableRootModel rootModel = rootManager.getModifiableModel()
         final ContentEntry entry = rootModel.getContentEntries()[0]
         entry.removeSourceFolder(entry.getSourceFolders()[0])
         entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("src"), false)
         entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("tests"), true)
         rootModel.commit()
-      }
-    }.execute()
+      })
   }
 
   protected Module addDependentModule() {
     Module module = addModule("dependent", true)
-    ModuleRootModificationUtil.addDependency(module, myModule)
+    ModuleRootModificationUtil.addDependency(module, getModule())
     return module
   }
 
@@ -138,13 +136,13 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
         moduleModel.commit()
 
         final Module dep = ModuleManager.getInstance(getProject()).findModuleByName(moduleName)
-        ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(myModule).getSdk())
+        ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(module).getSdk())
         if (withSource) {
           PsiTestUtil.addSourceRoot(dep, depRoot)
         } else {
           PsiTestUtil.addContentRoot(dep, depRoot)
         }
-        IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtensionImpl.getInstance(myModule).getLanguageLevel())
+        IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel())
 
         return dep
     } as ThrowableComputable<Module,RuntimeException>)
@@ -156,7 +154,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Nullable
   protected VirtualFile findClassFile(String className) {
-    return findClassFile(className, myModule)
+    return findClassFile(className, module)
   }
 
   @Nullable
@@ -193,7 +191,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   }
 
   protected void assertOutput(String className, String output) throws ExecutionException {
-    assertOutput(className, output, myModule)
+    assertOutput(className, output, module)
   }
 
   protected void assertOutput(String className, String expected, final Module module) throws ExecutionException {
@@ -210,7 +208,8 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     def output = StringUtil.convertLineSeparators(sb.toString().trim()).readLines()
     output = output.findAll { line ->
       !StringUtil.containsIgnoreCase(line, "illegal") &&
-      !line.contains("consider reporting this to the maintainers of org.codehaus.groovy.reflection.CachedClass")
+      !line.contains("consider reporting this to the maintainers of org.codehaus.groovy.reflection.CachedClass") &&
+      !line.startsWith("Picked up ")
     }
     assertEquals(expected.trim(), output.join("\n"))
   }

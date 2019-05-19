@@ -26,16 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
 public abstract class BaseInspection extends GroovySuppressableInspectionTool {
 
-  @Deprecated public static final String ASSIGNMENT_ISSUES = GroovyBundle.message("inspection.assignments");
-  @Deprecated public static final String CONFUSING_CODE_CONSTRUCTS = GroovyBundle.message("inspection.confusing");
-  @Deprecated public static final String CONTROL_FLOW = GroovyBundle.message("inspection.control.flow");
   @Deprecated public static final String PROBABLE_BUGS = GroovyBundle.message("inspection.bugs");
-  @Deprecated public static final String ERROR_HANDLING = GroovyBundle.message("inspection.error.handling");
-  @Deprecated public static final String GPATH = GroovyBundle.message("inspection.gpath");
-  @Deprecated public static final String METHOD_METRICS = GroovyBundle.message("inspection.method.metrics");
-  @Deprecated public static final String THREADING_ISSUES = GroovyBundle.message("inspection.threading");
-  @Deprecated public static final String VALIDITY_ISSUES = GroovyBundle.message("inspection.validity");
-  @Deprecated public static final String ANNOTATIONS_ISSUES = GroovyBundle.message("inspection.annotations");
 
   @Nullable
   protected String buildErrorString(Object... args) {

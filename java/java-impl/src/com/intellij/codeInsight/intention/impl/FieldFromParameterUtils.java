@@ -136,7 +136,7 @@ public final class FieldFromParameterUtils {
   }
 
   public static int findFieldAssignmentAnchor(final PsiStatement[] statements,
-                                              final @Nullable Ref<Pair<PsiField, Boolean>> anchorRef,
+                                              final @Nullable Ref<? super Pair<PsiField, Boolean>> anchorRef,
                                               final PsiClass targetClass,
                                               final PsiParameter myParameter) {
     int i = 0;
@@ -280,7 +280,7 @@ public final class FieldFromParameterUtils {
                                     boolean findIndirectAssignments) {
     return myParameter != null
            && myParameter.isValid()
-           && myParameter.getManager().isInProject(myParameter)
+           && BaseIntentionAction.canModify(myParameter)
            && myParameter.getDeclarationScope() instanceof PsiMethod
            && ((PsiMethod)myParameter.getDeclarationScope()).getBody() != null
            && type != null

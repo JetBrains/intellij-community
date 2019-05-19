@@ -1,0 +1,15 @@
+PyFile:shellExpansion.py
+  PyEmptyExpression
+    PsiElement(Py:PLING)('!')
+    PsiElement(Py:IDENTIFIER)('mv')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:DOLLAR)('$')
+    PsiElement(Py:IDENTIFIER)('file')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:LBRACE)('{')
+    PsiElement(Py:IDENTIFIER)('file')
+    PsiElement(Py:DOT)('.')
+    PsiElement(Py:IDENTIFIER)('upper')
+    PsiElement(Py:LPAR)('(')
+    PsiElement(Py:RPAR)(')')
+    PsiElement(Py:RBRACE)('}')

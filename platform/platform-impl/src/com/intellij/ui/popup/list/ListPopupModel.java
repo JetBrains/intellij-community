@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -29,28 +15,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ListPopupModel extends AbstractListModel {
+public class ListPopupModel<T> extends AbstractListModel<T> {
 
-  private final List<Object> myOriginalList;
-  private final List<Object> myFilteredList = new ArrayList<>();
+  private final List<T> myOriginalList;
+  private final List<T> myFilteredList = new ArrayList<>();
 
-  private final ElementFilter myFilter;
-  private final ListPopupStep myStep;
+  private final ElementFilter<? super T> myFilter;
+  private final ListPopupStep<T> myStep;
 
   private int myFullMatchIndex = -1;
   private int myStartsWithIndex = -1;
   private final SpeedSearch mySpeedSearch;
   private final Map<Object, ListSeparator> mySeparators = new HashMap<>();
 
-  public ListPopupModel(ElementFilter filter, SpeedSearch speedSearch, ListPopupStep step) {
+  public ListPopupModel(ElementFilter<? super T> filter, SpeedSearch speedSearch, ListPopupStep<T> step) {
     myFilter = filter;
     myStep = step;
     mySpeedSearch = speedSearch;
-    myOriginalList = new ArrayList<>(step.getValues());
+    myOriginalList = new ArrayList<>(myStep.getValues());
     rebuildLists();
   }
 
-  public void deleteItem(final Object item) {
+  public void deleteItem(Object item) {
     final int i = myOriginalList.indexOf(item);
     if (i >= 0) {
       myOriginalList.remove(i);
@@ -60,7 +46,7 @@ public class ListPopupModel extends AbstractListModel {
   }
 
   @Nullable
-  public Object get(final int i) {
+  public T get(int i) {
     if (i >= 0 && i < myFilteredList.size()) {
       return myFilteredList.get(i);
     }
@@ -75,7 +61,7 @@ public class ListPopupModel extends AbstractListModel {
     myStartsWithIndex = -1;
 
     ListSeparator lastSeparator = null;
-    for (Object each : myOriginalList) {
+    for (T each : myOriginalList) {
       lastSeparator = ObjectUtils.chooseNotNull(myStep.getSeparatorAbove(each), lastSeparator);
 
       if (myFilter.shouldBeShowing(each)) {
@@ -88,8 +74,9 @@ public class ListPopupModel extends AbstractListModel {
     }
   }
 
-  private void addToFiltered(Object each) {
+  private void addToFiltered(T each) {
     myFilteredList.add(each);
+    if (!mySpeedSearch.isHoldingFilter()) return;
     String filterString = StringUtil.toUpperCase(mySpeedSearch.getFilter());
     String candidateString = StringUtil.toUpperCase(myStep.getTextFor(each));
     int index = myFilteredList.size() - 1;
@@ -103,11 +90,13 @@ public class ListPopupModel extends AbstractListModel {
     }
   }
 
+  @Override
   public int getSize() {
     return myFilteredList.size();
   }
 
-  public Object getElementAt(int index) {
+  @Override
+  public T getElementAt(int index) {
     if (index >= myFilteredList.size()) {
       return null;
     }

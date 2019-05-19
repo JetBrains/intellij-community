@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -16,8 +16,8 @@ import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -65,11 +65,12 @@ public abstract class CompiledPattern {
     return nodes;
   }
 
-  public void setNodes(List<PsiElement> elements) {
+  public void setNodes(List<? extends PsiElement> elements) {
     this.nodes = new ArrayBackedNodeIterator(PsiUtilCore.toPsiElementArray(elements));
     this.nodeCount = elements.size();
   }
 
+  @Contract("null -> false")
   public boolean isTypedVar(final PsiElement element) {
     return element != null && isTypedVar(element.getText());
   }
@@ -85,10 +86,8 @@ public abstract class CompiledPattern {
   @NotNull
   public String getTypedVarString(PsiElement element) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
-    if (profile == null) {
-      return element.getText();
-    }
-    return profile.getTypedVarString(element);
+    String typedVarString = (profile == null) ? element.getText() : profile.getTypedVarString(element);
+    return typedVarString.trim();
   }
 
   public MatchingHandler getHandlerSimple(PsiElement node) {
@@ -157,11 +156,6 @@ public abstract class CompiledPattern {
 
   public boolean isToResetHandler(PsiElement element) {
     return true;
-  }
-
-  @Nullable
-  public String getAlternativeTextToMatch(PsiElement node, String previousText) {
-    return null;
   }
 
   @NotNull

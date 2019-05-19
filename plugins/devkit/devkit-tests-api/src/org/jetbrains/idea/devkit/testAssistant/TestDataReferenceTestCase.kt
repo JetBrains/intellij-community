@@ -3,8 +3,8 @@ package org.jetbrains.idea.devkit.testAssistant
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
+import com.intellij.psi.util.PsiUtilCore
 import junit.framework.TestCase
 
 abstract class TestDataReferenceTestCase : TestDataPathTestCase() {
@@ -15,8 +15,7 @@ abstract class TestDataReferenceTestCase : TestDataPathTestCase() {
   }
 
   fun assertResolvedTo(virtualFile: VirtualFile, referenceTest: String) {
-    val psiManager = PsiManager.getInstance(project)
-    val fileSystemItem = if (virtualFile.isDirectory) psiManager.findDirectory(virtualFile) else psiManager.findFile(virtualFile)
+    val fileSystemItem = PsiUtilCore.findFileSystemItem(project, virtualFile)
     TestCase.assertEquals(fileSystemItem, myFixture.file.getReferenceForText(referenceTest).resolve())
   }
 

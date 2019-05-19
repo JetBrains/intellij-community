@@ -46,4 +46,43 @@ class ConditionalExpressionWithIdenticalBranches {
   interface IntSupplier {
     int getAsInt();
   }
+
+  void switchExpression(int i, E e) {
+    int xx = <warning descr="Conditional expression 'i == 10 ? switch (e) { case A, B -> 1; case C -> 2; default -> throw new InternalE...' with identical branches">i == 10 ? switch (e) {
+      case A, B -> 1;
+      case C -> 2;
+      default -> throw new InternalError();
+    } : switch (e) {
+      case B, A -> 1; // different case value order
+      case C -> 2;
+      default -> throw new InternalError();
+    }</warning>;
+    int xy = i == 10 ? switch (e) {
+      case A, B -> 1;
+      case C -> 2;
+      default -> throw new InternalError();
+    } : switch (e) {
+      case B, A -> 2; // different body
+      case C -> 2;
+      default -> throw new InternalError();
+    };
+    int xz = (i == 10) ? switch (e) {
+      default: break 1;
+    } : switch (e) {
+      default: break 2; // different break value expression
+    };
+    int yy = (i == 10) ? switch (e) {
+      default -> throw new InternalError();
+    }: switch (e) {
+      default -> throw new InternalError((String) null); // different default body
+    };
+  }
+  
+  void testPrimitiveArrays(boolean b) {
+    System.out.println(b ? new int[1] : new long[1]);
+  }
+
+  enum E {
+    A, B, C
+  }
 }

@@ -26,10 +26,11 @@ public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrIn
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitInstanceofExpression(this);
   }
 
+  @Override
   public String toString() {
     return "Instanceof expression";
   }

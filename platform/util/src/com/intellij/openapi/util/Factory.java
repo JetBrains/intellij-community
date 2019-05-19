@@ -16,8 +16,10 @@
 package com.intellij.openapi.util;
 
 /**
+ * Please use {@link java.util.function.Supplier} instead
  * @author dsl
  */
+@FunctionalInterface
 public interface Factory<T> {
   T create();
 }

@@ -36,7 +36,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
   private final int myRow;
   private final int myColumn;
   @NotNull
-  private TripleFunction<CompilerMessage, Integer, Integer, Integer> myColumnAdjuster = (msg, line, col) -> col;
+  private TripleFunction<? super CompilerMessage, ? super Integer, ? super Integer, Integer> myColumnAdjuster = (msg, line, col) -> col;
 
   public CompilerMessageImpl(Project project, CompilerMessageCategory category, String message) {
     this(project, category, message, null, -1, -1, null);
@@ -58,7 +58,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     myFile = file;
   }
 
-  public void setColumnAdjuster(@NotNull TripleFunction<CompilerMessage, Integer, Integer, Integer> columnAdjuster) {
+  public void setColumnAdjuster(@NotNull TripleFunction<? super CompilerMessage, ? super Integer, ? super Integer, Integer> columnAdjuster) {
     myColumnAdjuster = columnAdjuster;
   }
 

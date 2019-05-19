@@ -41,7 +41,7 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(getProject());
   }
 
   @Override

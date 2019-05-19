@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.CacheUpdateRunner;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -40,7 +41,6 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -98,7 +98,7 @@ public class IndexInfrastructure {
 
   @NotNull
   private static File getIndexDirectory(@NotNull ID<?, ?> indexName, boolean forVersion, String relativePath) {
-    final String dirName = indexName.getName().toLowerCase(Locale.US);
+    final String dirName = StringUtil.toLowerCase(indexName.getName());
     File indexDir;
 
     if (indexName instanceof StubIndexKey) {
@@ -165,7 +165,8 @@ public class IndexInfrastructure {
         prepare();
         runParallelNestedInitializationTasks();
         return finish();
-      } finally {
+      }
+      finally {
         Logger.getInstance(getClass().getName()).info("Initialization done:" + (System.nanoTime() - started) / 1000000);
       }
     }
@@ -175,9 +176,9 @@ public class IndexInfrastructure {
     }
 
     protected void prepare() {}
-    protected abstract void onThrowable(Throwable t);
+    protected abstract void onThrowable(@NotNull Throwable t);
 
-    public void addNestedInitializationTask(ThrowableRunnable nestedInitializationTask) {
+    protected void addNestedInitializationTask(ThrowableRunnable nestedInitializationTask) {
       myNestedInitializationTasks.add(nestedInitializationTask);
     }
 

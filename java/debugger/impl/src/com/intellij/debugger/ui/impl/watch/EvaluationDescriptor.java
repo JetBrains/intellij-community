@@ -56,6 +56,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
     return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, myProject);
   }
 
+  @Override
   public final Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     try {
       PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(() -> {});
@@ -87,7 +88,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       }
 
       Value value = evaluator.evaluate(thisEvaluationContext);
-      DebuggerUtilsEx.keep(value, thisEvaluationContext);
+      thisEvaluationContext.keep(value);
 
       myModifier = evaluator.getModifier();
       setLvalue(myModifier != null);
@@ -105,6 +106,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
     }
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElement evaluationCode = getEvaluationCode(context);
     if (evaluationCode instanceof PsiExpressionCodeFragment) {
@@ -125,6 +127,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
     return myModifier;
   }
 
+  @Override
   public boolean canSetValue() {
     return super.canSetValue() && myModifier != null && myModifier.canSetValue();
   }
@@ -142,6 +145,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
         if (evaluationDescriptor.canSetValue()) {
           final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
           set(expression, callback, debuggerContext, new SetValueRunnable() {
+            @Override
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
               throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
               //noinspection ConstantConditions

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -22,6 +8,8 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -101,7 +89,7 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
 
     Editor editor = getEditor();
     Project project = editor.getProject();
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     new MemberInplaceRenameHandler().doRename(element, editor, DataManager.getInstance().getDataContext(editor.getComponent()));
     TemplateState state = TemplateManagerImpl.getTemplateState(editor);
     assert state != null;
@@ -148,17 +136,21 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
   public void testNearParameterHint() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     int originalCaretPosition = myEditor.getCaretModel().getOffset();
-    EditorTestUtil.addInlay(myEditor, originalCaretPosition);
+    Inlay inlay = EditorTestUtil.addInlay(myEditor, originalCaretPosition);
+    VisualPosition inlayPosition = inlay.getVisualPosition();
     // make sure caret is to the right of inlay initially
-    myEditor.getCaretModel().moveToLogicalPosition(myEditor.getCaretModel().getLogicalPosition().leanForward(true));
+    myEditor.getCaretModel().moveToVisualPosition(new VisualPosition(inlayPosition.line, inlayPosition.column + 1));
 
     final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
     assertNotNull(element);
 
-    TemplateManagerImpl.setTemplateTesting(ourProject, getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     new MemberInplaceRenameHandler().doRename(element, myEditor, DataManager.getInstance().getDataContext(myEditor.getComponent()));
     assertEquals(originalCaretPosition, myEditor.getCaretModel().getOffset());
-    assertTrue(myEditor.getCaretModel().getLogicalPosition().leansForward); // check caret is still to the right
+    assertTrue(inlay.isValid());
+    assertEquals(inlayPosition, inlay.getVisualPosition());
+    // check caret is still to the right
+    assertEquals(new VisualPosition(inlayPosition.line, inlayPosition.column + 1), myEditor.getCaretModel().getVisualPosition());
   }
 
   private void doTestInplaceRename(final String newName) {

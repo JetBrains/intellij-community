@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,16 @@ public class PsiModificationTrackerTreeChangesUpdatesTest extends PlatformTestCa
 
   @Override
   public void tearDown() throws Exception {
-    ((PsiManagerImpl)PsiManager.getInstance(getProject())).removeTreeChangePreprocessor(myTracker);
-    myTracker = null;
-    super.tearDown();
+    try {
+      ((PsiManagerImpl)PsiManager.getInstance(getProject())).removeTreeChangePreprocessor(myTracker);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myTracker = null;
+      super.tearDown();
+    }
   }
 
   public void testMoveFile() throws IOException {

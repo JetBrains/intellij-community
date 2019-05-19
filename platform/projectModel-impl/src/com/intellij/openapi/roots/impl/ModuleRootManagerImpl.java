@@ -25,14 +25,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
+import kotlin.NotImplementedError;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
-public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable {
+public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
@@ -96,6 +98,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     return getModifiableModel(new RootConfigurationAccessor());
   }
 
+  @Override
   @NotNull
   public ModifiableRootModel getModifiableModel(@NotNull RootConfigurationAccessor accessor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -116,6 +119,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
       }
     }
     return model;
+  }
+
+  @Override
+  @TestOnly
+  public long getModificationCountForTests() {
+    throw new NotImplementedError("Make sense only for persistent root manager");
   }
 
   void makeRootsChange(@NotNull Runnable runnable) {
@@ -153,6 +162,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   void commitModel(RootModelImpl rootModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(rootModel.myModuleRootManager == this);
+    LOG.assertTrue(!myIsDisposed);
 
     boolean changed = rootModel.isChanged();
 
@@ -204,7 +214,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   @Override
-  public boolean isDependsOn(Module module) {
+  public boolean isDependsOn(@NotNull Module module) {
     return myRootModel.findModuleOrderEntry(module) != null;
   }
 
@@ -220,7 +230,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   @Override
-  public <R> R processOrder(RootPolicy<R> policy, R initialValue) {
+  public <R> R processOrder(@NotNull RootPolicy<R> policy, R initialValue) {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.processOrder(policy, initialValue);
   }

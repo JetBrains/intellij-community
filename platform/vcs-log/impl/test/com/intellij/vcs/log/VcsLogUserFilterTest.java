@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -23,10 +9,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
-import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.UserNameRegex;
-import com.intellij.vcs.log.util.VcsUserUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,10 +47,10 @@ public abstract class VcsLogUserFilterTest {
   }
 
   public void testWeirdCharacters() throws Exception {
-    List<String> names = ContainerUtil.newArrayList();
+    List<String> names = new ArrayList<>();
 
     for (Character c : UserNameRegex.EXTENDED_REGEX_CHARS) {
-      String name = "user" + Character.toString(c) + "userovich" + c.hashCode(); // hashCode is required so that uses wont be synonyms
+      String name = "user" + c + "userovich" + c.hashCode(); // hashCode is required so that uses wont be synonyms
       names.add(name);
       names.add(name + "@company.com");
     }
@@ -96,12 +80,12 @@ public abstract class VcsLogUserFilterTest {
   }
 
   public void testSynonyms(@NotNull Set<Character> excludes) throws Exception {
-    List<String> names = ContainerUtil.newArrayList();
+    List<String> names = new ArrayList<>();
 
-    Set<String> synonyms = ContainerUtil.newHashSet();
+    Set<String> synonyms = new HashSet<>();
     for (char c = ' '; c <= '~'; c++) {
       if (c == '\'' || c == '!' || c == '\\' || Character.isUpperCase(c) || excludes.contains(c)) continue;
-      String name = "User" + Character.toString(c) + "Userovich";
+      String name = "User" + c + "Userovich";
       names.add(name);
       names.add(name + "@company.com");
       if (!Character.isLetterOrDigit(c)) synonyms.add(name);
@@ -112,7 +96,7 @@ public abstract class VcsLogUserFilterTest {
     MultiMap<VcsUser, String> commits = generateHistory(ArrayUtil.toStringArray(names));
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
 
-    List<String> synonymCommits = ContainerUtil.newArrayList();
+    List<String> synonymCommits = new ArrayList<>();
     for (VcsUser user : commits.keySet()) {
       if (synonyms.contains(user.getName())) synonymCommits.addAll(commits.get(user));
     }
@@ -158,11 +142,11 @@ public abstract class VcsLogUserFilterTest {
   }
 
   private void checkTurkishAndEnglishLocales(@NotNull VcsUser user,
-                                             @NotNull Collection<VcsUser> synonymUsers,
+                                             @NotNull Collection<? extends VcsUser> synonymUsers,
                                              @NotNull MultiMap<VcsUser, String> commits,
-                                             @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder builder)
+                                             @NotNull List<? extends VcsCommitMetadata> metadata, @NotNull StringBuilder builder)
     throws VcsException {
-    Set<String> expectedCommits = ContainerUtil.newHashSet(commits.get(user));
+    Set<String> expectedCommits = new HashSet<>(commits.get(user));
     for (VcsUser synonym : synonymUsers) {
       expectedCommits.addAll(commits.get(synonym));
     }
@@ -194,24 +178,24 @@ public abstract class VcsLogUserFilterTest {
     MultiMap<VcsUser, String> commits = generateHistory(users);
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
     StringBuilder builder = new StringBuilder();
-    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton("jeka"), emptyMap(), commits.keySet());
+    VcsLogUserFilter userFilter = VcsLogFilterObject.fromUserNames(singleton("jeka"), emptyMap(), commits.keySet());
     checkFilter(userFilter, "jeka", commits.get(jeka), metadata, builder);
     assertFilteredCorrectly(builder);
   }
 
   private void checkFilterForUser(@NotNull VcsUser user,
-                                  @NotNull Set<VcsUser> allUsers,
+                                  @NotNull Set<? extends VcsUser> allUsers,
                                   @NotNull Collection<String> expectedHashes,
-                                  @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder)
+                                  @NotNull List<? extends VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder)
     throws VcsException {
-    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(VcsUserUtil.getShortPresentation(user)), emptyMap(), allUsers);
+    VcsLogUserFilter userFilter = VcsLogFilterObject.fromUser(user, allUsers);
     checkFilter(userFilter, user.toString(), expectedHashes, metadata, errorMessageBuilder);
   }
 
   private void checkFilter(VcsLogUserFilter userFilter,
                            String filterDescription,
                            @NotNull Collection<String> expectedHashes,
-                           @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder) throws VcsException {
+                           @NotNull List<? extends VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder) throws VcsException {
     // filter by vcs
     List<String> actualHashes = getFilteredHashes(userFilter);
 
@@ -227,24 +211,24 @@ public abstract class VcsLogUserFilterTest {
   }
 
   private static <T> boolean hasSameElements(@NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
-    return ContainerUtil.newHashSet(expected).equals(ContainerUtil.newHashSet(collection));
+    return new HashSet<>(expected).equals(new HashSet<>(collection));
   }
 
   @NotNull
   private List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter) throws VcsException {
-    VcsLogFilterCollection filters = new VcsLogFilterCollectionBuilder().with(filter).build();
+    VcsLogFilterCollection filters = VcsLogFilterObject.collection(filter);
     List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(myProject.getBaseDir(), filters, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 
   @NotNull
-  private static List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter, @NotNull List<VcsCommitMetadata> metadata) {
+  private static List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter, @NotNull List<? extends VcsCommitMetadata> metadata) {
     return ContainerUtil.map(ContainerUtil.filter(metadata, filter::matches), metadata1 -> metadata1.getId().asString());
   }
 
   @NotNull
   private List<VcsCommitMetadata> generateMetadata(@NotNull MultiMap<VcsUser, String> commits) {
-    List<VcsCommitMetadata> result = ContainerUtil.newArrayList();
+    List<VcsCommitMetadata> result = new ArrayList<>();
 
     for (VcsUser user : commits.keySet()) {
       for (String commit : commits.get(user)) {
@@ -262,7 +246,7 @@ public abstract class VcsLogUserFilterTest {
   private MultiMap<VcsUser, String> generateHistory(String... names) throws IOException {
     TestCase.assertTrue("Incorrect user names (should be pairs of users and emails) " + Arrays.toString(names), names.length % 2 == 0);
 
-    List<VcsUser> users = ContainerUtil.newArrayList();
+    List<VcsUser> users = new ArrayList<>();
     for (int i = 0; i < names.length / 2; i++) {
       users.add(myObjectsFactory.createUser(names[2 * i], names[2 * i + 1]));
     }
@@ -271,7 +255,7 @@ public abstract class VcsLogUserFilterTest {
   }
 
   @NotNull
-  private MultiMap<VcsUser, String> generateHistory(@NotNull List<VcsUser> users) throws IOException {
+  private MultiMap<VcsUser, String> generateHistory(@NotNull List<? extends VcsUser> users) throws IOException {
     MultiMap<VcsUser, String> commits = MultiMap.createLinked();
 
     for (VcsUser user : users) {

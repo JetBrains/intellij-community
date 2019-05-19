@@ -60,7 +60,7 @@ class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
   }
 
   private fun reparseFile(file: PsiFile, newText: CharSequence) {
-    val node = file.node as FileElement
+    val node = file.node as? FileElement ?: throw IllegalStateException("${file.javaClass} ${file.fileType}")
     val range = ChangedPsiRangeUtil.getChangedPsiRange(file, node, newText) ?: return
     val indicator = ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
     val log = BlockSupport.getInstance(file.project).reparseRange(file, node, range, newText, indicator, file.viewProvider.contents)

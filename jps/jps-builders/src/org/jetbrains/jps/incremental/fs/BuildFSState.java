@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
@@ -51,9 +36,9 @@ public class BuildFSState {
   // when true, will always determine dirty files by scanning FS and comparing timestamps
   // alternatively, when false, after first scan will rely on external notifications about changes
   private final boolean myAlwaysScanFS;
-  private final Set<BuildTarget<?>> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<BuildTarget<?>>());
+  private final Set<BuildTarget<?>> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<>());
   private final TObjectLongHashMap<File> myRegistrationStamps = new TObjectLongHashMap<>(FileUtil.FILE_HASHING_STRATEGY);
-  private final Map<BuildTarget<?>, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<BuildTarget<?>, FilesDelta>());
+  private final Map<BuildTarget<?>, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<>());
 
   public BuildFSState(boolean alwaysScanFS) {
     myAlwaysScanFS = alwaysScanFS;
@@ -143,7 +128,7 @@ public class BuildFSState {
       for (Set<File> files : delta.getSourcesToRecompile().values()) {
         files_loop:
         for (File file : files) {
-          if ((getEventRegistrationStamp(file) > targetBuildStart || FileSystemUtil.lastModified(file) > targetBuildStart) && scope.isAffected(target, file)) {
+          if ((getEventRegistrationStamp(file) > targetBuildStart || FSOperations.lastModified(file) > targetBuildStart) && scope.isAffected(target, file)) {
             for (BuildRootDescriptor rd : rootIndex.findAllParentDescriptors(file, context)) {
               if (rd.isGenerated()) { // do not send notification for generated sources
                 continue files_loop;
@@ -154,7 +139,7 @@ public class BuildFSState {
                         "; file: " + file.getPath() +
                         "; targetBuildStart=" + targetBuildStart +
                         "; eventRegistrationStamp=" + getEventRegistrationStamp(file) +
-                        "; lastModified=" + FileSystemUtil.lastModified(file)
+                        "; lastModified=" + FSOperations.lastModified(file)
               );
             }
             return true;
@@ -240,7 +225,7 @@ public class BuildFSState {
     if (delta == null) {
       delta = getDelta(rd.getTarget());
     }
-    
+
     return delta.isMarkedRecompile(rd, file);
   }
 
@@ -394,7 +379,7 @@ public class BuildFSState {
         CompileScope scope = context.getScope();
         for (File file : files) {
           if (scope.isAffected(target, file)) {
-            final long currentFileStamp = FileSystemUtil.lastModified(file);
+            final long currentFileStamp = FSOperations.lastModified(file);
             if (!rd.isGenerated() && (currentFileStamp > targetBuildStartStamp || getEventRegistrationStamp(file) > targetBuildStartStamp)) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty

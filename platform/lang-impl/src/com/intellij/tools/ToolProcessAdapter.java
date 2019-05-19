@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- * @since Mar 30, 2005
  */
 public class ToolProcessAdapter extends ProcessAdapter {
   private final Project myProject;

@@ -107,7 +107,7 @@ public class Saxon9TraceListener implements TraceListener {
 
   private static class VirtualFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, Source> implements Debugger.StyleFrame {
 
-    public VirtualFrame(Debugger.StyleFrame previous, InstructionDetails instr) {
+    VirtualFrame(Debugger.StyleFrame previous, InstructionDetails instr) {
       super(previous, new MySource(instr));
     }
 
@@ -126,7 +126,7 @@ public class Saxon9TraceListener implements TraceListener {
     private static class MySource implements Source, SourceLocator {
       private final InstructionDetails myInstruction;
 
-      public MySource(InstructionDetails instr) {
+      MySource(InstructionDetails instr) {
         myInstruction = instr;
       }
 

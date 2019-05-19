@@ -20,19 +20,20 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.uast.internal.log
 
 open class UIdentifier(
-  override val psi: PsiElement?,
+  override val sourcePsi: PsiElement?,
   override val uastParent: UElement?
-) : JvmDeclarationUElement {
+) : UElement {
   /**
    * Returns the identifier name.
    */
   open val name: String
-    get() = psi?.text ?: "<error>"
+    get() = sourcePsi?.text ?: "<error>"
 
   override fun asLogString(): String = log("Identifier ($name)")
 
-  override val sourcePsi: PsiElement?
-    get() = psi
+  @Suppress("OverridingDeprecatedMember")
+  override val psi: PsiElement?
+    get() = sourcePsi
 
   override val javaPsi: PsiElement?
     get() = null

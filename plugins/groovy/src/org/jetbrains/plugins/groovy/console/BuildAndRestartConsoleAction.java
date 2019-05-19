@@ -36,13 +36,13 @@ public class BuildAndRestartConsoleAction extends AnAction {
   private final Project myProject;
   private final Executor myExecutor;
   private final RunContentDescriptor myContentDescriptor;
-  private final Consumer<Module> myRestarter;
+  private final Consumer<? super Module> myRestarter;
 
   public BuildAndRestartConsoleAction(@NotNull Module module,
                                       @NotNull Project project,
                                       @NotNull Executor executor,
                                       @NotNull RunContentDescriptor contentDescriptor,
-                                      @NotNull Consumer<Module> restarter) {
+                                      @NotNull Consumer<? super Module> restarter) {
     super("Build and restart", "Build module '" + module.getName() + "' and restart", AllIcons.Actions.Restart);
     myModule = module;
     myProject = project;
@@ -52,7 +52,7 @@ public class BuildAndRestartConsoleAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled());
   }
 
@@ -66,11 +66,11 @@ public class BuildAndRestartConsoleAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(myExecutor, myContentDescriptor)) {
       CompilerManager.getInstance(myProject).compile(myModule, new CompileStatusNotification() {
         @Override
-        public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
           if (!myModule.isDisposed()) {
             myRestarter.consume(myModule);
           }

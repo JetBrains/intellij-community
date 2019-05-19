@@ -3,12 +3,13 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -19,17 +20,47 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
     }
     return new JavaElementVisitor() {
       @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {
+        List<PsiTypeElement> typeElements = new ArrayList<>();
+        for (PsiParameter parameter: expression.getParameterList().getParameters()) {
+          PsiTypeElement typeElement = getTypeElementToExpand(parameter);
+          if (typeElement == null) return;
+          typeElements.add(typeElement);
+        }
+
+        for (PsiTypeElement typeElement: typeElements) {
+          registerTypeElementProblem(typeElement);
+        }
+      }
+
+      @Override
       public void visitVariable(PsiVariable variable) {
+        if (variable instanceof PsiParameter && 
+            ((PsiParameter)variable).getDeclarationScope() instanceof PsiLambdaExpression) {
+          return;
+        }
+        PsiTypeElement typeElement = getTypeElementToExpand(variable);
+        if (typeElement != null) {
+          registerTypeElementProblem(typeElement);
+        }
+      }
+
+      private void registerTypeElementProblem(PsiTypeElement typeElement) {
+        holder.registerProblem(typeElement,
+                               "'var' can be replaced with explicit type",
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                               new ReplaceVarWithExplicitTypeFix());
+      }
+
+      private PsiTypeElement getTypeElementToExpand(PsiVariable variable) {
         PsiTypeElement typeElement = variable.getTypeElement();
         if (typeElement != null && typeElement.isInferredType()) {
           PsiType type = variable.getType();
           if (PsiTypesUtil.isDenotableType(type, variable)) {
-            holder.registerProblem(typeElement,
-                                   "'var' can be replaced with explicit type",
-                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                   new ReplaceVarWithExplicitTypeFix());
+            return typeElement;
           }
         }
+        return null;
       }
     };
   }
@@ -46,11 +77,20 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiTypeElement) {
-        PsiTypeElement typeElementByExplicitType = JavaPsiFacade.getElementFactory(project)
-          .createTypeElement(((PsiTypeElement)element).getType());
-        PsiElement explicitTypeElement = element.replace(typeElementByExplicitType);
-        explicitTypeElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(explicitTypeElement);
-        CodeStyleManager.getInstance(project).reformat(explicitTypeElement);
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiParameter) {
+          PsiElement declarationScope = ((PsiParameter)parent).getDeclarationScope();
+          if (declarationScope instanceof PsiLambdaExpression) {
+            for (PsiParameter parameter: ((PsiLambdaExpression)declarationScope).getParameterList().getParameters()) {
+              PsiTypeElement typeElement = parameter.getTypeElement();
+              if (typeElement != null) {
+                PsiTypesUtil.replaceWithExplicitType(typeElement);
+              }
+            }
+            return;
+          }
+        }
+        PsiTypesUtil.replaceWithExplicitType((PsiTypeElement)element);
       }
     }
   }

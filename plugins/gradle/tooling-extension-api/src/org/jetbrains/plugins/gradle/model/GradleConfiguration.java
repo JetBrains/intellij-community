@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/7/2016
  */
 public interface GradleConfiguration extends Serializable {
   @NotNull

@@ -17,11 +17,12 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class VirtualFileInfoAction extends AnAction implements DumbAware {
 
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     String pathToFile = Messages.showInputDialog("Path to file: ",
                                  "Virtual File Info",
                                  Messages.getQuestionIcon());
@@ -50,7 +51,7 @@ public class VirtualFileInfoAction extends AnAction implements DumbAware {
       Messages.showErrorDialog("Cannot find virtual file", "Virtual File Info");
       return;
     } else {
-      StringBuffer info = new StringBuffer();
+      StringBuilder info = new StringBuilder();
       info.append("Path: ");
       info.append(virtualFile.getPath());
       info.append("\n");
@@ -58,10 +59,10 @@ public class VirtualFileInfoAction extends AnAction implements DumbAware {
       info.append(DATE_FORMAT.format(new Date(virtualFile.getTimeStamp())));
       info.append("\n");
       info.append("isValid: ");
-      info.append(String.valueOf(virtualFile.isValid()));
+      info.append(virtualFile.isValid());
       info.append("\n");
       info.append("isWritable: ");
-      info.append(String.valueOf(virtualFile.isWritable()));
+      info.append(virtualFile.isWritable());
       info.append("\n");
       info.append("Content: ");
       try {

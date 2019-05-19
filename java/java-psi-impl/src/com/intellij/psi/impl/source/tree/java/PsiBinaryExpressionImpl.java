@@ -32,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements PsiBinaryExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBinaryExpressionImpl");
 
-  /** used via reflection in {@link com.intellij.psi.impl.source.tree.JavaElementType.JavaCompositeElementType#JavaCompositeElementType(java.lang.String, java.lang.Class)} */
-  @SuppressWarnings("UnusedDeclaration")
   public PsiBinaryExpressionImpl() {
     this(JavaElementType.BINARY_EXPRESSION);
   }
@@ -138,6 +136,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     }
   }
 
+  @Override
   public String toString() {
     return "PsiBinaryExpression:" + getText();
   }

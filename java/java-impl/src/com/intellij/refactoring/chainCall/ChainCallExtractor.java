@@ -16,13 +16,14 @@
 package com.intellij.refactoring.chainCall;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
-import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
@@ -59,7 +60,7 @@ public interface ChainCallExtractor {
     if(expression instanceof PsiArrayInitializerExpression) {
       expression = RefactoringUtil.convertInitializerToNormalExpression(expression, expressionType);
     }
-    String typeArgument = OptionalUtil.getMapTypeArgument(expression, expressionType);
+    String typeArgument = OptionalRefactoringUtil.getMapTypeArgument(expression, expressionType);
     return "." + typeArgument + getMethodName(variable, expression, expressionType) +
            "(" + variable.getName() + "->" + expression.getText() + ")";
   }
@@ -92,7 +93,7 @@ public interface ChainCallExtractor {
     if (lambda == null) return null;
     PsiParameterList parameters = lambda.getParameterList();
     if (parameters.getParametersCount() != 1) return null;
-    PsiExpressionList args = tryCast(lambda.getParent(), PsiExpressionList.class);
+    PsiExpressionList args = tryCast(PsiUtil.skipParenthesizedExprUp(lambda.getParent()), PsiExpressionList.class);
     if (args == null || args.getExpressionCount() != 1) return null;
     PsiParameter parameter = parameters.getParameters()[0];
     if (ExpressionUtils.isReferenceTo(expression, parameter) && parameter.getType().equals(targetType)) {

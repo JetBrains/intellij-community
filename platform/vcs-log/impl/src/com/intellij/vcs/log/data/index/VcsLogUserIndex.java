@@ -1,64 +1,78 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.VoidDataExternalizer;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.util.indexing.impl.ForwardIndex;
+import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
+import com.intellij.util.io.*;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.data.VcsUserRegistryImpl;
+import com.intellij.vcs.log.VcsUserRegistry;
+import com.intellij.vcs.log.data.VcsUserKeyDescriptor;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
 
-public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
+public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
   public static final String USERS = "users";
-  @NotNull private final VcsUserRegistryImpl myUserRegistry;
+  public static final String USERS_IDS = "users-ids";
+  @NotNull private final UserIndexer myUserIndexer;
 
-  public VcsLogUserIndex(@NotNull String logId,
-                         @NotNull VcsUserRegistryImpl userRegistry,
+  public VcsLogUserIndex(@NotNull StorageId storageId,
+                         @NotNull VcsUserRegistry userRegistry,
                          @NotNull FatalErrorHandler consumer,
                          @NotNull Disposable disposableParent) throws IOException {
-    super(logId, USERS, getVersion(), new UserIndexer(userRegistry), VoidDataExternalizer.INSTANCE, true,
+    super(storageId, USERS, new UserIndexer(createUsersEnumerator(storageId, userRegistry)), VoidDataExternalizer.INSTANCE,
           consumer, disposableParent);
-    myUserRegistry = userRegistry;
+    myUserIndexer = (UserIndexer)myIndexer;
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
   }
 
-  public TIntHashSet getCommitsForUsers(@NotNull Set<VcsUser> users) throws IOException, StorageException {
-    Set<Integer> ids = ContainerUtil.newHashSet();
+  @NotNull
+  @Override
+  protected ForwardIndex<Integer, Void> createForwardIndex(@NotNull IndexExtension<Integer, Void, VcsShortCommitDetails> extension)
+    throws IOException {
+    return new KeyCollectionBasedForwardIndex<Integer, Void>(extension) {
+      @NotNull
+      @Override
+      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
+        File storageFile = myStorageId.getStorageFile(myName + ".idx");
+        return new PersistentHashMap<>(storageFile, EnumeratorIntegerDescriptor.INSTANCE, new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
+      }
+    };
+  }
+
+  @NotNull
+  private static PersistentEnumeratorBase<VcsUser> createUsersEnumerator(@NotNull StorageId storageId,
+                                                                         @NotNull VcsUserRegistry userRegistry) throws IOException {
+    File storageFile = storageId.getStorageFile(USERS_IDS);
+    return new PersistentBTreeEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), Page.PAGE_SIZE, null,
+                                           storageId.getVersion());
+  }
+
+  public TIntHashSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
+    Set<Integer> ids = new HashSet<>();
     for (VcsUser user : users) {
-      ids.add(myUserRegistry.getUserId(user));
+      ids.add(myUserIndexer.getUserId(user));
     }
     return getCommitsWithAnyKey(ids);
   }
@@ -68,29 +82,50 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
     Collection<Integer> userIds = getKeysForCommit(commit);
     if (userIds == null || userIds.isEmpty()) return null;
     LOG.assertTrue(userIds.size() == 1);
-    return myUserRegistry.getUserById(notNull(getFirstItem(userIds)));
+    return myUserIndexer.getUserById(notNull(getFirstItem(userIds)));
+  }
+
+  public int getUserId(@NotNull VcsUser user) throws IOException {
+    return myUserIndexer.getUserId(user);
   }
 
   @Nullable
   public VcsUser getUserById(int id) throws IOException {
-    return myUserRegistry.getUserById(id);
+    return myUserIndexer.getUserById(id);
   }
 
-  private static class UserIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {
-    @NotNull private final VcsUserRegistryImpl myRegistry;
-    @NotNull private Consumer<Exception> myFatalErrorConsumer = LOG::error;
+  @Override
+  public void flush() throws StorageException {
+    super.flush();
+    myUserIndexer.flush();
+  }
 
-    public UserIndexer(@NotNull VcsUserRegistryImpl registry) {
-      myRegistry = registry;
+  @Override
+  public void dispose() {
+    super.dispose();
+    try {
+      myUserIndexer.close();
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+  }
+
+  private static class UserIndexer implements DataIndexer<Integer, Void, VcsShortCommitDetails> {
+    @NotNull private final PersistentEnumeratorBase<VcsUser> myUserEnumerator;
+    @NotNull private Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
+
+    UserIndexer(@NotNull PersistentEnumeratorBase<VcsUser> userEnumerator) {
+      myUserEnumerator = userEnumerator;
     }
 
     @NotNull
     @Override
-    public Map<Integer, Void> map(@NotNull VcsFullCommitDetails inputData) {
+    public Map<Integer, Void> map(@NotNull VcsShortCommitDetails inputData) {
       Map<Integer, Void> result = new THashMap<>();
 
       try {
-        result.put(myRegistry.getUserId(inputData.getAuthor()), null);
+        result.put(myUserEnumerator.enumerate(inputData.getAuthor()), null);
       }
       catch (IOException e) {
         myFatalErrorConsumer.consume(e);
@@ -99,8 +134,25 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
       return result;
     }
 
-    public void setFatalErrorConsumer(@NotNull Consumer<Exception> fatalErrorConsumer) {
+    @Nullable
+    public VcsUser getUserById(int id) throws IOException {
+      return myUserEnumerator.valueOf(id);
+    }
+
+    public int getUserId(@NotNull VcsUser user) throws IOException {
+      return myUserEnumerator.enumerate(user);
+    }
+
+    public void setFatalErrorConsumer(@NotNull Consumer<? super Exception> fatalErrorConsumer) {
       myFatalErrorConsumer = fatalErrorConsumer;
+    }
+
+    public void flush() {
+      myUserEnumerator.force();
+    }
+
+    public void close() throws IOException {
+      myUserEnumerator.close();
     }
   }
 }

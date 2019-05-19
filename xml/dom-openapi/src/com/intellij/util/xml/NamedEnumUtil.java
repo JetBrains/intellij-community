@@ -26,7 +26,7 @@ public class NamedEnumUtil {
   private static final Function<Enum, String> NAMED_SHOW = s -> ((NamedEnum) s).getValue();
   private static final Function<Enum, String> SIMPLE_SHOW = s -> s.name();
   
-  public static <T extends Enum> T getEnumElementByValue(final Class<T> enumClass, final String value, Function<Enum, String> show) {
+  public static <T extends Enum> T getEnumElementByValue(final Class<T> enumClass, final String value, Function<? super Enum, String> show) {
     for (final T t : enumClass.getEnumConstants()) {
       if (Comparing.equal(value, show.fun(t))) {
         return t;

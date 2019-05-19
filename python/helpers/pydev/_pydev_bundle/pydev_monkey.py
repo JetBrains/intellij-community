@@ -9,6 +9,8 @@ except:
     xrange = range
 
 
+PYTHON_NAMES = ['python', 'jython', 'pypy']
+
 #===============================================================================
 # Things that are dependent on having the pydevd debugger
 #===============================================================================
@@ -45,8 +47,22 @@ def _get_host_port():
 
 
 def _is_managed_arg(arg):
-    if arg.endswith('pydevd.py'):
-        return True
+    return arg.endswith('pydevd.py')
+
+
+def _is_already_patched(args):
+    for arg in args:
+        if 'pydevd' in arg:
+            return True
+    return False
+
+
+def _is_py3_and_has_bytes_args(args):
+    if not isinstance('', type(u'')):
+        return False
+    for arg in args:
+        if isinstance(arg, bytes):
+            return True
     return False
 
 
@@ -64,15 +80,39 @@ def _on_set_trace_for_new_thread(global_debugger):
 #===============================================================================
 # Things related to monkey-patching
 #===============================================================================
+def is_python_args(args):
+    return not _is_py3_and_has_bytes_args(args) and len(args) > 0 and is_python(args[0])
+
+
+def is_executable(path):
+    return os.access(os.path.abspath(path), os.EX_OK)
+
+
+def starts_with_python_shebang(path):
+    try:
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    for name in PYTHON_NAMES:
+                        if line.startswith('#!/usr/bin/env %s' % name):
+                            return True
+                    return False
+    except UnicodeDecodeError:
+        return False
+    except:
+        traceback.print_exc()
+        return False
+
+
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path) - 1]
     filename = os.path.basename(path).lower()
-    for name in ['python', 'jython', 'pypy']:
+    for name in PYTHON_NAMES:
         if filename.find(name) != -1:
             return True
-
-    return False
+    return sys.platform != 'win32' and is_executable(path) and starts_with_python_shebang(path)
 
 
 def remove_quotes_from_args(args):
@@ -122,6 +162,11 @@ def get_c_option_index(args):
 def patch_args(args):
     try:
         log_debug("Patching args: %s"% str(args))
+
+        if _is_py3_and_has_bytes_args(args):
+            warn_bytes_args()
+            return args
+
         args = remove_quotes_from_args(args)
 
         from pydevd import SetupHolder
@@ -131,9 +176,20 @@ def patch_args(args):
             return args
 
         if is_python(args[0]):
+
+            for name in PYTHON_NAMES:
+                if args[0].find(name) != -1:
+                    break
+            else:
+                # Executable file with Python shebang.
+                args.insert(0, sys.executable)
+
             ind_c = get_c_option_index(args)
 
             if ind_c != -1:
+                if _is_already_patched(args):
+                    return args
+
                 host, port = _get_host_port()
 
                 if port is not None:
@@ -177,7 +233,11 @@ def patch_args(args):
                 # Always insert at pos == 1 (i.e.: pydevd "--module" --multiprocess ...)
                 original.insert(1, '--module')
             else:
-                if args[i].startswith('-'):
+                if args[i] == '-':
+                    # this is the marker that input is going to be from stdin for Python
+                    # for now we just disable the debugging here, don't crash but is not supported
+                    return args
+                elif args[i].startswith('-'):
                     new_args.append(args[i])
                 else:
                     break
@@ -298,6 +358,25 @@ def patch_arg_str_win(arg_str):
     log_debug("New args: %s" % arg_str)
     return arg_str
 
+
+def patch_fork_exec_executable_list(args, other_args):
+    # When calling a Python executable script with `subprocess.call` the latest uses the first argument as an executable for `fork_exec`.
+    # This leads to `subprocess.call(["foo.py", "bar", "baz"])` after patching the args will be transformed into something like
+    # foo.py pydevd.py --port 59043 --client 127.0.0.1 --multiproc --file foo.py bar baz.
+    # To fix the issue we need to look inside the `fork_exec` executable list and, if necessary, replace an executable script with Python.
+    i = 0
+    for arg in args:
+        i += 1
+        if arg == '--file':
+            break
+    else:
+        return other_args
+    executable_list = other_args[0]
+    if args[i].encode() in executable_list:
+        return ((sys.executable.encode(),),) + other_args[1:]
+    return other_args
+
+
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):
         original_name = 'original_' + funcname
@@ -316,6 +395,11 @@ def warn_multiproc():
             "pydev debugger: To debug that process please enable 'Attach to subprocess automatically while debugging?' option in the debugger settings.\n")
 
 
+def warn_bytes_args():
+    log_error_once(
+            "pydev debugger: bytes arguments were passed to a new process creation function. Breakpoints may not work correctly.\n")
+
+
 def create_warn_multiproc(original_name):
 
     def new_warn_multiproc(*args):
@@ -325,6 +409,7 @@ def create_warn_multiproc(original_name):
 
         return getattr(os, original_name)(*args)
     return new_warn_multiproc
+
 
 def create_execl(original_name):
     def new_execl(path, *args):
@@ -336,7 +421,9 @@ def create_execl(original_name):
         """
         import os
         args = patch_args(args)
-        send_process_created_message()
+        if is_python_args(args):
+            path = args[0]
+            send_process_will_be_substituted()
         return getattr(os, original_name)(path, *args)
     return new_execl
 
@@ -348,8 +435,11 @@ def create_execv(original_name):
         os.execvp(file, args)
         """
         import os
-        send_process_created_message()
-        return getattr(os, original_name)(path, patch_args(args))
+        args = patch_args(args)
+        if is_python_args(args):
+            path = args[0]
+            send_process_will_be_substituted()
+        return getattr(os, original_name)(path, args)
     return new_execv
 
 
@@ -360,8 +450,11 @@ def create_execve(original_name):
     """
     def new_execve(path, args, env):
         import os
-        send_process_created_message()
-        return getattr(os, original_name)(path, patch_args(args), env)
+        args = patch_args(args)
+        if is_python_args(args):
+            path = args[0]
+            send_process_will_be_substituted()
+        return getattr(os, original_name)(path, args, env)
     return new_execve
 
 
@@ -385,8 +478,9 @@ def create_spawnv(original_name):
         os.spawnvp(mode, file, args)
         """
         import os
+        args = patch_args(args)
         send_process_created_message()
-        return getattr(os, original_name)(mode, path, patch_args(args))
+        return getattr(os, original_name)(mode, path, args)
     return new_spawnv
 
 
@@ -397,8 +491,9 @@ def create_spawnve(original_name):
     """
     def new_spawnve(mode, path, args, env):
         import os
+        args = patch_args(args)
         send_process_created_message()
-        return getattr(os, original_name)(mode, path, patch_args(args), env)
+        return getattr(os, original_name)(mode, path, args, env)
     return new_spawnve
 
 
@@ -410,7 +505,7 @@ def create_fork_exec(original_name):
         import _posixsubprocess  # @UnresolvedImport
         args = patch_args(args)
         send_process_created_message()
-        return getattr(_posixsubprocess, original_name)(args, *other_args)
+        return getattr(_posixsubprocess, original_name)(args, *patch_fork_exec_executable_list(args, other_args))
     return new_fork_exec
 
 
@@ -495,6 +590,17 @@ def send_process_created_message():
     debugger = get_global_debugger()
     if debugger is not None:
         debugger.send_process_created_message()
+
+
+def send_process_will_be_substituted():
+    """Sends a message that a new process is going to be created.
+    When `PyDB` works in server mode this method also waits for the
+    response from IDE to be sure that IDE received this message.
+    """
+    from _pydevd_bundle.pydevd_comm import get_global_debugger
+    debugger = get_global_debugger()
+    if debugger is not None:
+        debugger.send_process_will_be_substituted()
 
 
 def patch_new_process_functions():

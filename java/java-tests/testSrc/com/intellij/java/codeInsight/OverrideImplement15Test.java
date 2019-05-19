@@ -75,47 +75,28 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
   public void testRawInheritanceWithMethodTypeParameters() { doTest(false); }
 
   public void testLongFinalParameterList() {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    try {
-      CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
-      javaSettings.RIGHT_MARGIN = 80;
-      javaSettings.KEEP_LINE_BREAKS = true;
-      codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = true;
-      javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
-      CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(codeStyleSettings);
-      doTest(false);
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
+    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.RIGHT_MARGIN = 80;
+    javaSettings.KEEP_LINE_BREAKS = true;
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = true;
+    javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    doTest(false);
   }
 
   public void testOverridingLibraryFunctionWithConfiguredParameterPrefix() {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    try {
-      codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).PARAMETER_NAME_PREFIX = "in";
-      CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(codeStyleSettings);
-      doTest(false);
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
+    JavaCodeStyleSettings.getInstance(getProject()).PARAMETER_NAME_PREFIX = "in";
+    doTest(false);
   }
 
   public void testLongParameterList() {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    try {
-      CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
-      javaSettings.RIGHT_MARGIN = 80;
-      javaSettings.KEEP_LINE_BREAKS = false;
-      codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = false;
-      javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
-      CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(codeStyleSettings);
-      doTest(false);
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
+    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.RIGHT_MARGIN = 80;
+    javaSettings.KEEP_LINE_BREAKS = false;
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = false;
+    javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    doTest(false);
   }
 
   public void testImplementedConstructorsExcluded() {

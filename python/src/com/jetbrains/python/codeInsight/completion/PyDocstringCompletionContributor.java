@@ -55,7 +55,7 @@ public class PyDocstringCompletionContributor extends CompletionContributor {
 
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
-                                  ProcessingContext context,
+                                  @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       final PsiElement element = parameters.getOriginalPosition();
       if (element == null) return;

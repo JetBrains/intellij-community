@@ -27,7 +27,12 @@ import java.util.Map;
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
-    if (PsiUtil.isModuleFile(ref.getContainingFile())) {
+    PsiFile containingFile = ref.getContainingFile();
+    if (containingFile instanceof PsiJavaCodeReferenceCodeFragment &&
+        !((PsiJavaCodeReferenceCodeFragment)containingFile).isClassesAccepted()) {
+      return;
+    }
+    if (PsiUtil.isModuleFile(containingFile)) {
       OrderEntryFix.registerFixes(registrar, ref);
       registrar.register(new CreateServiceImplementationClassFix(ref));
       registrar.register(new CreateServiceInterfaceOrClassFix(ref));
@@ -36,8 +41,8 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
     QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
     registrar.register(new ImportClassFix(ref));
-    registrar.register(new StaticImportConstantFix(ref));
-    registrar.register(new QualifyStaticConstantFix(ref));
+    registrar.register(new StaticImportConstantFix(containingFile, ref));
+    registrar.register(new QualifyStaticConstantFix(containingFile, ref));
     registrar.register(quickFixFactory.createSetupJDKFix());
 
     OrderEntryFix.registerFixes(registrar, ref);
@@ -49,8 +54,12 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
 
       registrar.register(new RenameWrongRefFix(refExpr));
-      if (!ref.isQualified()) {
+      PsiExpression qualifier = ((PsiReferenceExpression)ref).getQualifierExpression();
+      if (qualifier == null) {
         registrar.register(fixRange, new BringVariableIntoScopeFix(refExpr), null);
+      }
+      else {
+        AddTypeCastFix.registerFix(registrar, qualifier, ref, fixRange);
       }
 
       for (IntentionAction action : createVariableActions(refExpr)) {

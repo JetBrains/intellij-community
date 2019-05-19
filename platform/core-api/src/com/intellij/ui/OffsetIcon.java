@@ -3,18 +3,21 @@
 package com.intellij.ui;
 
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
+import com.intellij.util.ui.JBCachingScalableIcon;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Icon;
-import java.awt.Component;
-import java.awt.Graphics;
+import javax.swing.*;
+import java.awt.*;
 import java.util.Objects;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
-public final class OffsetIcon extends CachingScalableJBIcon<OffsetIcon> {
+public final class OffsetIcon extends JBCachingScalableIcon<OffsetIcon> {
+
+  public static final int REGULAR_OFFSET = 20;
+
   private int myWidth;
   private int myHeight;
 
@@ -28,8 +31,13 @@ public final class OffsetIcon extends CachingScalableJBIcon<OffsetIcon> {
     setAutoUpdateScaleContext(false);
   }
 
+  @Contract("null->null;!null->!null")
+  public static Icon getOriginalIcon(Icon icon) {
+    return icon instanceof OffsetIcon ? ((OffsetIcon)icon).myIcon : icon;
+  }
+
   public OffsetIcon(@NotNull Icon icon) {
-    this(20, icon);
+    this(REGULAR_OFFSET, icon);
   }
 
   public OffsetIcon(int offset, @NotNull Icon icon) {
@@ -50,7 +58,7 @@ public final class OffsetIcon extends CachingScalableJBIcon<OffsetIcon> {
 
   @NotNull
   @Override
-  protected OffsetIcon copy() {
+  public OffsetIcon copy() {
     return new OffsetIcon(this);
   }
 

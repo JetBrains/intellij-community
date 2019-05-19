@@ -24,13 +24,15 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class VcsGeneralConfigurationPanel {
 
@@ -58,11 +60,15 @@ public class VcsGeneralConfigurationPanel {
   private JPanel myAddConfirmationPanel;
   private JComboBox myOnPatchCreation;
   private JCheckBox myReloadContext;
+  private JLabel myOnPatchCreationLabel;
+  private JPanel myEmptyChangeListPanel;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
     myProject = project;
+    myOnPatchCreationLabel.setText(VcsBundle.message("combobox.show.patch.in.explorer.after.creation",
+                                                     ShowFilePathAction.getFileManagerName()));
 
     myOnFileAddingGroup = new JRadioButton[]{
       myShowDialogOnAddingFile,
@@ -137,6 +143,25 @@ public class VcsGeneralConfigurationPanel {
       .getConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
+  private void createUIComponents() {
+    myPanel = new JPanel() {
+      @Override
+      public void doLayout() {
+        updateMinSize(myAddConfirmationPanel, myRemoveConfirmationPanel, myEmptyChangeListPanel, myPromptsPanel);
+        super.doLayout();
+      }
+
+      private void updateMinSize(JPanel... panels) {
+        for (JPanel panel : panels) {
+          Border border = panel.getBorder();
+          if (border instanceof IdeaTitledBorder) {
+            ((IdeaTitledBorder)border).acceptMinimumSize(panel);
+          }
+        }
+      }
+    };
+  }
+
 
   private static VcsShowConfirmationOption.Value getSelected(JRadioButton[] group) {
     if (group[0].isSelected()) return VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
@@ -207,7 +232,6 @@ public class VcsGeneralConfigurationPanel {
   private static void selectInGroup(final JRadioButton[] group, final VcsShowConfirmationOption confirmation) {
     final VcsShowConfirmationOption.Value value = confirmation.getValue();
     final int index;
-    //noinspection EnumSwitchStatementWhichMissesCases
     switch(value) {
       case SHOW_CONFIRMATION: index = 0; break;
       case DO_ACTION_SILENTLY: index = 1; break;
@@ -221,7 +245,7 @@ public class VcsGeneralConfigurationPanel {
     return myPanel;
   }
 
-  public void updateAvailableOptions(final Collection<AbstractVcs> activeVcses) {
+  public void updateAvailableOptions(final Collection<? extends AbstractVcs> activeVcses) {
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       final JCheckBox checkBox = myPromptOptions.get(setting);
       checkBox.setEnabled(setting.isApplicableTo(activeVcses) || myProject.isDefault());
@@ -244,7 +268,7 @@ public class VcsGeneralConfigurationPanel {
     }
   }
 
-  private static String composeText(final List<AbstractVcs> applicableVcses) {
+  private static String composeText(final List<? extends AbstractVcs> applicableVcses) {
     final TreeSet<String> result = new TreeSet<>();
     for (AbstractVcs abstractVcs : applicableVcses) {
       result.add(abstractVcs.getDisplayName());

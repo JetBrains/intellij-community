@@ -40,22 +40,27 @@ public abstract class CvsConnectionSettings extends CvsRootData implements CvsEn
 
   public abstract int getDefaultPort();
 
+  @Override
   public RevisionOrDate getRevisionOrDate() {
     return RevisionOrDate.EMPTY;
   }
 
+  @Override
   public String getRepository() {
     return REPOSITORY;
   }
 
+  @Override
   public CvsRoot getCvsRoot() {
     return new CvsRoot(USER, REPOSITORY, getCvsRootAsString());
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   public IConnection createConnection(ReadWriteStatistics statistics) {
     CvsListenerWithProgress cvsCommandStopper = CvsListenerWithProgress.createOnProgress();
     IConnection originalConnection = createOriginalConnection(cvsCommandStopper, myCvsRootConfiguration);
@@ -84,7 +89,8 @@ public abstract class CvsConnectionSettings extends CvsRootData implements CvsEn
   public ProxySettings getProxySettings(){
     return myCvsRootConfiguration.PROXY_SETTINGS;
   }
-  
+
+  @Override
   public void setUseProxy(String proxyHost, String proxyPort) {
     super.setUseProxy(proxyHost, proxyPort);
     final ProxySettings settings = myCvsRootConfiguration.PROXY_SETTINGS;
@@ -98,6 +104,7 @@ public abstract class CvsConnectionSettings extends CvsRootData implements CvsEn
     settings.USE_PROXY = true;
   }
 
+  @Override
   public boolean isOffline() {
     return myOffline;
   }

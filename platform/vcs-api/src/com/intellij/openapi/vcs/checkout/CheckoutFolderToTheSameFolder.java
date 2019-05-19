@@ -25,16 +25,19 @@ public class CheckoutFolderToTheSameFolder extends CheckoutStrategy {
     super(selectedLocation, cvsPath, isForFile);
   }
 
+  @Override
   public File getResult() {
     if (isForFile()) return null;
     if (getSelectedLocation().getParentFile() == null) return null;
     return getSelectedLocation();
   }
 
+  @Override
   public boolean useAlternativeCheckoutLocation() {
     return true;
   }
 
+  @Override
   public File getCheckoutDirectory() {
     return getSelectedLocation();
   }

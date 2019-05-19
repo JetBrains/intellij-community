@@ -21,7 +21,7 @@ import org.jetbrains.uast.values.UValue
 import java.lang.ref.SoftReference
 
 interface UEvaluationContext {
-  val uastContext: UastContext
+  val uastContext: UastLanguagePlugin
 
   val extensions: List<UEvaluatorExtension>
 
@@ -36,7 +36,7 @@ interface UEvaluationContext {
   fun getEvaluator(declaration: UDeclaration): UEvaluator
 }
 
-fun UFile.analyzeAll(context: UastContext = getUastContext(), extensions: List<UEvaluatorExtension> = emptyList()): UEvaluationContext =
+fun UFile.analyzeAll(context: UastLanguagePlugin = UastFacade, extensions: List<UEvaluatorExtension> = emptyList()): UEvaluationContext =
   MapBasedEvaluationContext(context, extensions).analyzeAll(this)
 
 @JvmOverloads
@@ -61,11 +61,11 @@ fun UDeclaration.getEvaluationContextWithCaching(extensions: List<UEvaluatorExte
     if (cachedContext != null && cachedContext.extensions == extensions)
       cachedContext
     else
-      MapBasedEvaluationContext(getUastContext(), extensions).apply {
+      MapBasedEvaluationContext(UastFacade, extensions).apply {
         file.putUserData(EVALUATION_CONTEXT_KEY, SoftReference(this))
       }
 
-  } ?: MapBasedEvaluationContext(getUastContext(), extensions)
+  } ?: MapBasedEvaluationContext(UastFacade, extensions)
 }
 
 val EVALUATION_CONTEXT_KEY: Key<SoftReference<out UEvaluationContext>> = Key<SoftReference<out UEvaluationContext>>("uast.EvaluationContext")

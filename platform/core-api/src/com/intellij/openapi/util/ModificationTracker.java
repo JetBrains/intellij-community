@@ -18,21 +18,17 @@ package com.intellij.openapi.util;
 /**
  * @author dyoma
  */
+@FunctionalInterface
 public interface ModificationTracker {
   long getModificationCount();
 
   ModificationTracker EVER_CHANGED = new ModificationTracker() {
-    private long myCounter = 0;
+    private long myCounter;
 
     @Override
     public long getModificationCount() {
       return myCounter++;
     }
   };
-  ModificationTracker NEVER_CHANGED = new ModificationTracker() {
-    @Override
-    public long getModificationCount() {
-      return 0;
-    }
-  };
+  ModificationTracker NEVER_CHANGED = () -> 0;
 }

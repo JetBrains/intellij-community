@@ -347,7 +347,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   private class PointlessBooleanExpressionFix extends InspectionGadgetsFix {
     private final boolean myHasSideEffect;
 
-    public PointlessBooleanExpressionFix(boolean hasSideEffect) {
+    PointlessBooleanExpressionFix(boolean hasSideEffect) {
       myHasSideEffect = hasSideEffect;
     }
 

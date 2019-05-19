@@ -15,13 +15,15 @@
  */
 package com.jetbrains.python.sdk.flavors;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -36,13 +38,13 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
   public static final UnixPythonSdkFlavor INSTANCE = new UnixPythonSdkFlavor();
 
   @Override
-  public Collection<String> suggestHomePaths() {
+  public Collection<String> suggestHomePaths(@Nullable Module module) {
     Set<String> candidates = new HashSet<>();
     collectUnixPythons("/usr/bin", candidates);
     return candidates;
   }
 
-  public static void collectUnixPythons(String path, Set<String> candidates) {
+  public static void collectUnixPythons(String path, Set<? super String> candidates) {
     VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath(path);
     if (rootDir != null) {
       if (rootDir instanceof NewVirtualFile) {
@@ -52,14 +54,13 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
       VirtualFile[] suspects = rootDir.getChildren();
       for (VirtualFile child : suspects) {
         if (!child.isDirectory()) {
-          final String childName = child.getName().toLowerCase(Locale.US);
+          final String childName = StringUtil.toLowerCase(child.getName());
           for (String name : NAMES) {
             if (childName.startsWith(name) || PYTHON_RE.matcher(childName).matches()) {
               final String childPath = child.getPath();
               if (!childName.endsWith("-config") &&
                   !childName.startsWith("pythonw") &&
-                  !childName.endsWith("m") &&
-                  !candidates.contains(childPath)) {
+                  !childName.endsWith("m")) {
                 candidates.add(childPath);
               }
               break;

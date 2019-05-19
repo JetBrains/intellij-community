@@ -22,7 +22,7 @@ import com.intellij.testFramework.InspectionTestCase;
 public class InvalidPropertyKeyInspectionTest extends InspectionTestCase {
   private void doTest() {
     LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new InvalidPropertyKeyInspection());
-    doTest("invalidPropertyKey/" + getTestName(true), tool, "java 1.5");
+    doTest("invalidPropertyKey/" + getTestName(true), tool);
   }
 
   public void testSimple() {

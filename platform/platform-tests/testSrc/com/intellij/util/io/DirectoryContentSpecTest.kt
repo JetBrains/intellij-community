@@ -15,6 +15,8 @@
  */
 package com.intellij.util.io
 
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import kotlin.test.fail
@@ -135,6 +137,27 @@ class DirectoryContentSpecTest {
         file("a.txt")
         file("b.txt")
       }
+    })
+  }
+
+  @Test
+  fun `zip file`() {
+    val zip = zipFile {
+      file("a.txt", "a")
+    }.generateInTempDir()
+    assertTrue(zip.isFile)
+    assertEquals("zip", zip.extension)
+    zip.assertMatches(zipFile {
+      file("a.txt", "a")
+    })
+    zip.assertNotMatches(zipFile {
+      file("b.txt", "a")
+    })
+    zip.assertNotMatches(zipFile {
+      file("a.txt", "b")
+    })
+    zip.assertNotMatches(directoryContent {
+      file("a.txt", "b")
     })
   }
 }

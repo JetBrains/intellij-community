@@ -1,24 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.InputSource;
@@ -30,11 +30,11 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
  * @author stathik
- * @since Mar 28, 2003
  */
 public class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
@@ -47,7 +47,7 @@ public class RepositoryHelper {
    */
   @NotNull
   public static List<String> getPluginHosts() {
-    List<String> hosts = ContainerUtil.newArrayList(UpdateSettings.getInstance().getPluginHosts());
+    List<String> hosts = new ArrayList<>(UpdateSettings.getInstance().getPluginHosts());
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.add(null);  // main plugin repository
     return hosts;
@@ -57,15 +57,20 @@ public class RepositoryHelper {
    * Loads list of plugins, compatible with a current build, from all configured repositories
    */
   @NotNull
-  public static List<IdeaPluginDescriptor> loadPluginsFromAllRepositories(@Nullable ProgressIndicator indicator) throws IOException {
+  public static List<IdeaPluginDescriptor> loadPluginsFromAllRepositories(@Nullable ProgressIndicator indicator) {
     List<IdeaPluginDescriptor> result = new ArrayList<>();
     Set<String> addedPluginIds = new HashSet<>();
     for (String host : getPluginHosts()) {
-      List<IdeaPluginDescriptor> plugins = loadPlugins(host, indicator);
-      for (IdeaPluginDescriptor plugin : plugins) {
-        if (addedPluginIds.add(plugin.getPluginId().getIdString())) {
-          result.add(plugin);
+      try {
+        List<IdeaPluginDescriptor> plugins = loadPlugins(host, indicator);
+        for (IdeaPluginDescriptor plugin : plugins) {
+          if (addedPluginIds.add(plugin.getPluginId().getIdString())) {
+            result.add(plugin);
+          }
         }
+      }
+      catch (IOException e) {
+        LOG.info("Couldn't load plugins from " + (host == null ? "main repository" : host), e);
       }
     }
     return result;
@@ -86,17 +91,7 @@ public class RepositoryHelper {
 
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
-                                                       @Nullable BuildNumber buildnumber,
-                                                       @Nullable ProgressIndicator indicator) throws IOException {
-    boolean hostEligibleForHttpsForcing = repositoryUrl == null || repositoryUrl.equals(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
-    boolean forceHttps = hostEligibleForHttpsForcing && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
-    return loadPlugins(repositoryUrl, buildnumber, forceHttps, indicator);
-  }
-
-  @NotNull
-  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber build,
-                                                       boolean forceHttps,
                                                        @Nullable ProgressIndicator indicator) throws IOException {
     String eTag;
     File pluginListFile;
@@ -122,11 +117,10 @@ public class RepositoryHelper {
     }
 
     Url finalUrl = url;
-    List<IdeaPluginDescriptor> descriptors = HttpRequests.request(url)
-                                                         .forceHttps(forceHttps)
-                                                         .tuner(connection -> connection.setRequestProperty("If-None-Match", eTag))
-                                                         .productNameAsUserAgent()
-                                                         .connect(request -> {
+    List<PluginNode> descriptors = HttpRequests.request(url)
+      .tuner(connection -> connection.setRequestProperty("If-None-Match", eTag))
+      .productNameAsUserAgent()
+      .connect(request -> {
         if (indicator != null) {
           indicator.checkCanceled();
         }
@@ -154,11 +148,13 @@ public class RepositoryHelper {
           }
         }
         else {
-          return parsePluginList(request.getReader());
+          try (BufferedReader reader = request.getReader()) {
+            return parsePluginList(reader);
+          }
         }
       });
 
-    return process(repositoryUrl, descriptors);
+    return process(descriptors, repositoryUrl);
   }
 
   private static String loadPluginListETag(File pluginListFile) {
@@ -199,19 +195,21 @@ public class RepositoryHelper {
   }
 
   /**
-   * Reads cached plugin descriptors from a file. Returns null if cache file does not exist.
+   * Reads cached plugin descriptors from a file. Returns {@code null} if cache file does not exist.
    */
   @Nullable
   public static List<IdeaPluginDescriptor> loadCachedPlugins() throws IOException {
     File file = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
-    return file.length() > 0 ? loadPluginList(file) : null;
+    return file.length() > 0 ? process(loadPluginList(file), null) : null;
   }
 
-  private static List<IdeaPluginDescriptor> loadPluginList(File file) throws IOException {
-    return parsePluginList(new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), CharsetToolkit.UTF8_CHARSET));
+  private static List<PluginNode> loadPluginList(File file) throws IOException {
+    try (Reader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), StandardCharsets.UTF_8)) {
+      return parsePluginList(reader);
+    }
   }
 
-  private static List<IdeaPluginDescriptor> parsePluginList(Reader reader) throws IOException {
+  private static List<PluginNode> parsePluginList(Reader reader) throws IOException {
     try {
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       RepositoryContentHandler handler = new RepositoryContentHandler();
@@ -221,32 +219,37 @@ public class RepositoryHelper {
     catch (ParserConfigurationException | SAXException | RuntimeException e) {
       throw new IOException(e);
     }
-    finally {
-      reader.close();
-    }
   }
 
-  private static List<IdeaPluginDescriptor> process(String repositoryUrl, List<IdeaPluginDescriptor> list) {
-    for (Iterator<IdeaPluginDescriptor> i = list.iterator(); i.hasNext(); ) {
-      PluginNode node = (PluginNode)i.next();
+  private static List<IdeaPluginDescriptor> process(List<PluginNode> list, @Nullable String repositoryUrl) {
+    Map<PluginId, IdeaPluginDescriptor> result = new LinkedHashMap<>(list.size());
 
-      if (node.getPluginId() == null || repositoryUrl != null && node.getDownloadUrl() == null) {
-        LOG.warn("Malformed plugin record (id:" + node.getPluginId() + " repository:" + repositoryUrl + ")");
-        i.remove();
+    for (PluginNode node : list) {
+      PluginId pluginId = node.getPluginId();
+
+      if (pluginId == null || repositoryUrl != null && node.getDownloadUrl() == null) {
+        LOG.debug("Malformed plugin record (id:" + pluginId + " repository:" + repositoryUrl + ")");
+        continue;
+      }
+      if (PluginManagerCore.isBrokenPlugin(node) || PluginManagerCore.isIncompatible(node)) {
+        LOG.debug("Incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
 
       if (repositoryUrl != null) {
         node.setRepositoryName(repositoryUrl);
       }
-
       if (node.getName() == null) {
         String url = node.getDownloadUrl();
-        String name = FileUtil.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1));
-        node.setName(name);
+        node.setName(FileUtil.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1)));
+      }
+
+      IdeaPluginDescriptor previous = result.get(pluginId);
+      if (previous == null || VersionComparatorUtil.compare(node.getVersion(), previous.getVersion()) > 0) {
+        result.put(pluginId, node);
       }
     }
 
-    return list;
+    return new ArrayList<>(result.values());
   }
 }

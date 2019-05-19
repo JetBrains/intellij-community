@@ -20,7 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="library" exported="" name="ASM" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="RUNTIME" />
   </component>

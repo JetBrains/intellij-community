@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -24,21 +10,18 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.*;
 
 class JBZipOutputStream {
   /**
    * Default compression level for deflated entries.
-   *
-   * @since Ant 1.7
    */
   public static final int DEFAULT_COMPRESSION = Deflater.DEFAULT_COMPRESSION;
 
   /**
    * The file comment.
-   *
-   * @since 1.1
    */
   private String comment = "";
 
@@ -55,8 +38,6 @@ class JBZipOutputStream {
    * <p>For a list of possible values see <a
    * href="http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html">http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html</a>.
    * Defaults to the platform's default character encoding.</p>
-   *
-   * @since 1.3
    */
   private String encoding = null;
 
@@ -67,15 +48,11 @@ class JBZipOutputStream {
    * backwards compatibility.  This class used to extend {@link
    * java.util.zip.DeflaterOutputStream DeflaterOutputStream} up to
    * Revision 1.13.</p>
-   *
-   * @since 1.14
    */
   private final Deflater def = new Deflater(level, true);
 
   /**
    * Optional random access output.
-   *
-   * @since 1.14
    */
   private final RandomAccessFile raf;
   private final JBZipFile myFile;
@@ -87,9 +64,8 @@ class JBZipOutputStream {
    * @param file the file to zip to
    * @param currentCDOffset
    * @throws IOException on error
-   * @since 1.14
    */
-  public JBZipOutputStream(JBZipFile file, long currentCDOffset) throws IOException {
+  JBZipOutputStream(JBZipFile file, long currentCDOffset) throws IOException {
     myFile = file;
     raf = myFile.archive;
     writtenOnDisk = currentCDOffset;
@@ -103,7 +79,6 @@ class JBZipOutputStream {
    * Defaults to the platform's default character encoding.</p>
    *
    * @param encoding the encoding value
-   * @since 1.3
    */
   public void setEncoding(String encoding) {
     this.encoding = encoding;
@@ -113,7 +88,6 @@ class JBZipOutputStream {
    * The encoding to use for filenames and the file comment.
    *
    * @return null if using the platform's default character encoding.
-   * @since 1.3
    */
   public String getEncoding() {
     return encoding;
@@ -124,7 +98,6 @@ class JBZipOutputStream {
    * underlying stream.
    *
    * @throws IOException on error
-   * @since 1.1
    */
   public void finish() throws IOException {
     long cdOffset = getWritten();
@@ -142,7 +115,6 @@ class JBZipOutputStream {
    * Set the file comment.
    *
    * @param comment the comment
-   * @since 1.1
    */
   public void setComment(String comment) {
     this.comment = comment;
@@ -155,7 +127,6 @@ class JBZipOutputStream {
    *
    * @param level the compression level.
    * @throws IllegalArgumentException if an invalid compression level is specified.
-   * @since 1.1
    */
   public void setLevel(int level) {
     if (level < Deflater.DEFAULT_COMPRESSION || level > Deflater.BEST_COMPRESSION) {
@@ -170,7 +141,6 @@ class JBZipOutputStream {
    * <p>Default is DEFLATED.</p>
    *
    * @param method an {@code int} from java.util.zip.ZipEntry
-   * @since 1.1
    */
   public void setMethod(int method) {
     this.method = method;
@@ -181,21 +151,15 @@ class JBZipOutputStream {
   */
   /**
    * local file header signature
-   *
-   * @since 1.1
    */
   protected static final byte[] LFH_SIG = ZipLong.getBytes(0X04034B50L);
 
   /**
    * central file header signature
-   *
-   * @since 1.1
    */
   protected static final byte[] CFH_SIG = ZipLong.getBytes(0X02014B50L);
   /**
    * end of central dir signature
-   *
-   * @since 1.1
    */
   protected static final byte[] EOCD_SIG = ZipLong.getBytes(0X06054B50L);
 
@@ -204,7 +168,6 @@ class JBZipOutputStream {
    *
    * @param ze the entry to write
    * @throws IOException on error
-   * @since 1.1
    */
   protected void writeLocalFileHeader(JBZipEntry ze) throws IOException {
     ze.setHeaderOffset(getWritten());
@@ -259,7 +222,6 @@ class JBZipOutputStream {
    *
    * @param ze the entry to write
    * @throws IOException on error
-   * @since 1.1
    */
   protected void writeCentralFileHeader(JBZipEntry ze) throws IOException {
     writeOut(CFH_SIG);
@@ -308,7 +270,6 @@ class JBZipOutputStream {
    * Writes the &quot;End of central dir record&quot;.
    *
    * @throws IOException on error
-   * @since 1.1
    * @param cdLength
    * @param cdOffset
    */
@@ -341,11 +302,10 @@ class JBZipOutputStream {
    * @param name the string to get bytes from
    * @return the bytes as a byte array
    * @throws ZipException on error
-   * @since 1.3
    */
   protected byte[] getBytes(String name) throws ZipException {
     if (encoding == null) {
-      return name.getBytes();
+      return name.getBytes(StandardCharsets.UTF_8);
     }
     else {
       try {
@@ -362,7 +322,6 @@ class JBZipOutputStream {
    *
    * @param data the byte array to write
    * @throws IOException on error
-   * @since 1.14
    */
   private void writeOut(byte[] data) throws IOException {
     writeOut(data, 0, data.length);
@@ -375,7 +334,6 @@ class JBZipOutputStream {
    * @param offset the start position to write from
    * @param length the number of bytes to write
    * @throws IOException on error
-   * @since 1.14
    */
   private final BufferExposingByteArrayOutputStream myBuffer = new BufferExposingByteArrayOutputStream();
 
@@ -409,12 +367,8 @@ class JBZipOutputStream {
     if (entry.getMethod() == ZipEntry.DEFLATED) {
       def.setLevel(level);
       final BufferExposingByteArrayOutputStream compressedBytesStream = new BufferExposingByteArrayOutputStream();
-      final DeflaterOutputStream stream = new DeflaterOutputStream(compressedBytesStream, def);
-      try {
+      try (DeflaterOutputStream stream = new DeflaterOutputStream(compressedBytesStream, def)) {
         stream.write(bytes);
-      }
-      finally {
-        stream.close();
       }
       outputBytesLength = compressedBytesStream.size();
       outputBytes = compressedBytesStream.getInternalBuffer();
@@ -483,7 +437,7 @@ class JBZipOutputStream {
     private final RandomAccessFile myFile;
     private long myWrittenBytes;
 
-    public RandomAccessFileOutputStream(RandomAccessFile file) {
+    RandomAccessFileOutputStream(RandomAccessFile file) {
       myFile = file;
     }
 

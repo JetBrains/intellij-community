@@ -17,7 +17,7 @@ public abstract class AbstractTreeWalker<N> {
   private final AtomicReference<State> state = new AtomicReference<>();
   private final AsyncPromise<TreePath> promise = new AsyncPromise<>();
   private final ArrayDeque<ArrayDeque<N>> stack = new ArrayDeque<>();
-  private final Function<N, Object> converter;
+  private final Function<? super N, Object> converter;
   private final TreeVisitor visitor;
   private volatile TreePath current;
 
@@ -37,7 +37,7 @@ public abstract class AbstractTreeWalker<N> {
    * @param visitor   an object that controls visiting a tree structure
    * @param converter a node converter for the path components
    */
-  public AbstractTreeWalker(@NotNull TreeVisitor visitor, Function<N, Object> converter) {
+  public AbstractTreeWalker(@NotNull TreeVisitor visitor, Function<? super N, Object> converter) {
     this.converter = converter;
     this.visitor = visitor;
   }
@@ -60,7 +60,7 @@ public abstract class AbstractTreeWalker<N> {
    * @param children a list of child nodes for the node specified in the {@link #getChildren} method
    * @throws IllegalStateException if it is called in unexpected state
    */
-  public void setChildren(Collection<N> children) {
+  public void setChildren(Collection<? extends N> children) {
     boolean paused = state.compareAndSet(State.PAUSED, State.STARTED);
     if (!paused && !state.compareAndSet(State.REQUESTED, State.STARTED)) throw new IllegalStateException();
     stack.push(children == null ? new ArrayDeque<>() : new ArrayDeque<>(children));
@@ -183,7 +183,7 @@ public abstract class AbstractTreeWalker<N> {
     }
   }
 
-  private void update(State expected, State replacement) {
+  private void update(State expected, @NotNull State replacement) {
     if (!state.compareAndSet(expected, replacement)) throw new IllegalStateException();
   }
 }

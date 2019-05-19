@@ -32,13 +32,13 @@ public class LineTokenizer extends LineTokenizerBase<String> {
 
   @NotNull
   public String[] execute() {
-    ArrayList<String> lines = new ArrayList<String>();
+    ArrayList<String> lines = new ArrayList<>();
     doExecute(lines);
     return ArrayUtil.toStringArray(lines);
   }
 
   @Override
-  protected void addLine(List<String> lines, int start, int end, boolean appendNewLine) {
+  protected void addLine(List<? super String> lines, int start, int end, boolean appendNewLine) {
     if (appendNewLine) {
       lines.add(myText.substring(start, end) + "\n");
     }

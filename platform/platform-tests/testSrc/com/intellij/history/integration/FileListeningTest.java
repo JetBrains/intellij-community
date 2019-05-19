@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.integration;
-
 
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.changes.DeleteChange;
@@ -34,16 +19,12 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class FileListeningTest extends IntegrationTestCase {
   public void testCreatingFiles() throws Exception {
@@ -71,18 +52,19 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testIgnoringFilesRecursively() throws Exception {
-    addExcludedDir(myRoot.getPath() + "/dir/subdir");
-    addContentRoot(createModule("foo"), myRoot.getPath() + "/dir/subdir/subsubdir1");
+    String excluded = "dir/excluded";
+    addExcludedDir(myRoot.getPath() + "/" + excluded);
+    String contentUnderExcluded = excluded + "/content";
+    addContentRoot(createModule("foo"), myRoot.getPath() + "/" + contentUnderExcluded);
 
     String dir = createDirectoryExternally("dir");
-    String dir1_file = createFileExternally("dir/f.txt");
+    String dir1_fTxt = createFileExternally("dir/f.txt");
     createFileExternally("dir/f.class");
-    createFileExternally("dir/subdir/f.txt");
-    String subsubdir1 = createDirectoryExternally("dir/subdir/subsubdir1");
-    String subsubdir1_file = createFileExternally("dir/subdir/subsubdir1/f.txt");
-    createDirectoryExternally("dir/subdir/subsubdir2");
-    createFileExternally("dir/subdir/subsubdir2/f.txt");
- 
+    String contentUnderExcludedPath = createDirectoryExternally(contentUnderExcluded);
+    String contentUnderExcluded_fTxt = createFileExternally(contentUnderExcluded + "/f.txt");
+    createDirectoryExternally(excluded + "/subsubdir2");
+    createFileExternally(excluded + "/subsubdir2/f.txt");
+
     myRoot.refresh(false, true);
 
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
@@ -91,7 +73,7 @@ public class FileListeningTest extends IntegrationTestCase {
       actual.add(((StructuralChange)each).getPath());
     }
 
-    List<String> expected = new ArrayList<>(Arrays.asList(dir, subsubdir1, dir1_file, subsubdir1_file));
+    List<String> expected = new ArrayList<>(Arrays.asList(dir, contentUnderExcludedPath, dir1_fTxt, contentUnderExcluded_fTxt));
 
     Collections.sort(actual);
     Collections.sort(expected);
@@ -99,18 +81,18 @@ public class FileListeningTest extends IntegrationTestCase {
 
     // ignored folders should not be loaded in VFS
     assertEquals("dir\n" +
+                 " excluded\n" +
+                 "  content\n" +
+                 "   f.txt\n" +
                  " f.class\n" +
-                 " f.txt\n" +
-                 " subdir\n" +
-                 "  subsubdir1\n" +
-                 "   f.txt\n",
-                 buildDBFileStructure(myRoot, 0, new StringBuilder()).toString()
+                 " f.txt\n"
+                 , buildDBFileStructure(myRoot, 0, new StringBuilder()).toString()
     );
   }
 
   private static StringBuilder buildDBFileStructure(@NotNull VirtualFile from, int level, @NotNull StringBuilder builder) {
-    List<VirtualFile> children = ContainerUtil.newArrayList(((NewVirtualFile)from).getCachedChildren());
-    Collections.sort(children, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+    List<VirtualFile> children = new ArrayList<>(((NewVirtualFile)from).getCachedChildren());
+    Collections.sort(children, Comparator.comparing(VirtualFile::getName));
     for (VirtualFile eachChild : children) {
       builder.append(StringUtil.repeat(" ", level)).append(eachChild.getName()).append("\n");
       buildDBFileStructure(eachChild, level + 1, builder);
@@ -122,10 +104,10 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile("file.txt");
     assertEquals(2, getRevisionsFor(f).size());
 
-    setBinaryContent(f,new byte[]{1});
+    setBinaryContent(f, new byte[]{1});
     assertEquals(3, getRevisionsFor(f).size());
 
-    setBinaryContent(f,new byte[]{2});
+    setBinaryContent(f, new byte[]{2});
     assertEquals(4, getRevisionsFor(f).size());
   }
 
@@ -225,7 +207,7 @@ public class FileListeningTest extends IntegrationTestCase {
     assertEquals(before, getRevisionsFor(myRoot).size());
   }
 
-  private void setReadOnlyAttribute(VirtualFile f, boolean status) throws IOException {
+  private static void setReadOnlyAttribute(VirtualFile f, boolean status) throws IOException {
     ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
       @Override
       public Object compute() throws IOException {
@@ -328,6 +310,6 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   private static void sortEntries(final List<Entry> entries) {
-    Collections.sort(entries, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+    Collections.sort(entries, Comparator.comparing(Entry::getName));
   }
 }

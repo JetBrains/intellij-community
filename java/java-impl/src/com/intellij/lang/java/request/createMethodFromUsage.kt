@@ -61,17 +61,17 @@ private class CreateMethodRequests(val myCall: PsiMethodCallExpression) {
       }
     }
     else {
-      val inStaticContext = myCall.isInStaticContext()
       for (outerClass in collectOuterClasses(myCall)) {
-        processClass(outerClass, inStaticContext)
+        processClass(outerClass, null)
       }
     }
   }
 
-  private fun processClass(clazz: PsiClass, staticContext: Boolean) {
+  private fun processClass(clazz: PsiClass, inStaticContext: Boolean?) {
     if (isMethodSignatureExists(myCall, clazz)) return // TODO generic check
     val visibility = computeVisibility(myCall.project, myCall.parentOfType(), clazz)
     val modifiers = mutableSetOf<JvmModifier>()
+    val staticContext = inStaticContext ?: (myCall.isWithinConstructorCall() || myCall.isWithinStaticMemberOf(clazz))
     if (staticContext) modifiers += JvmModifier.STATIC
     if (visibility != null) modifiers += visibility
     myRequests[clazz] = CreateMethodFromJavaUsageRequest(myCall, modifiers)

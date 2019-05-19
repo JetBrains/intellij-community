@@ -127,7 +127,7 @@ public class BreakpointChooser {
   }
 
   @Nullable
-  private static BreakpointItem findItem(Object baseBreakpoint, List<BreakpointItem> breakpointItems) {
+  private static BreakpointItem findItem(Object baseBreakpoint, List<? extends BreakpointItem> breakpointItems) {
     BreakpointItem breakpointItem = null;
     for (BreakpointItem item : breakpointItems) {
       if (item.getBreakpoint() == baseBreakpoint) {
@@ -147,7 +147,7 @@ public class BreakpointChooser {
     private final PreviewEditorState myPushed;
     private ItemWrapper myCurrentItem;
 
-    public MyDetailView(PreviewEditorState pushed) {
+    MyDetailView(PreviewEditorState pushed) {
       myPushed = pushed;
       putUserData(BreakpointItem.EDITOR_ONLY, Boolean.TRUE);
     }
@@ -184,6 +184,7 @@ public class BreakpointChooser {
       return myDetailViewDelegate.getEditorState();
     }
 
+    @Override
     public void setCurrentItem(ItemWrapper currentItem) {
       myCurrentItem = currentItem;
     }

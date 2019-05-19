@@ -1,25 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -31,7 +14,6 @@ import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.NotNullFunction;
@@ -40,17 +22,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-/**
- * @author yole
- */
-public class ChangesViewContentManager extends AbstractProjectComponent implements ChangesViewContentI {
+public class ChangesViewContentManager implements ChangesViewContentI, Disposable {
   public static final String TOOLWINDOW_ID = ToolWindowId.VCS;
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
 
   private MyContentManagerListener myContentManagerListener;
+  @NotNull private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
 
   public static ChangesViewContentI getInstance(Project project) {
@@ -58,27 +40,25 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   private ContentManager myContentManager;
-  private final VcsListener myVcsListener = new MyVcsListener();
   private final Alarm myVcsChangeAlarm;
   private final List<Content> myAddedContents = new ArrayList<>();
   @NotNull private final CountDownLatch myInitializationWaiter = new CountDownLatch(1);
 
-  private final List<AnAction> myToolWindowTitleActions = new ArrayList<>();
-
   public ChangesViewContentManager(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
-    super(project);
+    myProject = project;
     myVcsManager = vcsManager;
-    myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
-    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
+    myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
+    myProject.getMessageBus().connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new MyVcsListener());
   }
 
+  @Override
   public void setUp(ToolWindow toolWindow) {
-
     final ContentManager contentManager = toolWindow.getContentManager();
     myContentManagerListener = new MyContentManagerListener();
     contentManager.addContentManagerListener(myContentManagerListener);
 
-    Disposer.register(myProject, new Disposable(){
+    Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         contentManager.removeContentManagerListener(myContentManagerListener);
       }
@@ -86,23 +66,19 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
 
     loadExtensionTabs();
     myContentManager = contentManager;
-    final List<Content> ordered = doPresetOrdering(myAddedContents);
-    for(Content content: ordered) {
-      myContentManager.addContent(content);
+    for (Content content : myAddedContents) {
+      addIntoCorrectPlace(content);
     }
     myAddedContents.clear();
     if (contentManager.getContentCount() > 0) {
       contentManager.setSelectedContent(contentManager.getContent(0));
     }
     myInitializationWaiter.countDown();
-
-    ((ToolWindowEx)toolWindow).setTitleActions(myToolWindowTitleActions.toArray(AnAction.EMPTY_ARRAY));
   }
 
   private void loadExtensionTabs() {
     final List<Content> contentList = new LinkedList<>();
-    final ChangesViewContentEP[] contentEPs = myProject.getExtensions(ChangesViewContentEP.EP_NAME);
-    for(ChangesViewContentEP ep: contentEPs) {
+    for(ChangesViewContentEP ep: ChangesViewContentEP.EP_NAME.getExtensionList(myProject)) {
       final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null || predicate.fun(myProject).equals(Boolean.TRUE)) {
         final Content content = ContentFactory.SERVICE.getInstance().createContent(new ContentStub(ep), ep.getTabName(), false);
@@ -122,7 +98,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   private void updateExtensionTabs() {
-    final ChangesViewContentEP[] contentEPs = myProject.getExtensions(ChangesViewContentEP.EP_NAME);
+    final ChangesViewContentEP[] contentEPs = ChangesViewContentEP.EP_NAME.getExtensions(myProject);
     for(ChangesViewContentEP ep: contentEPs) {
       final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null) continue;
@@ -152,17 +128,21 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
     if (toolWindow != null) {
       boolean available = isAvailable();
-      toolWindow.setShowStripeButton(available);
+      if (available && !toolWindow.isAvailable()) {
+        toolWindow.setShowStripeButton(true);
+      }
       toolWindow.setAvailable(available, null);
     }
   }
 
+  @Override
   public boolean isAvailable() {
     final List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     return mappings.stream().anyMatch(mapping -> !StringUtil.isEmpty(mapping.getVcs()));
   }
 
-  public void projectClosed() {
+  @Override
+  public void dispose() {
     for (Content content : myAddedContents) {
       Disposer.dispose(content);
     }
@@ -176,13 +156,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     return "ChangesViewContentManager";
   }
 
-  public void addToolWindowTitleAction(@NotNull AnAction action) {
-    myToolWindowTitleActions.add(action);
-
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
-    if (toolWindow != null) ((ToolWindowEx)toolWindow).setTitleActions(myToolWindowTitleActions.toArray(AnAction.EMPTY_ARRAY));
-  }
-
+  @Override
   public void addContent(Content content) {
     if (myContentManager == null) {
       myAddedContents.add(content);
@@ -192,17 +166,20 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     }
   }
 
+  @Override
   public void removeContent(final Content content) {
     if (myContentManager != null && (! myContentManager.isDisposed())) { // for unit tests
       myContentManager.removeContent(content, true);
     }
   }
 
+  @Override
   public void setSelectedContent(final Content content) {
     if (myContentManager == null) return;
     myContentManager.setSelectedContent(content);
   }
 
+  @Override
   @Nullable
   public <T> T getActiveComponent(final Class<T> aClass) {
     if (myContentManager == null) return null;
@@ -213,7 +190,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     }
     return null;
   }
-  
+
   public boolean isContentSelected(@NotNull String contentName) {
     if (myContentManager == null) return false;
     Content selectedContent = myContentManager.getSelectedContent();
@@ -221,6 +198,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     return Comparing.equal(contentName, selectedContent.getTabName());
   }
 
+  @Override
   public void selectContent(@NotNull String tabName) {
     selectContent(tabName, false);
   }
@@ -236,6 +214,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   private class MyVcsListener implements VcsListener {
+    @Override
     public void directoryMappingChanged() {
       myVcsChangeAlarm.cancelAllRequests();
       myVcsChangeAlarm.addRequest(() -> {
@@ -261,7 +240,8 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   private class MyContentManagerListener extends ContentManagerAdapter {
-    public void selectionChanged(final ContentManagerEvent event) {
+    @Override
+    public void selectionChanged(@NotNull final ContentManagerEvent event) {
       Content content = event.getContent();
       if (content.getComponent() instanceof ContentStub) {
         ChangesViewContentEP ep = ((ContentStub) content.getComponent()).getEP();
@@ -278,54 +258,66 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     }
   }
 
+  public static final Key<Integer> ORDER_WEIGHT_KEY = Key.create("ChangesView.ContentOrderWeight");
   public static final String LOCAL_CHANGES = "Local Changes";
   public static final String REPOSITORY = "Repository";
   public static final String INCOMING = "Incoming";
   public static final String SHELF = "Shelf";
-  private static final String[] ourPresetOrder = {LOCAL_CHANGES, REPOSITORY, INCOMING, SHELF};
-  private static List<Content> doPresetOrdering(final List<Content> contents) {
-    final List<Content> result = new ArrayList<>(contents.size());
-    for (final String preset : ourPresetOrder) {
-      for (Iterator<Content> iterator = contents.iterator(); iterator.hasNext();) {
-        final Content current = iterator.next();
-        if (preset.equals(current.getTabName())) {
-          iterator.remove();
-          result.add(current);
-        }
-      }
+
+  public enum TabOrderWeight {
+    LOCAL_CHANGES(ChangesViewContentManager.LOCAL_CHANGES, 10),
+    REPOSITORY(ChangesViewContentManager.REPOSITORY, 20),
+    INCOMING(ChangesViewContentManager.INCOMING, 30),
+    SHELF(ChangesViewContentManager.SHELF, 40),
+    OTHER(null, 100);
+
+    @Nullable private final String myName;
+    private final int myWeight;
+
+    TabOrderWeight(@Nullable String name, int weight) {
+      myName = name;
+      myWeight = weight;
     }
-    result.addAll(contents);
-    return result;
+
+    @Nullable
+    private String getName() {
+      return myName;
+    }
+
+    public int getWeight() {
+      return myWeight;
+    }
   }
 
   private void addIntoCorrectPlace(final Content content) {
-    final String name = content.getTabName();
+    int weight = getContentWeight(content);
+
     final Content[] contents = myContentManager.getContents();
 
-    int idxOfBeingInserted = -1;
-    for (int i = 0; i < ourPresetOrder.length; i++) {
-      final String s = ourPresetOrder[i];
-      if (s.equals(name)) {
-        idxOfBeingInserted = i;
+    int index = -1;
+    for (int i = 0; i < contents.length; i++) {
+      int oldWeight = getContentWeight(contents[i]);
+      if (oldWeight > weight) {
+        index = i;
+        break;
       }
     }
-    if (idxOfBeingInserted == -1) {
-      myContentManager.addContent(content);
-      return;
-    }
 
-    final Set<String> existingNames = new HashSet<>();
-    for (Content existingContent : contents) {
-      existingNames.add(existingContent.getTabName());
-    }
+    if (index == -1) index = contents.length;
+    myContentManager.addContent(content, index);
+  }
 
-    int place = idxOfBeingInserted;
-    for (int i = 0; i < idxOfBeingInserted; i++) {
-      if (! existingNames.contains(ourPresetOrder[i])) {
-        -- place;
+  private static int getContentWeight(Content content) {
+    Integer userData = content.getUserData(ORDER_WEIGHT_KEY);
+    if (userData != null) return userData;
+
+    String tabName = content.getTabName();
+    for (TabOrderWeight value : TabOrderWeight.values()) {
+      if (value.getName() != null && value.getName().equals(tabName)) {
+        return value.getWeight();
       }
-
     }
-    myContentManager.addContent(content, place);
+
+    return TabOrderWeight.OTHER.getWeight();
   }
 }

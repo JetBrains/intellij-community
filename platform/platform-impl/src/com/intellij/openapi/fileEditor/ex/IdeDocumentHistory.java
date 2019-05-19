@@ -16,8 +16,12 @@
  */
 package com.intellij.openapi.fileEditor.ex;
 
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public abstract class IdeDocumentHistory {
   public static IdeDocumentHistory getInstance(Project project) {
@@ -40,4 +44,12 @@ public abstract class IdeDocumentHistory {
   public abstract boolean isNavigateNextChangeAvailable();
 
   public abstract VirtualFile[] getChangedFiles();
+
+  public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getChangePlaces();
+  public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getBackPlaces();
+
+  public abstract void removeChangePlace(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
+  public abstract void removeBackPlace(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
+
+  public abstract void gotoPlaceInfo(@NotNull IdeDocumentHistoryImpl.PlaceInfo info);
 }

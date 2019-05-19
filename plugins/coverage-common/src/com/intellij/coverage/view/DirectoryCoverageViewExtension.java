@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,6 +68,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
     return null;
   }
 
+  @NotNull
   @Override
   public AbstractTreeNode createRootNode() {
     final VirtualFile baseDir = myProject.getBaseDir();

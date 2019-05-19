@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -11,7 +11,6 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
-import java.util.HashSet;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.sun.jdi.ObjectReference;
@@ -233,11 +232,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        // add the current thread
-        if (!addThreads(Collections.singletonList(myThread), null, false)) {
-          return;
-        }
-
         // add paused threads
         List<ThreadReferenceProxyImpl> pausedThreads =
           StreamEx.of(((SuspendManagerImpl)myDebugProcess.getSuspendManager()).getPausedContexts())
@@ -251,7 +245,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
         addThreads(getDebugProcess().getVirtualMachineProxy().allThreads(), THREADS_SUSPEND_AND_NAME_COMPARATOR, true);
       }
 
-      boolean addThreads(Collection<ThreadReferenceProxyImpl> threads, @Nullable Comparator<JavaExecutionStack> comparator, boolean last) {
+      boolean addThreads(Collection<ThreadReferenceProxyImpl> threads, @Nullable Comparator<? super JavaExecutionStack> comparator, boolean last) {
         List<JavaExecutionStack> res = new ArrayList<>();
         for (ThreadReferenceProxyImpl thread : threads) {
           if (container.isObsolete()) {

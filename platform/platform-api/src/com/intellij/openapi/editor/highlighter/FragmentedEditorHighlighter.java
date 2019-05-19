@@ -33,18 +33,18 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
   private final int myAdditionalOffset;
   private final boolean myMergeByTextAttributes;
 
-  public FragmentedEditorHighlighter(EditorHighlighter highlighter, TextRange range) {
+  public FragmentedEditorHighlighter(@NotNull EditorHighlighter highlighter, TextRange range) {
     this(highlighter.createIterator(range.getStartOffset()), Collections.singletonList(range));
   }
 
-  public FragmentedEditorHighlighter(HighlighterIterator sourceIterator, List<TextRange> ranges) {
+  private FragmentedEditorHighlighter(@NotNull HighlighterIterator sourceIterator, List<? extends TextRange> ranges) {
     this(sourceIterator, ranges, 0, false);
   }
 
-  public FragmentedEditorHighlighter(HighlighterIterator sourceIterator,
-                                     List<TextRange> ranges,
-                                     final int additionalOffset,
-                                     boolean mergeByTextAttributes) {
+  private FragmentedEditorHighlighter(@NotNull HighlighterIterator sourceIterator,
+                                      List<? extends TextRange> ranges,
+                                      final int additionalOffset,
+                                      boolean mergeByTextAttributes) {
     myMergeByTextAttributes = mergeByTextAttributes;
     myDocument = sourceIterator.getDocument();
     myPieces = new ArrayList<>();
@@ -52,7 +52,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
     translate(sourceIterator, ranges);
   }
 
-  private void translate(HighlighterIterator iterator, List<TextRange> ranges) {
+  private void translate(HighlighterIterator iterator, List<? extends TextRange> ranges) {
     int offset = 0;
     int index = 0;
 
@@ -75,7 +75,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
       }
 
       if (range.getEndOffset() < iterator.getEnd()) {
-        offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shoene separators
+        offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shown separators
         int lastEnd = myPieces.isEmpty() ? -1 : myPieces.get(myPieces.size() - 1).getEnd();
         addElement(new Element(Math.max(offset - 1 - myAdditionalOffset, lastEnd), offset, null, TextAttributes.ERASE_MARKER));
         index++;

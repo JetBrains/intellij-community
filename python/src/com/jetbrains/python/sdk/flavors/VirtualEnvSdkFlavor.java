@@ -15,15 +15,15 @@
  */
 package com.jetbrains.python.sdk.flavors;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -46,24 +46,28 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   public static VirtualEnvSdkFlavor INSTANCE = new VirtualEnvSdkFlavor();
 
   @Override
-  public Collection<String> suggestHomePaths() {
-    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    List<String> candidates = new ArrayList<>();
-    if (project != null) {
-      VirtualFile rootDir = project.getBaseDir();
-      if (rootDir != null)
-        candidates.addAll(findInDirectory(rootDir));
-    }
-    
-    final VirtualFile path = getDefaultLocation();
-    if (path != null)
-      candidates.addAll(findInDirectory(path));
+  public Collection<String> suggestHomePaths(@Nullable Module module) {
+    return ReadAction.compute(() -> {
+      final List<String> candidates = new ArrayList<>();
+      if (module != null) {
+        final VirtualFile baseDir = PySdkExtKt.getBaseDir(module);
+        if (baseDir != null) {
+          candidates.addAll(findInBaseDirectory(baseDir));
+        }
+      }
 
-    final VirtualFile pyEnvLocation = getPyEnvDefaultLocations();
-    if (pyEnvLocation != null) {
-      candidates.addAll(findInDirectory(pyEnvLocation));
-    }
-    return candidates;
+      final VirtualFile path = getDefaultLocation();
+      if (path != null) {
+        candidates.addAll(findInBaseDirectory(path));
+      }
+
+      final VirtualFile pyEnvLocation = getPyEnvDefaultLocations();
+      if (pyEnvLocation != null) {
+        candidates.addAll(findInBaseDirectory(pyEnvLocation));
+      }
+
+      return candidates;
+    });
   }
 
   @Nullable
@@ -98,24 +102,35 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     return null;
   }
 
-  public static Collection<String> findInDirectory(VirtualFile rootDir) {
+  public static Collection<String> findInBaseDirectory(@Nullable VirtualFile baseDir) {
     List<String> candidates = new ArrayList<>();
-    if (rootDir != null) {
-      rootDir.refresh(true, false);
-      VirtualFile[] suspects = rootDir.getChildren();
+    if (baseDir != null) {
+      baseDir.refresh(true, false);
+      VirtualFile[] suspects = baseDir.getChildren();
       for (VirtualFile child : suspects) {
-        if (child.isDirectory()) {
-          final VirtualFile bin = child.findChild("bin");
-          final VirtualFile scripts = child.findChild("Scripts");
-          if (bin != null) {
-            final String interpreter = findInterpreter(bin);
-            if (interpreter != null) candidates.add(interpreter);
-          }
-          if (scripts != null) {
-            final String interpreter = findInterpreter(scripts);
-            if (interpreter != null) candidates.add(interpreter);
-          }
-        }
+        candidates.addAll(findInRootDirectory(child));
+      }
+    }
+    return candidates;
+  }
+
+  @NotNull
+  public static Collection<String> findInRootDirectory(@Nullable VirtualFile rootDir) {
+    final List<String> candidates = new ArrayList<>();
+    if (rootDir != null && rootDir.isDirectory()) {
+      final VirtualFile bin = rootDir.findChild("bin");
+      final VirtualFile scripts = rootDir.findChild("Scripts");
+      if (bin != null) {
+        final String interpreter = findInterpreter(bin);
+        if (interpreter != null) candidates.add(interpreter);
+      }
+      if (scripts != null) {
+        final String interpreter = findInterpreter(scripts);
+        if (interpreter != null) candidates.add(interpreter);
+      }
+      if (candidates.isEmpty()) {
+        final String interpreter = findInterpreter(rootDir);
+        if (interpreter != null) candidates.add(interpreter);
       }
     }
     return candidates;
@@ -125,7 +140,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   private static String findInterpreter(VirtualFile dir) {
     for (VirtualFile child : dir.getChildren()) {
       if (!child.isDirectory()) {
-        final String childName = child.getName().toLowerCase();
+        final String childName = StringUtil.toLowerCase(child.getName());
         for (String name : NAMES) {
           if (SystemInfo.isWindows) {
             if (childName.equals(name)) {

@@ -36,6 +36,8 @@ public class ProjectKeys {
 
   @NotNull public static final Key<ConfigurationData>     CONFIGURATION = Key.create(ConfigurationData.class, 350);
 
+  @NotNull public static final Key<TestData>              TEST = Key.create(TestData.class, 450);
+
   private ProjectKeys() {
   }
 }

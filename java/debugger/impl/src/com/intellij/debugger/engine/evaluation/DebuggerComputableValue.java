@@ -28,9 +28,9 @@ public class DebuggerComputableValue {
   @Nullable private Value myValue;
   @Nullable private EvaluateException myException;
 
-  @NotNull private final EvaluatingComputable<Value> myComputable;
+  @NotNull private final EvaluatingComputable<? extends Value> myComputable;
 
-  public DebuggerComputableValue(@NotNull EvaluatingComputable<Value> computable) {
+  public DebuggerComputableValue(@NotNull EvaluatingComputable<? extends Value> computable) {
     myComputable = computable;
   }
 

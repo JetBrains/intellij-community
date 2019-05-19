@@ -1,29 +1,32 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.style.ConditionalModel;
+import com.siyeh.ig.style.IfConditionalModel;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.function.BiConsumer;
 
 import static com.intellij.codeInsight.PsiEquivalenceUtil.areElementsEquivalent;
 
@@ -64,17 +67,8 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         super.visitConditionalExpression(expression);
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(expression.getCondition());
         if (condition == null) return;
-        boolean invert = false;
-        PsiExpression strippedCondition = condition;
-        if (BoolUtils.isNegation(condition)) {
-          strippedCondition = BoolUtils.getNegated(condition);
-          invert = true;
-        }
-        PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(strippedCondition);
-        if (optionalRef == null) return;
-        PsiExpression thenExpression = invert ? expression.getElseExpression() : expression.getThenExpression();
-        PsiExpression elseExpression = invert ? expression.getThenExpression() : expression.getElseExpression();
-        check(condition, optionalRef, thenExpression, elseExpression);
+        processConditional(expression, condition,
+                           optionalRef -> (trueVal, falseVal) -> check(condition, optionalRef, trueVal, falseVal));
       }
 
       @Override
@@ -82,17 +76,8 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         super.visitIfStatement(statement);
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (condition == null) return;
-        boolean invert = false;
-        PsiExpression strippedCondition = condition;
-        if (BoolUtils.isNegation(condition)) {
-          strippedCondition = BoolUtils.getNegated(condition);
-          invert = true;
-        }
-        PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(strippedCondition);
-        if (optionalRef == null) return;
-        PsiStatement thenStatement = extractThenStatement(statement, invert);
-        PsiStatement elseStatement = extractElseStatement(statement, invert);
-        check(condition, optionalRef, thenStatement, elseStatement);
+        processConditional(statement, condition,
+                           optionalRef -> (trueVal, falseVal) -> check(condition, optionalRef, trueVal, falseVal));
       }
 
       void check(@NotNull PsiExpression condition, PsiReferenceExpression optionalRef, PsiElement thenElement, PsiElement elseElement) {
@@ -101,6 +86,54 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         }
       }
     };
+  }
+
+  private static void processConditional(@NotNull PsiElement conditional,
+                                         @NotNull PsiExpression condition,
+                                         @NotNull Function<PsiReferenceExpression, BiConsumer<PsiElement, PsiElement>> continuation) {
+    boolean invert = false;
+    if (BoolUtils.isNegation(condition)) {
+      condition = BoolUtils.getNegated(condition);
+      invert = true;
+    }
+    PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(condition);
+    if (optionalRef == null) return;
+    extractThenElse(conditional, invert, continuation.fun(optionalRef));
+  }
+
+  private static void extractThenElse(@NotNull PsiElement conditional, boolean invert,
+                                      @NotNull BiConsumer<? super PsiElement, ? super PsiElement> continuation) {
+    PsiElement thenElement;
+    PsiElement elseElement;
+    if (conditional instanceof PsiConditionalExpression) {
+      ConditionalModel model = ConditionalModel.from((PsiConditionalExpression)conditional);
+      if (model == null) return;
+      thenElement = model.myThenExpression;
+      elseElement = model.myElseExpression;
+    }
+    else if (conditional instanceof PsiIfStatement) {
+      PsiIfStatement ifStatement = (PsiIfStatement)conditional;
+      IfConditionalModel model = IfConditionalModel.from(ifStatement);
+      if (model == null) {
+        thenElement = extractThenStatement(ifStatement, invert);
+        if (thenElement == null) return;
+        elseElement = extractElseStatement(ifStatement, invert);
+        continuation.accept(thenElement, elseElement);
+        return;
+      }
+      thenElement = model.myThenBranch;
+      elseElement = model.myElseBranch;
+    }
+    else {
+      return;
+    }
+
+    if (invert) {
+      continuation.accept(elseElement, thenElement);
+    }
+    else {
+      continuation.accept(thenElement, elseElement);
+    }
   }
 
   private static boolean isRaw(@NotNull PsiVariable variable) {
@@ -155,8 +188,11 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     if (!call.getArgumentList().isEmpty()) return false;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
-    return "get".equals(methodExpression.getReferenceName()) &&
-           areElementsEquivalent(ExpressionUtils.getQualifierOrThis(methodExpression), optionalRef);
+    if ("get".equals(methodExpression.getReferenceName())) {
+      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
+      return qualifier != null && areElementsEquivalent(qualifier, optionalRef);
+    }
+    return false;
   }
 
   @NotNull
@@ -182,16 +218,23 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     PsiExpression expression = (PsiExpression)lambdaCandidate;
     if (falseExpression != null) {
       // falseExpression == null is "consumer" case (to be replaced with ifPresent())
-      if (!ExpressionUtils.isNullLiteral(falseExpression) && NullnessUtil.getExpressionNullness(expression, true) != Nullness.NOT_NULL) {
+      if (!ExpressionUtils.isNullLiteral(falseExpression) &&
+          NullabilityUtil.getExpressionNullability(expression, true) != Nullability.NOT_NULL) {
         // if falseExpression is null literal, then semantics is preserved
         return ProblemType.INFO;
       }
       PsiType falseType = falseExpression.getType();
       PsiType trueType = expression.getType();
-      // like x ? double_expression : integer_expression; support only if integer_expression is simple literal,
-      // so could be converted explicitly to double
-      if (falseType instanceof PsiPrimitiveType && trueType instanceof PsiPrimitiveType &&
-          !falseType.equals(trueType) && JavaPsiMathUtil.getNumberFromLiteral(falseExpression) == null) {
+      if (falseType == null || trueType == null) return ProblemType.NONE;
+      if (falseType instanceof PsiPrimitiveType && trueType instanceof PsiPrimitiveType) {
+        if (falseType.equals(trueType) || JavaPsiMathUtil.getNumberFromLiteral(falseExpression) != null) {
+          // like x ? double_expression : integer_expression; support only if integer_expression is simple literal,
+          // so could be converted explicitly to double
+          return ProblemType.WARNING;
+        }
+        return ProblemType.NONE;
+      }
+      if (!trueType.isAssignableFrom(falseType)) {
         return ProblemType.NONE;
       }
     }
@@ -204,10 +247,8 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
                                        PsiReferenceExpression optionalRef,
                                        PsiElement trueValue) {
     PsiType type = optionalRef.getType();
-    JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(trueValue.getProject());
-    SuggestedNameInfo info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type);
-    String baseName = ObjectUtils.coalesce(ArrayUtil.getFirstElement(info.names), "value");
-    String paramName = javaCodeStyleManager.suggestUniqueVariableName(baseName, trueValue, true);
+    String paramName = new VariableNameGenerator(trueValue, VariableKind.PARAMETER)
+      .byType(OptionalUtil.getOptionalElementType(type)).byName("value").generate(true);
     if(trueValue instanceof PsiExpressionStatement) {
       trueValue = ((PsiExpressionStatement)trueValue).getExpression();
     }
@@ -238,8 +279,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     }
     String lambdaText = generateOptionalLambda(factory, ct, optionalRef, trueValue);
     PsiLambdaExpression lambda = (PsiLambdaExpression)factory.createExpressionFromText(lambdaText, trueValue);
-    return OptionalUtil.generateOptionalUnwrap(optionalRef.getText(), lambda.getParameterList().getParameters()[0],
-                                               (PsiExpression)lambda.getBody(), ct.markUnchanged(falseValue), targetType, true);
+    PsiExpression body = Objects.requireNonNull((PsiExpression)lambda.getBody());
+    return OptionalRefactoringUtil.generateOptionalUnwrap(optionalRef.getText(), lambda.getParameterList().getParameters()[0],
+                                                          body, ct.markUnchanged(falseValue), targetType, true);
   }
 
   static boolean isSimpleOrUnchecked(PsiExpression expression) {
@@ -249,7 +291,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   static class OptionalIsPresentFix implements LocalQuickFix {
     private final OptionalIsPresentCase myScenario;
 
-    public OptionalIsPresentFix(OptionalIsPresentCase scenario) {
+    OptionalIsPresentFix(OptionalIsPresentCase scenario) {
       myScenario = scenario;
     }
 
@@ -265,23 +307,16 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       PsiElement element = descriptor.getStartElement();
       if (!(element instanceof PsiExpression)) return;
       PsiExpression condition = (PsiExpression)element;
-      boolean invert = false;
-      if (BoolUtils.isNegation(condition)) {
-        condition = BoolUtils.getNegated(condition);
-        invert = true;
-      }
-      PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(condition);
-      if (optionalRef == null) return;
       PsiElement cond = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, PsiConditionalExpression.class);
-      PsiElement thenElement;
-      PsiElement elseElement;
-      if(cond instanceof PsiIfStatement) {
-        thenElement = extractThenStatement((PsiIfStatement)cond, invert);
-        elseElement = extractElseStatement((PsiIfStatement)cond, invert);
-      } else if(cond instanceof PsiConditionalExpression) {
-        thenElement = invert ? ((PsiConditionalExpression)cond).getElseExpression() : ((PsiConditionalExpression)cond).getThenExpression();
-        elseElement = invert ? ((PsiConditionalExpression)cond).getThenExpression() : ((PsiConditionalExpression)cond).getElseExpression();
-      } else return;
+      if (cond == null) return;
+      processConditional(cond, condition,
+                         optionalRef -> (trueVal, falseVal) -> replaceConditional(project, optionalRef, cond, trueVal, falseVal));
+    }
+
+    private void replaceConditional(@NotNull Project project,
+                                    PsiReferenceExpression optionalRef,
+                                    PsiElement cond,
+                                    PsiElement thenElement, PsiElement elseElement) {
       if (myScenario.getProblemType(optionalRef, thenElement, elseElement) == ProblemType.NONE) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       CommentTracker ct = new CommentTracker();
@@ -290,7 +325,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       if (elseElement != null && !PsiTreeUtil.isAncestor(cond, elseElement, true)) ct.delete(elseElement);
       PsiElement result = ct.replaceAndRestoreComments(cond, replacementText);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
-      PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
       CodeStyleManager.getInstance(project).reformat(result);
     }
   }
@@ -347,13 +382,10 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       PsiAssignmentExpression trueAssignment = ExpressionUtils.getAssignment(trueElement);
       PsiAssignmentExpression falseAssignment = ExpressionUtils.getAssignment(falseElement);
       if (trueAssignment == null || falseAssignment == null) return ProblemType.NONE;
-      PsiExpression falseVal = falseAssignment.getRExpression();
       PsiExpression trueVal = trueAssignment.getRExpression();
-      if (areElementsEquivalent(trueAssignment.getLExpression(), falseAssignment.getLExpression()) &&
-          isSimpleOrUnchecked(falseVal)) {
-        return getTypeByLambdaCandidate(optionalVariable, trueVal, falseVal);
-      }
-      return ProblemType.NONE;
+      PsiExpression falseVal = falseAssignment.getRExpression();
+      if (!isSimpleOrUnchecked(falseVal)) return ProblemType.NONE;
+      return getTypeByLambdaCandidate(optionalVariable, trueVal, falseVal);
     }
 
     @NotNull
@@ -385,11 +417,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       if(!(trueElement instanceof PsiExpression) || !(falseElement instanceof PsiExpression)) return ProblemType.NONE;
       PsiExpression trueExpression = (PsiExpression)trueElement;
       PsiExpression falseExpression = (PsiExpression)falseElement;
-      PsiType trueType = trueExpression.getType();
-      PsiType falseType = falseExpression.getType();
-      if (trueType == null || falseType == null || !trueType.isAssignableFrom(falseType) || !isSimpleOrUnchecked(falseExpression)) {
-        return ProblemType.NONE;
-      }
+      if (!isSimpleOrUnchecked(falseExpression)) return ProblemType.NONE;
       return getTypeByLambdaCandidate(optionalVariable, trueExpression, falseExpression);
     }
 

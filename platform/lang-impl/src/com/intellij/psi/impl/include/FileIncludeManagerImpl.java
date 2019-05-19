@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.include;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -38,7 +23,6 @@ import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -74,9 +58,8 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   };
   private final Map<String, FileIncludeProvider> myProviderMap;
 
-  public void processIncludes(PsiFile file, Processor<FileIncludeInfo> processor) {
-    GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-    List<FileIncludeInfo> infoList = FileIncludeIndex.getIncludes(file.getVirtualFile(), scope);
+  public void processIncludes(PsiFile file, Processor<? super FileIncludeInfo> processor) {
+    List<FileIncludeInfo> infoList = FileIncludeIndex.getIncludes(file.getVirtualFile(), myProject);
     for (FileIncludeInfo info : infoList) {
       if (!processor.process(info)) {
         return;
@@ -97,11 +80,11 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   };
 
   @Override
-  public void processIncludingFiles(PsiFile context, Processor<Pair<VirtualFile, FileIncludeInfo>> processor) {
+  public void processIncludingFiles(PsiFile context, Processor<? super Pair<VirtualFile, FileIncludeInfo>> processor) {
     context = context.getOriginalFile();
     VirtualFile contextFile = context.getVirtualFile();
     if (contextFile == null) return;
-    
+
     String originalName = context.getName();
     Collection<String> names = getPossibleIncludeNames(context, originalName);
 
@@ -125,7 +108,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
 
   @NotNull
   private static Collection<String> getPossibleIncludeNames(@NotNull PsiFile context, @NotNull String originalName) {
-    Collection<String> names = ContainerUtil.newTroveSet();
+    Collection<String> names = new THashSet<>();
     names.add(originalName);
     for (FileIncludeProvider provider : FileIncludeProvider.EP_NAME.getExtensions()) {
       String newName = provider.getIncludeName(context, originalName);
@@ -142,8 +125,8 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     myPsiManager = psiManager;
     myPsiFileFactory = psiFileFactory;
 
-    FileIncludeProvider[] providers = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
-    myProviderMap = new HashMap<>(providers.length);
+    List<FileIncludeProvider> providers = FileIncludeProvider.EP_NAME.getExtensionList();
+    myProviderMap = new HashMap<>(providers.size());
     for (FileIncludeProvider provider : providers) {
       FileIncludeProvider old = myProviderMap.put(provider.getId(), provider);
       assert old == null;
@@ -231,7 +214,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
       return getFiles(file, compileTimeOnly);
     }
 
-    private void getAllFilesRecursively(@NotNull VirtualFile file, boolean compileTimeOnly, Set<VirtualFile> result) {
+    private void getAllFilesRecursively(@NotNull VirtualFile file, boolean compileTimeOnly, Set<? super VirtualFile> result) {
       if (!result.add(file)) return;
       VirtualFile[] includes = getFiles(file, compileTimeOnly);
       if (includes.length != 0) {
@@ -259,7 +242,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   private abstract static class IncludedFilesProvider implements ParameterizedCachedValueProvider<VirtualFile[], PsiFile> {
     private final boolean myRuntimeOnly;
 
-    public IncludedFilesProvider(boolean runtimeOnly) {
+    IncludedFilesProvider(boolean runtimeOnly) {
       myRuntimeOnly = runtimeOnly;
     }
 

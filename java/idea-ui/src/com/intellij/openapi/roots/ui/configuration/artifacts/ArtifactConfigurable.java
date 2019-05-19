@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.ui.SimpleListCellRenderer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,12 +64,15 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
 
   @Override
   protected JComponent createTopRightComponent() {
-    final ComboBox artifactTypeBox = new ComboBox();
+    final ComboBox<ArtifactType> artifactTypeBox = new ComboBox<>();
     for (ArtifactType type : ArtifactType.getAllTypes()) {
       artifactTypeBox.addItem(type);
     }
 
-    artifactTypeBox.setRenderer(new ArtifactTypeCellRenderer(artifactTypeBox.getRenderer()));
+    artifactTypeBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      label.setIcon(value.getIcon());
+      label.setText(value.getPresentableName());
+    }));
 
     artifactTypeBox.setSelectedItem(getArtifact().getArtifactType());
     artifactTypeBox.addActionListener(new ActionListener() {

@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.util.ConcurrencyUtil;
-import java.util.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,38 +10,43 @@ import org.jetbrains.annotations.PropertyKey;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Provides a UI to configure internal settings of the IDE. Plugins can provide their own registry keys using the
+ * {@code <registryKey>} extension point (see {@link com.intellij.openapi.util.registry.RegistryKeyBean} for more details).
+ */
 public class Registry  {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
   public static final String REGISTRY_BUNDLE = "misc.registry";
 
-  private final Map<String, String> myUserProperties = new LinkedHashMap<String, String>();
-  private final ConcurrentMap<String, RegistryValue> myValues = new ConcurrentHashMap<String, RegistryValue>();
+  private final Map<String, String> myUserProperties = new LinkedHashMap<>();
+  private final ConcurrentMap<String, RegistryValue> myValues = new ConcurrentHashMap<>();
+  private final Map<String, RegistryKeyDescriptor> myContributedKeys = new HashMap<>();
 
   private static final Registry ourInstance = new Registry();
 
   @NotNull
-  public static RegistryValue get(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) {
+  public static RegistryValue get(@NotNull String key) {
     final Registry registry = getInstance();
 
     RegistryValue value = registry.myValues.get(key);
     if (value == null) {
-      value = ConcurrencyUtil.cacheOrGet(registry.myValues, key, new RegistryValue(registry, key));
+      value = ConcurrencyUtil.cacheOrGet(registry.myValues, key, new RegistryValue(registry, key, registry.myContributedKeys.get(key)));
     }
     return value;
   }
 
-  public static boolean is(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
+  public static boolean is(@NotNull String key) throws MissingResourceException {
     return get(key).asBoolean();
   }
 
-  public static boolean is(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key, boolean defaultValue) {
+  public static boolean is(@NotNull String key, boolean defaultValue) {
     try {
       return get(key).asBoolean();
     }
@@ -65,11 +55,11 @@ public class Registry  {
     }
   }
 
-  public static int intValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
+  public static int intValue(@NotNull String key) throws MissingResourceException {
     return get(key).asInteger();
   }
 
-  public static int intValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key, int defaultValue) {
+  public static int intValue(@NotNull String key, int defaultValue) {
     try {
       return get(key).asInteger();
     }
@@ -78,16 +68,16 @@ public class Registry  {
     }
   }
 
-  public static double doubleValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
+  public static double doubleValue(@NotNull String key) throws MissingResourceException {
     return get(key).asDouble();
   }
 
   @NotNull
-  public static String stringValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
+  public static String stringValue(@NotNull String key) throws MissingResourceException {
     return get(key).asString();
   }
 
-  public static Color getColor(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key, Color defaultValue) throws MissingResourceException {
+  public static Color getColor(@NotNull String key, Color defaultValue) throws MissingResourceException {
     return get(key).asColor(defaultValue);
   }
 
@@ -96,11 +86,28 @@ public class Registry  {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(REGISTRY_BUNDLE);
-      ourBundle = new SoftReference<ResourceBundle>(bundle);
+      ourBundle = new SoftReference<>(bundle);
     }
     return bundle;
   }
 
+
+  public String getBundleValue(@NotNull String key, boolean mustExist) throws MissingResourceException {
+    if (myContributedKeys.containsKey(key)) {
+      return myContributedKeys.get(key).getDefaultValue();
+    }
+
+    try {
+      return getBundle().getString(key);
+    }
+    catch (MissingResourceException e) {
+      if (mustExist) {
+        throw e;
+      }
+    }
+
+    return null;
+  }
 
   @NotNull
   public static Registry getInstance() {
@@ -144,20 +151,24 @@ public class Registry  {
     final ResourceBundle bundle = getBundle();
     final Enumeration<String> keys = bundle.getKeys();
 
-    List<RegistryValue> result = new ArrayList<RegistryValue>();
+    List<RegistryValue> result = new ArrayList<>();
 
+    Map<String, RegistryKeyDescriptor> contributedKeys = getInstance().myContributedKeys;
     while (keys.hasMoreElements()) {
       final String each = keys.nextElement();
-      if (each.endsWith(".description") || each.endsWith(".restartRequired")) continue;
+      if (each.endsWith(".description") || each.endsWith(".restartRequired") || contributedKeys.containsKey(each)) continue;
       result.add(get(each));
+    }
+
+    for (String key : contributedKeys.keySet()) {
+      result.add(get(key));
     }
 
     return result;
   }
 
   void restoreDefaults() {
-    Map<String, String> old = new HashMap<String, String>();
-    old.putAll(myUserProperties);
+    Map<String, String> old = new HashMap<>(myUserProperties);
     for (String each : old.keySet()) {
       try {
         get(each).resetToDefault();
@@ -184,5 +195,25 @@ public class Registry  {
     }
 
     return false;
+  }
+
+  public static void addKey(@NotNull String key, @NotNull String description, @NotNull String defaultValue, boolean restartRequired) {
+    addKey(key, description, defaultValue, restartRequired, false);
+  }
+
+  public static void addKey(@NotNull String key,
+                            @NotNull String description,
+                            @NotNull String defaultValue,
+                            boolean restartRequired,
+                            boolean contributedByThirdPartyPlugin) {
+    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired, contributedByThirdPartyPlugin));
+  }
+
+  public static void addKey(@NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {
+    addKey(key, description, Integer.toString(defaultValue), restartRequired);
+  }
+
+  public static void addKey(@NotNull String key, @NotNull String description, boolean defaultValue, boolean restartRequired) {
+    addKey(key, description, Boolean.toString(defaultValue), restartRequired);
   }
 }

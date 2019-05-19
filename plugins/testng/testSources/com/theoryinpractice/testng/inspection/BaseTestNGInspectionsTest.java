@@ -66,5 +66,5 @@ public abstract class BaseTestNGInspectionsTest extends JavaCodeInsightFixtureTe
 
   protected String getActionName() {
     return getEnabledTool().getDisplayName();
-  };
+  }
 }

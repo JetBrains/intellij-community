@@ -50,7 +50,10 @@ public class PyConvertToNewStyleQuickFix implements LocalQuickFix {
       assert list != null;
       final ASTNode node = pyClass.getNameNode();
       assert node != null;
-      pyClass.addAfter(list, node.getPsi());
+      final PsiElement oldArgList = node.getPsi().getNextSibling();
+      if (oldArgList instanceof PyArgumentList) {
+        oldArgList.replace(list);
+      }
     }
   }
 }

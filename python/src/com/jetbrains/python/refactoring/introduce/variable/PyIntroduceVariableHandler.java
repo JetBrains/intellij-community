@@ -42,7 +42,7 @@ public class PyIntroduceVariableHandler extends IntroduceHandler {
 
   public static PsiElement doIntroduceVariable(PsiElement expression,
                                                PsiElement declaration,
-                                               List<PsiElement> occurrences,
+                                               List<? extends PsiElement> occurrences,
                                                boolean replaceAll) {
     PsiElement anchor = replaceAll ? findAnchor(occurrences) : PsiTreeUtil.getParentOfType(expression, PyStatement.class);
     assert anchor != null;

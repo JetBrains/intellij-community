@@ -29,10 +29,12 @@ public class RecentTaskRepositories implements PersistentStateComponent<Element>
   private final Set<TaskRepository> myRepositories = new THashSet<>(HASHING_STRATEGY);
 
   private static final TObjectHashingStrategy<TaskRepository> HASHING_STRATEGY = new TObjectHashingStrategy<TaskRepository>() {
+    @Override
     public int computeHashCode(TaskRepository object) {
       return object.getUrl() == null ? 0 : object.getUrl().hashCode();
     }
 
+    @Override
     public boolean equals(TaskRepository o1, TaskRepository o2) {
       return Comparing.equal(o1.getUrl(), o2.getUrl());
     }
@@ -66,10 +68,12 @@ public class RecentTaskRepositories implements PersistentStateComponent<Element>
     return false;
   }
 
+  @Override
   public Element getState() {
     return XmlSerializer.serialize(myRepositories.toArray(new TaskRepository[0]));
   }
 
+  @Override
   public void loadState(@NotNull Element state) {
     myRepositories.clear();
     myRepositories.addAll(TaskManagerImpl.loadRepositories(state));

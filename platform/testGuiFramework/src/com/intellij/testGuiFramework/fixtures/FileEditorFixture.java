@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
@@ -23,8 +24,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.THIRTY_SEC_TIMEOUT;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.method;
 import static org.fest.swing.edt.GuiActionRunner.execute;
@@ -59,21 +58,27 @@ public class FileEditorFixture extends EditorFixture {
    */
   @Nullable
   public VirtualFile getCurrentFile() {
-    VirtualFile[] selectedFiles = myManager.getSelectedFiles();
-    if (selectedFiles.length > 0) {
+    return execute(new GuiQuery<VirtualFile>() {
+      @javax.annotation.Nullable
+      @Override
+      protected VirtualFile executeInEDT() throws Throwable {
+        VirtualFile[] selectedFiles = myManager.getSelectedFiles();
+        if (selectedFiles.length > 0) {
 
-      // we should be sure that EditorComponent is already showing
-      VirtualFile selectedFile = selectedFiles[0];
-      if (myManager.getEditors(selectedFile).length == 0) {
+          // we should be sure that EditorComponent is already showing
+          VirtualFile selectedFile = selectedFiles[0];
+          if (myManager.getEditors(selectedFile).length == 0) {
+            return null;
+          }
+          else {
+            FileEditor editor = myManager.getEditors(selectedFile)[0];
+            return editor.getComponent().isShowing() ? selectedFile : null;
+          }
+        }
+
         return null;
       }
-      else {
-        FileEditor editor = myManager.getEditors(selectedFile)[0];
-        return editor.getComponent().isShowing() ? selectedFile : null;
-      }
-    }
-
-    return null;
+    });
   }
 
   /**
@@ -164,7 +169,7 @@ public class FileEditorFixture extends EditorFixture {
           }
         });
       }
-    }, SHORT_TIMEOUT);
+    }, Timeouts.INSTANCE.getMinutes02());
 
     // TODO: Maybe find a better way to keep Documents in sync with their VirtualFiles.
     invokeActionViaKeystroke("Synchronize");
@@ -176,7 +181,7 @@ public class FileEditorFixture extends EditorFixture {
    * Opens up a different file. This will run through the "Open File..." dialog to
    * find and select the given file.
    *
-   * @param file the project-relative path (with /, not File.separator, as the path separator)
+   * @param relativePath the project-relative path (with /, not File.separator, as the path separator)
    * @param tab  which tab to open initially, if there are multiple editors
    */
   public EditorFixture open(@NotNull final String relativePath, @NotNull Tab tab) {
@@ -210,10 +215,10 @@ public class FileEditorFixture extends EditorFixture {
   }
 
   /**
-   * Like {@link #open(String, com.android.tools.idea.tests.gui.framework.fixture.EditorFixture.Tab)} but
+   * Like {@link #open(String, Tab)} but
    * always uses the default tab
    *
-   * @param file the project-relative path (with /, not File.separator, as the path separator)
+   * @param relativePath the project-relative path (with /, not File.separator, as the path separator)
    */
   public EditorFixture open(@NotNull final String relativePath) {
     return open(relativePath, Tab.DEFAULT);
@@ -245,7 +250,13 @@ public class FileEditorFixture extends EditorFixture {
 
   @NotNull
   public EditorFixture waitUntilErrorAnalysisFinishes() {
-    FileFixture file = getCurrentFileFixture();
+    FileFixture file = execute(new GuiQuery<FileFixture>() {
+      @Override
+      protected FileFixture executeInEDT() {
+        return getCurrentFileFixture();
+      }
+    });
+    assert file != null;
     file.waitUntilErrorAnalysisFinishes();
     return this;
   }
@@ -270,7 +281,7 @@ public class FileEditorFixture extends EditorFixture {
         }));
         return virtualFileReference.get() != null;
       }
-    }, THIRTY_SEC_TIMEOUT);
+    }, Timeouts.INSTANCE.getSeconds30());
     return new FileFixture(myFrame.getProject(), virtualFileReference.get());
   }
 
@@ -341,7 +352,7 @@ public class FileEditorFixture extends EditorFixture {
    * Selects the editor with a given tab name.
    */
   public FileEditorFixture selectTab(@NotNull final String tabName) {
-    tabs.waitTab(tabName, 5).selectTab(tabName);
+    tabs.waitTab(tabName, Timeouts.INSTANCE.getSeconds05()).selectTab(tabName);
     return this;
   }
 

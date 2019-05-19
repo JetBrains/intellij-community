@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -22,6 +8,7 @@ import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
 import com.intellij.history.core.tree.RootEntry;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -35,7 +22,10 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -65,14 +55,19 @@ public class IdeaGateway {
   public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeInContent) {
     if (!f.isInLocalFileSystem()) return false;
 
-    if (!f.isDirectory() && StringUtil.endsWith(f.getNameSequence(), ".class")) return false;
+    if (!f.isDirectory()) {
+      CharSequence fileName = f.getNameSequence();
+      if (StringUtil.equals(fileName, "workspace.xml") || StringUtil.endsWith(fileName, ".iws")
+          || StringUtil.endsWith(fileName, ".class")) {
+        return false;
+      }
+    }
 
     VersionedFilterData versionedFilterData = getVersionedFilterData();
 
     boolean isInContent = false;
     int numberOfOpenProjects = versionedFilterData.myOpenedProjects.size();
     for (int i = 0; i < numberOfOpenProjects; ++i) {
-      if (f.equals(versionedFilterData.myWorkspaceFiles.get(i))) return false;
       ProjectFileIndex index = versionedFilterData.myProjectFileIndices.get(i);
 
       if (index.isExcluded(f)) return false;
@@ -116,6 +111,7 @@ public class IdeaGateway {
       ourCurrentEventDispatchContext.set(this);
     }
 
+    @Override
     public void close() {
       ourCurrentEventDispatchContext.set(myPreviousContext);
       if (myPreviousContext != null && myPreviousContext.myFilterData == null && myFilterData != null) {
@@ -133,7 +129,6 @@ public class IdeaGateway {
   private static class VersionedFilterData {
     final List<Project> myOpenedProjects = new ArrayList<>();
     final List<ProjectFileIndex> myProjectFileIndices = new ArrayList<>();
-    final List<VirtualFile> myWorkspaceFiles = new ArrayList<>();
 
     VersionedFilterData() {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -142,7 +137,6 @@ public class IdeaGateway {
         if (each.isDefault()) continue;
         if (!each.isInitialized()) continue;
 
-        myWorkspaceFiles.add(each.getWorkspaceFile());
         myOpenedProjects.add(each);
         myProjectFileIndices.add(ProjectRootManager.getInstance(each).getFileIndex());
       }
@@ -150,16 +144,17 @@ public class IdeaGateway {
   }
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
-    return isVersioned(f) && !f.isDirectory() && !f.getFileType().isBinary();
+    return isVersioned(f) && !f.isDirectory() &&
+           (areContentChangesVersioned(f.getName()) || ScratchFileService.isInScratchRoot(f));
   }
 
   public boolean areContentChangesVersioned(@NotNull String fileName) {
     return !FileTypeManager.getInstance().getFileTypeByFileName(fileName).isBinary();
   }
 
-  public boolean ensureFilesAreWritable(@NotNull Project p, @NotNull List<VirtualFile> ff) {
+  public boolean ensureFilesAreWritable(@NotNull Project p, @NotNull List<? extends VirtualFile> ff) {
     ReadonlyStatusHandler h = ReadonlyStatusHandler.getInstance(p);
-    return !h.ensureFilesWritable(VfsUtilCore.toVirtualFileArray(ff)).hasReadonlyFiles();
+    return !h.ensureFilesWritable(ff).hasReadonlyFiles();
   }
 
   @Nullable
@@ -226,7 +221,7 @@ public class IdeaGateway {
   public static Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
     if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
     NewVirtualFile nf = (NewVirtualFile)f;
-    return nf.iterInDbChildren();
+    return nf.iterInDbChildrenWithoutLoadingVfsFromOtherProjects();
   }
 
   @NotNull
@@ -258,7 +253,7 @@ public class IdeaGateway {
 
   private void doCreateChildrenForPathOnly(@NotNull DirectoryEntry parent,
                                            @NotNull String path,
-                                           @NotNull Iterable<VirtualFile> children) {
+                                           @NotNull Iterable<? extends VirtualFile> children) {
     for (VirtualFile child : children) {
       String name = StringUtil.trimStart(child.getName(), "/"); // on Mac FS root name is "/"
       if (!path.startsWith(name)) continue;
@@ -341,7 +336,7 @@ public class IdeaGateway {
     return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
   }
 
-  private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<VirtualFile> children, final boolean forDeletion) {
+  private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<? extends VirtualFile> children, final boolean forDeletion) {
     List<Entry> entries = ContainerUtil.mapNotNull(children, (NullableFunction<VirtualFile, Entry>)each -> doCreateEntry(each, forDeletion));
     parent.addChildren(entries);
   }

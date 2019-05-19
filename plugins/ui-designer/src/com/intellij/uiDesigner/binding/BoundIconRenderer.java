@@ -87,7 +87,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
   public AnAction getClickAction() {
     return new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         List<PsiFile> formFiles = getBoundFormFiles();
         if (formFiles.size() > 0) {
           final VirtualFile virtualFile = formFiles.get(0).getVirtualFile();

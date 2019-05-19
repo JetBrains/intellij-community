@@ -6,6 +6,7 @@ public class ForCanBeForEach {
 
     public void foo(int[] is) {
         <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0; i < is.length; i++) {
+            System.out.println(is[i]);
         }
     }
 
@@ -255,8 +256,12 @@ public class ForCanBeForEach {
 
   public void food(int[] is) {
     <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0; is.length > i; i++) {
+      System.out.println(is[i]);
     }
     for (int i = 0, j = 10; i < is.length; i++) {
+    }
+    for (int i = 0; i < is.length; i++) {
+      System.out.println('-');
     }
   }
 
@@ -266,10 +271,18 @@ public class ForCanBeForEach {
     }
   }
 
+    void b(List<String> list) {
+        for (final Iterator<String> iterator = list.iterator(); iterator.hasNext(); ) {
+            System.out.println(iterator.next());
+            final Iterator<String> iterator1 = iterator;
+            System.out.println(iterator1);
+        }
+    }
+
   class XX<T> {
     void m(T[] ts) {
       <warning descr="'for' loop replaceable with 'foreach'">for</warning> (int i = 0; i < ts.length; i++) {
-        System.out.println();
+        System.out.println(ts[i]);
       }
     }
   }
@@ -296,4 +309,24 @@ class OuterClass
     private UnnecessaryEnumModifier2Inspection() {
     }
   }
+}
+class Base implements Iterable<String> {
+    @Override
+    public Iterator<String> iterator() {
+        return null;
+    }
+}
+
+class Sub extends Base {
+    @Override
+    public Iterator<String> iterator() {
+        ArrayList<String> strings = new ArrayList<String>();
+        for (Iterator<String> superIterator = super.iterator(); superIterator.hasNext(); ) {
+            String str = superIterator.next();
+
+            strings.add(str + str);
+        }
+
+        return strings.iterator();
+    }
 }

@@ -37,7 +37,6 @@ import static com.intellij.util.text.CharArrayUtil.containsOnlyWhiteSpaces;
  * Advises typing in javadoc if necessary.
  * 
  * @author Denis Zhdanov
- * @since 2/2/11 11:17 AM
  */
 public class JavadocTypedHandler extends TypedHandlerDelegate {
 

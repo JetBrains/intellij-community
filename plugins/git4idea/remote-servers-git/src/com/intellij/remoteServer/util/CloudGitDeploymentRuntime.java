@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,21 +46,18 @@ import java.util.List;
  * @author michael.golubev
  */
 public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
-
   private static final Logger LOG = Logger.getInstance(CloudGitDeploymentRuntime.class);
 
   private static final String COMMIT_MESSAGE = "Deploy";
 
   private static final CommitSession NO_COMMIT = new CommitSession() {
     @Override
-    public void execute(Collection<Change> changes, String commitMessage) {
-
+    public void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
     }
   };
 
   private static final List<CommitExecutor> ourCommitExecutors = Arrays.asList(
     new CommitExecutor() {
-
       @Nls
       @Override
       public String getActionText() {
@@ -311,7 +294,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   protected GitLineHandlerListener createGitLineHandlerListener() {
-    return new GitLineHandlerAdapter() {
+    return new GitLineHandlerListener() {
 
       @Override
       public void onLineAvailable(String line, Key outputType) {
@@ -343,7 +326,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       handler.setSilent(false);
       handler.addParameters(subCommand, remoteName, application.getGitUrl());
       GitCommandResult result = myGit.runCommand(handler);
-      result.getOutputOrThrow();
+      result.throwOnError();
       getRepository().update();
       if (result.getExitCode() != 0) {
         throw new ServerRuntimeException(failMessage);
@@ -364,7 +347,9 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   protected void refreshApplicationRepository() {
-    GitInit.refreshAndConfigureVcsMappings(getProject(), getRepositoryRoot(), getRepositoryRootFile().getAbsolutePath());
+    Project project = getProject();
+    GitInit.refreshAndConfigureVcsMappings(project, getRepositoryRoot(), getRepositoryRootFile().getAbsolutePath());
+    GitUtil.proposeUpdateGitignore(project, getRepositoryRoot());
   }
 
   protected void pushApplication(@NotNull CloudGitApplication application) throws ServerRuntimeException {
@@ -421,7 +406,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
         handler.setStdoutSuppressed(false);
         handler.addParameters("-m", message);
         handler.endOptions();
-        Git.getInstance().runCommand(handler).getOutputOrThrow();
+        Git.getInstance().runCommand(handler).throwOnError();
       }
     }
     catch (VcsException e) {
@@ -481,9 +466,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   public CloudGitApplication findApplication4Repository() throws ServerRuntimeException {
     final List<String> repositoryUrls = new ArrayList<>();
     for (GitRemote remote : getRepository().getRemotes()) {
-      for (String url : remote.getUrls()) {
-        repositoryUrls.add(url);
-      }
+      repositoryUrls.addAll(remote.getUrls());
     }
 
     return getAgentTaskExecutor().execute(() -> getDeployment().findApplication4Repository(ArrayUtil.toStringArray(repositoryUrls)));
@@ -529,6 +512,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
   public class CloneJobWithRemote extends CloneJob {
 
+    @Override
     public void doClone(File cloneDirParent, String cloneDirName, String gitUrl) throws ServerRuntimeException {
       final GitLineHandler handler = new GitLineHandler(getProject(), cloneDirParent, GitCommand.CLONE);
       handler.setSilent(false);

@@ -7,7 +7,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import sun.swing.SwingUtilities2;
+import com.intellij.util.ui.UIUtilities;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -22,30 +22,15 @@ import java.awt.geom.RoundRectangle2D;
  */
 public class DarculaProgressBarUI extends BasicProgressBarUI {
 
-  private static final Color REMAINDER_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
-                                                                 Gray.xCC :
-                                                                 new JBColor(Gray.xC4, Gray.x55));
+  private static final Color TRACK_COLOR = JBColor.namedColor("ProgressBar.trackColor", new JBColor(Gray.xC4, Gray.x55));
+  private static final Color PROGRESS_COLOR = JBColor.namedColor("ProgressBar.progressColor", new JBColor(Gray.x80, Gray.xA0));
+  private static final Color INDETERMINATE_START_COLOR = JBColor.namedColor("ProgressBar.indeterminateStartColor", new JBColor(Gray.xC4, Gray.x69));
+  private static final Color INDETERMINATE_END_COLOR = JBColor.namedColor("ProgressBar.indeterminateEndColor", new JBColor(Gray.x80, Gray.x83));
 
-  @SuppressWarnings("UseJBColor")
-  private static final Color FINISHED_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
-                                                                new Color(0x0075da) :
-                                                                new JBColor(Gray.x80, Gray.xA0));
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color START_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
-                                                             new Color(0x76b8f8) :
-                                                             new JBColor(Gray.xC4, Gray.x69));
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color END_COLOR = new JBColor(() -> UIUtil.isUnderWin10LookAndFeel() ?
-                                                           new Color(0x0075da) :
-                                                           new JBColor(Gray.x80, Gray.x83));
-
-  private static final Color RED = new JBColor(0xd64f4f, 0xe74848);
-  private static final Color RED_LIGHT = new JBColor(0xfb8f89, 0xf4a2a0);
-
-  private static final Color GREEN = new JBColor(0x34b171, 0x008f50);
-  private static final Color GREEN_LIGHT = new JBColor(0x7ee8a5, 0x5dc48f);
+  private static final Color FAILED_COLOR = JBColor.namedColor("ProgressBar.failedColor", new JBColor(0xd64f4f, 0xe74848));
+  private static final Color FAILED_END_COLOR = JBColor.namedColor("ProgressBar.failedEndColor", new JBColor(0xfb8f89, 0xf4a2a0));
+  private static final Color PASSED_COLOR = JBColor.namedColor("ProgressBar.passedColor", new JBColor(0x34b171, 0x008f50));
+  private static final Color PASSED_END_COLOR = JBColor.namedColor("ProgressBar.passedEndColor", new JBColor(0x7ee8a5, 0x5dc48f));
 
   private static final int CYCLE_TIME_DEFAULT = 800;
   private static final int REPAINT_INTERVAL_DEFAULT = 50;
@@ -90,12 +75,14 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       Color startColor, endColor;
       Color foreground = progressBar.getForeground();
       if (foreground == ColorProgressBar.RED) {
-        startColor = RED;
-        endColor = RED_LIGHT;
-      } else if (foreground == ColorProgressBar.GREEN) {
-        startColor = GREEN;
-        endColor = GREEN_LIGHT;
-      } else {
+        startColor = FAILED_COLOR;
+        endColor = FAILED_END_COLOR;
+      }
+      else if (foreground == ColorProgressBar.GREEN) {
+        startColor = PASSED_COLOR;
+        endColor = PASSED_END_COLOR;
+      }
+      else {
         startColor = getStartColor();
         endColor = getEndColor();
       }
@@ -111,29 +98,32 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
         int idx = 0;
         int delta = JBUI.scale(10);
         if (orientation == SwingConstants.HORIZONTAL) {
-          for (float offset = r.x; offset - r.x < r.width; offset+= delta) {
+          for (float offset = r.x; offset - r.x < r.width; offset += delta) {
             g2.setPaint(ca[(getAnimationIndex() + idx++) % 2]);
             g2.fill(new Rectangle2D.Float(offset, yOffset, delta, pHeight));
           }
-        } else {
-          for (float offset = r.y; offset - r.y < r.height; offset+= delta) {
+        }
+        else {
+          for (float offset = r.y; offset - r.y < r.height; offset += delta) {
             g2.setPaint(ca[(getAnimationIndex() + idx++) % 2]);
             g2.fill(new Rectangle2D.Float(xOffset, offset, delta, pWidth));
           }
         }
-      } else {
+      }
+      else {
         Shape shape;
         int step = JBUI.scale(6);
         if (orientation == SwingConstants.HORIZONTAL) {
           shape = getShapedRect(r.x, yOffset, r.width, pHeight, pHeight);
           yOffset = r.y + pHeight / 2;
-          g2.setPaint(new GradientPaint(r.x + getAnimationIndex()*step*2, yOffset, startColor,
-                                        r.x + getFrameCount()*step + getAnimationIndex()*step*2, yOffset, endColor, true));
-        } else {
+          g2.setPaint(new GradientPaint(r.x + getAnimationIndex() * step * 2, yOffset, startColor,
+                                        r.x + getFrameCount() * step + getAnimationIndex() * step * 2, yOffset, endColor, true));
+        }
+        else {
           shape = getShapedRect(xOffset, r.y, pWidth, r.height, pWidth);
           xOffset = r.x + pWidth / 2;
-          g2.setPaint(new GradientPaint(xOffset, r.y + getAnimationIndex()*step*2, startColor,
-                                        xOffset, r.y + getFrameCount()*step + getAnimationIndex()*step*2, endColor, true));
+          g2.setPaint(new GradientPaint(xOffset, r.y + getAnimationIndex() * step * 2, startColor,
+                                        xOffset, r.y + getFrameCount() * step + getAnimationIndex() * step * 2, endColor, true));
         }
         g2.fill(shape);
       }
@@ -142,23 +132,23 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       if (progressBar.isStringPainted()) {
         if (progressBar.getOrientation() == SwingConstants.HORIZONTAL) {
           paintString((Graphics2D)g, i.left, i.top, r.width, r.height, boxRect.x, boxRect.width);
-        } else {
+        }
+        else {
           paintString((Graphics2D)g, i.left, i.top, r.width, r.height, boxRect.y, boxRect.height);
         }
       }
-
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
-
   }
 
   protected Color getStartColor() {
-    return START_COLOR;
+    return INDETERMINATE_START_COLOR;
   }
 
   protected Color getEndColor() {
-    return END_COLOR;
+    return INDETERMINATE_END_COLOR;
   }
 
   private void paintString(Graphics2D g, int x, int y, int w, int h, int fillStart, int amountFull) {
@@ -169,21 +159,22 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
     if (progressBar.getOrientation() == SwingConstants.HORIZONTAL) {
       g.setColor(getSelectionBackground());
-      SwingUtilities2.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
+      UIUtilities.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
 
       g.setColor(getSelectionForeground());
       g.clipRect(fillStart, y, amountFull, h);
-      SwingUtilities2.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
-    } else { // VERTICAL
+      UIUtilities.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
+    }
+    else { // VERTICAL
       g.setColor(getSelectionBackground());
-      AffineTransform rotate = AffineTransform.getRotateInstance(Math.PI/2);
+      AffineTransform rotate = AffineTransform.getRotateInstance(Math.PI / 2);
       g.setFont(progressBar.getFont().deriveFont(rotate));
       renderLocation = getStringPlacement(g, progressString, x, y, w, h);
-      SwingUtilities2.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
+      UIUtilities.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
 
       g.setColor(getSelectionForeground());
       g.clipRect(x, fillStart, w, amountFull);
-      SwingUtilities2.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
+      UIUtilities.drawString(progressBar, g, progressString, renderLocation.x, renderLocation.y);
     }
     g.setClip(oldClip);
   }
@@ -196,7 +187,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
       Rectangle r = new Rectangle(progressBar.getSize());
-      if (c.isOpaque()) {
+      if (c.isOpaque() && c.getParent() != null) {
         g2.setColor(c.getParent().getBackground());
         g2.fill(r);
       }
@@ -213,7 +204,8 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
         fullShape = getShapedRect(r.x, yOffset, r.width, pHeight, pHeight);
         coloredShape = getShapedRect(r.x, yOffset, amountFull, pHeight, pHeight);
-      } else {
+      }
+      else {
         int pWidth = progressBar.getPreferredSize().width;
         int xOffset = r.x + (r.width - pWidth) / 2;
 
@@ -227,10 +219,12 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       // Colors are hardcoded in UI delegates by design. If more colors are needed contact designers.
       Color foreground = progressBar.getForeground();
       if (foreground == ColorProgressBar.RED) {
-        g2.setColor(RED);
-      } else if (foreground == ColorProgressBar.GREEN) {
-        g2.setColor(GREEN);
-      } else {
+        g2.setColor(FAILED_COLOR);
+      }
+      else if (foreground == ColorProgressBar.GREEN) {
+        g2.setColor(PASSED_COLOR);
+      }
+      else {
         g2.setColor(getFinishedColor());
       }
       g2.fill(coloredShape);
@@ -239,25 +233,27 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       if (progressBar.isStringPainted()) {
         paintString(g, i.left, i.top, r.width, r.height, amountFull, i);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
 
   protected Color getRemainderColor() {
-    return REMAINDER_COLOR;
+    return TRACK_COLOR;
   }
 
   protected Color getFinishedColor() {
-    return FINISHED_COLOR;
+    return PROGRESS_COLOR;
   }
 
-  @Override public Dimension getPreferredSize(JComponent c) {
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
     if (!(c instanceof JProgressBar)) {
       return size;
     }
-    if( !((JProgressBar)c).isStringPainted()) {
+    if (!((JProgressBar)c).isStringPainted()) {
       if (((JProgressBar)c).getOrientation() == SwingConstants.HORIZONTAL) {
         size.height = getStripeWidth();
       }
@@ -273,10 +269,12 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     if (ho != null) {
       try {
         return JBUI.scale(Integer.parseInt(ho.toString()));
-      } catch (NumberFormatException nfe) {
+      }
+      catch (NumberFormatException nfe) {
         return JBUI.scale(DEFAULT_WIDTH);
       }
-    } else {
+    }
+    else {
       return JBUI.scale(DEFAULT_WIDTH);
     }
   }

@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
  * Holds utility methods for soft wraps-related processing.
  *
  * @author Denis Zhdanov
- * @since Aug 11, 2010 11:03:43 AM
  */
 public class SoftWrapHelper {
 

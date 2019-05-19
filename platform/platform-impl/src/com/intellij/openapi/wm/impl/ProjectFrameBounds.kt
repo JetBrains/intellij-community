@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.WindowManagerImpl.FrameBoundsConverter.convertToDeviceSpace
+import com.intellij.ui.ScreenUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import org.jdom.Element
@@ -16,7 +18,7 @@ import java.awt.Rectangle
 class ProjectFrameBounds(private val project: Project) : PersistentStateComponent<FrameInfo>, ModificationTracker {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): ProjectFrameBounds = project.service<ProjectFrameBounds>()
+    fun getInstance(project: Project) = project.service<ProjectFrameBounds>()
   }
 
   // in device space
@@ -26,7 +28,7 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
   val isInFullScreen: Boolean
     get() = rawFrameInfo?.fullScreen ?: false
 
-  override fun getState(): FrameInfo? = rawFrameInfo
+  override fun getState() = rawFrameInfo
 
   override fun loadState(state: FrameInfo) {
     rawFrameInfo = state
@@ -34,7 +36,7 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
   }
 
   override fun getModificationCount(): Long {
-    val frameInfoInDeviceSpace = (WindowManager.getInstance() as? WindowManagerImpl)?.getFrameInfoInDeviceSpace(project)
+    val frameInfoInDeviceSpace = (WindowManager.getInstance() as? WindowManagerImpl)?.let { getFrameInfoInDeviceSpace(it, project, rawFrameInfo) }
     if (frameInfoInDeviceSpace != null) {
       if (rawFrameInfo == null) {
         rawFrameInfo = frameInfoInDeviceSpace
@@ -49,24 +51,31 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
 
 class FrameInfo : BaseState() {
   // flat is used due to backward compatibility
-  @get:Property(flat = true) var bounds: Rectangle? by property<Rectangle>()
-  @get:Attribute var extendedState: Int by property(Frame.NORMAL)
+  @get:Property(flat = true) var bounds by property<Rectangle?>(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
+  @get:Attribute var extendedState by property(Frame.NORMAL)
 
-  @get:Attribute var fullScreen: Boolean by property(false)
+  @get:Attribute var fullScreen by property(false)
 }
 
-fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project): FrameInfo? {
-  val frame = getFrame(project) ?: return null
+internal fun getFrameInfoInDeviceSpace(windowManagerImpl: WindowManagerImpl, project: Project, prev: FrameInfo?): FrameInfo? {
+  val frame = windowManagerImpl.getFrame(project) ?: return null
 
   // updateFrameBounds will also update myDefaultFrameInfo,
   // so, we have to call this method before other code in this method and if later extendedState is used only for macOS
-  val extendedState = updateFrameBounds(frame)
-  val frameInfo = FrameInfo()
-  // save bounds even if maximized because on unmaximize we must restore previous frame bounds
-  frameInfo.bounds = convertToDeviceSpace(frame.graphicsConfiguration, myDefaultFrameInfo.bounds!!)
-  frameInfo.extendedState = extendedState
+  val extendedState = windowManagerImpl.updateFrameBounds(frame)
 
-  if (isFullScreenSupportedInCurrentOS) {
+  // save bounds even if maximized because on unmaximize we must restore previous frame bounds
+  val deviceSpaceBounds = convertToDeviceSpace(frame.graphicsConfiguration, windowManagerImpl.myDefaultFrameInfo.bounds ?: return null)
+
+  // don't report if was already reported
+  if (prev?.bounds != deviceSpaceBounds && !ScreenUtil.intersectsVisibleScreen(frame)) {
+    logger<WindowInfoImpl>().error("Frame bounds are invalid: $deviceSpaceBounds")
+  }
+
+  val frameInfo = FrameInfo()
+  frameInfo.bounds = deviceSpaceBounds
+  frameInfo.extendedState = extendedState
+  if (windowManagerImpl.isFullScreenSupportedInCurrentOS) {
     frameInfo.fullScreen = frame.isInFullScreen
   }
   return frameInfo

@@ -18,6 +18,7 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -37,7 +38,7 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     return properties != null &&
            properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
@@ -45,7 +46,7 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
       PermanentGraph.SortType bekSortType = state ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal;
@@ -66,8 +67,8 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
       boolean off = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.Normal;
       String description = "Turn IntelliSort " + (off ? "on" : "off") + ": " +
                            (off
-                            ? PermanentGraph.SortType.Bek.getDescription().toLowerCase()
-                            : PermanentGraph.SortType.Normal.getDescription().toLowerCase()) + ".";
+                            ? StringUtil.toLowerCase(PermanentGraph.SortType.Bek.getDescription())
+                            : StringUtil.toLowerCase(PermanentGraph.SortType.Normal.getDescription())) + ".";
       e.getPresentation().setDescription(description);
       e.getPresentation().setText(description);
     }

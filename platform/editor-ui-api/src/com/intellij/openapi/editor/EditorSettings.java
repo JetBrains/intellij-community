@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,7 +149,17 @@ public interface EditorSettings {
   int getCustomSoftWrapIndent();
   void setCustomSoftWrapIndent(int indent);
 
+  /**
+   * @see #setAllowSingleLogicalLineFolding(boolean)
+   */
   boolean isAllowSingleLogicalLineFolding();
+
+  /**
+   * By default, gutter mark (for collapsing/expanding the region using mouse) is not shown for a folding region, if it's contained within
+   * a single document line. If overridden by the call to this method, marks will be displayed for such a region if it occupies multiple
+   * visual lines (due to soft wrapping). Displaying a gutter mark can be also enabled for a region unconditionally using
+   * {@link FoldRegion#setGutterMarkEnabledForSingleLine(boolean)}.
+   */
   void setAllowSingleLogicalLineFolding(boolean allow);
 
   boolean isPreselectRename();
@@ -156,4 +167,13 @@ public interface EditorSettings {
 
   boolean isShowIntentionBulb();
   void setShowIntentionBulb(boolean show);
+
+  /**
+   * Sets the language which determines certain editor settings (right margin and soft margins, 'wrap on reaching right margin').
+   *
+   * @see #getRightMargin(Project)
+   * @see #getSoftMargins()
+   * @see #isWrapWhenTypingReachesRightMargin(Project)
+   */
+  void setLanguage(@Nullable Language language);
 }

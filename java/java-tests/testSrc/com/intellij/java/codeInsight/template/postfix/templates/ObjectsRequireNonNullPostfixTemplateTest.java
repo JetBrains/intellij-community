@@ -22,8 +22,10 @@ public class ObjectsRequireNonNullPostfixTemplateTest extends PostfixTemplateTes
       LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myDefaultLanguageLevel);
       myDefaultLanguageLevel = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
-      //noinspection ThrowFromFinallyBlock
       super.tearDown();
     }
   }

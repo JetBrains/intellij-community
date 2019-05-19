@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.util.ArrayUtil;
-
 import java.awt.*;
 
 /**
@@ -26,5 +24,5 @@ import java.awt.*;
 public interface AnnotationColors {
   int BG_COLORS_PRIME = 3;
 
-  Color[] BG_COLORS = ArrayUtil.toObjectArray(AnnotationsSettings.getInstance().getOrderedColors(null), Color.class);
+  Color[] BG_COLORS = AnnotationsSettings.getInstance().getOrderedColors(null).toArray(new Color[0]);
 }

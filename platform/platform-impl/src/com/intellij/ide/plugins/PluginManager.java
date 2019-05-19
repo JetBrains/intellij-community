@@ -1,15 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.diagnostic.ImplementationConflictException;
-import com.intellij.diagnostic.PluginConflictReporter;
-import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
@@ -20,7 +18,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFrame;
@@ -31,13 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -46,14 +42,15 @@ import java.util.stream.Collectors;
 public class PluginManager extends PluginManagerCore {
   public static final String INSTALLED_TXT = "installed.txt";
 
-  @SuppressWarnings("StaticNonFinalField") public static long startupStart;
+  @SuppressWarnings("StaticNonFinalField")
+  public static Activity startupStart;
 
   /**
    * Called via reflection
    */
   @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
-  protected static void start(final String mainClass, final String methodName, final String[] args) {
-    startupStart = System.nanoTime();
+  protected static void start(@NotNull String mainClass, @NotNull String methodName, @NotNull String[] args) {
+    startupStart = StartUpMeasurer.start(Phases.PREPARE_TO_INIT_APP);
 
     Main.setFlags(args);
 
@@ -66,12 +63,14 @@ public class PluginManager extends PluginManagerCore {
 
     Runnable runnable = () -> {
       try {
+        Activity activity = startupStart.startChild(Phases.LOAD_MAIN_CLASS);
         ClassUtilCore.clearJarURLCache();
 
         Class<?> aClass = Class.forName(mainClass);
         Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
         method.setAccessible(true);
         Object[] argsArray = {args};
+        activity.end();
         method.invoke(null, argsArray);
       }
       catch (Throwable t) {
@@ -91,7 +90,7 @@ public class PluginManager extends PluginManagerCore {
     return onceInstalledFile.isFile() ? onceInstalledFile : null;
   }
 
-  public static void processException(Throwable t) {
+  public static void processException(@NotNull Throwable t) {
     if (!IdeaApplication.isLoaded()) {
       EssentialPluginMissingException pluginMissingException = findCause(t, EssentialPluginMissingException.class);
       if (pluginMissingException != null && pluginMissingException.pluginIds != null) {
@@ -174,41 +173,32 @@ public class PluginManager extends PluginManagerCore {
   public static void reportPluginError() {
     if (myPluginError != null) {
       String title = IdeBundle.message("title.plugin.error");
-      Notifications.Bus.notify(new Notification(title, title, myPluginError, NotificationType.ERROR, new NotificationListener() {
-        @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          notification.expire();
+      Notifications.Bus.notify(new Notification(title, title, myPluginError, NotificationType.ERROR, (notification, event) -> {
+        notification.expire();
 
-          String description = event.getDescription();
-          if (EDIT.equals(description)) {
-            PluginManagerConfigurable configurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
-            IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
-            ShowSettingsUtil.getInstance().editConfigurable((JFrame)ideFrame, configurable);
-            return;
-          }
-
-          List<String> disabledPlugins = getDisabledPlugins();
-          if (myPlugins2Disable != null && DISABLE.equals(description)) {
-            for (String pluginId : myPlugins2Disable) {
-              if (!disabledPlugins.contains(pluginId)) {
-                disabledPlugins.add(pluginId);
-              }
-            }
-          }
-          else if (myPlugins2Enable != null && ENABLE.equals(description)) {
-            disabledPlugins.removeAll(myPlugins2Enable);
-            PluginManagerMain.notifyPluginsUpdated(null);
-          }
-
-          try {
-            saveDisabledPlugins(disabledPlugins, false);
-          }
-          catch (IOException ignore) { }
-
-          myPlugins2Enable = null;
-          myPlugins2Disable = null;
+        String description = event.getDescription();
+        if (EDIT.equals(description)) {
+          IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
+          PluginManagerConfigurableProxy.showPluginConfigurable((JFrame)ideFrame, null);
+          return;
         }
+
+        Collection<String> disabledPlugins = new LinkedHashSet<>(disabledPlugins());
+        if (myPlugins2Disable != null && DISABLE.equals(description)) {
+          disabledPlugins.addAll(myPlugins2Disable);
+        }
+        else if (myPlugins2Enable != null && ENABLE.equals(description)) {
+          disabledPlugins.removeAll(myPlugins2Enable);
+          PluginManagerMain.notifyPluginsUpdated(null);
+        }
+
+        try {
+          saveDisabledPlugins(disabledPlugins, false);
+        }
+        catch (IOException ignore) { }
+
+        myPlugins2Enable = null;
+        myPlugins2Disable = null;
       }));
       myPluginError = null;
     }
@@ -229,7 +219,7 @@ public class PluginManager extends PluginManagerCore {
     return null;
   }
 
-  public static void handleComponentError(Throwable t, @Nullable String componentClassName, @Nullable PluginId pluginId) {
+  public static void handleComponentError(@NotNull Throwable t, @Nullable String componentClassName, @Nullable PluginId pluginId) {
     Application app = ApplicationManager.getApplication();
     if (app != null && app.isUnitTestMode()) {
       ExceptionUtil.rethrow(t);
@@ -258,14 +248,19 @@ public class PluginManager extends PluginManagerCore {
     }
   }
 
+  // return plugin mentioned in this exception (only if all plugins are initialized, to avoid stack overflow when exception is thrown during plugin init)
+  public static IdeaPluginDescriptor findPluginIfInitialized(@NotNull Throwable t) {
+    return arePluginsInitialized() ? getPlugin(IdeErrorsDialog.findPluginId(t)) : null;
+  }
+
   private static class StartupAbortedException extends RuntimeException {
     private int exitCode = Main.STARTUP_EXCEPTION;
 
-    public StartupAbortedException(Throwable cause) {
+    StartupAbortedException(Throwable cause) {
       super(cause);
     }
 
-    public StartupAbortedException(String message, Throwable cause) {
+    StartupAbortedException(String message, Throwable cause) {
       super(message, cause);
     }
 
@@ -273,6 +268,7 @@ public class PluginManager extends PluginManagerCore {
       return exitCode;
     }
 
+    @NotNull
     public StartupAbortedException exitCode(int exitCode) {
       this.exitCode = exitCode;
       return this;

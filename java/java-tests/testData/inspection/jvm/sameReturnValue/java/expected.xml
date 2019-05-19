@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>3</line>
+    <problem_class>Method returns the same value</problem_class>
+    <description>Method always returns &lt;code&gt;0&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>10</line>
+    <problem_class>Method returns the same value</problem_class>
+    <description>Method always returns &lt;code&gt;0&lt;/code&gt;</description>
+  </problem>
+</problems>
+

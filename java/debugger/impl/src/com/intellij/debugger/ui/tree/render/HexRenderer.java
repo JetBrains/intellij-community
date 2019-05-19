@@ -1,52 +1,43 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class HexRenderer extends NodeRendererImpl{
+public class HexRenderer extends NodeRendererImpl {
   public static final @NonNls String UNIQUE_ID = "HexRenderer";
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.HexRenderer");
 
   public HexRenderer() {
-    setEnabled(false);
+    super(DEFAULT_NAME, false);
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public @NonNls String getName() {
     return "Hex";
   }
 
+  @Override
   public void setName(String name) {
     // prohibit change
   }
 
+  @Override
   public HexRenderer clone() {
     return (HexRenderer) super.clone();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
     Value value = valueDescriptor.getValue();
     StringBuilder buf = new StringBuilder();
@@ -69,27 +60,27 @@ public class HexRenderer extends NodeRendererImpl{
   static void appendHexValue(@NotNull PrimitiveValue value, StringBuilder buf) {
     if (value instanceof CharValue) {
       long longValue = value.longValue();
-      buf.append("0x").append(Long.toHexString(longValue).toUpperCase());
+      buf.append("0x").append(StringUtil.toUpperCase(Long.toHexString(longValue)));
     }
     else if (value instanceof ByteValue) {
-      String strValue = Integer.toHexString(value.byteValue()).toUpperCase();
+      String strValue = StringUtil.toUpperCase(Integer.toHexString(value.byteValue()));
       if (strValue.length() > 2) {
         strValue = strValue.substring(strValue.length() - 2);
       }
       buf.append("0x").append(strValue);
     }
     else if (value instanceof ShortValue) {
-      String strValue = Integer.toHexString(value.shortValue()).toUpperCase();
+      String strValue = StringUtil.toUpperCase(Integer.toHexString(value.shortValue()));
       if (strValue.length() > 4) {
         strValue = strValue.substring(strValue.length() - 4);
       }
       buf.append("0x").append(strValue);
     }
     else if (value instanceof IntegerValue) {
-      buf.append("0x").append(Integer.toHexString(value.intValue()).toUpperCase());
+      buf.append("0x").append(StringUtil.toUpperCase(Integer.toHexString(value.intValue())));
     }
     else if (value instanceof LongValue) {
-      buf.append("0x").append(Long.toHexString(value.longValue()).toUpperCase());
+      buf.append("0x").append(StringUtil.toUpperCase(Long.toHexString(value.longValue())));
     }
     else {
       LOG.assertTrue(false);
@@ -97,6 +88,7 @@ public class HexRenderer extends NodeRendererImpl{
   }
 
   //returns whether this renderer is apllicable to this type or it's supertypes
+  @Override
   public boolean isApplicable(Type t) {
     if(t == null) {
       return false;

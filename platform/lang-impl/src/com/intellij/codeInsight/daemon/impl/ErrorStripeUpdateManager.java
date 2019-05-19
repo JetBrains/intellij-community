@@ -39,7 +39,7 @@ public class ErrorStripeUpdateManager {
     final EditorMarkupModel markup = (EditorMarkupModel) editor.getMarkupModel();
     markup.setErrorPanelPopupHandler(createPopup(file));
     markup.setErrorStripTooltipRendererProvider(createTooltipRenderer());
-    markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
+    markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
     setOrRefreshErrorStripeRenderer(markup, file);
   }
 
@@ -75,6 +75,12 @@ public class ErrorStripeUpdateManager {
 
   @Nullable
   protected TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
+    for (TrafficLightRendererContributor contributor : TrafficLightRendererContributor.EP_NAME.getExtensionList()) {
+      TrafficLightRenderer renderer = contributor.createRenderer(editor, file);
+      if (renderer != null) {
+        return renderer;
+      }
+    }
     return new TrafficLightRenderer(myProject, editor.getDocument(), file);
   }
 }

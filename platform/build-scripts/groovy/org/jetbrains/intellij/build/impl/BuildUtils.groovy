@@ -38,6 +38,16 @@ class BuildUtils {
     addToClassLoaderClassPath(path, ant, BuildUtils.class.classLoader)
   }
 
+  @CompileDynamic
+  static void addToSystemClasspath(File file) {
+    def classLoader = ClassLoader.getSystemClassLoader()
+    if (!(classLoader instanceof URLClassLoader)) {
+      throw new BuildException("Cannot add to system classpath: unsupported class loader $classLoader (${classLoader.getClass()})")
+    }
+
+    classLoader.addURL(file.toURI().toURL())
+  }
+
   static void addToJpsClassPath(String path, AntBuilder ant) {
     //we need to add path to classloader of BuilderService to ensure that classes from that path will be returned by JpsServiceManager.getExtensions
     addToClassLoaderClassPath(path, ant, Class.forName("org.jetbrains.jps.incremental.BuilderService").classLoader)
@@ -81,11 +91,20 @@ class BuildUtils {
       //if the build script is running under Ant or AntBuilder it may replace the standard System.out
       def field = Main.class.getDeclaredField("out")
       field.accessible = true
-      return (PrintStream) field.get(null)
+      return (PrintStream) field.get(null) // No longer works in recent Ant 1.9.x and 1.10
     }
     catch (Throwable ignored) {
-      return System.out
     }
+    try {
+      def clazz = Class.forName("org.jetbrains.jps.gant.GantWithClasspathTask")
+      def field = clazz.getDeclaredField("out")
+      field.setAccessible(true)
+      def out = field.get(null)
+      if (out != null) return out as PrintStream
+    }
+    catch (Throwable ignored) {
+    }
+    return System.out
   }
 
   static void defineFtpTask(BuildContext context) {

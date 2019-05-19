@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.snapShooter;
 
@@ -32,7 +30,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -59,6 +56,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -71,7 +69,7 @@ public class CreateSnapShotAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.uiDesigner.snapShooter.CreateSnapShotAction");
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     e.getPresentation().setVisible(project != null && view != null && hasDirectoryInPackage(project, view));
@@ -88,7 +86,8 @@ public class CreateSnapShotAction extends AnAction {
     return false;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     if (project == null || view == null) {
@@ -206,7 +205,7 @@ public class CreateSnapShotAction extends AnAction {
             PsiFile formFile = PsiFileFactory.getInstance(dir.getProject())
               .createFileFromText(dlg.getFormName() + GuiFormFileType.DOT_DEFAULT_EXTENSION, snapshot1);
             formFile = (PsiFile)dir.add(formFile);
-            formFile.getVirtualFile().setCharset(CharsetToolkit.UTF8_CHARSET);
+            formFile.getVirtualFile().setCharset(StandardCharsets.UTF_8);
             formFile.getViewProvider().getDocument().setText(snapshot1);
             view.selectElement(formFile);
           }
@@ -305,6 +304,7 @@ public class CreateSnapShotAction extends AnAction {
       myComponentTree.setModel(model);
       myComponentTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
       myComponentTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+        @Override
         public void valueChanged(TreeSelectionEvent e) {
           updateOKAction();
         }
@@ -323,6 +323,7 @@ public class CreateSnapShotAction extends AnAction {
         new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, attributes.getForegroundColor());
 
       myComponentTree.setCellRenderer(new ColoredTreeCellRenderer() {
+        @Override
         public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
           SnapShotRemoteComponent rc = (SnapShotRemoteComponent) value;
 
@@ -357,7 +358,8 @@ public class CreateSnapShotAction extends AnAction {
         }
       });
       myFormNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-        protected void textChanged(DocumentEvent e) {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
           updateOKAction();
         }
       });
@@ -503,6 +505,7 @@ public class CreateSnapShotAction extends AnAction {
       }
     }
 
+    @Override
     @Nullable
     protected JComponent createCenterPanel() {
       return myRootPanel;

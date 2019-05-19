@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +26,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
@@ -54,6 +58,7 @@ public abstract class DebuggerUtils {
         return "null";
       }
       if (value instanceof StringReference) {
+        ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
         return ((StringReference)value).value();
       }
       if (isInteger(value)) {
@@ -103,9 +108,11 @@ public abstract class DebuggerUtils {
         if (toStringMethod == null) {
           throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
+        Method finalToStringMethod = toStringMethod;
+        final Value result = evaluationContext.computeAndKeep(
+          () -> debugProcess.invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0));
         // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
         // it is a plain com.sun.tools.jdi.ObjectReferenceImpl
-        final Value result = debugProcess.invokeInstanceMethod(evaluationContext, objRef, toStringMethod, Collections.emptyList(), 0);
         if (result == null) {
           return "null";
         }
@@ -115,6 +122,14 @@ public abstract class DebuggerUtils {
     }
     catch (ObjectCollectedException ignored) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
+    }
+  }
+
+  public static void ensureNotInsideObjectConstructor(@NotNull ObjectReference reference, @NotNull EvaluationContext context)
+    throws EvaluateException {
+    StackFrameProxy frameProxy = context.getFrameProxy();
+    if (frameProxy != null && frameProxy.location().method().isConstructor() && reference.equals(context.computeThisObject())) {
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.object.is.being.initialized"));
     }
   }
 
@@ -388,7 +403,7 @@ public abstract class DebuggerUtils {
 
     try {
       if (getArrayClass(className) != null) {
-        return JavaPsiFacade.getInstance(project).getElementFactory().createTypeFromText(className, null);
+        return JavaPsiFacade.getElementFactory(project).createTypeFromText(className, null);
       }
       if (project.isDefault()) {
         return null;
@@ -488,12 +503,12 @@ public abstract class DebuggerUtils {
     if (typeComponent == null) {
       return false;
     }
-    return Arrays.stream(SyntheticTypeComponentProvider.EP_NAME.getExtensions()).anyMatch(provider -> provider.isSynthetic(typeComponent));
+    return SyntheticTypeComponentProvider.EP_NAME.extensions().noneMatch(provider -> provider.isNotSynthetic(typeComponent)) &&
+           SyntheticTypeComponentProvider.EP_NAME.extensions().anyMatch(provider -> provider.isSynthetic(typeComponent));
   }
 
   public static boolean isInsideSimpleGetter(@NotNull PsiElement contextElement) {
-    return Arrays.stream(SimplePropertyGetterProvider.EP_NAME.getExtensions())
-      .anyMatch(provider -> provider.isInsideSimpleGetter(contextElement));
+    return SimplePropertyGetterProvider.EP_NAME.extensions().anyMatch(provider -> provider.isInsideSimpleGetter(contextElement));
   }
 
   public static boolean isPrimitiveType(final String typeName) {
@@ -537,7 +552,7 @@ public abstract class DebuggerUtils {
       return true;
     }
 
-    return Arrays.stream(JavaDebugAware.EP_NAME.getExtensions()).anyMatch(provider -> provider.isBreakpointAware(file));
+    return JavaDebugAware.EP_NAME.extensions().anyMatch(provider -> provider.isBreakpointAware(file));
   }
 
   public static boolean isAndroidVM(@NotNull VirtualMachine virtualMachine) {

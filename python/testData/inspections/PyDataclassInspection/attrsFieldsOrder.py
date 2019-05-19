@@ -60,3 +60,15 @@ class D1:
 class D2:
     x: int = attr.ib(default=attr.NOTHING)
     y: int
+
+
+@attr.dataclass
+class E1:
+    x: int = 0
+    y: int = attr.ib(init=False)
+
+
+@attr.dataclass
+class F1:
+    foo = "bar"  # <- has no type annotation, so doesn't count.
+    baz: str

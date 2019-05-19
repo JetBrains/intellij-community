@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +37,7 @@ import java.util.List;
  */
 public class DumpExtensionsAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     List<ExtensionsArea> areas = new ArrayList<>();
     areas.add(Extensions.getRootArea());
     final Project project = e.getData(CommonDataKeys.PROJECT);

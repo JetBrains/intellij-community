@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash;
 
 import com.intellij.notification.Notification;
@@ -12,9 +12,11 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 public class GitStashChangesSaver extends GitChangesSaver {
@@ -33,7 +36,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private static final String NO_LOCAL_CHANGES_TO_SAVE = "No local changes to save";
 
   @NotNull private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final Set<VirtualFile> myStashedRoots = ContainerUtil.newHashSet(); // save stashed roots to unstash only them
+  @NotNull private final Set<VirtualFile> myStashedRoots = new HashSet<>(); // save stashed roots to unstash only them
+
 
   public GitStashChangesSaver(@NotNull Project project,
                               @NotNull Git git,
@@ -81,11 +85,15 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   @Override
   public void load() {
+    final String oldProgressTitle = myProgressIndicator.getText();
     GitStashUtils.unstash(myProject, myStashedRoots, (root) -> {
+      final String message = "Popping changes to '" + root.getName() + "'...";
+      myProgressIndicator.setText(message);
       GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);
       handler.addParameters("pop");
       return handler;
     }, new UnstashConflictResolver(myProject, myGit, myStashedRoots, myParams));
+    myProgressIndicator.setText(oldProgressTitle);
   }
 
   @Override
@@ -118,9 +126,9 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     private final Set<VirtualFile> myStashedRoots;
 
-    public UnstashConflictResolver(@NotNull Project project, @NotNull Git git,
+    UnstashConflictResolver(@NotNull Project project, @NotNull Git git,
                                    @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
-      super(project, git, stashedRoots, makeParamsOrUse(params, project));
+      super(project, stashedRoots, makeParamsOrUse(params, project));
       myStashedRoots = stashedRoots;
     }
 
@@ -168,16 +176,19 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   private static class UnstashMergeDialogCustomizer extends MergeDialogCustomizer {
 
+    @NotNull
     @Override
     public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       return "Uncommitted changes that were stashed before update have conflicts with updated files.";
     }
 
+    @NotNull
     @Override
     public String getLeftPanelTitle(@NotNull VirtualFile file) {
       return getConflictLeftPanelTitle();
     }
 
+    @NotNull
     @Override
     public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
       return getConflictRightPanelTitle();

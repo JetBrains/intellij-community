@@ -8,7 +8,6 @@ import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -19,6 +18,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.util.PsiUtilCore;
+import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
-  public SuggestEnumValuesFix() {
+  private final JsonLikeSyntaxAdapter myQuickFixAdapter;
+
+  public SuggestEnumValuesFix(JsonLikeSyntaxAdapter quickFixAdapter) {
+    myQuickFixAdapter = quickFixAdapter;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -45,17 +50,23 @@ public class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix<Common
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof JsonValue)) return;
+    PsiElement initialElement = descriptor.getPsiElement();
+    PsiElement element = myQuickFixAdapter.adjustValue(initialElement);
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(element.getContainingFile().getVirtualFile());
     boolean whitespaceBefore = false;
-    if (element.getPrevSibling() instanceof PsiWhiteSpace) {
+    PsiElement prevPrev = null;
+    PsiElement prev = element.getPrevSibling();
+    if (prev instanceof PsiWhiteSpace) {
       whitespaceBefore = true;
+      prevPrev = prev.getPrevSibling();
     }
+    boolean shouldAddWhitespace = myQuickFixAdapter.fixWhitespaceBefore(initialElement, element);
     WriteAction.run(() -> element.delete());
     EditorEx editor = EditorUtil.getEditorEx(fileEditor);
     assert editor != null;
-    if (whitespaceBefore) {
+    // this is a workaround for buggy formatters such as in YAML - it removes the whitespace after ':' when deleting the value
+    shouldAddWhitespace |= prevPrev != null && PsiUtilCore.getElementType(prevPrev.getNextSibling()) != TokenType.WHITE_SPACE;
+    if (shouldAddWhitespace && whitespaceBefore) {
       WriteAction.run(() -> {
         int offset = editor.getCaretModel().getOffset();
         editor.getDocument().insertString(offset, " ");

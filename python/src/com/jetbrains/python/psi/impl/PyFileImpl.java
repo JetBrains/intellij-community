@@ -406,9 +406,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       return results;
     }
     final List<String> allNames = getDunderAll();
-    if (allNames != null && allNames.contains(name)) {
+    if (allNames != null && !name.contains(".") && allNames.contains(name)) {
       final ResolveResultList allFallbackResults = new ResolveResultList();
-
 
       PyResolveImportUtil
         .resolveModuleAt(QualifiedName.fromComponents(name), getContainingDirectory(), PyResolveImportUtil.fromFoothold(this))
@@ -613,20 +612,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
       return PyUtil.strListValue(expression);
     }
-  }
-
-  /**
-   * @deprecated This method will be removed in 2018.3.
-   */
-  @Nullable
-  @Deprecated
-  public static List<String> getStringListFromTargetExpression(final String name, List<PyTargetExpression> attrs) {
-    for (PyTargetExpression attr : attrs) {
-      if (name.equals(attr.getName())) {
-        return PyUtil.strListValue(attr.findAssignedValue());
-      }
-    }
-    return null;
   }
 
   @Override

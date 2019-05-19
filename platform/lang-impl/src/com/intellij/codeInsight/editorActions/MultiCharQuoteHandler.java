@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,18 @@ public interface MultiCharQuoteHandler extends QuoteHandler {
   /**
    * Should insert <code>closingQuote</code> returned from {@link #getClosingQuote(HighlighterIterator, int)} in the document. 
    */
+  default void insertClosingQuote(@NotNull Editor editor, int offset, PsiFile file, @NotNull CharSequence closingQuote) {
+    insertClosingQuote(editor, offset, closingQuote);
+  }
+
+  /**
+   * Should insert <code>closingQuote</code> returned from {@link #getClosingQuote(HighlighterIterator, int)} in the document.
+   * API compatibility method
+   */
   default void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull CharSequence closingQuote) {
     editor.getDocument().insertString(offset, closingQuote);
+    if (closingQuote.length() == 1) {
+      TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);
+    }
   }
 }

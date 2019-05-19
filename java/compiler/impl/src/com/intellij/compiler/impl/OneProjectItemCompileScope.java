@@ -46,6 +46,7 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
     myUrl = file.isDirectory()? url + "/" : url;
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
     final List<VirtualFile> files = new ArrayList<>(1);
@@ -60,13 +61,15 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
     return VfsUtil.toVirtualFileArray(files);
   }
 
-  public boolean belongs(String url) {
+  @Override
+  public boolean belongs(@NotNull String url) {
     if (myFile.isDirectory()){
       return FileUtil.startsWith(url, myUrl);
     }
     return FileUtil.pathsEqual(url, myUrl);
   }
 
+  @Override
   @NotNull
   public Module[] getAffectedModules() {
     final Module module = ModuleUtil.findModuleForFile(myFile, myProject);

@@ -18,6 +18,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
+import com.intellij.psi.PsiModifier;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class UnusedReturnValueTest extends InspectionTestCase {
@@ -67,5 +68,19 @@ public class UnusedReturnValueTest extends InspectionTestCase {
     finally {
       myTool.IGNORE_BUILDER_PATTERN = false;
     }
+  }
+
+  public void testVisibilitySetting() {
+    try {
+      myTool.highestModifier = PsiModifier.PRIVATE;
+      doTest();
+    }
+    finally {
+      myTool.highestModifier = UnusedReturnValue.DEFAULT_HIGHEST_MODIFIER;
+    }
+  }
+
+  public void testUsedFromGroovy() {
+    doTest();
   }
 }

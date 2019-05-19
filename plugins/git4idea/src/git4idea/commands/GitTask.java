@@ -187,7 +187,7 @@ public class GitTask {
       }
 
       @Override
-      public void startFailed(Throwable exception) {
+      public void startFailed(@NotNull Throwable exception) {
         myHandler.addError(new VcsException("Git start failed: " + exception.getMessage(), exception));
       }
 
@@ -224,7 +224,7 @@ public class GitTask {
       }
 
       @Override
-      public void startFailed(Throwable exception) {
+      public void startFailed(@NotNull Throwable exception) {
         task.dispose();
       }
     });
@@ -254,7 +254,7 @@ public class GitTask {
   private abstract class BackgroundableTask extends Task.Backgroundable implements TaskExecution {
     private final GitTaskDelegate myDelegate;
 
-    public BackgroundableTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull final String processTitle) {
+    BackgroundableTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull final String processTitle) {
       super(project, processTitle, true);
       myDelegate = new GitTaskDelegate(myProject, handler, this);
     }
@@ -299,7 +299,7 @@ public class GitTask {
   private abstract class ModalTask extends Task.Modal implements TaskExecution {
     private final GitTaskDelegate myDelegate;
 
-    public ModalTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull final String processTitle) {
+    ModalTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull final String processTitle) {
       super(project, processTitle, true);
       myDelegate = new GitTaskDelegate(myProject, handler, this);
     }
@@ -333,7 +333,7 @@ public class GitTask {
     private ScheduledFuture<?> myTimer;
     private final Project myProject;
 
-    public GitTaskDelegate(Project project, GitHandler handler, TaskExecution task) {
+    GitTaskDelegate(Project project, GitHandler handler, TaskExecution task) {
       myProject = project;
       myHandler = handler;
       myTask = task;

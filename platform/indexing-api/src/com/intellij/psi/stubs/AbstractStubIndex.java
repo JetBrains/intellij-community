@@ -31,7 +31,7 @@ public abstract class AbstractStubIndex<Key, Psi extends PsiElement> implements 
     return StubIndex.getInstance().getAllKeys(getKey(), project);
   }
 
-  public boolean processAllKeys(Project project, Processor<Key> processor) {
+  public boolean processAllKeys(Project project, Processor<? super Key> processor) {
     return StubIndex.getInstance().processAllKeys(getKey(), project, processor);
   }
 
@@ -39,5 +39,6 @@ public abstract class AbstractStubIndex<Key, Psi extends PsiElement> implements 
     return StubIndex.getInstance().get(getKey(), key, project, scope);
   }
 
+  @Override
   public int getCacheSize() { return 2 * 1024; }
 }

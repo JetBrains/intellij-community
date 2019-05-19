@@ -19,11 +19,13 @@ package com.intellij.refactoring.util.duplicates;
 import org.jetbrains.annotations.NonNls;
 
 public class ContinueReturnValue extends GotoReturnValue {
+  @Override
   public boolean isEquivalent(final ReturnValue other) {
     return other instanceof ContinueReturnValue;
   }
 
 
+  @Override
   @NonNls
   public String getGotoStatement() {
     return "if (a) continue;";

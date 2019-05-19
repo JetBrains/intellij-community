@@ -126,7 +126,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   public final void install(@NotNull Component component){
-    myTopComponent = new WeakReference<Component>(component);
+    myTopComponent = new WeakReference<>(component);
     installImpl(component);
   }
   
@@ -176,7 +176,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
    * this method each time one of the populated  component gains focus. All "temporary" focus
    * event are ignored.
    *
-   * @param component currenly focused component. The component can be {@code null}
+   * @param component currently focused component. The component can be {@code null}
    * @param cause
    */
   protected void focusedComponentChanged(Component component, @Nullable final AWTEvent cause){}
@@ -184,10 +184,10 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   protected void focusLostImpl(final FocusEvent e){}
 
   private void setFocusedComponent(final Component focusedComponent) {
-    myFocusedComponent = new WeakReference<Component>(focusedComponent);
+    myFocusedComponent = new WeakReference<>(focusedComponent);
   }
 
   private void setNearestFocusableComponent(final Component nearestFocusableComponent) {
-    myNearestFocusableComponent = new WeakReference<Component>(nearestFocusableComponent);
+    myNearestFocusableComponent = new WeakReference<>(nearestFocusableComponent);
   }
 }

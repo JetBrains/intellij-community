@@ -34,7 +34,6 @@ import java.util.List;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 12/26/11 5:19 PM
  */
 public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
 

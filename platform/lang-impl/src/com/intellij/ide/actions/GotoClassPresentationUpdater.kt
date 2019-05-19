@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -20,6 +20,12 @@ class GotoClassPresentationUpdater : PreloadingActivity() {
 
   companion object {
     @JvmStatic
+    fun getTabTitle(pluralize: Boolean): String {
+      val split = getActionTitle().split("/".toRegex()).take(2).toTypedArray()
+      return if (pluralize) StringUtil.pluralize(split[0]) else split[0] + if (split.size > 1) " +" else ""
+    }
+
+    @JvmStatic
     fun getActionTitle(): String {
       val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
       val mainContributor = ChooseByNameRegistry.getInstance().classModelContributors
@@ -34,7 +40,7 @@ class GotoClassPresentationUpdater : PreloadingActivity() {
       val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
       return ChooseByNameRegistry.getInstance().classModelContributors
         .filterIsInstance(GotoClassContributor::class.java)
-        .sortedBy { 
+        .sortedBy {
           val index = primaryIdeLanguages.indexOf(it.elementLanguage)
           if (index == -1) primaryIdeLanguages.size else index
         }

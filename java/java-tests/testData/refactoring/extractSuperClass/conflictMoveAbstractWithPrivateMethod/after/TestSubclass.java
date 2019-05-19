@@ -1,5 +1,5 @@
 public class TestSubclass extends Test {
-    @java.lang.Override
+    @Override
     void x() {
       xx();
     }

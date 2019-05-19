@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing.configurers;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -33,6 +19,7 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -144,7 +131,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
                                                   @Nullable ProcessorConfigProfile moduleProfile,
                                                   boolean isDefault,
                                                   @NotNull Module module) {
-    List<ProcessorConfigProfile> profiles = ContainerUtil.newArrayList(compilerConfiguration.getModuleProcessorProfiles());
+    List<ProcessorConfigProfile> profiles = new ArrayList<>(compilerConfiguration.getModuleProcessorProfiles());
     for (ProcessorConfigProfile p : profiles) {
       if (p != moduleProfile) {
         p.removeModuleName(module.getName());
@@ -154,6 +141,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
       }
 
       if (!isDefault && moduleProfile != null && isSimilarProfiles(p, moduleProfile)) {
+        moduleProfile.setEnabled(p.isEnabled());
         final String mavenProjectRootProfileName = PROFILE_PREFIX + rootProject.getDisplayName();
         ProcessorConfigProfile mergedProfile = compilerConfiguration.findModuleProcessorProfile(mavenProjectRootProfileName);
         if (mergedProfile == null) {
@@ -187,9 +175,11 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
 
     ProcessorConfigProfileImpl p1 = new ProcessorConfigProfileImpl(profile1);
     p1.setName("tmp");
+    p1.setEnabled(true);
     p1.clearModuleNames();
     ProcessorConfigProfileImpl p2 = new ProcessorConfigProfileImpl(profile2);
     p2.setName("tmp");
+    p2.setEnabled(true);
     p2.clearModuleNames();
     return p1.equals(p2);
   }

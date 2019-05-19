@@ -10,6 +10,7 @@ class UpClass {
       @CompileStatic
       def method() {
       new I() {
+        @CompileDynamic
         def m() {
           InClass.unresolved
         }

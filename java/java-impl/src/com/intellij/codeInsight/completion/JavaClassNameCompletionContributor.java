@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -47,6 +33,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -97,7 +84,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   public static void addAllClasses(@NotNull CompletionParameters parameters,
                                    final boolean filterByScope,
                                    @NotNull final PrefixMatcher matcher,
-                                   @NotNull final Consumer<LookupElement> consumer) {
+                                   @NotNull final Consumer<? super LookupElement> consumer) {
     final PsiElement insertedElement = parameters.getPosition();
 
     if (JavaCompletionContributor.ANNOTATION_NAME.accepts(insertedElement)) {
@@ -106,6 +93,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         JavaPsiClassReferenceElement item = AllClassesGetter.createLookupItem(anno, JAVA_CLASS_INSERT_HANDLER);
         item.addLookupStrings(getClassNameWithContainers(anno));
         consumer.consume(item);
+        return true;
       });
       for (String name : CompletionUtil.sortMatching(matcher, annoMap.keySet())) {
         if (!ContainerUtil.process(annoMap.get(name), processor)) break;
@@ -145,7 +133,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         processClass(psiClass, null, "");
       }
 
-      private void processClass(PsiClass psiClass, @Nullable Set<PsiClass> visited, String prefix) {
+      private void processClass(PsiClass psiClass, @Nullable Set<? super PsiClass> visited, String prefix) {
         boolean isInnerClass = StringUtil.isNotEmpty(prefix);
         if (isInnerClass && isProcessedIndependently(psiClass)) {
           return;
@@ -162,7 +150,9 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
               AllClassesGetter.isAcceptableInContext(insertedElement, eachClass, filterByScope, pkgContext);
             for (JavaPsiClassReferenceElement element : createClassLookupItems(psiClass, afterNew, JAVA_CLASS_INSERT_HANDLER, condition)) {
               element.setLookupString(prefix + element.getLookupString());
-              JavaConstructorCallElement.wrap(element, insertedElement).forEach(consumer::consume);
+
+              JavaConstructorCallElement.wrap(element, insertedElement).forEach(
+                e -> consumer.consume(JavaCompletionUtil.highlightIfNeeded(null, e, e.getObject(), insertedElement)));
             }
           }
         } else {
@@ -170,7 +160,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           if (name != null) {
             PsiClass[] innerClasses = psiClass.getInnerClasses();
             if (innerClasses.length > 0) {
-              if (visited == null) visited = ContainerUtil.newHashSet();
+              if (visited == null) visited = new HashSet<>();
 
               for (PsiClass innerClass : innerClasses) {
                 if (visited.add(innerClass)) {
@@ -219,10 +209,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     return name;
   }
 
-  static LookupElement highlightIfNeeded(JavaPsiClassReferenceElement element, CompletionParameters parameters) {
-    return JavaCompletionUtil.highlightIfNeeded(null, element, element.getObject(), parameters.getPosition());
-  }
-
   public static JavaPsiClassReferenceElement createClassLookupItem(final PsiClass psiClass, final boolean inJavaContext) {
     return AllClassesGetter.createLookupItem(psiClass, inJavaContext ? JAVA_CLASS_INSERT_HANDLER
                                                                      : AllClassesGetter.TRY_SHORTENING);
@@ -231,7 +217,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   public static List<JavaPsiClassReferenceElement> createClassLookupItems(final PsiClass psiClass,
                                                                           boolean withInners,
                                                                           InsertHandler<JavaPsiClassReferenceElement> insertHandler,
-                                                                          Condition<PsiClass> condition) {
+                                                                          Condition<? super PsiClass> condition) {
     List<JavaPsiClassReferenceElement> result = new SmartList<>();
     if (condition.value(psiClass)) {
       result.add(AllClassesGetter.createLookupItem(psiClass, insertHandler));

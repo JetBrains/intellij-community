@@ -1,6 +1,7 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolReader
 
-private val BASE_VALUE_PREFIX = "baseMessage"
+private const val BASE_VALUE_PREFIX = "baseMessage"
 
 internal class ExistingSubtypeAspect(private val jsonSuperClass: TypeRef<*>) {
   private var subtypeCaster: SubtypeCaster? = null

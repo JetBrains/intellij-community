@@ -16,8 +16,8 @@
 package com.intellij.ide.diff;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -28,7 +28,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -111,12 +110,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   @Nullable
   @Override
   public byte[] getContent() throws IOException {
-    return ApplicationManager.getApplication().runReadAction(new ThrowableComputable<byte[], IOException>() {
-      @Override
-      public byte[] compute() throws IOException {
-        return myFile.contentsToByteArray();
-      }
-    });
+    return ReadAction.compute(() -> myFile.contentsToByteArray());
   }
 
   @Override

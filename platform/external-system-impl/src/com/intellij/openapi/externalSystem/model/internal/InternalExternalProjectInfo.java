@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.internal;
 
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -22,54 +10,59 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
-
-/**
- * @author Vladislav.Soroka
- * @since 9/22/2014
- */
-public class InternalExternalProjectInfo implements ExternalProjectInfo, Serializable {
-
-  private static final long serialVersionUID = 1L;
-
+public final class InternalExternalProjectInfo implements ExternalProjectInfo {
   @NotNull
-  private final ProjectSystemId myProjectSystemId;
+  private final ProjectSystemId projectSystemId;
   @NotNull
-  private final String myExternalProjectPath;
+  private final String externalProjectPath;
   @Nullable
-  private DataNode<ProjectData> myExternalProjectStructure;
+  private final DataNode<ProjectData> externalProjectStructure;
+
   private long lastSuccessfulImportTimestamp = -1;
   private long lastImportTimestamp = -1;
+
+  private final String buildNumber;
 
   public InternalExternalProjectInfo(@NotNull ProjectSystemId projectSystemId,
                                      @NotNull String externalProjectPath,
                                      @Nullable DataNode<ProjectData> externalProjectStructure) {
-    myProjectSystemId = projectSystemId;
-    myExternalProjectPath = externalProjectPath;
-    myExternalProjectStructure = externalProjectStructure;
+    this.projectSystemId = projectSystemId;
+    this.externalProjectPath = externalProjectPath;
+    this.externalProjectStructure = externalProjectStructure;
+    buildNumber = ApplicationInfo.getInstance().getBuild().asString();
+  }
+
+  // InternalExternalProjectInfo is quite huge, better to not use PropertyMapping
+  @SuppressWarnings("unused")
+  private InternalExternalProjectInfo() {
+    projectSystemId = ProjectSystemId.IDE;
+    externalProjectPath = "";
+    externalProjectStructure = null;
+    buildNumber = ApplicationManager.getApplication() == null ? "" : ApplicationInfo.getInstance().getBuild().asString();
   }
 
   @Override
   @NotNull
   public ProjectSystemId getProjectSystemId() {
-    return myProjectSystemId;
+    return projectSystemId;
   }
 
   @Override
   @NotNull
   public String getExternalProjectPath() {
-    return myExternalProjectPath;
+    return externalProjectPath;
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Nullable
   public String getNullSafeExternalProjectPath() {
-    return myExternalProjectPath;
+    return externalProjectPath;
   }
 
   @Override
   @Nullable
   public DataNode<ProjectData> getExternalProjectStructure() {
-    return myExternalProjectStructure;
+    return externalProjectStructure;
   }
 
   @Override
@@ -82,24 +75,25 @@ public class InternalExternalProjectInfo implements ExternalProjectInfo, Seriali
     return lastImportTimestamp;
   }
 
-  public void setExternalProjectStructure(@Nullable DataNode<ProjectData> externalProjectStructure) {
-    myExternalProjectStructure = externalProjectStructure;
+  public void setLastSuccessfulImportTimestamp(long value) {
+    lastSuccessfulImportTimestamp = value;
   }
 
-  public void setLastSuccessfulImportTimestamp(long lastSuccessfulImportTimestamp) {
-    this.lastSuccessfulImportTimestamp = lastSuccessfulImportTimestamp;
+  public void setLastImportTimestamp(long value) {
+    lastImportTimestamp = value;
   }
 
-  public void setLastImportTimestamp(long lastImportTimestamp) {
-    this.lastImportTimestamp = lastImportTimestamp;
+  @Override
+  public String getBuildNumber() {
+    return buildNumber;
   }
 
   @Override
   public ExternalProjectInfo copy() {
     InternalExternalProjectInfo copy = new InternalExternalProjectInfo(
-      myProjectSystemId,
-      myExternalProjectPath,
-      myExternalProjectStructure != null ? myExternalProjectStructure.graphCopy() : null
+      projectSystemId,
+      externalProjectPath,
+      externalProjectStructure != null ? externalProjectStructure.graphCopy() : null
     );
     copy.setLastImportTimestamp(lastImportTimestamp);
     copy.setLastSuccessfulImportTimestamp(lastSuccessfulImportTimestamp);
@@ -109,9 +103,9 @@ public class InternalExternalProjectInfo implements ExternalProjectInfo, Seriali
   @Override
   public String toString() {
     return "InternalExternalProjectInfo{" +
-           "myProjectSystemId=" + myProjectSystemId +
-           ", myExternalProjectPath='" + myExternalProjectPath + '\'' +
-           ", myExternalProjectStructure=" + myExternalProjectStructure +
+           "myProjectSystemId=" + projectSystemId +
+           ", externalProjectPath='" + externalProjectPath + '\'' +
+           ", externalProjectStructure=" + externalProjectStructure +
            ", lastSuccessfulImportTimestamp=" + lastSuccessfulImportTimestamp +
            ", lastImportTimestamp=" + lastImportTimestamp +
            '}';

@@ -16,6 +16,6 @@ class MyTest {
   List<Integer> baz(Iterator<Integer> s, Iterator<Integer> i) {return null;}
 
   {
-    List<Integer> l = foo(a -> bar(ba<ref>z(a.iterator(), a.iterator())));
+    List<Integer> l = foo(a -> bar(ba<caret>z(a.iterator(), a.iterator())));
   }
 }

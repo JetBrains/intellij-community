@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 /**
+ * @author Sergey Zhulin
  * Date: May 6, 2006
  * Time: 10:43:01 AM
  */

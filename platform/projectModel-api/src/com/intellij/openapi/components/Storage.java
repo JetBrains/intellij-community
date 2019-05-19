@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -12,6 +12,9 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Storage {
+  @Deprecated
+  String NOT_ROAMABLE_FILE = StoragePathMacros.NON_ROAMABLE_FILE;
+
   /**
    * @deprecated Use {@link #value()}.
    */
@@ -22,9 +25,10 @@ public @interface Storage {
    * Relative to component container configuration root path.
    * Consider using shorthand form - {@code @Storage("yourName.xml")} (when you need to specify only file path).
    *
-   * Consider reusing existing storage files instead of a new one. No-one need myriads config files. Related components should reuse storage file.
+   * Consider reusing existing storage files instead of a new one. No one need myriads config files. Related components should reuse storage file.
+   *
+   * @see StoragePathMacros
    */
-  @NonNls
   String value() default "";
 
   /**
@@ -48,16 +52,15 @@ public @interface Storage {
   Class<? extends StateSplitter> stateSplitter() default StateSplitterEx.class;
 
   /**
-   * @deprecated Not required and not used anymore.
-   */
-  @Deprecated
-  StorageScheme scheme() default StorageScheme.DEFAULT;
-
-  /**
    * Whether to apply save threshold policy (defaults to true if roamingType is set to DISABLED)
    */
   ThreeState useSaveThreshold() default ThreeState.UNSURE;
 
-  // internal use only
+  @ApiStatus.Internal
   boolean exclusive() default false;
+
+  /**
+   * Is exportable (Export Settings dialog) regardless of roaming type.
+   */
+  boolean exportable() default false;
 }

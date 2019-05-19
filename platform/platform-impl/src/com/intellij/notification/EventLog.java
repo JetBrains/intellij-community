@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.notification;
 
@@ -23,7 +9,7 @@ import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -55,8 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -215,7 +201,7 @@ public class EventLog {
     return StringUtil.replace(text, "\n", "\n" + indent);
   }
 
-  private static boolean isLongLine(@NotNull List<AnAction> actions) {
+  private static boolean isLongLine(@NotNull List<? extends AnAction> actions) {
     int size = actions.size();
     if (size > 3) {
       return true;
@@ -272,7 +258,7 @@ public class EventLog {
 
   private static String getStatusText(DocumentImpl logDoc,
                                       AtomicBoolean showMore,
-                                      List<RangeMarker> lineSeparators,
+                                      List<? extends RangeMarker> lineSeparators,
                                       String indent,
                                       boolean hasHtml) {
     DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(),true);
@@ -367,7 +353,7 @@ public class EventLog {
     return ArrayUtil.indexOf(tags, tag) != -1;
   }
 
-  private static void insertNewLineSubstitutors(Document document, AtomicBoolean showMore, List<RangeMarker> lineSeparators) {
+  private static void insertNewLineSubstitutors(Document document, AtomicBoolean showMore, List<? extends RangeMarker> lineSeparators) {
     for (RangeMarker marker : lineSeparators) {
       if (!marker.isValid()) {
         showMore.set(true);
@@ -398,7 +384,7 @@ public class EventLog {
     }
   }
 
-  private static void removeJavaNewLines(Document document, List<RangeMarker> lineSeparators, String indent, boolean hasHtml) {
+  private static void removeJavaNewLines(Document document, List<? super RangeMarker> lineSeparators, String indent, boolean hasHtml) {
     CharSequence text = document.getCharsSequence();
     int i = 0;
     while (true) {
@@ -420,7 +406,7 @@ public class EventLog {
     text = StringUtil.replace(text, "&raquo;", ">>");
     text = StringUtil.replace(text, "&laquo;", "<<");
     text = StringUtil.replace(text, "&hellip;", "...");
-    document.insertString(document.getTextLength(), StringUtil.unescapeXml(text));
+    document.insertString(document.getTextLength(), StringUtil.unescapeXmlEntities(text));
   }
 
   public static class LogEntry {
@@ -468,15 +454,15 @@ public class EventLog {
     }, true);
   }
 
-  public static class ProjectTracker extends AbstractProjectComponent {
+  public static class ProjectTracker implements ProjectComponent {
     private final Map<String, EventLogConsole> myCategoryMap = ContainerUtil.newConcurrentMap();
     private final List<Notification> myInitial = ContainerUtil.createLockFreeCopyOnWriteList();
     private final LogModel myProjectModel;
+    @NotNull private final Project myProject;
 
     public ProjectTracker(@NotNull final Project project) {
-      super(project);
-
       myProjectModel = new LogModel(project, project);
+      myProject = project;
 
       for (Notification notification : getApplicationComponent().myModel.takeNotifications()) {
         printNotification(notification);
@@ -593,7 +579,7 @@ public class EventLog {
     private final Notification myNotification;
     private final String myHref;
 
-    public NotificationHyperlinkInfo(Notification notification, String href) {
+    NotificationHyperlinkInfo(Notification notification, String href) {
       myNotification = notification;
       myHref = href;
     }
@@ -613,7 +599,7 @@ public class EventLog {
     private final Notification myNotification;
     private RangeHighlighter myRangeHighlighter;
 
-    public ShowBalloon(Notification notification) {
+    ShowBalloon(Notification notification) {
       myNotification = notification;
     }
 

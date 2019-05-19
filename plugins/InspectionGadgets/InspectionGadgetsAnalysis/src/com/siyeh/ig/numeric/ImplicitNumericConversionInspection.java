@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -143,6 +144,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     @Nullable
     @NonNls
     private static String convertExpression(PsiExpression expression, PsiType expectedType) {
+      expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (!(expression instanceof PsiLiteralExpression) && !isNegatedLiteral(expression)) {
         return null;
       }
@@ -254,6 +256,12 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     }
 
     @Override
+    public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+      super.visitArrayAccessExpression(expression);
+      checkExpression(expression);
+    }
+
+    @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       checkExpression(expression);
@@ -293,26 +301,40 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         }
       }
       final PsiType expressionType = expression.getType();
-      if (expressionType == null || !ClassUtils.isPrimitiveNumericType(expressionType)) {
+      if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
         return;
       }
       if (PsiType.CHAR.equals(expressionType) && (ignoreCharConversions || isArgumentOfStringIndexOf(parent))) {
         return;
       }
+      if (parent instanceof PsiAssignmentExpression) {
+        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+        if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ && assignmentExpression.getLExpression() == expression) {
+          final PsiExpression rhs = assignmentExpression.getRExpression();
+          if (rhs != null) {
+            final PsiType promotedType = TypeConversionUtil.binaryNumericPromotion(expressionType, rhs.getType());
+            checkTypes(expression, expressionType, promotedType);
+          }
+        }
+      }
       final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
       if (!ClassUtils.isPrimitiveNumericType(expectedType)) {
         return;
       }
-      if (expressionType.equals(expectedType)) {
+      checkTypes(expression, expressionType, expectedType);
+    }
+
+    private void checkTypes(PsiExpression expression, PsiType expressionType, PsiType convertedType) {
+      if (expressionType.equals(convertedType)) {
         return;
       }
-      if (ignoreWideningConversions && !TypeUtils.isNarrowingConversion(expressionType, expectedType)) {
+      if (ignoreWideningConversions && !TypeUtils.isNarrowingConversion(expressionType, convertedType)) {
         return;
       }
-      if (ignoreCharConversions && PsiType.CHAR.equals(expectedType)) {
+      if (ignoreCharConversions && PsiType.CHAR.equals(convertedType)) {
         return;
       }
-      registerError(expression, expression, expressionType, expectedType);
+      registerError(expression, expression, expressionType, convertedType);
     }
 
     private boolean isArgumentOfStringIndexOf(PsiElement parent) {

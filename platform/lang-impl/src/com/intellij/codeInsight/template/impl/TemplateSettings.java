@@ -4,6 +4,8 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.AbstractBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -14,11 +16,12 @@ import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.JdomKt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
@@ -36,10 +39,7 @@ import java.util.*;
 
 @State(
   name = "TemplateSettings",
-  storages = {
-    @Storage("templates.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  },
+  storages = @Storage("templates.xml"),
   additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
 )
 public class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
@@ -95,9 +95,10 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private final SchemeManager<TemplateGroup> mySchemeManager;
 
   private State myState = new State();
+  private final Map<Pair<String, String>, PluginInfo> myPredefinedTemplates = new HashMap<>();
 
   static final class ShortcutConverter extends Converter<Character> {
-    @Nullable
+    @NotNull
     @Override
     public Character fromString(@NotNull String shortcut) {
       return TAB.equals(shortcut) ? TAB_CHAR :
@@ -185,7 +186,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       @Nullable
       @Override
       public TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
-        TemplateGroup group = readTemplateFile(element, element.getAttributeValue("group"), false, false, getClass().getClassLoader());
+        TemplateGroup readGroup = parseTemplateGroup(element, element.getAttributeValue("group"), getClass().getClassLoader());
+        TemplateGroup group = readGroup == null ? null : mergeParsedGroup(element, false, false, readGroup);
         if (group != null) {
           group.setModified(false);
         }
@@ -203,12 +205,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
       @Override
       public void reloaded(@NotNull SchemeManager<TemplateGroup> schemeManager, @NotNull Collection<? extends TemplateGroup> groups) {
-        for (TemplateGroup group : groups) {
-          for (TemplateImpl template : group.getElements()) {
-            addTemplateImpl(template);
-          }
-        }
-        loadDefaultLiveTemplates();
+        doLoadTemplates(groups);
       }
 
       @NotNull
@@ -254,13 +251,6 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       }
 
       @Override
-      public void initScheme(@NotNull final TemplateGroup scheme) {
-        for (TemplateImpl template : scheme.getElements()) {
-          addTemplateImpl(template);
-        }
-      }
-
-      @Override
       public void onSchemeAdded(@NotNull final TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           addTemplateImpl(template);
@@ -275,12 +265,15 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       }
     });
 
-    for (TemplateGroup group : mySchemeManager.loadSchemes()) {
+    doLoadTemplates(mySchemeManager.loadSchemes());
+  }
+
+  private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {
+    for (TemplateGroup group : groups) {
       for (TemplateImpl template : group.getElements()) {
         addTemplateImpl(template);
       }
     }
-
     loadDefaultLiveTemplates();
   }
 
@@ -358,7 +351,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     myState.defaultShortcut = defaultShortcutChar;
   }
 
-  public Collection<TemplateImpl> getTemplates(@NonNls String key) {
+  @NotNull
+  public Collection<TemplateImpl> getTemplates(@NotNull String key) {
     return myTemplates.get(key);
   }
 
@@ -466,7 +460,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private void loadDefaultLiveTemplates() {
     try {
-      for (DefaultLiveTemplatesProvider provider : DefaultLiveTemplatesProvider.EP_NAME.getExtensions()) {
+      for (DefaultLiveTemplatesProvider provider : DefaultLiveTemplatesProvider.EP_NAME.getExtensionList()) {
         for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
           readDefTemplate(provider, defTemplate, true);
         }
@@ -482,21 +476,42 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
         }
       }
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
       LOG.error(e);
     }
   }
 
-  private void readDefTemplate(DefaultLiveTemplatesProvider provider, String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
+  private void readDefTemplate(@NotNull DefaultLiveTemplatesProvider provider, @NotNull String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
     InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
     if (inputStream != null) {
-      TemplateGroup group = readTemplateFile(JdomKt.loadElement(inputStream), getDefaultTemplateName(defTemplate), true, registerTemplate, provider.getClass().getClassLoader());
-      if (group != null && group.getReplace() != null) {
-        for (TemplateImpl template : myTemplates.get(group.getReplace())) {
-          removeTemplate(template);
+      Element element = JDOMUtil.load(inputStream);
+      TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), provider.getClass().getClassLoader());
+      if (defGroup != null) {
+        PluginInfo info = PluginInfoDetectorKt.getPluginInfo(provider.getClass());
+        for (TemplateImpl template : defGroup.getElements()) {
+          String key = template.getKey();
+          String groupName = template.getGroupName();
+          if (StringUtil.isNotEmpty(key) && StringUtil.isNotEmpty(groupName)) {
+            myPredefinedTemplates.put(Pair.create(key, groupName), info);
+          }
+        }
+
+        TemplateGroup group = mergeParsedGroup(element, true, registerTemplate, defGroup);
+        if (group != null && group.getReplace() != null) {
+          for (TemplateImpl template : myTemplates.get(group.getReplace())) {
+            removeTemplate(template);
+          }
         }
       }
     }
+  }
+
+  @Nullable
+  public PluginInfo findPluginForPredefinedTemplate(TemplateImpl template) {
+    return myPredefinedTemplates.get(Pair.create(template.getKey(), template.getGroupName()));
   }
 
   private static String getDefaultTemplateName(String defTemplate) {
@@ -504,7 +519,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @Nullable
-  private TemplateGroup readTemplateFile(@NotNull Element element, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, @NotNull ClassLoader classLoader) {
+  private static TemplateGroup parseTemplateGroup(@NotNull Element element, @NonNls String defGroupName, @NotNull ClassLoader classLoader) {
     if (!TEMPLATE_SET.equals(element.getName())) {
       LOG.error("Ignore invalid template scheme: " + JDOMUtil.writeElement(element));
       return null;
@@ -517,18 +532,27 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
     TemplateGroup result = new TemplateGroup(groupName, element.getAttributeValue("REPLACE"));
 
-    Map<String, TemplateImpl> created = new LinkedHashMap<>();
-
     for (Element child : element.getChildren(TEMPLATE)) {
-      TemplateImpl template;
       try {
-        template = readTemplateFromElement(groupName, child, classLoader);
+        result.addElement(readTemplateFromElement(groupName, child, classLoader));
       }
       catch (Exception e) {
         LOG.warn("failed to load template " + element.getAttributeValue(NAME), e);
-        continue;
       }
+    }
+    return result;
+  }
 
+  @Nullable
+  private TemplateGroup mergeParsedGroup(@NotNull Element element,
+                                         boolean isDefault,
+                                         boolean registerTemplate,
+                                         TemplateGroup parsedGroup) {
+    TemplateGroup result = new TemplateGroup(parsedGroup.getName(), element.getAttributeValue("REPLACE"));
+
+    Map<String, TemplateImpl> created = new LinkedHashMap<>();
+
+    for (TemplateImpl template : parsedGroup.getElements()) {
       if (isDefault) {
         myDefaultTemplates.put(TemplateKey.keyOf(template), template);
       }
@@ -665,7 +689,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     return element;
   }
 
-  public void setTemplates(@NotNull List<TemplateGroup> newGroups) {
+  public void setTemplates(@NotNull List<? extends TemplateGroup> newGroups) {
     myTemplates.clear();
     myState.deletedKeys.clear();
     for (TemplateImpl template : myDefaultTemplates.values()) {
@@ -689,8 +713,13 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     return mySchemeManager.getAllSchemes();
   }
 
-  public List<TemplateImpl> collectMatchingCandidates(String key, @Nullable Character shortcutChar, boolean hasArgument) {
+  @NotNull
+  public List<TemplateImpl> collectMatchingCandidates(@NotNull String key, @Nullable Character shortcutChar, boolean hasArgument) {
     final Collection<TemplateImpl> templates = getTemplates(key);
+    if (templates.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     List<TemplateImpl> candidates = new ArrayList<>();
     for (TemplateImpl template : templates) {
       if (template.isDeactivated()) {

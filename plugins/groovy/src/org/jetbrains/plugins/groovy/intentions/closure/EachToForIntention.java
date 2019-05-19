@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.closure;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +11,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
@@ -39,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -47,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -105,9 +91,10 @@ public class EachToForIntention extends Intention {
     final GrStatement statement = elementFactory.createStatementFromText(builder.toString());
     GrForStatement forStatement = (GrForStatement)expression.replaceWithStatement(statement);
     final GrForClause clause = forStatement.getClause();
-    GrVariable variable = clause.getDeclaredVariable();
+    if (!(clause instanceof GrForInClause)) return;
+    final GrVariable variable = ((GrForInClause)clause).getDeclaredVariable();
 
-    forStatement = updateReturnStatements(forStatement);
+    updateReturnStatements(forStatement);
 
     if (variable == null) return;
 
@@ -126,7 +113,7 @@ public class EachToForIntention extends Intention {
     GrStatement body = forStatement.getBody();
     assert body != null;
 
-    final Set<String> usedLabels = ContainerUtil.newHashSet();
+    final Set<String> usedLabels = new HashSet<>();
     final Ref<Boolean> needLabel = Ref.create(false);
 
     body.accept(new GroovyRecursiveElementVisitor() {

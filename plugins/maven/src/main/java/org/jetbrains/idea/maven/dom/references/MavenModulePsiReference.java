@@ -48,6 +48,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     super(element, text, range);
   }
 
+  @Override
   public PsiElement resolve() {
     VirtualFile baseDir = myPsiFile.getVirtualFile().getParent();
     if (baseDir == null) return null;
@@ -65,6 +66,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     return getPsiFile(file);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     List<DomFileElement<MavenDomProjectModel>> files = MavenDomUtil.collectProjectModels(getProject());
@@ -100,6 +102,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     return myPsiFile.getProject();
   }
 
+  @Override
   public LocalQuickFix[] getQuickFixes() {
     if (myText.length() == 0 || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
     return new LocalQuickFix[]{new CreateModuleFix(true, myText, myPsiFile), new CreateModuleFix(false, myText, myPsiFile)};
@@ -122,6 +125,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       return myWithParent ? MavenDomBundle.message("fix.create.module.with.parent") : MavenDomBundle.message("fix.create.module");
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return MavenDomBundle.message("inspection.group");

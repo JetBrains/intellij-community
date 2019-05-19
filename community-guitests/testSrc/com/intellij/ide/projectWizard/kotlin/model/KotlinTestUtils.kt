@@ -24,27 +24,6 @@ fun getKotlinLibInProject(projectPath: String) =
  * */
 internal fun String.normalizeSeparator() = replace("\\", File.separator).replace("/", File.separator)
 
-/**
- * Wrapper for [waitForBackgroundTasksToFinish]
- * adds an extra pause
- * This function should be used instead of  [waitForBackgroundTasksToFinish]
- * because sometimes it doesn't wait enough time
- * After [waitForBackgroundTasksToFinish] fixing this function should be removed
- * @param extraTimeOut time of additional waiting
- * */
-fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
-  ideFrame {
-    this.waitForBackgroundTasksToFinish()
-  }
-  Pause.pause(extraTimeOut)
-}
-
-internal fun GuiTestCase.waitUntil(condition: () -> Boolean) {
-  Pause.pause(object : Condition("Wait until condition is done") {
-    override fun test() = condition()
-  })
-}
-
 fun createFolder(projectPath: String, folder: String): File {
   val folderFile = File("$projectPath${if (!projectPath.endsWith(File.separator)) File.separator else ""}$folder".normalizeSeparator())
   folderFile.mkdirs()

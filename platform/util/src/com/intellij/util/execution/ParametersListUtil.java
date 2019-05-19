@@ -1,62 +1,32 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.execution;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * @author nik
  */
 public class ParametersListUtil {
-  public static final Function<String, List<String>> DEFAULT_LINE_PARSER = new Function<String, List<String>>() {
-    @Override
-    public List<String> fun(String text) {
-      return parse(text, true);
+  public static final Function<String, List<String>> DEFAULT_LINE_PARSER = text -> parse(text, true);
+  public static final Function<List<String>, String> DEFAULT_LINE_JOINER = strings -> StringUtil.join(strings, " ");
+  public static final Function<String, List<String>> COLON_LINE_PARSER = text -> {
+    final ArrayList<String> result = new ArrayList<>();
+    final StringTokenizer tokenizer = new StringTokenizer(text, ";", false);
+    while (tokenizer.hasMoreTokens()) {
+      result.add(tokenizer.nextToken());
     }
+    return result;
   };
-  public static final Function<List<String>, String> DEFAULT_LINE_JOINER = new Function<List<String>, String>() {
-    @Override
-    public String fun(List<String> strings) {
-      return StringUtil.join(strings, " ");
-    }
-  };
-  public static final Function<String, List<String>> COLON_LINE_PARSER = new Function<String, List<String>>() {
-    @Override
-    public List<String> fun(String text) {
-      final ArrayList<String> result = ContainerUtilRt.newArrayList();
-      final StringTokenizer tokenizer = new StringTokenizer(text, ";", false);
-      while (tokenizer.hasMoreTokens()) {
-        result.add(tokenizer.nextToken());
-      }
-      return result;
-    }
-  };
-  public static final Function<List<String>, String> COLON_LINE_JOINER = new Function<List<String>, String>() {
-    @Override
-    public String fun(List<String> strings) {
-      return StringUtil.join(strings, ";");
-    }
-  };
+  public static final Function<List<String>, String> COLON_LINE_JOINER = strings -> StringUtil.join(strings, ";");
 
   /**
    * <p>Joins list of parameters into single string, which may be then parsed back into list by {@link #parseToArray(String)}.</p>
@@ -137,7 +107,10 @@ public class ParametersListUtil {
   public static List<String> parse(@NotNull String parameterString, boolean keepQuotes, boolean supportSingleQuotes) {
     parameterString = parameterString.trim();
 
-    final ArrayList<String> params = ContainerUtilRt.newArrayList();
+    final ArrayList<String> params = new ArrayList<>();
+    if (parameterString.isEmpty()) {
+      return params;
+    }
     final StringBuilder token = new StringBuilder(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;

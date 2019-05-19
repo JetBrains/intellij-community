@@ -1,6 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
@@ -9,10 +12,8 @@ import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
-import javax.swing.ButtonGroup
-import javax.swing.JComponent
-import javax.swing.JDialog
-import javax.swing.JLabel
+import javax.swing.*
+import kotlin.reflect.KProperty0
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagic: Boolean = true) : LayoutBuilderImpl {
   companion object {
@@ -52,27 +53,36 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   private val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
   private val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
 
+  override var preferredFocusedComponent: JComponent? = null
+  override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
+  override var applyCallbacks: MutableList<() -> Unit> = mutableListOf()
+  override var resetCallbacks: MutableList<() -> Unit> = mutableListOf()
+  override var isModifiedCallbacks: MutableList<() -> Boolean> = mutableListOf()
+
   val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
   // keep in mind - MigLayout always creates one more than need column constraints (i.e. for 2 will be 3)
   // it doesn't lead to any issue.
   val columnConstraints = AC()
 
-  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, separated: Boolean): Row {
-    return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, separated = separated)
+  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean): Row {
+    return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, isSeparated = isSeparated)
+  }
+
+  override fun newTitledRow(title: String): Row {
+    return rootRow.createChildRow(isSeparated = true, title = title)
   }
 
   override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
-    val cc = CC()
-    cc.vertical.gapBefore = gapToBoundSize(if (rootRow.subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
-    cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
+    rootRow.createNoteOrCommentRow(noteComponent(text, linkHandler))
+  }
 
-    val row = rootRow.createChildRow(label = null, noGrid = true)
-    row.apply {
-      val noteComponent = noteComponent(text, linkHandler)
-      componentConstraints.put(noteComponent, cc)
-      noteComponent()
-    }
+  override fun commentRow(text: String) {
+    rootRow.createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true))
+  }
+
+  fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {
+    componentConstraints.getOrPut(component) { CC() }.callback()
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
@@ -87,32 +97,22 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     }
 
     lc.isVisualPadding = spacing.isCompensateVisualPaddings
-    lc.hideMode = 3
+    // if 3, invisible component will be disregarded completely and it means that if it is last component, it's "wrap" constraint will be not taken in account
+    lc.hideMode = 2
 
-    configureGapBetweenColumns()
-
-    // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
     val rowConstraints = AC()
-    rowConstraints.align(if (isUseMagic) "baseline" else "top")
-
     (container as JComponent).putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
     var isLayoutInsetsAdjusted = false
     container.layout = object : MigLayout(lc, columnConstraints, rowConstraints) {
       override fun layoutContainer(parent: Container) {
         if (!isLayoutInsetsAdjusted) {
           isLayoutInsetsAdjusted = true
-
-          var topParent = parent.parent
-          while (topParent != null) {
-            if (topParent is JDialog) {
-              val topBottom = createUnitValue(spacing.dialogTopBottom, false)
-              val leftRight = createUnitValue(spacing.dialogLeftRight, true)
-              // since we compensate visual padding, child components should be not clipped, so, we do not use content pane DialogWrapper border (returns null),
-              // but instead set insets to our content panel (so, child components are not clipped)
-              lc.insets = arrayOf(topBottom, leftRight, topBottom, leftRight)
-              break
-            }
-            topParent = topParent.parent
+          if (container.getClientProperty(DialogWrapper.DIALOG_CONTENT_PANEL_PROPERTY) != null) {
+            val topBottom = createUnitValue(spacing.dialogTopBottom, false)
+            val leftRight = createUnitValue(spacing.dialogLeftRight, true)
+            // since we compensate visual padding, child components should be not clipped, so, we do not use content pane DialogWrapper border (returns null),
+            // but instead set insets to our content panel (so, child components are not clipped)
+            lc.insets = arrayOf(topBottom, leftRight, topBottom, leftRight)
           }
         }
 
@@ -135,21 +135,24 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
         }
 
         // we cannot use columnCount as an indicator of whether to use spanX/wrap or not because component can share cell with another component,
-        // in any case MigLayout is smart enough and unnecessary spanX/wrap doesn't harm
+        // in any case MigLayout is smart enough and unnecessary spanX doesn't harm
         if (component === lastComponent) {
           cc.spanX()
-          cc.wrap()
+          cc.isWrap = true
         }
 
-        if (row.noGrid) {
-          if (component === row.components.first()) {
+        if (index == 0) {
+          if (row.noGrid) {
             rowConstraints.noGrid(rowIndex)
           }
-        }
-        else if (component === row.components.first()) {
-          row.gapAfter?.let {
-            rowConstraints.gap(it, rowIndex)
+          else {
+            row.gapAfter?.let {
+              rowConstraints.gap(it, rowIndex)
+            }
           }
+          // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
+          // so, we set for each row to make sure that constraints from previous row will be not applied
+          rowConstraints.align(if (isUseMagic) "baseline" else "top", rowIndex)
         }
 
         if (index >= row.rightIndex) {
@@ -164,7 +167,10 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
 
     fun processRows(rows: List<MigLayoutRow>) {
       for (row in rows) {
-        configureComponents(row)
+        // configureComponents will increase rowIndex, but if row doesn't have components, it is synthetic row (e.g. titled row that contains only sub rows)
+        if (row.components.isNotEmpty()) {
+          configureComponents(row)
+        }
         row.subRows?.let {
           processRows(it)
         }
@@ -172,6 +178,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     }
 
     rootRow.subRows?.let {
+      configureGapBetweenColumns(it)
       processRows(it)
     }
 
@@ -179,9 +186,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     componentConstraints.clear()
   }
 
-  private fun configureGapBetweenColumns() {
+  private fun configureGapBetweenColumns(subRows: List<MigLayoutRow>) {
     var startColumnIndexToApplyHorizontalGap = 0
-    if (rootRow.subRows!!.any { it.isLabeledIncludingSubRows }) {
+    if (subRows.any { it.isLabeledIncludingSubRows }) {
       // using columnConstraints instead of component gap allows easy debug (proper painting of debug grid)
       columnConstraints.gap("${spacing.labelColumnHorizontalGap}px!", 0)
       columnConstraints.grow(0f, 0)

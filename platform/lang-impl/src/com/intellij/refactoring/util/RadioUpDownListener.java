@@ -77,9 +77,7 @@ public class RadioUpDownListener extends KeyAdapter {
 
   private static boolean click(final JRadioButton button) {
     if (button.isEnabled() && button.isVisible()) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(button, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(button, true));
       button.doClick();
       return true;
     }

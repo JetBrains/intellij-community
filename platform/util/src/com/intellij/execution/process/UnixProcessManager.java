@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.jna.JnaLoader;
@@ -22,26 +10,28 @@ import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
+import sun.misc.Signal;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
- * Use {@code com.intellij.execution.process.OSProcessUtil} wherever possible.
+ * Use {@link com.intellij.execution.process.OSProcessUtil} wherever possible.
  *
  * @author traff
  */
 public class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
 
-  public static final int SIGINT = 2;
-  public static final int SIGKILL = 9;
-  public static final int SIGTERM = 15;
+  public static final int SIGINT = getSignalNumber("INT");
+  public static final int SIGKILL = getSignalNumber("KILL");
+  public static final int SIGTERM = getSignalNumber("TERM");
 
   @SuppressWarnings("SpellCheckingInspection")
   private interface CLib extends Library {
@@ -54,7 +44,7 @@ public class UnixProcessManager {
     CLib lib = null;
     try {
       if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
-        lib = Native.loadLibrary("c", CLib.class);
+        lib = Native.load("c", CLib.class);
       }
     }
     catch (Throwable t) {
@@ -81,6 +71,26 @@ public class UnixProcessManager {
 
   public static int getCurrentProcessId() {
     return C_LIB != null ? C_LIB.getpid() : 0;
+  }
+
+  /**
+   * @param signalName without the 'SIG' prefix ('INT', not 'SIGINT')
+   * @return -1 for unknown signal
+   */
+  public static int getSignalNumber(@NotNull String signalName) {
+    final Signal signal;
+    try {
+      signal = new Signal(signalName);
+    }
+    catch (IllegalArgumentException e) {
+      return -1;
+    }
+    return signal.getNumber();
+  }
+
+  public static int sendSignal(int pid, @NotNull String signalName) {
+    final int signalNumber = getSignalNumber(signalName);
+    return (signalNumber == -1) ? -1 : sendSignal(pid, signalNumber);
   }
 
   public static int sendSignal(int pid, int signal) {
@@ -124,9 +134,9 @@ public class UnixProcessManager {
       LOG.debug("Sending signal " + signal + " to process tree with root PID " + processId);
     }
 
-    final Ref<Integer> foundPid = new Ref<Integer>();
+    final Ref<Integer> foundPid = new Ref<>();
     final ProcessInfo processInfo = new ProcessInfo();
-    final List<Integer> childrenPids = new ArrayList<Integer>();
+    final List<Integer> childrenPids = new ArrayList<>();
 
     findChildProcesses(ourPid, processId, foundPid, processInfo, childrenPids);
 
@@ -151,48 +161,45 @@ public class UnixProcessManager {
 
   private static void findChildProcesses(final int our_pid,
                                          final int process_pid,
-                                         final Ref<Integer> foundPid,
+                                         final Ref<? super Integer> foundPid,
                                          final ProcessInfo processInfo,
-                                         final List<Integer> childrenPids) {
+                                         final List<? super Integer> childrenPids) {
     final Ref<Boolean> ourPidFound = Ref.create(false);
-    processPSOutput(getPSCmd(false), new Processor<String>() {
-      @Override
-      public boolean process(String s) {
-        StringTokenizer st = new StringTokenizer(s, " ");
+    processPSOutput(getPSCmd(false), s -> {
+      StringTokenizer st = new StringTokenizer(s, " ");
 
-        int parent_pid = Integer.parseInt(st.nextToken());
-        int pid = Integer.parseInt(st.nextToken());
+      int parent_pid = Integer.parseInt(st.nextToken());
+      int pid = Integer.parseInt(st.nextToken());
 
-        processInfo.register(pid, parent_pid);
+      processInfo.register(pid, parent_pid);
 
-        if (parent_pid == process_pid) {
-          childrenPids.add(pid);
-        }
-
-        if (pid == our_pid) {
-          ourPidFound.set(true);
-        }
-        else if (pid == process_pid) {
-          if (parent_pid == our_pid || our_pid == -1) {
-            foundPid.set(pid);
-          }
-          else {
-            throw new IllegalStateException("Process (pid=" + process_pid + ") is not our child(our pid = " + our_pid + ")");
-          }
-        }
-        return false;
+      if (parent_pid == process_pid) {
+        childrenPids.add(pid);
       }
+
+      if (pid == our_pid) {
+        ourPidFound.set(true);
+      }
+      else if (pid == process_pid) {
+        if (parent_pid == our_pid || our_pid == -1) {
+          foundPid.set(pid);
+        }
+        else {
+          throw new IllegalStateException("Process (pid=" + process_pid + ") is not our child(our pid = " + our_pid + ")");
+        }
+      }
+      return false;
     });
     if (our_pid != -1 && !ourPidFound.get()) {
       throw new IllegalStateException("IDE pid is not found in ps list(" + our_pid + ")");
     }
   }
 
-  public static void processPSOutput(String[] cmd, Processor<String> processor) {
+  public static void processPSOutput(String[] cmd, Processor<? super String> processor) {
     processCommandOutput(cmd, processor, true, true);
   }
 
-  public static void processCommandOutput(String[] cmd, Processor<String> processor, boolean skipFirstLine, boolean throwOnError) {
+  public static void processCommandOutput(String[] cmd, Processor<? super String> processor, boolean skipFirstLine, boolean throwOnError) {
     try {
       Process p = Runtime.getRuntime().exec(cmd);
       processCommandOutput(p, processor, skipFirstLine, throwOnError);
@@ -202,11 +209,9 @@ public class UnixProcessManager {
     }
   }
 
-  private static void processCommandOutput(Process process, Processor<String> processor, boolean skipFirstLine, boolean throwOnError) throws IOException {
-    BufferedReader stdOutput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-    try {
-      BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-      try {
+  private static void processCommandOutput(Process process, Processor<? super String> processor, boolean skipFirstLine, boolean throwOnError) throws IOException {
+    try (BufferedReader stdOutput = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+      try (BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
         if (skipFirstLine) {
           stdOutput.readLine(); //ps output header
         }
@@ -226,12 +231,6 @@ public class UnixProcessManager {
           throw new IOException("Error reading ps output:" + errorStr.toString());
         }
       }
-      finally {
-        stdError.close();
-      }
-    }
-    finally {
-      stdOutput.close();
     }
   }
 
@@ -257,11 +256,11 @@ public class UnixProcessManager {
   }
 
   private static class ProcessInfo {
-    private final Map<Integer, List<Integer>> BY_PARENT = new TreeMap<Integer, List<Integer>>(); // pid -> list of children pids
+    private final Map<Integer, List<Integer>> BY_PARENT = new TreeMap<>(); // pid -> list of children pids
 
     public void register(Integer pid, Integer parentPid) {
       List<Integer> children = BY_PARENT.get(parentPid);
-      if (children == null) BY_PARENT.put(parentPid, children = new LinkedList<Integer>());
+      if (children == null) BY_PARENT.put(parentPid, children = new LinkedList<>());
       children.add(pid);
     }
 
@@ -277,10 +276,5 @@ public class UnixProcessManager {
       }
       sendSignal(pid, signal);
     }
-  }
-
-  /** @deprecated to be removed in IDEA 2018 */
-  public static int getProcessPid(@NotNull Process process) {
-    return getProcessId(process);
   }
 }

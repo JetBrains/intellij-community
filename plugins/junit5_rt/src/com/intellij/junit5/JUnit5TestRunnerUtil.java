@@ -27,12 +27,35 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Method;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class JUnit5TestRunnerUtil {
+  private static final String[] DISABLED_ANNO = {"org.junit.jupiter.api.Disabled"};
 
-  public static final String DISABLED_ANNO = "org.junit.jupiter.api.Disabled";
+  private static final String[] DISABLED_COND_ANNO = {
+    "org.junit.jupiter.api.condition.DisabledOnJre",
+    "org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable",
+    "org.junit.jupiter.api.condition.DisabledIfSystemProperty",
+    "org.junit.jupiter.api.condition.DisabledOnOs"
+  };
+
+  private static final String[] SCRIPT_COND_ANNO =
+    {
+      "org.junit.jupiter.api.condition.DisabledIf",
+      "org.junit.jupiter.api.condition.EnabledIf"
+    };
+
+  private static final String[] ENABLED_COND_ANNO = {
+    "org.junit.jupiter.api.condition.EnabledOnJre",
+    "org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable",
+    "org.junit.jupiter.api.condition.EnabledIfSystemProperty",
+    "org.junit.jupiter.api.condition.EnabledOnOs"
+  };
 
   public static LauncherDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef) {
     if (suiteClassNames.length == 0) {
@@ -61,19 +84,18 @@ public class JUnit5TestRunnerUtil {
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
           if (selectors.isEmpty()) {
             builder = builder.selectors(DiscoverySelectors.selectPackage(packageName));
-            if (filters != null && !filters.isEmpty()) {
-              builder = builder.filters(ClassNameFilter.includeClassNamePatterns(filters.split("\\|\\|")));
-            }
           }
           else {
             builder = builder.selectors(selectors);
           }
+          if (filters != null && !filters.isEmpty()) {
+            builder = builder.filters(ClassNameFilter.includeClassNamePatterns(filters.split("\\|\\|")));
+          }
           if (tags != null && !tags.isEmpty()) {
             builder = builder
-              .filters(TagFilter.includeTags(tags.split(" ")))
-              .filters(ClassNameFilter.excludeClassNamePatterns("com\\.intellij\\.rt.*"));
+              .filters(TagFilter.includeTags(tags.split(" ")));
           }
-          return builder.build();
+          return builder.filters(ClassNameFilter.excludeClassNamePatterns("com\\.intellij\\.rt.*", "com\\.intellij\\.junit3.*")).build();
         }
         finally {
           reader.close();
@@ -85,9 +107,9 @@ public class JUnit5TestRunnerUtil {
       }
     }
     else {
-      boolean disableDisabledCondition = isDisabledConditionDisabled(suiteClassNames[0]);
-      if (disableDisabledCondition) {
-        builder = builder.configurationParameter("junit.jupiter.conditions.deactivate", "org.junit.*DisabledCondition");
+      String disableDisabledCondition = getDisabledConditionValue(suiteClassNames[0]);
+      if (disableDisabledCondition != null) {
+        builder = builder.configurationParameter("junit.jupiter.conditions.deactivate", disableDisabledCondition);
       }
 
       return builder.selectors(createSelector(suiteClassNames[0])).build();
@@ -96,21 +118,74 @@ public class JUnit5TestRunnerUtil {
     return null;
   }
 
-  public static boolean isDisabledConditionDisabled(String name) {
+  public static String getDisabledConditionValue(String name) {
     int commaIdx = name.indexOf(",");
-    boolean disableDisabledCondition = true;
-    if (commaIdx < 0) {
-      try {
-        ClassLoader loader = JUnit5TestRunnerUtil.class.getClassLoader();
-        Class<?> aClass = Class.forName(name, false, loader);
-        Class<? extends Annotation> disabledAnnotation = (Class<? extends Annotation>)Class.forName(DISABLED_ANNO, false, loader);
-        disableDisabledCondition = AnnotationUtils.findAnnotation(aClass, disabledAnnotation).isPresent();
+    String className = name.substring(0, commaIdx < 0 ? name.length() : commaIdx);
+    String methodName = commaIdx > 0 ? name.substring(commaIdx + 1) : null;
+    try {
+      ClassLoader loader = JUnit5TestRunnerUtil.class.getClassLoader();
+      Class<?> testClass = Class.forName(className, false, loader);
+
+      String disabledCondition = getDisabledCondition(loader, testClass);
+      if (disabledCondition != null) {
+        return disabledCondition;
       }
-      catch (ClassNotFoundException e) {
-        disableDisabledCondition = false;
+
+      if (methodName != null) {
+        int paramIdx = methodName.indexOf("(");
+        Method m;
+        if (paramIdx < 0) {
+          m = testClass.getDeclaredMethod(methodName);
+        }
+        else {
+          if (!methodName.endsWith(")")) return null;
+          String paramsString = methodName.substring(paramIdx + 1, methodName.length() - 1);
+          String[] params = paramsString.split(",");
+          Class<?>[] paramTypes = new Class[params.length];
+          for (int i = 0; i < params.length; i++) {
+            paramTypes[i] = Class.forName(params[i], false, loader);
+          }
+          m = testClass.getDeclaredMethod(methodName.substring(0, paramIdx), paramTypes);
+        }
+        disabledCondition = getDisabledCondition(loader, m);
+        if (disabledCondition != null) {
+          return disabledCondition;
+        }
+      }
+
+      return null;
+    }
+    catch (Throwable ignore) { }
+    return null;
+  }
+
+  private static String getDisabledCondition(ClassLoader loader, AnnotatedElement annotatedElement) throws ClassNotFoundException {
+    if (isDisabledCondition(DISABLED_COND_ANNO, loader, annotatedElement)) {
+      return "org.junit.*Disabled*Condition";
+    }
+
+    if (isDisabledCondition(ENABLED_COND_ANNO, loader, annotatedElement)) {
+      return "org.junit.*Enabled*Condition";
+    }
+
+    if (isDisabledCondition(SCRIPT_COND_ANNO, loader, annotatedElement)) {
+      return "org.junit.*Script*Condition";
+    }
+
+    if (isDisabledCondition(DISABLED_ANNO, loader, annotatedElement)) {
+      return "org.junit.*DisabledCondition";
+    }
+    return null;
+  }
+
+  private static boolean isDisabledCondition(String[] anno, ClassLoader loader, AnnotatedElement annotatedElement) throws ClassNotFoundException {
+    for (String disabledAnnotationName : anno) {
+      Class<? extends Annotation> disabledAnnotation = (Class<? extends Annotation>)Class.forName(disabledAnnotationName, false, loader);
+      if (AnnotationUtils.findAnnotation(annotatedElement, disabledAnnotation).isPresent()) {
+        return true;
       }
     }
-    return disableDisabledCondition;
+    return false;
   }
 
   /**
@@ -121,6 +196,10 @@ public class JUnit5TestRunnerUtil {
     if (line.startsWith("\u001B")) {
       String uniqueId = line.substring("\u001B".length());
       return DiscoverySelectors.selectUniqueId(uniqueId);
+    }
+    else if (line.startsWith("\u002B")) {
+      String directory = line.substring("\u002B".length());
+      return DiscoverySelectors.selectClasspathRoots(Collections.singleton(Paths.get(directory))).iterator().next();
     }
     else if (line.contains(",")) {
       return DiscoverySelectors.selectMethod(line.replaceFirst(",", "#"));

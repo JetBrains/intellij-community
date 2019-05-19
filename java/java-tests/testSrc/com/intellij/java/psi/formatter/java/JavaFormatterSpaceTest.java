@@ -4,19 +4,17 @@ package com.intellij.java.psi.formatter.java;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.LightPlatformTestCase;
 
 /**
  * Is intended to hold specific java formatting tests for 'spacing' settings.
  *
  * @author Denis Zhdanov
- * @since Apr 29, 2010
  */
 public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).setLanguageLevel(JavaTestUtil.getMaxRegisteredLanguageLevel());
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(JavaTestUtil.getMaxRegisteredLanguageLevel());
   }
 
   public void testSpacingBetweenTypeParameters() {
@@ -686,7 +684,75 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpacingAroundVarKeyword() {
-    doMethodTest("for (  var  path  :  paths) ;", "for (var path : paths) ;");
+    doMethodTest("for (  var  path :  paths) ;", "for (var path : paths) ;");
     doMethodTest("try ( @A  var  r  =  open()) { }", "try (@A var r = open()) {\n}");
+  }
+
+  public void testSpacingBeforeColonInForeach() {
+    getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = false;
+    doMethodTest("for (int i:arr) ;", "for (int i: arr) ;");
+    getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = true;
+    doMethodTest("for (int i:arr) ;", "for (int i : arr) ;");
+  }
+
+  public void testOneLineEnumSpacing() {
+    getJavaSettings().SPACE_INSIDE_ONE_LINE_ENUM_BRACES = true;
+    doTextTest("enum E {E1, E2}",
+               "enum E { E1, E2 }");
+  }
+
+  public void testSwitchLabelSpacing() {
+    doMethodTest("switch (i) { case\n1\n:break;\ndefault\n:break; }",
+                 "switch (i) {\n" +
+                 "    case 1:\n        break;\n" +
+                 "    default:\n        break;\n" +
+                 "}");
+  }
+
+  public void testSwitchLabeledRuleSpacing() {
+    doMethodTest("switch (i) { case\n1\n->\nfoo();\ncase\n2->{bar()};\ndefault->throw new Exception(); }",
+                 "switch (i) {\n" +
+                 "    case 1 -> foo();\n" +
+                 "    case 2 -> {\n        bar()\n    };\n" +
+                 "    default -> throw new Exception();\n" +
+                 "}");
+  }
+
+  public void testMultiValueLabel() {
+    doMethodTest("switch(i) { case 1,2,  3: break; }",
+                 "switch (i) {\n" +
+                 "    case 1, 2, 3:\n" +
+                 "        break;\n" +
+                 "}");
+  }
+
+  public void testMultiValueLabeledRule() {
+    doMethodTest("switch(i) { case 1,2,  3 -> foo(); }",
+                 "switch (i) {\n" +
+                 "    case 1, 2, 3 -> foo();\n" +
+                 "}");
+  }
+
+  public void testSwitchExpression() {
+    doMethodTest("String s = switch\n(i   ){default -> null;}",
+                 "String s = switch (i) {\n" +
+                 "    default -> null;\n" +
+                 "}");
+  }
+
+  public void testBreakStatementSpacing() {
+    getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
+    doMethodTest("String s = switch (i) {\n" +
+                 "    case 0: break(foo) ;\n" +
+                 "    case 1: break\n        42 ;\n" +
+                 "    case 3: break  label ;\n" +
+                 "    case 4: break  ;\n" +
+                 "}",
+                 "String s = switch (i) {\n" +
+                 "    case 0: break (foo);\n" +
+                 "    case 1: break 42;\n" +
+                 "    case 3: break label;\n" +
+                 "    case 4: break;\n" +
+                 "}");
   }
 }

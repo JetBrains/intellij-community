@@ -323,7 +323,7 @@ public class JavaFxAntGenerator {
       myValue = null;
     }
 
-    public SimpleTag(String name, Collection<Pair> pairs) {
+    public SimpleTag(String name, Collection<? extends Pair> pairs) {
       myName = name;
       myPairs = new ArrayList<>(pairs);
       myValue = null;

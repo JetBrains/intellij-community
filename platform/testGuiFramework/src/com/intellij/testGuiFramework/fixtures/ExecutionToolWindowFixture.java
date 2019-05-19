@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -23,9 +9,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.newImpl.JBTabsImpl;
+import com.intellij.ui.tabs.newImpl.TabLabel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.fest.swing.core.GenericTypeMatcher;
@@ -44,7 +31,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.List;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound;
 import static com.intellij.util.ui.UIUtil.findComponentOfType;
 import static com.intellij.util.ui.UIUtil.findComponentsOfType;
 import static junit.framework.Assert.assertNotNull;
@@ -142,7 +128,7 @@ public class ExecutionToolWindowFixture extends ToolWindowFixture {
 
       TabLabel tabLabel;
       if (parentComponentType == null) {
-        tabLabel = waitUntilFound(myRobot, new GenericTypeMatcher<TabLabel>(TabLabel.class) {
+        tabLabel = GuiTestUtil.INSTANCE.waitUntilFound(myRobot, new GenericTypeMatcher<TabLabel>(TabLabel.class) {
           @Override
           protected boolean isMatching(@NotNull TabLabel component) {
             return component.toString().equals(tabName);
@@ -151,7 +137,7 @@ public class ExecutionToolWindowFixture extends ToolWindowFixture {
       }
       else {
         final JComponent parent = myRobot.finder().findByType(root, parentComponentType, false);
-        tabLabel = waitUntilFound(myRobot, parent, new GenericTypeMatcher<TabLabel>(TabLabel.class) {
+        tabLabel = GuiTestUtil.INSTANCE.waitUntilFound(myRobot, parent, new GenericTypeMatcher<TabLabel>(TabLabel.class) {
           @Override
           protected boolean isMatching(@NotNull TabLabel component) {
             return component.getParent() == parent && component.toString().equals(tabName);

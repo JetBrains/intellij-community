@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.ChildAttributes;
@@ -25,7 +10,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.formatter.blocks.ClosureBodyBlock;
-import org.jetbrains.plugins.groovy.formatter.blocks.GrLabelBlock;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -34,9 +18,12 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.*;
@@ -66,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import static com.intellij.formatting.Indent.*;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * @author ilyas
@@ -92,18 +80,12 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   public Indent getChildIndent(@NotNull final GroovyBlock parentBlock, @NotNull final ASTNode child) {
     myChildType = child.getElementType();
     if (parentBlock instanceof ClosureBodyBlock) {
-      if (myChildType == GroovyElementTypes.PARAMETERS_LIST) {
+      if (myChildType == GroovyEmptyStubElementTypes.PARAMETER_LIST) {
         return getNoneIndent();
       }
       else if (myChildType != GroovyTokenTypes.mLCURLY && myChildType != GroovyTokenTypes.mRCURLY) {
         return getNormalIndent();
       }
-    }
-    if (parentBlock instanceof GrLabelBlock) {
-      ASTNode first = parentBlock.getNode().getFirstChildNode();
-      return child == first
-             ? getNoneIndent()
-             : getLabelIndent();
     }
 
     if (GSTRING_TOKENS_INNER.contains(myChildType)) {
@@ -133,6 +115,29 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     if (myChildType != GroovyTokenTypes.mLBRACK && myChildType != GroovyTokenTypes.mRBRACK) {
       myResult = getContinuationWithoutFirstIndent();
     }
+  }
+
+  @Override
+  public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
+    if (myChildType == BLOCK_LAMBDA_BODY) {
+      myResult = getBlockIndent(getGroovySettings().LAMBDA_BRACE_STYLE);
+      return;
+    }
+    myResult = getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitBlockLambdaBody(@NotNull GrBlockLambdaBody body) {
+    if (myChildType == GroovyTokenTypes.mLCURLY || myChildType == GroovyTokenTypes.mRCURLY) {
+      myResult = getNoneIndent();
+      return;
+    }
+    myResult = getIndentInBlock(getGroovySettings().LAMBDA_BRACE_STYLE);
+  }
+
+  @Override
+  public void visitExpressionLambdaBody(@NotNull GrExpressionLambdaBody body) {
+    myResult = getNoneIndent();
   }
 
   @Override
@@ -176,7 +181,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotation(@NotNull GrAnnotation annotation) {
-    if (myChildType == GroovyElementTypes.ANNOTATION_ARGUMENTS) {
+    if (myChildType == GroovyEmptyStubElementTypes.ANNOTATION_ARGUMENT_LIST) {
       myResult = getContinuationIndent();
     }
     else {
@@ -186,7 +191,10 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitArgumentList(@NotNull GrArgumentList list) {
-    if (myChildType != GroovyTokenTypes.mLPAREN && myChildType != GroovyTokenTypes.mRPAREN) {
+    if (myChildType != T_LPAREN &&
+        myChildType != T_RPAREN &&
+        myChildType != T_LBRACK &&
+        myChildType != T_RBRACK) {
       myResult = getContinuationWithoutFirstIndent();
     }
   }
@@ -296,10 +304,10 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitMethod(@NotNull GrMethod method) {
-    if (myChildType == GroovyElementTypes.PARAMETERS_LIST) {
+    if (myChildType == GroovyEmptyStubElementTypes.PARAMETER_LIST) {
       myResult = getContinuationIndent();
     }
-    else if (myChildType == GroovyElementTypes.THROW_CLAUSE) {
+    else if (myChildType == GroovyStubElementTypes.THROWS_CLAUSE) {
       myResult = getGroovySettings().ALIGN_THROWS_KEYWORD ? getNoneIndent() : getContinuationIndent();
     } else if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
       myResult = getBlockIndent(getGroovySettings().METHOD_BRACE_STYLE);
@@ -308,10 +316,10 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
-    if (myChildType == GroovyElementTypes.EXTENDS_CLAUSE || myChildType == GroovyElementTypes.IMPLEMENTS_CLAUSE) {
+    if (myChildType == GroovyStubElementTypes.EXTENDS_CLAUSE || myChildType == GroovyStubElementTypes.IMPLEMENTS_CLAUSE) {
       myResult = getContinuationIndent();
     }
-    else if (myChildType == GroovyElementTypes.ENUM_BODY || myChildType == GroovyElementTypes.CLASS_BODY) {
+    else if (myChildType == GroovyEmptyStubElementTypes.ENUM_BODY || myChildType == GroovyEmptyStubElementTypes.CLASS_BODY) {
       myResult = getBlockIndent(getGroovySettings().CLASS_BRACE_STYLE);
     }
   }
@@ -400,7 +408,12 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitParameterList(@NotNull GrParameterList parameterList) {
-    myResult = getContinuationWithoutFirstIndent();
+    if (myChildType == T_LPAREN || myChildType == T_RPAREN) {
+      myResult = getNoneIndent();
+    }
+    else {
+      myResult = getContinuationWithoutFirstIndent();
+    }
   }
 
   @Override
@@ -471,6 +484,13 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
+  public void visitTryResourceList(@NotNull GrTryResourceList resourceList) {
+    if (myChildType != T_LPAREN && myChildType != T_RPAREN) {
+      myResult = getContinuationWithoutFirstIndent();
+    }
+  }
+
+  @Override
   public void visitBlockStatement(@NotNull GrBlockStatement blockStatement) {
     myResult = getBlockIndent(getGroovySettings().BRACE_STYLE);
   }
@@ -485,6 +505,13 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   @Override
   public void visitTypeParameterList(@NotNull GrTypeParameterList list) {
     myResult = getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitArrayInitializer(@NotNull GrArrayInitializer arrayInitializer) {
+    if (myChildType != T_LBRACE && myChildType != T_RBRACE) {
+      myResult = getContinuationWithoutFirstIndent();
+    }
   }
 
   @NotNull

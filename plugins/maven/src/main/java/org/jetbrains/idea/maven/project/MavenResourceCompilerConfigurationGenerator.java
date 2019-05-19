@@ -124,6 +124,9 @@ public class MavenResourceCompilerConfigurationGenerator {
     MavenProjectConfiguration projectConfig = new MavenProjectConfiguration();
 
     for (MavenProject mavenProject : myMavenProjectsManager.getProjects()) {
+      // do not add resource roots for 'pom' packaging projects
+      if ("pom".equals(mavenProject.getPackaging())) continue;
+
       VirtualFile pomXml = mavenProject.getFile();
 
       Module module = fileIndex.getModuleForFile(pomXml);
@@ -468,9 +471,9 @@ public class MavenResourceCompilerConfigurationGenerator {
       }
 
       for (MavenResource resource : ContainerUtil.concat(project.getResources(), project.getTestResources())) {
-        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(resource.getDirectory());
-        if (file != null) {
-          processedRoots.add(file);
+        String directory = resource.getDirectory();
+        if (directory != null) {
+          ContainerUtil.addIfNotNull(processedRoots, LocalFileSystem.getInstance().findFileByPath(directory));
         }
       }
     }

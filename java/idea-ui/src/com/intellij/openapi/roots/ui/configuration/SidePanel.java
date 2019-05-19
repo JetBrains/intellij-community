@@ -82,15 +82,10 @@ public class SidePanel extends JPanel {
     myList.setCellRenderer(new GroupedItemsListRenderer<SidePanelItem>(descriptor) {
       JPanel myExtraPanel;
       SidePanelCountLabel myCountLabel;
-      CellRendererPane myValidationParent = new CellRendererPane();
+      final CellRendererPane myValidationParent = new CellRendererPane();
       {
         mySeparatorComponent.setCaptionCentered(false);
         myList.add(myValidationParent);
-      }
-
-      @Override
-      protected Color getForeground() {
-        return new JBColor(Gray._60, Gray._140);
       }
 
       @Override
@@ -195,7 +190,7 @@ public class SidePanel extends JPanel {
     private final Place myPlace;
     private final String myText;
 
-    public SidePanelItem(Place place, String text) {
+    SidePanelItem(Place place, String text) {
       myPlace = place;
       myText = text;
     }

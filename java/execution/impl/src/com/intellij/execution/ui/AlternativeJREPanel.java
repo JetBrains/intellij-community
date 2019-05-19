@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -44,6 +30,7 @@ import java.util.ArrayList;
  *
  * @deprecated use {@link JrePathEditor} instead
  */
+@Deprecated
 public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
   private final ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
   private final JBCheckBox myCbEnabled;
@@ -62,10 +49,12 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
       foundJDKs.add(sdk.getName());
     }
 
-    for (JreProvider provider : JreProvider.EP_NAME.getExtensions()) {
-      String path = provider.getJrePath();
-      if (!StringUtil.isEmpty(path)) {
-        foundJDKs.add(path);
+    for (JreProvider provider : JreProvider.EP_NAME.getExtensionList()) {
+      if (provider.isAvailable()) {
+        String path = provider.getJrePath();
+        if (!StringUtil.isEmpty(path)) {
+          foundJDKs.add(path);
+        }
       }
     }
 
@@ -97,6 +86,7 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
     InsertPathAction.addTo(myFieldWithHistory.getTextEditor());
 
     myCbEnabled.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         enabledChanged();
       }

@@ -11,8 +11,9 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -21,19 +22,25 @@ import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.paint.PaintUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.lang.ref.Reference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+
+import static com.intellij.util.ui.UIUtil.useSafely;
 
 /**
- * This panel contains all tool stripes and JLayeredPanle at the center area. All tool windows are
+ * This panel contains all tool stripes and JLayeredPane at the center area. All tool windows are
  * located inside this layered pane.
  *
  * @author Anton Katilin
@@ -44,11 +51,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private final IdeFrameImpl myFrame;
 
-  private final HashMap<String, StripeButton> myId2Button = new HashMap<>();
-  private final HashMap<String, InternalDecorator> myId2Decorator = new HashMap<>();
-  private final HashMap<StripeButton, WindowInfoImpl> myButton2Info = new HashMap<>();
-  private final HashMap<InternalDecorator, WindowInfoImpl> myDecorator2Info = new HashMap<>();
-  private final HashMap<String, Float> myId2SplitProportion = new HashMap<>();
+  private final Map<String, StripeButton> myId2Button = new HashMap<>();
+  private final Map<String, InternalDecorator> myId2Decorator = new HashMap<>();
+  private final Map<InternalDecorator, WindowInfoImpl> myDecorator2Info = new HashMap<>();
+  private final Map<String, Float> myId2SplitProportion = new HashMap<>();
   private Pair<ToolWindow, Integer> myMaximizedProportion;
   /**
    * This panel is the layered pane where all sliding tool windows are located. The DEFAULT
@@ -86,6 +92,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
     // Splitters
     myVerticalSplitter = new ThreeComponentsSplitter(true);
+    RegistryValue registryValue = Registry.get("ide.mainSplitter.min.size");
+    registryValue.addListener(new RegistryValueListener.Adapter() {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        updateInnerMinSize(value);
+      }
+    }, this);
     Disposer.register(this, myVerticalSplitter);
     myVerticalSplitter.setDividerWidth(0);
     myVerticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
@@ -95,6 +108,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     myHorizontalSplitter.setDividerWidth(0);
     myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myHorizontalSplitter.setBackground(Color.gray);
+    updateInnerMinSize(registryValue);
     myWidescreen = UISettings.getInstance().getWideScreenSupport();
     myLeftHorizontalSplit = UISettings.getInstance().getLeftHorizontalSplit();
     myRightHorizontalSplit = UISettings.getInstance().getRightHorizontalSplit();
@@ -131,6 +145,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     add(myLayeredPane, JLayeredPane.DEFAULT_LAYER);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+  }
+
+  private void updateInnerMinSize(@NotNull RegistryValue value) {
+    int minSize = Math.max(0, Math.min(100, value.asInteger()));
+    myVerticalSplitter.setMinSize(JBUI.scale(minSize));
+    myHorizontalSplitter.setMinSize(JBUI.scale(minSize));
   }
 
   @Override
@@ -195,11 +215,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   @NotNull
   final FinalizableCommand createAddButtonCmd(final StripeButton button,
                                               @NotNull WindowInfoImpl info,
-                                              @NotNull Comparator<StripeButton> comparator,
+                                              @NotNull Comparator<? super StripeButton> comparator,
                                               @NotNull Runnable finishCallBack) {
     final WindowInfoImpl copiedInfo = info.copy();
     myId2Button.put(copiedInfo.getId(), button);
-    myButton2Info.put(button, copiedInfo);
     return new AddToolStripeButtonCmd(button, copiedInfo, comparator, finishCallBack);
   }
 
@@ -240,13 +259,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    *
    * @param id {@code ID} of the button to be removed.
    */
-  @NotNull
-  final FinalizableCommand createRemoveButtonCmd(@NotNull String id, @NotNull Runnable finishCallBack) {
-    final StripeButton button = getButtonById(id);
-    final WindowInfoImpl info = getButtonInfoById(id);
+  @Nullable
+  final FinalizableCommand createRemoveButtonCmd(@NotNull WindowInfoImpl info, @NotNull String id, @NotNull Runnable finishCallBack) {
+    StripeButton button = myId2Button.remove(id);
+    if (button == null) {
+      return null;
+    }
 
-    myButton2Info.remove(button);
-    myId2Button.remove(id);
     return new RemoveToolStripeButtonCmd(button, info, finishCallBack);
   }
 
@@ -299,21 +318,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return myLayeredPane;
   }
 
-  @Nullable
-  private StripeButton getButtonById(final String id) {
-    return myId2Button.get(id);
-  }
-
   private InternalDecorator getDecoratorById(final String id) {
     return myId2Decorator.get(id);
-  }
-
-  /**
-   * @param id {@code ID} of tool stripe butoon.
-   * @return {@code WindowInfo} associated with specified tool stripe button.
-   */
-  private WindowInfoImpl getButtonInfoById(final String id) {
-    return myButton2Info.get(myId2Button.get(id));
   }
 
   /**
@@ -777,7 +783,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
           @Override
           public String toString() {
-            return "["+String.valueOf(getFirstComponent()) + "|" + String.valueOf(getSecondComponent())+"]";
+            return "[" + getFirstComponent() + "|" + getSecondComponent() + "]";
           }
         }
         Splitter splitter = new MySplitter();
@@ -887,37 +893,32 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     public final void run() {
       try {
         // Show component.
-        if (!myDirtyMode && UISettings.getInstance().getAnimateWindows() && !RemoteDesktopService.isAnimationDisabled()) {
+        if (!myDirtyMode && UISettings.getInstance().getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
           // Prepare top image. This image is scrolling over bottom image.
           final Image topImage = myLayeredPane.getTopImage();
-          final Graphics topGraphics = topImage.getGraphics();
 
-          Rectangle bounds;
+          Rectangle bounds =  myComponent.getBounds();
 
-          try {
+          useSafely(topImage.getGraphics(), topGraphics -> {
             myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
             myLayeredPane.moveToFront(myComponent);
             myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
-            bounds = myComponent.getBounds();
             myComponent.paint(topGraphics);
             myLayeredPane.remove(myComponent);
-          }
-          finally {
-            topGraphics.dispose();
-          }
+          });
+
           // Prepare bottom image.
           final Image bottomImage = myLayeredPane.getBottomImage();
-          final Graphics bottomGraphics = bottomImage.getGraphics();
-          try {
+
+          Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(myLayeredPane);
+          useSafely(bottomImage.getGraphics(), bottomGraphics -> {
             bottomGraphics.setClip(0, 0, bounds.width, bounds.height);
-            bottomGraphics.translate(-bounds.x, -bounds.y);
+            bottomGraphics.translate(bottomImageOffset.getX() - bounds.x, bottomImageOffset.getY() - bounds.y);
             myLayeredPane.paint(bottomGraphics);
-          }
-          finally {
-            bottomGraphics.dispose();
-          }
+          });
+
           // Start animation.
-          final Surface surface = new Surface(topImage, bottomImage, 1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
+          final Surface surface = new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), 1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
           myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
           surface.setBounds(bounds);
           myLayeredPane.validate();
@@ -945,11 +946,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final class AddToolStripeButtonCmd extends FinalizableCommand {
     private final StripeButton myButton;
     private final WindowInfoImpl myInfo;
-    private final Comparator<StripeButton> myComparator;
+    private final Comparator<? super StripeButton> myComparator;
 
     AddToolStripeButtonCmd(final StripeButton button,
                            @NotNull WindowInfoImpl info,
-                           @NotNull Comparator<StripeButton> comparator,
+                           @NotNull Comparator<? super StripeButton> comparator,
                            @NotNull Runnable finishCallBack) {
       super(finishCallBack);
       myButton = button;
@@ -988,31 +989,32 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final class RemoveToolStripeButtonCmd extends FinalizableCommand {
     private final StripeButton myButton;
     private final WindowInfoImpl myInfo;
+    private final ToolWindowAnchor myAnchor;
 
     RemoveToolStripeButtonCmd(@NotNull StripeButton button, @NotNull WindowInfoImpl info, @NotNull Runnable finishCallBack) {
       super(finishCallBack);
       myButton = button;
       myInfo = info;
+      myAnchor = myInfo.getAnchor();
     }
 
     @Override
     public final void run() {
       try {
-        final ToolWindowAnchor anchor = myInfo.getAnchor();
-        if (ToolWindowAnchor.TOP == anchor) {
+        if (ToolWindowAnchor.TOP == myAnchor) {
           myTopStripe.removeButton(myButton);
         }
-        else if (ToolWindowAnchor.LEFT == anchor) {
+        else if (ToolWindowAnchor.LEFT == myAnchor) {
           myLeftStripe.removeButton(myButton);
         }
-        else if (ToolWindowAnchor.BOTTOM == anchor) {
+        else if (ToolWindowAnchor.BOTTOM == myAnchor) {
           myBottomStripe.removeButton(myButton);
         }
-        else if (ToolWindowAnchor.RIGHT == anchor) {
+        else if (ToolWindowAnchor.RIGHT == myAnchor) {
           myRightStripe.removeButton(myButton);
         }
         else {
-          LOG.error("unknown anchor: " + anchor);
+          LOG.error("unknown anchor: " + myAnchor);
         }
         validate();
         repaint();
@@ -1081,6 +1083,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           myLayeredPane.validate();
           myLayeredPane.repaint();
         }
+        transferFocus();
       }
       finally {
         finish();
@@ -1103,33 +1106,27 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     public final void run() {
       try {
         final UISettings uiSettings = UISettings.getInstance();
-        if (!myDirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isAnimationDisabled()) {
+        if (!myDirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
           final Rectangle bounds = myComponent.getBounds();
           // Prepare top image. This image is scrolling over bottom image. It contains
           // picture of component is being removed.
           final Image topImage = myLayeredPane.getTopImage();
-          final Graphics topGraphics = topImage.getGraphics();
-          try {
-            myComponent.paint(topGraphics);
-          }
-          finally {
-            topGraphics.dispose();
-          }
+          useSafely(topImage.getGraphics(), topGraphics -> myComponent.paint(topGraphics));
+
           // Prepare bottom image. This image contains picture of component that is located
           // under the component to is being removed.
           final Image bottomImage = myLayeredPane.getBottomImage();
-          final Graphics bottomGraphics = bottomImage.getGraphics();
-          try {
+
+          Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(myLayeredPane);
+          useSafely(bottomImage.getGraphics(), bottomGraphics -> {
             myLayeredPane.remove(myComponent);
             bottomGraphics.clipRect(0, 0, bounds.width, bounds.height);
-            bottomGraphics.translate(-bounds.x, -bounds.y);
+            bottomGraphics.translate(bottomImageOffset.getX() - bounds.x, bottomImageOffset.getY() - bounds.y);
             myLayeredPane.paint(bottomGraphics);
-          }
-          finally {
-            bottomGraphics.dispose();
-          }
+          });
+
           // Remove component from the layered pane and start animation.
-          final Surface surface = new Surface(topImage, bottomImage, -1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
+          final Surface surface = new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), -1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
           myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
           surface.setBounds(bounds);
           myLayeredPane.validate();
@@ -1145,6 +1142,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           myLayeredPane.validate();
           myLayeredPane.repaint();
         }
+        transferFocus();
       }
       finally {
         finish();
@@ -1184,7 +1182,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     @Override
     public void run() {
       try {
-        StripeButton stripeButton = getButtonById(myId);
+        StripeButton stripeButton = myId2Button.get(myId);
         if (stripeButton == null) {
           return;
         }
@@ -1214,13 +1212,52 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
+  private static class ImageRef extends SoftReference<BufferedImage> {
+    @Nullable private BufferedImage myStrongRef;
+
+    ImageRef(@NotNull BufferedImage image) {
+      super(image);
+      myStrongRef = image;
+    }
+
+    @Override
+    public BufferedImage get() {
+      if (myStrongRef != null) {
+        BufferedImage img = myStrongRef;
+        myStrongRef = null; // drop on first request
+        return img;
+      }
+      return super.get();
+    }
+  }
+
+  private static class ImageCache extends ScaleContext.Cache<ImageRef> {
+    ImageCache(@NotNull Function<? super ScaleContext, ? extends ImageRef> imageProvider) {
+      super(imageProvider);
+    }
+
+    public BufferedImage get(@NotNull ScaleContext ctx) {
+      ImageRef ref = getOrProvide(ctx);
+      BufferedImage image = SoftReference.dereference(ref);
+      if (image != null) return image;
+      clear(); // clear to recalculate the image
+      return get(ctx); // first recalculated image will be non-null
+    }
+  }
+
   private final class MyLayeredPane extends JBLayeredPane {
+    private final Function<ScaleContext, ImageRef> myImageProvider = __ -> {
+      int width = Math.max(Math.max(1, getWidth()), myFrame.getWidth());
+      int height = Math.max(Math.max(1, getHeight()), myFrame.getHeight());
+      return new ImageRef(UIUtil.createImage(getGraphicsConfiguration(), width, height, BufferedImage.TYPE_INT_RGB));
+    };
+
     /*
      * These images are used to perform animated showing and hiding of components.
      * They are the member for performance reason.
      */
-    private Reference<BufferedImage> myBottomImageRef;
-    private Reference<BufferedImage> myTopImageRef;
+    private final ImageCache myBottomImageCache = new ImageCache(myImageProvider);
+    private final ImageCache myTopImageCache = new ImageCache(myImageProvider);
 
     MyLayeredPane(@NotNull JComponent splitter) {
       setOpaque(false);
@@ -1228,38 +1265,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
 
     final Image getBottomImage() {
-      Pair<BufferedImage, Reference<BufferedImage>> result = getImage(myBottomImageRef);
-      myBottomImageRef = result.second;
-      return result.first;
+      return myBottomImageCache.get(ScaleContext.create(this));
     }
 
     final Image getTopImage() {
-      Pair<BufferedImage, Reference<BufferedImage>> result = getImage(myTopImageRef);
-      myTopImageRef = result.second;
-      return result.first;
-    }
-
-    @NotNull
-    private Pair<BufferedImage, Reference<BufferedImage>> getImage(@Nullable Reference<BufferedImage> imageRef) {
-      LOG.assertTrue(UISettings.getInstance().getAnimateWindows());
-      BufferedImage image = SoftReference.dereference(imageRef);
-      if (image == null || image.getWidth(null) < getWidth() || image.getHeight(null) < getHeight()) {
-        final int width = Math.max(Math.max(1, getWidth()), myFrame.getWidth());
-        final int height = Math.max(Math.max(1, getHeight()), myFrame.getHeight());
-        if (SystemInfo.isWindows) {
-          image = myFrame.getGraphicsConfiguration().createCompatibleImage(width, height);
-        }
-        else {
-          // Under Linux we have found that images created by createCompatibleImage(),
-          // createVolatileImage(), etc extremely slow for rendering. TrueColor buffered image
-          // is MUCH faster.
-          // On Mac we create a retina-compatible image
-
-          image = UIUtil.createImage(getGraphics(), width, height, BufferedImage.TYPE_INT_RGB);
-        }
-        imageRef = new SoftReference<>(image);
-      }
-      return Pair.create(image, imageRef);
+      return myTopImageCache.get(ScaleContext.create(this));
     }
 
     /**
@@ -1292,8 +1302,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         }
 
         float weight = info.getAnchor().isHorizontal()
-                             ? (float)component.getHeight() / (float)getHeight()
-                             : (float)component.getWidth() / (float)getWidth();
+                             ? (float)component.getHeight() / getHeight()
+                             : (float)component.getWidth() / getWidth();
         setBoundsInPaletteLayer(component, info.getAnchor(), weight);
       }
     }

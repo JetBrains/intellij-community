@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/2/13
  */
 public enum ProgressExecutionMode {
   /**

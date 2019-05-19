@@ -30,7 +30,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/8/13
  */
 public class ModuleExtendedModelImpl implements ModuleExtendedModel {
   private final String myName;

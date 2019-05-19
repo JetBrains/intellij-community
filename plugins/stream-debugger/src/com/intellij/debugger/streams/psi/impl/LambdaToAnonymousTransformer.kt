@@ -46,7 +46,7 @@ object LambdaToAnonymousTransformer : PsiElementTransformer.Base() {
         LOG.assertTrue(anonymousClass != null)
         val infos = overrideOrImplement(anonymousClass!!, method)
         if (infos.size == 1) {
-          val member = infos[0].psiMember
+          val member = infos[0].psiMember!!
           val parameters = member.parameterList.parameters
           if (parameters.size == paramListCopy.size) {
             for (i in parameters.indices) {
@@ -161,9 +161,9 @@ object LambdaToAnonymousTransformer : PsiElementTransformer.Base() {
       val interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType)
       if (interfaceMethod != null) {
         val substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(functionalInterfaceType))
-        if (interfaceMethod.getSignature(substitutor).parameterTypes.any { !PsiTypesUtil.isDenotableType(it, lambdaExpression) }) return false
+        if (interfaceMethod.getSignature(substitutor).parameterTypes.any { !PsiTypesUtil.isDenotableType(it) }) return false
         val returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType)
-        return PsiTypesUtil.isDenotableType(returnType, lambdaExpression)
+        return PsiTypesUtil.isDenotableType(returnType)
       }
     }
 

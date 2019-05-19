@@ -60,12 +60,12 @@ public class ComboboxEditorTextField extends EditorTextField {
 
     result.addFocusListener(new FocusChangeListener() {
       @Override
-      public void focusGained(Editor editor) {
+      public void focusGained(@NotNull Editor editor) {
         repaintComboBox();
       }
 
       @Override
-      public void focusLost(Editor editor) {
+      public void focusLost(@NotNull Editor editor) {
         repaintComboBox();
       }
     });

@@ -34,7 +34,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
   default PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
     if (resolvedCallee instanceof PyFunction) {
       final PyFunction function = (PyFunction)resolvedCallee;
-      if (function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
+      if (!PyNames.NEW.equals(function.getName()) && function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
         return null;
       }
     }

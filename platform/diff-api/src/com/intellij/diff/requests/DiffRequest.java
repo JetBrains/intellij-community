@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @see com.intellij.diff.DiffRequestFactory
+ * @see SimpleDiffRequest
  */
 public abstract class DiffRequest implements UserDataHolder {
   protected final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();

@@ -38,7 +38,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private ObjectReference myThisObject;
   private SourcePosition mySourcePosition;
 
-  private Icon myIcon = AllIcons.Debugger.StackFrame;
+  private Icon myIcon = AllIcons.Debugger.Frame;
 
   public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame, @NotNull MethodsTracker tracker) {
     myFrame = frame;
@@ -136,7 +136,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       label.append(settings.SHOW_ARGUMENTS_TYPES ? DebuggerUtilsEx.methodNameWithArguments(method) : myName);
     }
     if (settings.SHOW_LINE_NUMBER) {
-      label.append(':').append(Integer.toString(DebuggerUtilsEx.getLineNumber(myLocation, false)));
+      label.append(':').append(DebuggerUtilsEx.getLineNumber(myLocation, false));
     }
     if (settings.SHOW_CLASS_NAME) {
       String name;

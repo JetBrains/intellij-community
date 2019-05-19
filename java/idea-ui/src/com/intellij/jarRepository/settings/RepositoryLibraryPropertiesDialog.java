@@ -17,6 +17,7 @@ package com.intellij.jarRepository.settings;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
@@ -36,7 +37,7 @@ public class RepositoryLibraryPropertiesDialog extends DialogWrapper {
     propertiesEditor =
       new RepositoryLibraryPropertiesEditor(project, model, description, allowExcludingTransitiveDependencies, new RepositoryLibraryPropertiesEditor.ModelChangeListener() {
         @Override
-        public void onChange(RepositoryLibraryPropertiesEditor editor) {
+        public void onChange(@NotNull RepositoryLibraryPropertiesEditor editor) {
           setOKActionEnabled(editor.isValid() && (!changesRequired || editor.hasChanges()));
         }
       });

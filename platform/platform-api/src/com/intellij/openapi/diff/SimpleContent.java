@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Allows to compare some text not associated with file or document.
@@ -57,14 +44,10 @@ public class SimpleContent extends DiffContent {
     this(text, null);
   }
 
-  public SimpleContent(@NotNull String text, @Nullable FileType type) {
-    this(text, type, EditorFactory.getInstance());
-  }
-
-  public SimpleContent(@NotNull String text, FileType type, EditorFactory f) {
-    myOriginalBytes = text.getBytes();
+  public SimpleContent(@NotNull String text, FileType type) {
+    myOriginalBytes = text.getBytes(StandardCharsets.UTF_8);
     myOriginalText = myLineSeparators.correctText(text);
-    myDocument = f.createDocument(myOriginalText);
+    myDocument = EditorFactory.getInstance().createDocument(myOriginalText);
     setReadOnly(true);
     myType = type;
   }
@@ -99,7 +82,7 @@ public class SimpleContent extends DiffContent {
    * @return null
    */
   @Override
-  public OpenFileDescriptor getOpenFileDescriptor(int offset) {
+  public Navigatable getOpenFileDescriptor(int offset) {
     return null;
   }
 
@@ -138,7 +121,7 @@ public class SimpleContent extends DiffContent {
       buffer.get(result, bomLength, encodedLength);
       return result;
     }
-    return currentText.getBytes();
+    return currentText.getBytes(StandardCharsets.UTF_8);
   }
 
   @NotNull
@@ -156,22 +139,7 @@ public class SimpleContent extends DiffContent {
   }
 
   /**
-   * @param text     text of content
-   * @param fileName used to determine content type
-   */
-  public static SimpleContent forFileContent(String text, String fileName) {
-    FileType fileType;
-    if (fileName != null) {
-      fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    }
-    else {
-      fileType = null;
-    }
-    return new SimpleContent(text, fileType);
-  }
-
-  /**
-   * @param bytes    binary text representaion
+   * @param bytes    binary text representation
    * @param charset  name of charset. If null IDE default charset will be used
    * @param fileType content type. If null file name will be used to select file type
    * @return content representing bytes as text
@@ -192,15 +160,11 @@ public class SimpleContent extends DiffContent {
   public static DiffContent fromIoFile(File file, String charset, FileType fileType) throws IOException {
     if (file.isDirectory()) throw new IllegalArgumentException(file.toString());
     if (fileType == null) fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
-    BufferedInputStream stream = new BufferedInputStream(new FileInputStream(file));
-    try {
+    try (BufferedInputStream stream = new BufferedInputStream(new FileInputStream(file))) {
       byte[] bytes = new byte[(int)file.length()];
       int bytesRead = stream.read(bytes, 0, bytes.length);
       LOG.assertTrue(file.length() == bytesRead);
       return fromBytes(bytes, charset, fileType);
-    }
-    finally {
-      stream.close();
     }
   }
 

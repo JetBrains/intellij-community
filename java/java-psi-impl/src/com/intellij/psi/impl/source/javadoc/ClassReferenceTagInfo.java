@@ -12,7 +12,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 abstract class ClassReferenceTagInfo implements JavadocTagInfo {
   private final String myName;
 
-  public ClassReferenceTagInfo(String name) {
+  ClassReferenceTagInfo(String name) {
     myName = name;
   }
 

@@ -38,14 +38,14 @@ public final class ScriptRunnerUtil {
     return getProcessOutput(commandLine, STDOUT_OUTPUT_KEY_FILTER, DEFAULT_TIMEOUT);
   }
 
-  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine, @NotNull Condition<Key> outputTypeFilter, long timeout)
+  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine, @NotNull Condition<? super Key> outputTypeFilter, long timeout)
     throws ExecutionException {
     return getProcessOutput(new OSProcessHandler(commandLine), outputTypeFilter,
                             timeout);
   }
 
   public static String getProcessOutput(@NotNull final ProcessHandler processHandler,
-                                        @NotNull final Condition<Key> outputTypeFilter,
+                                        @NotNull final Condition<? super Key> outputTypeFilter,
                                         final long timeout)
     throws ExecutionException {
     LOG.assertTrue(!processHandler.isStartNotified());
@@ -81,7 +81,7 @@ public final class ScriptRunnerUtil {
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
                                          @Nullable Charset charset,
-                                         @NotNull ThrowableNotNullFunction<GeneralCommandLine, OSProcessHandler, ExecutionException> creator)
+                                         @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator)
     throws ExecutionException {
 
     GeneralCommandLine commandLine = new GeneralCommandLine(PathEnvironmentVariableUtil.findExecutableInWindowsPath(exePath));
@@ -134,7 +134,7 @@ public final class ScriptRunnerUtil {
                                                                   @Nullable VirtualFile scriptFile,
                                                                   @Nullable String workingDirectory,
                                                                   long timeout,
-                                                                  Condition<Key> scriptOutputType,
+                                                                  Condition<? super Key> scriptOutputType,
                                                                   @NonNls String... parameters) throws ExecutionException {
     final OSProcessHandler processHandler = execute(exePathString, workingDirectory, scriptFile, parameters);
 
@@ -151,11 +151,11 @@ public final class ScriptRunnerUtil {
   }
 
   public static class ScriptOutput extends ProcessAdapter {
-    private final Condition<Key> myScriptOutputType;
+    private final Condition<? super Key> myScriptOutputType;
     public final StringBuilder myFilteredOutput;
     public final StringBuffer myMergedOutput;
 
-    private ScriptOutput(Condition<Key> scriptOutputType) {
+    private ScriptOutput(Condition<? super Key> scriptOutputType) {
       myScriptOutputType = scriptOutputType;
       myFilteredOutput = new StringBuilder();
       myMergedOutput = new StringBuffer();
@@ -202,8 +202,8 @@ public final class ScriptRunnerUtil {
                                              long millisTimeout,
                                              @Nullable String commandLine) {
     if (processHandler.isProcessTerminated()) {
-      if (commandLine == null && processHandler instanceof BaseOSProcessHandler) {
-        commandLine = ((BaseOSProcessHandler) processHandler).getCommandLine();
+      if (commandLine == null && processHandler instanceof BaseProcessHandler) {
+        commandLine = ((BaseProcessHandler)processHandler).getCommandLine();
       }
       LOG.warn("Process '" + commandLine + "' is already terminated!");
       return;

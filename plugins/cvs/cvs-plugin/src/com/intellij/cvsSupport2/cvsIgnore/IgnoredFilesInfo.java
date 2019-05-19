@@ -23,16 +23,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 public interface IgnoredFilesInfo {
 
   IgnoredFilesInfo IGNORE_NOTHING = new IgnoredFilesInfo() {
+    @Override
     public boolean shouldBeIgnored(String fileName) {
       return false;
     }
 
+    @Override
     public boolean shouldBeIgnored(VirtualFile file) {
       return false;
     }
   };
 
   IgnoredFilesInfo IGNORE_ALL = new IgnoredFilesInfo() {
+    @Override
     public boolean shouldBeIgnored(String fileName) {
       return true;
     }

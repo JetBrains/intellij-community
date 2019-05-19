@@ -19,8 +19,8 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.ExternalChangeAction;
@@ -60,8 +61,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class FileDocumentManagerImpl extends FileDocumentManager implements VirtualFileListener, VetoableProjectManagerListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
@@ -91,7 +92,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     }
 
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       final Document document = e.getDocument();
       if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
         myUnsavedDocuments.add(document);
@@ -243,6 +244,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @Override
   @Nullable
   public VirtualFile getFile(@NotNull Document document) {
+    if (document instanceof FrozenDocument) return null;
     return document.getUserData(FILE_KEY);
   }
 
@@ -260,10 +262,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private void saveAllDocumentsLater() {
     // later because some document might have been blocked by PSI right now
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (ApplicationManager.getApplication().isDisposed()) {
-        return;
-      }
+    TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
       final Document[] unsavedDocuments = getUnsavedDocuments();
       for (Document document : unsavedDocuments) {
         VirtualFile file = getFile(document);
@@ -304,7 +303,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
           doSaveDocument(document, isExplicit);
         }
         catch (IOException e) {
-          //noinspection ThrowableResultOfMethodCallIgnored
           failedToSave.put(document, e);
         }
         catch (SaveVetoException e) {
@@ -388,7 +386,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
     return !myConflictResolver.hasConflict(file) &&
-           Arrays.stream(Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)).allMatch(vetoer -> vetoer.maySaveDocument(document, isExplicit));
+           (FileDocumentSynchronizationVetoer.EP_NAME).getExtensionList().stream().allMatch(vetoer -> vetoer.maySaveDocument(document, isExplicit));
   }
 
   private void doSaveDocumentInWriteAction(@NotNull final Document document, @NotNull final VirtualFile file) throws IOException {
@@ -494,15 +492,28 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   @Override
   public boolean requestWriting(@NotNull Document document, Project project) {
+    return requestWritingStatus(document, project).hasWriteAccess();
+  }
+
+  @NotNull
+  @Override
+  public WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
     final VirtualFile file = getInstance().getFile(document);
     if (project != null && file != null && file.isValid()) {
-      return !file.getFileType().isBinary() && ReadonlyStatusHandler.ensureFilesWritable(project, file);
+      if (file.getFileType().isBinary()) return WriteAccessStatus.NON_WRITABLE;
+      ReadonlyStatusHandler.OperationStatus writableStatus =
+        ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file));
+      if (writableStatus.hasReadonlyFiles()) {
+        return new WriteAccessStatus(writableStatus.getReadonlyFilesMessage());
+      }
+      assert document.isWritable();
+      return WriteAccessStatus.WRITABLE;
     }
     if (document.isWritable()) {
-      return true;
+      return WriteAccessStatus.WRITABLE;
     }
     document.fireReadOnlyModificationAttempt();
-    return false;
+    return WriteAccessStatus.NON_WRITABLE;
   }
 
   @Override
@@ -580,12 +591,14 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     return fileType.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType) == null;
   }
 
-  private static final Key<Document> DOCUMENT_WAS_SAVED_TEMPORARILY = Key.create("DOCUMENT_WAS_RESURRECTED_TEMPORARILY");
+  private static final Key<Document> DOCUMENT_WAS_SAVED_TEMPORARILY = Key.create("DOCUMENT_WAS_SAVED_TEMPORARILY");
   @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent event) {
     VirtualFile virtualFile = event.getFile();
-    // check file type in second order to avoid content detection running
-    if (virtualFile.getLength() == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) {
+
+    // when an empty unknown file is written into, re-run file type detection
+    long lastRecordedLength = PersistentFS.getInstance().getLastRecordedLength(virtualFile);
+    if (lastRecordedLength == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) { // check file type last to avoid content detection running
       virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
     }
 
@@ -717,7 +730,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   private boolean fireBeforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
-    for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
+    for (FileDocumentSynchronizationVetoer vetoer : FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList()) {
       try {
         if (!vetoer.mayReloadFileContent(file, document)) {
           return false;
@@ -733,8 +746,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   @NotNull
-  private static FileDocumentManagerListener[] getListeners() {
-    return FileDocumentManagerListener.EP_NAME.getExtensions();
+  private static List<FileDocumentManagerListener> getListeners() {
+    return FileDocumentManagerListener.EP_NAME.getExtensionList();
   }
 
   private static int getPreviewCharCount(@NotNull VirtualFile file) {
@@ -804,15 +817,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   //temp setter for Rider 2017.1
   public static boolean ourConflictsSolverEnabled = true;
 
-  private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
+  protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.put(file, document);
   }
 
-  private void removeDocumentFromCache(@NotNull VirtualFile file) {
+  protected void removeDocumentFromCache(@NotNull VirtualFile file) {
     myDocumentCache.remove(file);
   }
 
-  private Document getDocumentFromCache(@NotNull VirtualFile file) {
+  protected Document getDocumentFromCache(@NotNull VirtualFile file) {
     return myDocumentCache.get(file);
   }
 }

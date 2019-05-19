@@ -15,8 +15,8 @@
  */
 package com.intellij.execution.testframework.sm.runner.states;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,10 +55,12 @@ public class SuiteInProgressState extends TestInProgressState {
     return false;
   }
 
+  @Override
   public boolean wasTerminated() {
     return false;
   }
 
+  @Override
   public Magnitude getMagnitude() {
     return Magnitude.RUNNING_INDEX;
   }

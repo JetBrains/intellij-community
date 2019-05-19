@@ -1,21 +1,18 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerUISettings;
+import com.intellij.ide.plugins.PluginManagerConfigurableProxy;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
@@ -24,7 +21,6 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +53,7 @@ public class IntentionDescriptionPanel {
   public IntentionDescriptionPanel() {
     myDescriptionBrowser.addHyperlinkListener(
       new HyperlinkListener() {
+        @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             BrowserUtil.browse(e.getURL());
@@ -106,31 +103,21 @@ public class IntentionDescriptionPanel {
 
   private void setupPoweredByPanel(final IntentionActionMetaData actionMetaData) {
     PluginId pluginId = actionMetaData == null ? null : actionMetaData.getPluginId();
-    JComponent owner;
-    if (pluginId == null) {
-      ApplicationInfo info = ApplicationInfo.getInstance();
-      String label = XmlStringUtil.wrapInHtml(
-        info.getShortCompanyName() + " " +
-        info.getVersionName());
-      owner = new JLabel(label);
-    }
-    else {
-      IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
+    myPoweredByPanel.removeAll();
+    IdeaPluginDescriptorImpl pluginDescriptor  = (IdeaPluginDescriptorImpl)PluginManager.getPlugin(pluginId);
+    boolean isCustomPlugin = pluginDescriptor != null && pluginDescriptor.isBundled();
+    if (isCustomPlugin) {
       HyperlinkLabel label = new HyperlinkLabel(CodeInsightBundle.message("powered.by.plugin", pluginDescriptor.getName()));
       label.addHyperlinkListener(new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
-          ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-          PluginManagerConfigurable pluginConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
           Project project = ProjectManager.getInstance().getDefaultProject();
-          util.editConfigurable(project, pluginConfigurable, () -> pluginConfigurable.select(pluginDescriptor));
+          PluginManagerConfigurableProxy.showPluginConfigurable(null, project, pluginDescriptor);
         }
       });
-      owner = label;
+      myPoweredByPanel.add(label, BorderLayout.CENTER);
     }
-    //myPoweredByContainer.setVisible(true);
-    myPoweredByPanel.removeAll();
-    myPoweredByPanel.add(owner, BorderLayout.CENTER);
+    myPoweredByPanel.setVisible(isCustomPlugin);
   }
 
 
@@ -215,7 +202,7 @@ public class IntentionDescriptionPanel {
     disposeUsagePanels(myAfterUsagePanels);
   }
 
-  private static void disposeUsagePanels(List<IntentionUsagePanel> usagePanels) {
+  private static void disposeUsagePanels(List<? extends IntentionUsagePanel> usagePanels) {
     for (final IntentionUsagePanel usagePanel : usagePanels) {
       Disposer.dispose(usagePanel);
     }
@@ -241,4 +228,4 @@ public class IntentionDescriptionPanel {
     myAfterPanel.setMaximumSize(newd);
     myAfterPanel.setMinimumSize(newd);
   }
-}  
+}

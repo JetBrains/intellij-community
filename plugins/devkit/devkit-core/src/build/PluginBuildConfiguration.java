@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ReadAction;
@@ -31,6 +31,7 @@ import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.File;
+import java.util.Objects;
 
 @State(name = "DevKit.ModuleBuildProperties")
 public class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
@@ -68,8 +69,8 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
 
       State state = (State)o;
 
-      if (url != null ? !url.equals(state.url) : state.url != null) return false;
-      if (manifest != null ? !manifest.equals(state.manifest) : state.manifest != null) return false;
+      if (!Objects.equals(url, state.url)) return false;
+      if (!Objects.equals(manifest, state.manifest)) return false;
 
       return true;
     }
@@ -111,6 +112,11 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     myPluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, virtualFile.getUrl());
   }
 
+  @TestOnly
+  public void cleanupForNextTest() {
+    myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
+  }
+
   private void createDescriptor(final String url) {
     final ConfigFileInfo descriptor = new ConfigFileInfo(PluginDescriptorConstants.META_DATA, url);
     myPluginXmlContainer.getConfiguration().addConfigFile(descriptor);
@@ -144,7 +150,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
 
   public void setPluginXmlPathAndCreateDescriptorIfDoesntExist(final String pluginXmlPath) {
     myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
-    WriteAction.runAndWait(() -> createDescriptor(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath))));
+    WriteAction.runAndWait(() -> createDescriptor(VfsUtilCore.pathToUrl(pluginXmlPath)));
   }
 
   public void setManifestPath(@Nullable String manifestPath) {
@@ -156,15 +162,11 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestPath);
     if (manifest == null) {
       Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
-      ReadAction.run(()-> {
-        myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
-          VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null);
-      });
+      ReadAction.run(()-> myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
+        VfsUtilCore.pathToUrl(manifestPath), myModule, null));
     }
     else {
-      WriteAction.run(()-> {
-        myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null);
-      });
+      WriteAction.run(()-> myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null));
     }
   }
 

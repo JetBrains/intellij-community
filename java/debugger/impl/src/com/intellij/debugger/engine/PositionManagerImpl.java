@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.MultiRequestPositionManager;
@@ -56,6 +56,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return myDebugProcess;
   }
 
+  @Override
   @NotNull
   public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     try {
@@ -67,6 +68,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return Collections.emptyList();
   }
 
+  @Override
   public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
     throws NoDataException {
     throw new IllegalStateException("This class implements MultiRequestPositionManager, corresponding createPrepareRequests version should be used");
@@ -92,6 +94,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           }
           classPattern = parentQName + "*";
           prepareRequestor = new ClassPrepareRequestor() {
+            @Override
             public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
               if (((DebugProcessImpl)debuggerProcess).getPositionManager().getAllClasses(position).contains(referenceType)) {
                 requestor.processClassPrepare(debuggerProcess, referenceType);
@@ -108,6 +111,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     });
   }
 
+  @Override
   @Nullable
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -333,8 +337,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         PsiFile[] files = FilenameIndex.getFilesByName(project, refType.sourceName(), GlobalSearchScope.allScope(project));
         for (PsiFile file : files) {
           if (file instanceof PsiJavaFile) {
-            for (PsiClass cls : ((PsiJavaFile)file).getClasses()) {
-              if (StringUtil.equals(originalQName, cls.getQualifiedName())) {
+            for (PsiClass cls : PsiTreeUtil.findChildrenOfAnyType(file, PsiClass.class)) {
+              if (StringUtil.equals(originalQName, JVMNameUtil.getClassVMName(cls))) {
                 return file;
               }
             }
@@ -348,7 +352,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return null;
   }
 
-  private PsiClass findPsiClassByName(String originalQName, @Nullable Consumer<ClsClassImpl> altClsProcessor) {
+  private PsiClass findPsiClassByName(String originalQName, @Nullable Consumer<? super ClsClassImpl> altClsProcessor) {
     PsiClass psiClass = null;
     // first check alternative jre if any
     Sdk alternativeJre = myDebugProcess.getSession().getAlternativeJre();
@@ -398,6 +402,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return null;
   }
 
+  @Override
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
     return ReadAction.compute(() -> StreamEx.of(getLineClasses(position.getFile(), position.getLine()))
@@ -480,8 +485,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     PsiElement previous = null;
 
     while (element != null) {
-      if (PsiClass.class.isInstance(element) && !(previous instanceof PsiExpressionList)) {
-        //noinspection unchecked
+      if (element instanceof PsiClass && !(previous instanceof PsiExpressionList)) {
         return (PsiClass)element;
       }
       if (element instanceof PsiFile) {
@@ -583,7 +587,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     private final String myMethodSignature;
     private PsiMethod myCompiledMethod;
 
-    public MethodFinder(final String className, final String methodName, final String methodSignature) {
+    MethodFinder(final String className, final String methodName, final String methodSignature) {
       myClassName = className;
       myMethodName = methodName;
       myMethodSignature = methodSignature;

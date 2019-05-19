@@ -67,8 +67,8 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
     return items;
   }
 
-  private static void addItemsForMarkers(List<RelatedItemLineMarkerInfo> markers,
-                                         List<GotoRelatedItem> result) {
+  private static void addItemsForMarkers(List<? extends RelatedItemLineMarkerInfo> markers,
+                                         List<? super GotoRelatedItem> result) {
     Set<PsiFile> addedFiles = new HashSet<>();
     for (RelatedItemLineMarkerInfo<?> marker : markers) {
       Collection<? extends GotoRelatedItem> items = marker.createGotoRelatedItems();

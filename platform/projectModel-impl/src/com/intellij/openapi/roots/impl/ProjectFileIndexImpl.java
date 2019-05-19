@@ -3,24 +3,22 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -46,23 +44,29 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return true;
   }
 
-  private Set<VirtualFile> getRootsToIterate(final Module module) {
+  @NotNull
+  private Set<VirtualFile> getRootsToIterate(@NotNull Module module) {
     return ReadAction.compute(() -> {
       if (module.isDisposed()) return Collections.emptySet();
 
-      Set<VirtualFile> result = new LinkedHashSet<>();
-      for (VirtualFile[] roots : getModuleContentAndSourceRoots(module)) {
-        for (VirtualFile root : roots) {
-          DirectoryInfo info = getInfoForFileOrDirectory(root);
-          if (!info.isInProject(root)) continue; // is excluded or ignored
-          if (!module.equals(info.getModule())) continue; // maybe 2 modules have the same content root?
+      ModuleFileIndexImpl moduleFileIndex = (ModuleFileIndexImpl)ModuleRootManager.getInstance(module).getFileIndex();
+      Set<VirtualFile> result = moduleFileIndex.getModuleRootsToIterate();
 
-          VirtualFile parent = root.getParent();
-          if (parent != null) {
-            DirectoryInfo parentInfo = getInfoForFileOrDirectory(parent);
-            if (isFileInContent(parent, parentInfo)) continue;
+      for (Iterator<VirtualFile> iterator = result.iterator(); iterator.hasNext(); ) {
+        VirtualFile root = iterator.next();
+        DirectoryInfo info = getInfoForFileOrDirectory(root);
+        if (!info.isInProject(root) // is excluded or ignored
+            || !module.equals(info.getModule())) { // maybe 2 modules have the same content root?
+          iterator.remove();
+          continue;
+        }
+
+        VirtualFile parent = root.getParent();
+        if (parent != null) {
+          DirectoryInfo parentInfo = getInfoForFileOrDirectory(parent);
+          if (isFileInContent(parent, parentInfo)) {
+            iterator.remove();
           }
-          result.add(root);
         }
       }
 
@@ -90,6 +94,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+    if (file instanceof BackedVirtualFile) file = ((BackedVirtualFile)file).getOriginFile();
     DirectoryInfo info = getInfoForFileOrDirectory(file);
     if (info.isInProject(file) || !honorExclusion && info.isExcluded(file)) {
       return info.getModule();
@@ -109,7 +114,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Nullable
-  public static VirtualFile getClassRootForFile(@NotNull VirtualFile file, DirectoryInfo info) {
+  public static VirtualFile getClassRootForFile(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
     return info.isInProject(file) ? info.getLibraryClassRoot() : null;
   }
 
@@ -119,7 +124,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Nullable
-  public static VirtualFile getSourceRootForFile(@NotNull VirtualFile file, DirectoryInfo info) {
+  public static VirtualFile getSourceRootForFile(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
     return info.isInProject(file) ? info.getSourceRoot() : null;
   }
 
@@ -134,7 +139,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Nullable
-  public static VirtualFile getContentRootForFile(DirectoryInfo info, @NotNull VirtualFile file, boolean honorExclusion) {
+  public static VirtualFile getContentRootForFile(@NotNull DirectoryInfo info, @NotNull VirtualFile file, boolean honorExclusion) {
     if (info.isInProject(file) || !honorExclusion && info.isExcluded(file)) {
       return info.getContentRoot();
     }
@@ -173,6 +178,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   // a slightly faster implementation then the default one
+  @Override
   public boolean isInLibrary(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
     return info.isInProject(fileOrDir) && (info.hasLibraryClassRoot() || info.isInLibrarySource(fileOrDir));
@@ -200,7 +206,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource(fileOrDir) && JavaModuleSourceRootTypes.isTestSourceOrResource(myDirectoryIndex.getSourceRootType(info));
+    return info.isInModuleSource(fileOrDir) && isTestSourcesRoot(info);
   }
 
   @Override
@@ -209,8 +215,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return info.isInModuleSource(fileOrDir) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
   }
 
-  public JpsModuleSourceRootType<?> getSourceRootType(@NotNull VirtualFile fileOrDir) {
-    return myDirectoryIndex.getSourceRootType(getInfoForFileOrDirectory(fileOrDir));
+  public SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
+    return myDirectoryIndex.getSourceRootFolder(getInfoForFileOrDirectory(fileOrDir));
   }
   
   @Override

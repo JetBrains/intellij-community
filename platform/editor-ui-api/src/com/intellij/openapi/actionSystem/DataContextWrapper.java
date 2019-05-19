@@ -34,7 +34,7 @@ public class DataContextWrapper implements DataContext, UserDataHolder {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return myDelegate.getData(dataId);
   }
 

@@ -233,7 +233,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
         if (isAnonymousClassOf(psiNewExpression.getAnonymousClass(), targets)) {
           return UsageType.CLASS_ANONYMOUS_NEW_OPERATOR;
         }
-        if (isNewArrayCreation(psiNewExpression)) {
+        if (psiNewExpression.isArrayCreation()) {
           return UsageType.CLASS_NEW_ARRAY;
         }
         return UsageType.CLASS_NEW_OPERATOR;
@@ -241,10 +241,6 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     }
 
     return null;
-  }
-
-  private static boolean isNewArrayCreation(@NotNull PsiNewExpression expression){
-    return expression.getArrayDimensions().length > 0 || expression.getArrayInitializer() != null;
   }
 
   private static boolean isAnonymousClassOf(@Nullable PsiAnonymousClass anonymousClass, @NotNull UsageTarget[] targets) {
@@ -256,6 +252,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   private static boolean isNestedClassOf(PsiJavaCodeReferenceElement classReference, @NotNull UsageTarget[] targets) {
+    if (classReference instanceof PsiMethodReferenceExpression) return false;
     final PsiElement qualifier = classReference.getQualifier();
     if (qualifier instanceof PsiJavaCodeReferenceElement) {
       return qualifiesToTargetClasses((PsiJavaCodeReferenceElement)qualifier, targets) && classReference.resolve() instanceof PsiClass;

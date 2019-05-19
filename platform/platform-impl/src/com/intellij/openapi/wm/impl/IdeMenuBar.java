@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -15,29 +15,27 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
-import org.java.ayatana.ApplicationMenu;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
@@ -49,6 +47,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatcher, UISettingsListener {
+  private static final Logger LOG = Logger.getInstance(IdeMenuBar.class);
   private static final int COLLAPSED_HEIGHT = 2;
 
   private enum State {
@@ -75,6 +74,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @NotNull private State myState = State.EXPANDED;
   private double myProgress;
   private boolean myActivated;
+
+  private GlobalMenuLinux myGlobalMenuLinux;
 
   public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager) {
     myActionManager = actionManager;
@@ -122,10 +123,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     //save 1px for mouse handler
     if (state == State.COLLAPSED) {
       return JBUI.Borders.emptyBottom(1);
-    }
-
-    if (SystemInfo.isWindows && Registry.is("ide.win.frame.decoration") && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
-      return null;
     }
 
     return UISettings.getInstance().getShowMainToolbar() || UISettings.getInstance().getShowNavigationBar() ? super.getBorder() : null;
@@ -249,7 +246,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     updateMenuActions();
 
     // Add updater for menus
-    myActionManager.addTimerListener(1000, new WeakTimerListener(myActionManager, myTimerListener));
+    myActionManager.addTimerListener(1000, new WeakTimerListener(myTimerListener));
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
@@ -273,28 +270,31 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   public boolean dispatch(@NotNull AWTEvent e) {
-    if (e instanceof MouseEvent) {
-      MouseEvent mouseEvent = (MouseEvent)e;
-      Component component = findActualComponent(mouseEvent);
-
-      if (getState() != State.EXPANDED /*&& !myState.isInProgress()*/) {
-        boolean mouseInside = myActivated || UIUtil.isDescendingFrom(component, this);
-        if (e.getID() == MouseEvent.MOUSE_EXITED && e.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
-        if (mouseInside && getState() == State.COLLAPSED) {
-          setState(State.EXPANDING);
-          restartAnimator();
-        }
-        else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
-          setState(State.COLLAPSING);
-          restartAnimator();
-        }
-      }
+    if (e instanceof MouseEvent && getState() != State.EXPANDED /*&& !myState.isInProgress()*/) {
+      considerRestartingAnimator((MouseEvent)e);
     }
     return false;
   }
 
+  private void considerRestartingAnimator(MouseEvent mouseEvent) {
+    boolean mouseInside = myActivated || UIUtil.isDescendingFrom(findActualComponent(mouseEvent), this);
+    if (mouseEvent.getID() == MouseEvent.MOUSE_EXITED && mouseEvent.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
+    if (mouseInside && getState() == State.COLLAPSED) {
+      setState(State.EXPANDING);
+      restartAnimator();
+    }
+    else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
+      setState(State.COLLAPSING);
+      restartAnimator();
+    }
+  }
+
+  @Nullable
   private Component findActualComponent(MouseEvent mouseEvent) {
     Component component = mouseEvent.getComponent();
+    if (component == null) {
+      return null;
+    }
     Component deepestComponent;
     if (getState() != State.EXPANDED &&
         !getState().isInProgress() &&
@@ -310,7 +310,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     return component;
   }
 
-  void updateMenuActions() {
+  void updateMenuActions() { updateMenuActions(false); }
+
+  void updateMenuActions(boolean forceRebuild) {
     myNewVisibleActions.clear();
 
     if (!myDisabled) {
@@ -318,7 +320,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       expandActionGroup(dataContext, myNewVisibleActions, myActionManager);
     }
 
-    if (!myNewVisibleActions.equals(myVisibleActions)) {
+    if (forceRebuild || !myNewVisibleActions.equals(myVisibleActions)) {
       // should rebuild UI
       final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
 
@@ -328,10 +330,12 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
       removeAll();
       final boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
+      final boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar() || myGlobalMenuLinux != null;
       for (final AnAction action : myVisibleActions) {
-        add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, true));
+        add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu));
       }
 
+      updateGlobalMenuRoots();
       updateMnemonicsVisibility();
       if (myClockPanel != null) {
         add(myClockPanel);
@@ -374,7 +378,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
-  private void expandActionGroup(final DataContext context, final List<AnAction> newVisibleActions, ActionManager actionManager) {
+  private void expandActionGroup(final DataContext context, final List<? super AnAction> newVisibleActions, ActionManager actionManager) {
     final ActionGroup mainActionGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
     if (mainActionGroup == null) return;
     final AnAction[] children = mainActionGroup.getChildren(null);
@@ -415,6 +419,17 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     updateMenuActions();
   }
 
+  private void updateGlobalMenuRoots() {
+    if (myGlobalMenuLinux != null) {
+      final List<ActionMenu> roots = new ArrayList<>();
+      for (Component each: getComponents()) {
+        if (each instanceof ActionMenu)
+          roots.add((ActionMenu)each);
+      }
+      myGlobalMenuLinux.setRoots(roots);
+    }
+  }
+
   private final class MyTimerListener implements TimerListener {
     @Override
     public ModalityState getModalityState() {
@@ -446,9 +461,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       }
 
       updateMenuActions();
-      if (UIUtil.isWinLafOnVista()) {
-        repaint();
-      }
     }
   }
 
@@ -475,6 +487,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
           setState(State.TEMPORARY_EXPANDED);
           break;
         default:
+      }
+      if (!isShowing()) {
+        return;
       }
       revalidate();
       if (getState() == State.COLLAPSED) {
@@ -518,20 +533,76 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
             // re-target border clicks as a menu item ones
             item.dispatchEvent(MouseEventAdapter.convert(e, item, 1, 1));
             e.consume();
-            return;
           }
         }
       }
-
-      super.mouseClicked(e);
     }
   }
 
   public static void installAppMenuIfNeeded(@NotNull final JFrame frame) {
-    if (SystemInfo.isLinux && Registry.is("linux.native.menu") && "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> ApplicationMenu.tryInstall(frame));
+    try {
+      if (!GlobalMenuLinux.isAvailable()) {
+        return;
+      }
+
+      // NOTE: must be called when frame is visible (otherwise frame.getPeer() == null)
+      if (frame.getJMenuBar() instanceof IdeMenuBar) {
+        final IdeMenuBar frameMenuBar = (IdeMenuBar)frame.getJMenuBar();
+        if (frameMenuBar.myGlobalMenuLinux == null) {
+          final GlobalMenuLinux gml = GlobalMenuLinux.create(frame);
+          if (gml == null) {
+            return;
+          }
+
+          frameMenuBar.myGlobalMenuLinux = gml;
+          Disposer.register(frameMenuBar.myDisposable, gml);
+          frameMenuBar.updateMenuActions(true);
+        }
+      }
+      else if (frame.getJMenuBar() != null) {
+        LOG.info("The menu bar '" + frame.getJMenuBar() + "' of frame '" + frame + "' isn't instance of IdeMenuBar");
+      }
     }
+    catch (Throwable t) {
+      LOG.warn("cannot install app menu", t);
+    }
+  }
+
+  public static void bindAppMenuOfParent(@NotNull final Window frame, IdeFrame parent) {
+    if (!GlobalMenuLinux.isAvailable())
+      return;
+    if (!(parent instanceof JFrame))
+      return;
+
+    if (frame instanceof JFrame) {
+      final JFrame jfr = (JFrame)frame;
+      if (jfr.getJMenuBar() != null)
+        jfr.getJMenuBar().setVisible(false); // all children of IdeFrame mustn't show swing-menubar
+    }
+
+    final JFrame fr = (JFrame)parent;
+    if (fr.getJMenuBar() instanceof IdeMenuBar) {
+      final IdeMenuBar frameMenuBar = (IdeMenuBar)fr.getJMenuBar();
+      if (frameMenuBar.myGlobalMenuLinux != null) {
+        frame.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosing(WindowEvent e) {
+            frameMenuBar.myGlobalMenuLinux.unbindWindow(frame);
+          }
+          @Override
+          public void windowOpened(WindowEvent e) {
+            frameMenuBar.myGlobalMenuLinux.bindNewWindow(frame);
+          }
+        });
+      }
+    }
+  }
+
+  public void onToggleFullScreen(boolean isFullScreen) {
+    if (myGlobalMenuLinux == null)
+      return;
+
+     myGlobalMenuLinux.toggle(!isFullScreen);
   }
 
   private static class MyExitFullScreenButton extends JButton {

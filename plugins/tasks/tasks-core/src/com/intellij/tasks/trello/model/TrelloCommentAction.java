@@ -22,8 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Date;
 
 /**
- * @author Mikhail Golubev
+ * This is a stub definition intended to be used with Google GSON. Its fields are initialized reflectively.
  */
+@SuppressWarnings("unused")
 public class TrelloCommentAction extends Comment {
   private String id;
   private Date date;
@@ -31,8 +32,9 @@ public class TrelloCommentAction extends Comment {
   private Data data;
 
 
+  @SuppressWarnings("FieldMayBeFinal")
   private static class Data {
-    private final String text = "";
+    private String text = "";
     private TrelloBoard board;
     private TrelloCard card;
   }

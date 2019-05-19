@@ -26,7 +26,7 @@ public final class JsonReaders {
   private JsonReaders() {
   }
 
-  public static <T> ObjectFactory<Map<String, T>> mapFactory(@NotNull ObjectFactory<T> valueFactory) {
+  public static <T> ObjectFactory<Map<String, T>> mapFactory(@NotNull ObjectFactory<? extends T> valueFactory) {
     return new MapFactory<>(valueFactory);
   }
 
@@ -91,7 +91,7 @@ public final class JsonReaders {
     }
   }
 
-  public static <T> List<T> readObjectArray(@NotNull JsonReaderEx reader, @NotNull ObjectFactory<T> factory) {
+  public static <T> List<T> readObjectArray(@NotNull JsonReaderEx reader, @NotNull ObjectFactory<? extends T> factory) {
     if (reader.peek() == JsonToken.NULL) {
       reader.skipValue();
       return null;
@@ -112,7 +112,7 @@ public final class JsonReaders {
     return result;
   }
 
-  public static <T> Map<String, T> readMap(@NotNull JsonReaderEx reader, @Nullable ObjectFactory<T> factory) {
+  public static <T> Map<String, T> readMap(@NotNull JsonReaderEx reader, @Nullable ObjectFactory<? extends T> factory) {
     if (reader.peek() == JsonToken.NULL) {
       reader.skipValue();
       return null;
@@ -199,7 +199,6 @@ public final class JsonReaders {
 
     List<String> list = new ArrayList<>();
     do {
-      //noinspection unchecked
       list.add(reader.nextString(true));
     }
     while (reader.hasNext());

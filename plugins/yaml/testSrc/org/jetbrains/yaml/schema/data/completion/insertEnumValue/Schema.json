@@ -1,0 +1,7 @@
+{
+  "properties": {
+    "jsx": {
+      "enum": [ "preserve", "react", "react-native" ]
+    }
+  }
+}

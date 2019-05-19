@@ -18,5 +18,5 @@ Groovy script
           PsiWhiteSpace(' ')
           Command arguments
             Literal
-              PsiElement(string)(''bugaga'')
+              PsiElement(single quoted string)(''bugaga'')
         PsiElement(})('}')

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.io.PathExecLazyValue;
@@ -6,13 +6,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.List;
-import java.util.Locale;
 
 import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
 import static com.intellij.util.ObjectUtils.notNull;
 
-@SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
+/**
+ * Provides information about operating system, system-wide settings, and Java Runtime.
+ */
+@SuppressWarnings({"HardCodedStringLiteral", "UnusedDeclaration"})
 public class SystemInfo extends SystemInfoRt {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
@@ -20,7 +23,11 @@ public class SystemInfo extends SystemInfoRt {
   public static final String JAVA_VERSION = System.getProperty("java.version");
   public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
   public static final String JAVA_VENDOR = System.getProperty("java.vm.vendor", "Unknown");
-  public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
+
+  /**
+   * @deprecated use {@link #is32Bit} or {@link #is64Bit} instead
+   */
+  @Deprecated public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
   private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
@@ -34,11 +41,13 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
   public static final boolean isSolaris = SystemInfoRt.isSolaris;
   public static final boolean isUnix = SystemInfoRt.isUnix;
+  public static final boolean isChromeOS = SystemInfoRt.isLinux && isCrostini();
 
   public static final boolean isAppleJvm = containsIgnoreCase(JAVA_VENDOR, "Apple");
   public static final boolean isOracleJvm = containsIgnoreCase(JAVA_VENDOR, "Oracle");
   public static final boolean isSunJvm = containsIgnoreCase(JAVA_VENDOR, "Sun") && containsIgnoreCase(JAVA_VENDOR, "Microsystems");
   public static final boolean isIbmJvm = containsIgnoreCase(JAVA_VENDOR, "IBM");
+  public static final boolean isAzulJvm = containsIgnoreCase(JAVA_VENDOR, "Azul");
   public static final boolean isJetBrainsJvm = containsIgnoreCase(JAVA_VENDOR, "JetBrains");
 
   public static final boolean IS_AT_LEAST_JAVA9 = isModularJava();
@@ -52,6 +61,10 @@ public class SystemInfo extends SystemInfoRt {
     catch (Throwable t) {
       return false;
     }
+  }
+
+  private static boolean isCrostini() {
+    return new File("/dev/.cros_milestone").exists();
   }
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
@@ -71,7 +84,7 @@ public class SystemInfo extends SystemInfoRt {
   /* http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669 */
   public static final boolean isGNOME = isXWindow &&
                                         (notNull(System.getenv("GDMSESSION"), "").startsWith("gnome") ||
-                                         notNull(System.getenv("XDG_CURRENT_DESKTOP"), "").toLowerCase(Locale.ENGLISH).endsWith("gnome"));
+                                         StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).endsWith("gnome"));
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
   public static final boolean isKDE = isXWindow && !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
@@ -80,8 +93,8 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
   public static final boolean areSymLinksSupported = isUnix || isWinVistaOrNewer;
 
-  public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
-  public static final boolean is64Bit = !is32Bit;
+  public static final boolean is32Bit = SystemInfoRt.is32Bit;
+  public static final boolean is64Bit = SystemInfoRt.is64Bit;
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new PathExecLazyValue("xdg-open");
@@ -104,6 +117,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacOSElCapitan = isMac && isOsVersionAtLeast("10.11");
   public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
   public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
+  public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
 
   @NotNull
   public static String getMacOSMajorVersion() {
@@ -177,36 +191,26 @@ public class SystemInfo extends SystemInfoRt {
     }
   }
 
+  public static boolean isJavaVersionAtLeast(int major) {
+    return isJavaVersionAtLeast(major, 0, 0);
+  }
+
   public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
     return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
   }
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} (to be removed in IDEA 2020) */
+  @Deprecated
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
-  public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
+  @Deprecated public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
 
   /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
-  public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
+  @Deprecated public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
 
-  /** @deprecated not for generic use (to be removed in IDEA 2018) */
-  public static String getUnixReleaseName() {
-    return null;
-  }
-
-  /** @deprecated not for generic use (to be removed in IDEA 2018) */
-  public static String getUnixReleaseVersion() {
-    return null;
-  }
-
-  /** @deprecated outdated (to be removed in IDEA 2018) */
-  public static final boolean isOS2 = SystemInfoRt.isOS2;
-
-  /** @deprecated use {@link #isJetBrainsJvm} (to be removed in IDEA 2018)*/
-  public static final boolean isJetbrainsJvm = isJetBrainsJvm;
   //</editor-fold>
 }

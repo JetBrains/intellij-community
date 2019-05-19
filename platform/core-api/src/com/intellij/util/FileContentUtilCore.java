@@ -51,7 +51,7 @@ public class FileContentUtilCore {
    *
    * @param files the files to reparse.
    */
-  public static void reparseFiles(@NotNull final Collection<VirtualFile> files) {
+  public static void reparseFiles(@NotNull final Collection<? extends VirtualFile> files) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       // files must be processed under one write action to prevent firing event for invalid files.
       final Set<VFilePropertyChangeEvent> events = new THashSet<>();

@@ -66,11 +66,11 @@ public abstract class DependencyMemberInfoModel<T extends PsiElement, M extends 
   }
 
   @Override
-  public void memberInfoChanged(MemberInfoChange<T, M> event) {
+  public void memberInfoChanged(@NotNull MemberInfoChange<T, M> event) {
     memberInfoChanged(event.getChangedMembers());
   }
 
-  public void memberInfoChanged(final Collection<M> changedMembers) {
+  public void memberInfoChanged(final Collection<? extends M> changedMembers) {
     if (myTooltipManager != null) myTooltipManager.invalidate();
     for (M changedMember : changedMembers) {
       myMemberDependencyGraph.memberChanged(changedMember);

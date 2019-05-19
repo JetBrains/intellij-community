@@ -16,6 +16,7 @@
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.Locale;
 import java.util.Map;
 
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
@@ -108,7 +108,7 @@ public class GitConfigUtil {
    */
   @Nullable
   public static Boolean getBooleanValue(@NotNull String value) {
-    value = value.toLowerCase(Locale.ENGLISH);
+    value = StringUtil.toLowerCase(value);
     if (newHashSet("true", "yes", "on", "1").contains(value)) return true;
     if (newHashSet("false", "no", "off", "0", "").contains(value)) return false;
     return null;
@@ -180,6 +180,6 @@ public class GitConfigUtil {
     h.setSilent(true);
     h.addParameters(additionalParameters);
     h.addParameters(key, value);
-    Git.getInstance().runCommand(h).getOutputOrThrow(1);
+    Git.getInstance().runCommand(h).throwOnError(1);
   }
 }

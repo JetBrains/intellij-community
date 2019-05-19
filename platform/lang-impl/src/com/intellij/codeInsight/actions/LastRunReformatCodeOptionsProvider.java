@@ -24,6 +24,7 @@ public class LastRunReformatCodeOptionsProvider {
 
   private static final String OPTIMIZE_IMPORTS_KEY     = "LayoutCode.optimizeImports";
   private static final String REARRANGE_ENTRIES_KEY    = "LayoutCode.rearrangeEntries";
+  private static final String CODE_CLEANUP_KEY         = "LayoutCode.codeCleanup";
   private static final String PROCESS_CHANGED_TEXT_KEY = "LayoutCode.processChangedText";
 
   private final PropertiesComponent myPropertiesComponent;
@@ -71,6 +72,15 @@ public class LastRunReformatCodeOptionsProvider {
 
   public boolean getLastRearrangeCode() {
     return myPropertiesComponent.getBoolean(REARRANGE_ENTRIES_KEY);
+  }
+
+
+  public void saveCodeCleanupState(boolean value) {
+    myPropertiesComponent.setValue(CODE_CLEANUP_KEY, value);
+  }
+
+  public boolean getLastCodeCleanup() {
+    return myPropertiesComponent.getBoolean(CODE_CLEANUP_KEY);
   }
 
   public boolean isRearrangeCode(@NotNull Language language) {

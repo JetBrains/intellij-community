@@ -79,14 +79,10 @@ public class Wrapper extends JPanel implements NullableComponent {
   @Override
   public void requestFocus() {
     if (getTargetComponent() == this) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        super.requestFocus();
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> super.requestFocus());
       return;
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getTargetComponent(), true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getTargetComponent(), true));
   }
 
   @Override
@@ -98,9 +94,7 @@ public class Wrapper extends JPanel implements NullableComponent {
   }
 
   public void requestFocusInternal() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      super.requestFocus();
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> super.requestFocus());
   }
 
   @Override

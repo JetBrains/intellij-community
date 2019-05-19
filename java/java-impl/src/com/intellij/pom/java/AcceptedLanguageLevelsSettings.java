@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -19,17 +20,18 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.LegalNoticeDialog;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -42,7 +44,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
     new NotificationGroup("Accepted language levels", NotificationDisplayType.STICKY_BALLOON, true);
 
   @XCollection(propertyElementName = "explicitly-accepted", elementName = "name", valueAttributeName = "")
-  public List<String> acceptedNames = ContainerUtil.newArrayList();
+  public List<String> acceptedNames = new ArrayList<>();
 
   @Override
   public void runActivity(@NotNull Project project) {
@@ -75,10 +77,8 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
               NotificationType.WARNING,
               (notification, event) -> {
                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                  switch (event.getDescription()) {
-                    case "accept":
-                      acceptAndRestore(project, unacceptedLevels.get(level), level);
-                      break;
+                  if (event.getDescription().equals("accept")) {
+                    acceptAndRestore(project, unacceptedLevels.get(level), level);
                   }
                   notification.expire();
                 }
@@ -96,7 +96,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
     return LanguageLevel.HIGHEST.compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
   }
 
-  private static void acceptAndRestore(Project project, Collection<Module> modules, LanguageLevel languageLevel) {
+  private static void acceptAndRestore(Project project, Collection<? extends Module> modules, LanguageLevel languageLevel) {
     if (!getSettings().acceptedNames.contains(languageLevel.name())) {
       getSettings().acceptedNames.add(languageLevel.name());
     }
@@ -191,8 +191,18 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   private static String getLegalNotice(LanguageLevel level) {
     return
       "You must accept the terms of legal notice of the beta Java specification to enable support for " +
-      "\"" + StringUtil.substringAfter(level.getPresentableText(), " - ") + "\".<br/><br/>" +
+      "\"" + level.getPresentableText() + "\".<br/><br/>" +
       "<b>The implementation of an early-draft specification developed under the Java Community Process (JCP) " +
       "is made available for testing and evaluation purposes only and is not compatible with any specification of the JCP.</b>";
+  }
+
+  @TestOnly
+  public static void allowLevel(@NotNull Disposable parentDisposable, @NotNull LanguageLevel level) {
+    List<String> acceptedNames = getSettings().acceptedNames;
+    String name = level.name();
+    if (!acceptedNames.contains(name)) {
+      acceptedNames.add(name);
+      Disposer.register(parentDisposable, () -> getSettings().acceptedNames.remove(name));
+    }
   }
 }

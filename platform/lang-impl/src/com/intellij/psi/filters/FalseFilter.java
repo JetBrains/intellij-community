@@ -21,6 +21,7 @@ public class FalseFilter implements ElementFilter {
   public static final FalseFilter INSTANCE = new FalseFilter(true);
 
   /** @deprecated use {@link #INSTANCE} */
+  @Deprecated
   public FalseFilter() { }
 
   private FalseFilter(@SuppressWarnings("unused") boolean b) { }

@@ -54,6 +54,8 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
                                                        ActionInfo actionInfo,
                                                        boolean canceled);
 
+  public abstract void scheduleMappedRootsUpdate();
+
   public abstract void fireDirectoryMappingsChanged();
 
   public abstract String haveDefaultMapping();

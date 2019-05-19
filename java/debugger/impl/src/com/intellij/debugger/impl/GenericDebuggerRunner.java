@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -14,6 +14,8 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -59,7 +61,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
         isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
       }
       if (connection == null) {
-        int transport = DebuggerSettings.getInstance().DEBUGGER_TRANSPORT;
+        int transport = DebuggerSettings.getInstance().getTransport();
         connection = DebuggerManagerImpl.createDebugParameters(parameters,
                                                                true,
                                                                transport,
@@ -67,7 +69,16 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
                                                                false);
         isPollConnection = true;
       }
-      return attachVirtualMachine(state, environment, connection, isPollConnection);
+
+      // TODO: remove in 2019.1 where setShouldKillProcessSoftlyWithWinP is enabled by default in KillableProcessHandler
+      RunContentDescriptor descriptor = attachVirtualMachine(state, environment, connection, isPollConnection);
+      if (descriptor != null) {
+        ProcessHandler handler = descriptor.getProcessHandler();
+        if (handler instanceof KillableProcessHandler) {
+          ((KillableProcessHandler)handler).setShouldKillProcessSoftlyWithWinP(true);
+        }
+      }
+      return descriptor;
     }
     if (state instanceof PatchedRunnableState) {
       final RemoteConnection connection = doPatch(new JavaParameters(), environment.getRunnerSettings(), true);
@@ -147,8 +158,10 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     if (StringUtil.isEmpty(debuggerSettings.getDebugPort())) {
       debuggerSettings.setDebugPort(DebuggerUtils.getInstance().findAvailableDebugAddress(debuggerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT));
     }
-    return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings.LOCAL, debuggerSettings.getTransport(),
-                                                     debuggerSettings.getDebugPort(), false, beforeExecution);
+    return new RemoteConnectionBuilder(debuggerSettings.LOCAL, debuggerSettings.getTransport(), debuggerSettings.getDebugPort())
+      .asyncAgent(beforeExecution)
+      .memoryAgent(beforeExecution && DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
+      .create(javaParameters);
   }
 
   @Override

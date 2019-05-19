@@ -34,10 +34,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class LocalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.LocalSearchScope");
@@ -114,6 +111,7 @@ public class LocalSearchScope extends SearchScope {
     return myVirtualFiles;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof LocalSearchScope)) return false;
@@ -134,7 +132,8 @@ public class LocalSearchScope extends SearchScope {
     return true;
   }
 
-  public int hashCode() {
+  @Override
+  public int calcHashCode() {
     int result = 0;
     result += myIgnoreInjectedPsi? 1 : 0;
     for (final PsiElement element : myScope) {
@@ -197,6 +196,7 @@ public class LocalSearchScope extends SearchScope {
     return null;
   }
 
+  @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < myScope.length; i++) {
@@ -259,11 +259,11 @@ public class LocalSearchScope extends SearchScope {
     return commonParent;
   }
 
-  public boolean isInScope(VirtualFile file) {
+  public boolean isInScope(@NotNull VirtualFile file) {
     return ArrayUtil.indexOf(myVirtualFiles, file) != -1;
   }
 
-  public boolean containsRange(PsiFile file, @NotNull TextRange range) {
+  public boolean containsRange(@NotNull PsiFile file, @NotNull TextRange range) {
     for (PsiElement element : getScope()) {
       if (file == element.getContainingFile() && element.getTextRange().contains(range)) {
         return true;
@@ -293,8 +293,5 @@ public class LocalSearchScope extends SearchScope {
              ? EMPTY
              : new LocalSearchScope(PsiUtilCore.toPsiElementArray(result), scope.getDisplayName(), scope.isIgnoreInjectedPsi());
     });
-
-
-
   }
 }

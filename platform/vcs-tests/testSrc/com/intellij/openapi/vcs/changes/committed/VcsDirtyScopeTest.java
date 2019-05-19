@@ -72,7 +72,8 @@ public class VcsDirtyScopeTest extends FileBasedTest {
     myVcsManager.setDirectoryMappings(mappings);
 
     myVcsManager.iterateVcsRoot(myProject.getBaseDir(), path -> {
-      Assert.assertFalse(VfsUtilCore.isAncestor(data.dir1, path.getVirtualFile(), false));
+      Assert.assertFalse(String.format("data dir: %s - file: %s", data.dir1.getPath(), path.getVirtualFile().getPath()),
+                         VfsUtilCore.isAncestor(data.dir1, path.getVirtualFile(), false));
       Assert.assertEquals(myVcsManager.getVcsFor(path), myVcs);
       return true;
     });
@@ -187,15 +188,12 @@ public class VcsDirtyScopeTest extends FileBasedTest {
           listener.consume(dirtyFile.getVirtualFile());
         }
       }
-      final Collection<VirtualFile> roots = modifier.getAffectedVcsRoots();
-      for (VirtualFile root : roots) {
-        final Iterator<FilePath> dirIterator = modifier.getDirtyDirectoriesIterator(root);
-        while (dirIterator.hasNext()) {
-          final FilePath dir = dirIterator.next();
-          if ((dir.getVirtualFile() != null) && ignored.contains(dir.getVirtualFile())) {
-            dirIterator.remove();
-            listener.consume(dir.getVirtualFile());
-          }
+      final Iterator<FilePath> dirIterator = modifier.getDirtyDirectoriesIterator();
+      while (dirIterator.hasNext()) {
+        final FilePath dir = dirIterator.next();
+        if ((dir.getVirtualFile() != null) && ignored.contains(dir.getVirtualFile())) {
+          dirIterator.remove();
+          listener.consume(dir.getVirtualFile());
         }
       }
       modifier.recheckDirtyKeys();

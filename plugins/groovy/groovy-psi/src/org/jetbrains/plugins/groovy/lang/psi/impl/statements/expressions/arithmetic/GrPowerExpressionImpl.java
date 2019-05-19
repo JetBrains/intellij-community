@@ -29,6 +29,7 @@ public class GrPowerExpressionImpl extends GrBinaryExpressionImpl {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Power expression";
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.editor;
 
@@ -29,26 +15,35 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.actions.CaretStopBoundary;
+import com.intellij.openapi.editor.actions.CaretStopOptions;
+import com.intellij.openapi.editor.actions.CaretStopOptionsTransposed;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider;
+import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.util.ui.JBEmptyBorder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -57,8 +52,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.List;
 
-public class EditorOptionsPanel implements SearchableConfigurable {
+public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvider> implements SearchableConfigurable {
+  private static final String ID = "preferences.editor";
+
   private JPanel    myBehaviourPanel;
   private JCheckBox myCbHighlightBraces;
   private static final String STRIP_CHANGED = ApplicationBundle.message("combobox.strip.modified.lines");
@@ -74,7 +72,6 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
   private JCheckBox myCbHighlightScope;
 
-  private JTextField myClipboardContentLimitTextField;
   private JCheckBox  myCbSmoothScrolling;
   private JCheckBox  myCbVirtualPageAtBottom;
   private JCheckBox  myCbEnableDnD;
@@ -98,23 +95,31 @@ public class EditorOptionsPanel implements SearchableConfigurable {
   private JBCheckBox   myCbShowQuickDocOnMouseMove;
   private JBLabel      myQuickDocDelayLabel;
   private JTextField   myQuickDocDelayTextField;
-  private JComboBox    myRichCopyColorSchemeComboBox;
+  private JComboBox<String> myRichCopyColorSchemeComboBox;
   private JCheckBox    myShowInlineDialogForCheckBox;
   private JCheckBox    myCbEnableRichCopyByDefault;
   private JCheckBox    myShowLSTInGutterCheckBox;
   private JCheckBox    myShowWhitespacesModificationsInLSTGutterCheckBox;
-  private JCheckBox myCbKeepTrailingSpacesOnCaretLine;
+  private JCheckBox    myCbKeepTrailingSpacesOnCaretLine;
+  private JTextField   myRecentLocationsLimitField;
+  private JBTextField  mySoftWrapFileMasks;
+  private JLabel       mySoftWrapFileMasksHint;
+
+  private JComboBox<EditorCaretStopPolicyItem.WordBoundary> myWordBoundaryCaretStopComboBox;
+  private JComboBox<EditorCaretStopPolicyItem.LineBoundary> myLineBoundaryCaretStopComboBox;
 
   private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
   private static final UINumericRange RECENT_FILES_RANGE = new UINumericRange(50, 1, 500);
+  private static final UINumericRange RECENT_LOCATIONS_RANGE = new UINumericRange(10, 1, 100);
 
-  private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
-
+  private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel(getConfigurables());
 
   public EditorOptionsPanel() {
     if (SystemInfo.isMac) {
       myCbEnableWheelFontChange.setText(ApplicationBundle.message("checkbox.enable.ctrl.mousewheel.changes.font.size.macos"));
     }
+
+    mySoftWrapFileMasks.getEmptyText().setText(ApplicationBundle.message("soft.wraps.file.masks.empty.text"));
 
     myStripTrailingSpacesCombo.addItem(STRIP_CHANGED);
     myStripTrailingSpacesCombo.addItem(STRIP_ALL);
@@ -134,23 +139,32 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
     myCbRenameLocalVariablesInplace.setVisible(OptionsApplicabilityFilter.isApplicable(OptionId.RENAME_IN_PLACE));
 
-    myRichCopyColorSchemeComboBox.setRenderer(new ListCellRendererWrapper<String>() {
-      @Override
-      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-        final String textToUse;
-        if (RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER.equals(value)) {
-          textToUse = ACTIVE_COLOR_SCHEME;
-        }
-        else {
-          textToUse = value;
-        }
-        setText(textToUse);
-      }
-    });
+    myRichCopyColorSchemeComboBox.setRenderer(SimpleListCellRenderer.create("", value ->
+      RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER.equals(value) ? ACTIVE_COLOR_SCHEME : value));
+
+    initCaretStopComboBox(myWordBoundaryCaretStopComboBox, EditorCaretStopPolicyItem.WordBoundary.values());
+    initCaretStopComboBox(myLineBoundaryCaretStopComboBox, EditorCaretStopPolicyItem.LineBoundary.values());
 
     initQuickDocProcessing();
     initSoftWrapsSettingsProcessing();
     initVcsSettingsProcessing();
+  }
+
+  private static <E extends EditorCaretStopPolicyItem> void initCaretStopComboBox(@NotNull JComboBox<E> comboBox, @NotNull E[] values) {
+    final DefaultComboBoxModel<E> model = new EditorCaretStopPolicyItem.SeparatorAwareComboBoxModel<>();
+
+    boolean lastWasOsDefault = false;
+    for (E item : values) {
+      final boolean isOsDefault = item.getOsDefault() != EditorCaretStopPolicyItem.OsDefault.NONE;
+      if (lastWasOsDefault && !isOsDefault) model.addElement(null);
+      lastWasOsDefault = isOsDefault;
+
+      final int insertionIndex = item.getOsDefault().isIdeDefault() ? 0 : model.getSize();
+      model.insertElementAt(item, insertionIndex);
+    }
+
+    comboBox.setModel(model);
+    comboBox.setRenderer(new EditorCaretStopPolicyItem.SeparatorAwareListItemRenderer());
   }
 
   @Override
@@ -162,8 +176,12 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
     // Display
 
-
     myCbSmoothScrolling.setSelected(editorSettings.isSmoothScrolling());
+
+    // Caret Movement
+    final CaretStopOptions caretStopOptions = editorSettings.getCaretStopOptions();
+    myWordBoundaryCaretStopComboBox.setSelectedItem(EditorCaretStopPolicyItem.WordBoundary.itemForPolicy(caretStopOptions));
+    myLineBoundaryCaretStopComboBox.setSelectedItem(EditorCaretStopPolicyItem.LineBoundary.itemForPolicy(caretStopOptions));
 
     // Brace highlighting
 
@@ -173,7 +191,8 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
     // Virtual space
 
-    myCbUseSoftWrapsAtEditor.setSelected(editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR));
+    myCbUseSoftWrapsAtEditor.setSelected(editorSettings.isUseSoftWraps());
+    mySoftWrapFileMasks.setText(editorSettings.getSoftWrapFileMasks());
     myCbUseCustomSoftWrapIndent.setSelected(editorSettings.isUseCustomSoftWrapIndent());
     myCustomSoftWrapIndent.setText(Integer.toString(editorSettings.getCustomSoftWrapIndent()));
     myCbShowSoftWrapsOnlyOnCaretLine.setSelected(!editorSettings.isAllSoftWrapsShown());
@@ -182,9 +201,6 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     myCbVirtualSpace.setSelected(editorSettings.isVirtualSpace());
     myCbCaretInsideTabs.setSelected(editorSettings.isCaretInsideTabs());
     myCbVirtualPageAtBottom.setSelected(editorSettings.isAdditionalPageAtBottom());
-
-    // Limits
-    myClipboardContentLimitTextField.setText(Integer.toString(uiSettings.getMaxClipboardContents()));
 
     // Strip trailing spaces on save
 
@@ -216,6 +232,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
 
     myRecentFilesLimitField.setText(Integer.toString(uiSettings.getRecentFilesLimit()));
+    myRecentLocationsLimitField.setText(Integer.toString(uiSettings.getRecentLocationsLimit()));
 
     myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
     myPreselectCheckBox.setSelected(editorSettings.isPreselectRename());
@@ -229,6 +246,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     myShowWhitespacesModificationsInLSTGutterCheckBox.setEnabled(myShowLSTInGutterCheckBox.isSelected());
 
     myErrorHighlightingPanel.reset();
+    super.reset();
 
     RichCopySettings settings = RichCopySettings.getInstance();
     myCbEnableRichCopyByDefault.setSelected(settings.isEnabled());
@@ -255,6 +273,8 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
     editorSettings.setSmoothScrolling(myCbSmoothScrolling.isSelected());
 
+    // Caret Movement
+    editorSettings.setCaretStopOptions(getCaretStopOptions());
 
     // Brace Highlighting
 
@@ -265,28 +285,14 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
     // Virtual space
 
-    editorSettings.setUseSoftWraps(myCbUseSoftWrapsAtEditor.isSelected(), SoftWrapAppliancePlaces.MAIN_EDITOR);
+    editorSettings.setUseSoftWraps(myCbUseSoftWrapsAtEditor.isSelected());
+    editorSettings.setSoftWrapFileMasks(mySoftWrapFileMasks.getText());
     editorSettings.setUseCustomSoftWrapIndent(myCbUseCustomSoftWrapIndent.isSelected());
     editorSettings.setCustomSoftWrapIndent(getCustomSoftWrapIndent());
     editorSettings.setAllSoftwrapsShown(!myCbShowSoftWrapsOnlyOnCaretLine.isSelected());
     editorSettings.setVirtualSpace(myCbVirtualSpace.isSelected());
     editorSettings.setCaretInsideTabs(myCbCaretInsideTabs.isSelected());
     editorSettings.setAdditionalPageAtBottom(myCbVirtualPageAtBottom.isSelected());
-
-    // Limits
-
-
-
-    boolean uiSettingsChanged = false;
-    int maxClipboardContents = getMaxClipboardContents();
-    if (uiSettings.getMaxClipboardContents() != maxClipboardContents) {
-      uiSettings.setMaxClipboardContents(maxClipboardContents);
-      uiSettingsChanged = true;
-    }
-
-    if(uiSettingsChanged){
-      uiSettings.fireUISettingsChanged();
-    }
 
     // Strip trailing spaces on save
 
@@ -342,12 +348,13 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
     reinitAllEditors();
 
+    boolean uiSettingsChanged = false;
     String temp=myRecentFilesLimitField.getText();
     if(temp.trim().length() > 0){
       try {
         int newRecentFilesLimit = Integer.parseInt(temp);
         if (newRecentFilesLimit > 0 && uiSettings.getRecentFilesLimit() != newRecentFilesLimit) {
-          uiSettings.setRecentFilesLimit(newRecentFilesLimit);
+          uiSettings.getState().setRecentFilesLimit(newRecentFilesLimit);
           uiSettingsChanged = true;
         }
       }catch (NumberFormatException ignored){}
@@ -356,7 +363,14 @@ public class EditorOptionsPanel implements SearchableConfigurable {
       uiSettings.fireUISettingsChanged();
     }
 
+    uiSettingsChanged = setRecentLocationLimit(uiSettings, myRecentLocationsLimitField.getText()) || uiSettingsChanged;
+    if (uiSettingsChanged) {
+      uiSettings.fireUISettingsChanged();
+    }
+
     myErrorHighlightingPanel.apply();
+    super.apply();
+    UISettings.getInstance().fireUISettingsChanged();
 
     RichCopySettings settings = RichCopySettings.getInstance();
     settings.setEnabled(myCbEnableRichCopyByDefault.isSelected());
@@ -367,6 +381,25 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
     restartDaemons();
     ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.OPTIONS_PANEL_TOPIC).changesApplied();
+  }
+
+  private void createUIComponents() {
+    mySoftWrapFileMasks = new JBTextField();
+    mySoftWrapFileMasksHint = ComponentPanelBuilder.createCommentComponent(ApplicationBundle.message("soft.wraps.file.masks.hint"), true);
+    mySoftWrapFileMasksHint.setBorder(new JBEmptyBorder(ComponentPanelBuilder.computeCommentInsets(mySoftWrapFileMasks, true)));
+  }
+
+  private static boolean setRecentLocationLimit(@NotNull UISettings uiSettings, @NotNull String recentLocationsLimit) {
+    try {
+      int newRecentLocationsLimit = Integer.parseInt(recentLocationsLimit.trim());
+      if (uiSettings.getRecentLocationsLimit() != newRecentLocationsLimit) {
+        uiSettings.getState().setRecentLocationsLimit(newRecentLocationsLimit);
+        return true;
+      }
+    }
+    catch (NumberFormatException ignored) {
+    }
+    return false;
   }
 
   private int getQuickDocDelayFromGui() {
@@ -400,31 +433,23 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     EditorFactory.getInstance().refreshAllEditors();
   }
 
+  @NotNull
   @Override
-  public void disposeUIResources() {
-    myErrorHighlightingPanel.disposeUIResources();
-  }
-
-  private int getMaxClipboardContents(){
-    int maxClipboardContents = -1;
-    try {
-      maxClipboardContents = Integer.parseInt(myClipboardContentLimitTextField.getText());
-    } catch (NumberFormatException ignored) {}
-    if (maxClipboardContents <= 0) {
-      maxClipboardContents = 1;
-    }
-    return maxClipboardContents;
+  protected List<ErrorOptionsProvider> createConfigurables() {
+    return ConfigurableWrapper.createConfigurables(ErrorOptionsProviderEP.EP_NAME);
   }
 
   @Override
   public boolean isModified() {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-    UISettings uiSettings=UISettings.getInstance();
     VcsApplicationSettings vcsSettings = VcsApplicationSettings.getInstance();
 
     // Display
     boolean isModified = isModified(myCbSmoothScrolling, editorSettings.isSmoothScrolling());
+
+    // Caret Movement
+    isModified |= !getCaretStopOptions().equals(editorSettings.getCaretStopOptions());
 
     // Brace highlighting
     isModified |= isModified(myCbHighlightBraces, codeInsightSettings.HIGHLIGHT_BRACES);
@@ -432,18 +457,14 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     isModified |= isModified(myCbHighlightIdentifierUnderCaret, codeInsightSettings.HIGHLIGHT_IDENTIFIER_UNDER_CARET);
 
     // Virtual space
-    isModified |= isModified(myCbUseSoftWrapsAtEditor, editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR));
+    isModified |= isModified(myCbUseSoftWrapsAtEditor, editorSettings.isUseSoftWraps());
+    isModified |= !mySoftWrapFileMasks.getText().equals(editorSettings.getSoftWrapFileMasks());
     isModified |= isModified(myCbUseCustomSoftWrapIndent, editorSettings.isUseCustomSoftWrapIndent());
     isModified |= editorSettings.getCustomSoftWrapIndent() != getCustomSoftWrapIndent();
     isModified |= isModified(myCbShowSoftWrapsOnlyOnCaretLine, !editorSettings.isAllSoftWrapsShown());
     isModified |= isModified(myCbVirtualSpace, editorSettings.isVirtualSpace());
     isModified |= isModified(myCbCaretInsideTabs, editorSettings.isCaretInsideTabs());
     isModified |= isModified(myCbVirtualPageAtBottom, editorSettings.isAdditionalPageAtBottom());
-
-    // Limits
-
-
-    isModified |= getMaxClipboardContents() != uiSettings.getMaxClipboardContents();
 
     // Paste
 
@@ -465,6 +486,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
 
     isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().getRecentFilesLimit(), RECENT_FILES_RANGE);
+    isModified |= isModified(myRecentLocationsLimitField, UISettings.getInstance().getRecentLocationsLimit(), RECENT_LOCATIONS_RANGE);
     isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
     isModified |= isModified(myPreselectCheckBox, editorSettings.isPreselectRename());
     isModified |= isModified(myShowInlineDialogForCheckBox, editorSettings.isShowInlineLocalDialog());
@@ -476,12 +498,28 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     isModified |= isModified(myShowWhitespacesModificationsInLSTGutterCheckBox, vcsSettings.SHOW_WHITESPACES_IN_LST);
 
     isModified |= myErrorHighlightingPanel.isModified();
+    isModified |= super.isModified();
 
     RichCopySettings settings = RichCopySettings.getInstance();
     isModified |= isModified(myCbEnableRichCopyByDefault, settings.isEnabled());
     isModified |= !Comparing.equal(settings.getSchemeName(), myRichCopyColorSchemeComboBox.getSelectedItem());
 
     return isModified;
+  }
+
+  @NotNull
+  protected CaretStopOptions getCaretStopOptions() {
+    return new CaretStopOptionsTransposed(
+      getCaretStopBoundary(myWordBoundaryCaretStopComboBox, CaretStopOptionsTransposed.DEFAULT.getWordBoundary()),
+      getCaretStopBoundary(myLineBoundaryCaretStopComboBox, CaretStopOptionsTransposed.DEFAULT.getLineBoundary())).toCaretStopOptions();
+  }
+
+  @NotNull
+  protected static CaretStopBoundary getCaretStopBoundary(@NotNull JComboBox<? extends EditorCaretStopPolicyItem> comboBox,
+                                                          @NotNull CaretStopBoundary defaultValue) {
+    final Object selectedItem = comboBox.getSelectedItem();
+    if (!(selectedItem instanceof EditorCaretStopPolicyItem)) return defaultValue;
+    return ((EditorCaretStopPolicyItem)selectedItem).getCaretStopBoundary();
   }
 
   @NotNull
@@ -523,22 +561,12 @@ public class EditorOptionsPanel implements SearchableConfigurable {
   }
 
   private void initSoftWrapsSettingsProcessing() {
-    ItemListener listener = new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        updateSoftWrapSettingsRepresentation();
-      }
-    };
-    myCbUseSoftWrapsAtEditor.addItemListener(listener);
-    myCbUseCustomSoftWrapIndent.addItemListener(listener);
+    myCbUseCustomSoftWrapIndent.addItemListener(e -> updateSoftWrapSettingsRepresentation());
   }
 
   private void updateSoftWrapSettingsRepresentation() {
-    boolean softWrapsEnabled = myCbUseSoftWrapsAtEditor.isSelected();
-    myCbUseCustomSoftWrapIndent.setEnabled(softWrapsEnabled);
-    myCustomSoftWrapIndent.setEnabled(myCbUseCustomSoftWrapIndent.isEnabled() && myCbUseCustomSoftWrapIndent.isSelected());
-    myCustomSoftWrapIndentLabel.setEnabled(myCustomSoftWrapIndent.isEnabled());
-    myCbShowSoftWrapsOnlyOnCaretLine.setEnabled(softWrapsEnabled);
+    myCustomSoftWrapIndent.setEnabled(myCbUseCustomSoftWrapIndent.isSelected());
+    myCustomSoftWrapIndentLabel.setEnabled(myCbUseCustomSoftWrapIndent.isSelected());
   }
 
   private void initVcsSettingsProcessing() {
@@ -550,24 +578,24 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     });
   }
 
-    @Override
-    @NotNull
-    public String getId() {
-      return "Editor.Behavior";
-    }
+  @Override
+  @NotNull
+  public String getId() {
+    return ID;
+  }
 
-    @Override
-    public String getDisplayName() {
-      return ApplicationBundle.message("tab.editor.settings.behavior");
-    }
+  @Override
+  public String getDisplayName() {
+    return ApplicationBundle.message("title.editor");
+  }
 
-    @Override
-    public String getHelpTopic() {
-      return null;
-    }
+  @Override
+  public String getHelpTopic() {
+    return ID;
+  }
 
-    @Override
-    public JComponent createComponent() {
-      return myBehaviourPanel;
-    }
+  @Override
+  public JComponent createComponent() {
+    return myBehaviourPanel;
+  }
 }

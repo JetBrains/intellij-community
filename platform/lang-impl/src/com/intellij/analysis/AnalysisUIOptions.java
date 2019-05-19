@@ -12,6 +12,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,6 +30,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   @AnalysisScope.Type
   public int SCOPE_TYPE = AnalysisScope.PROJECT;
   public String CUSTOM_SCOPE_NAME = "";
+  @Transient
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   public volatile boolean SHOW_STRUCTURE = false;
   public String FILE_MASK;
@@ -50,17 +52,6 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
 
   }
 
-  @NotNull
-  public AnalysisUIOptions copy() {
-    final AnalysisUIOptions result = new AnalysisUIOptions();
-    XmlSerializerUtil.copyBean(this, result);
-    return result;
-  }
-
-  public void save(AnalysisUIOptions options) {
-    XmlSerializerUtil.copyBean(options, this);
-  }
-
   public AutoScrollToSourceHandler getAutoScrollToSourceHandler() {
     return myAutoScrollToSourceHandler;
   }
@@ -73,7 +64,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
 
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return GROUP_BY_SEVERITY;
       }
 
@@ -92,7 +83,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
 
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return FILTER_RESOLVED_ITEMS;
       }
 
@@ -108,7 +99,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
     return new InspectionResultsViewToggleAction(view, message, message, AllIcons.Actions.GroupByPackage) {
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return SHOW_STRUCTURE;
       }
 
@@ -132,7 +123,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   private abstract static class InspectionResultsViewToggleAction extends ToggleAction {
     @NotNull private final InspectionResultsView myView;
 
-    public InspectionResultsViewToggleAction(@NotNull InspectionResultsView view,
+    InspectionResultsViewToggleAction(@NotNull InspectionResultsView view,
                                              @NotNull String text,
                                              @NotNull String description,
                                              @NotNull Icon icon) {
@@ -141,7 +132,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
     }
 
     @Override
-    public final void setSelected(AnActionEvent e, boolean state) {
+    public final void setSelected(@NotNull AnActionEvent e, boolean state) {
       setSelected(state);
       myView.update();
     }

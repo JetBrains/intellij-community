@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindManager;
@@ -90,34 +90,39 @@ public class SearchCommand {
     );
   }
 
-  public void findUsages(final Processor<Usage> processor) {
+  public void findUsages(final Processor<? super Usage> processor) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     progress.setIndeterminate(false);
 
     final MatchResultSink sink = new MatchResultSink() {
       int count;
 
+      @Override
       public void setMatchingProcess(MatchingProcess _process) {
         process = _process;
         findStarted();
       }
 
+      @Override
       public void processFile(PsiFile element) {
         final VirtualFile virtualFile = element.getVirtualFile();
         if (virtualFile != null)
           progress.setText(SSRBundle.message("looking.in.progress.message", virtualFile.getPresentableName()));
       }
 
+      @Override
       public void matchingFinished() {
         if (mySearchContext.getProject().isDisposed()) return;
         findEnded();
         progress.setText(SSRBundle.message("found.progress.message", count));
       }
 
+      @Override
       public ProgressIndicator getProgressIndicator() {
         return progress;
       }
 
+      @Override
       public void newMatch(MatchResult result) {
         UsageInfo info;
 
@@ -145,7 +150,7 @@ public class SearchCommand {
           info = new UsageInfo(parent, startOffset, end - parentStart);
         }
         else {
-          final PsiElement match = StructuralSearchUtil.getPresentableElement(result.getMatch());
+          final PsiElement match = result.getMatch();
           if (!match.isPhysical()) {
             // e.g. lambda parameter anonymous type element
             return;

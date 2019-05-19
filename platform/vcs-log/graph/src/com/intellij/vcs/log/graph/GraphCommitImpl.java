@@ -53,6 +53,10 @@ abstract class AbstractGraphCommit<CommitId> extends ImmutableList<CommitId> imp
     return this;
   }
 
+  @Override
+  public String toString() {
+    return getId().toString();
+  }
 }
 
 public class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitId> {

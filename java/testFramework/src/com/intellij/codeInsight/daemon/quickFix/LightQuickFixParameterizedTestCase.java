@@ -35,13 +35,6 @@ public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTe
     return fileName.substring(BEFORE_PREFIX.length());
   }
 
-  @SuppressWarnings("deprecation")
-  @Override
-  protected void doAllTests() {
-    super.doAllTests();
-  }
-
-  @SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
   @Test
   public void runSingle() throws Throwable {
     runSingleTest(() -> doSingleTest(myFileSuffix, myTestDataPath));

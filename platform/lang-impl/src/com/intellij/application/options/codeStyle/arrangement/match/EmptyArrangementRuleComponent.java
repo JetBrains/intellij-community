@@ -26,7 +26,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 11/13/12 1:31 PM
  */
 public class EmptyArrangementRuleComponent extends JPanel implements ArrangementRepresentationAware {
   

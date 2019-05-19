@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.DataManager;
@@ -20,7 +6,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -28,22 +16,27 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.openapi.application.ApplicationBundle.message;
 import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
+import static com.intellij.util.containers.ContainerUtil.newSmartList;
 import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 import static javax.swing.SwingConstants.LEFT;
 
 /**
  * @author Sergey.Malenkov
  */
-final class BreadcrumbsConfigurable implements Configurable {
+final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsConfigurable.BreadcrumbsProviderConfigurable> implements SearchableConfigurable {
   private final HashMap<String, JCheckBox> map = new HashMap<>();
   private JComponent component;
   private JCheckBox show;
@@ -51,6 +44,12 @@ final class BreadcrumbsConfigurable implements Configurable {
   private JRadioButton below;
   private JLabel placement;
   private JLabel languages;
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "editor.breadcrumbs";
+  }
 
   @Override
   public String getDisplayName() {
@@ -65,12 +64,10 @@ final class BreadcrumbsConfigurable implements Configurable {
   @Override
   public JComponent createComponent() {
     if (component == null) {
-      for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensions()) {
-        for (Language language : provider.getLanguages()) {
-          String id = language.getID();
-          if (!map.containsKey(id)) {
-            map.put(id, new JCheckBox(language.getDisplayName()));
-          }
+      for (final BreadcrumbsProviderConfigurable configurable : getConfigurables()) {
+        final String id = configurable.getId();
+        if (!map.containsKey(id)) {
+          map.put(id, configurable.createComponent());
         }
       }
       JPanel boxes = new JPanel(new GridLayout(0, 3, isUnderDarcula() ? JBUI.scale(10) : 0, 0));
@@ -135,6 +132,18 @@ final class BreadcrumbsConfigurable implements Configurable {
     return false;
   }
 
+  @NotNull
+  @Override
+  protected List<BreadcrumbsProviderConfigurable> createConfigurables() {
+    final List<BreadcrumbsProviderConfigurable> configurables = newSmartList();
+    for (final BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensionList()) {
+      for (final Language language : provider.getLanguages()) {
+        configurables.add(new BreadcrumbsProviderConfigurable(provider, language));
+      }
+    }
+    return configurables;
+  }
+
   @Override
   public void apply() {
     boolean modified = false;
@@ -171,5 +180,49 @@ final class BreadcrumbsConfigurable implements Configurable {
     if (placement != null) placement.setEnabled(enabled);
     if (languages != null) languages.setEnabled(enabled);
     for (JCheckBox box : map.values()) box.setEnabled(enabled);
+  }
+
+  static class BreadcrumbsProviderConfigurable implements SearchableConfigurable {
+
+    private final BreadcrumbsProvider myProvider;
+    private final Language myLanguage;
+
+    private BreadcrumbsProviderConfigurable(@NotNull final BreadcrumbsProvider provider, @NotNull final Language language) {
+      myProvider = provider;
+      myLanguage = language;
+    }
+
+    @Nullable
+    @Override
+    public JCheckBox createComponent() {
+      return new JCheckBox(myLanguage.getDisplayName());
+    }
+
+    @Override
+    public boolean isModified() {
+      return false;
+    }
+
+    @Override
+    public void apply() throws ConfigurationException {
+    }
+
+    @NotNull
+    @Override
+    public String getId() {
+      return myLanguage.getID();
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Title)
+    @Override
+    public String getDisplayName() {
+      return myLanguage.getDisplayName();
+    }
+
+    @NotNull
+    @Override
+    public Class<?> getOriginalClass() {
+      return myProvider.getClass();
+    }
   }
 }

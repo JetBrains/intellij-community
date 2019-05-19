@@ -21,10 +21,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.MemberNodeBase;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class JavaMethodNode extends JavaMemberNode<PsiMethod> {
   protected JavaMethodNode(PsiMethod method,
@@ -50,7 +47,8 @@ public class JavaMethodNode extends JavaMemberNode<PsiMethod> {
           !(((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression)) {
         final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
         if (enclosingContext instanceof PsiMethod && !result.contains(enclosingContext) &&
-            !getMember().equals(enclosingContext) && !myCalled.contains(getMember())) { //do not add recursive methods
+            !getMember().equals(enclosingContext) && !myCalled.contains(getMember()) &&  //do not add recursive methods
+            Arrays.stream(((PsiMethod)enclosingContext).findDeepestSuperMethods()).anyMatch(method -> !method.isWritable())) { //do not add library inheritances
           result.add((PsiMethod)enclosingContext);
         }
         else if (element instanceof PsiClass) {

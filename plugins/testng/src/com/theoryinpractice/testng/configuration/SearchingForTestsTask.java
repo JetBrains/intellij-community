@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
@@ -26,6 +25,7 @@ import org.testng.xml.XmlSuite;
 
 import java.io.*;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class SearchingForTestsTask extends SearchForTestsTask {
@@ -63,7 +63,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     }
 
     try {
-      FileUtil.writeToFile(myTempFile, "end".getBytes(), true);
+      FileUtil.writeToFile(myTempFile, "end".getBytes(StandardCharsets.UTF_8), true);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -76,10 +76,11 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     fillTestObjects(myClasses);
   }
 
+  @Override
   protected void logCantRunException(ExecutionException e) {
     try {
       final String message = "CantRunException" + e.getMessage() + "\n";
-      FileUtil.writeToFile(myTempFile, message.getBytes());
+      FileUtil.writeToFile(myTempFile, message.getBytes(StandardCharsets.UTF_8));
     }
     catch (IOException e1) {
       LOG.error(e1);
@@ -117,7 +118,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     int logLevel = 1;
     try {
       final Properties properties = new Properties();
-      properties.load(new ByteArrayInputStream(myConfig.getVMParameters().getBytes()));
+      properties.load(new ByteArrayInputStream(myConfig.getVMParameters().getBytes(StandardCharsets.UTF_8)));
       final String verbose = properties.getProperty("-Dtestng.verbose");
       if (verbose != null) {
         logLevel = Integer.parseInt(verbose);
@@ -138,7 +139,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
       xmlFile = suite.save(new File(PathManager.getSystemPath()));
     }
     else {
-      xmlFile = TestNGXmlSuiteHelper.writeSuite(map, testParams, myProject.getName(), 
+      xmlFile = TestNGXmlSuiteHelper.writeSuite(map, testParams, myProject.getName(),
                                                 PathManager.getSystemPath(),
                                                 new TestNGXmlSuiteHelper.Logger() {
                                                   @Override
@@ -149,7 +150,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     }
     String path = xmlFile.getAbsolutePath() + "\n";
     try {
-      FileUtil.writeToFile(myTempFile, path.getBytes(CharsetToolkit.UTF8_CHARSET), true);
+      FileUtil.writeToFile(myTempFile, path.getBytes(StandardCharsets.UTF_8), true);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -170,7 +171,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     try {
       if (buildTestParams.isEmpty()) {
         String path = new File(myData.getSuiteName()).getAbsolutePath() + "\n";
-        FileUtil.writeToFile(myTempFile, path.getBytes(CharsetToolkit.UTF8_CHARSET), true);
+        FileUtil.writeToFile(myTempFile, path.getBytes(StandardCharsets.UTF_8), true);
         return;
       }
       final Parser parser = new Parser(myData.getSuiteName());
@@ -192,7 +193,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
           fileWriter.close();
         }
         String path = suiteFile.getAbsolutePath() + "\n";
-        FileUtil.writeToFile(myTempFile, path.getBytes(CharsetToolkit.UTF8_CHARSET), true);
+        FileUtil.writeToFile(myTempFile, path.getBytes(StandardCharsets.UTF_8), true);
       }
     }
     catch (Exception e) {

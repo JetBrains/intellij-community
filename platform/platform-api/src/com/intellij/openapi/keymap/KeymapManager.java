@@ -41,5 +41,6 @@ public abstract class KeymapManager {
   /**
    * @deprecated use {@link KeymapManagerListener#TOPIC} instead
    */
+  @Deprecated
   public abstract void removeKeymapManagerListener(@NotNull KeymapManagerListener listener);
 }

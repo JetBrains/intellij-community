@@ -31,10 +31,11 @@ public abstract class ProjectImportWizardStep extends ModuleWizardStep {
     myContext = context;
   }
 
+  @Override
   public Icon getIcon() {
     return myContext.getStepIcon();
   }
-  
+
   protected ProjectImportBuilder getBuilder() {
     return (ProjectImportBuilder)myContext.getProjectBuilder();
   }

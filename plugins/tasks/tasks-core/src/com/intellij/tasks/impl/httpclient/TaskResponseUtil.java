@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.TaskUtil;
 import org.apache.commons.httpclient.HeaderElement;
@@ -42,7 +43,6 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * @author Mikhail Golubev
@@ -106,6 +106,21 @@ public class TaskResponseUtil {
     return new InputStreamReader(stream, charsetName == null ? DEFAULT_CHARSET_NAME : charsetName);
   }
 
+  @NotNull
+  public static RequestFailedException forStatusCode(int code) {
+    return new RequestFailedException(messageForStatusCode(code));
+  }
+
+  @NotNull
+  public static String messageForStatusCode(int statusCode) {
+    if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+      return TaskBundle.message("failure.login");
+    }
+    else if (statusCode == HttpStatus.SC_FORBIDDEN) {
+      return TaskBundle.message("failure.permissions");
+    }
+    return TaskBundle.message("failure.http.error", statusCode, HttpStatus.getStatusText(statusCode));
+  }
 
   public static final class GsonSingleObjectDeserializer<T> implements ResponseHandler<T> {
     private final Gson myGson;
@@ -129,7 +144,7 @@ public class TaskResponseUtil {
         if (statusCode == HttpStatus.SC_NOT_FOUND && myIgnoreNotFound) {
           return null;
         }
-        throw RequestFailedException.forStatusCode(statusCode);
+        throw forStatusCode(statusCode);
       }
       try {
         if (LOG.isDebugEnabled()) {
@@ -170,7 +185,7 @@ public class TaskResponseUtil {
         if (statusCode == HttpStatus.SC_NOT_FOUND && myIgnoreNotFound) {
           return Collections.emptyList();
         }
-        throw RequestFailedException.forStatusCode(statusCode);
+        throw forStatusCode(statusCode);
       }
       try {
         if (LOG.isDebugEnabled()) {
@@ -199,7 +214,7 @@ public class TaskResponseUtil {
       try {
         String content = TaskResponseUtil.getResponseContentAsString(response);
         org.apache.commons.httpclient.Header header = response.getRequestHeader(HTTP.CONTENT_TYPE);
-        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
+        String contentType = header == null ? "text/plain" : StringUtil.toLowerCase(header.getElements()[0].getName());
         if (contentType.contains("xml")) {
           TaskUtil.prettyFormatXmlToLog(logger, content);
         }
@@ -221,7 +236,7 @@ public class TaskResponseUtil {
       try {
         String content = TaskResponseUtil.getResponseContentAsString(response);
         Header header = response.getEntity().getContentType();
-        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
+        String contentType = header == null ? "text/plain" : StringUtil.toLowerCase(header.getElements()[0].getName());
         if (contentType.contains("xml")) {
           TaskUtil.prettyFormatXmlToLog(logger, content);
         }

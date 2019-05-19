@@ -80,7 +80,7 @@ public class SpecialAnnotationsUtilBase {
     */
   }
 
-  public static void createAddToSpecialAnnotationFixes(@NotNull PsiModifierListOwner owner, @NotNull Processor<String> processor) {
+  public static void createAddToSpecialAnnotationFixes(@NotNull PsiModifierListOwner owner, @NotNull Processor<? super String> processor) {
     final PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
       final PsiAnnotation[] psiAnnotations = modifierList.getAnnotations();
@@ -89,8 +89,7 @@ public class SpecialAnnotationsUtilBase {
         if (name == null) continue;
         if (name.startsWith("java.") || //name.startsWith("javax.") ||
             name.startsWith("org.jetbrains.") ||
-            NullableNotNullManager.isNullableAnnotation(psiAnnotation) ||
-            NullableNotNullManager.isNotNullAnnotation(psiAnnotation)) continue;
+            NullableNotNullManager.isNullabilityAnnotation(psiAnnotation)) continue;
         if (!processor.process(name)) break;
       }
     }

@@ -25,11 +25,11 @@ final class AddonlyKeylessHash<K, V> {
   private Object[] entries;
   private final KeyValueMapper<K, V> keyValueMapper;
 
-  public AddonlyKeylessHash(KeyValueMapper<K, V> _keyValueMapper) {
+  AddonlyKeylessHash(KeyValueMapper<K, V> _keyValueMapper) {
     this(4, _keyValueMapper);
   }
 
-  public AddonlyKeylessHash(int expectedSize, KeyValueMapper<K, V> _keyValueMapper) {
+  AddonlyKeylessHash(int expectedSize, KeyValueMapper<K, V> _keyValueMapper) {
     int i = PrimeFinder.nextPrime(5 * expectedSize / 4 + 1);
     entries = new Object[i];
     keyValueMapper = _keyValueMapper;

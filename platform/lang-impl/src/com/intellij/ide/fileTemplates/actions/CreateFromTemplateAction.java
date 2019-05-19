@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.fileTemplates.actions;
 
@@ -29,7 +15,7 @@ import javax.swing.*;
 import java.util.function.Supplier;
 
 public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
-  private final Supplier<FileTemplate> myTemplate;
+  private final Supplier<? extends FileTemplate> myTemplate;
 
   /** Avoid calling the constructor from normal IDE actions, because:
    *  - Normal actions are preloaded at startup
@@ -39,7 +25,7 @@ public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
     this(template.getName(), FileTemplateUtil.getIcon(template), () -> template);
   }
 
-  public CreateFromTemplateAction(String templateName, @Nullable Icon icon, @NotNull Supplier<FileTemplate> template){
+  public CreateFromTemplateAction(String templateName, @Nullable Icon icon, @NotNull Supplier<? extends FileTemplate> template){
     super(templateName, null, icon);
     myTemplate = template;
   }
@@ -50,14 +36,14 @@ public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
   }
 
   @Override
-  public void update(AnActionEvent e){
+  public void update(@NotNull AnActionEvent e){
     super.update(e);
     Presentation presentation = e.getPresentation();
     boolean isEnabled = CreateFromTemplateGroup.canCreateFromTemplate(e, myTemplate.get());
-    presentation.setEnabled(isEnabled);
-    presentation.setVisible(isEnabled);
+    presentation.setEnabledAndVisible(isEnabled);
   }
 
+  @NotNull
   public FileTemplate getTemplate() {
     return myTemplate.get();
   }

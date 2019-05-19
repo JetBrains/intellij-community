@@ -22,11 +22,10 @@ import com.intellij.refactoring.MakeStaticRefactoring;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.makeStatic.MakeClassStaticProcessor;
 import com.intellij.refactoring.makeStatic.Settings;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -42,18 +41,22 @@ public class MakeClassStaticRefactoringImpl extends RefactoringImpl<MakeClassSta
     super(new MakeClassStaticProcessor(project, aClass, new Settings(replaceUsages, classParameterName, fields, names)));
   }
 
+  @Override
   public PsiClass getMember() {
     return myProcessor.getMember();
   }
 
+  @Override
   public boolean isReplaceUsages() {
     return myProcessor.getSettings().isReplaceUsages();
   }
 
+  @Override
   public String getClassParameterName() {
     return myProcessor.getSettings().getClassParameterName();
   }
 
+  @Override
   public List<PsiField> getFields() {
     final Settings settings = myProcessor.getSettings();
     List<PsiField> result = new ArrayList<>();
@@ -65,6 +68,7 @@ public class MakeClassStaticRefactoringImpl extends RefactoringImpl<MakeClassSta
     return result;
   }
 
+  @Override
   @Nullable
   public String getParameterNameForField(PsiField field) {
     return myProcessor.getSettings().getNameForField(field);

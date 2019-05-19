@@ -24,7 +24,7 @@ class IndentOptionsAdjusterImpl implements IndentOptionsAdjuster {
   
   private final IndentUsageStatistics myStats;
 
-  public IndentOptionsAdjusterImpl(IndentUsageStatistics stats) {
+  IndentOptionsAdjusterImpl(IndentUsageStatistics stats) {
     myStats = stats;    
   }
 

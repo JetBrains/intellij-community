@@ -1,22 +1,18 @@
 <idea-plugin>
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>1</version>
-  <vendor email="vitaliy.bibaev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
 
   <description><![CDATA[
-      This plugin collects data about your usage of code completion, anonymizes and sends it to JetBrains.
-      Note, the plugin doesn't send any of your personal data or code. All we send is just numbers
-      calculated based on your completion usage patterns. If you don't want to send anything just disable this plugin.
+      Collects data about your usage of code completion, anonymizes and sends it to JetBrains.
+      Note, the plugin doesn't send any of your personal data or code. All it sends is just numbers
+      calculated based on your completion usage patterns. The plugin does not send more than 15MB of data per day.
+      It will not send anything until you explicitly allow it in the settings/preferences: Editor | General | Code Completion,
+      "Machine Learning Assistant Code Completion" section.
     ]]></description>
-
-  <change-notes><![CDATA[
-    ]]>
-  </change-notes>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
 
@@ -44,21 +40,28 @@
                         testServiceImplementation="com.intellij.mocks.TestRequestService">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentDecision"
-                        serviceImplementation="com.intellij.stats.experiment.PermanentInstallationIDBasedDecision"
-                        testServiceImplementation="com.intellij.mocks.TestExperimentDecision">
+    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
+                        serviceImplementation="com.intellij.completion.sorting.MLSorterFactory">
     </applicationService>
 
     <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"
                         serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
     </applicationService>
 
-    <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
-
     <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
                         serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>
 
-    <reporting.sendPermission implementation="com.intellij.reporting.AllowedOnlyInEAP"/>
+    <registryKey key="completion.stats.exit.experiment" defaultValue="false"
+                 description="Do not perform A/B experiment for code completion on this installation"/>
+
+    <registryKey key="completion.stats.show.ml.ranking.diff" defaultValue="false"
+                 description="Show how element position changed after ml ranking performed, if ml completion ranking is enabled"/>
+
+    <registryKey key="completion.stats.enable.ml.ranking" defaultValue="false"
+                 description="Re-rank lookup elements using ML model"/>
+
+    <registryKey key="completion.stats.send.logs" defaultValue="true"
+                 description="Send anonymous logs about completion usage"/>
   </extensions>
 
   <application-components>
@@ -74,11 +77,6 @@
       <implementation-class>
         com.intellij.stats.personalization.impl.ApplicationUserFactorStorage
       </implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.completion.FeatureManagerImpl</implementation-class>
-      <interface-class>com.jetbrains.completion.feature.FeatureManager</interface-class>
     </component>
   </application-components>
 

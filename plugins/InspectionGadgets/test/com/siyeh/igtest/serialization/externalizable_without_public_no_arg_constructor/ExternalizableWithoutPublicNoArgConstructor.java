@@ -6,14 +6,14 @@ abstract class e implements Externalizable {
 
   protected e() {}
 }
-class eImpl extends e {
+class <warning descr="Externalizable class 'eImpl' has no 'public' no-arg constructor">eImpl</warning> extends e {
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
   }
 
   public void writeExternal(ObjectOutput out) throws IOException {
   }
 }
-class eImpl1 extends e {
+class <warning descr="Externalizable class 'eImpl1' has no 'public' no-arg constructor">eImpl1</warning> extends e {
   private eImpl1() {}
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
   }
@@ -21,7 +21,7 @@ class eImpl1 extends e {
   public void writeExternal(ObjectOutput out) throws IOException {
   }
 }
-class eImpl2 extends e {
+class <warning descr="Externalizable class 'eImpl2' has no 'public' no-arg constructor">eImpl2</warning> extends e {
   public eImpl2(int i) {
     System.out.print(i);
   }
@@ -34,7 +34,7 @@ class eImpl2 extends e {
 class AnonymousTest {
   public static void main(String[] args) throws IOException, ClassNotFoundException {
     final String h = "Hello World";
-    final Externalizable externalizable = new Externalizable() {
+    final Externalizable externalizable = new <warning descr="Externalizable class 'Externalizable' has no 'public' no-arg constructor">Externalizable</warning>() {
 
       private String string = h;
 

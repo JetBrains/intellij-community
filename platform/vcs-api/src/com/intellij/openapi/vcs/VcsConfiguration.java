@@ -1,15 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
@@ -29,6 +29,7 @@ import java.util.Map;
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
+  private static final Logger LOG = Logger.getInstance(VcsConfiguration.class);
   public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
   @NonNls public static final String PATCH = "patch";
@@ -56,6 +57,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean USE_CUSTOM_SHELF_PATH = false;
   public String CUSTOM_SHELF_PATH = null;
   public boolean MOVE_SHELVES = false;
+  public boolean ADD_EXTERNAL_FILES_SILENTLY = false;
   // asked only for non-DVCS
   public boolean INCLUDE_TEXT_INTO_SHELF = true;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
@@ -73,7 +75,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean RELOAD_CONTEXT = true;
 
   @XCollection(elementName = "path", propertyElementName = "ignored-roots")
-  public List<String> IGNORED_UNREGISTERED_ROOTS = ContainerUtil.newArrayList();
+  public List<String> IGNORED_UNREGISTERED_ROOTS = new ArrayList<>();
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
@@ -98,12 +100,14 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     ADD(VcsBundle.message("vcs.command.name.add")),
     REMOVE(VcsBundle.message("vcs.command.name.remove"));
 
-    StandardConfirmation(final String id) {
+    StandardConfirmation(@NotNull String id) {
       myId = id;
     }
 
+    @NotNull
     private final String myId;
 
+    @NotNull
     public String getId() {
       return myId;
     }
@@ -159,7 +163,11 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     LAST_COMMIT_MESSAGE = comment;
     if (comment == null || comment.length() == 0) return;
     myLastCommitMessages.remove(comment);
-    while (myLastCommitMessages.size() >= MAX_STORED_MESSAGES) {
+    addCommitMessage(comment);
+  }
+
+  private void addCommitMessage(@NotNull String comment) {
+    if (myLastCommitMessages.size() >= MAX_STORED_MESSAGES) {
       myLastCommitMessages.remove(0);
     }
     myLastCommitMessages.add(comment);
@@ -179,10 +187,20 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     return new ArrayList<>(myLastCommitMessages);
   }
 
-  public void removeMessage(final String content) {
-    myLastCommitMessages.remove(content);
+  public void replaceMessage(@NotNull String oldMessage, @NotNull String newMessage) {
+    if (oldMessage.equals(LAST_COMMIT_MESSAGE)) {
+      LAST_COMMIT_MESSAGE = newMessage;
+    }
+    int index = myLastCommitMessages.indexOf(oldMessage);
+    if (index >= 0) {
+      myLastCommitMessages.remove(index);
+      myLastCommitMessages.add(index, newMessage);
+    }
+    else {
+      LOG.debug("Couldn't find message [" + oldMessage + "] in the messages history");
+      addCommitMessage(newMessage);
+    }
   }
-
 
   public PerformInBackgroundOption getUpdateOption() {
     return myUpdateOption;

@@ -47,8 +47,7 @@ Set = TypeAlias(object)
 FrozenSet = TypeAlias(object)
 Counter = TypeAlias(object)
 Deque = TypeAlias(object)
-if sys.version_info >= (3, 3):
-    ChainMap = TypeAlias(object)
+ChainMap = TypeAlias(object)
 
 # Predefined type variables.
 AnyStr = TypeVar('AnyStr', str, bytes)
@@ -126,7 +125,7 @@ class Iterable(Protocol[_T_co]):
 class Iterator(Iterable[_T_co], Protocol[_T_co]):
     @abstractmethod
     def __next__(self) -> _T_co: ...
-    def __iter__(self) -> 'Iterator[_T_co]': ...
+    def __iter__(self) -> Iterator[_T_co]: ...
 
 class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     @abstractmethod
@@ -143,12 +142,16 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     def close(self) -> None: ...
 
     @abstractmethod
-    def __iter__(self) -> 'Generator[_T_co, _T_contra, _V_co]': ...
+    def __iter__(self) -> Generator[_T_co, _T_contra, _V_co]: ...
 
-    gi_code = ...  # type: CodeType
-    gi_frame = ...  # type: FrameType
-    gi_running = ...  # type: bool
-    gi_yieldfrom = ...  # type: Optional[Generator]
+    @property
+    def gi_code(self) -> CodeType: ...
+    @property
+    def gi_frame(self) -> FrameType: ...
+    @property
+    def gi_running(self) -> bool: ...
+    @property
+    def gi_yieldfrom(self) -> Optional[Generator]: ...
 
 # TODO: Several types should only be defined if sys.python_version >= (3, 5):
 # Awaitable, AsyncIterator, AsyncIterable, Coroutine, Collection.
@@ -160,6 +163,15 @@ class Awaitable(Protocol[_T_co]):
     def __await__(self) -> Generator[Any, None, _T_co]: ...
 
 class Coroutine(Awaitable[_V_co], Generic[_T_co, _T_contra, _V_co]):
+    @property
+    def cr_await(self) -> Optional[Any]: ...
+    @property
+    def cr_code(self) -> CodeType: ...
+    @property
+    def cr_frame(self) -> FrameType: ...
+    @property
+    def cr_running(self) -> bool: ...
+
     @abstractmethod
     def send(self, value: _T_contra) -> _T_co: ...
 
@@ -172,22 +184,21 @@ class Coroutine(Awaitable[_V_co], Generic[_T_co, _T_contra, _V_co]):
 
 
 # NOTE: This type does not exist in typing.py or PEP 484.
-# The parameters corrrespond to Generator, but the 4th is the original type.
-class AwaitableGenerator(Generator[_T_co, _T_contra, _V_co], Awaitable[_V_co],
-                         Generic[_T_co, _T_contra, _V_co, _S]):
-    pass
+# The parameters correspond to Generator, but the 4th is the original type.
+class AwaitableGenerator(Awaitable[_V_co], Generator[_T_co, _T_contra, _V_co],
+                         Generic[_T_co, _T_contra, _V_co, _S], metaclass=ABCMeta): ...
 
 @runtime
 class AsyncIterable(Protocol[_T_co]):
     @abstractmethod
-    def __aiter__(self) -> 'AsyncIterator[_T_co]': ...
+    def __aiter__(self) -> AsyncIterator[_T_co]: ...
 
 @runtime
 class AsyncIterator(AsyncIterable[_T_co],
                     Protocol[_T_co]):
     @abstractmethod
     def __anext__(self) -> Awaitable[_T_co]: ...
-    def __aiter__(self) -> 'AsyncIterator[_T_co]': ...
+    def __aiter__(self) -> AsyncIterator[_T_co]: ...
 
 if sys.version_info >= (3, 6):
     class AsyncGenerator(AsyncIterator[_T_co], Generic[_T_co, _T_contra]):
@@ -202,15 +213,19 @@ if sys.version_info >= (3, 6):
                    tb: Any = ...) -> Awaitable[_T_co]: ...
 
         @abstractmethod
-        def aclose(self) -> Awaitable[_T_co]: ...
+        def aclose(self) -> Awaitable[None]: ...
 
         @abstractmethod
-        def __aiter__(self) -> 'AsyncGenerator[_T_co, _T_contra]': ...
+        def __aiter__(self) -> AsyncGenerator[_T_co, _T_contra]: ...
 
-        ag_await = ...  # type: Any
-        ag_code = ...  # type: CodeType
-        ag_frame = ...  # type: FrameType
-        ag_running = ...  # type: bool
+        @property
+        def ag_await(self) -> Any: ...
+        @property
+        def ag_code(self) -> CodeType: ...
+        @property
+        def ag_frame(self) -> FrameType: ...
+        @property
+        def ag_running(self) -> bool: ...
 
 @runtime
 class Container(Protocol[_T_co]):
@@ -220,11 +235,18 @@ class Container(Protocol[_T_co]):
 
 if sys.version_info >= (3, 6):
     @runtime
-    class Collection(Sized, Iterable[_T_co], Container[_T_co], Protocol[_T_co]): ...
+    class Collection(Iterable[_T_co], Container[_T_co], Protocol[_T_co]):
+        # Implement Sized (but don't have it as a base class).
+        @abstractmethod
+        def __len__(self) -> int: ...
+
     _Collection = Collection
 else:
     @runtime
-    class _Collection(Sized, Iterable[_T_co], Container[_T_co], Protocol[_T_co]): ...
+    class _Collection(Iterable[_T_co], Container[_T_co], Protocol[_T_co]):
+        # Implement Sized (but don't have it as a base class).
+        @abstractmethod
+        def __len__(self) -> int: ...
 
 class Sequence(_Collection[_T_co], Reversible[_T_co], Generic[_T_co]):
     @overload
@@ -246,6 +268,12 @@ class Sequence(_Collection[_T_co], Reversible[_T_co], Generic[_T_co]):
 class MutableSequence(Sequence[_T], Generic[_T]):
     @abstractmethod
     def insert(self, index: int, object: _T) -> None: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, i: int) -> _T: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, s: slice) -> MutableSequence[_T]: ...
     @overload
     @abstractmethod
     def __setitem__(self, i: int, o: _T) -> None: ...
@@ -296,14 +324,14 @@ class MutableSet(AbstractSet[_T], Generic[_T]):
     def __ixor__(self, s: AbstractSet[_S]) -> MutableSet[Union[_T, _S]]: ...
     def __isub__(self, s: AbstractSet[Any]) -> MutableSet[_T]: ...
 
-class MappingView(Sized):
+class MappingView:
     def __len__(self) -> int: ...
 
-class ItemsView(AbstractSet[Tuple[_KT_co, _VT_co]], MappingView, Generic[_KT_co, _VT_co]):
+class ItemsView(MappingView, AbstractSet[Tuple[_KT_co, _VT_co]], Generic[_KT_co, _VT_co]):
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[Tuple[_KT_co, _VT_co]]: ...
 
-class KeysView(AbstractSet[_KT_co], MappingView, Generic[_KT_co]):
+class KeysView(MappingView, AbstractSet[_KT_co], Generic[_KT_co]):
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_KT_co]: ...
 
@@ -423,7 +451,7 @@ class IO(Iterator[AnyStr], Generic[AnyStr]):
     @abstractmethod
     def __iter__(self) -> Iterator[AnyStr]: ...
     @abstractmethod
-    def __enter__(self) -> 'IO[AnyStr]': ...
+    def __enter__(self) -> IO[AnyStr]: ...
     @abstractmethod
     def __exit__(self, t: Optional[Type[BaseException]], value: Optional[BaseException],
                  traceback: Optional[TracebackType]) -> bool: ...
@@ -457,7 +485,7 @@ class TextIO(IO[str]):
     @abstractmethod
     def __enter__(self) -> TextIO: ...
 
-class ByteString(Sequence[int]): ...
+class ByteString(Sequence[int], metaclass=ABCMeta): ...
 
 class Match(Generic[AnyStr]):
     pos = 0
@@ -468,7 +496,7 @@ class Match(Generic[AnyStr]):
 
     # The regular expression object whose match() or search() method produced
     # this match instance.
-    re = ...  # type: 'Pattern[AnyStr]'
+    re = ...  # type: Pattern[AnyStr]
 
     def expand(self, template: AnyStr) -> AnyStr: ...
 
@@ -529,13 +557,17 @@ class Pattern(Generic[AnyStr]):
 def get_type_hints(obj: Callable, globalns: Optional[dict[str, Any]] = ...,
                    localns: Optional[dict[str, Any]] = ...) -> dict[str, Any]: ...
 
+@overload
 def cast(tp: Type[_T], obj: Any) -> _T: ...
+@overload
+def cast(tp: str, obj: Any) -> Any: ...
 
 # Type constructors
 
 # NamedTuple is special-cased in the type checker
 class NamedTuple(tuple):
     _field_types = ...  # type: collections.OrderedDict[str, Type[Any]]
+    _field_defaults: Dict[str, Any] = ...
     _fields = ...  # type: Tuple[str, ...]
     _source = ...  # type: str
 
@@ -545,10 +577,7 @@ class NamedTuple(tuple):
     @classmethod
     def _make(cls: Type[_T], iterable: Iterable[Any]) -> _T: ...
 
-    if sys.version_info >= (3, 1):
-        def _asdict(self) -> collections.OrderedDict[str, Any]: ...
-    else:
-        def _asdict(self) -> Dict[str, Any]: ...
+    def _asdict(self) -> collections.OrderedDict[str, Any]: ...
     def _replace(self: _T, **kwargs: Any) -> _T: ...
 
 def NewType(name: str, tp: Type[_T]) -> Type[_T]: ...

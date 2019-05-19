@@ -24,7 +24,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 5/15/13 12:37 PM
  */
 public interface ExternalSystemUiAware {
 

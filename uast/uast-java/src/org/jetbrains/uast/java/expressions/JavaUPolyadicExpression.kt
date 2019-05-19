@@ -20,15 +20,15 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UPolyadicExpression
 import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.java.internal.PsiArrayToUElementListMappingView
 
 
 class JavaUPolyadicExpression(
-  override val psi: PsiPolyadicExpression,
+  override val sourcePsi: PsiPolyadicExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UPolyadicExpression {
-  override val operands: List<UExpression> by lz {
-    psi.operands.map { JavaConverter.convertOrEmpty(it, this) }
-  }
 
-  override val operator: UastBinaryOperator by lz { psi.operationTokenType.getOperatorType() }
+  override val operands: List<UExpression> = PsiArrayToUElementListMappingView(sourcePsi.operands) { JavaConverter.convertOrEmpty(it, this) }
+
+  override val operator: UastBinaryOperator by lz { sourcePsi.operationTokenType.getOperatorType() }
 }

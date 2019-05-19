@@ -16,18 +16,59 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifier;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeClassFinalFix;
+import com.siyeh.ig.psiutils.UtilityClassUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class NonFinalUtilityClassInspection extends NonFinalUtilityClassInspectionBase {
+public class NonFinalUtilityClassInspection extends BaseInspection {
 
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new MakeClassFinalFix((PsiClass)infos[0]);
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("non.final.utility.class.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("non.final.utility.class.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonFinalUtilityClassVisitor();
+  }
+
+  private static class NonFinalUtilityClassVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (!UtilityClassUtil.isUtilityClass(aClass)) {
+        return;
+      }
+      if (aClass.hasModifierProperty(PsiModifier.FINAL) ||
+          aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      registerClassError(aClass, aClass);
+    }
   }
 }

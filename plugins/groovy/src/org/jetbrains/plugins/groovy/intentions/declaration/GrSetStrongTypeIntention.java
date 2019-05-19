@@ -141,7 +141,7 @@ public class GrSetStrongTypeIntention extends Intention {
     TemplateManager templateManager = TemplateManager.getInstance(project);
     templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         if (brokenOff) {
           ApplicationManager.getApplication().runWriteAction(() -> {
             if (rangeMarker.isValid()) {

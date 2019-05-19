@@ -16,10 +16,13 @@
 
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @deprecated This API proved to be rather inconvenient
- * @see com.intellij.openapi.actionSystem.DataProvider
+ * @see DataProvider
  */
+@Deprecated
 public interface TypeSafeDataProvider {
-  void calcData(DataKey key, DataSink sink);
+  void calcData(@NotNull DataKey key, @NotNull DataSink sink);
 }

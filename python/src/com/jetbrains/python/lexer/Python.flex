@@ -1,7 +1,6 @@
 /* It's an automatically generated code. Do not modify it. */
 package com.jetbrains.python.lexer;
 
-import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,7 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 %%
 
 %class _PythonLexer
-%implements FlexLexer
+%implements FlexLexerEx
 %unicode
 %function advance
 %type IElementType
@@ -48,8 +47,8 @@ IMAGNUMBER=(({FLOATNUMBER})|({INTPART}))[Jj]
 
 // If you change patterns for string literals, don't forget to update PyStringLiteralUtil!
 // "c" prefix character is included for Cython
-SINGLE_QUOTED_STRING=[UuBbCcRrFf]{0,3}({QUOTED_LITERAL} | {DOUBLE_QUOTED_LITERAL})
-TRIPLE_QUOTED_STRING=[UuBbCcRrFf]{0,3}({TRIPLE_QUOTED_LITERAL}|{TRIPLE_APOS_LITERAL})
+SINGLE_QUOTED_STRING=[UuBbCcRr]{0,3}({QUOTED_LITERAL} | {DOUBLE_QUOTED_LITERAL})
+TRIPLE_QUOTED_STRING=[UuBbCcRr]{0,3}({TRIPLE_QUOTED_LITERAL}|{TRIPLE_APOS_LITERAL})
 
 DOCSTRING_LITERAL=({SINGLE_QUOTED_STRING}|{TRIPLE_QUOTED_STRING})
 
@@ -69,9 +68,26 @@ ONE_TWO_APOS = ('[^\\']) | ('\\[^]) | (''[^\\']) | (''\\[^])
 APOS_STRING_CHAR = [^\\'] | {ANY_ESCAPE_SEQUENCE} | {ONE_TWO_APOS}
 TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 
+FSTRING_PREFIX = [UuBbCcRr]{0,3}[fF][UuBbCcRr]{0,3}
+FSTRING_START = {FSTRING_PREFIX} (\"\"\"|'''|\"|')
+FSTRING_QUOTES = (\"{1,3}|'{1,3})
+FSTRING_ESCAPED_LBRACE = "{{"
+FSTRING_ESCAPE_SEQUENCE = \\[^{}\r\n]
+// TODO report it in annotation
+//FSTRING_ESCAPED_RBRACE = "}}"
+NAMED_UNICODE_ESCAPE = \\N\{[\w ]*\}?
+FSTRING_TEXT_NO_QUOTES = ([^\\\'\"\r\n{] | {NAMED_UNICODE_ESCAPE} | {FSTRING_ESCAPE_SEQUENCE} | {FSTRING_ESCAPED_LBRACE} | (\\[\r\n]) )+
+FSTRING_FORMAT_TEXT_NO_QUOTES = ([^\\\'\"\r\n{}] | {NAMED_UNICODE_ESCAPE} | {FSTRING_ESCAPE_SEQUENCE} | (\\[\r\n]) )+
+FSTRING_FRAGMENT_TYPE_CONVERSION = "!" [^=:'\"} \t\r\n]*
+
 %state PENDING_DOCSTRING
 %state IN_DOCSTRING_OWNER
+%xstate FSTRING
+%state FSTRING_FRAGMENT
+%xstate FSTRING_FRAGMENT_FORMAT
 %{
+private final PyLexerFStringHelper fStringHelper = new PyLexerFStringHelper(this);
+
 private int getSpaceLength(CharSequence string) {
 String string1 = string.toString();
 string1 = StringUtil.trimEnd(string1, "\\");
@@ -83,6 +99,51 @@ return yylength()-s.length();
 %}
 
 %%
+
+<FSTRING> {
+  {FSTRING_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
+  "\\" { return PyTokenTypes.FSTRING_TEXT; }
+  [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
+  {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
+  "{" { return fStringHelper.handleFragmentStart(); }
+  
+  [^]  { return PyTokenTypes.BAD_CHARACTER; }
+}
+
+<FSTRING_FRAGMENT> {
+  "(" { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LPAR); }
+  ")" { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RPAR); }
+  
+  "[" { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LBRACKET); }
+  "]" { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RBRACKET); }
+  
+  "{" { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LBRACE); }
+  "}" { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RBRACE); }
+        
+  {FSTRING_FRAGMENT_TYPE_CONVERSION} { return PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION; }
+        
+  ":" { return fStringHelper.handleColonInFragment(); }
+
+  {SINGLE_QUOTED_STRING} { return fStringHelper.handleStringLiteral(PyTokenTypes.SINGLE_QUOTED_STRING); }
+  {TRIPLE_QUOTED_STRING} { return fStringHelper.handleStringLiteral(PyTokenTypes.TRIPLE_QUOTED_STRING); }
+  {FSTRING_START}       { return fStringHelper.handleFStringStartInFragment(); }
+      
+  [\n] { return fStringHelper.handleLineBreakInFragment(); }
+
+  // Should be impossible inside expression fragments: any openingQuotes should be matched as a string literal there
+  // {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString()) ? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
+}
+
+<FSTRING_FRAGMENT_FORMAT> {
+  {FSTRING_FORMAT_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
+  "\\" { return PyTokenTypes.FSTRING_TEXT; }
+  [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
+  {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
+  "{" { return fStringHelper.handleFragmentStart(); }
+  "}" { return fStringHelper.handleFragmentEnd(); }
+
+  [^] { return PyTokenTypes.BAD_CHARACTER; }
+}
 
 [\ ]                        { return PyTokenTypes.SPACE; }
 [\t]                        { return PyTokenTypes.TAB; }
@@ -117,7 +178,7 @@ return PyTokenTypes.DOCSTRING; }
 [\n]                        { return PyTokenTypes.LINE_BREAK; }
 {END_OF_LINE_COMMENT}       { return PyTokenTypes.END_OF_LINE_COMMENT; }
 
-<YYINITIAL, IN_DOCSTRING_OWNER> {
+<YYINITIAL, IN_DOCSTRING_OWNER, FSTRING_FRAGMENT> {
 {LONGINTEGER}         { return PyTokenTypes.INTEGER_LITERAL; }
 {INTEGER}             { return PyTokenTypes.INTEGER_LITERAL; }
 {FLOATNUMBER}         { return PyTokenTypes.FLOAT_LITERAL; }
@@ -205,6 +266,8 @@ return PyTokenTypes.DOCSTRING; }
 "="                   { return PyTokenTypes.EQ; }
 ";"                   { return PyTokenTypes.SEMICOLON; }
 
+{FSTRING_START}       { return fStringHelper.handleFStringStart(); }
+
 [^]                   { return PyTokenTypes.BAD_CHARACTER; }
 }
 
@@ -217,10 +280,7 @@ return PyTokenTypes.DOCSTRING; }
                                  else yybegin(YYINITIAL); return PyTokenTypes.SINGLE_QUOTED_STRING; }
 {TRIPLE_QUOTED_STRING}          { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
                                  else yybegin(YYINITIAL); return PyTokenTypes.TRIPLE_QUOTED_STRING; }
-{DOCSTRING_LITERAL}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); yybegin(YYINITIAL); return PyTokenTypes.DOCSTRING; }
-{DOCSTRING_LITERAL}[\ \t]*"\\"  {
- yypushback(getSpaceLength(yytext())); return PyTokenTypes.DOCSTRING; }
-
+{DOCSTRING_LITERAL}[\ \t]*[\n;] { yypushback(getSpaceLength(yytext())); yybegin(YYINITIAL); return PyTokenTypes.DOCSTRING; }
+{DOCSTRING_LITERAL}[\ \t]*"\\"  { yypushback(getSpaceLength(yytext())); return PyTokenTypes.DOCSTRING; }
 .                               { yypushback(1); yybegin(YYINITIAL); }
 }
-

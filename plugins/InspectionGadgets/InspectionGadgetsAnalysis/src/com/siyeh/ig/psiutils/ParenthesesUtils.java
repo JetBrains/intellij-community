@@ -92,6 +92,7 @@ public class ParenthesesUtils {
   }
 
   @Contract("null -> null")
+  @Nullable
   public static PsiExpression stripParentheses(@Nullable PsiExpression expression) {
     while (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
@@ -177,15 +178,16 @@ public class ParenthesesUtils {
   private static void removeParensFromParenthesizedExpression(@NotNull PsiParenthesizedExpression parenthesizedExpression,
                                                               boolean ignoreClarifyingParentheses) {
     final PsiExpression body = parenthesizedExpression.getExpression();
-    if (body == null) {
-      new CommentTracker().deleteAndRestoreComments(parenthesizedExpression);
-      return;
-    }
+    // Do not remove empty parentheses, as incorrect Java expression could become incorrect PSI
+    // E.g. ()+=foo is correct PSI, but removing () will yield an assignment without LExpression which is invalid.
+    if (body == null) return;
     final PsiElement parent = parenthesizedExpression.getParent();
     if (!(parent instanceof PsiExpression) || !areParenthesesNeeded(body, (PsiExpression)parent, ignoreClarifyingParentheses)) {
       PsiExpression newExpression = ExpressionUtils.replacePolyadicWithParent(parenthesizedExpression, body);
       if (newExpression == null){
-        newExpression = (PsiExpression)new CommentTracker().replaceAndRestoreComments(parenthesizedExpression, body);
+        CommentTracker commentTracker = new CommentTracker();
+        commentTracker.markUnchanged(body);
+        newExpression = (PsiExpression)commentTracker.replaceAndRestoreComments(parenthesizedExpression, body);
       }
       removeParentheses(newExpression, ignoreClarifyingParentheses);
     }
@@ -217,6 +219,7 @@ public class ParenthesesUtils {
   private static void removeParensFromPolyadicExpression(@NotNull PsiPolyadicExpression polyadicExpression,
                                                          boolean ignoreClarifyingParentheses) {
     for (PsiExpression operand : polyadicExpression.getOperands()) {
+      if (!operand.isValid()) break;
       removeParentheses(operand, ignoreClarifyingParentheses);
     }
   }

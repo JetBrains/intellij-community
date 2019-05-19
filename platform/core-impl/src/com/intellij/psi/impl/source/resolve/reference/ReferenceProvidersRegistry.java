@@ -20,6 +20,9 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,15 +42,6 @@ public abstract class ReferenceProvidersRegistry {
   @NotNull
   public abstract PsiReferenceRegistrar getRegistrar(@NotNull Language language);
 
-  /**
-   * @see #getReferencesFromProviders(PsiElement)
-   */
-  @Deprecated
-  @NotNull
-  public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context, @NotNull Class clazz) {
-    return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);
-  }
-
   @NotNull
   public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context) {
     return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);
@@ -56,6 +50,13 @@ public abstract class ReferenceProvidersRegistry {
   @NotNull
   public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context, @NotNull PsiReferenceService.Hints hints) {
     ProgressIndicatorProvider.checkCanceled();
+
+    if (hints == PsiReferenceService.Hints.NO_HINTS) {
+      return CachedValuesManager.getCachedValue(context, () ->
+        CachedValueProvider.Result.create(getInstance().doGetReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS),
+                                          PsiModificationTracker.MODIFICATION_COUNT)).clone();
+    }
+
     return getInstance().doGetReferencesFromProviders(context, hints);
   }
 

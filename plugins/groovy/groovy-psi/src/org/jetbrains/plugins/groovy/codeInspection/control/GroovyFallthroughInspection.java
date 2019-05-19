@@ -17,9 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.control;
 
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -34,22 +32,10 @@ import java.util.regex.Pattern;
 public class GroovyFallthroughInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Fallthrough in switch statement";
-  }
-
-  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Fallthrough in switch statement #loc";
 
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

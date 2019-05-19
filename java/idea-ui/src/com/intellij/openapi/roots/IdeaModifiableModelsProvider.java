@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Proxy;
@@ -25,7 +26,7 @@ import java.lang.reflect.Proxy;
 public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   @Override
   @Nullable
-  public ModifiableRootModel getModuleModifiableModel(final Module module) {
+  public ModifiableRootModel getModuleModifiableModel(@NotNull final Module module) {
     final Project project = module.getProject();
     final ModulesConfigurator configurator = getModulesConfigurator(project);
     if (configurator != null) {
@@ -40,13 +41,13 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Nullable
-  private static ModulesConfigurator getModulesConfigurator(Project project) {
+  private static ModulesConfigurator getModulesConfigurator(@NotNull Project project) {
     StructureConfigurableContext context = getProjectStructureContext(project);
     return context != null ? context.getModulesConfigurator() : null;
   }
 
   @Override
-  public void commitModuleModifiableModel(final ModifiableRootModel model) {
+  public void commitModuleModifiableModel(@NotNull final ModifiableRootModel model) {
     if (!(model instanceof Proxy)) {
       model.commit();
     }
@@ -54,15 +55,16 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Override
-  public void disposeModuleModifiableModel(final ModifiableRootModel model) {
+  public void disposeModuleModifiableModel(@NotNull final ModifiableRootModel model) {
     if (!(model instanceof Proxy)) {
       model.dispose();
     }
     //IDEA should dispose this model instead of us, because it is was given from StructureConfigurableContext
   }
 
+  @NotNull
   @Override
-  public ModifiableFacetModel getFacetModifiableModel(Module module) {
+  public ModifiableFacetModel getFacetModifiableModel(@NotNull Module module) {
     final ModulesConfigurator configurator = getModulesConfigurator(module.getProject());
     if (configurator != null) {
       return configurator.getFacetsConfigurator().getOrCreateModifiableModel(module);
@@ -71,13 +73,14 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Override
-  public void commitFacetModifiableModel(Module module, ModifiableFacetModel model) {
+  public void commitFacetModifiableModel(@NotNull Module module, @NotNull ModifiableFacetModel model) {
     final ModulesConfigurator configurator = getModulesConfigurator(module.getProject());
     if (configurator == null || !(configurator.getFacetsConfigurator().getFacetModel(module) instanceof ModifiableFacetModel)) {
       model.commit();
     }
   }
 
+  @NotNull
   @Override
   public LibraryTable.ModifiableModel getLibraryTableModifiableModel() {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
@@ -96,7 +99,7 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Override
-  public LibraryTable.ModifiableModel getLibraryTableModifiableModel(Project project) {
+  public LibraryTable.ModifiableModel getLibraryTableModifiableModel(@NotNull Project project) {
     StructureConfigurableContext context = getProjectStructureContext(project);
     if (context != null) {
       LibraryTableModifiableModelProvider provider = context.createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL);
@@ -106,7 +109,7 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Override
-  public void disposeLibraryTableModifiableModel(LibraryTable.ModifiableModel model) {
+  public void disposeLibraryTableModifiableModel(@NotNull LibraryTable.ModifiableModel model) {
     //IDEA should dispose this model instead of us, because it is was given from StructureConfigurableContext
     if (!(model instanceof LibrariesModifiableModel)) {
       Disposer.dispose(model);
@@ -114,7 +117,7 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Nullable
-  private static StructureConfigurableContext getProjectStructureContext(Project project) {
+  private static StructureConfigurableContext getProjectStructureContext(@NotNull Project project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return null;
 
     final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(project);

@@ -25,7 +25,7 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
     settings.ADD_IMPORTS_ON_PASTE = myAddImportsOld
     super.tearDown()
   }
-  
+
   private void doTest(String fromText, String toText, String expected) {
     myFixture.configureByText 'fromFileName.groovy', fromText
     myFixture.performEditorAction IdeActions.ACTION_COPY
@@ -168,106 +168,106 @@ print CONST<caret>
 
 
   void 'test single-quoted string'() {
-    doTest($/<selection>'\\'</selection>/$, '', $/'\\'/$)
+    doTest($/     <selection>'\\'</selection>/$, '', $/'\\'/$)
   }
 
   void 'test single-quoted string partial'() {
-    doTest($/<selection>'\\</selection>'/$, '', $/'\\/$)
+    doTest($/     <selection>'\\</selection>'/$, '', $/'\\/$)
   }
 
   void 'test single-quoted string content'() {
-    doTest($/'<selection>\\</selection>'/$, '', $/\/$)
+    doTest($/     '<selection>\\</selection>'/$, '', $/\/$)
   }
 
 
   void 'test double-quoted string'() {
-    doTest($/<selection>"\\"</selection>/$, '', $/"\\"/$)
+    doTest($/     <selection>"\\"</selection>/$, '', $/"\\"/$)
   }
 
   void 'test double-quoted string partial'() {
-    doTest($/<selection>"\\</selection>"/$, '', $/"\\/$)
+    doTest($/     <selection>"\\</selection>"/$, '', $/"\\/$)
   }
 
   void 'test double-quoted string content'() {
-    doTest($/"<selection>\\</selection>"/$, '', $/\/$)
+    doTest($/     "<selection>\\</selection>"/$, '', $/\/$)
   }
 
 
   void 'test triple-single-quoted string'() {
-    doTest($/<selection>'''\\'''</selection>/$, '', $/'''\\'''/$)
+    doTest($/     <selection>'''\\'''</selection>/$, '', $/'''\\'''/$)
   }
 
   void 'test triple-single-quoted string partial start quote 1'() {
-    doTest($/'<selection>''\\'''</selection>/$, '', $/''\\'''/$)
+    doTest($/     '<selection>''\\'''</selection>/$, '', $/''\\'''/$)
   }
 
   void 'test triple-single-quoted string partial start quote 2'() {
-    doTest($/''<selection>'\\'''</selection>/$, '', $/'\\'''/$)
+    doTest($/     ''<selection>'\\'''</selection>/$, '', $/'\\'''/$)
   }
 
   void 'test triple-single-quoted string partial start quote 3'() {
-    doTest($/'''<selection>\\'''</selection>/$, '', $/\\'''/$)
+    doTest($/     '''<selection>\\'''</selection>/$, '', $/\\'''/$)
   }
 
   void 'test triple-single-quoted string partial end quote 1'() {
-    doTest($/<selection>'''\\</selection>'''/$, '', $/'''\\/$)
+    doTest($/     <selection>'''\\</selection>'''/$, '', $/'''\\/$)
   }
 
   void 'test triple-single-quoted string partial end quote 2'() {
-    doTest($/<selection>'''\\'</selection>''/$, '', $/'''\\'/$)
+    doTest($/     <selection>'''\\'</selection>''/$, '', $/'''\\'/$)
   }
 
   void 'test triple-single-quoted string partial end quote 3'() {
-    doTest($/<selection>'''\\''</selection>'/$, '', $/'''\\''/$)
+    doTest($/     <selection>'''\\''</selection>'/$, '', $/'''\\''/$)
   }
 
   void 'test triple-single-quoted string content'() {
-    doTest($/'''<selection>\\</selection>'''/$, '', $/\/$)
+    doTest($/     '''<selection>\\</selection>'''/$, '', $/\/$)
   }
 
 
   void 'test triple-double-quoted string'() {
-    doTest($/<selection>"""\\"""</selection>/$, '', $/"""\\"""/$)
+    doTest($/     <selection>"""\\"""</selection>/$, '', $/"""\\"""/$)
   }
 
   void 'test triple-double-quoted string partial start quote 1'() {
-    doTest($/"<selection>""\\"""</selection>/$, '', $/""\\"""/$)
+    doTest($/     "<selection>""\\"""</selection>/$, '', $/""\\"""/$)
   }
 
   void 'test triple-double-quoted string partial start quote 2'() {
-    doTest($/""<selection>"\\"""</selection>/$, '', $/"\\"""/$)
+    doTest($/     ""<selection>"\\"""</selection>/$, '', $/"\\"""/$)
   }
 
   void 'test triple-double-quoted string partial start quote 3'() {
-    doTest($/"""<selection>\\"""</selection>/$, '', $/\\"""/$)
+    doTest($/     """<selection>\\"""</selection>/$, '', $/\\"""/$)
   }
 
   void 'test triple-double-quoted string partial end quote 1'() {
-    doTest($/<selection>"""\\</selection>"""/$, '', $/"""\\/$)
+    doTest($/     <selection>"""\\</selection>"""/$, '', $/"""\\/$)
   }
 
   void 'test triple-double-quoted string partial end quote 2'() {
-    doTest($/<selection>"""\\"</selection>""/$, '', $/"""\\"/$)
+    doTest($/     <selection>"""\\"</selection>""/$, '', $/"""\\"/$)
   }
 
   void 'test triple-double-quoted string partial end quote 3'() {
-    doTest($/<selection>"""\\""</selection>"/$, '', $/"""\\""/$)
+    doTest($/     <selection>"""\\""</selection>"/$, '', $/"""\\""/$)
   }
 
   void 'test triple-double-quoted string content'() {
-    doTest($/"""<selection>\\</selection>"""/$, '', $/\/$)
+    doTest($/     """<selection>\\</selection>"""/$, '', $/\/$)
   }
 
 
   void 'test slashy string'() {
-    doTest($/<selection>/\//</selection>/$, '', $//\///$)
+    doTest($/     <selection>/\//</selection>/$, '', $//\///$)
   }
 
   void 'test slashy string partial'() {
-    doTest($/<selection>/\/</selection>//$, '', $//\//$)
+    doTest($/     <selection>/\/</selection>//$, '', $//\//$)
   }
 
   void 'test slashy string content'() {
-    doTest($//<selection>\/</selection>//$, '', $///$)
+    doTest($/     /<selection>\/</selection>//$, '', $///$)
   }
 }

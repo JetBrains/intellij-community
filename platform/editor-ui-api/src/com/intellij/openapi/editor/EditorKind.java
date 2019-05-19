@@ -23,5 +23,5 @@ public enum EditorKind {
   MAIN_EDITOR,  // instead of SoftWrapAppliancePlaces.MAIN_EDITOR
   CONSOLE,      // EDITOR_IS_CONSOLE_VIEW, SoftWrapAppliancePlaces.CONSOLE
   PREVIEW,      // SoftWrapAppliancePlaces.PREVIEW
-  DIFF          // EDITOR_IS_DIFF_KEY
+  DIFF         // EDITOR_IS_DIFF_KEY
 }

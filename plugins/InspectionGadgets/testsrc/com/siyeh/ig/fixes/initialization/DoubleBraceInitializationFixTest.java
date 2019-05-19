@@ -26,7 +26,9 @@ public class DoubleBraceInitializationFixTest extends IGQuickFixesTestCase {
 
   public void testLocalVariable() { doTest(); }
   public void testField() { doTest(); }
+  public void testParentheses() { doTest(); }
   public void testLinked() { doTest(); }
+  public void testInterface() { assertQuickfixNotAvailable(); }
   public void testArgument() { assertQuickfixNotAvailable(); }
 
   @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.jarRepository.services.bintray.BintrayModel;
@@ -23,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentEnumeratorBase;
@@ -52,7 +37,7 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.split;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
-public class MavenIndex {
+public class MavenIndex implements MavenSearchIndex {
   private static final String CURRENT_VERSION = "5";
 
   protected static final String INDEX_INFO_FILE = "index.properties";
@@ -72,15 +57,11 @@ public class MavenIndex {
   private static final String VERSIONS_MAP_FILE = "versions-map.dat";
   private static final String ARCHETYPES_MAP_FILE = "archetypes-map.dat";
 
-  public enum Kind {
-    LOCAL, REMOTE
-  }
-
   private final MavenIndexerWrapper myNexusIndexer;
   private final NotNexusIndexer myNotNexusIndexer;
   private final File myDir;
 
-  private final Set<String> myRegisteredRepositoryIds = ContainerUtil.newHashSet();
+  private final Set<String> myRegisteredRepositoryIds = new HashSet<>();
   private final CachedValue<String> myId = new CachedValueImpl<>(new MyIndexRepositoryIdsProvider());
 
   private final String myRepositoryPathOrUrl;
@@ -163,13 +144,14 @@ public class MavenIndex {
   private static NotNexusIndexer initNotNexusIndexer(Kind kind, String repositoryPathOrUrl) {
     if (kind == Kind.REMOTE) {
       BintrayModel.Repository info = BintrayRepositoryService.parseInfo(repositoryPathOrUrl);
-      if (info != null) {
+      if (info != null && info.repo != null) {
         return new BintrayIndexer(info.subject, info.repo);
       }
     }
     return null;
   }
 
+  @Override
   public void registerId(String repositoryId) throws MavenIndexException {
     if (myRegisteredRepositoryIds.add(repositoryId)) {
       save();
@@ -212,25 +194,19 @@ public class MavenIndex {
   }
 
   private void doOpen() throws Exception {
-    try {
-      File dataDir;
-      if (myDataDirName == null) {
-        dataDir = createNewDataDir();
-        myDataDirName = dataDir.getName();
-      }
-      else {
-        dataDir = new File(myDir, myDataDirName);
-        dataDir.mkdirs();
-      }
-      if (myData != null) {
-        myData.close(true);
-      }
-      myData = new IndexData(dataDir);
+    File dataDir;
+    if (myDataDirName == null) {
+      dataDir = createNewDataDir();
+      myDataDirName = dataDir.getName();
     }
-    catch (Exception e) {
-      cleanupBrokenData();
-      throw e;
+    else {
+      dataDir = new File(myDir, myDataDirName);
+      dataDir.mkdirs();
     }
+    if (myData != null) {
+      myData.close(true);
+    }
+    myData = new IndexData(dataDir);
   }
 
   private void cleanupBrokenData() {
@@ -252,6 +228,7 @@ public class MavenIndex {
     }
   }
 
+  @Override
   public synchronized void close(boolean releaseIndexContext) {
     try {
       if (myData != null) myData.close(releaseIndexContext);
@@ -289,40 +266,49 @@ public class MavenIndex {
     }
   }
 
+  @Override
   public String getRepositoryId() {
     return myId.getValue();
   }
 
+  @Override
   public File getRepositoryFile() {
     return myKind == Kind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
   }
 
+  @Override
   public String getRepositoryUrl() {
     return myKind == Kind.REMOTE ? myRepositoryPathOrUrl : null;
   }
 
+  @Override
   public String getRepositoryPathOrUrl() {
     return myRepositoryPathOrUrl;
   }
 
+  @Override
   public Kind getKind() {
     return myKind;
   }
 
+  @Override
   public boolean isFor(Kind kind, String pathOrUrl) {
     if (myKind != kind) return false;
     if (kind == Kind.LOCAL) return FileUtil.pathsEqual(myRepositoryPathOrUrl, normalizePathOrUrl(pathOrUrl));
     return myRepositoryPathOrUrl.equalsIgnoreCase(normalizePathOrUrl(pathOrUrl));
   }
 
+  @Override
   public synchronized long getUpdateTimestamp() {
     return myUpdateTimestamp == null ? -1 : myUpdateTimestamp;
   }
 
+  @Override
   public synchronized String getFailureMessage() {
     return myFailureMessage;
   }
 
+  @Override
   public void updateOrRepair(boolean fullUpdate, MavenGeneralSettings settings, MavenProgressIndicator progress)
     throws MavenProcessCanceledException {
     try {
@@ -401,7 +387,7 @@ public class MavenIndex {
     synchronized (this) {
       IndexData oldData = myData;
 
-      if(oldData != null) {
+      if (oldData != null) {
         oldData.close(true);
       }
     }
@@ -449,6 +435,9 @@ public class MavenIndex {
       final StringBuilder builder = new StringBuilder();
       MavenIndicesProcessor mavenIndicesProcessor = artifacts -> {
         for (IndexedMavenId id : artifacts) {
+          if ("pom.lastUpdated".equals(id.packaging)) {
+            continue;
+          }
           builder.setLength(0);
 
           builder.append(id.groupId).append(":").append(id.artifactId);
@@ -517,6 +506,7 @@ public class MavenIndex {
   public synchronized void addArtifact(final File artifactFile) {
     doIndexTask(() -> {
       IndexedMavenId id = myData.addArtifact(artifactFile);
+      if (id == null) return null;
 
       myData.hasGroupCache.put(id.groupId, true);
 
@@ -666,7 +656,7 @@ public class MavenIndex {
 
     private final int indexId;
 
-    public IndexData(File dir) throws MavenIndexException {
+    IndexData(File dir) throws MavenIndexException {
       try {
         groupToArtifactMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
         groupWithArtifactToVersionMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
@@ -728,6 +718,7 @@ public class MavenIndex {
   }
 
   private static class SetDescriptor implements DataExternalizer<Set<String>> {
+    @Override
     public void save(@NotNull DataOutput s, Set<String> set) throws IOException {
       s.writeInt(set.size());
       for (String each : set) {
@@ -735,6 +726,7 @@ public class MavenIndex {
       }
     }
 
+    @Override
     public Set<String> read(@NotNull DataInput s) throws IOException {
       int count = s.readInt();
       Set<String> result = new THashSet<>(count);
@@ -743,10 +735,6 @@ public class MavenIndex {
       }
       return result;
     }
-  }
-
-  public interface IndexListener {
-    void indexIsBroken(MavenIndex index);
   }
 
   private class MyIndexRepositoryIdsProvider implements CachedValueProvider<String> {

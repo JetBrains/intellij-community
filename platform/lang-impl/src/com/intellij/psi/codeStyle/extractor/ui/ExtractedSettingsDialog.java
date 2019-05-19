@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.extractor.ui;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -48,14 +34,11 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Roman.Shein
- * @since 28.09.2015.
  */
 public class ExtractedSettingsDialog extends DialogWrapper {
   protected CodeStyleSettingsNameProvider myNameProvider;
@@ -295,6 +278,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
         return myValueRenderer;
       }
 
+      @Override
       public TableCellEditor getEditor(Object o) {
         return myValueEditor;
       }
@@ -308,7 +292,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
 
   protected JComponent buildExtractedSettingsTree() {
 
-    Collection<Value> unusedValues = ContainerUtil.newHashSet(myValues);
+    Collection<Value> unusedValues = new HashSet<>(myValues);
     myRoot = new DefaultMutableTreeNode();
     for (Map.Entry<LanguageCodeStyleSettingsProvider.SettingsType,
       Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>>> typeEntry : myNameProvider.mySettings.entrySet()) {
@@ -385,10 +369,8 @@ public class ExtractedSettingsDialog extends DialogWrapper {
       @Override
       public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
         TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
-        UIUtil.setLineStyleAngled(tableRenderer);
         tableRenderer.setRootVisible(false);
         tableRenderer.setShowsRootHandles(true);
-
         return tableRenderer;
       }
 

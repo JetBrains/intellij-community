@@ -59,7 +59,7 @@ public class FileNode extends AbstractMvcPsiNodeDescriptor {
   }
 
   @Override
-  protected void updateImpl(final PresentationData data) {
+  protected void updateImpl(@NotNull final PresentationData data) {
     final PsiFile value = extractPsiFromValue();
     assert value != null;
     data.setPresentableText(value.getName());

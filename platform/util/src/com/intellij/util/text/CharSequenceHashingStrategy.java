@@ -27,11 +27,6 @@ public final class CharSequenceHashingStrategy implements TObjectHashingStrategy
   public static final CharSequenceHashingStrategy CASE_INSENSITIVE = new CharSequenceHashingStrategy(false);
   private final boolean myCaseSensitive;
 
-  @Deprecated
-  public CharSequenceHashingStrategy() {
-    this(true);
-  }
-
   private CharSequenceHashingStrategy(boolean caseSensitive) {
     myCaseSensitive = caseSensitive;
   }

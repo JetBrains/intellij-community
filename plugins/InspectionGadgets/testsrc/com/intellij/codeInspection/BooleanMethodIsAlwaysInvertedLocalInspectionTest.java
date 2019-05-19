@@ -7,6 +7,7 @@ import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlways
 
 public class BooleanMethodIsAlwaysInvertedLocalInspectionTest extends BooleanMethodIsAlwaysInvertedInspectionTest {
 
+  @Override
   protected void doTest(boolean checkRange) {
     doTest("invertedBoolean/" + getTestName(true), new BooleanMethodIsAlwaysInvertedInspection().getSharedLocalInspectionTool());
   }

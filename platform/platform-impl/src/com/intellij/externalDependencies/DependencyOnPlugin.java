@@ -35,6 +35,7 @@ public class DependencyOnPlugin implements ProjectExternalDependency, Comparable
   /**
    * @deprecated use {@link #DependencyOnPlugin(String, String, String)} instead
    */
+  @Deprecated
   public DependencyOnPlugin(@NotNull String pluginId, @Nullable String minVersion, @Nullable String maxVersion, @Nullable String channel) {
     this(pluginId, minVersion, maxVersion);
   }

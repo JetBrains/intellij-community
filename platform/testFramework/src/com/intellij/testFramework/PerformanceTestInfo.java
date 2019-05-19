@@ -61,17 +61,6 @@ public class PerformanceTestInfo {
     return this;
   }
 
-  /**
-   * @deprecated tests are CPU-bound by default, so no need to call this method.
-   */
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  @Deprecated
-  public PerformanceTestInfo cpuBound() {
-    adjustForIO = false;
-    adjustForCPU = true;
-    return this;
-  }
-
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo ioBound() {
     adjustForIO = true;
@@ -90,6 +79,7 @@ public class PerformanceTestInfo {
    * seem to be meaningful, and is known to make results worse in some cases. Consider migration off this setting, recalibrating
    * expected execution time accordingly.
    */
+  @Deprecated
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo useLegacyScaling() {
     useLegacyScaling = true;
@@ -101,6 +91,7 @@ public class PerformanceTestInfo {
     Timings.getStatistics(); // warm-up, measure
 
     if (attempts == 1) {
+      //noinspection CallToSystemGC
       System.gc();
     }
 
@@ -136,7 +127,9 @@ public class PerformanceTestInfo {
       }
       else {
         TeamCityLogger.warning(logMessage, null);
-        System.out.println("\nWARNING: " + logMessage);
+        if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+          System.out.println("\nWARNING: " + logMessage);
+        }
       }
 
       if (attempts == 0 || iterationResult == IterationResult.acceptable) {
@@ -147,9 +140,10 @@ public class PerformanceTestInfo {
       // try again
       String s = "  " + attempts + " attempts remain";
       TeamCityLogger.warning(s, null);
-      System.out.println(s);
-      System.gc();
-      System.gc();
+      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+        System.out.println(s);
+      }
+      //noinspection CallToSystemGC
       System.gc();
     }
   }

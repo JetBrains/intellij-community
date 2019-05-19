@@ -27,7 +27,7 @@ public class SchemeNameGenerator {
   private SchemeNameGenerator() {
   }
 
-  public static String getUniqueName(@NotNull String preferredName, @NotNull Predicate<String> nameExistsPredicate) {
+  public static String getUniqueName(@NotNull String preferredName, @NotNull Predicate<? super String> nameExistsPredicate) {
     if (nameExistsPredicate.test(preferredName)) {
       int numberPos = preferredName.length() - 1;
       while (numberPos >= 0 && Character.isDigit(preferredName.charAt(numberPos))) {
@@ -51,7 +51,7 @@ public class SchemeNameGenerator {
   
   public static String getUniqueName(@Nullable String preferredName,
                                      @Nullable Scheme parentScheme,
-                                     @NotNull Predicate<String> nameExistsPredicate) {
+                                     @NotNull Predicate<? super String> nameExistsPredicate) {
     assert preferredName != null || parentScheme != null : "Either preferredName or parentScheme must be non-null";
     String baseName = preferredName != null ? preferredName : parentScheme.getName();
     return getUniqueName(baseName, nameExistsPredicate);

@@ -5,14 +5,14 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
 import javax.swing.*;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
 
 /**
  * Tests {@link com.intellij.ui.LayeredIcon} painting.

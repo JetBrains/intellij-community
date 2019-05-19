@@ -1,15 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import java.nio.file.Files
 import java.nio.file.Paths
 
 repositories {
-  mavenCentral()
-  if (project.ext.inJetBrainsNetwork) {
-    maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
-  }
-  maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
-  maven { url "https://jetbrains.bintray.com/test-discovery" }
-  jcenter()
+  maven { url "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies" }
+  maven { url "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/test-discovery" }
+  maven { url "https://cache-redirector.jetbrains.com/jcenter.bintray.com" }
 }
 
 configurations {
@@ -18,26 +14,30 @@ configurations {
 }
 
 List<String> projectLibraries = [
+  "ASM",
+  "jetbrains-annotations-java5",
   "Groovy",
   "cli-parser",
   "protobuf",
   "OroMatcher",
   "commons-codec",
   "commons-logging",
+  "commons-compress",
   "Trove4j",
   "JDOM",
   "NanoXML",
   "Guava",
   "JUnit4",
   "netty-codec-http",
-  "netty-handler",
   "lz4-java",
   "gant-groovy",
   "Log4J",
   "Slf4j",
   "jna",
   "jgoodies-forms",
-  "http-client"
+  "http-client",
+  "maven-model",
+  "gson"
 ]
 
 dependencies {

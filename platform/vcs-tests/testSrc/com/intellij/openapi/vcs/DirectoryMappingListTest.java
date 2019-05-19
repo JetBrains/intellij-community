@@ -4,9 +4,11 @@ package com.intellij.openapi.vcs;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI;
@@ -30,7 +32,6 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   private NewMappings myMappings;
   private VirtualFile myProjectRoot;
   private String myRootPath;
-  private AllVcsesI myVcses;
 
   @Override
   protected void setUpProject() throws Exception {
@@ -47,31 +48,21 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
     startupManager.runStartupActivities();
     startupManager.startCacheUpdate();
-    myVcses = AllVcses.getInstance(myProject);
-    myVcses.registerManually(new MockAbstractVcs(myProject, "mock"));
-    myVcses.registerManually(new MockAbstractVcs(myProject, "CVS"));
-    myVcses.registerManually(new MockAbstractVcs(myProject, "mock2"));
+    AllVcsesI vcses = AllVcses.getInstance(myProject);
+    vcses.registerManually(new MockAbstractVcs(myProject, "mock"));
+    vcses.registerManually(new MockAbstractVcs(myProject, "CVS"));
+    vcses.registerManually(new MockAbstractVcs(myProject, "mock2"));
     myMappings = new NewMappings(myProject, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject),
-                                 FileStatusManager.getInstance(myProject));
+                                 FileStatusManager.getInstance(myProject), DefaultVcsRootPolicy.getInstance(myProject));
+    Disposer.register(getTestRootDisposable(), myMappings);
     startupManager.runPostStartupActivities();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      myMappings.disposeMe();
-      ((AllVcses)myVcses).dispose();
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   public void testMappingsFilter() {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     ((MockAbstractVcs) vcsManager.findVcsByName("mock")).setAllowNestedRoots(true);
 
-    final String[] pathsStr = new String[] {myRootPath + "/a", myRootPath + "/a/b", myRootPath + "/def",
+    final String[] pathsStr = {myRootPath + "/a", myRootPath + "/a/b", myRootPath + "/def",
       myRootPath + "/a-b", myRootPath + "/a-b/d-e", myRootPath + "/a-b1/d-e"};
     final VirtualFile a = myProjectRoot.findChild("a");
     createChildDirectory(a, "b");
@@ -103,44 +94,44 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   public void testSamePrefix() {
     myMappings.setMapping(myRootPath + "/a", "CVS");
     myMappings.setMapping(myRootPath + "/a-b", "mock2");
-    assertEquals(3, myMappings.getDirectoryMappings().size());
+    assertEquals(2, myMappings.getDirectoryMappings().size());
     myMappings.cleanupMappings();
-    assertEquals(3, myMappings.getDirectoryMappings().size());
-    assertEquals("mock2", myMappings.getVcsFor(myProjectRoot.findChild("a-b")));
-    assertEquals("CVS", myMappings.getVcsFor(myProjectRoot.findChild("a")));
+    assertEquals(2, myMappings.getDirectoryMappings().size());
+    assertEquals("mock2", getVcsFor(myProjectRoot.findChild("a-b")));
+    assertEquals("CVS", getVcsFor(myProjectRoot.findChild("a")));
   }
 
   public void testSamePrefixEmpty() {
     myMappings.setMapping(myRootPath + "/a", "CVS");
-    assertEquals("", myMappings.getVcsFor(myProjectRoot.findChild("a-b")));
+    assertNull(getVcsFor(myProjectRoot.findChild("a-b")));
   }
 
   public void testSame() {
-    myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
-    myMappings.setMapping(myRootPath + "/parent/path", "CVS");
+    myMappings.setMapping(myRootPath + "/parent/path1", "CVS");
+    myMappings.setMapping(myRootPath + "\\parent\\path2", "CVS");
 
-    final String[] children = new String[] {
-      myRootPath + "/parent/path", myRootPath + "\\parent\\path", myRootPath + "\\parent\\path"
+    final String[] children = {
+      myRootPath + "\\parent\\path1", myRootPath + "/parent/path1", myRootPath + "\\parent\\path1",
+      myRootPath + "\\parent\\path2", myRootPath + "/parent/path2", myRootPath + "\\parent\\path2"
     };
     createFiles(children);
 
     for (String child : children) {
       myMappings.setMapping(child, "CVS");
       myMappings.cleanupMappings();
-      assertEquals("cleanup failed: " + child, 1, myMappings.getDirectoryMappings().size());
+      assertEquals("cleanup failed: " + child, 2, myMappings.getDirectoryMappings().size());
     }
 
     for (String child : children) {
       myMappings.setMapping(child, "CVS");
-      assertEquals("cleanup failed: " + child, 1, myMappings.getDirectoryMappings().size());
+      assertEquals("cleanup failed: " + child, 2, myMappings.getDirectoryMappings().size());
     }
   }
 
   public void testHierarchy() {
-    myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent", "CVS");
 
-    final String[] children = new String[] {
+    final String[] children = {
       myRootPath + "/parent/child1", myRootPath + "/parent/middle/child2", myRootPath + "/parent/middle/child3"
     };
     createFiles(children);
@@ -153,15 +144,18 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   }
 
   public void testNestedInnerCopy() {
-    myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     myMappings.setMapping(myRootPath + "/parent", "CVS");
     myMappings.setMapping(myRootPath + "/parent/child", "mock");
 
-    final String[] children = new String[] {
-      myRootPath + "/parent/child1", myRootPath + "\\parent\\middle\\child2", myRootPath + "/parent/middle/child3",
+    final String[] children = {
+      myRootPath + "/parent/child1",
+      myRootPath + "\\parent\\middle\\child2",
+      myRootPath + "/parent/middle/child3",
       myRootPath + "/parent/child/inner"
     };
     createFiles(children);
+
+    myMappings.waitMappedRootsUpdate();
 
     final String[] awaitedVcsNames = {"CVS","CVS","CVS","mock"};
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -169,7 +163,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
       String child = children[i];
       final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(child));
       assertNotNull(vf);
-      final VcsDirectoryMapping mapping = myMappings.getMappingFor(vf);
+      final VcsDirectoryMapping mapping = getMappingFor(vf);
       assertNotNull(mapping);
       assertEquals(awaitedVcsNames[i], mapping.getVcs());
     }
@@ -178,8 +172,21 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   private void createFiles(final String[] paths) {
     for (String path : paths) {
       final File file = new File(FileUtil.toSystemDependentName(path));
-      assert file.mkdirs() || file.isDirectory() : file;
+      boolean created = file.mkdirs();
+      assert created || file.isDirectory() : file;
       myFilesToDelete.add(file);
     }
+    LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
+  }
+
+  private String getVcsFor(VirtualFile file) {
+    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
+    AbstractVcs vcs = root != null ? root.vcs : null;
+    return vcs != null ? vcs.getName() : null;
+  }
+
+  private VcsDirectoryMapping getMappingFor(VirtualFile file) {
+    NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
+    return root != null ? root.mapping : null;
   }
 }

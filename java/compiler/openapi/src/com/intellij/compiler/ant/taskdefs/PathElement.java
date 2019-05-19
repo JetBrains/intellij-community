@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NonNls;
 public class PathElement extends Tag {
 
     public PathElement(@NonNls String dir) {
-        //noinspection HardCodedStringLiteral
-        super("pathelement", pair("location", dir));
+      super("pathelement", pair("location", dir));
     }
 
 }

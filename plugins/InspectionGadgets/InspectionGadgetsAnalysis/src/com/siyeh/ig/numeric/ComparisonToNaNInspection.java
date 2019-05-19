@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -43,11 +44,11 @@ public class ComparisonToNaNInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     final PsiBinaryExpression comparison = (PsiBinaryExpression)infos[0];
     final IElementType tokenType = comparison.getOperationTokenType();
-    if (tokenType.equals(JavaTokenType.EQEQ)) {
-      return InspectionGadgetsBundle.message("comparison.to.nan.problem.descriptor1");
+    if (tokenType.equals(JavaTokenType.NE)) {
+      return InspectionGadgetsBundle.message("comparison.to.nan.problem.descriptor2");
     }
     else {
-      return InspectionGadgetsBundle.message("comparison.to.nan.problem.descriptor2");
+      return InspectionGadgetsBundle.message("comparison.to.nan.problem.descriptor1");
     }
   }
 
@@ -58,7 +59,8 @@ public class ComparisonToNaNInspection extends BaseInspection {
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new ComparisonToNaNFix();
+    final PsiBinaryExpression comparison = (PsiBinaryExpression)infos[0];
+    return ComparisonUtils.isEqualityComparison(comparison) ? new ComparisonToNaNFix() : null;
   }
 
   private static class ComparisonToNaNFix extends InspectionGadgetsFix {
@@ -66,7 +68,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("comparison.to.nan.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "isNaN()");
     }
 
     @Override
@@ -114,7 +116,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
     @Override
     public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      if (!ComparisonUtils.isEqualityComparison(expression)) {
+      if (!ComparisonUtils.isComparison(expression)) {
         return;
       }
       final PsiExpression lhs = expression.getLOperand();

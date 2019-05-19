@@ -50,7 +50,7 @@ public class TextField extends JTextField {
     private final InspectionProfileEntry owner;
     private final String property;
 
-    public TextFieldDocumentListener(InspectionProfileEntry owner,
+    TextFieldDocumentListener(InspectionProfileEntry owner,
                                      String property) {
       this.owner = owner;
       this.property = property;

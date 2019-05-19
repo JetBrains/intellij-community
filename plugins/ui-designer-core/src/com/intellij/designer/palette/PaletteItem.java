@@ -16,6 +16,7 @@
 package com.intellij.designer.palette;
 
 import com.intellij.designer.model.MetaModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,6 +25,7 @@ import javax.swing.*;
  * @author Alexander Lobas
  */
 public interface PaletteItem {
+  @NotNull
   String getTitle();
 
   Icon getIcon();

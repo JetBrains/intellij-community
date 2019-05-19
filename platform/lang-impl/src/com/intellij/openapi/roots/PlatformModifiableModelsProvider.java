@@ -19,37 +19,39 @@ public class PlatformModifiableModelsProvider implements ModifiableModelsProvide
   }
 
   @Override
-  public void commitModuleModifiableModel(final ModifiableRootModel model) {
+  public void commitModuleModifiableModel(@NotNull final ModifiableRootModel model) {
     model.commit();
   }
 
   @Override
-  public void disposeModuleModifiableModel(final ModifiableRootModel model) {
+  public void disposeModuleModifiableModel(@NotNull final ModifiableRootModel model) {
     model.dispose();
   }
 
+  @NotNull
   @Override
-  public ModifiableFacetModel getFacetModifiableModel(Module module) {
+  public ModifiableFacetModel getFacetModifiableModel(@NotNull Module module) {
     return FacetManager.getInstance(module).createModifiableModel();
   }
 
   @Override
-  public void commitFacetModifiableModel(Module module, ModifiableFacetModel model) {
+  public void commitFacetModifiableModel(@NotNull Module module, @NotNull ModifiableFacetModel model) {
     model.commit();
   }
 
+  @NotNull
   @Override
   public LibraryTable.ModifiableModel getLibraryTableModifiableModel() {
     return LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
   }
 
   @Override
-  public LibraryTable.ModifiableModel getLibraryTableModifiableModel(Project project) {
+  public LibraryTable.ModifiableModel getLibraryTableModifiableModel(@NotNull Project project) {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(project).getModifiableModel();
   }
 
   @Override
-  public void disposeLibraryTableModifiableModel(LibraryTable.ModifiableModel model) {
+  public void disposeLibraryTableModifiableModel(@NotNull LibraryTable.ModifiableModel model) {
     Disposer.dispose(model);
   }
 }

@@ -93,7 +93,7 @@ public class NegationBroadScopeFix implements IntentionAction {
     PsiExpression operand = myPrefixExpression.getOperand();
     PsiElement unnegated = myPrefixExpression.replace(operand);
     PsiElement parent = unnegated.getParent();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(file.getProject());
 
     PsiPrefixExpression negated = (PsiPrefixExpression)factory.createExpressionFromText("!(xxx)", parent);
     PsiParenthesizedExpression parentheses = (PsiParenthesizedExpression)negated.getOperand();

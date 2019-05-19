@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
+import com.intellij.execution.actions.ChooseRunConfigurationPopup
+import com.intellij.execution.actions.ExecutorProvider
 import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.execution.impl.RunConfigurableNodeKind.*
 import com.intellij.execution.junit.JUnitConfigurationType
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Trinity
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.EdtRule
@@ -14,7 +17,6 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.RowsDnDSupport
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.loadElement
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
@@ -22,6 +24,7 @@ import org.junit.Test
 import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
+import kotlin.test.assertFalse
 
 private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
                             FOLDER, //1
@@ -34,20 +37,20 @@ private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
 )
 
 @RunsInEdt
-class RunConfigurableTest {
+internal class RunConfigurableTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule: ProjectRule = ProjectRule()
+    val projectRule = ProjectRule()
 
     private fun createRunManager(element: Element): RunManagerImpl {
       val runManager = RunManagerImpl(projectRule.project)
-      runManager.initializeConfigurationTypes(arrayOf(ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()))
+      runManager.initializeConfigurationTypes(listOf(ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()))
       runManager.loadState(element)
       return runManager
     }
 
-    private class MockRunConfigurable(override val runManager: RunManagerImpl) : RunConfigurable(projectRule.project) {
+    private class MockRunConfigurable(override val runManager: RunManagerImpl) : ProjectRunConfigurationConfigurable(projectRule.project) {
       init {
         createComponent()
       }
@@ -56,14 +59,14 @@ class RunConfigurableTest {
 
   @JvmField
   @Rule
-  val edtRule: EdtRule = EdtRule()
+  val edtRule = EdtRule()
 
   @JvmField
   @Rule
-  val disposableRule: DisposableRule = DisposableRule()
+  val disposableRule = DisposableRule()
 
-  private val configurable: RunConfigurable by lazy {
-    val result = MockRunConfigurable(createRunManager(loadElement(RunConfigurableTest::class.java.getResourceAsStream("folders.xml"))))
+  private val configurable by lazy {
+    val result = MockRunConfigurable(createRunManager(JDOMUtil.load(RunConfigurableTest::class.java.getResourceAsStream("folders.xml"))))
     Disposer.register(disposableRule.disposable, result)
     result
   }
@@ -78,7 +81,7 @@ class RunConfigurableTest {
     get() = configurable.treeModel
 
   @Test
-  fun testDND() {
+  fun dnd() {
     doExpand()
     val never = intArrayOf(-1, 0, 14, 22, 23, 999)
     for (i in -1..16) {
@@ -187,42 +190,84 @@ class RunConfigurableTest {
   }
 
   @Test
-  fun testSort() {
+  fun sort() {
     doExpand()
+    assertFalse(model.canDrop(2, 0, ABOVE))
     assertThat(configurable.isModified).isFalse()
-    model.drop(2, 0, ABOVE)
+    model.drop(2, 14, ABOVE)
     assertThat(configurable.isModified).isTrue()
     configurable.apply()
-    assertThat(configurable.runManager.allSettings.map { it.name }).isEqualTo(listOf("Renamer",
-                                                                                     "UI",
-                                                                                     "AuTest",
-                                                                                     "Simples",
-                                                                                     "OutAndErr",
-                                                                                     "C148C_TersePrincess",
-                                                                                     "Periods",
-                                                                                     "C148E_Porcelain",
-                                                                                     "ErrAndOut",
-                                                                                     "All in titled",
-                                                                                     "All in titled2",
-                                                                                     "All in titled3",
-                                                                                     "All in titled4",
-                                                                                     "All in titled5"))
+    val runManager = configurable.runManager
+    assertThat(runManager.allSettings.map { it.name }).containsExactly("Renamer",
+                                                                       "UI",
+                                                                       "AuTest",
+                                                                       "Simples",
+                                                                       "OutAndErr",
+                                                                       "C148C_TersePrincess",
+                                                                       "Periods",
+                                                                       "C148E_Porcelain",
+                                                                       "ErrAndOut",
+                                                                       "CodeGenerator",
+                                                                       "All in titled",
+                                                                       "All in titled2",
+                                                                       "All in titled3",
+                                                                       "All in titled4",
+                                                                       "All in titled5")
     assertThat(configurable.isModified).isFalse()
     model.drop(4, 8, BELOW)
     configurable.apply()
-    assertThat(configurable.runManager.allSettings.map { it.name }).isEqualTo(listOf("Renamer",
-                                                                                     "AuTest",
-                                                                                     "Simples",
-                                                                                     "UI",
-                                                                                     "OutAndErr",
-                                                                                     "C148C_TersePrincess",
-                                                                                     "Periods",
-                                                                                     "C148E_Porcelain",
-                                                                                     "ErrAndOut",
-                                                                                     "All in titled",
-                                                                                     "All in titled2",
-                                                                                     "All in titled3",
-                                                                                     "All in titled4",
-                                                                                     "All in titled5"))
+    assertThat(runManager.allSettings.joinToString("\n") { "[${it.type.displayName}] [${it.folderName ?: ""}] ${it.name}" }).isEqualTo("""
+      [Application] [1] Renamer
+      [Application] [1] UI
+      [Application] [1] Simples
+      [Application] [1] OutAndErr
+      [Application] [1] C148C_TersePrincess
+      [Application] [2] AuTest
+      [Application] [2] Periods
+      [Application] [3] C148E_Porcelain
+      [Application] [3] ErrAndOut
+      [Application] [] CodeGenerator
+      [JUnit] [4] All in titled
+      [JUnit] [4] All in titled2
+      [JUnit] [5] All in titled3
+      [JUnit] [5] All in titled4
+      [JUnit] [] All in titled5
+    """.trimIndent())
+
+    val executorProvider = ExecutorProvider { throw UnsupportedOperationException() }
+    assertThat(ChooseRunConfigurationPopup.createSettingsList(runManager, executorProvider, false, false).joinToString("\n") {
+      val value = it.value
+      if (value is String) {
+        "[$value]"
+      }
+      else {
+        it.value!!.toString()
+      }
+    }).isEqualTo("""
+      [1]
+      [2  (mnemonic is to "AuTest")]
+      [3]
+      Application: CodeGenerator (level: WORKSPACE)
+      [4]
+      [5]
+      JUnit: All in titled5 (level: TEMPORARY)
+    """.trimIndent())
+    assertThat(ChooseRunConfigurationPopup.createSettingsList(runManager, executorProvider, false, true).joinToString("\n") {
+      val value = it.value
+      if (value is String) {
+        "[$value]"
+      }
+      else {
+        it.value!!.toString()
+      }
+    }).isEqualTo("""
+     [1]
+     [2  (mnemonic is to "AuTest")]
+     [3]
+     [4]
+     [5]
+     Application: CodeGenerator (level: WORKSPACE)
+     JUnit: All in titled5 (level: TEMPORARY)
+    """.trimIndent())
   }
 }

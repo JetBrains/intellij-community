@@ -27,12 +27,10 @@ import org.jetbrains.annotations.NotNull;
 public class EmmetAbbreviationCompletionProvider extends CompletionProvider<CompletionParameters> {
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     if (LiveTemplateCompletionContributor.shouldShowAllTemplates() || !parameters.isAutoPopup()) {
-      /**
-       * covered with {@link com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor}
-       */
+       // covered with com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
       return;
     }
 

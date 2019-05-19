@@ -126,7 +126,6 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     return myIncludeAllCards == repository.myIncludeAllCards;
   }
 
-  @SuppressWarnings("CloneDoesntCallSuperClone")
   @NotNull
   @Override
   public BaseRepository clone() {

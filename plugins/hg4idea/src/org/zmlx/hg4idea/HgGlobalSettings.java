@@ -23,13 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-@State(
-  name = "HgGlobalSettings",
-  storages = {
-    @Storage(value = "hg.xml", roamingType = RoamingType.PER_OS),
-    @Storage(value = "vcs.xml", deprecated = true)
-  }
-)
+@State(name = "HgGlobalSettings", storages = @Storage(value = "hg.xml", roamingType = RoamingType.PER_OS))
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings.State> {
   private static final int FIVE_MINUTES = 300;
 

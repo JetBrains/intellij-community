@@ -12,7 +12,7 @@ import com.intellij.json.psi.*;
 
 public class JsonContainerImpl extends JsonValueImpl implements JsonContainer {
 
-  public JsonContainerImpl(ASTNode node) {
+  public JsonContainerImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -20,6 +20,7 @@ public class JsonContainerImpl extends JsonValueImpl implements JsonContainer {
     visitor.visitContainer(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);

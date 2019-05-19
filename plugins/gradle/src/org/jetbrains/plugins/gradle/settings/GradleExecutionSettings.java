@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 4/9/13 1:50 PM
  */
 public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
@@ -36,7 +21,8 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   @NotNull private final GradleExecutionWorkspace myExecutionWorkspace = new GradleExecutionWorkspace();
 
-  @NotNull private final List<ClassHolder<? extends GradleProjectResolverExtension>> myResolverExtensions = ContainerUtilRt.newArrayList();
+  @NotNull private final List<ClassHolder<? extends GradleProjectResolverExtension>> myResolverExtensions =
+    new ArrayList<>();
   @Nullable private final String myGradleHome;
 
   @Nullable private final String myServiceDirectory;
@@ -50,6 +36,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   private String myIdeProjectPath;
   private boolean resolveModulePerSourceSet = true;
   private boolean useQualifiedModuleNames = false;
+  private boolean delegatedBuild = true;
 
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
@@ -125,6 +112,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     this.useQualifiedModuleNames = useQualifiedModuleNames;
   }
 
+  public boolean isDelegatedBuild() {
+    return delegatedBuild;
+  }
+
+  public void setDelegatedBuild(boolean delegatedBuild) {
+    this.delegatedBuild = delegatedBuild;
+  }
+
   @NotNull
   public List<ClassHolder<? extends GradleProjectResolverExtension>> getResolverExtensions() {
     return myResolverExtensions;
@@ -136,11 +131,12 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   /**
    * @return VM options to use for the gradle daemon process (if any)
-   * @deprecated use {@link #getVmOptions()}
+   * @deprecated use {@link #getJvmArguments()}
    */
+  @Deprecated
   @Nullable
   public String getDaemonVmOptions() {
-    return ParametersListUtil.join(ContainerUtilRt.newArrayList(getVmOptions()));
+    return ParametersListUtil.join(getJvmArguments());
   }
 
   @Nullable

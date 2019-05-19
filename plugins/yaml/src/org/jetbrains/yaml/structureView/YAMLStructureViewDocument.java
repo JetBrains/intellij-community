@@ -21,14 +21,16 @@ class YAMLStructureViewDocument extends PsiTreeElementBase<YAMLDocument> {
   @Override
   public Collection<StructureViewTreeElement> getChildrenBase() {
     YAMLDocument document = Objects.requireNonNull(getElement());
-    return YAMLStructureViewFactory.createChildrenViewTreeElements(document.getTopLevelValue(), "<doc>");
+    return YAMLStructureViewFactory.createChildrenViewTreeElements(document.getTopLevelValue(), null);
   }
 
+  @Override
   @NotNull
   public String getPresentableText() {
     return YAMLBundle.message("YAMLStructureViewDocument.element.name");
   }
 
+  @Override
   @NotNull
   public Icon getIcon(boolean open) {
     return PlatformIcons.XML_TAG_ICON;

@@ -31,17 +31,19 @@ import java.util.List;
 import java.util.Set;
 
 public class EvalContextProvider extends ContextProvider {
-  private final List<Debugger.Variable> myVariables;
+  private final List<? extends Debugger.Variable> myVariables;
 
-  public EvalContextProvider(List<Debugger.Variable> model) {
+  public EvalContextProvider(List<? extends Debugger.Variable> model) {
     myVariables = model;
   }
 
+  @Override
   @NotNull
   public ContextType getContextType() {
     return XsltContextProvider.TYPE;
   }
 
+  @Override
   @Nullable
   public XmlElement getContextElement() {
     return null;
@@ -52,13 +54,16 @@ public class EvalContextProvider extends ContextProvider {
     return true;
   }
 
+  @Override
   @Nullable
   public NamespaceContext getNamespaceContext() {
     return null;
   }
 
+  @Override
   public VariableContext getVariableContext() {
     return new SimpleVariableContext() {
+      @Override
       @NotNull
       public String[] getVariablesInScope(XPathElement element) {
         final int size = myVariables.size();
@@ -71,11 +76,13 @@ public class EvalContextProvider extends ContextProvider {
     };
   }
 
+  @Override
   @Nullable
   public Set<QName> getAttributes(boolean forValidation) {
     return null; // TODO
   }
 
+  @Override
   @Nullable
   public Set<QName> getElements(boolean forValidation) {
     return null; // TODO

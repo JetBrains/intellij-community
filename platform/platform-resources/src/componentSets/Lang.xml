@@ -1,16 +1,5 @@
 <idea-plugin>
   <application-components>
-
-    <component>
-      <interface-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.formatting.FormatterEx</interface-class>
-      <implementation-class>com.intellij.formatting.FormatterImpl</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.util.indexing.FileBasedIndex</interface-class>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexImpl</implementation-class>
@@ -34,26 +23,12 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.openapi.roots.impl.libraries.LibraryKindLoader</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
       <headless-implementation-class/>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.ide.script.IdeStartupScripts</implementation-class>
-    </component>
-
   </application-components>
 
   <project-components>
-    <component>
-      <interface-class>com.intellij.codeInsight.highlighting.HighlightManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.highlighting.HighlightManagerImpl</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.openapi.roots.ProjectRootManager</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerComponent</implementation-class>
@@ -66,7 +41,6 @@
       <loadForDefaultProject/>
     </component>
     <component>
-      <interface-class>com.intellij.psi.impl.file.impl.PsiVFSListener</interface-class>
       <implementation-class>com.intellij.psi.impl.file.impl.PsiVFSListener</implementation-class>
     </component>
     <component>
@@ -82,7 +56,7 @@
     </component>
     <component>
       <interface-class>com.intellij.openapi.module.impl.ExternalModuleListStorage</interface-class>
-      <implementation-class>com.intellij.openapi.module.impl.ExternalModuleListStorage</implementation-class>
+      <implementation-class>com.intellij.openapi.module.impl.ExternalModuleListStorageImpl</implementation-class>
       <loadForDefaultProject/>
     </component>
 
@@ -91,7 +65,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.execution.impl.ProjectRunConfigurationInitializer</interface-class>
       <implementation-class>com.intellij.execution.impl.ProjectRunConfigurationInitializer</implementation-class>
     </component>
 
@@ -114,7 +87,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.pom.tree.TreeAspect</interface-class>
       <implementation-class>com.intellij.pom.tree.TreeAspect</implementation-class>
       <loadForDefaultProject/>
     </component>
@@ -137,65 +109,16 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTracker</implementation-class>
       <loadForDefaultProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.InjectedGeneralHighlightingPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.LineMarkersPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.ShowIntentionsPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.refactoring.changeSignature.inplace.ChangeSignaturePassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.hints.ParameterHintsPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.IndentsPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.InjectedCodeFoldingPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.LocalInspectionsPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.WholeFileLocalInspectionsPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.ExternalToolPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.WolfPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.ShowAutoImportPassFactory</implementation-class>
-    </component>
+
     <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexProjectHandler</implementation-class>
     </component>
 
     <component>
-      <interface-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</interface-class>
       <implementation-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</implementation-class>
     </component>
 
     <component>
-      <interface-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</interface-class>
       <implementation-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</implementation-class>
       <loadForDefaultProject/>
     </component>
@@ -226,11 +149,6 @@
       <interface-class>com.intellij.openapi.roots.ModuleRootManager</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.ModuleRootManagerComponent</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.openapi.components.impl.ModuleServiceManagerImpl</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.facet.FacetManager</interface-class>
       <implementation-class>com.intellij.facet.FacetManagerImpl</implementation-class>
@@ -238,6 +156,8 @@
   </module-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.openapi.roots.impl.libraries.LibraryKindLoader"/>
+    <applicationInitializedListener implementation="com.intellij.ide.script.IdeStartupScripts"/>
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.IntentionsUI"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.IntentionsUIImpl"/>
   </extensions>

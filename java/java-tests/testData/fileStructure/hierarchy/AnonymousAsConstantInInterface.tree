@@ -1,6 +1,6 @@
 -AnonymousAsConstantInInterface.java
  -AnonymousAsConstantInInterface
-  -getAMethod(): void
+  -[getAMethod(): void]
    -$1
     getA(): void
     getA1(): void
@@ -13,7 +13,7 @@
     getA8(): void
     -DEFAULT: BuggyInterface = new BuggyInterface() {...}
      -$1
-      [getA1(): void]
+      getA1(): void
       getA2(): void
       getA3(): void
       getA4(): void

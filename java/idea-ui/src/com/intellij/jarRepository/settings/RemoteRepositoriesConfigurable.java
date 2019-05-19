@@ -13,8 +13,8 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +54,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
   @Override
-  public boolean isModified() { 
+  public boolean isModified() {
     return isServiceListModified() || isRepoListModified();
   }
 
@@ -167,12 +167,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
                                             final String emptyListHint, DataAdapter<T, String> adapter) {
     list.setModel(model);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(new ListCellRendererWrapper<T>() {
-      @Override
-      public void customize(JList list, T value, int index, boolean selected, boolean hasFocus) {
-        setText(adapter.toPresentation(value));
-      }
-    });
+    list.setCellRenderer(SimpleListCellRenderer.create("", adapter::toPresentation));
     addButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -205,24 +200,28 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
 
+  @Override
   public String getDisplayName() {
     return "Remote Jar Repositories";
   }
 
   @Override
   public String getHelpTopic() {
-    return "reference.jar.repositories"; 
+    return "reference.jar.repositories";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getClass().getName();
   }
 
+  @Override
   public JComponent createComponent() {
     return myMainPanel;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     List<String> newUrls = ContainerUtil.map(myReposModel.getItems(), RemoteRepositoryDescription::getUrl);
     List<String> oldUrls = ContainerUtil.map(RemoteRepositoriesConfiguration.getInstance(myProject).getRepositories(), RemoteRepositoryDescription::getUrl);
@@ -233,6 +232,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     }
   }
 
+  @Override
   public void reset() {
     resetServicesModel(MavenRepositoryServicesManager.getInstance(myProject).getUrls());
     resetReposModel(RemoteRepositoriesConfiguration.getInstance(myProject).getRepositories());

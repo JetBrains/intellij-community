@@ -47,12 +47,12 @@ public class RegistryToggleAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return Registry.is(myKey);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     Registry.get(myKey).setValue(state);
     doWhenDone(e);
   }

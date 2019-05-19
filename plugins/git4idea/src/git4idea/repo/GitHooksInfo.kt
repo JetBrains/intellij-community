@@ -15,4 +15,4 @@
  */
 package git4idea.repo
 
-data class GitHooksInfo(val isPreCommitHookAvailable: Boolean, val isPrePushHookAvailable: Boolean)
+data class GitHooksInfo(val areCommitHooksAvailable: Boolean, val isPrePushHookAvailable: Boolean)

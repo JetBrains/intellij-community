@@ -21,12 +21,15 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,9 +38,6 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   private final MavenImportingSettings myImportingSettings;
   private final MavenImportingSettingsForm mySettingsForm = new MavenImportingSettingsForm(false, false);
   private final List<UnnamedConfigurable> myAdditionalConfigurables;
-
-  private final JTextField myEmbedderVMOptions;
-  private final ExternalSystemJdkComboBox myEmbedderJdk;
 
   private final Project myProject;
 
@@ -49,40 +49,14 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     for (final AdditionalMavenImportingSettings additionalSettings : AdditionalMavenImportingSettings.EP_NAME.getExtensions()) {
       myAdditionalConfigurables.add(additionalSettings.createConfigurable(project));
     }
-
-    myEmbedderVMOptions = new JTextField(30);
-    myEmbedderJdk = new ExternalSystemJdkComboBox(); // Embedder JDK is an application setting, not a project setting, so don't pass project
-    assert myEmbedderJdk.getProject() == null;
   }
 
+  @Override
   public JComponent createComponent() {
     final JPanel panel = mySettingsForm.getAdditionalSettingsPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
     panel.add(Box.createVerticalStrut(5));
-
-    JPanel useMaven3Panel = new JPanel(new BorderLayout());
-
-    panel.add(useMaven3Panel);
-
-    JPanel embedderVMOptionPanel = new JPanel(new BorderLayout());
-    JLabel vmOptionLabel = new JLabel("VM options for importer:");
-    embedderVMOptionPanel.add(vmOptionLabel, BorderLayout.WEST);
-    vmOptionLabel.setLabelFor(myEmbedderVMOptions);
-
-    embedderVMOptionPanel.add(myEmbedderVMOptions);
-
-    panel.add(Box.createVerticalStrut(3));
-    panel.add(embedderVMOptionPanel);
-
-    JPanel embedderJdkPanel = new JPanel(new BorderLayout());
-    JLabel embedderJdkLabel = new JLabel("JDK for importer:");
-    embedderJdkLabel.setLabelFor(myEmbedderJdk);
-    embedderJdkPanel.add(embedderJdkLabel, BorderLayout.WEST);
-    embedderJdkPanel.add(myEmbedderJdk);
-
-    panel.add(Box.createVerticalStrut(3));
-    panel.add(embedderJdkPanel);
 
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       panel.add(Box.createVerticalStrut(3));
@@ -91,12 +65,14 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     return mySettingsForm.createComponent();
   }
 
+  @Override
   public void disposeUIResources() {
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       additionalConfigurable.disposeUIResources();
     }
   }
 
+  @Override
   public boolean isModified() {
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       if (additionalConfigurable.isModified()) {
@@ -104,24 +80,17 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
       }
     }
 
-    if (!MavenServerManager.getInstance().getMavenEmbedderVMOptions().equals(myEmbedderVMOptions.getText())) {
-      return true;
-    }
-
-    if (!MavenServerManager.getInstance().getEmbedderJdk().equals(myEmbedderJdk.getSelectedValue())) {
-      return true;
-    }
-
     return mySettingsForm.isModified(myImportingSettings, myProject);
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     mySettingsForm.getData(myImportingSettings);
     ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(mySettingsForm.isStoreExternally());
 
-    MavenServerManager.getInstance().setMavenEmbedderVMOptions(myEmbedderVMOptions.getText());
-    String jdk = myEmbedderJdk.getSelectedValue();
-    if(jdk != null) {
+    MavenServerManager.getInstance().setMavenEmbedderVMOptions(myImportingSettings.getVmOptionsForImporter());
+    String jdk = myImportingSettings.getJdkForImporter();
+    if (jdk != null) {
       MavenServerManager.getInstance().setEmbedderJdk(jdk);
     }
 
@@ -130,17 +99,23 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     }
   }
 
+  @Override
   public void reset() {
+    readGlobalOptions(myImportingSettings);
     mySettingsForm.setData(myImportingSettings, myProject);
-
-    myEmbedderVMOptions.setText(MavenServerManager.getInstance().getMavenEmbedderVMOptions());
-    myEmbedderJdk.refreshData(MavenServerManager.getInstance().getEmbedderJdk());
 
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       additionalConfigurable.reset();
     }
   }
 
+  private void readGlobalOptions(MavenImportingSettings settings) {
+    // Embedder JDK is an application setting, not a project setting
+    settings.setJdkForImporter(MavenServerManager.getInstance().getEmbedderJdk());
+    settings.setVmOptionsForImporter(MavenServerManager.getInstance().getMavenEmbedderVMOptions());
+  }
+
+  @Override
   @Nls
   public String getDisplayName() {
     return ProjectBundle.message("maven.tab.importing");
@@ -153,6 +128,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     return "reference.settings.project.maven.importing";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();

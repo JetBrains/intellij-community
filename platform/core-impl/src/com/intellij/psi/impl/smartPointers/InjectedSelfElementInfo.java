@@ -249,7 +249,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     }
 
     @Nullable
-    ProperTextRange expandRangeToAffixes(int start, int end, @NotNull List<TextRange> fragments) {
+    ProperTextRange expandRangeToAffixes(int start, int end, @NotNull List<? extends TextRange> fragments) {
       if (startAffixIndex >= 0) {
         TextRange fragment = startAffixIndex < fragments.size() ? fragments.get(startAffixIndex) : null;
         if (fragment == null || startAffixOffset > fragment.getLength()) return null;

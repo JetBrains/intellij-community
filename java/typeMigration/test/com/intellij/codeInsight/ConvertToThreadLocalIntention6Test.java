@@ -32,10 +32,6 @@ public class ConvertToThreadLocalIntention6Test extends LightQuickFixParameteriz
     return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData";
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_7;

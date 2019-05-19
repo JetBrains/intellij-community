@@ -75,7 +75,7 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
     private final JComboBox myComboBox;
     private int myMaxWidth;
 
-    public MyListCellRenderer(final JComboBox comboBox) {
+    MyListCellRenderer(final JComboBox comboBox) {
       myComboBox = comboBox;
       myMaxWidth = comboBox.getPreferredSize().width;
     }

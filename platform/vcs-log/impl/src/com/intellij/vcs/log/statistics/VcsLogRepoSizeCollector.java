@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics;
 
-import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
-import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,14 +25,11 @@ import java.util.Set;
 
 import static java.util.Arrays.asList;
 
-@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
-public class VcsLogRepoSizeCollector extends AbstractProjectsUsagesCollector {
-
-  public static final GroupDescriptor ID = GroupDescriptor.create("VCS Log 2");
+public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
+  public Set<UsageDescriptor> getUsages(@NotNull Project project) {
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     VcsLogData logData = projectLog.getDataManager();
     if (logData != null) {
@@ -53,22 +38,31 @@ public class VcsLogRepoSizeCollector extends AbstractProjectsUsagesCollector {
         PermanentGraph<Integer> permanentGraph = dataPack.getPermanentGraph();
         MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
 
-        Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-        usages.add(StatisticsUtilKt.getCountingUsage("data.commit.count", permanentGraph.getAllCommits().size(),
+        Set<UsageDescriptor> usages = ContainerUtil.newHashSet(new UsageDescriptor("dataInitialized"));
+        usages.add(StatisticsUtilKt.getCountingUsage("commit.count", permanentGraph.getAllCommits().size(),
                                                      asList(0, 1, 100, 1000, 10 * 1000, 100 * 1000, 500 * 1000, 1000 * 1000)));
-        usages.add(StatisticsUtilKt.getCountingUsage("data.branches.count", dataPack.getRefsModel().getBranches().size(),
+        usages.add(StatisticsUtilKt.getCountingUsage("branches.count", dataPack.getRefsModel().getBranches().size(),
                                                      asList(0, 1, 10, 50, 100, 500, 1000, 5 * 1000, 10 * 1000, 20 * 1000, 50 * 1000)));
-        usages.add(StatisticsUtilKt.getCountingUsage("data.users.count", logData.getAllUsers().size(),
+        usages.add(StatisticsUtilKt.getCountingUsage("users.count", logData.getAllUsers().size(),
                                                      asList(0, 1, 10, 50, 100, 500, 1000, 5 * 1000, 10 * 1000, 20 * 1000, 50 * 1000)));
 
         for (VcsKey vcs : groupedRoots.keySet()) {
-          usages.add(StatisticsUtilKt.getCountingUsage("data." + vcs.getName().toLowerCase() + ".root.count", groupedRoots.get(vcs).size(),
+          String vcsKey = getVcsKeySafe(vcs);
+          usages.add(StatisticsUtilKt.getCountingUsage(vcsKey + ".root.count", groupedRoots.get(vcs).size(),
                                                        asList(0, 1, 2, 5, 8, 15, 30, 50, 100, 300, 500)));
         }
         return usages;
       }
     }
     return Collections.emptySet();
+  }
+
+  @NotNull
+  private static String getVcsKeySafe(@NotNull VcsKey vcs) {
+    if (PluginInfoDetectorKt.getPluginInfo(vcs.getClass()).isDevelopedByJetBrains()) {
+      return UsageDescriptorKeyValidator.ensureProperKey(StringUtil.toLowerCase(vcs.getName()));
+    }
+    return "third.party";
   }
 
   @NotNull
@@ -84,7 +78,7 @@ public class VcsLogRepoSizeCollector extends AbstractProjectsUsagesCollector {
 
   @NotNull
   @Override
-  public GroupDescriptor getGroupId() {
-    return ID;
+  public String getGroupId() {
+    return "vcs.log.data";
   }
 }

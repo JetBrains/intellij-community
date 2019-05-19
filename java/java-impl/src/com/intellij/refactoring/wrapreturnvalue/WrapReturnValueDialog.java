@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -35,8 +20,8 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +31,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-@SuppressWarnings({"OverridableMethodCallInConstructor"})
 class WrapReturnValueDialog extends RefactoringDialog {
 
   private final PsiMethod sourceMethod;
@@ -59,7 +43,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
   private ReferenceEditorComboWithBrowseButton existingClassField;
   private JRadioButton useExistingClassButton;
-  private JComboBox myFieldsCombo;
+  private JComboBox<PsiField> myFieldsCombo;
   private JPanel myExistingClassPanel;
 
   private JPanel myWholePanel;
@@ -139,6 +123,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
     }
   }
 
+  @NotNull
   private String getInnerClassName() {
     return myInnerClassNameTextField.getText().trim();
   }
@@ -159,7 +144,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
     final DocumentListener docListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         validateButtons();
       }
     };
@@ -201,22 +186,18 @@ class WrapReturnValueDialog extends RefactoringDialog {
     createNewClassButton.addActionListener(enableListener);
     myCreateInnerClassButton.addActionListener(enableListener);
     toggleRadioEnablement();
-    
-    final DefaultComboBoxModel model = new DefaultComboBoxModel();
+
+    final DefaultComboBoxModel<PsiField> model = new DefaultComboBoxModel<>();
     myFieldsCombo.setModel(model);
-    myFieldsCombo.setRenderer(new ListCellRendererWrapper() {
-      @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof PsiField) {
-          final PsiField field = (PsiField)value;
-          setText(field.getName());
-          setIcon(field.getIcon(Iconable.ICON_FLAG_VISIBILITY));
-        }
+    myFieldsCombo.setRenderer(SimpleListCellRenderer.create((label, field, index) -> {
+      if (field != null) {
+        label.setText(field.getName());
+        label.setIcon(field.getIcon(Iconable.ICON_FLAG_VISIBILITY));
       }
-    });
+    }));
     existingClassField.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentListener() {
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+      public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent e) {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
         final PsiClass currentClass = facade.findClass(existingClassField.getText(), GlobalSearchScope.allScope(myProject));
         if (currentClass != null) {
@@ -264,14 +245,14 @@ class WrapReturnValueDialog extends RefactoringDialog {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.WrapReturnValue);
+  protected String getHelpId() {
+    return HelpID.WrapReturnValue;
   }
 
   private void createUIComponents() {
     final com.intellij.openapi.editor.event.DocumentListener adapter = new com.intellij.openapi.editor.event.DocumentListener() {
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+      public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent e) {
         validateButtons();
       }
     };

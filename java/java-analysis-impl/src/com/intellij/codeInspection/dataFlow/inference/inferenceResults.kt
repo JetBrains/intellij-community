@@ -1,19 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.codeInspection.dataFlow.Mutability
-import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.lang.LighterASTNode
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.util.gist.GistManager
 import com.siyeh.ig.psiutils.ClassUtils
 import java.util.*
 
@@ -38,17 +37,27 @@ data class ExpressionRange internal constructor (internal val startOffset: Int, 
 
 data class PurityInferenceResult(internal val mutatedRefs: List<ExpressionRange>, internal val singleCall: ExpressionRange?) {
 
-  fun isPure(method: PsiMethod, body: () -> PsiCodeBlock): Boolean = !mutatesNonLocals(method, body) && callsOnlyPureMethods(body)
+  fun isPure(method: PsiMethod, body: () -> PsiCodeBlock): Boolean = !mutatesNonLocals(method, body) && callsOnlyPureMethods(method, body)
 
   private fun mutatesNonLocals(method: PsiMethod, body: () -> PsiCodeBlock): Boolean {
     return mutatedRefs.any { range -> !isLocalVarReference(range.restoreExpression(body()), method) }
   }
 
-  private fun callsOnlyPureMethods(body: () -> PsiCodeBlock): Boolean {
+  private fun callsOnlyPureMethods(currentMethod: PsiMethod, body: () -> PsiCodeBlock): Boolean {
     if (singleCall == null) return true
 
-    val called = (singleCall.restoreExpression(body()) as PsiCall).resolveMethod()
-    return called != null && JavaMethodContractUtil.isPure(called)
+    val psiCall = singleCall.restoreExpression(body()) as PsiCall
+    val method = psiCall.resolveMethod()
+    if (method != null) {
+      return method == currentMethod || JavaMethodContractUtil.isPure(method)
+    } else if (psiCall is PsiNewExpression && psiCall.argumentList?.expressionCount == 0) {
+      val psiClass = psiCall.classOrAnonymousClassReference?.resolve() as? PsiClass
+      if (psiClass != null) {
+        val superClass = psiClass.superClass
+        return superClass == null || superClass.qualifiedName == CommonClassNames.JAVA_LANG_OBJECT
+      }
+    }
+    return false
   }
 
   private fun isLocalVarReference(expression: PsiExpression?, scope: PsiMethod): Boolean {
@@ -81,38 +90,30 @@ data class PurityInferenceResult(internal val mutatedRefs: List<ExpressionRange>
 
 
 interface MethodReturnInferenceResult {
-  fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness
+  fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability
   fun getMutability(method: PsiMethod, body: () -> PsiCodeBlock): Mutability = Mutability.UNKNOWN
 
   @Suppress("EqualsOrHashCode")
-  data class Predefined(internal val value: Nullness) : MethodReturnInferenceResult {
+  data class Predefined(internal val value: Nullability) : MethodReturnInferenceResult {
     override fun hashCode(): Int = value.ordinal
-    override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness = when {
-      value == Nullness.NULLABLE && InferenceFromSourceUtil.suppressNullable(
-        method) -> Nullness.UNKNOWN
-      else -> value
-    }
+    override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability = value
   }
 
-  data class FromDelegate(internal val value: Nullness, internal val delegateCalls: List<ExpressionRange>) : MethodReturnInferenceResult {
-    override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness {
-      if (value == Nullness.NULLABLE) {
-        return if (InferenceFromSourceUtil.suppressNullable(
-            method)) Nullness.UNKNOWN
-        else Nullness.NULLABLE
-      }
+  data class FromDelegate(internal val value: Nullability, internal val delegateCalls: List<ExpressionRange>) : MethodReturnInferenceResult {
+    override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability {
       return when {
-        delegateCalls.all { range -> isNotNullCall(range, body()) } -> Nullness.NOT_NULL
-        else -> Nullness.UNKNOWN
+        value == Nullability.NULLABLE -> Nullability.NULLABLE 
+        delegateCalls.all { range -> isNotNullCall(range, body()) } -> Nullability.NOT_NULL
+        else -> Nullability.UNKNOWN
       }
     }
 
     override fun getMutability(method: PsiMethod, body: () -> PsiCodeBlock): Mutability {
-      if (value == Nullness.NOT_NULL) {
+      if (value == Nullability.NOT_NULL) {
         return Mutability.UNKNOWN
       }
       return delegateCalls.stream().map { range -> getDelegateMutability(range, body()) }.reduce(
-        Mutability::union).orElse(
+        Mutability::unite).orElse(
         Mutability.UNKNOWN)
     }
 
@@ -144,16 +145,34 @@ data class MethodData(
   internal val bodyStart: Int,
   internal val bodyEnd: Int
 ) {
+
+  @Volatile
+  private var myDetachedBody: PsiCodeBlock? = null
+
   fun methodBody(method: PsiMethodImpl): () -> PsiCodeBlock = {
-    if (method.stub != null)
-      CachedValuesManager.getCachedValue(method) { CachedValueProvider.Result(getDetachedBody(method), method) }
+    if (method.stub != null) {
+      var detached = myDetachedBody
+      if (detached == null) {
+        detached = getDetachedBody(method)
+        myDetachedBody = detached
+      } else {
+        assert(detached.parent == method || detached.containingFile.context == method)
+      }
+      detached
+    }
     else
       method.body!!
   }
 
   private fun getDetachedBody(method: PsiMethod): PsiCodeBlock {
     val document = method.containingFile.viewProvider.document ?: return method.body!!
-    val bodyText = PsiDocumentManager.getInstance(method.project).getLastCommittedText(document).substring(bodyStart, bodyEnd)
-    return JavaPsiFacade.getElementFactory(method.project).createCodeBlockFromText(bodyText, method)
+    try {
+      val bodyText = PsiDocumentManager.getInstance(method.project).getLastCommittedText(document).substring(bodyStart, bodyEnd)
+      return JavaPsiFacade.getElementFactory(method.project).createCodeBlockFromText(bodyText, method)
+    }
+    catch (e: Exception) {
+      GistManager.getInstance().invalidateData()
+      throw e
+    }
   }
 }

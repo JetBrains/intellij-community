@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.dnd.*;
@@ -26,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ListActions;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.PlatformColors;
@@ -56,10 +43,12 @@ public class PaletteComponentList extends JBList {
     myPalette = palette;
     myGroup = group;
     setModel(new AbstractListModel() {
+      @Override
       public int getSize() {
         return myGroup.getItems().length;
       }
 
+      @Override
       public Object getElementAt(int index) {
         return myGroup.getItems() [index];
       }
@@ -92,6 +81,7 @@ public class PaletteComponentList extends JBList {
     });
 
     addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         requestFocusInWindow();
         SwingUtilities.invokeLater(() -> {
@@ -113,20 +103,24 @@ public class PaletteComponentList extends JBList {
     });
 
     addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
       public void mouseMoved(MouseEvent e) {
         setHoverIndex(locationToIndex(e.getPoint()));
       }
     });
 
     addKeyListener(new KeyListener() {
+      @Override
       public void keyPressed(KeyEvent e) {
         myPalette.notifyKeyEvent(e);
       }
 
+      @Override
       public void keyReleased(KeyEvent e) {
         myPalette.notifyKeyEvent(e);
       }
 
+      @Override
       public void keyTyped(KeyEvent e) {
         myPalette.notifyKeyEvent(e);
       }
@@ -167,14 +161,15 @@ public class PaletteComponentList extends JBList {
 
   private void initActions() {
     @NonNls ActionMap map = getActionMap();
-    map.put( "selectPreviousRow", new MoveFocusAction( map.get( "selectPreviousRow" ), false ) );
-    map.put( "selectNextRow", new MoveFocusAction( map.get( "selectNextRow" ), true ) );
-    map.put( "selectPreviousColumn", new MoveFocusAction( new ChangeColumnAction( map.get( "selectPreviousColumn" ), false ), false ) );
-    map.put( "selectNextColumn", new MoveFocusAction( new ChangeColumnAction( map.get( "selectNextColumn" ), true ), true ) );
+    map.put(ListActions.Up.ID, new MoveFocusAction(map.get(ListActions.Up.ID), false));
+    map.put(ListActions.Down.ID, new MoveFocusAction(map.get(ListActions.Down.ID), true));
+    map.put(ListActions.Left.ID, new MoveFocusAction(new ChangeColumnAction(map.get(ListActions.Left.ID), false), false));
+    map.put(ListActions.Right.ID, new MoveFocusAction(new ChangeColumnAction(map.get(ListActions.Right.ID), true), true));
   }
 
   Integer myTempWidth;
 
+  @Override
   public int getWidth () {
       return (myTempWidth == null) ? super.getWidth () : myTempWidth.intValue ();
   }
@@ -197,9 +192,7 @@ public class PaletteComponentList extends JBList {
     else if (getModel().getSize() == 0) {
       indexToSelect = -1;
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(this, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
     setSelectedIndex(indexToSelect);
     if (indexToSelect >= 0) {
       ensureIndexIsVisible(indexToSelect);
@@ -266,6 +259,7 @@ public class PaletteComponentList extends JBList {
   }
 
   private static class ComponentCellRenderer extends ColoredListCellRenderer {
+    @Override
     protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       PaletteItem paletteItem = (PaletteItem) value;
       clear();
@@ -277,11 +271,12 @@ public class PaletteComponentList extends JBList {
     private final Action defaultAction;
     private final boolean focusNext;
 
-    public MoveFocusAction(Action defaultAction, boolean focusNext) {
+    MoveFocusAction(Action defaultAction, boolean focusNext) {
       this.defaultAction = defaultAction;
       this.focusNext = focusNext;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       int selIndexBefore = getSelectedIndex();
       defaultAction.actionPerformed(e);
@@ -299,9 +294,7 @@ public class PaletteComponentList extends JBList {
                        : policy.getComponentBefore(container, PaletteComponentList.this);
       if (next instanceof PaletteGroupHeader) {
         clearSelection();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(next, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(next, true));
         ((PaletteGroupHeader)next).scrollRectToVisible(next.getBounds());
       }
     }
@@ -311,11 +304,12 @@ public class PaletteComponentList extends JBList {
     private final Action defaultAction;
     private final boolean selectNext;
 
-    public ChangeColumnAction(Action defaultAction, boolean selectNext) {
+    ChangeColumnAction(Action defaultAction, boolean selectNext) {
       this.defaultAction = defaultAction;
       this.selectNext = selectNext;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       int selIndexBefore = getSelectedIndex();
       defaultAction.actionPerformed(e);
@@ -340,6 +334,7 @@ public class PaletteComponentList extends JBList {
 
   private class MyDnDTarget implements DnDTarget {
 
+    @Override
     public boolean update(DnDEvent aEvent) {
       setHoverIndex(-1);
       if (aEvent.getAttachedObject() instanceof PaletteItem) {
@@ -353,6 +348,7 @@ public class PaletteComponentList extends JBList {
       return false;
     }
 
+    @Override
     public void drop(DnDEvent aEvent) {
       setDropTargetIndex(-1);
       if (aEvent.getAttachedObject() instanceof PaletteItem) {
@@ -363,6 +359,7 @@ public class PaletteComponentList extends JBList {
       }
     }
 
+    @Override
     public void cleanUpOnLeave() {
       setDropTargetIndex(-1);
     }
@@ -376,30 +373,36 @@ public class PaletteComponentList extends JBList {
       return location.y < rc.getCenterY() ? row : row + 1;
     }
 
+    @Override
     public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
     }
   }
 
   private class MyDnDSource implements DnDSource {
+    @Override
     public boolean canStartDragging(DnDAction action, Point dragOrigin) {
       int index = locationToIndex(dragOrigin);
       return index >= 0 && myGroup.getItems() [index].startDragging() != null;
     }
 
+    @Override
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
       int index = locationToIndex(dragOrigin);
       if (index < 0) return null;
       return myGroup.getItems() [index].startDragging();
     }
 
+    @Override
     @Nullable
     public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
       return null;
     }
 
+    @Override
     public void dragDropEnd() {
     }
 
+    @Override
     public void dropActionChanged(final int gestureModifiers) {
       myPalette.notifyDropActionChanged(gestureModifiers);
     }

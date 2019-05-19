@@ -43,13 +43,13 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
 
   private Pattern myCompiledPattern;
   private String myPattern;
-  private final List<T> myItems;
+  private final List<? extends T> myItems;
   private final String myNotInMessage;
 
   public ListChooseByNameModel(@NotNull final Project project,
-                               final String prompt,
-                               final String notInMessage,
-                               List<T> items) {
+                               @NotNull String prompt,
+                               @NotNull String notInMessage,
+                               @NotNull List<? extends T> items) {
     super(project, prompt, null);
 
     myItems = items;
@@ -76,17 +76,20 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @NotNull
   @Override
   public String getNotInMessage() {
     return myNotInMessage;
   }
 
+  @NotNull
   @Override
   public String getNotFoundMessage() {
     return myNotInMessage;
   }
 
   // from ruby plugin
+  @NotNull
   @Override
   public ListCellRenderer getListCellRenderer() {
     return new DefaultListCellRenderer() {
@@ -148,7 +151,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
   }
 
   @Override
-  public String getElementName(final Object element) {
+  public String getElementName(@NotNull final Object element) {
     if (!(element instanceof ChooseByNameItem)) return null;
     return ((ChooseByNameItem)element).getName();
   }

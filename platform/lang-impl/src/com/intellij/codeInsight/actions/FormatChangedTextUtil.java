@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ReadAction;
@@ -22,14 +22,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FormatChangedTextUtil {
@@ -102,9 +98,9 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  public static List<PsiFile> getChangedFilesFromDirs(@NotNull Project project, @NotNull List<PsiDirectory> dirs)  {
+  public static List<PsiFile> getChangedFilesFromDirs(@NotNull Project project, @NotNull List<? extends PsiDirectory> dirs)  {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    Collection<Change> changes = ContainerUtil.newArrayList();
+    Collection<Change> changes = new ArrayList<>();
 
     for (PsiDirectory dir : dirs) {
       changes.addAll(changeListManager.getChangesIn(dir.getVirtualFile()));
@@ -114,7 +110,7 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  public static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<Change> changes) {
+  public static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<? extends Change> changes) {
     Function<Change, PsiFile> changeToPsiFileMapper = new Function<Change, PsiFile>() {
       private final PsiManager myPsiManager = PsiManager.getInstance(project);
 
@@ -140,8 +136,8 @@ public class FormatChangedTextUtil {
   public boolean isChangeNotTrackedForFile(@NotNull Project project, @NotNull PsiFile file) {
     return false;
   }
-  
-    
+
+
   @Nullable
   public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) {
     return null;
@@ -150,9 +146,9 @@ public class FormatChangedTextUtil {
   @NotNull
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
                                                            @NotNull Change[] changes,
-                                                           @NotNull Convertor<VirtualFile, List<T>> elementsConvertor) {
+                                                           @NotNull java.util.function.Function<? super VirtualFile, ? extends List<T>> elementsConvertor) {
     return Arrays.stream(changes).map(Change::getVirtualFile).filter(Objects::nonNull)
-                 .flatMap(file -> elementsConvertor.convert(file).stream()).filter(Objects::nonNull)
+                 .flatMap(file -> elementsConvertor.apply(file).stream()).filter(Objects::nonNull)
                  .collect(Collectors.toList());
   }
 

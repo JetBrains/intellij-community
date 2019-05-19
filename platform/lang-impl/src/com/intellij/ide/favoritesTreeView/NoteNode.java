@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Set;
 
 public class NoteNode {
@@ -22,10 +24,11 @@ public class NoteNode {
   private Set<Flag> myFlags;
   private Set<Concept> myConcepts;
 
+  @NotNull
   private String myText;
   private final boolean myReadonly;
 
-  public NoteNode(String text, boolean readonly) {
+  public NoteNode(@NotNull String text, boolean readonly) {
     myText = text;
     myReadonly = readonly;
   }
@@ -54,11 +57,12 @@ public class NoteNode {
     myConcepts = concepts;
   }
 
+  @NotNull
   public String getText() {
     return myText;
   }
 
-  public void setText(String text) {
+  public void setText(@NotNull String text) {
     myText = text;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,74 @@
  */
 package com.siyeh.ig.visibility;
 
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
-public class MethodOverridesStaticMethodInspection extends MethodOverridesStaticMethodInspectionBase {
+public class MethodOverridesStaticMethodInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "MethodOverridesStaticMethodOfSuperclass";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "method.overrides.static.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "method.overrides.static.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MethodOverridesStaticMethodVisitor();
+  }
+
+  private static class MethodOverridesStaticMethodVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      if (method.getNameIdentifier() == null || !method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiClass ancestorClass = aClass.getSuperClass();
+      if (ancestorClass == null) {
+        return;
+      }
+      final PsiMethod[] methods = ancestorClass.findMethodsBySignature(method, true);
+      for (final PsiMethod testMethod : methods) {
+        if (testMethod.hasModifierProperty(PsiModifier.STATIC) && !testMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+          registerMethodError(method);
+          return;
+        }
+      }
+    }
   }
 }

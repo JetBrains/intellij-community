@@ -27,10 +27,9 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(identifier)('w')
         PsiWhiteSpace(' ')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
+          PsiElement(()('(')
+          PsiElement())(')')
         Throw clause
           <empty list>
         PsiWhiteSpace(' ')

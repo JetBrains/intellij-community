@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
+import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -9,13 +10,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import git4idea.DialogManager
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
-import org.jetbrains.plugins.github.api.GithubApiUtil
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.api.GithubTask
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
+import java.awt.Component
 import java.io.IOException
 
 internal const val GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY"
@@ -27,13 +28,14 @@ internal const val GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY"
 @Suppress("DEPRECATION")
 class GithubAccountsMigrationHelper internal constructor(private val settings: GithubSettings,
                                                          private val passwordSafe: PasswordSafe,
-                                                         private val accountManager: GithubAccountManager) {
+                                                         private val accountManager: GithubAccountManager,
+                                                         private val executorFactory: GithubApiRequestExecutor.Factory) {
   private val LOG = logger<GithubAccountsMigrationHelper>()
 
   internal fun getOldServer(): GithubServerPath? {
     try {
       if (hasOldAccount()) {
-        return GithubServerPath.from(settings.host ?: GithubApiUtil.DEFAULT_GITHUB_HOST)
+        return GithubServerPath.from(settings.host ?: GithubServerPath.DEFAULT_HOST)
       }
     }
     catch (ignore: Exception) {
@@ -52,11 +54,12 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
    * @return false if process was cancelled by user, true otherwise
    */
   @CalledInAwt
-  fun migrate(project: Project): Boolean {
+  @JvmOverloads
+  fun migrate(project: Project, parentComponent: Component? = null): Boolean {
     LOG.debug("Migrating old auth")
     val login = settings.login
     val host = settings.host
-    val password = passwordSafe.getPassword(GithubSettings::class.java, GITHUB_SETTINGS_PASSWORD_KEY)
+    val password = passwordSafe.getPassword(CredentialAttributes(GithubSettings::class.java, GITHUB_SETTINGS_PASSWORD_KEY))
     val authType = settings.authType
     LOG.debug("Old auth data: { login: $login, host: $host, authType: $authType, password null: ${password == null} }")
 
@@ -66,7 +69,7 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
     var dialogCancelled = false
 
     if (accountManager.accounts.isEmpty()) {
-      val hostToUse = host ?: GithubApiUtil.DEFAULT_GITHUB_HOST
+      val hostToUse = host ?: GithubServerPath.DEFAULT_HOST
       when (authType) {
         GithubAuthData.AuthType.TOKEN -> {
           LOG.debug("Migrating token auth")
@@ -75,23 +78,25 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
               val server = GithubServerPath.from(hostToUse)
               val progressManager = ProgressManager.getInstance()
               val accountName = progressManager.runProcessWithProgressSynchronously(ThrowableComputable<String, IOException> {
-                GithubApiTaskExecutor.execute(progressManager.progressIndicator, server, password,
-                                              GithubTask { GithubApiUtil.getCurrentUser(it).login })
-              }, "Accessing Github", true, project)
+                executorFactory.create(password).execute(progressManager.progressIndicator,
+                                                         GithubApiRequests.CurrentUser.get(server)).login
+              }, "Accessing GitHub", true, project)
               val account = GithubAccountManager.createAccount(accountName, server)
               registerAccount(account, password)
             }
             catch (e: Exception) {
               LOG.debug("Failed to migrate old token-based auth. Showing dialog.", e)
-              val dialog = GithubLoginDialog(project).withServer(hostToUse, false).withToken(password).withError(e)
+              val dialog = GithubLoginDialog(executorFactory, project, parentComponent)
+                .withServer(hostToUse, false).withToken(password).withError(e)
               dialogCancelled = !registerFromDialog(dialog)
             }
           }
         }
         GithubAuthData.AuthType.BASIC -> {
           LOG.debug("Migrating basic auth")
-          val dialog = GithubLoginDialog(project, message = "Password authentication is no longer supported for Github.\n" +
-                                                            "Personal access token can be acquired instead.")
+          val dialog = GithubLoginDialog(executorFactory, project, parentComponent,
+                                         message = "Password authentication is no longer supported for Github.\n" +
+                                                   "Personal access token can be acquired instead.")
             .withServer(hostToUse, false).withCredentials(login, password)
           dialogCancelled = !registerFromDialog(dialog)
         }
@@ -99,7 +104,6 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
         }
       }
     }
-    if (!dialogCancelled) clearOldAuth()
     return !dialogCancelled
   }
 
@@ -116,11 +120,6 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
     accountManager.accounts += account
     accountManager.updateAccountToken(account, token)
     LOG.debug("Registered account $account")
-  }
-
-  private fun clearOldAuth() {
-    settings.clearAuth()
-    passwordSafe.setPassword(GithubSettings::class.java, GITHUB_SETTINGS_PASSWORD_KEY, null)
   }
 
   companion object {

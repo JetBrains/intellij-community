@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -30,16 +31,16 @@ import java.util.regex.Pattern;
  */
 public class ToggleHighlightingMarkupAction extends AnAction {
   @Override
-  public void update(AnActionEvent e) {
-    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
+  public void update(@NotNull AnActionEvent e) {
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     e.getPresentation().setEnabled(editor != null && file != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (editor == null || file == null) return;
     final Project project = file.getProject();
     CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessor.getInstance();

@@ -1,22 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -27,32 +11,35 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Dmitry Avdeev
- */
-public abstract class EditorNotifications extends AbstractProjectComponent {
-  public static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
-
+public abstract class EditorNotifications {
   /**
    * An extension allowing to add custom notifications to the top of file editors.
-   * 
-   * During indexing, only {@link com.intellij.openapi.project.DumbAware} instances are executed. 
+   *
+   * During indexing, only {@link com.intellij.openapi.project.DumbAware} instances are executed.
    * @param <T> the type of the notification UI component
    */
   public abstract static class Provider<T extends JComponent> {
     @NotNull
     public abstract Key<T> getKey();
 
+    /**
+     * @deprecated Override {@link #createNotificationPanel(VirtualFile, FileEditor, Project)}
+     */
+    @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
     @Nullable
-    public abstract T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor);
+    @Deprecated
+    public T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
+      throw new AbstractMethodError();
+    }
+
+    @Nullable
+    public T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+      return createNotificationPanel(file, fileEditor);
+    }
   }
 
   public static EditorNotifications getInstance(Project project) {
     return project.getComponent(EditorNotifications.class);
-  }
-
-  public EditorNotifications(final Project project) {
-    super(project);
   }
 
   public abstract void updateNotifications(@NotNull VirtualFile file);

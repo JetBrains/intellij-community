@@ -26,11 +26,13 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousToInnerAction extends BaseRefactoringAction {
+public class AnonymousToInnerAction extends BaseJavaRefactoringAction {
+  @Override
   public boolean isAvailableInEditorOnly() {
     return true;
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }
@@ -48,6 +50,7 @@ public class AnonymousToInnerAction extends BaseRefactoringAction {
     return newExpression != null && newExpression.getAnonymousClass() != null;
   }
 
+  @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new AnonymousToInnerHandler();
   }

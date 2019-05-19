@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -25,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
@@ -46,16 +33,16 @@ class SlowerTypeConversions implements Runnable {
       return this;
     }
   };
-  private final Set<LookupElement> myBase;
+  private final Set<? extends LookupElement> myBase;
   private final PsiElement myElement;
   private final PsiJavaCodeReferenceElement myReference;
   private final JavaSmartCompletionParameters myParameters;
-  private final Consumer<LookupElement> myResult;
+  private final Consumer<? super LookupElement> myResult;
 
-  SlowerTypeConversions(Set<LookupElement> base,
+  SlowerTypeConversions(Set<? extends LookupElement> base,
                         PsiElement element,
                         PsiJavaCodeReferenceElement reference,
-                        JavaSmartCompletionParameters parameters, Consumer<LookupElement> result) {
+                        JavaSmartCompletionParameters parameters, Consumer<? super LookupElement> result) {
     myBase = base;
     myElement = element;
     myReference = reference;
@@ -65,7 +52,7 @@ class SlowerTypeConversions implements Runnable {
 
   @Override
   public void run() {
-    final Set<Pair<LookupElement, String>> processedChains = ContainerUtil.newHashSet();
+    final Set<Pair<LookupElement, String>> processedChains = new HashSet<>();
     for (final LookupElement item : myBase) {
       addSecondCompletionVariants(myElement, myReference, item, myParameters, lookupElement -> {
         ContainerUtil.addIfNotNull(processedChains, chainInfo(lookupElement));
@@ -73,7 +60,7 @@ class SlowerTypeConversions implements Runnable {
       });
     }
     if (!psiElement().afterLeaf(".").accepts(myElement)) {
-      BasicExpressionCompletionContributor.processDataflowExpressionTypes(myElement, null, TRUE_MATCHER,
+      BasicExpressionCompletionContributor.processDataflowExpressionTypes(myParameters, null, TRUE_MATCHER,
                                                                           baseItem -> addSecondCompletionVariants(myElement, myReference, baseItem, myParameters, lookupElement -> {
                                                                             if (!processedChains.contains(chainInfo(lookupElement))) {
                                                                               myResult.consume(lookupElement);
@@ -83,7 +70,7 @@ class SlowerTypeConversions implements Runnable {
   }
 
   private static void addSecondCompletionVariants(PsiElement element, PsiReference reference, LookupElement baseItem,
-                                                  JavaSmartCompletionParameters parameters, Consumer<LookupElement> result) {
+                                                  JavaSmartCompletionParameters parameters, Consumer<? super LookupElement> result) {
     final Object object = baseItem.getObject();
 
     try {

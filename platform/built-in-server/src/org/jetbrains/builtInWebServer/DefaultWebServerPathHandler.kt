@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -105,7 +105,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     }
 
     val canonicalPath = if (indexUsed) "$path/${pathInfo.name}" else path
-    for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
+    for (fileHandler in WebServerFileHandler.EP_NAME.extensionList) {
       LOG.runAndLogException {
         if (fileHandler.process(pathInfo, canonicalPath, project, request, channel, if (isCustomHost) null else projectName, extraHeaders)) {
           return true
@@ -141,7 +141,7 @@ private fun checkAccess(pathInfo: PathInfo, channel: Channel, request: HttpReque
 }
 
 private fun canBeAccessedDirectly(path: String): Boolean {
-  for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
+  for (fileHandler in WebServerFileHandler.EP_NAME.extensionList) {
     for (ext in fileHandler.pageFileExtensions) {
       if (FileUtilRt.extensionEquals(path, ext)) {
         return true

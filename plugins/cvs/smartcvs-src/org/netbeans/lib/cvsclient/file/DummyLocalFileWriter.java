@@ -1,9 +1,8 @@
 package org.netbeans.lib.cvsclient.file;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
 import java.nio.charset.Charset;
+import java.util.Date;
 
 /**
  * @author  Thomas Singer
@@ -13,22 +12,28 @@ public final class DummyLocalFileWriter
 
 	// Implemented ============================================================
 
-	public void writeTextFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IReaderFactory readerFactory,
+	@Override
+        public void writeTextFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IReaderFactory readerFactory,
                                   IFileReadOnlyHandler fileReadOnlyHandler, IFileSystem fileSystem, final Charset charSet) {
 	}
 
-	public void writeBinaryFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IFileReadOnlyHandler fileReadOnlyHandler, ICvsFileSystem cvsFileSystem) {
+	@Override
+        public void writeBinaryFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IFileReadOnlyHandler fileReadOnlyHandler, ICvsFileSystem cvsFileSystem) {
 	}
 
-	public void removeLocalFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler) {
+	@Override
+        public void removeLocalFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler) {
 	}
 
-	public void renameLocalFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, String newFileName) {
+	@Override
+        public void renameLocalFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, String newFileName) {
 	}
 
-	public void setNextFileDate(Date modifiedDate) {
+	@Override
+        public void setNextFileDate(Date modifiedDate) {
 	}
 
-	public void setNextFileMode(String nextFileMode) {
+	@Override
+        public void setNextFileMode(String nextFileMode) {
 	}
 }

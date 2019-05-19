@@ -61,7 +61,7 @@ public abstract class ModuleInsight {
     setRoots(Collections.emptyList(), Collections.emptyList(), Collections.emptySet());
   }
 
-  public final void setRoots(final List<File> contentRoots, final List<? extends DetectedSourceRoot> sourceRoots, final Set<String> ignoredNames) {
+  public final void setRoots(final List<? extends File> contentRoots, final List<? extends DetectedSourceRoot> sourceRoots, final Set<String> ignoredNames) {
     myModules = null;
     myLibraries = null;
 
@@ -148,7 +148,7 @@ public abstract class ModuleInsight {
     return myIgnoredNames.contains(sourceRoot.getName());
   }
 
-  protected void addModules(Collection<ModuleDescriptor> newModules) {
+  protected void addModules(Collection<? extends ModuleDescriptor> newModules) {
     if (myModules == null) {
       myModules = new ArrayList<>(newModules);
     }
@@ -285,8 +285,8 @@ public abstract class ModuleInsight {
     }
   }
 
-  public LibraryDescriptor splitLibrary(LibraryDescriptor library, String newLibraryName, final Collection<File> jarsToExtract) {
-    final LibraryDescriptor newLibrary = new LibraryDescriptor(newLibraryName, jarsToExtract);
+  public LibraryDescriptor splitLibrary(LibraryDescriptor library, String newLibraryName, final Collection<? extends File> jarsToExtract) {
+    final LibraryDescriptor newLibrary = new LibraryDescriptor(newLibraryName, new ArrayList<>(jarsToExtract));
     myLibraries.add(newLibrary);
     library.removeJars(jarsToExtract);
     if (library.getJars().size() == 0) {
@@ -296,7 +296,7 @@ public abstract class ModuleInsight {
   }
 
   @Nullable
-  public ModuleDescriptor splitModule(final ModuleDescriptor descriptor, String newModuleName, final Collection<File> contentsToExtract) {
+  public ModuleDescriptor splitModule(final ModuleDescriptor descriptor, String newModuleName, final Collection<? extends File> contentsToExtract) {
     ModuleDescriptor newModule = null;
     for (File root : contentsToExtract) {
       final Collection<DetectedSourceRoot> sources = descriptor.removeContentRoot(root);
@@ -341,7 +341,7 @@ public abstract class ModuleInsight {
     myLibraries.remove(lib);
   }
 
-  public void moveJarsToLibrary(final LibraryDescriptor from, Collection<File> files, LibraryDescriptor to) {
+  public void moveJarsToLibrary(final LibraryDescriptor from, Collection<? extends File> files, LibraryDescriptor to) {
     to.addJars(files);
     from.removeJars(files);
     // remove the library if it became empty
@@ -355,7 +355,7 @@ public abstract class ModuleInsight {
   }
 
   public static Collection<LibraryDescriptor> getLibraryDependencies(ModuleDescriptor module,
-                                                                     @Nullable List<LibraryDescriptor> allLibraries) {
+                                                                     @Nullable List<? extends LibraryDescriptor> allLibraries) {
     final Set<LibraryDescriptor> libs = new HashSet<>();
     if (allLibraries != null) {
       for (LibraryDescriptor library : allLibraries) {
@@ -388,7 +388,7 @@ public abstract class ModuleInsight {
   }
 
 
-  private static List<LibraryDescriptor> buildInitialLibrariesLayout(final Set<File> jars) {
+  private static List<LibraryDescriptor> buildInitialLibrariesLayout(final Set<? extends File> jars) {
     final Map<File, LibraryDescriptor> rootToLibraryMap = new HashMap<>();
     for (File jar : jars) {
       final File parent = jar.getParentFile();
@@ -402,7 +402,7 @@ public abstract class ModuleInsight {
     return new ArrayList<>(rootToLibraryMap.values());
   }
 
-  private void scanSources(final File fromRoot, final String parentPackageName, final Set<String> usedPackages, final Set<String> selfPackages) {
+  private void scanSources(final File fromRoot, final String parentPackageName, final Set<? super String> usedPackages, final Set<? super String> selfPackages) {
     if (isIgnoredName(fromRoot)) {
       return;
     }
@@ -430,7 +430,7 @@ public abstract class ModuleInsight {
 
   protected abstract boolean isSourceFile(final File file);
 
-  private void scanSourceFile(File file, final Set<String> usedPackages) {
+  private void scanSourceFile(File file, final Set<? super String> usedPackages) {
     myProgress.setText2(file.getName());
     try {
       final char[] chars = FileUtil.loadFileText(file);

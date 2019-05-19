@@ -29,8 +29,8 @@ import java.beans.PropertyChangeListener;
  * @author Sergey.Malenkov
  */
 final class KeyboardShortcutPanel extends ShortcutPanel<KeyboardShortcut> {
-  final ShortcutTextField myFirstStroke = new ShortcutTextField();
-  final ShortcutTextField mySecondStroke = new ShortcutTextField();
+  final ShortcutTextField myFirstStroke;
+  final ShortcutTextField mySecondStroke;
   final JCheckBox mySecondStrokeEnable = new JCheckBox();
 
   private final ItemListener myItemListener = new ItemListener() {
@@ -40,9 +40,7 @@ final class KeyboardShortcutPanel extends ShortcutPanel<KeyboardShortcut> {
       mySecondStroke.setEnabled(enabled);
       ShortcutTextField component = !enabled || null == myFirstStroke.getKeyStroke() ? myFirstStroke : mySecondStroke;
       setShortcut(newShortcut());
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(component, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
     }
   };
   private final PropertyChangeListener myPropertyListener = new PropertyChangeListener() {
@@ -51,14 +49,10 @@ final class KeyboardShortcutPanel extends ShortcutPanel<KeyboardShortcut> {
       if (KeyboardShortcutPanel.this != event.getSource()) {
         setShortcut(newShortcut());
         if (null == myFirstStroke.getKeyStroke()) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myFirstStroke, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myFirstStroke, true));
         }
         else if (null == mySecondStroke.getKeyStroke() && mySecondStrokeEnable.isSelected()) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(mySecondStroke, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(mySecondStroke, true));
         }
       }
       else if (event.getNewValue() instanceof KeyboardShortcut) {
@@ -73,8 +67,10 @@ final class KeyboardShortcutPanel extends ShortcutPanel<KeyboardShortcut> {
     }
   };
 
-  KeyboardShortcutPanel(LayoutManager layout) {
+  KeyboardShortcutPanel(boolean isFocusTraversalKeysEnabled, LayoutManager layout) {
     super(layout);
+    myFirstStroke = new ShortcutTextField(isFocusTraversalKeysEnabled);
+    mySecondStroke = new ShortcutTextField(isFocusTraversalKeysEnabled);
     addPropertyChangeListener("shortcut", myPropertyListener);
     myFirstStroke.addPropertyChangeListener("keyStroke", myPropertyListener);
     mySecondStroke.addPropertyChangeListener("keyStroke", myPropertyListener);

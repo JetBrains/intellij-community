@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * @since Feb 10, 2005
  */
 @State(name = "DependenciesAnalyzeManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class DependenciesAnalyzeManager implements PersistentStateComponent<DependenciesAnalyzeManager.State> {

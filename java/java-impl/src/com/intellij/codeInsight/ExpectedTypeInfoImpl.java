@@ -159,8 +159,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
         if (info1.type.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {info1};
       }
       else if (info1.kind == TYPE_OR_SUBTYPE) {
-        PsiType otherType = info1.type;
-        if (otherType.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {this};
+        if (info1.type.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {this};
       }
       else if (info1.kind == TYPE_OR_SUPERTYPE) {
         PsiType otherType = info1.type;

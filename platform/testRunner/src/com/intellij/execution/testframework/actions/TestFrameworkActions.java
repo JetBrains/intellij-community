@@ -28,6 +28,7 @@ public class TestFrameworkActions {
   public static void installFilterAction(final TestFrameworkRunningModel model) {
     final TestConsoleProperties properties = model.getProperties();
     final TestFrameworkPropertyListener<Boolean> propertyListener = new TestFrameworkPropertyListener<Boolean>() {
+        @Override
         public void onChanged(final Boolean value) {
           model.setFilter(getFilter(properties));
         }
@@ -69,6 +70,7 @@ public class TestFrameworkActions {
       properties.addListener(property, propertyListener);
     }
     Disposer.register(model, new Disposable() {
+      @Override
       public void dispose() {
         properties.removeListener(property, propertyListener);
       }

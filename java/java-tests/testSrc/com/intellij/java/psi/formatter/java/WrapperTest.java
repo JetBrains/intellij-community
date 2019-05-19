@@ -538,4 +538,13 @@ public class WrapperTest extends JavaFormatterTestCase {
                "}");
 
   }
+
+
+  public void testWrappingBeforeNewLinedBlock() throws Exception {
+    // Inspired by IDEA-67968
+
+    defaultCodeStyle();
+
+    doTest("NewLineBlock", "NewLineBlock_after");
+  }
 }

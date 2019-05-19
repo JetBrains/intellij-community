@@ -29,6 +29,7 @@ public class GrShiftExpressionImpl extends GrBinaryExpressionImpl {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Shift expression";
   }

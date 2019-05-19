@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.impl.cache.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -40,9 +27,10 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.FindClassUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -79,6 +67,20 @@ public class FindClassTest extends PsiTestCase {
   public void testSimple() {
     PsiClass psiClass = myJavaFacade.findClass("p.A");
     assertEquals("p.A", psiClass.getQualifiedName());
+  }
+
+  public void testClassDuplicatedInResourceRoot() {
+    WriteAction.run(() -> {
+      //duplicate class in resource directory
+      VirtualFile resourceDir = createChildDirectory(myPrjDir1, "rSrc1");
+      VirtualFile file1 = createChildData(createChildDirectory(resourceDir, "p"), "A.java");
+      setFileText(file1, "package p; public class A{ public void foo(); }");
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      PsiTestUtil.addSourceRoot(myModule, resourceDir, JavaResourceRootType.RESOURCE);
+
+      PsiClass[] classes = myJavaFacade.findClasses("p.A", GlobalSearchScope.allScope(myProject));
+      assertSize(1, classes);
+    });
   }
 
   public void testClassUnderExcludedFolder() {
@@ -180,7 +182,7 @@ public class FindClassTest extends PsiTestCase {
   }
 
   private List<Module> configureTwoMoreModules() {
-    final List<Module> newModules = ContainerUtil.newArrayList();
+    final List<Module> newModules = new ArrayList<>();
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableModuleModel modifiableModel = ModuleManager.getInstance(getProject()).getModifiableModel();
       Module module2 = modifiableModel.newModule("a.iml", StdModuleTypes.JAVA.getId());

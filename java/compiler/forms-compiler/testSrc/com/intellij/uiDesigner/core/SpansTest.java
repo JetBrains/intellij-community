@@ -21,6 +21,13 @@ import javax.swing.*;
 import java.awt.*;
 
 public final class SpansTest extends TestCase {
+  public static void setDefaults(Component component) {
+    // GridLayoutManager use min and max component size for calc final size: com.intellij.uiDesigner.core.Util.adjustSize
+    // sets min size < avg values in tests
+    // sets max size > avg values in tests
+    component.setMinimumSize(new Dimension(10, 10));
+    component.setMaximumSize(new Dimension(1000, 10));
+  }
 
   /**
    * button(can grow) | text field (want grow)
@@ -31,12 +38,15 @@ public final class SpansTest extends TestCase {
     final JPanel panel = new JPanel(layout);
 
     final JButton button = new JButton();
+    setDefaults(button);
     button.setPreferredSize(new Dimension(80, 10));
 
     final JTextField field1 = new JTextField();
+    setDefaults(field1);
     field1.setPreferredSize(new Dimension(50, 10));
 
     final JTextField field2 = new JTextField();
+    setDefaults(field2);
 
     panel.add(button, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
@@ -46,6 +56,8 @@ public final class SpansTest extends TestCase {
 
     panel.add(field2, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     assertEquals(130, panel.getPreferredSize().width);
 
@@ -66,12 +78,15 @@ public final class SpansTest extends TestCase {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), 0, 0));
 
     final JButton button = new JButton();
+    setDefaults(button);
     button.setPreferredSize(new Dimension(80, 10));
 
     final JTextField field1 = new JTextField();
+    setDefaults(field1);
     field1.setPreferredSize(new Dimension(80, 10));
 
     final JTextField field2 = new JTextField();
+    setDefaults(field2);
 
     panel.add(button, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
@@ -81,6 +96,8 @@ public final class SpansTest extends TestCase {
 
     panel.add(field2, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     assertEquals(160, panel.getPreferredSize().width);
 
@@ -99,9 +116,11 @@ public final class SpansTest extends TestCase {
     final JPanel panel = new JPanel(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), 0, 0));
 
     final JButton button = new JButton();
+    setDefaults(button);
     button.setPreferredSize(new Dimension(80, 10));
 
     final JTextField field1 = new JTextField();
+    setDefaults(field1);
     field1.setPreferredSize(new Dimension(110, 10));
 
     panel.add(button, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
@@ -109,6 +128,8 @@ public final class SpansTest extends TestCase {
 
     panel.add(field1, new GridConstraints(0, 1, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     assertEquals(190, panel.getPreferredSize().width);
 
@@ -128,12 +149,15 @@ public final class SpansTest extends TestCase {
     final JPanel panel = new JPanel(layoutManager);
 
     final JButton button = new JButton();
+    setDefaults(button);
     button.setPreferredSize(new Dimension(50, 10));
 
     final JTextField field1 = new JTextField();
+    setDefaults(field1);
     field1.setPreferredSize(new Dimension(110, 10));
 
     final JTextField field2 = new JTextField();
+    setDefaults(field2);
     field2.setPreferredSize(new Dimension(110, 10));
 
     panel.add(button, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
@@ -144,6 +168,8 @@ public final class SpansTest extends TestCase {
 
     panel.add(field2, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     final Dimension preferredSize = panel.getPreferredSize();
 

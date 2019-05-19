@@ -69,7 +69,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
 
   private PsiClass getBaseClass() {
     PsiElement parent = getParent();
-    LOG.assertTrue(parent instanceof PsiEnumConstant);
+    LOG.assertTrue(parent instanceof PsiEnumConstant, parent);
     PsiClass containingClass = ((PsiEnumConstant)parent).getContainingClass();
     LOG.assertTrue(containingClass != null);
     return containingClass;
@@ -85,7 +85,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   @NotNull
   public PsiClassType getBaseClassType() {
     if (myCachedBaseType == null) {
-      myCachedBaseType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getBaseClass());
+      myCachedBaseType = JavaPsiFacade.getElementFactory(getProject()).createType(getBaseClass());
     }
     return myCachedBaseType;
   }
@@ -161,6 +161,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
     }
   }
 
+  @Override
   public String toString() {
     return "PsiAnonymousClass (PsiEnumConstantInitializerImpl)):";
   }

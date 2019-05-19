@@ -26,12 +26,13 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,6 +52,7 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
  * (a java implementation: https://github.com/atteo/evo-inflector)
  *
  * @author gregsh
+ * @noinspection SpellCheckingInspection
  */
 class Pluralizer {
 
@@ -59,8 +61,8 @@ class Pluralizer {
   private final Map<String, String> irregularSingles = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
   private final Map<String, String> irregularPlurals = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
   private final Set<String> uncountables = ContainerUtil.newTroveSet(CaseInsensitiveStringHashingStrategy.INSTANCE);
-  private final List<Pair<Pattern, String>> pluralRules = ContainerUtil.newArrayList();
-  private final List<Pair<Pattern, String>> singularRules = ContainerUtil.newArrayList();
+  private final List<Pair<Pattern, String>> pluralRules = new ArrayList<>();
+  private final List<Pair<Pattern, String>> singularRules = new ArrayList<>();
 
   /**
    * Pass in a word token to produce a function that can replicate the case on
@@ -96,7 +98,7 @@ class Pluralizer {
   /**
    * Sanitize a word by passing in the word and sanitization rules.
    */
-  private String sanitizeWord(String word, List<Pair<Pattern, String>> rules) {
+  private String sanitizeWord(String word, List<? extends Pair<Pattern, String>> rules) {
     if (StringUtil.isEmpty(word) || uncountables.contains(word)) return word;
 
     int len = rules.size();
@@ -115,7 +117,7 @@ class Pluralizer {
    * Replace a word with the updated word.
    * @return null if no applicable rules found
    */
-  private String replaceWord(String word, Map<String, String> replaceMap, Map<String, String> keepMap, List<Pair<Pattern, String>> rules) {
+  private String replaceWord(String word, Map<String, String> replaceMap, Map<String, String> keepMap, List<? extends Pair<Pattern, String>> rules) {
     if (StringUtil.isEmpty(word)) return word;
 
     // Get the correct token and case restoration functions.
@@ -135,7 +137,8 @@ class Pluralizer {
   /**
    * Pluralize or singularize a word based on the passed in count.
    */
-  public String pluralize(String word, int count, boolean inclusive) {
+  @NotNull
+  public String pluralize(@NotNull String word, int count, boolean inclusive) {
     String pluralized = count == 1 ? singular(word) : plural(word);
 
     return (inclusive ? count + " " : "") + notNullize(pluralized, word);
@@ -180,8 +183,8 @@ class Pluralizer {
   }
 
   static {
-    final Pluralizer pluralizer = new Pluralizer(); 
-    
+    final Pluralizer pluralizer = new Pluralizer();
+
     /*
      * Irregular rules.
      */
@@ -238,12 +241,7 @@ class Pluralizer {
       {"groove", "grooves"},
       {"pickaxe", "pickaxes"},
       {"whiskey", "whiskies"}
-    }).consumeEach(new Consumer<String[]>() {
-      @Override
-      public void consume(String[] o) {
-        pluralizer.addIrregularRule(o[0], o[1]);
-      }
-    });
+    }).consumeEach(o -> pluralizer.addIrregularRule(o[0], o[1]));
 
     /*
      * Pluralization rules.
@@ -272,12 +270,7 @@ class Pluralizer {
       {"/(child)(?:ren)?$", "$1ren"},
       {"/eaux$", "$0"},
       {"/m[ae]n$", "men"},
-    }).consumeEach(new Consumer<String[]>() {
-      @Override
-      public void consume(String[] o) {
-        pluralizer.addPluralRule(o[0], o[1]);
-      }
-    });
+    }).consumeEach(o -> pluralizer.addPluralRule(o[0], o[1]));
 
     /*
      * Singularization rules.
@@ -310,12 +303,7 @@ class Pluralizer {
       {"/(child)ren$", "$1"},
       {"/(eau)x?$", "$1"},
       {"/men$", "man"}
-    }).consumeEach(new Consumer<String[]>() {
-      @Override
-      public void consume(String[] o) {
-        pluralizer.addSingularRule(o[0], o[1]);
-      }
-    });
+    }).consumeEach(o -> pluralizer.addSingularRule(o[0], o[1]));
     /*
      * Uncountable rules.
      */
@@ -414,12 +402,7 @@ class Pluralizer {
       "/o[iu]s$", // "carnivorous"
       "/pox$", // "chickpox", "smallpox"
       "/sheep$"
-    ).consumeEach(new Consumer<String>() {
-      @Override
-      public void consume(String o) {
-        pluralizer.addUncountableRule(o);
-      }
-    });
+    ).consumeEach(pluralizer::addUncountableRule);
 
     PLURALIZER = pluralizer;
   }

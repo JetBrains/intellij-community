@@ -46,6 +46,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     return new TestClassFilter(this.scope.intersectWith(scope), project, includeConfig, checkClassCanBeInstantiated);
   }
 
+  @Override
   public boolean isAccepted(final PsiClass psiClass) {
     return ReadAction.compute(() -> {
       if (!ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(psiClass)) return false;
@@ -82,6 +83,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     return project;
   }
 
+  @Override
   public GlobalSearchScope getScope() {
     return scope;
   }

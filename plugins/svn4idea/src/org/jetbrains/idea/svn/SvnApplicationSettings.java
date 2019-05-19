@@ -45,12 +45,14 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
     myConfigurationBean = new ConfigurationBean();
   }
 
+  @Override
   public ConfigurationBean getState() {
     myConfigurationBean.myTypedURLs.clear();
     myConfigurationBean.myTypedURLs.addAll(getTypedList().getList());
     return myConfigurationBean;
   }
 
+  @Override
   public void loadState(@NotNull ConfigurationBean object) {
     myConfigurationBean = object;
     getTypedList();

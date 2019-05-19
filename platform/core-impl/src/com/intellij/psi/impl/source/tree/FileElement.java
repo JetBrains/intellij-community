@@ -19,7 +19,9 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.*;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
@@ -70,16 +72,13 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
     super(type, text);
   }
 
-  @Deprecated  // for 8.1 API compatibility
-  public FileElement(IElementType type) {
-    super(type, null);
-  }
-
   @Override
   public PsiManagerEx getManager() {
     CompositeElement treeParent = getTreeParent();
     if (treeParent != null) return treeParent.getManager();
-    return (PsiManagerEx)getPsi().getManager(); //TODO: cache?
+    PsiElement psi = getPsi();
+    if (psi == null) throw PsiInvalidElementAccessException.createByNode(this, null);
+    return (PsiManagerEx)psi.getManager();
   }
 
   @Override
@@ -114,7 +113,7 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
 
       result = RecursionManager.doPreventingRecursion(file, false, () -> new AstSpine(calcStubbedDescendants(type.getBuilder())));
       if (result == null) {
-        throw new StackOverflowError("Endless recursion prevented");
+        throw new StackOverflowPreventedException("Endless recursion prevented");
       }
       myStubbedSpine = result;
     }

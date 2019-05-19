@@ -9,12 +9,25 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.util.*
-import com.intellij.util.VisibilityUtil
 import java.util.*
 import kotlin.collections.ArrayList
 
 internal fun PsiExpression.isInStaticContext(): Boolean {
   return isWithinStaticMember() || isWithinConstructorCall()
+}
+
+internal fun PsiExpression.isWithinStaticMemberOf(clazz: PsiClass): Boolean {
+  var currentPlace: PsiElement = this
+  while (true) {
+    val enclosingMember = currentPlace.parentOfType<PsiMember>() ?: return false
+    val enclosingClass = enclosingMember.containingClass ?: return false
+    if (enclosingClass == clazz) {
+      return enclosingMember.hasModifierProperty(PsiModifier.STATIC)
+    }
+    else {
+      currentPlace = enclosingClass.parent ?: return false
+    }
+  }
 }
 
 internal fun PsiExpression.isWithinStaticMember(): Boolean {
@@ -47,14 +60,12 @@ internal fun computeVisibility(project: Project, ownerClass: PsiClass?, targetCl
     }
   }
   val setting = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings::class.java).VISIBILITY
-  if (setting == VisibilityUtil.ESCALATE_VISIBILITY) {
-    return null // TODO
-  }
-  else if (setting == PsiModifier.PACKAGE_LOCAL) {
-    return JvmModifier.PACKAGE_LOCAL
-  }
-  else {
-    return JvmModifier.valueOf(setting.toUpperCase())
+  return when (setting) {
+    PsiModifier.PUBLIC -> JvmModifier.PUBLIC
+    PsiModifier.PROTECTED -> JvmModifier.PROTECTED
+    PsiModifier.PACKAGE_LOCAL -> JvmModifier.PACKAGE_LOCAL
+    PsiModifier.PRIVATE -> JvmModifier.PRIVATE
+    else -> null // TODO escalate visibility
   }
 }
 

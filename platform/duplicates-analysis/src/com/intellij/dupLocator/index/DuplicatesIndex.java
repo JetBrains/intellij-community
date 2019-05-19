@@ -46,7 +46,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * @by Maxim.Mossienko on 12/11/13.
+ * @author Maxim.Mossienko on 12/11/13.
  */
 public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayList> implements PsiDependentIndex {
   static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.duplicates.online.calculation",
@@ -122,11 +122,11 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
       if (profile == null || !profile.acceptsContentForIndexing(inputData)) return Collections.emptyMap();
 
       try {
-        FileContentImpl fileContent = (FileContentImpl)inputData;
+        PsiDependentFileContent fileContent = (PsiDependentFileContent)inputData;
 
         if (profile instanceof LightDuplicateProfile && ourEnabledLightProfiles) {
           final THashMap<Integer, TIntArrayList> result = new THashMap<>();
-          LighterAST ast = fileContent.getLighterASTForPsiDependentIndex();
+          LighterAST ast = fileContent.getLighterAST();
 
           ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
             @Override
@@ -144,7 +144,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
         MyFragmentsCollector collector = new MyFragmentsCollector(profile, ((LanguageFileType)type).getLanguage());
         DuplocateVisitor visitor = profile.createVisitor(collector, true);
 
-        visitor.visitNode(fileContent.getPsiFileForPsiDependentIndex());
+        visitor.visitNode(fileContent.getPsiFile());
 
         return collector.getMap();
       } catch (StackOverflowError ae) {
@@ -211,7 +211,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     private final DuplicatesProfile myProfile;
     private final DuplocatorState myDuplocatorState;
 
-    public MyFragmentsCollector(DuplicatesProfile profile, Language language) {
+    MyFragmentsCollector(DuplicatesProfile profile, Language language) {
       myProfile = profile;
       myDuplocatorState = profile.getDuplocatorState(language);
     }

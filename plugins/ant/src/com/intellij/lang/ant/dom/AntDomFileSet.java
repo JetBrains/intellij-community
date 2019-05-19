@@ -17,7 +17,6 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntFilesProvider;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -42,6 +41,7 @@ public abstract class AntDomFileSet extends AntDomFilesProviderImpl{
   @Convert(value = AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
+  @Override
   @NotNull protected List<File> getFiles(@Nullable AntDomPattern pattern, Set<AntFilesProvider> processed) {
     assert pattern != null;
     final File singleFile = getCanonicalFile(getFile().getStringValue());
@@ -68,7 +68,7 @@ public abstract class AntDomFileSet extends AntDomFilesProviderImpl{
     private int myDirsProcessed = 0;
     private boolean myDirCheckEnabled = false;
 
-    public void collectFiles(List<File> container, File from, String relativePath, final AntDomPattern pattern) {
+    public void collectFiles(List<? super File> container, File from, String relativePath, final AntDomPattern pattern) {
       if (myDirsProcessed > MAX_DIRS_TO_PROCESS) {
         return;
       }
@@ -97,13 +97,7 @@ public abstract class AntDomFileSet extends AntDomFilesProviderImpl{
       if (parentPath.length() == 0) {
         return name;
       }
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        return builder.append(parentPath).append("/").append(name).toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
-      }
+      return parentPath + "/" + name;
     }
 
   }

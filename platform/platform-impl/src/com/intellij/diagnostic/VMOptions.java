@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -171,42 +170,24 @@ public class VMOptions {
       return null;
     }
 
-    String fileName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    return new File(location, getCustomVMOptionsFileName());
+  }
+
+  @NotNull
+  public static String getCustomVMOptionsFileName() {
+    String fileName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
     if (SystemInfo.is64Bit && !SystemInfo.isMac) fileName += "64";
     if (SystemInfo.isWindows) fileName += ".exe";
     fileName += ".vmoptions";
-    return new File(location, fileName);
+    return fileName;
   }
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
+  @Deprecated
   public static int readXmx() {
     return readOption(MemoryKind.HEAP, true);
   }
 
-  /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
-  public static int readMaxPermGen() {
-    return readOption(MemoryKind.PERM_GEN, true);
-  }
-
-  /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
-  public static int readCodeCache() {
-    return readOption(MemoryKind.CODE_CACHE, true);
-  }
-
-  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
-  public static void writeXmx(int value) {
-    writeOption(MemoryKind.HEAP, value);
-  }
-
-  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
-  public static void writeMaxPermGen(int value) {
-    writeOption(MemoryKind.PERM_GEN, value);
-  }
-
-  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
-  public static void writeCodeCache(int value) {
-    writeOption(MemoryKind.CODE_CACHE, value);
-  }
   //</editor-fold>
 }

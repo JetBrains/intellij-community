@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,10 +61,15 @@ public class AppScheduledExecutorServiceTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    service.shutdownAppScheduledExecutorService();
-    assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
-    service = null;
-    super.tearDown();
+    try {
+      service.shutdownAppScheduledExecutorService();
+      assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
+    }
+    finally {
+      service = null;
+
+      super.tearDown();
+    }
   }
 
   public void testDelayedWorks() throws InterruptedException {
@@ -256,7 +261,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
     List<SchedulingWrapper.MyScheduledFutureTask> queuedTasks = new ArrayList<>(service.delayQueue);
     if (!queuedTasks.isEmpty()) {
-      String s = queuedTasks.stream().map(BoundedTaskExecutor::info).collect(Collectors.toList()).toString();
+      String s = ContainerUtil.map(queuedTasks, BoundedTaskExecutor::info).toString();
       fail("Queued tasks left: "+s + ";\n"+queuedTasks);
     }
     service.shutdownAppScheduledExecutorService();

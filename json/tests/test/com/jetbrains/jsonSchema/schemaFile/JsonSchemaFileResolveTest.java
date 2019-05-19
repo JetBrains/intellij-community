@@ -40,7 +40,10 @@ public class JsonSchemaFileResolveTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(position);
         PsiElement resolve = position.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("\"baseEnum\"", resolve.getText());
+        Assert.assertEquals("{\n" +
+                            "      \"type\": \"string\",\n" +
+                            "      \"enum\": [\"one\", \"two\"]\n" +
+                            "    }", resolve.getText());
       }
 
       @Override

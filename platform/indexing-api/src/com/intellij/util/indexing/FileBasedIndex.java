@@ -29,12 +29,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -43,9 +44,15 @@ import java.util.Set;
 public abstract class FileBasedIndex {
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
 
-  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
+  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, @NotNull ProgressIndicator indicator) {
     iterateIndexableFiles(processor, project, indicator);
   }
+
+  /**
+   * @return the file which the current thread is indexing right now, or null if current thread isn't indexing.
+   */
+  @Nullable
+  public abstract VirtualFile getFileBeingCurrentlyIndexed();
 
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
 
@@ -69,7 +76,7 @@ public abstract class FileBasedIndex {
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
     requestRebuild(indexId, new Throwable());
   }
-  
+
   @NotNull
   public abstract <K, V> List<V> getValues(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope filter);
 
@@ -84,7 +91,7 @@ public abstract class FileBasedIndex {
   public abstract <K, V> boolean processValues(@NotNull ID<K, V> indexId,
                                                @NotNull K dataKey,
                                                @Nullable VirtualFile inFile,
-                                               @NotNull FileBasedIndex.ValueProcessor<V> processor,
+                                               @NotNull ValueProcessor<? super V> processor,
                                                @NotNull GlobalSearchScope filter);
 
   /**
@@ -93,17 +100,17 @@ public abstract class FileBasedIndex {
   public <K, V> boolean processValues(@NotNull ID<K, V> indexId,
                                                @NotNull K dataKey,
                                                @Nullable VirtualFile inFile,
-                                               @NotNull FileBasedIndex.ValueProcessor<V> processor,
+                                               @NotNull ValueProcessor<? super V> processor,
                                                @NotNull GlobalSearchScope filter,
                                                @Nullable IdFilter idFilter) {
     return processValues(indexId, dataKey, inFile, processor, filter);
   }
 
   public abstract <K, V> boolean processFilesContainingAllKeys(@NotNull ID<K, V> indexId,
-                                                               @NotNull Collection<K> dataKeys,
+                                                               @NotNull Collection<? extends K> dataKeys,
                                                                @NotNull GlobalSearchScope filter,
-                                                               @Nullable Condition<V> valueChecker,
-                                                               @NotNull Processor<VirtualFile> processor);
+                                                               @Nullable Condition<? super V> valueChecker,
+                                                               @NotNull Processor<? super VirtualFile> processor);
 
   /**
    * @param project it is guaranteed to return data which is up-to-date withing the project
@@ -125,24 +132,27 @@ public abstract class FileBasedIndex {
   public abstract void requestReindex(@NotNull VirtualFile file);
 
   public abstract <K, V> boolean getFilesWithKey(@NotNull ID<K, V> indexId,
-                                                 @NotNull Set<K> dataKeys,
-                                                 @NotNull Processor<VirtualFile> processor,
+                                                 @NotNull Set<? extends K> dataKeys,
+                                                 @NotNull Processor<? super VirtualFile> processor,
                                                  @NotNull GlobalSearchScope filter);
 
   /**
    * @param project it is guaranteed to return data which is up-to-date withing the project
-   *                Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
-  public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<K> processor, @Nullable Project project);
+  public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project);
 
-  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     return processAllKeys(indexId, processor, scope.getProject());
   }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project);
 
   public static void iterateRecursively(@Nullable final VirtualFile root,
                                         @NotNull final ContentIterator processor,
                                         @Nullable final ProgressIndicator indicator,
-                                        @Nullable final Set<VirtualFile> visitedRoots,
+                                        @Nullable final Set<? super VirtualFile> visitedRoots,
                                         @Nullable final ProjectFileIndex projectFileIndex) {
     if (root == null) {
       return;
@@ -170,10 +180,7 @@ public abstract class FileBasedIndex {
         if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
           return false;
         }
-        if (projectFileIndex != null && ReadAction.compute(() -> projectFileIndex.isExcluded(file))) {
-          return false;
-        }
-        return true;
+        return projectFileIndex == null || !ReadAction.compute(() -> projectFileIndex.isExcluded(file));
       }
     });
   }
@@ -201,7 +208,7 @@ public abstract class FileBasedIndex {
     void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
   }
 
-  // TODO: remove once changes becomes permanent
-  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping =
-    SystemProperties.getBooleanProperty("idea.enable.tracing.keyhash2virtualfile", true);
+  /** @deprecated inline true */
+  @Deprecated
+  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
 }

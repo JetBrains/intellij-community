@@ -21,10 +21,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.StdModuleTypes
@@ -45,10 +42,12 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.ui.JBColor
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 /**
  * @author peter
  */
+@CompileStatic
 class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
@@ -105,11 +104,7 @@ class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java")
     myFixture.complete(CompletionType.BASIC, 2)
-    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myFixture.getEditor())
-    LookupElement[] myItems = lookup.getItems().toArray(LookupElement.EMPTY_ARRAY)
-    assertEquals(2, myItems.length)
-    assertEquals("AxBxCxDxEx", myItems[1].getLookupString())
-    assertEquals("AyByCyDyEy", myItems[0].getLookupString())
+    assert myFixture.lookupElementStrings == ["AyByCyDyEy", "AxBxCxDxEx"]
   }
   
   static class CacheVerifyingContributor extends CompletionContributor {
@@ -146,7 +141,7 @@ class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
 
   void testPreferOwnMethods() {
     def nanoUrls = IntelliJProjectConfiguration.getProjectLibraryClassesRootUrls("NanoXML")
-    ModuleRootModificationUtil.addModuleLibrary(myModule, 'nano1', nanoUrls, [])
+    ModuleRootModificationUtil.addModuleLibrary(module, 'nano1', nanoUrls, [])
 
     assert JavaPsiFacade.getInstance(project).findClass('net.n3.nanoxml.StdXMLParser', GlobalSearchScope.allScope(project))
 
@@ -188,7 +183,7 @@ public class Test {
   }
 
   void testForbiddenApiVariants() {
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_4)
+    IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_1_4)
     myFixture.addClass("""\
 package java.nio.channels;
 public class SocketChannel {
@@ -217,7 +212,7 @@ public class SocketChannel {
   }
 
   void "test seemingly scrambled subclass"() {
-    PsiTestUtil.addLibrary(myModule, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/normal/seemsScrambled.jar")
+    PsiTestUtil.addLibrary(module, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/normal/seemsScrambled.jar")
     myFixture.configureByText 'a.java', '''import test.Books;
 
 class Foo {{ Books.Test.v<caret> }}

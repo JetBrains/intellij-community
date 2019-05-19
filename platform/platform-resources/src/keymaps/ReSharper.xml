@@ -58,6 +58,9 @@
   <action id="RecentFiles">
     <keyboard-shortcut first-keystroke="control COMMA"/>
   </action>
+  <action id="SwitcherRecentEditedChangedToggleCheckBox">
+    <keyboard-shortcut first-keystroke="control COMMA"/>
+  </action>
   <action id="RenameElement">
     <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
   </action>
@@ -76,6 +79,9 @@
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
   <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
+  </action>
+  <action id="ChangesView.Rename">
     <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
   </action>
   <action id="ShelvedChanges.Rename">

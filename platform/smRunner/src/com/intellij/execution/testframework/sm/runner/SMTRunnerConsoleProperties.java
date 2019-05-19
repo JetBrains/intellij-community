@@ -30,10 +30,10 @@ import com.intellij.execution.testframework.sm.runner.history.actions.AbstractIm
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -189,7 +189,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
       }
     }
 
-    return new OpenFileDescriptor(project, file, offset);
+    return PsiNavigationSupport.getInstance().createNavigatable(project, file, offset);
   }
 
   public boolean fixEmptySuite() {

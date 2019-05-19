@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * version control.
  *
  * @see com.intellij.openapi.vcs.AbstractVcs#getRevisionSelector() 
- * @since 5.0.2
  */
 public interface RevisionSelector {
   /**

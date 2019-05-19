@@ -7,4 +7,4 @@ Groovy script
     PsiWhiteSpace(' ')
     Command arguments
       Literal
-        PsiElement(Gstring)('"preved!"')
+        PsiElement(double quoted string)('"preved!"')

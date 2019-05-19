@@ -24,6 +24,10 @@ public interface IntroduceVariableSettings {
   boolean isReplaceAllOccurrences();
 
   boolean isDeclareFinal();
+  
+  default boolean isDeclareVarType() {
+    return false;
+  }
 
   boolean isReplaceLValues();
 

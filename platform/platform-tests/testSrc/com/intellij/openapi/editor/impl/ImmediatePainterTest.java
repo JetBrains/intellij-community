@@ -76,6 +76,9 @@ public class ImmediatePainterTest extends AbstractEditorTest {
       getDefaultColorScheme().setColor(EditorColors.CARET_COLOR, myDefaultCaretColor);
       KeyboardFocusManager.setCurrentKeyboardFocusManager(myDefaultFocusManager);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

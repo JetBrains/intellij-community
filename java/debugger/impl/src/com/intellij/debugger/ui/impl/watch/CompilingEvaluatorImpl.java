@@ -75,7 +75,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
           platformClasspath.add(new File(s));
         }
       }
-      JavaBuilder.addAnnotationProcessingOptions(options, profile);
+      JavaBuilder.addAnnotationProcessingOptions(options, profile, false);
 
       Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
       JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
@@ -99,7 +99,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
         Set<File> sources = Collections.singleton(sourceFile);
 
         myCompiledClasses =
-          compilerManager.compileJavaCode(options, platformClasspath, classpath, Collections.emptyList(), sourcePath, sources, srcDir);
+          compilerManager.compileJavaCode(options, platformClasspath, classpath, Collections.emptyList(), Collections.emptyList(), sourcePath, sources, srcDir);
       }
       catch (CompilationException e) {
         StringBuilder res = new StringBuilder("Compilation failed:\n");
@@ -141,7 +141,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   @Nullable
   public static ExpressionEvaluator create(@NotNull Project project,
                                            @Nullable PsiElement psiContext,
-                                           @NotNull Function<PsiElement, PsiCodeFragment> fragmentFactory)
+                                           @NotNull Function<? super PsiElement, ? extends PsiCodeFragment> fragmentFactory)
     throws EvaluateException {
     if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
       return ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {

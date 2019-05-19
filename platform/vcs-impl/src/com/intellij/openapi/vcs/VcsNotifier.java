@@ -92,7 +92,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyWeakError(@NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, "", message, NotificationType.ERROR, (NotificationListener)null);
+    return notify(NOTIFICATION_GROUP_ID, "", message, NotificationType.ERROR);
   }
 
   @NotNull
@@ -112,7 +112,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyImportantInfo(@NotNull String title, @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.INFORMATION, (NotificationListener)null);
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.INFORMATION);
   }
 
   @NotNull
@@ -157,7 +157,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyImportantWarning(@NotNull String title, @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING, (NotificationListener)null);
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING);
   }
 
   @NotNull
@@ -180,7 +180,24 @@ public class VcsNotifier {
     return notify(STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, actions);
   }
 
+  @NotNull
+  public Notification notifyMinorInfo(boolean sticky, @NotNull String title, @NotNull String message, NotificationAction... actions) {
+    return notify(sticky ? IMPORTANT_ERROR_NOTIFICATION : STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, actions);
+  }
+
   public Notification logInfo(@NotNull String title, @NotNull String message) {
-    return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION, (NotificationListener)null);
+    return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION);
+  }
+
+  public void showNotificationAndHideExisting(@NotNull Notification notificationToShow, @NotNull Class<? extends Notification> klass) {
+    hideAllNotificationsByType(klass);
+    notificationToShow.notify(myProject);
+  }
+
+  public void hideAllNotificationsByType(@NotNull Class<? extends Notification> klass) {
+    NotificationsManager notificationsManager = NotificationsManager.getNotificationsManager();
+    for (Notification notification : notificationsManager.getNotificationsOfType(klass, myProject)) {
+      notification.expire();
+    }
   }
 }

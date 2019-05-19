@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.xml.util.XmlStringUtil;
 import org.fest.swing.core.Robot;
@@ -32,7 +33,6 @@ import javax.swing.text.JTextComponent;
 import java.awt.event.KeyEvent;
 import java.util.regex.Pattern;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -52,9 +52,7 @@ public class RenameRefactoringDialogFixture extends IdeaDialogFixture<RenameDial
     GuiActionRunner.execute(new GuiTask() {
       @Override
       protected void executeInEDT() throws Throwable {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(field, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(field, true));
       }
     });
     robot().pressAndReleaseKey(KeyEvent.VK_BACK_SPACE); // to make sure we don't append to existing item on Linux
@@ -64,7 +62,7 @@ public class RenameRefactoringDialogFixture extends IdeaDialogFixture<RenameDial
 
   @NotNull
   public RenameRefactoringDialogFixture clickRefactor() {
-    findAndClickButton(this, "Refactor");
+    GuiTestUtil.INSTANCE.findAndClickButton(this, "Refactor");
     return this;
   }
 
@@ -80,7 +78,7 @@ public class RenameRefactoringDialogFixture extends IdeaDialogFixture<RenameDial
 
     @NotNull
     public ConflictsDialogFixture clickContinue() {
-      findAndClickButton(this, "Continue");
+      GuiTestUtil.INSTANCE.findAndClickButton(this, "Continue");
       return this;
     }
 

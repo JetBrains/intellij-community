@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Irina.Chernushina on 3/7/2017.
  */
 public interface JsonLikePsiWalkerFactory {
-  ExtensionPointName<JsonLikePsiWalkerFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("Json.Like.Psi.Walker.Factory");
+  ExtensionPointName<JsonLikePsiWalkerFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.json.jsonLikePsiWalkerFactory");
 
   boolean handles(@NotNull PsiElement element);
 

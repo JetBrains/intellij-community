@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -30,9 +29,7 @@ import com.intellij.testFramework.fixtures.*;
 
 public class ExternalAnnotationsTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
-  private Module myModule;
-  private Project myProject;
- 
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -45,30 +42,29 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
 
     myFixture.setUp();
-    myModule = builder.getFixture().getModule();
+    Module myModule = builder.getFixture().getModule();
     ModuleRootModificationUtil.updateModel(myModule, model -> {
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
       model.addContentEntry(contentUrl).addSourceFolder(contentUrl + "/src", false);
       final JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
       extension.setExternalAnnotationUrls(new String[]{VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno")});
     });
-  
-    myProject = myFixture.getProject();
 
-    CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = true;
+    Project myProject = myFixture.getProject();
+
+    JavaCodeStyleSettings.getInstance(myProject).USE_EXTERNAL_ANNOTATIONS = true;
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = false;
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
-      myModule = null;
-      myProject = null;
-  
       super.tearDown();
     }
   }

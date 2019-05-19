@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.openapi.application.runWriteAction
@@ -15,9 +16,9 @@ import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
 
-private val EXCLUDED_DIR_NAME = "excludedDir"
+private const val EXCLUDED_DIR_NAME = "excludedDir"
 
-internal class TestManager(val projectRule: ProjectRule, private val tempDirManager: TemporaryDirectory) : TestWatcher() {
+internal class TestManager(private val projectRule: ProjectRule, private val tempDirManager: TemporaryDirectory) : TestWatcher() {
   var annotation: TestDescriptor? = null
 
   var filePath: String? = null

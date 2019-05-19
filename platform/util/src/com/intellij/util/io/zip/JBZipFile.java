@@ -1,18 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.zip.ZipException;
 
 /**
@@ -40,7 +39,7 @@ import java.util.zip.ZipException;
  * </ul>
  * </p>
  */
-public class JBZipFile {
+public class JBZipFile implements Closeable {
   static final int SHORT = 2;
   static final int WORD = 4;
 
@@ -51,12 +50,12 @@ public class JBZipFile {
   /**
    * A list of entries in the file.
    */
-  private final List<JBZipEntry> entries = new ArrayList<JBZipEntry>(HASH_SIZE);
+  private final List<JBZipEntry> entries = new ArrayList<>(HASH_SIZE);
 
   /**
    * A map of entry names.
    */
-  private final Map<String, JBZipEntry> nameMap = new HashMap<String, JBZipEntry>(HASH_SIZE);
+  private final Map<String, JBZipEntry> nameMap = new HashMap<>(HASH_SIZE);
 
   /**
    * The encoding to use for filenames and the file comment
@@ -81,7 +80,7 @@ public class JBZipFile {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(File f) throws IOException {
-    this(f, CharsetToolkit.UTF8_CHARSET);
+    this(f, StandardCharsets.UTF_8);
   }
 
   /**
@@ -92,7 +91,7 @@ public class JBZipFile {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(String name) throws IOException {
-    this(new File(name), CharsetToolkit.UTF8_CHARSET);
+    this(new File(name), StandardCharsets.UTF_8);
   }
 
   /**
@@ -155,6 +154,7 @@ public class JBZipFile {
    *
    * @throws IOException if an error occurs closing the archive.
    */
+  @Override
   public void close() throws IOException {
     if (myOutputStream != null) {
       if (entries.isEmpty()) {
@@ -422,10 +422,40 @@ public class JBZipFile {
     }
   }
 
+  /**
+   * Removes entry from the directory list.<br/>
+   * NB: it will NOT remove entry content from the stream, please call {@link JBZipFile#gc()} manually when you've finished modifying the
+   * archive.<br/>
+   * {@link JBZipFile#gc()} is not called on {@link JBZipFile#close()} due to potential performance impact of removing small entry from a
+   * big archive.
+   */
   public void eraseEntry(JBZipEntry entry) throws IOException {
     getOutputStream(); // Ensure OutputStream created, so we'll print out central directory at the end;
     entries.remove(entry);
     nameMap.remove(entry.getName());
+  }
+
+  public void gc() throws IOException {
+    if (myOutputStream != null) {
+      myOutputStream = null;
+
+      final Map<JBZipEntry, byte[]> existingEntries = new LinkedHashMap<>();
+      for (JBZipEntry entry : entries) {
+        existingEntries.put(entry, entry.getData());
+      }
+
+      currentCfdOffset = 0;
+      nameMap.clear();
+      entries.clear();
+      for (Map.Entry<JBZipEntry, byte[]> entry : existingEntries.entrySet()) {
+        JBZipEntry zipEntry = getOrCreateEntry(entry.getKey().getName());
+        zipEntry.setComment(entry.getKey().getComment());
+        zipEntry.setExtra(entry.getKey().getExtra());
+        zipEntry.setMethod(entry.getKey().getMethod());
+        zipEntry.setTime(entry.getKey().getTime());
+        zipEntry.setData(entry.getValue());
+      }
+    }
   }
 
   JBZipOutputStream getOutputStream() throws IOException {

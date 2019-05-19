@@ -28,7 +28,7 @@ public class PackageEntry {
 
   public PackageEntry(boolean isStatic, @NotNull @NonNls String packageName, boolean withSubpackages) {
     this.isStatic = isStatic;
-    myPackageName = packageName;
+    myPackageName = StringUtil.trimEnd(packageName, ".*");
     myWithSubpackages = withSubpackages;
   }
 

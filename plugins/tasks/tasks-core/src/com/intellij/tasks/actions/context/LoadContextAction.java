@@ -50,7 +50,7 @@ public class LoadContextAction extends BaseTaskAction {
   private static final int MAX_ROW_COUNT = 10;
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getProject(e);
     assert project != null;
     DefaultActionGroup group = new DefaultActionGroup();
@@ -124,8 +124,7 @@ public class LoadContextAction extends BaseTaskAction {
     final Ref<Boolean> shiftPressed = Ref.create(false);
     boolean today = true;
     Calendar now = Calendar.getInstance();
-    for (int i = 0, historySize = Math.min(MAX_ROW_COUNT, infos.size()); i < historySize; i++) {
-      final ContextHolder info = infos.get(i);
+    for (final ContextHolder info : infos) {
       Calendar calendar = Calendar.getInstance();
       calendar.setTime(info.getDate());
       if (today &&
@@ -180,13 +179,13 @@ public class LoadContextAction extends BaseTaskAction {
     }
     final AnAction loadAction = new AnAction("Load") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         holder.load(!shiftPressed.get());
       }
     };
     ActionGroup contextGroup = new ActionGroup(text, text, holder.getIcon()) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         loadAction.actionPerformed(e);
       }
 
@@ -196,14 +195,14 @@ public class LoadContextAction extends BaseTaskAction {
         return new AnAction[]{loadAction,
           new AnAction("Remove") {
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
               holder.remove();
             }
           }};
       }
 
       @Override
-      public boolean canBePerformed(DataContext context) {
+      public boolean canBePerformed(@NotNull DataContext context) {
         return true;
       }
 

@@ -1,40 +1,40 @@
 class T {
   void f(String[] a) {
-    for (String s : a)
+    <warning descr="'for' without braces">for</warning> (String s : a)
       System.out.println(s);
 
-    if (a.length == 0)
+    <warning descr="'if' without braces">if</warning> (a.length == 0)
       System.out.println("no");
-    else
+    <warning descr="'else' without braces">else</warning>
       System.out.println(a.length);
 
-    for (int i = 0; i < a.length; i++)
+    <warning descr="'for' without braces">for</warning> (int i = 0; i < a.length; i++)
       System.out.println(a[i]);
 
     int j = 0;
-    do System.out.println(a[j++]);
+    <warning descr="'do' without braces">do</warning> System.out.println(a[j++]);
     while (j < a.length);
 
     int k = 0;
-    while (k < a.length)
+    <warning descr="'while' without braces">while</warning> (k < a.length)
       System.out.println(a[k++]);
 
-    if (a.length == 0)
+    <warning descr="'if' without braces">if</warning> (a.length == 0)
       System.out.println("no");
 
     if (a.length == 0) {
-    } else
+    } <warning descr="'else' without braces">else</warning>
       System.out.println(a.length);
   }
 
   void ff(String[] a) {
-    if (a.length != 0)
-      for (String arg : a)
-        if (arg.length() > 1)
-          for (int i = 0; i < arg.length(); i++)
+    <warning descr="'if' without braces">if</warning> (a.length != 0)
+      <warning descr="'for' without braces">for</warning> (String arg : a)
+        <warning descr="'if' without braces">if</warning> (arg.length() > 1)
+          <warning descr="'for' without braces">for</warning> (int i = 0; i < arg.length(); i++)
             System.out.println(arg.charAt(i));
-        else System.out.println(0);
-    else System.out.println("no");
+        <warning descr="'else' without braces">else</warning> System.out.println(0);
+    <warning descr="'else' without braces">else</warning> System.out.println("no");
   }
 
   void fff(String[] a) {

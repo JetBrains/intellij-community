@@ -24,7 +24,6 @@ import static com.intellij.util.BitUtil.isSet;
  * Do not use this class directly.
  *
  * @author Dmitry Avdeev
- * @since 12.0
  */
 public class FileInfo {
   private static final int BROKEN_SYMLINK = -1;

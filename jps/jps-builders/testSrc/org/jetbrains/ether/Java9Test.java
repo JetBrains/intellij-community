@@ -14,6 +14,7 @@ public class Java9Test extends IncrementalTestCase {
     super("java9-features");
   }
 
+  @Override
   protected boolean shouldRunTest() {
     if (!SystemInfo.IS_AT_LEAST_JAVA9) {
       System.out.println("Test '" + getTestName(false) + "' skipped because it requires at least java 9 runtime");
@@ -22,6 +23,7 @@ public class Java9Test extends IncrementalTestCase {
     return super.shouldRunTest();
   }
 
+  @Override
   protected BuildResult doTestBuild(int makesCount) {
     setupModules();
     return super.doTestBuild(makesCount);

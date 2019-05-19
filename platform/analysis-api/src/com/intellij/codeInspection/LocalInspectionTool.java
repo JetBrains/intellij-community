@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author max
- */
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public static final LocalInspectionTool[] EMPTY_ARRAY = new LocalInspectionTool[0];
 
@@ -35,14 +32,15 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    */
   @NonNls @Language("RegExp")
   public static final String VALID_ID_PATTERN = "[a-zA-Z_0-9.-]+";
+  private static final java.util.regex.Pattern COMPILED_VALID_ID_PATTERN = java.util.regex.Pattern.compile(VALID_ID_PATTERN);
 
   public static boolean isValidID(@NotNull String id) {
-    return !id.isEmpty() && id.matches(VALID_ID_PATTERN);
+    return !id.isEmpty() && COMPILED_VALID_ID_PATTERN.matcher(id).matches();
   }
 
   /**
    * If you want to change suppression id you have to define it in XML as well.
-   * 
+   *
    * <p>Inspection tool ID is a descriptive name to be used in "suppress" comments and annotations.
    * <p>It must satisfy {@link #VALID_ID_PATTERN} regexp pattern.
    * <p>If not defined {@link #getShortName()} is used as tool ID.

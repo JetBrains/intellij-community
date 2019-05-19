@@ -16,24 +16,26 @@
 
 package com.intellij.application.options.colors;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 public interface ColorAndFontSettingsListener extends EventListener {
-  void selectedOptionChanged(final Object selected);
-  void schemeChanged(final Object source);
+  void selectedOptionChanged(@NotNull Object selected);
+  void schemeChanged(@NotNull Object source);
   void settingsChanged();
-  void selectionInPreviewChanged(final String typeToSelect);
+  void selectionInPreviewChanged(@NotNull String typeToSelect);
 
   void fontChanged();
 
   abstract class Abstract implements ColorAndFontSettingsListener {
     @Override
-    public void selectedOptionChanged(final Object selected) {
+    public void selectedOptionChanged(@NotNull final Object selected) {
 
     }
 
     @Override
-    public void schemeChanged(final Object source) {
+    public void schemeChanged(@NotNull final Object source) {
     }
 
     @Override
@@ -41,7 +43,7 @@ public interface ColorAndFontSettingsListener extends EventListener {
     }
 
     @Override
-    public void selectionInPreviewChanged(final String typeToSelect) {
+    public void selectionInPreviewChanged(@NotNull final String typeToSelect) {
     }
 
     @Override

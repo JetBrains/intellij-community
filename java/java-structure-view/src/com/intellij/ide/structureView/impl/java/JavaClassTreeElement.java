@@ -78,7 +78,7 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     return members;
   }
 
-  private static void addPhysicalElements(@NotNull PsiMember[] elements, @NotNull Collection<PsiElement> to, @NotNull PsiClass aClass) {
+  private static void addPhysicalElements(@NotNull PsiMember[] elements, @NotNull Collection<? super PsiElement> to, @NotNull PsiClass aClass) {
     for (PsiMember element : elements) {
       PsiElement mirror = PsiImplUtil.handleMirror(element);
       if (mirror instanceof LightElement) continue;

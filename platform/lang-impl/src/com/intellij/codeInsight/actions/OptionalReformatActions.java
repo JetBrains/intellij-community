@@ -21,4 +21,11 @@ public interface OptionalReformatActions {
 
   boolean isRearrangeCode();
 
+  /**
+   * @return true if it is required to apply code cleanup inspections' fixes
+   */
+  default boolean isCodeCleanup() {
+    return false;
+  }
+
 }

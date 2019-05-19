@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
+ * @see CompletionContributor
  */
 public abstract class CompletionProvider<V extends CompletionParameters> {
 
@@ -30,9 +31,9 @@ public abstract class CompletionProvider<V extends CompletionParameters> {
   protected CompletionProvider(final boolean startInReadAction) {
   }
 
-  protected abstract void addCompletions(@NotNull V parameters, final ProcessingContext context, @NotNull CompletionResultSet result);
+  protected abstract void addCompletions(@NotNull V parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result);
 
-  public final void addCompletionVariants(@NotNull final V parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+  public final void addCompletionVariants(@NotNull final V parameters, @NotNull ProcessingContext context, @NotNull final CompletionResultSet result) {
     addCompletions(parameters, context, result);
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -17,7 +17,8 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.util.ui.JBUI.ScaleType.*;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.*;
 
 public class TextToIconPaintTest extends CompositeIconPaintTestHelper {
   private static final String TEXT = "IDEA";
@@ -35,11 +36,11 @@ public class TextToIconPaintTest extends CompositeIconPaintTestHelper {
   private static final Map<ScaleContext, Integer> CTX_TO_SIZE = new HashMap<>();
 
   static {
-    for (int i=0; i<SCALES_TO_SIZE.length; i++) {
-      CTX_TO_SIZE.put(ScaleContext.create(USR_SCALE.of(SCALES_TO_SIZE[i][0]),
-                                          SYS_SCALE.of(SCALES_TO_SIZE[i][1]),
-                                          OBJ_SCALE.of(SCALES_TO_SIZE[i][2])),
-                      SCALES_TO_SIZE[i][3]);
+    for (int[] scaleData : SCALES_TO_SIZE) {
+      CTX_TO_SIZE.put(ScaleContext.create(USR_SCALE.of(scaleData[0]),
+                                          SYS_SCALE.of(scaleData[1]),
+                                          OBJ_SCALE.of(scaleData[2])),
+                      scaleData[3]);
     }
   }
 
@@ -62,7 +63,7 @@ public class TextToIconPaintTest extends CompositeIconPaintTestHelper {
     // The test may depend on a physical font which may vary b/w platforms. By this reason, there's a preset map
     // b/w ScaleContext's and the tested string with. If the font on this platform doesn't fit the preset,
     // then the test silently interrupts.
-    Font font = JBFont.create(JBUI.Fonts.label().deriveFont((float)ctx.apply(FONT_SIZE, USR_SCALE, OBJ_SCALE)));
+    Font font = JBFont.create(JBUI.Fonts.label().deriveFont((float)ctx.apply(FONT_SIZE, EFF_USR_SCALE)));
     int width = TestScaleHelper.createComponent(ctx).getFontMetrics(font).stringWidth(TEXT);
     Assume.assumeTrue("unexpected ScaleContext: " + ctx, CTX_TO_SIZE.containsKey(ctx));
     Assume.assumeTrue("unexpected text width: " + width, CTX_TO_SIZE.get(ctx) == width);
@@ -70,7 +71,7 @@ public class TextToIconPaintTest extends CompositeIconPaintTestHelper {
 
   @Override
   protected String getGoldImagePath(ScaleContext ctx) {
-    int usrScale = (int)(ctx.apply(1, USR_SCALE, OBJ_SCALE));
+    int usrScale = (int)(ctx.apply(1, EFF_USR_SCALE));
     int sysScale = (int)(ctx.getScale(SYS_SCALE));
     return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_TextIcon@" + usrScale + "x" + sysScale + "x.png";
   }

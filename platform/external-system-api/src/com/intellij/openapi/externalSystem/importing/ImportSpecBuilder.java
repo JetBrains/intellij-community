@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/29/2014
  */
 public class ImportSpecBuilder {
 

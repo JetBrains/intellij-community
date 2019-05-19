@@ -1,12 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -23,22 +20,9 @@ public class ComponentConfig {
   protected boolean loadForDefaultProject;
 
   @Property(surroundWithTag = false)
-  @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value")
+  @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name")
   @Nullable
   public Map<String, String> options;
-
-  @Transient
-  public PluginDescriptor pluginDescriptor;
-
-  @Transient
-  public ClassLoader getClassLoader() {
-    return pluginDescriptor != null ? pluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
-  }
-
-  @Transient
-  public PluginId getPluginId() {
-    return pluginDescriptor == null ? null : pluginDescriptor.getPluginId();
-  }
 
   public String getImplementationClass() {
     return implementationClass;
@@ -96,7 +80,6 @@ public class ComponentConfig {
            ", headlessImplementationClass='" + headlessImplementationClass + '\'' +
            ", loadForDefaultProject=" + loadForDefaultProject +
            ", options=" + options +
-           ", pluginDescriptor=" + pluginDescriptor +
            '}';
   }
 }

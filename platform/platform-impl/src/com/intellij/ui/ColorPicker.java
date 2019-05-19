@@ -11,6 +11,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.colorpicker.ColorPickerBuilder;
+import com.intellij.ui.colorpicker.LightCalloutPopup;
+import com.intellij.ui.colorpicker.MaterialGraphicalColorPipetteProvider;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.picker.ColorPipette;
 import com.intellij.ui.picker.ColorPipetteBase;
@@ -57,7 +60,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private final JTextField myBlue;
   private final JTextField myHex;
   private final Alarm myUpdateQueue;
-  private final List<ColorPickerListener> myExternalListeners;
+  private final List<? extends ColorPickerListener> myExternalListeners;
 
   private RecentColorsComponent myRecentColorsComponent;
   @Nullable
@@ -86,7 +89,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private ColorPicker(@NotNull Disposable parent,
                       @Nullable Color color,
                       boolean restoreColors, boolean enableOpacity,
-                      List<ColorPickerListener> listeners, boolean opacityInPercent) {
+                      List<? extends ColorPickerListener> listeners, boolean opacityInPercent) {
     myUpdateQueue = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parent);
     myRed = createColorField(false);
     myGreen = createColorField(false);
@@ -173,20 +176,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   private JTextField createColorField(boolean hex) {
-    final NumberDocument doc = new NumberDocument(hex);
-    int lafFix = UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderDarcula() ? 1 : 0;
-    UIManager.LookAndFeelInfo info = LafManager.getInstance().getCurrentLookAndFeel();
-    if (info != null && (info.getName().startsWith("IDEA") || info.getName().equals("Windows Classic")))
-      lafFix = 1;
-    final JTextField field;
-    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-      field = new JTextField("");
-      field.setDocument(doc);
-      field.setPreferredSize(new Dimension(hex ? 60 : 40, 26));
-    } else {
-      field = new JTextField(doc, "", (hex ? 5 : 2) + lafFix);
-      field.setSize(50, -1);
-    }
+    NumberDocument doc = new NumberDocument(hex);
+    JTextField field = new JTextField("");
+    field.setDocument(doc);
+
     doc.setSource(field);
     field.getDocument().addDocumentListener(this);
     field.addFocusListener(new FocusAdapter() {
@@ -350,7 +343,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
                                  String caption,
                                  Color preselectedColor,
                                  boolean enableOpacity,
-                                 List<ColorPickerListener> listeners,
+                                 List<? extends ColorPickerListener> listeners,
                                  boolean opacityInPercent) {
     final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
     dialog.show();
@@ -359,6 +352,24 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     return null;
+  }
+
+  public static void showColorPickerPopup(@Nullable Color currentColor, @NotNull ColorListener listener) {
+    LightCalloutPopup dialog = new LightCalloutPopup();
+
+    JPanel panel = new ColorPickerBuilder()
+      .setOriginalColor(currentColor)
+      .addSaturationBrightnessComponent()
+      .addColorAdjustPanel(new MaterialGraphicalColorPipetteProvider())
+      .addColorValuePanel().withFocus()
+      //.addSeparator()
+      //.addCustomComponent(MaterialColorPaletteProvider.INSTANCE)
+      .addColorListener(listener)
+      .focusWhenDisplay(true)
+      .setFocusCycleRoot(true)
+      .build();
+
+    dialog.show(panel, null, MouseInfo.getPointerInfo().getLocation());
   }
 
   private JComponent buildTopPanel(boolean enablePipette) throws ParseException {
@@ -696,6 +707,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     void setSource(JTextField field) {
       mySrc = field;
     }
+    @Override
     public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
       final boolean rgb = isRGBMode();
       char[] source = str.toCharArray();
@@ -899,13 +911,13 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
   static class ColorPickerDialog extends DialogWrapper {
     private final Color myPreselectedColor;
-    private final List<ColorPickerListener> myListeners;
+    private final List<? extends ColorPickerListener> myListeners;
     private ColorPicker myColorPicker;
     private final boolean myEnableOpacity;
     private final boolean myOpacityInPercent;
 
-    public ColorPickerDialog(@NotNull Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity,
-                             List<ColorPickerListener> listeners, boolean opacityInPercent) {
+    ColorPickerDialog(@NotNull Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity,
+                      List<? extends ColorPickerListener> listeners, boolean opacityInPercent) {
       super(parent, true);
       myListeners = listeners;
       myPreselectedColor = preselectedColor;
@@ -1081,6 +1093,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       return false;
     }
 
+    @Override
     @NotNull
     @SuppressWarnings("UseJBColor")
     protected Dialog getOrCreatePickerDialog() {
@@ -1123,7 +1136,6 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
         myPipetteImage = UIUtil.createImage(pickerDialog, AllIcons.Ide.Pipette.getIconWidth(), AllIcons.Ide.Pipette.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = myPipetteImage.createGraphics();
-        //noinspection ConstantConditions
         AllIcons.Ide.Pipette.paintIcon(null, graphics, 0, 0);
         graphics.dispose();
 

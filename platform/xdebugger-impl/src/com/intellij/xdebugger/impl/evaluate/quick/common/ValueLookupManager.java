@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class ValueLookupManager
@@ -10,9 +10,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,7 @@ import org.jetbrains.concurrency.Promise;
 
 import java.awt.*;
 
-public class ValueLookupManager extends EditorMouseAdapter implements EditorMouseMotionListener {
+public class ValueLookupManager implements EditorMouseMotionListener, EditorMouseListener {
   /**
    * @see XDebuggerUtil#disableValueLookup(Editor)
    */
@@ -55,16 +55,12 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
   }
 
   @Override
-  public void mouseDragged(EditorMouseEvent e) {
-  }
-
-  @Override
-  public void mouseExited(EditorMouseEvent e) {
+  public void mouseExited(@NotNull EditorMouseEvent e) {
     myAlarm.cancelAllRequests();
   }
 
   @Override
-  public void mouseMoved(EditorMouseEvent e) {
+  public void mouseMoved(@NotNull EditorMouseEvent e) {
     if (e.isConsumed()) {
       return;
     }

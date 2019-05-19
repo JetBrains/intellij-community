@@ -54,7 +54,7 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
   }
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName, String templateName) {
+  protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
     return GroovyBundle.message("newscript.menu.action.text");
   }
 

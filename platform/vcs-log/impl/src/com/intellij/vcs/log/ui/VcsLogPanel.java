@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.navigation.History;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
@@ -53,7 +53,7 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (VcsLogInternalDataKeys.LOG_MANAGER.is(dataId)) {
       return myManager;
     }
@@ -63,7 +63,7 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     else if (VCS_LOG_UI.is(dataId)) {
       return myUi;
     }
-    else if (VCS_LOG_DATA_PROVIDER.is(dataId)) {
+    else if (VCS_LOG_DATA_PROVIDER.is(dataId) || VcsLogInternalDataKeys.LOG_DATA.is(dataId)) {
       return myManager.getDataManager();
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBER.is(dataId)) {
@@ -74,11 +74,13 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
       List<CommitId> hashes = myUi.getVcsLog().getSelectedCommits();
       if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ArrayUtil.toObjectArray(ContainerUtil.map(hashes, commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())),
-                                     VcsRevisionNumber.class);
+      return ContainerUtil.map(hashes, commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
     }
     else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myUi.getHelpId();
+    }
+    else if (History.KEY.is(dataId)) {
+      return myUi.getNavigationHistory();
     }
     return null;
   }

@@ -27,13 +27,15 @@ object Fixtures {
 
     val userId = UUID.randomUUID().toString()
 
-    val relevance = mapOf(Pair("sort", 1.0.toString()), Pair("proximity", 2.0.toString()))
+    private val relevance = mapOf(Pair("sort", 1.0.toString()), Pair("proximity", 2.0.toString()))
     
     val lookupList = listOf(
             LookupEntryInfo(0, 5, relevance),
             LookupEntryInfo(1, 9, relevance),
             LookupEntryInfo(2, 7, relevance)
     )
+
+    val initialState = LookupState(lookupList.map { it.id }, lookupList, emptyList(), 0)
 
     val userFactors: Map<String, String> = mapOf(
             "avgTimeToType" to "0.6",
@@ -56,60 +58,63 @@ class EventSerializeDeserializeTest {
     @Test
     fun `completion started event`() {
         val event = CompletionStartedEvent("", "", "", Fixtures.userId,
-                "xx", "Java", true, 1, Fixtures.lookupList,
-                Fixtures.userFactors, 0)
+                                           "xx", "Java", true, 1, Fixtures.initialState,
+                                           Fixtures.userFactors, 0, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
 
     @Test
     fun `up down pressed event`() {
-        var event: LogEvent = UpPressedEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 2)
+        val state = Fixtures.initialState
+        var event: LogEvent = UpPressedEvent(Fixtures.userId, "xx", state, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
 
-        event = DownPressedEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 2)
+        event = DownPressedEvent(Fixtures.userId, "xx", state.withSelected(1), System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
     
     @Test
     fun `up down pressed event no additional items`() {
-        var event: LogEvent = UpPressedEvent(Fixtures.userId, "xx", emptyList(), emptyList(), 2)
+        val state = Fixtures.initialState.withoutNewItems()
+        var event: LogEvent = UpPressedEvent(Fixtures.userId, "xx", state, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
 
-        event = DownPressedEvent(Fixtures.userId, "xx", emptyList(), emptyList(), 2)
+        event = DownPressedEvent(Fixtures.userId, "xx", state.withSelected(1), System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
     
     @Test
     fun `completion cancelled event`() {
-        val event = CompletionCancelledEvent(Fixtures.userId, "xx")
+        val event = CompletionCancelledEvent(Fixtures.userId, "xx", System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
     
     @Test
     fun `item selected by typing event`() {
-        val event = TypedSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 5, Fixtures.lookupList, Fixtures.history)
+        val event = TypedSelectEvent(Fixtures.userId, "xx", Fixtures.initialState.withoutNewItems(),
+                                     0, Fixtures.history, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
     
     @Test
     fun `explicit select event`() {
-        var event: LogEvent = ExplicitSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 10, 10, Fixtures.lookupList, Fixtures.history)
-        serializeDeserializeAndCheck(event)
-        
-        event = ExplicitSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 2, 2, Fixtures.lookupList, Fixtures.history)
+        val state = Fixtures.initialState.withoutNewItems()
+        val event = ExplicitSelectEvent(Fixtures.userId, "xx", state, 0,
+                                        Fixtures.history, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
-    
+
     @Test
     fun `backspace event`() {
-        val event: LogEvent = BackspaceEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 3)
+        val event: LogEvent = BackspaceEvent(Fixtures.userId, "xx",
+                                             Fixtures.initialState.withoutNewItems(), 1, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
     
     
     @Test
     fun `type event`() {
-        val event = TypeEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 1)
+        val event = TypeEvent(Fixtures.userId, "xx", Fixtures.initialState, 2, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
 
@@ -125,7 +130,13 @@ class EventSerializeDeserializeTest {
         assertThat(obj.unknownFields).hasSize(1)
         assertThat(obj.unknownFields).contains("unknown_field")
     }
-    
+
+    @Test
+    fun `ignore static fields`() {
+        val obj = JsonSerializer.fromJson(JsonSerializer.toJson(WithStaticField()), WithStaticField::class.java)
+        assertThat(obj.absentFields).hasSize(0)
+        assertThat(obj.unknownFields).hasSize(0)
+    }
 }
 
 
@@ -140,5 +151,13 @@ class Second {
     val just_field: String = ""
     val absent_field0: Double = 1.0
     val absent_field1: Double = 1.0
+}
+
+@Suppress("unused")
+class WithStaticField {
+    companion object {
+        @JvmStatic
+        val STATIC_FIELD = 10
+    }
 }
 

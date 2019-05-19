@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -25,7 +11,6 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.*;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MultiRowFlowPanel;
@@ -37,8 +22,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * Control for managing {@link ArrangementEntryMatcher matching rule conditions} for a single {@link ArrangementMatchRule}.
@@ -46,12 +31,12 @@ import java.util.List;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/14/12 9:54 AM
  */
 public class ArrangementMatchingRuleEditor extends JPanel implements ArrangementUiComponent.Listener {
 
-  @NotNull private final Map<ArrangementSettingsToken, ArrangementUiComponent> myComponents = ContainerUtilRt.newHashMap();
-  @NotNull private final List<MultiRowFlowPanel>                               myRows       = ContainerUtilRt.newArrayList();
+  @NotNull private final Map<ArrangementSettingsToken, ArrangementUiComponent> myComponents =
+    new HashMap<>();
+  @NotNull private final List<MultiRowFlowPanel>                               myRows       = new ArrayList<>();
 
   @NotNull private final ArrangementMatchingRulesControl    myControl;
   @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
@@ -59,10 +44,10 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
 
   private int myRow = -1;
   private int        myLabelWidth;
-  
+
   @Nullable private JComponent myDefaultFocusRequestor;
   @Nullable private JComponent myFocusRequestor;
-  
+
   private boolean mySkipStateChange;
 
   public ArrangementMatchingRuleEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
@@ -73,7 +58,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
   }
 
   public ArrangementMatchingRuleEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
-                                       @Nullable List<CompositeArrangementSettingsToken> tokens,
+                                       @Nullable List<? extends CompositeArrangementSettingsToken> tokens,
                                        @NotNull ArrangementColorsProvider colorsProvider,
                                        @NotNull ArrangementMatchingRulesControl control)
   {
@@ -89,7 +74,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     });
   }
 
-  private void init(@Nullable List<CompositeArrangementSettingsToken> tokens) {
+  private void init(@Nullable List<? extends CompositeArrangementSettingsToken> tokens) {
     setLayout(new GridBagLayout());
     setBorder(JBUI.Borders.empty(5));
 
@@ -108,7 +93,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     MultiRowFlowPanel panel = new MultiRowFlowPanel(
       FlowLayout.LEFT, ArrangementConstants.HORIZONTAL_GAP, ArrangementConstants.VERTICAL_GAP
     );
-    List<ArrangementSettingsToken> prevTokens = ContainerUtilRt.newArrayList();
+    List<ArrangementSettingsToken> prevTokens = new ArrayList<>();
     StdArrangementTokenUiRole prevRole = null;
     ArrangementUiComponent component;
     JComponent uiComponent;
@@ -141,7 +126,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
           break;
         case TEXT_FIELD:
           panel = addRowIfNecessary(panel);
-          
+
           ArrangementUiComponent textLabel = ArrangementUtil.buildUiComponent(
             StdArrangementTokenUiRole.LABEL, Collections.singletonList(token.getToken()), myColorsProvider, mySettingsManager
           );
@@ -154,7 +139,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
           prevRole = null;
 
           myComponents.put(token.getToken(), component);
-          
+
           if (myDefaultFocusRequestor == null) {
             myDefaultFocusRequestor = uiComponent;
           }
@@ -165,7 +150,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
             prevRole = role;
             break;
           }
-          
+
           panel.add(uiComponent);
           myComponents.put(token.getToken(), component);
       }
@@ -203,7 +188,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
 
   @Nullable
   private Pair<ArrangementMatchCondition, ArrangementSettingsToken> buildCondition() {
-    List<ArrangementMatchCondition> conditions = ContainerUtilRt.newArrayList();
+    List<ArrangementMatchCondition> conditions = new ArrayList<>();
     ArrangementSettingsToken orderType = null;
     for (ArrangementUiComponent component : myComponents.values()) {
       if (!component.isEnabled() || !component.isSelected()) {
@@ -227,7 +212,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
       return null;
     }
   }
-  
+
   @Override
   protected void paintComponent(Graphics g) {
     if (myFocusRequestor != null) {
@@ -271,12 +256,12 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     ArrangementSettingsToken orderType = element instanceof ArrangementMatchRule ? ((ArrangementMatchRule)element).getOrderType() : null;
     final ArrangementMatchCondition condition;
     final Map<ArrangementSettingsToken, Object> conditionTokens;
-    
+
     if (element instanceof EmptyArrangementRuleComponent) {
       // We need to disable conditions which are not applicable for empty rules (e.g. we don't want to enable 'volatile' condition
       // for java rearranger if no 'field' condition is selected.
       condition = null;
-      conditionTokens = ContainerUtilRt.newHashMap();
+      conditionTokens = new HashMap<>();
     }
     else if (!(element instanceof StdArrangementMatchRule)) {
       return;
@@ -317,7 +302,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
    */
   private void refreshConditions() {
     Pair<ArrangementMatchCondition, ArrangementSettingsToken> pair = buildCondition();
-    ArrangementMatchCondition condition = pair == null ? null : pair.first;
+    ArrangementMatchCondition condition = Pair.getFirst(pair);
     for (ArrangementUiComponent component : myComponents.values()) {
       ArrangementSettingsToken token = component.getToken();
       if (token == null) {
@@ -409,7 +394,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     }
   }
 
-  private void updateMutexConditions(@NotNull ArrangementUiComponent component, @NotNull Set<ArrangementSettingsToken> mutex) {
+  private void updateMutexConditions(@NotNull ArrangementUiComponent component, @NotNull Set<? extends ArrangementSettingsToken> mutex) {
     if (!mutex.contains(component.getToken())) {
       return;
     }

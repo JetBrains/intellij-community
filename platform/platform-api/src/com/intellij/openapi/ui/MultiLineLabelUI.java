@@ -31,6 +31,7 @@ public class MultiLineLabelUI extends BasicLabelUI {
   private String myString;
   private String[] myLines;
 
+  @Override
   protected String layoutCL(
     JLabel label,
     FontMetrics fontMetrics,
@@ -309,12 +310,14 @@ public class MultiLineLabelUI extends BasicLabelUI {
     return rettext;
   }
 
+  @Override
   protected void paintEnabledText(JLabel l, Graphics g, String s, int textX, int textY) {
     int accChar = l.getDisplayedMnemonic();
     g.setColor(l.getForeground());
     drawString(g, s, accChar, textX, textY);
   }
 
+  @Override
   protected void paintDisabledText(JLabel l, Graphics g, String s, int textX, int textY) {
     int accChar = l.getDisplayedMnemonic();
     g.setColor(l.getBackground());
@@ -338,8 +341,8 @@ public class MultiLineLabelUI extends BasicLabelUI {
 
   public static Dimension computeMultiLineDimension(FontMetrics fm, String[] strs) {
     int width = 0;
-    for (int i = 0; i < strs.length; i++) {
-      width = Math.max(width, SwingUtilities.computeStringWidth(fm, strs[i]));
+    for (String str : strs) {
+      width = Math.max(width, SwingUtilities.computeStringWidth(fm, str));
     }
     return new Dimension(width, fm.getHeight() * strs.length);
   }
@@ -355,7 +358,7 @@ public class MultiLineLabelUI extends BasicLabelUI {
   }
 
   public static String convertTabs(String text, final int tabLength) {
-    StringBuffer buf = new StringBuffer(text.length());
+    StringBuilder buf = new StringBuilder(text.length());
     for (int idx = 0; idx < text.length(); idx++) {
       char ch = text.charAt(idx);
       if (ch == '\t') {

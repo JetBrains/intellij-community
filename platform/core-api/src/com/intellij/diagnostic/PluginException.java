@@ -15,44 +15,74 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author stathik
- * @since Jan 8, 2004
+ * Represents an internal error caused by a plugin. It may happen if the plugin's code fails with an exception, or if the plugin violates
+ * some contract of IntelliJ Platform. If such exceptions are thrown or logged via {@link Logger#error(Throwable)}
+ * method and reported to JetBrains by user, they may be automatically attributed to corresponding plugins.
+ *
+ * <p> If the problem is caused by a class, use {@link #createByClass} to create
+ * an instance. If the problem is caused by an extension, implement {@link com.intellij.openapi.extensions.PluginAware} in its extension class
+ * to get the plugin ID.
  */
 public class PluginException extends RuntimeException {
   private final PluginId myPluginId;
 
-  public PluginException(String message, Throwable cause, PluginId pluginId) {
+  public PluginException(@NotNull String message, Throwable cause, @Nullable PluginId pluginId) {
     super(message, cause);
     myPluginId = pluginId;
   }
 
-  public PluginException(Throwable e, PluginId pluginId) {
+  public PluginException(@NotNull Throwable e, @Nullable PluginId pluginId) {
     super (e.getMessage(), e);
     myPluginId = pluginId;
   }
 
-  public PluginException(final String message, final PluginId pluginId) {
+  public PluginException(@NotNull String message, @Nullable PluginId pluginId) {
     super(message);
     myPluginId = pluginId;
   }
 
+  @Nullable
   public PluginId getPluginId() {
     return myPluginId;
   }
 
   @Override
+  @NotNull 
   public String getMessage() {
-    @NonNls String message = super.getMessage();
+    String message = super.getMessage();
+    return myPluginId != null ? StringUtil.notNullize(message) + " [Plugin: " + myPluginId + "]" : message;
+  }
 
-    if (message == null) {
-      message = "";
-    }
+  /**
+   * Creates an exception caused by a problem in a plugin's code.
+   * @param pluginClass a problematic class which caused the error
+   */
+  @NotNull
+  public static PluginException createByClass(@NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class pluginClass) {
+    return PluginProblemReporter.getInstance().createPluginExceptionByClass(errorMessage, cause, pluginClass);
+  }
 
-    message += " [Plugin: " + myPluginId.toString() + "]";
-    return message;
+  /**
+   * Creates an exception caused by a problem in a plugin's code, takes error message from the cause exception.
+   * @param pluginClass a problematic class which caused the error
+   */
+  @NotNull
+  public static PluginException createByClass(@NotNull Throwable cause, @NotNull Class pluginClass) {
+    return PluginProblemReporter.getInstance().createPluginExceptionByClass(StringUtil.notNullize(cause.getMessage()), cause, pluginClass);
+  }
+
+  /**
+   * Log an error caused by a problem in a plugin's code.
+   * @param pluginClass a problematic class which caused the error
+   */
+  public static void logPluginError(@NotNull Logger logger, @NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class pluginClass) {
+    logger.error(createByClass(errorMessage, cause, pluginClass));
   }
 }

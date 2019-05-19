@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -85,6 +71,7 @@ public class PasteProcessor extends EventProcessor {
     StatusBar.Info.set(UIDesignerBundle.message("paste.choose.destination.prompt"), myEditor.getProject());
   }
 
+  @Override
   protected void processKeyEvent(KeyEvent e) {
     if (e.getID() == KeyEvent.KEY_PRESSED) {
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -101,6 +88,7 @@ public class PasteProcessor extends EventProcessor {
     }
   }
 
+  @Override
   protected void processMouseEvent(MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_MOVED) {
       myLastLocation = myGridInsertProcessor.processDragEvent(e.getPoint(), myPastedComponentList);
@@ -130,6 +118,7 @@ public class PasteProcessor extends EventProcessor {
           location.processDrop(myEditor, componentsToPaste, null, myPastedComponentList);
           for(RadComponent c: componentsToPaste) {
             FormEditingUtil.iterate(c, new FormEditingUtil.ComponentVisitor() {
+              @Override
               public boolean visit(final IComponent component) {
                 if (component.getBinding() != null) {
                   InsertComponentProcessor.createBindingField(myEditor, (RadComponent) component);
@@ -151,6 +140,7 @@ public class PasteProcessor extends EventProcessor {
     WindowManager.getInstance().getStatusBar(myEditor.getProject()).setInfo("");
   }
 
+  @Override
   protected boolean cancelOperation() {
     WindowManager.getInstance().getStatusBar(myEditor.getProject()).setInfo("");
     return true;
@@ -161,38 +151,47 @@ public class PasteProcessor extends EventProcessor {
   }
 
   private class PastedComponentList implements ComponentDragObject {
+    @Override
     public int getComponentCount() {
       return myComponentsToPaste.size();
     }
 
+    @Override
     public boolean isHGrow() {
       return false;
     }
 
+    @Override
     public boolean isVGrow() {
       return false;
     }
 
+    @Override
     public int getRelativeRow(int componentIndex) {
       return myComponentsToPaste.get(componentIndex).getConstraints().getRow() - myMinRow;
     }
 
+    @Override
     public int getRelativeCol(int componentIndex) {
       return myComponentsToPaste.get(componentIndex).getConstraints().getColumn() - myMinCol;
     }
 
+    @Override
     public int getRowSpan(int componentIndex) {
       return myComponentsToPaste.get(componentIndex).getConstraints().getRowSpan();
     }
 
+    @Override
     public int getColSpan(int componentIndex) {
       return myComponentsToPaste.get(componentIndex).getConstraints().getColSpan();
     }
 
+    @Override
     public Point getDelta(int componentIndex) {
       return new Point(myDX [componentIndex], myDY [componentIndex]);
     }
 
+    @Override
     @NotNull
     public Dimension getInitialSize(final RadContainer targetContainer) {
       if (myComponentsToPaste.size() == 1) {

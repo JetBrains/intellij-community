@@ -39,7 +39,7 @@ public class CodeCleanupAction extends CodeInspectionAction {
     final InspectionProfile profile = myExternalProfile != null ? myExternalProfile : InspectionProjectProfileManager.getInstance(project)
       .getCurrentProfile();
     final InspectionManager managerEx = InspectionManager.getInstance(project);
-    final GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)managerEx.createNewGlobalContext(false);
+    final GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)managerEx.createNewGlobalContext();
     globalContext.codeCleanup(scope, profile, getTemplatePresentation().getText(), null, false);
   }
 

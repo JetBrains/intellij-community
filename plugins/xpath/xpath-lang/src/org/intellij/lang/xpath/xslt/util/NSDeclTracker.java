@@ -44,11 +44,11 @@ public class NSDeclTracker implements ModificationTracker {
         myCount = 0;
     }
 
+    @Override
     public long getModificationCount() {
         return myFile.getModificationStamp() == myRootCount ? myCount : queryCount();
     }
 
-    @SuppressWarnings({ "AutoUnboxing" })
     private synchronized long queryCount() {
         for (XmlAttribute decl : myNSDecls) {
             if (!decl.isValid()) {

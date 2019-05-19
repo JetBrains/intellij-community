@@ -23,12 +23,14 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,9 +73,12 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
       return null;
     }
 
-    @NonNls final String versionString = sdk.getVersionString();
+    @NonNls String versionString = sdk.getVersionString();
     if (versionString == null) {
       return null;
+    }
+    if (PythonSdkType.isConda(sdk)) {
+      versionString = "Anaconda-" + versionString;
     }
 
     return getPrebuiltSkeletonsName(generatorVersion, versionString, withMinorVersion, withExtension);
@@ -86,7 +91,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
                                                 boolean withMinorVersion,
                                                 boolean withExtension) {
 
-    String version = versionString.toLowerCase().replace(" ", "-");
+    String version = StringUtil.toLowerCase(versionString).replace(" ", "-");
     if (!withMinorVersion) {
       int ind = version.lastIndexOf(".");
       if (ind != -1) {
@@ -155,7 +160,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
   private static class ArchivedSkeletons implements PyPregeneratedSkeletons {
     private final VirtualFile myArchiveRoot;
 
-    public ArchivedSkeletons(VirtualFile archiveRoot) {
+    ArchivedSkeletons(VirtualFile archiveRoot) {
       myArchiveRoot = archiveRoot;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -26,12 +25,13 @@ import org.jetbrains.java.generate.element.FieldElement;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public abstract class TemplatesManager implements PersistentStateComponent<TemplatesState> {
 
   public static final Key<Map<String, PsiType>> TEMPLATE_IMPLICITS = Key.create("TEMPLATE_IMPLICITS");
-  
+
   private TemplatesState myState = new TemplatesState();
 
   public abstract TemplateResource[] getDefaultTemplates();
@@ -45,13 +45,15 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
    */
   protected static String readFile(String resource, Class<? extends TemplatesManager> templatesManagerClass) throws IOException {
     BufferedInputStream in = new BufferedInputStream(templatesManagerClass.getResourceAsStream(resource));
-    return StringUtil.convertLineSeparators(FileUtil.loadTextAndClose(new InputStreamReader(in, CharsetToolkit.UTF8_CHARSET)));
+    return StringUtil.convertLineSeparators(FileUtil.loadTextAndClose(new InputStreamReader(in, StandardCharsets.UTF_8)));
   }
 
+  @Override
   public TemplatesState getState() {
         return myState;
     }
 
+    @Override
     public void loadState(@NotNull TemplatesState state) {
         myState = state;
     }
@@ -110,7 +112,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
         myState.defaultTempalteName = res.getFileName();
     }
 
-    public void setTemplates(List<TemplateResource> items) {
+    public void setTemplates(List<? extends TemplateResource> items) {
         myState.templates.clear();
         for (TemplateResource item : items) {
             if (!item.isDefault()) {
@@ -122,7 +124,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
     @NotNull
     public static PsiType createFieldListElementType(Project project) {
       final PsiType classType = createElementType(project, FieldElement.class);
-      PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(CommonClassNames.JAVA_UTIL_LIST, 
+      PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(CommonClassNames.JAVA_UTIL_LIST,
                                                                           GlobalSearchScope.allScope(project));
       for (PsiClass listClass : classes) {
         if (listClass.getTypeParameters().length == 1) {
@@ -134,7 +136,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
 
     @NotNull
     public static PsiType createElementType(Project project, Class<?> elementClass) {
-      final List<String> methodNames = 
+      final List<String> methodNames =
         ContainerUtil.mapNotNull(elementClass.getMethods(),
                                  method -> {
                                    final String methodName = method.getName();
@@ -145,7 +147,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
                                    String parametersString = StringUtil.join(method.getParameters(),
                                                                              param -> param.getParameterizedType().getTypeName() +
                                                                                       " " +
-                                                                                      param.getName(), 
+                                                                                      param.getName(),
                                                                              ", ");
                                    return method.getGenericReturnType().getTypeName() + " " + methodName + "(" + parametersString + ");";
                                  });

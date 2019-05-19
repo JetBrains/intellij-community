@@ -52,7 +52,7 @@ public class LibrariesUtil {
   private LibrariesUtil() {
   }
 
-  public static Library[] getLibrariesByCondition(final Module module, final Condition<Library> condition) {
+  public static Library[] getLibrariesByCondition(final Module module, final Condition<? super Library> condition) {
     if (module == null) return Library.EMPTY_ARRAY;
     final ArrayList<Library> libraries = new ArrayList<>();
 
@@ -61,7 +61,7 @@ public class LibrariesUtil {
     return libraries.toArray(Library.EMPTY_ARRAY);
   }
 
-  private static void populateOrderEntries(@NotNull Module module, Condition<Library> condition, ArrayList<Library> libraries, boolean exportedOnly, Set<Module> visited) {
+  private static void populateOrderEntries(@NotNull Module module, Condition<? super Library> condition, ArrayList<? super Library> libraries, boolean exportedOnly, Set<? super Module> visited) {
     if (!visited.add(module)) {
       return;
     }
@@ -87,7 +87,7 @@ public class LibrariesUtil {
     }
   }
 
-  public static Library[] getGlobalLibraries(Condition<Library> condition) {
+  public static Library[] getGlobalLibraries(Condition<? super Library> condition) {
     LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
     List<Library> libs = ContainerUtil.findAll(table.getLibraries(), condition);
     return libs.toArray(Library.EMPTY_ARRAY);

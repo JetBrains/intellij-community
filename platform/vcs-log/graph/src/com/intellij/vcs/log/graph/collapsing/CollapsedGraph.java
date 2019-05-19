@@ -192,6 +192,10 @@ public class CollapsedGraph {
       return myNodesToShow.contains(nodeIndex);
     }
 
+    public int convertToDelegateNodeIndex(int nodeIndex) {
+      return CollapsedGraph.this.convertToDelegateNodeIndex(nodeIndex);
+    }
+
     public void apply() {
       assert myCurrentModification.get() == this;
       myProgress = APPLYING;

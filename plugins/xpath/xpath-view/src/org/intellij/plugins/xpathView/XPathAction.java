@@ -23,11 +23,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class XPathAction extends AnAction {
   @Override
-  public void update(AnActionEvent event) {
-    super.update(event);
+  public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
 
     // keep track of enabled status
@@ -61,7 +61,7 @@ public abstract class XPathAction extends AnAction {
       return false;
     }
 
-    Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
     if (editor == null) {
       FileEditorManager fem = FileEditorManager.getInstance(project);
       editor = fem.getSelectedTextEditor();

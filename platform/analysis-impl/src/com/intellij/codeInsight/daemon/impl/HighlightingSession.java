@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -29,14 +28,6 @@ public interface HighlightingSession {
 
   @NotNull
   PsiFile getPsiFile();
-
-  /**
-   * TODO to remove in IDEA 2018
-   */
-  @Deprecated
-  default Editor getEditor() {
-    return null;
-  }
 
   @NotNull
   Document getDocument();

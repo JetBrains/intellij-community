@@ -1,0 +1,9 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement(STRING_CONTENT)('case a in a) echo [ \"a\" ];; esac')
+            PsiElement(CLOSE_QUOTE)('"')

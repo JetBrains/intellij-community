@@ -41,9 +41,9 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private JBPopup myPopup;
 
   private boolean myRequestFocus = true;
-  private boolean myForceResizable = false;
-  private boolean myForceMovable = false;
-  private String myDimensionServiceKey = null;
+  private boolean myForceResizable;
+  private boolean myForceMovable;
+  private String myDimensionServiceKey;
   private Computable<Boolean> myCancelCallback;
   private boolean myAutoselect = true;
   private float myAlpha;
@@ -58,23 +58,25 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private Component mySettingsButtons;
   private boolean myAutoselectOnMouseMove = true;
 
-  private Function<Object,String> myItemsNamer = null;
+  private Function<Object,String> myItemsNamer;
   private boolean myMayBeParent;
-  private int myAdAlignment = SwingUtilities.LEFT;
+  private int myAdAlignment = SwingConstants.LEFT;
   private boolean myModalContext;
   private boolean myCloseOnEnter = true;
   private boolean myCancelOnWindowDeactivation = true;
   private boolean myUseForXYLocation;
-  @Nullable private Processor<JBPopup> myCouldPin;
+  @Nullable private Processor<? super JBPopup> myCouldPin;
+  private int myVisibleRowCount = 15;
+  private boolean myAutoPackHeightOnFiltering = true;
 
   public interface PopupComponentAdapter<T> {
     JComponent getComponent();
 
     default void setRenderer(ListCellRenderer renderer) {}
 
-    void setItemChosenCallback(Consumer<T> callback);
+    void setItemChosenCallback(Consumer<? super T> callback);
 
-    void setItemsChosenCallback(Consumer<Set<T>> callback);
+    void setItemsChosenCallback(Consumer<? super Set<T>> callback);
 
     JScrollPane createScrollPane();
 
@@ -97,7 +99,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       throw new UnsupportedOperationException("Not supported for this popup type");
     }
 
-    default void setItemSelectedCallback(Consumer<T> c) {
+    default void setItemSelectedCallback(Consumer<? super T> c) {
       throw new UnsupportedOperationException("Not supported for this popup type");
     }
 
@@ -147,7 +149,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   @NotNull
-  public PopupChooserBuilder<T> setTitle(@NotNull @Nls String title) {
+  public PopupChooserBuilder<T> setTitle(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     myTitle = title;
     return this;
   }
@@ -172,14 +174,14 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @NotNull
   @Override
-  public IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Consumer<T> callback) {
+  public IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Consumer<? super T> callback) {
     myChooserComponent.setItemChosenCallback(callback);
     return this;
   }
 
   @NotNull
   @Override
-  public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<Set<T>> callback) {
+  public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<? super Set<T>> callback) {
     myChooserComponent.setItemsChosenCallback(callback);
     return this;
   }
@@ -198,11 +200,11 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   @NotNull
-  public PopupChooserBuilder<T> setCouldPin(@Nullable Processor<JBPopup> callback){
+  public PopupChooserBuilder<T> setCouldPin(@Nullable Processor<? super JBPopup> callback){
     myCouldPin = callback;
     return this;
   }
-  
+
   @NotNull
   public PopupChooserBuilder<T> setEastComponent(@NotNull JComponent cmp) {
     myEastComponent = cmp;
@@ -275,13 +277,23 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
 
   @Override
-  public PopupChooserBuilder<T> setNamerForFiltering(Function<T, String> namer) {
+  public PopupChooserBuilder<T> setNamerForFiltering(Function<? super T, String> namer) {
     myItemsNamer = (Function<Object, String>)namer;
     return this;
   }
 
   public Function<Object, String> getItemsNamer() {
     return myItemsNamer;
+  }
+
+  @Override
+  public IPopupChooserBuilder<T> setAutoPackHeightOnFiltering(boolean autoPackHeightOnFiltering) {
+    myAutoPackHeightOnFiltering = autoPackHeightOnFiltering;
+    return this;
+  }
+
+  public boolean isAutoPackHeightOnFiltering() {
+    return myAutoPackHeightOnFiltering;
   }
 
   @Override
@@ -310,7 +322,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       public void mouseReleased(MouseEvent e) {
         if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
           if (myCloseOnEnter) {
-            closePopup(true, e, true);
+            closePopup(e, true);
           }
           else {
             myItemChosenRunnable.run();
@@ -324,12 +336,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       registerClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), true);
     }
     else {
-      registerKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent event) {
-          myItemChosenRunnable.run();
-        }
-      });
+      registerKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), __ -> myItemChosenRunnable.run());
     }
     for (KeyStroke keystroke : myAdditionalKeystrokes) {
       registerClosePopupKeyboardAction(keystroke, true);
@@ -379,7 +386,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       .setModalContext(myModalContext)
       .setCancelOnWindowDeactivation(myCancelOnWindowDeactivation)
       .setCancelOnClickOutside(myCancelOnClickOutside)
-      .setCouldPin(myCouldPin);
+      .setCouldPin(myCouldPin)
+      .setOkHandler(myItemChosenRunnable);
 
     BooleanFunction<KeyEvent> keyEventHandler = myChooserComponent.getKeyEventHandler();
     if (keyEventHandler != null) {
@@ -400,11 +408,11 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return myPopup;
   }
 
-  protected void addEastComponentToContentPane(JPanel contentPane, JComponent component) {
+  private static void addEastComponentToContentPane(JPanel contentPane, JComponent component) {
     contentPane.add(component, BorderLayout.EAST);
   }
 
-  protected void addSouthComponentToContentPane(JPanel contentPane, JComponent component) {
+  private static void addSouthComponentToContentPane(JPanel contentPane, JComponent component) {
     contentPane.add(component, BorderLayout.SOUTH);
   }
 
@@ -427,9 +435,10 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private void registerClosePopupKeyboardAction(final KeyStroke keyStroke, final boolean shouldPerformAction) {
     registerPopupKeyboardAction(keyStroke, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!shouldPerformAction && myChooserComponent.checkResetFilter()) return;
-        closePopup(shouldPerformAction, null, shouldPerformAction);
+        closePopup(null, shouldPerformAction);
       }
     });
   }
@@ -438,11 +447,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     myChooserComponent.getComponent().registerKeyboardAction(action, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
-  private void closePopup(boolean shouldPerformAction, MouseEvent e, boolean isOk) {
-    if (shouldPerformAction) {
-      myPopup.setFinalRunnable(myItemChosenRunnable);
-    }
-
+  private void closePopup(MouseEvent e, boolean isOk) {
     if (isOk) {
       myPopup.closeOk(e);
     } else {
@@ -469,8 +474,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
-  public PopupChooserBuilder<T> setSettingButton(Component abutton) {
-    mySettingsButtons = abutton;
+  public PopupChooserBuilder<T> setSettingButton(Component button) {
+    mySettingsButtons = button;
     return this;
   }
 
@@ -495,7 +500,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   @NotNull
   public PopupChooserBuilder<T> setAdText(String ad) {
-    setAdText(ad, SwingUtilities.LEFT);
+    setAdText(ad, SwingConstants.LEFT);
     return this;
   }
 
@@ -531,7 +536,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
-  public IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<T> c) {
+  public IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<? super T> c) {
     myChooserComponent.setItemSelectedCallback(c);
     return this;
   }
@@ -555,6 +560,16 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   public IPopupChooserBuilder<T> setFont(Font f) {
     myChooserComponent.setFont(f);
     return this;
+  }
+
+  @Override
+  public IPopupChooserBuilder<T> setVisibleRowCount(int visibleRowCount) {
+    myVisibleRowCount = visibleRowCount;
+    return this;
+  }
+
+  public int getVisibleRowCount() {
+    return myVisibleRowCount;
   }
 
   @Override

@@ -89,7 +89,7 @@ public class MethodPropertyReference extends BasicAttributeValueReference {
 
 
   @Override
-  public PsiElement handleElementRename(String _newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String _newElementName) throws IncorrectOperationException {
     String newElementName = PropertyUtilBase.getPropertyName(_newElementName);
     if (newElementName == null) newElementName = _newElementName;
 

@@ -16,25 +16,26 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
+import junit.framework.TestCase;
 import one.util.streamex.IntStreamEx;
-import org.junit.Test;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
 
-public class ContainerUtilTest {
-  @Test
+public class ContainerUtilTest extends TestCase {
   public void testFindInstanceOf() {
-    Iterator<Object> iterator = Arrays.<Object>asList(new Integer(1), new ArrayList(), "1").iterator();
+    Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList(), "1").iterator();
     String string = (String)ContainerUtil.find(iterator, FilteringIterator.instanceOf(String.class));
     assertEquals("1", string);
   }
 
-  @Test
   public void testConcatMulti() {
     List<Integer> l = ContainerUtil.concat(Arrays.asList(1, 2), Collections.emptyList(), Arrays.asList(3, 4));
     assertEquals(4, l.size());
@@ -47,16 +48,17 @@ public class ContainerUtilTest {
       l.get(-1);
       fail();
     }
-    catch (IndexOutOfBoundsException ignore) { }
+    catch (IndexOutOfBoundsException ignore) {
+    }
 
     try {
       l.get(4);
       fail();
     }
-    catch (IndexOutOfBoundsException ignore) { }
+    catch (IndexOutOfBoundsException ignore) {
+    }
   }
 
-  @Test
   public void testConcatCME() {
     List<Integer> a1 = new ArrayList<>(Arrays.asList(0, 1));
     List<Integer> l = ContainerUtil.concat(a1, Arrays.asList(2, 3), ContainerUtil.emptyList());
@@ -71,10 +73,10 @@ public class ContainerUtilTest {
       l.get(3);
       fail();
     }
-    catch (ConcurrentModificationException ignore) { }
+    catch (ConcurrentModificationException ignore) {
+    }
   }
 
-  @Test
   public void testIterateWithCondition() {
     Condition<Integer> cond = integer -> integer > 2;
 
@@ -84,44 +86,41 @@ public class ContainerUtilTest {
     assertIterating(Collections.singletonList(4), cond, 4);
   }
 
-  private static void assertIterating(List<Integer> collection, Condition<Integer> condition, Integer... expected) {
+  private static void assertIterating(List<Integer> collection, Condition<? super Integer> condition, Integer... expected) {
     List<Integer> actual = ContainerUtil.newArrayList(ContainerUtil.iterate(collection, condition));
     assertEquals(Arrays.asList(expected), actual);
   }
 
-  @Test
   public void testIteratingBackward() {
     List<String> ss = new ArrayList<>();
     ss.add("a");
     ss.add("b");
     ss.add("c");
 
-    String log = "";
+    StringBuilder log = new StringBuilder();
     for (String s : ss) {
-      log += s;
+      log.append(s);
     }
 
     for (String s : ContainerUtil.iterateBackward(ss)) {
-      log += s;
+      log.append(s);
     }
 
-    assertEquals("abc" + "cba", log);
+    assertEquals("abc" + "cba", log.toString());
   }
 
-  @Test
   public void testLockFreeSingleThreadPerformance() {
-    final List<Object> my = new LockFreeCopyOnWriteArrayList<>();
     final List<Object> stock = new CopyOnWriteArrayList<>();
-
     measure(stock);
+    final List<Object> my = new LockFreeCopyOnWriteArrayList<>();
     measure(my);
     measure(stock);
     measure(my); // warm up
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 5; i++) {
       long stockElapsed = measure(stock);
       long myElapsed = measure(my);
 
-      System.out.println("LockFree my: "+myElapsed+"; stock: "+stockElapsed);
+      System.out.println("LockFree my: " + myElapsed + "; stock: " + stockElapsed);
       assertTrue("lockFree: " + myElapsed + "; stock: " + stockElapsed, (myElapsed - stockElapsed + 0.0) / myElapsed < 0.1);
     }
   }
@@ -139,7 +138,6 @@ public class ContainerUtilTest {
     return finish - start;
   }
 
-  @Test
   public void testLockFreeCOWDoesNotCreateEmptyArrays() {
     LockFreeCopyOnWriteArrayList<Object> my = (LockFreeCopyOnWriteArrayList<Object>)ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -159,12 +157,11 @@ public class ContainerUtilTest {
     }
   }
 
-  @Test
   public void testCOWListPerformanceAdd() {
     List<Object> list = ContainerUtil.createLockFreeCopyOnWriteList();
     int count = 15000;
     List<Integer> ints = IntStreamEx.range(0, count).boxed().toList();
-    PlatformTestUtil.startPerformanceTest("COWList add", 3500, () -> {
+    PlatformTestUtil.startPerformanceTest("COWList add", 4500, () -> {
       for (int it = 0; it < 10; it++) {
         list.clear();
         for (int i = 0; i < count; i++) {
@@ -187,7 +184,6 @@ public class ContainerUtilTest {
     assertSame(EmptyIterator.getInstance(), iterator);
   }
 
-  @Test
   public void testIdenticalItemsInLockFreeCOW() {
     List<String> list = ContainerUtil.createLockFreeCopyOnWriteList(Arrays.asList("a", "b"));
     list.add("a");
@@ -198,7 +194,6 @@ public class ContainerUtilTest {
     assertEquals(1, list.size());
   }
 
-  @Test
   public void testLockFreeCOWIteratorRemove() {
     List<String> seq = Arrays.asList("0", "1", "2", "3", "4");
     LockFreeCopyOnWriteArrayList<String> my = (LockFreeCopyOnWriteArrayList<String>)ContainerUtil.createLockFreeCopyOnWriteList(seq);
@@ -208,17 +203,18 @@ public class ContainerUtilTest {
         iterator.remove();
         fail("must not be able to remove before next() call");
       }
-      catch (NoSuchElementException ignore) { }
+      catch (NoSuchElementException ignore) {
+      }
     }
     int size = my.size();
     Iterator<String> iterator = my.iterator();
-    for (int i = 0; i<size; i++) {
+    for (int i = 0; i < size; i++) {
       assertTrue(iterator.hasNext());
       String next = iterator.next();
       assertEquals(next, String.valueOf(i));
       iterator.remove();
       assertEquals(my.size(), size - i - 1);
-      if (i == size-1) {
+      if (i == size - 1) {
         assertTrue(my.isEmpty());
       }
       else {
@@ -231,14 +227,97 @@ public class ContainerUtilTest {
       iterator.remove();
       fail("must not be able to double remove()");
     }
-    catch (NoSuchElementException ignore) { }
+    catch (NoSuchElementException ignore) {
+    }
   }
 
-  @Test
   public void testImmutableListEquals() {
     String value = "stringValue";
     List<String> expected = ContainerUtil.immutableList(value);
     List<String> actual = ContainerUtil.newArrayList(value);
     assertEquals(expected, actual);
+  }
+
+  public void testMergeSortedLists() {
+    List<Segment> target = new ArrayList<>(Arrays.asList(
+      range(0, 0),
+      range(2, 2),
+      range(4, 4),
+      range(6, 6)
+    ));
+    List<Segment> source = Arrays.asList(
+      range(1, 1),
+      range(2, 2),
+      range(2, 3)
+    );
+    target = mergeSegmentLists(target, source);
+    assertEquals(Arrays.asList(
+      range(0, 0),
+      range(1, 1),
+      range(2, 2),
+      range(2, 3),
+      range(4, 4),
+      range(6, 6)
+    ), target);
+    target = mergeSegmentLists(target, source);
+    assertEquals(Arrays.asList(
+      range(0, 0),
+      range(1, 1),
+      range(2, 2),
+      range(2, 3),
+      range(4, 4),
+      range(6, 6)
+    ), target);
+    target = mergeSegmentLists(target, Arrays.asList(
+      range(-1, -1),
+      range(-1, -2),
+      range(-2, -3)
+    ));
+    assertEquals(Arrays.asList(
+      range(-1, -1),
+      range(-1, -2),
+      range(-2, -3),
+      range(0, 0),
+      range(1, 1),
+      range(2, 2),
+      range(2, 3),
+      range(4, 4),
+      range(6, 6)
+    ), target);
+  }
+
+  private static Segment range(int start, int end) {
+    return new UnfairTextRange(start, end);
+  }
+
+  private static List<Segment> mergeSegmentLists(List<Segment> list1, List<Segment> list2) {
+    return ContainerUtil.mergeSortedLists(list1, list2, Segment.BY_START_OFFSET_THEN_END_OFFSET, true);
+  }
+
+  public void testMergeSortedArrays() {
+    List<Integer> list1 = Collections.singletonList(0);
+    List<Integer> list2 = Collections.singletonList(4);
+    List<Integer> m = ContainerUtil.mergeSortedLists(list1, list2, Comparator.naturalOrder(), true);
+    assertEquals(Arrays.asList(0, 4), m);
+    m = ContainerUtil.mergeSortedLists(list2, list1, Comparator.naturalOrder(), true);
+    assertEquals(Arrays.asList(0, 4), m);
+  }
+
+  public void testMergeSortedArrays2() {
+    int[] a1 = {0, 4};
+    int[] a2 = {4};
+    int[] m = ArrayUtil.mergeSortedArrays(a1, a2, true);
+    assertArrayEquals(new int[]{0, 4}, m);
+    m = ArrayUtil.mergeSortedArrays(a2, a1, true);
+    assertArrayEquals(new int[]{0, 4}, m);
+  }
+
+  public void testImmutableListSubList() {
+    List<Integer> list = ContainerUtil.immutableList(0, 1, 2, 3, 4);
+    List<Integer> subList = list.subList(1, 4);
+    UsefulTestCase.assertOrderedEquals(subList, 1, 2, 3);
+    List<Integer> subSubList = subList.subList(1, 2);
+    UsefulTestCase.assertOrderedEquals(subSubList, 2);
+    assertEquals(new ArrayList<>(subSubList), subSubList);
   }
 }

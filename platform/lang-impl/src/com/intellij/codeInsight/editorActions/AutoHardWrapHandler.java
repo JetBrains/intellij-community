@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -27,7 +27,6 @@ import java.util.Map;
  * Encapsulates logic for processing {@link EditorSettings#isWrapWhenTypingReachesRightMargin(Project)} option.
  *
  * @author Denis Zhdanov
- * @since 10/4/10 9:56 AM
  */
 public class AutoHardWrapHandler {
 
@@ -153,7 +152,7 @@ public class AutoHardWrapHandler {
     if (wrapOffset < 0) {
       return;
     }
-    
+
     WhiteSpaceFormattingStrategy formattingStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(editor);
     if (wrapOffset <= startOffset || wrapOffset > maxPreferredOffset
         || formattingStrategy.check(document.getCharsSequence(), startOffset, wrapOffset) >= wrapOffset)
@@ -168,7 +167,7 @@ public class AutoHardWrapHandler {
     final int baseCaretOffset = caretModel.getOffset();
     DocumentListener listener = new DocumentListener() {
       @Override
-      public void beforeDocumentChange(DocumentEvent event) {
+      public void beforeDocumentChange(@NotNull DocumentEvent event) {
         if (event.getOffset() < baseCaretOffset + caretOffsetDiff[0]) {
           caretOffsetDiff[0] += event.getNewLength() - event.getOldLength();
         }

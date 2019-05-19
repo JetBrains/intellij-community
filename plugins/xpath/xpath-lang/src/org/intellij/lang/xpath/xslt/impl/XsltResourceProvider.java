@@ -26,6 +26,7 @@ import org.intellij.lang.xpath.xslt.context.XsltFunctionContext;
  */
 public class XsltResourceProvider implements StandardResourceProvider {
 
+  @Override
   public void registerResources(ResourceRegistrar registrar) {
      registrar.addStdResource(XsltSupport.XSLT_NS, "/org/intellij/lang/xpath/xslt/resources/xslt-schema.xsd", getClass());
      registrar.addIgnoredResource(XsltSupport.PLUGIN_EXTENSIONS_NS);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -14,9 +15,10 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Document;
+import com.intellij.util.io.URLUtil;
+import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +29,8 @@ import java.awt.*;
 import java.io.File;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -41,6 +43,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myFullVersionFormat;
   private String myBuildNumber;
   private String myApiVersion;
+  private String myVersionSuffix;
   private String myCompanyName = "JetBrains s.r.o.";
   private String myCopyrightStart = "2000";
   private String myShortCompanyName;
@@ -49,12 +52,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private Color myCopyrightForeground = JBColor.BLACK;
   private Color myAboutForeground = JBColor.BLACK;
   private Color myAboutLinkColor;
+  private Rectangle myAboutLogoRect;
   private String myProgressTailIconName;
   private Icon myProgressTailIcon;
-
   private int myProgressHeight = 2;
-  private int myProgressX = 1;
   private int myProgressY = 350;
+  private int myLicenseOffsetX = 114;
   private int myLicenseOffsetY = 85;
   private String mySplashImageUrl;
   private String myAboutImageUrl;
@@ -62,9 +65,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
   private String myBigIconUrl;
+  private String mySvgIconUrl;
+  private String mySvgEapIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl;
-  private String myEditorBackgroundImageUrl;
 
   private Calendar myBuildDate;
   private Calendar myMajorReleaseBuildDate;
@@ -74,8 +78,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
   private String mySupportUrl;
-  private String myEAPFeedbackUrl;
-  private String myReleaseFeedbackUrl;
+  private String myYoutrackUrl;
+  private String myFeedbackUrl;
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
   private String myChannelsListUrl;
@@ -87,20 +91,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myEAP;
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
-  @Nullable
-  private String myHelpFileName = "ideahelp.jar";
-  @Nullable
-  private String myHelpRootName = "idea";
+  private @Nullable String myHelpFileName = "ideahelp.jar";
+  private @Nullable String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
-  private List<PluginChooserPage> myPluginChooserPages = new ArrayList<>();
   private String[] myEssentialPluginsIds;
-  private String myStatisticsSettingsUrl;
   private String myFUStatisticsSettingsUrl;
-  private String myStatisticsServiceUrl;
-  private String myStatisticsServiceKey;
   private String myEventLogSettingsUrl;
-  @Deprecated
-  private String myThirdPartySoftwareUrl;
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
   private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
@@ -111,8 +107,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionTipsKey;
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
-
-  private Rectangle myAboutLogoRect;
+  private List<ProgressSlide> myProgressSlides = new ArrayList<>();
 
   private static final String IDEA_PATH = "/idea/";
   private static final String ELEMENT_VERSION = "version";
@@ -138,8 +133,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
   private static final String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
   private static final String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
-  private static final String ATTRIBUTE_PROGRESS_X = "progressX";
   private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
+  private static final String ATTRIBUTE_LICENSE_TEXT_OFFSET_X = "licenseOffsetX";
   private static final String ATTRIBUTE_LICENSE_TEXT_OFFSET_Y = "licenseOffsetY";
   private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
   private static final String ELEMENT_ABOUT = "about";
@@ -154,20 +149,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_SHOW = "show";
   private static final String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
   private static final String LOGO_URL_ATTR = "logo-url";
-  private static final String ELEMENT_EDITOR = "editor";
-  private static final String BACKGROUND_URL_ATTR = "background-url";
   private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
   private static final String XML_EXTENSION = ".xml";
   private static final String ATTRIBUTE_EAP = "eap";
   private static final String HELP_ELEMENT_NAME = "help";
   private static final String ATTRIBUTE_HELP_FILE = "file";
   private static final String ATTRIBUTE_HELP_ROOT = "root";
-  private static final String PLUGINS_PAGE_ELEMENT_NAME = "plugins-page";
   private static final String ELEMENT_DOCUMENTATION = "documentation";
   private static final String ELEMENT_SUPPORT = "support";
+  private static final String ELEMENT_YOUTRACK = "youtrack";
   private static final String ELEMENT_FEEDBACK = "feedback";
-  private static final String ATTRIBUTE_RELEASE_URL = "release-url";
-  private static final String ATTRIBUTE_EAP_URL = "eap-url";
   private static final String ELEMENT_PLUGINS = "plugins";
   private static final String ATTRIBUTE_LIST_URL = "list-url";
   private static final String ATTRIBUTE_CHANNEL_LIST_URL = "channel-list-url";
@@ -181,13 +172,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_WINDOWS_URL = "win";
   private static final String ATTRIBUTE_MAC_URL = "mac";
   private static final String ELEMENT_STATISTICS = "statistics";
-  private static final String ATTRIBUTE_STATISTICS_SETTINGS = "settings";
   private static final String ATTRIBUTE_FU_STATISTICS_SETTINGS = "fus-settings";
-  private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
-  private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
   private static final String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
-  @Deprecated
-  private static final String ELEMENT_THIRD_PARTY = "third-party";
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
   private static final String STEPS_PROVIDER = "provider";
@@ -204,14 +190,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY = "tips-key";
   private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE = "tips-available";
   private static final String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
+  private static final String PROGRESS_SLIDE = "progressSlide";
+  private static final String PROGRESS_PERCENT = "progressPercent";
 
-  private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
+  static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
+  static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
   ApplicationInfoImpl() {
     String resource = IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
     try {
-      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, resource);
-      loadState(doc.getRootElement());
+      loadState(JDOMUtil.load(ApplicationInfoImpl.class, resource));
     }
     catch (Exception e) {
       throw new RuntimeException("Cannot load resource: " + resource, e);
@@ -230,18 +218,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public BuildNumber getBuild() {
-    return BuildNumber.fromStringWithProductCode(myBuildNumber, getProductPrefix());
-  }
-
-  private static String getProductPrefix() {
-    String prefix = null;
-    if (PlatformUtils.isIdeaCommunity()) {
-      prefix = "IC";
-    }
-    else if (PlatformUtils.isIdeaUltimate()) {
-      prefix = "IU";
-    }
-    return prefix;
+    return BuildNumber.fromString(myBuildNumber);
   }
 
   @Override
@@ -285,7 +262,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     else {
       result = StringUtil.notNullize(myMajorVersion, "0") + '.' + StringUtil.notNullize(myMinorVersion, "0");
     }
-    if (isEAP()) result += " EAP";
+    if (!StringUtil.isEmpty(myVersionSuffix)) {
+      result += " " + myVersionSuffix;
+    }
     return result;
   }
 
@@ -359,12 +338,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myProgressY;
   }
 
-  public int getLicenseOffsetY() {
-    return myLicenseOffsetY;
+  public int getLicenseOffsetX() {
+    return myLicenseOffsetX;
   }
 
-  public int getProgressX() {
-    return myProgressX;
+  public int getLicenseOffsetY() {
+    return myLicenseOffsetY;
   }
 
   @Nullable
@@ -372,9 +351,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     if (myProgressTailIcon == null && myProgressTailIconName != null) {
       try {
         final URL url = getClass().getResource(myProgressTailIconName);
-        @SuppressWarnings({"deprecation", "UnnecessaryFullyQualifiedName"}) final Image image = com.intellij.util.ImageLoader.loadFromUrl(url, false);
+        @SuppressWarnings({"UnnecessaryFullyQualifiedName"}) final Image image = com.intellij.util.ImageLoader.loadFromUrl(url);
         if (image != null) {
-          myProgressTailIcon = new ImageIcon(image);
+          myProgressTailIcon = new JBImageIcon(image);
         }
       } catch (Exception ignore) {}
     }
@@ -398,6 +377,25 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
+  @Nullable
+  public String getApplicationSvgIconUrl() {
+    return isEAP() && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
+  }
+
+  @Nullable
+  @Override
+  public File getApplicationSvgIconFile() {
+    String svgIconUrl = getApplicationSvgIconUrl();
+    if (svgIconUrl == null) return null;
+
+    URL url = getClass().getResource(svgIconUrl);
+    if (url != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
+      return URLUtil.urlToFile(url);
+    }
+    return null;
+  }
+
+  @Override
   public String getToolWindowIconUrl() {
     return myToolWindowIconUrl;
   }
@@ -414,11 +412,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getEditorBackgroundImageUrl() {
-    return myEditorBackgroundImageUrl;
-  }
-
-  @Override
   public String getPackageCode() {
     return myPackageCode;
   }
@@ -426,6 +419,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public boolean isEAP() {
     return myEAP;
+  }
+
+  @Override
+  public boolean isMajorEAP() {
+    return myEAP && (myMinorVersion == null || myMinorVersion.indexOf('.') < 0);
   }
 
   @Override
@@ -444,18 +442,23 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getEAPFeedbackUrl() {
-    return myEAPFeedbackUrl;
+  public String getYoutrackUrl() {
+    return myYoutrackUrl;
   }
 
   @Override
-  public String getReleaseFeedbackUrl() {
-    return myReleaseFeedbackUrl;
+  public String getFeedbackUrl() {
+    return myFeedbackUrl;
   }
 
   @Override
   public String getPluginManagerUrl() {
     return myPluginManagerUrl;
+  }
+
+  @Override
+  public boolean usesJetBrainsPluginRepository() {
+    return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl);
   }
 
   @Override
@@ -532,29 +535,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myCopyrightStart;
   }
 
-  public String getStatisticsSettingsUrl() {
-    return myStatisticsSettingsUrl;
-  }
-
   public String getFUStatisticsSettingsUrl() {
     return myFUStatisticsSettingsUrl;
   }
 
-  public String getStatisticsServiceUrl() {
-    return myStatisticsServiceUrl;
-  }
-
-  public String getStatisticsServiceKey() {
-    return myStatisticsServiceKey;
-  }
-
   public String getEventLogSettingsUrl() {
     return myEventLogSettingsUrl;
-  }
-
-  @Override
-  public String getThirdPartySoftwareURL() {
-    return myThirdPartySoftwareUrl;
   }
 
   @Override
@@ -608,17 +594,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return mySubscriptionAdditionalFormData;
   }
 
-  private static ApplicationInfoImpl ourShadowInstance;
-
-  public boolean isBetaOrRC() {
-    String minor = getMinorVersion();
-    if (minor != null) {
-      if (minor.contains("RC") || minor.contains("Beta") || minor.contains("beta")) {
-        return true;
-      }
-    }
-    return false;
+  @Override
+  public List<ProgressSlide> getProgressSlides() {
+    return myProgressSlides;
   }
+
+  private static ApplicationInfoImpl ourShadowInstance;
 
   @NotNull
   public static ApplicationInfoEx getShadowInstance() {
@@ -641,6 +622,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myFullVersionFormat = versionElement.getAttributeValue(ATTRIBUTE_FULL);
       myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
+      myVersionSuffix = versionElement.getAttributeValue("suffix");
+      if (myVersionSuffix == null && myEAP) {
+        myVersionSuffix = "EAP";
+      }
     }
 
     Element companyElement = getChild(parentNode, ELEMENT_COMPANY);
@@ -658,17 +643,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       setBuildNumber(myApiVersion, myBuildNumber);
 
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
-      if (dateString.equals("__BUILD_DATE__")) {
+      if ("__BUILD_DATE__".equals(dateString)) {
         myBuildDate = new GregorianCalendar();
-        try {
-          final JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "bootstrap.jar");
-          try {
-            final JarEntry jarEntry = bootstrapJar.entries().nextElement(); // /META-INF is always updated on build
-            myBuildDate.setTime(new Date(jarEntry.getTime()));
-          }
-          finally {
-            bootstrapJar.close();
-          }
+        try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + "/lib/bootstrap.jar")) {
+          JarEntry jarEntry = bootstrapJar.entries().nextElement();  // META-INF is always updated on build
+          myBuildDate.setTime(new Date(jarEntry.getTime()));
         }
         catch (Exception ignore) { }
       }
@@ -708,19 +687,33 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         myProgressHeight = Integer.parseInt(v);
       }
 
-      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_X);
-      if (v != null) {
-        myProgressX = Integer.parseInt(v);
-      }
-
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
       if (v != null) {
         myProgressY = Integer.parseInt(v);
       }
 
+      v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_X);
+      if (v != null) {
+        myLicenseOffsetX = Integer.parseInt(v);
+      }
+
       v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_Y);
       if (v != null) {
         myLicenseOffsetY = Integer.parseInt(v);
+      }
+
+      for (Element child : getChildren(logoElement, PROGRESS_SLIDE)) {
+        String slideUrl = child.getAttributeValue(ATTRIBUTE_URL);
+        assert slideUrl != null;
+        String progressPercentString = child.getAttributeValue(PROGRESS_PERCENT);
+        assert progressPercentString != null;
+
+        int progressPercentInt = Integer.parseInt(progressPercentString);
+        assert (progressPercentInt <= 100 && progressPercentInt >= 0);
+
+        float progressPercentFloat = (float) progressPercentInt / 100;
+        ProgressSlide progressSlide = new ProgressSlide(slideUrl, progressPercentFloat);
+        myProgressSlides.add(progressSlide);
       }
     }
 
@@ -763,6 +756,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;
       }
+      mySvgIconUrl = iconElement.getAttributeValue("svg");
+    }
+    Element iconEap = getChild(parentNode, "icon-eap");
+    if (iconEap != null) {
+      mySvgEapIconUrl = iconEap.getAttributeValue("svg");
     }
 
     Element packageElement = getChild(parentNode, ELEMENT_PACKAGE);
@@ -783,11 +781,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     Element wizardSteps = getChild(parentNode, CUSTOMIZE_IDE_WIZARD_STEPS);
     if (wizardSteps != null) {
       myCustomizeIDEWizardStepsProvider = wizardSteps.getAttributeValue(STEPS_PROVIDER);
-    }
-
-    Element editor = getChild(parentNode, ELEMENT_EDITOR);
-    if (editor != null) {
-      myEditorBackgroundImageUrl = editor.getAttributeValue(BACKGROUND_URL_ATTR);
     }
 
     Element helpElement = getChild(parentNode, HELP_ELEMENT_NAME);
@@ -819,10 +812,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       mySupportUrl = supportElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
+    Element youtrackElement = getChild(parentNode, ELEMENT_YOUTRACK);
+    if (youtrackElement != null) {
+      myYoutrackUrl = youtrackElement.getAttributeValue(ATTRIBUTE_URL);
+    }
+
     Element feedbackElement = getChild(parentNode, ELEMENT_FEEDBACK);
     if (feedbackElement != null) {
-      myEAPFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_EAP_URL);
-      myReleaseFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_RELEASE_URL);
+      myFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
     Element whatsnewElement = getChild(parentNode, ELEMENT_WHATSNEW);
@@ -833,45 +830,45 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     Element pluginsElement = getChild(parentNode, ELEMENT_PLUGINS);
     if (pluginsElement != null) {
       String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
-      myPluginManagerUrl = url != null ? url : DEFAULT_PLUGINS_HOST;
-      boolean closed = StringUtil.endsWith(myPluginManagerUrl, "/");
+      if (url != null) {
+        myPluginManagerUrl = StringUtil.trimEnd(url, "/");
+      }
 
       String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
-      myPluginsListUrl = listUrl != null ? listUrl : myPluginManagerUrl + (closed ? "" : "/") + "plugins/list/";
+      if (listUrl != null) {
+        myPluginsListUrl = listUrl;
+      }
 
       String channelListUrl = pluginsElement.getAttributeValue(ATTRIBUTE_CHANNEL_LIST_URL);
-      myChannelsListUrl = channelListUrl != null ? channelListUrl  : myPluginManagerUrl + (closed ? "" : "/") + "channels/list/";
+      if (channelListUrl != null) {
+        myChannelsListUrl = channelListUrl;
+      }
 
       String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
-      myPluginsDownloadUrl = downloadUrl != null ? downloadUrl : myPluginManagerUrl + (closed ? "" : "/") + "pluginManager/";
+      if (downloadUrl != null) {
+        myPluginsDownloadUrl = downloadUrl;
+      }
 
       if (!getBuild().isSnapshot()) {
         myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
       }
     }
-    else {
-      myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
-      myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
-      myChannelsListUrl = DEFAULT_PLUGINS_HOST + "/channels/list/";
-      myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager/";
+
+    final String pluginsHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
+    if (pluginsHost != null) {
+      myPluginManagerUrl = StringUtil.trimEnd(pluginsHost, "/");
+      myPluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
     }
 
-    final String pluginsHost = System.getProperty("idea.plugins.host");
-    if (pluginsHost != null) {
-      myPluginsListUrl = myPluginsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
-      myChannelsListUrl = myChannelsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
-      myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
-    }
+    myPluginManagerUrl = ObjectUtils.coalesce(myPluginManagerUrl, DEFAULT_PLUGINS_HOST);
+    myPluginsListUrl = ObjectUtils.coalesce(myPluginsListUrl, myPluginManagerUrl + "/plugins/list/");
+    myChannelsListUrl = ObjectUtils.coalesce(myChannelsListUrl, myPluginManagerUrl + "/channels/list/");
+    myPluginsDownloadUrl = ObjectUtils.coalesce(myPluginsDownloadUrl, myPluginManagerUrl + "/pluginManager/");
 
     Element keymapElement = getChild(parentNode, ELEMENT_KEYMAP);
     if (keymapElement != null) {
       myWinKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_WINDOWS_URL);
       myMacKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_MAC_URL);
-    }
-
-    myPluginChooserPages = new ArrayList<>();
-    for (Element child : getChildren(parentNode, PLUGINS_PAGE_ELEMENT_NAME)) {
-      myPluginChooserPages.add(new PluginChooserPageImpl(child));
     }
 
     List<Element> essentialPluginsElements = getChildren(parentNode, ESSENTIAL_PLUGIN);
@@ -883,23 +880,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element statisticsElement = getChild(parentNode, ELEMENT_STATISTICS);
     if (statisticsElement != null) {
-      myStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SETTINGS);
       myFUStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_FU_STATISTICS_SETTINGS);
-      myStatisticsServiceUrl  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
-      myStatisticsServiceKey  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE_KEY);
       myEventLogSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS);
     }
     else {
-      myStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/stat-assistant.xml";
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
-      myStatisticsServiceUrl  = "https://www.jetbrains.com/idea/statistics/index.jsp";
-      myStatisticsServiceKey  = null;
-      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-assistant.xml";
-    }
-
-    Element thirdPartyElement = getChild(parentNode, ELEMENT_THIRD_PARTY);
-    if (thirdPartyElement != null) {
-      myThirdPartySoftwareUrl = thirdPartyElement.getAttributeValue(ATTRIBUTE_URL);
+      myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/%s/lion-v3-assistant.xml";
     }
 
     Element tvElement = getChild(parentNode, ELEMENT_JB_TV);
@@ -939,8 +925,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return parentNode.getChildren(name, parentNode.getNamespace());
   }
 
-  private static Element getChild(Element parentNode, String version) {
-    return parentNode.getChild(version, parentNode.getNamespace());
+  private static Element getChild(Element parentNode, String name) {
+    return parentNode.getChild(name, parentNode.getNamespace());
   }
 
   //copy of ApplicationInfoProperties.shortenCompanyName
@@ -979,17 +965,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public List<PluginChooserPage> getPluginChooserPages() {
-    return myPluginChooserPages;
-  }
-
-  @Override
   public boolean isEssentialPlugin(@NotNull String pluginId) {
     return PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) || ArrayUtil.contains(pluginId, myEssentialPluginsIds);
   }
 
   public List<String> getEssentialPluginsIds() {
-    return Collections.unmodifiableList(Arrays.asList(myEssentialPluginsIds));
+    return ContainerUtil.immutableList(myEssentialPluginsIds);
   }
 
   private static class UpdateUrlsImpl implements UpdateUrls {
@@ -1011,34 +992,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     @Override
     public String getPatchesUrl() {
       return myPatchesUrl;
-    }
-  }
-
-  private static class PluginChooserPageImpl implements PluginChooserPage {
-    private final String myTitle;
-    private final String myCategory;
-    private final String myDependentPlugin;
-
-    private PluginChooserPageImpl(Element e) {
-      myTitle = e.getAttributeValue("title");
-      myCategory = e.getAttributeValue("category");
-      myDependentPlugin = e.getAttributeValue("depends");
-    }
-
-    @NotNull
-    @Override
-    public String getTitle() {
-      return myTitle;
-    }
-
-    @Override
-    public String getCategory() {
-      return myCategory;
-    }
-
-    @Override
-    public String getDependentPlugin() {
-      return myDependentPlugin;
     }
   }
 

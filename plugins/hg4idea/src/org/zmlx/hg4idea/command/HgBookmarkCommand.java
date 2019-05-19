@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,7 +26,7 @@ import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
 public class HgBookmarkCommand {
 
-  public static void createBookmarkAsynchronously(@NotNull List<HgRepository> repositories, @NotNull String name, boolean isActive) {
+  public static void createBookmarkAsynchronously(@NotNull List<? extends HgRepository> repositories, @NotNull String name, boolean isActive) {
     final Project project = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(repositories)).getProject();
     if (StringUtil.isEmptyOrSpaces(name)) {
       VcsNotifier.getInstance(project).notifyError("Hg Error", "Bookmark name is empty");
@@ -49,7 +50,7 @@ public class HgBookmarkCommand {
                                                           @NotNull VirtualFile repositoryRoot,
                                                           @NotNull String name,
                                                           @NotNull List<String> args) {
-    ArrayList<String> arguments = ContainerUtil.newArrayList(args);
+    ArrayList<String> arguments = new ArrayList<>(args);
     arguments.add(name);
     HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repositoryRoot, "bookmark", arguments);
     getRepositoryManager(project).updateRepository(repositoryRoot);

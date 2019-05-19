@@ -28,7 +28,7 @@ class JavaRemoteDebugRunConfigurationImporter : RunConfigurationImporter {
     runConfiguration.USE_SOCKET_TRANSPORT = (cfg["transport"] as? String) != "SHARED_MEM"
     runConfiguration.SERVER_MODE = (cfg["mode"] as? String) == "LISTEN"
 
-    consumeIfCast(cfg["port"], Int::class.java) { runConfiguration.PORT = it.toString() }
+    consumeIfCast(cfg["port"], Number::class.java) { runConfiguration.PORT = it.toInt().toString() }
     consumeIfCast(cfg["host"], String::class.java) { runConfiguration.HOST = it }
     consumeIfCast(cfg["sharedMemoryAddress"], String::class.java) { runConfiguration.SHMEM_ADDRESS = it }
   }

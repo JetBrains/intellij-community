@@ -60,13 +60,13 @@ public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
 
     configureGradleFile();
     performPaste();
-    checkResultByText("dependencies {\n" +
-                      "    <dependency>\n" +
-                      "      <groupId>group</groupId>\n" +
-                      "      <version>1.0</version>\n" +
-                      "      <scope>runtime</scope>\n" +
-                      "    </dependency>\n" +
-                      "}");
+    checkResultByText(null, "dependencies {\n" +
+                            "    <dependency>\n" +
+                            "      <groupId>group</groupId>\n" +
+                            "      <version>1.0</version>\n" +
+                            "      <scope>runtime</scope>\n" +
+                            "    </dependency>\n" +
+                            "}", true);
   }
 
   public void test_AddCompile() {

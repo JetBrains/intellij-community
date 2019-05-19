@@ -168,6 +168,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   public void testNoAnonymousOuterMethodReference() { doAntiTest(); }
 
   public void testMethodReferenceOnAncestor() { doTest(true); }
+  public void testObjectsNonNull() { doTest(true); }
 
   public void testNoLambdaSuggestionForGenericsFunctionalInterfaceMethod() {
     configureByFile("/" + getTestName(false) + ".java");
@@ -220,9 +221,10 @@ public void testConvertToObjectStream() {
 
   public void testCollectionsEmptyMap() { doTest(true); }
   public void testExpectedSuperOfLowerBound() { 
-    configureByTestName();
-    myFixture.complete(CompletionType.SMART, 1);
-    checkResultByFile("/" + getTestName(false) + "-out.java");
+    doTest(false);
+  }
+  public void testLowerBoundOfFreshVariable() { 
+    doTest(false);
   }
 
   private void doTest() {
@@ -273,7 +275,7 @@ public void testConvertToObjectStream() {
 
   public void testPreferLambdaOverGenericGetter() {
     configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "s -> ", "isEmpty", "getSomeGenericValue");
+    myFixture.assertPreferredCompletionItems(0, "s -> ", "isEmpty", "isNull", "nonNull", "getSomeGenericValue");
   }
 
   public void testNoInaccessibleConstructorRef() {
@@ -290,4 +292,8 @@ public void testConvertToObjectStream() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "String.class");
   }
+
+  public void testNestedCollectorsCounting() { doTest(false); }
+
+  public void testFilterInaccessibleConstructors() { doAntiTest(); }
 }

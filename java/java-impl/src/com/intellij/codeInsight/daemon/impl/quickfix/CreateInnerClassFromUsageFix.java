@@ -112,9 +112,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setRenderer(renderer)
       .setTitle(QuickFixBundle.message("target.class.chooser.title"))
-      .setItemChosenCallback((aClass) -> {
-        doInvoke(aClass, superClassName);
-      });
+      .setItemChosenCallback((aClass) -> doInvoke(aClass, superClassName));
     renderer.installSpeedSearch(builder);
     builder.createPopup().showInBestPositionFor(editor);
   }
@@ -125,7 +123,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(aClass)) return;
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
     PsiClass created = myKind == CreateClassKind.INTERFACE
                       ? elementFactory.createInterface(refName)
                       : myKind == CreateClassKind.CLASS ? elementFactory.createClass(refName) : elementFactory.createEnum(refName);

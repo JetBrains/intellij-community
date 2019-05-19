@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
-/** @noinspection SynchronizationOnLocalVariableOrMethodParameter*/
+/** */
 public final class FilesDelta {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FilesDelta");
   private final ReentrantLock myDataLock = new ReentrantLock();
@@ -219,7 +219,7 @@ public final class FilesDelta {
     return _addToRecompiled(root, Collections.singleton(file));
   }
 
-  private boolean _addToRecompiled(BuildRootDescriptor root, Collection<File> filesToAdd) {
+  private boolean _addToRecompiled(BuildRootDescriptor root, Collection<? extends File> filesToAdd) {
     Set<File> files = myFilesToRecompile.get(root);
     if (files == null) {
       files = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);

@@ -10,6 +10,8 @@ import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.util.VisibilityUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +49,12 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (method.isConstructor() ||
         PsiType.VOID.equals(method.getReturnType()) ||
+        VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), myGlobal.highestModifier) < 0 ||
         myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtilBase.isSimplePropertySetter(method) ||
         method.hasModifierProperty(PsiModifier.NATIVE) ||
         MethodUtils.hasSuper(method) ||
         RefUtil.isImplicitRead(method) ||
+        UnusedReturnValue.canIgnoreReturnValue(method) ||
         UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(method)) return null;
 
     final boolean[] atLeastOneUsageExists = new boolean[]{false};
@@ -60,16 +64,14 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
       if (element instanceof PsiReferenceExpression) {
         PsiElement parent = element.getParent();
         if (parent instanceof PsiMethodCallExpression) {
-          PsiElement gParent = parent.getParent();
-          return gParent instanceof PsiExpressionStatement ||
-                 gParent instanceof PsiLambdaExpression && PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)gParent));
+          return ExpressionUtils.isVoidContext((PsiExpression)parent);
         }
       }
       return element instanceof PsiMethodReferenceExpression &&
              PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)element));
     })) {
       if (atLeastOneUsageExists[0]) {
-        return new ProblemDescriptor[]{UnusedReturnValue.createProblemDescriptor(method, manager, null, false)};
+        return new ProblemDescriptor[]{UnusedReturnValue.createProblemDescriptor(method, manager, null, false, isOnTheFly)};
       }
     }
     return null;

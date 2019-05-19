@@ -17,7 +17,6 @@ package com.intellij.psi.codeStyle.arrangement.std;
 
 /**
  * @author Denis Zhdanov
- * @since 3/11/13 9:45 AM
  */
 public enum StdArrangementTokenUiRole {
   LABEL,

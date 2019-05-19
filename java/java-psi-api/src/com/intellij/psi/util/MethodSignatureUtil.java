@@ -189,7 +189,7 @@ public class MethodSignatureUtil {
     PsiClass derivedClass = derivedMethod.getContainingClass();
     if (derivedClass == null || superClassCandidate == null || derivedClass == superClassCandidate) return false;
     final PsiSubstitutor superSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClassCandidate, derivedClass,
-                                                                                             PsiSubstitutor.EMPTY, null);
+                                                                                             PsiSubstitutor.EMPTY);
     if (superSubstitutor == null) return false;
     final MethodSignature superSignature = superMethodCandidate.getSignature(superSubstitutor);
     final MethodSignature derivedSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);
@@ -320,7 +320,7 @@ public class MethodSignatureUtil {
     PsiSubstitutor result = superMethodSignature.getSubstitutor();
     for (int i = 0; i < methodTypeParameters.length; i++) {
       PsiTypeParameter methodTypeParameter = methodTypeParameters[i];
-      PsiElementFactory factory = JavaPsiFacade.getInstance(methodTypeParameter.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(methodTypeParameter.getProject());
       result = result.put(superTypeParameters[i], factory.createType(methodTypeParameter));
     }
 

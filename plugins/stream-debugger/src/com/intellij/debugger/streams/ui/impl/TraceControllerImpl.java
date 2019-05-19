@@ -65,6 +65,7 @@ public class TraceControllerImpl implements TraceController, Disposable {
     return myState.getRawValues();
   }
 
+  @Override
   @NotNull
   public List<TraceElement> getTrace() {
     return myState.getTrace();

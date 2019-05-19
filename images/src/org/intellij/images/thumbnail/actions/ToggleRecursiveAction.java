@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/** $Id$ */
-
 package org.intellij.images.thumbnail.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Toggle recursive flag.
@@ -29,19 +27,22 @@ import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class ToggleRecursiveAction extends ToggleAction {
-    public boolean isSelected(AnActionEvent e) {
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         return view != null && view.isRecursive();
     }
 
-    public void setSelected(AnActionEvent e, boolean state) {
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         if (view != null) {
             view.setRecursive(state);
         }
     }
 
-    public void update(final AnActionEvent e) {
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
         super.update(e);
         ThumbnailViewActionUtil.setEnabled(e);
     }

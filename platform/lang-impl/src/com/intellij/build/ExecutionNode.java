@@ -22,25 +22,46 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
+
+import static com.intellij.util.ui.EmptyIcon.ICON_16;
 
 /**
  * @author Vladislav.Soroka
  */
 public class ExecutionNode extends CachingSimpleNode {
-  private final List<ExecutionNode> myChildrenList = ContainerUtil.newSmartList();
+  private static final Icon NODE_ICON_OK = AllIcons.RunConfigurations.TestPassed;
+  private static final Icon NODE_ICON_ERROR = AllIcons.RunConfigurations.TestError;
+  private static final Icon NODE_ICON_WARNING = AllIcons.General.Warning;
+  private static final Icon NODE_ICON_INFO = AllIcons.General.Information;
+  private static final Icon NODE_ICON_SKIPPED = AllIcons.RunConfigurations.TestIgnored;
+  private static final Icon NODE_ICON_STATISTICS = ICON_16;
+  private static final Icon NODE_ICON_SIMPLE = ICON_16;
+  private static final Icon NODE_ICON_DEFAULT = ICON_16;
+  private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.FS();
+
+  private final Collection<ExecutionNode> myChildrenList = new ConcurrentLinkedDeque<>();
+  private final AtomicInteger myErrors = new AtomicInteger();
+  private final AtomicInteger myWarnings = new AtomicInteger();
+  private final AtomicInteger myInfos = new AtomicInteger();
   private long startTime;
   private long endTime;
   @Nullable
@@ -56,8 +77,9 @@ public class ExecutionNode extends CachingSimpleNode {
   private Navigatable myNavigatable;
   @Nullable
   private NullableLazyValue<Icon> myPreferredIconValue;
-  private final AtomicInteger myErrors = new AtomicInteger();
-  private final AtomicInteger myWarnings = new AtomicInteger();
+  @Nullable
+  private Predicate<ExecutionNode> myFilter;
+  private volatile boolean myVisible = true;
 
   public ExecutionNode(Project aProject, ExecutionNode parentNode) {
     super(aProject, parentNode);
@@ -65,24 +87,33 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Override
   protected SimpleNode[] buildChildren() {
-    return myChildrenList.size() == 0 ? NO_CHILDREN : ContainerUtil.toArray(myChildrenList, new ExecutionNode[myChildrenList.size()]);
+    Stream<ExecutionNode> stream = myChildrenList.stream();
+    stream = stream.filter(node -> node.myVisible);
+    if (myFilter != null) {
+      stream = stream.filter(myFilter);
+    }
+    return stream.toArray(SimpleNode[]::new);
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     setIcon(getCurrentIcon());
     presentation.setPresentableText(myName);
     presentation.setIcon(getIcon());
-    if (myTitle != null) {
+    if (StringUtil.isNotEmpty(myTitle)) {
       presentation.addText(myTitle + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
     String hint = getCurrentHint();
-    if (myTitle != null || hint != null) {
+    boolean isNotEmptyName = StringUtil.isNotEmpty(myName);
+    if (isNotEmptyName && myTitle != null || hint != null) {
       presentation.addText(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    if (hint != null) {
-      presentation.addText("  " + hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
+    if (StringUtil.isNotEmpty(hint)) {
+      if (isNotEmptyName) {
+        hint = " " + hint;
+      }
+      presentation.addText(hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
     if (myTooltip != null) {
       presentation.setTooltip(myTooltip);
@@ -127,16 +158,16 @@ public class ExecutionNode extends CachingSimpleNode {
 
   public void add(ExecutionNode node) {
     myChildrenList.add(node);
-    cleanUpCache();
-  }
-
-  public void add(int index, ExecutionNode node) {
-    myChildrenList.add(index, node);
+    node.setFilter(myFilter);
     cleanUpCache();
   }
 
   void removeChildren() {
     myChildrenList.clear();
+    myErrors.set(0);
+    myWarnings.set(0);
+    myInfos.set(0);
+    myResult = null;
     cleanUpCache();
   }
 
@@ -145,15 +176,15 @@ public class ExecutionNode extends CachingSimpleNode {
     if (startTime == endTime) return null;
     if (isRunning()) {
       final long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
-      String durationText = StringUtil.formatDuration(duration);
+      String durationText = StringUtil.formatDurationApproximate(duration);
       int index = durationText.indexOf("s ");
       if (index != -1) {
         durationText = durationText.substring(0, index + 1);
       }
-      return "Running for " + durationText;
+      return durationText;
     }
     else {
-      return isSkipped() ? null : StringUtil.formatDuration(endTime - startTime);
+      return isSkipped(myResult) ? null : StringUtil.formatDuration(endTime - startTime);
     }
   }
 
@@ -173,20 +204,47 @@ public class ExecutionNode extends CachingSimpleNode {
     this.endTime = endTime;
   }
 
-  public boolean isFailed() {
-    return myResult instanceof FailureResult;
+  @Nullable
+  public Predicate<ExecutionNode> getFilter() {
+    return myFilter;
   }
 
-  public boolean isSkipped() {
-    return myResult instanceof SkippedResult;
+  public void setFilter(@Nullable Predicate<ExecutionNode> filter) {
+    myFilter = filter;
+    for (ExecutionNode node : myChildrenList) {
+      node.setFilter(myFilter);
+    }
+    cleanUpCache();
+  }
+
+  public void setVisible(boolean visible) {
+    if (myVisible != visible) {
+      myVisible = visible;
+      SimpleNode parent = getParent();
+      if (parent instanceof CachingSimpleNode) {
+        ((CachingSimpleNode)parent).cleanUpCache();
+      }
+    }
   }
 
   public boolean isRunning() {
-    return endTime <= 0 && !isSkipped() && !isFailed();
+    return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult);
   }
 
-  public void setResult(@Nullable EventResult result) {
-    myResult = result;
+  public boolean hasWarnings() {
+    return myWarnings.get() > 0 ||
+           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.WARNING);
+  }
+
+  public boolean hasInfos() {
+    return myInfos.get() > 0 ||
+           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.INFO);
+  }
+
+  public boolean isFailed() {
+    return isFailed(myResult) ||
+           myErrors.get() > 0 ||
+           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.ERROR);
   }
 
   @Nullable
@@ -194,9 +252,16 @@ public class ExecutionNode extends CachingSimpleNode {
     return myResult;
   }
 
+  public void setResult(@Nullable EventResult result) {
+    myResult = result;
+    if (myFilter != null) {
+      cleanUpCache();
+    }
+  }
+
   @Override
   public boolean isAutoExpandNode() {
-    return myAutoExpandNode;
+    return myAutoExpandNode || (myFilter != null && (isRunning() || isFailed()));
   }
 
   public void setAutoExpandNode(boolean autoExpandNode) {
@@ -224,7 +289,7 @@ public class ExecutionNode extends CachingSimpleNode {
     return Collections.emptyList();
   }
 
-  public void setIconProvider(Supplier<Icon> iconProvider) {
+  public void setIconProvider(Supplier<? extends Icon> iconProvider) {
     myPreferredIconValue = new NullableLazyValue<Icon>() {
       @Nullable
       @Override
@@ -241,6 +306,15 @@ public class ExecutionNode extends CachingSimpleNode {
     else if (kind == MessageEvent.Kind.WARNING) {
       myWarnings.incrementAndGet();
     }
+    else if (kind == MessageEvent.Kind.INFO) {
+      myInfos.incrementAndGet();
+    }
+  }
+
+  @Nullable
+  @ApiStatus.Experimental
+  ExecutionNode findFirstChild(@NotNull Predicate<? super ExecutionNode> filter) {
+    return myChildrenList.stream().filter(filter).findFirst().orElse(null);
   }
 
   private String getCurrentHint() {
@@ -251,7 +325,8 @@ public class ExecutionNode extends CachingSimpleNode {
       if (hint == null) {
         hint = "";
       }
-      hint += (getParent() == null ? isRunning() ? "   " : "   with " : " (");
+      SimpleNode parent = getParent();
+      hint += parent == null || parent.getParent() == null ? (isRunning() ? "  " : " with ") : " ";
       if (errors > 0) {
         hint += (errors + " " + StringUtil.pluralize("error", errors));
         if (warnings > 0) {
@@ -260,9 +335,6 @@ public class ExecutionNode extends CachingSimpleNode {
       }
       if (warnings > 0) {
         hint += (warnings + " " + StringUtil.pluralize("warning", warnings));
-      }
-      if (getParent() != null) {
-        hint += ")";
       }
     }
     return hint;
@@ -276,28 +348,49 @@ public class ExecutionNode extends CachingSimpleNode {
       return getIcon(((MessageEventResult)myResult).getKind());
     }
     else {
-      return isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :
-             isFailed() ? AllIcons.General.Error :
-             isSkipped() ? AllIcons.Process.State.YellowStr :
-             myErrors.get() > 0 ? AllIcons.General.Error :
-             myWarnings.get() > 0 ? AllIcons.General.Warning :
-             AllIcons.Process.State.GreenOK;
+      return isRunning() ? NODE_ICON_RUNNING :
+             isFailed(myResult) ? NODE_ICON_ERROR :
+             isSkipped(myResult) ? NODE_ICON_SKIPPED :
+             myErrors.get() > 0 ? NODE_ICON_ERROR :
+             myWarnings.get() > 0 ? NODE_ICON_WARNING :
+             NODE_ICON_OK;
     }
+  }
+
+  public static boolean isFailed(@Nullable EventResult result) {
+    return result instanceof FailureResult;
+  }
+
+  public static boolean isSkipped(@Nullable EventResult result) {
+    return result instanceof SkippedResult;
+  }
+
+  public static Icon getEventResultIcon(@Nullable EventResult result) {
+    if (result == null) {
+      return NODE_ICON_RUNNING;
+    }
+    if (isFailed(result)) {
+      return NODE_ICON_ERROR;
+    }
+    if (isSkipped(result)) {
+      return NODE_ICON_SKIPPED;
+    }
+    return NODE_ICON_OK;
   }
 
   private static Icon getIcon(MessageEvent.Kind kind) {
     switch (kind) {
       case ERROR:
-        return AllIcons.General.Error;
+        return NODE_ICON_ERROR;
       case WARNING:
-        return AllIcons.General.Warning;
+        return NODE_ICON_WARNING;
       case INFO:
-        return AllIcons.General.Information;
+        return NODE_ICON_INFO;
       case STATISTICS:
-        return AllIcons.General.Mdot_empty;
+        return NODE_ICON_STATISTICS;
       case SIMPLE:
-        return AllIcons.General.Mdot_empty;
+        return NODE_ICON_SIMPLE;
     }
-    return AllIcons.General.Mdot_empty;
+    return NODE_ICON_DEFAULT;
   }
 }

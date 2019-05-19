@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -27,12 +28,13 @@ import java.util.List;
 
 public abstract class MavenProjectsAction extends MavenAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && !MavenActionUtil.getMavenProjects(e.getDataContext()).isEmpty();
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final DataContext context = e.getDataContext();
     final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
     if(projectsManager == null) return;

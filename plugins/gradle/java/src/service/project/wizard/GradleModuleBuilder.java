@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.application.options.CodeStyle;
@@ -12,16 +12,19 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalStateComponent;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
-import com.intellij.openapi.externalSystem.service.project.wizard.ExternalModuleSettingsStep;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -31,6 +34,7 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -46,25 +50,27 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinBuildScriptDataBuilder;
-import org.jetbrains.plugins.gradle.service.settings.GradleProjectSettingsControl;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.ide.util.newProjectWizard.AbstractProjectWizard.getNewProjectJdk;
+import static com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl.setupCreatedProject;
+import static org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil.setupGradleSettings;
 
 /**
  * @author Denis Zhdanov
- * @since 6/26/13 11:10 AM
  */
 public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
 
@@ -109,15 +115,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     final String originModuleFilePath = getModuleFilePath();
     LOG.assertTrue(originModuleFilePath != null);
 
-    String moduleName;
-    if (myProjectId == null) {
-      moduleName = getName();
-    }
-    else {
-      moduleName = getExternalProjectSettings().isUseQualifiedModuleNames() && StringUtil.isNotEmpty(myProjectId.getGroupId())
-                   ? (myProjectId.getGroupId() + '.' + myProjectId.getArtifactId())
-                   : myProjectId.getArtifactId();
-    }
+    String moduleName = myProjectId == null ? getName() : myProjectId.getArtifactId();
     Project contextProject = myWizardContext.getProject();
     String projectFileDirectory = null;
     if (myWizardContext.isCreatingNewProject() || contextProject == null || contextProject.getBasePath() == null) {
@@ -144,7 +142,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   }
 
   @Override
-  public void setupRootModel(final ModifiableRootModel modifiableRootModel) throws ConfigurationException {
+  public void setupRootModel(@NotNull final ModifiableRootModel modifiableRootModel) throws ConfigurationException {
     String contentEntryPath = getContentEntryPath();
     if (StringUtil.isEmpty(contentEntryPath)) {
       return;
@@ -223,23 +221,35 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     }
 
     // it will be set later in any case, but save is called immediately after project creation, so, to ensure that it will be properly saved as external system module
-    ExternalSystemModulePropertyManager.getInstance(module).setExternalId(GradleConstants.SYSTEM_ID);
+    ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
+    modulePropertyManager.setExternalId(GradleConstants.SYSTEM_ID);
+    // set linked project path to be able to map the module with the module data obtained from the import
+    ExternalStateComponent moduleState = modulePropertyManager.getState();
+    moduleState.setRootProjectPath(rootProjectPath);
+    moduleState.setLinkedProjectPath(rootProjectPath);
 
     final Project project = module.getProject();
+    final Sdk projectSdk = getNewProjectJdk(myWizardContext);
+    final GradleProjectSettings gradleProjectSettings = getExternalProjectSettings();
     if (myWizardContext.isCreatingNewProject()) {
-      getExternalProjectSettings().setExternalProjectPath(rootProjectPath);
+      setupGradleSettings(gradleProjectSettings, rootProjectPath, project, projectSdk);
       AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID);
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
       //noinspection unchecked
-      settings.linkProject(getExternalProjectSettings());
+      settings.linkProject(gradleProjectSettings);
+      // update external projects data to be able to add child modules before the initial import finish
+      ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, project.getName(), myWizardContext.getProjectFileDirectory(),
+                                                gradleProjectSettings.getExternalProjectPath());
+      DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
+      ExternalProjectsManagerImpl.getInstance(project).updateExternalProjectData(
+        new InternalExternalProjectInfo(GradleConstants.SYSTEM_ID, gradleProjectSettings.getExternalProjectPath(), projectDataNode));
     }
     else {
       FileDocumentManager.getInstance().saveAllDocuments();
-      final GradleProjectSettings gradleProjectSettings = getExternalProjectSettings();
       final VirtualFile finalBuildScriptFile = buildScriptFile;
       Runnable runnable = () -> {
         if (myParentProject == null) {
-          gradleProjectSettings.setExternalProjectPath(rootProjectPath);
+          setupGradleSettings(gradleProjectSettings, rootProjectPath, project, projectSdk);
           AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID);
           //noinspection unchecked
           settings.linkProject(gradleProjectSettings);
@@ -269,13 +279,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     myWizardContext = wizardContext;
-    GradleProjectSettings settings = getExternalProjectSettings().clone();
-    settings.setStoreProjectFilesExternally(ThreeState.UNSURE);
-    return new ModuleWizardStep[]{
-      new GradleModuleWizardStep(this, wizardContext),
-      new ExternalModuleSettingsStep<>(
-        wizardContext, this, new GradleProjectSettingsControl(settings))
-    };
+    return new ModuleWizardStep[]{new GradleModuleWizardStep(this, wizardContext)};
   }
 
   @Nullable
@@ -329,7 +333,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
                                     : DEFAULT_TEMPLATE_GRADLE_BUILD;
       }
 
-      Map<String, String> attributes = ContainerUtil.newHashMap();
+      Map<String, String> attributes = new HashMap<>();
       if (myProjectId != null) {
         attributes.put(TEMPLATE_ATTRIBUTE_MODULE_VERSION, myProjectId.getVersion());
         attributes.put(TEMPLATE_ATTRIBUTE_MODULE_GROUP, myProjectId.getGroupId());
@@ -352,7 +356,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     if (renderNewFile) {
       final String moduleDirName = VfsUtilCore.getRelativePath(modelContentRootDir, file.getParent(), '/');
 
-      Map<String, String> attributes = ContainerUtil.newHashMap();
+      Map<String, String> attributes = new HashMap<>();
       attributes.put(TEMPLATE_ATTRIBUTE_PROJECT_NAME, projectName);
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_PATH, moduleDirName);
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_NAME, moduleName);
@@ -362,7 +366,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
       char separatorChar = file.getParent() == null || !VfsUtilCore.isAncestor(file.getParent(), modelContentRootDir, true) ? '/' : ':';
       String modulePath = VfsUtilCore.findRelativePath(file, modelContentRootDir, separatorChar);
 
-      Map<String, String> attributes = ContainerUtil.newHashMap();
+      Map<String, String> attributes = new HashMap<>();
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_NAME, moduleName);
       // check for flat structure
       final String flatStructureModulePath =
@@ -488,7 +492,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
+    return setupCreatedProject(super.createProject(name, path));
   }
 
   public void setUseKotlinDsl(boolean useKotlinDSL) {

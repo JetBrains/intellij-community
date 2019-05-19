@@ -19,14 +19,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhileStatement, Constants {
+public class PsiWhileStatementImpl extends PsiLoopStatementImpl implements PsiWhileStatement, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiWhileStatementImpl");
 
   public PsiWhileStatementImpl() {
@@ -113,6 +112,7 @@ public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhi
     }
   }
 
+  @Override
   public String toString(){
     return "PsiWhileStatement";
   }

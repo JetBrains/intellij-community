@@ -225,6 +225,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
       myPropertyReference = propertyReference;
     }
 
+    @Override
     protected void doAction() {
       final String newName = getNewName();
       final boolean searchInComments = isSearchInComments();
@@ -234,7 +235,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   }
 
   private static class RenameFxIdDialog extends RenameDialog {
-    public RenameFxIdDialog(@NotNull XmlAttributeValue fxIdValueElement, Editor editor) {
+    RenameFxIdDialog(@NotNull XmlAttributeValue fxIdValueElement, Editor editor) {
       super(fxIdValueElement.getProject(), fxIdValueElement, null, editor);
     }
 

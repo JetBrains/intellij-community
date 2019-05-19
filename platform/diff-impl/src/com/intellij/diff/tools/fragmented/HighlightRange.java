@@ -24,7 +24,7 @@ class HighlightRange {
   @NotNull private final TextRange myChanged;
   @NotNull private final Side mySide;
 
-  public HighlightRange(@NotNull Side side, @NotNull TextRange base, @NotNull TextRange changed) {
+  HighlightRange(@NotNull Side side, @NotNull TextRange base, @NotNull TextRange changed) {
     mySide = side;
     myBase = base;
     myChanged = changed;

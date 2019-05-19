@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.List;
 
 public abstract class EditorColorsManager {
   public static final Topic<EditorColorsListener> TOPIC = Topic.create("EditorColorsListener", EditorColorsListener.class);
@@ -41,9 +40,6 @@ public abstract class EditorColorsManager {
 
   @Deprecated
   public abstract void removeAllSchemes();
-
-  @Deprecated
-  public abstract void setSchemes(@NotNull List<EditorColorsScheme> schemes);
 
   @NotNull
   public abstract EditorColorsScheme[] getAllSchemes();
@@ -87,5 +83,13 @@ public abstract class EditorColorsManager {
   public boolean isDarkEditor() {
     Color bg = getGlobalScheme().getDefaultBackground();
     return ColorUtil.isDark(bg);
+  }
+
+  /**
+   * Resolves a temporary link to a bundled scheme using bundled scheme's name.
+   * @param scheme The scheme with unresolved parent. The call will be ignored for other schemes.
+   * @throws com.intellij.openapi.util.InvalidDataException If a referenced scheme doesn't exist or is not read-only.
+   */
+  public void resolveSchemeParent(@NotNull EditorColorsScheme scheme) {
   }
 }

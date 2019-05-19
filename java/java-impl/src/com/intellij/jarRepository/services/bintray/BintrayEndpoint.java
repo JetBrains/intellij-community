@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.services.bintray;
 
 import com.google.gson.Gson;
@@ -7,7 +7,6 @@ import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryArtifactDescription;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.io.HttpRequests;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +14,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -55,7 +56,7 @@ public class BintrayEndpoint {
         request.getConnection();
       }
       catch (HttpRequests.HttpStatusException e) {
-        if (e.getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
+        if (e.getStatusCode() == HttpURLConnection.HTTP_NOT_FOUND) {
           return null;
         }
         throw e;
@@ -82,7 +83,7 @@ public class BintrayEndpoint {
         return result;
       }
       catch (HttpRequests.HttpStatusException e) {
-        if (e.getStatusCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
+        if (e.getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
           return emptyList();
         }
         throw e;
@@ -225,7 +226,7 @@ public class BintrayEndpoint {
   private <Data> void handleRequest(HttpRequests.Request request, Class<Data> responseDataClass,
                                     ThrowableConsumer<Data, IOException> responseHandler) throws IOException {
     try (InputStream in = request.getInputStream();
-         Reader reader = new InputStreamReader(in)) {
+         Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
       Data data = gson.fromJson(reader, responseDataClass);
       responseHandler.consume(data);
     }

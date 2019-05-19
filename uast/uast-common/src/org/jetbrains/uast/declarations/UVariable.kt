@@ -27,6 +27,10 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UVariable : UDeclaration, PsiVariable {
   override val psi: PsiVariable
 
+  @Suppress("DEPRECATION")
+  private val javaPsiInternal
+    get() = (this as? UVariableEx)?.javaPsi ?: psi
+
   /**
    * Returns the variable initializer or the parameter default value, or null if the variable has not an initializer.
    */
@@ -51,7 +55,7 @@ interface UVariable : UDeclaration, PsiVariable {
     visitor.visitVariable(this, data)
 
   @Deprecated("Use uastInitializer instead.", ReplaceWith("uastInitializer"))
-  override fun getInitializer(): PsiExpression? = psi.initializer
+  override fun getInitializer(): PsiExpression? = javaPsiInternal.initializer
 
   override fun asLogString(): String = log("name = $name")
 
@@ -59,10 +63,14 @@ interface UVariable : UDeclaration, PsiVariable {
     if (annotations.isNotEmpty()) {
       annotations.joinTo(this, separator = " ", postfix = " ") { it.asRenderString() }
     }
-    append(psi.renderModifiers())
-    append("var ").append(psi.name).append(": ").append(psi.type.getCanonicalText(false))
+    append(javaPsiInternal.renderModifiers())
+    append("var ").append(javaPsiInternal.name).append(": ").append(javaPsiInternal.type.getCanonicalText(false))
     uastInitializer?.let { initializer -> append(" = " + initializer.asRenderString()) }
   }
+}
+
+interface UVariableEx : UVariable, UDeclarationEx {
+  override val javaPsi: PsiVariable
 }
 
 private fun UVariable.visitContents(visitor: UastVisitor) {
@@ -84,6 +92,10 @@ interface UParameter : UVariable, PsiParameter {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitParameter(this, data)
 }
 
+interface UParameterEx : UParameter, UDeclarationEx {
+  override val javaPsi: PsiParameter
+}
+
 interface UField : UVariable, PsiField {
   override val psi: PsiField
 
@@ -98,6 +110,10 @@ interface UField : UVariable, PsiField {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitField(this, data)
 }
 
+interface UFieldEx : UField, UDeclarationEx {
+  override val javaPsi: PsiField
+}
+
 interface ULocalVariable : UVariable, PsiLocalVariable {
   override val psi: PsiLocalVariable
 
@@ -110,6 +126,10 @@ interface ULocalVariable : UVariable, PsiLocalVariable {
   }
 
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitLocalVariable(this, data)
+}
+
+interface ULocalVariableEx : ULocalVariable, UDeclarationEx {
+  override val javaPsi: PsiLocalVariable
 }
 
 interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
@@ -148,4 +168,8 @@ interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
       append("}")
     }
   }
+}
+
+interface UEnumConstantEx : UEnumConstant, UDeclarationEx {
+  override val javaPsi: PsiEnumConstant
 }

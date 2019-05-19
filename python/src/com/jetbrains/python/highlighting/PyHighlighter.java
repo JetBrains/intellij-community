@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.highlighting;
 
 import com.intellij.lexer.LayeredLexer;
@@ -24,6 +10,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.lexer.PyFStringLiteralLexer;
 import com.jetbrains.python.lexer.PyStringLiteralLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -41,6 +28,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   private final Map<IElementType, TextAttributesKey> keys;
   private final LanguageLevel myLanguageLevel;
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     LayeredLexer ret = new LayeredLexer(createHighlightingLexer(myLanguageLevel));
@@ -59,6 +47,10 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     ret.registerLayer(
       new PyStringLiteralLexer(PyTokenTypes.TRIPLE_QUOTED_UNICODE),
       PyTokenTypes.TRIPLE_QUOTED_UNICODE
+    );
+    ret.registerLayer(
+      new PyFStringLiteralLexer(), 
+      PyTokenTypes.FSTRING_TEXT
     );
 
     return ret;
@@ -118,6 +110,10 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);
   
+  public static final TextAttributesKey PY_FSTRING_FRAGMENT_BRACES = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_BRACES", VALID_STRING_ESCAPE);
+  public static final TextAttributesKey PY_FSTRING_FRAGMENT_COLON = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_COLON", VALID_STRING_ESCAPE);
+  public static final TextAttributesKey PY_FSTRING_FRAGMENT_TYPE_CONVERSION = TextAttributesKey.createTextAttributesKey("PY.FSTRING_FRAGMENT_TYPE_CONVERSION", VALID_STRING_ESCAPE);
+
   /**
    * The 'heavy' constructor that initializes everything. PySyntaxHighlighterFactory caches such instances per level.
    * @param languageLevel
@@ -136,6 +132,15 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     keys.put(PyTokenTypes.TRIPLE_QUOTED_STRING, PY_BYTE_STRING);
     keys.put(PyTokenTypes.SINGLE_QUOTED_UNICODE, PY_UNICODE_STRING);
     keys.put(PyTokenTypes.TRIPLE_QUOTED_UNICODE, PY_UNICODE_STRING);
+
+    keys.put(PyTokenTypes.FSTRING_START, PY_UNICODE_STRING);
+    keys.put(PyTokenTypes.FSTRING_END, PY_UNICODE_STRING);
+    keys.put(PyTokenTypes.FSTRING_TEXT, PY_UNICODE_STRING);
+    
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION, PY_FSTRING_FRAGMENT_TYPE_CONVERSION);
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START, PY_FSTRING_FRAGMENT_COLON);
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_START, PY_FSTRING_FRAGMENT_BRACES);
+    keys.put(PyTokenTypes.FSTRING_FRAGMENT_END, PY_FSTRING_FRAGMENT_BRACES);
 
     keys.put(PyTokenTypes.DOCSTRING, PY_DOC_COMMENT);
 
@@ -159,6 +164,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     keys.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(keys.get(tokenType));

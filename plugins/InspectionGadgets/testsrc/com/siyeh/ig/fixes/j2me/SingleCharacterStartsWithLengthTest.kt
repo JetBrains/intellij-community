@@ -17,6 +17,7 @@ class SingleCharacterStartsWithLengthTest : SingleCharacterStartsWithFixTestCase
 class SingleCharacterStartsWithIsEmptyTest : SingleCharacterStartsWithFixTestCase() {
 
   fun testUseIsEmptyMethod() = quickfixTest();
+  fun testParentPolyadic() = quickfixTest();
 
   override fun getProjectDescriptor() = JAVA_1_6
 }

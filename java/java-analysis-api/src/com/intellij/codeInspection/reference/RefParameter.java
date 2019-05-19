@@ -2,17 +2,18 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiParameter;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UParameter;
 
 /**
  * A node in the reference graph corresponding to a Java method parameter.
  *
  * @author anna
- * @since 6.0
  */
 public interface RefParameter extends RefJavaElement {
-  Object VALUE_IS_NOT_CONST = new Object();
-  Object VALUE_UNDEFINED = new Object();
+  Object VALUE_IS_NOT_CONST = ObjectUtils.sentinel("VALUE_IS_NOT_CONST");
+  Object VALUE_UNDEFINED = ObjectUtils.sentinel("VALUE_UNDEFINED");
 
   /**
    * Checks if the parameter is used for reading.
@@ -37,7 +38,6 @@ public interface RefParameter extends RefJavaElement {
 
   /**
    * @see RefParameter#getActualConstValue()
-   * @return
    */
   @Deprecated
   @Nullable
@@ -53,9 +53,9 @@ public interface RefParameter extends RefJavaElement {
    *
    * @return the parameter value or null if it's different or impossible to determine.
    */
-  @SuppressWarnings("deprecation")
   @Nullable
   default Object getActualConstValue() {
+    //noinspection deprecation
     return getActualValueIfSame();
   }
 
@@ -68,5 +68,17 @@ public interface RefParameter extends RefJavaElement {
   void parameterReferenced(final boolean forWriting);
 
   @Override
-  PsiParameter getElement();
+  default UParameter getUastElement() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Deprecated
+  @Override
+  default PsiParameter getElement() {
+    return ObjectUtils.tryCast(getPsiElement(), PsiParameter.class);
+  }
+
+  default int getUsageCount() {
+    throw new UnsupportedOperationException();
+  }
 }

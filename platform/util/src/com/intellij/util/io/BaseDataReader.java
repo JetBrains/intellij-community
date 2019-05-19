@@ -53,20 +53,12 @@ public abstract class BaseDataReader {
       LOG.warn(new Throwable("Must provide not-empty presentable name"));
     }
     if (myFinishedFuture == null) {
-      myFinishedFuture = executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          if (StringUtil.isEmptyOrSpaces(presentableName)) {
-            doRun();
-          }
-          else {
-            ConcurrencyUtil.runUnderThreadName("BaseDataReader: " + presentableName, new Runnable() {
-              @Override
-              public void run() {
-                doRun();
-              }
-            });
-          }
+      myFinishedFuture = executeOnPooledThread(() -> {
+        if (StringUtil.isEmptyOrSpaces(presentableName)) {
+          doRun();
+        }
+        else {
+          ConcurrencyUtil.runUnderThreadName("BaseDataReader: " + presentableName, this::doRun);
         }
       });
     }
@@ -127,7 +119,7 @@ public abstract class BaseDataReader {
   }
 
   /** @deprecated use one of default policies (recommended) or implement your own (to be removed in IDEA 2018) */
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static class AdaptiveSleepingPolicy implements SleepingPolicy {
     private static final int maxSleepTimeWhenIdle = 200;
     private static final int maxIterationsWithCurrentSleepTime = 50;
@@ -171,6 +163,7 @@ public abstract class BaseDataReader {
         if (!stopSignalled) {
           // if process stopped, there is no sense to sleep,
           // just check if there is unread output in the stream
+          beforeSleeping(read);
           synchronized (mySleepMonitor) {
             mySleepMonitor.wait(mySleepingPolicy.getTimeToSleep(read));
           }
@@ -192,6 +185,8 @@ public abstract class BaseDataReader {
       }
     }
   }
+
+  protected void beforeSleeping(boolean hasJustReadSomething) {}
 
   private void resumeReading() {
     synchronized (mySleepMonitor) {

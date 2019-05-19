@@ -30,10 +30,15 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="Xalan-2.7.1">
+      <library name="Xalan-2.7.2" type="repository">
+        <properties maven-id="xalan:xalan:2.7.2">
+          <exclude>
+            <dependency maven-id="xml-apis:xml-apis" />
+          </exclude>
+        </properties>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/xalan.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/serializer.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/xalan/xalan/2.7.2/xalan-2.7.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/xalan/serializer/2.7.2/serializer-2.7.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

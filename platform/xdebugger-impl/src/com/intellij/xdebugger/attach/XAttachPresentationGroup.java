@@ -43,6 +43,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
   /**
    * @deprecated Use {@link #getItemIcon(Project, Object, UserDataHolder)} (will be removed in 2018.2)
    */
+  @Deprecated
   @NotNull
   Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
 
@@ -59,6 +60,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
   /**
    * @deprecated Use {@link #getItemDisplayText(Project, Object, UserDataHolder)} (will be removed in 2018.2)
    */
+  @Deprecated
   @NotNull
   String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
 
@@ -90,6 +92,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    * @param dataHolder you may put your specific data into the holder at previous step in {@link XAttachDebuggerProvider#getAvailableDebuggers}
    *                   and use it for comparison
    */
+  @Deprecated
   default int compare(@NotNull Project project, @NotNull T a, @NotNull T b, @NotNull UserDataHolder dataHolder) {
     return compare(a, b);
   }

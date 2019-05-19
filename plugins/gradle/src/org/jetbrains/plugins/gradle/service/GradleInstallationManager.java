@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -26,13 +12,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.gradle.StartParameter;
 import org.gradle.util.DistributionLocator;
 import org.gradle.util.GradleVersion;
@@ -63,7 +49,6 @@ import java.util.regex.Pattern;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/4/11 11:06 AM
  */
 @SuppressWarnings("MethodMayBeStatic")
 public class GradleInstallationManager {
@@ -72,12 +57,6 @@ public class GradleInstallationManager {
   public static final Pattern ANY_GRADLE_JAR_FILE_PATTERN;
   public static final Pattern ANT_JAR_PATTERN = Pattern.compile("ant(-(.*))?\\.jar");
   public static final Pattern IVY_JAR_PATTERN = Pattern.compile("ivy(-(.*))?\\.jar");
-
-  /**
-   * copied from org.jetbrains.plugins.groovy.config.GroovyConfigUtils#GROOVY_ALL_JAR_PATTERN
-   */
-  @NonNls private static final Pattern GROOVY_ALL_JAR_PATTERN =
-    Pattern.compile("groovy-all(-minimal)?(-(\\d+(\\.\\d+)*))?(-indy|-alpha.*|-beta.*)?\\.jar");
 
   private static final String[] GRADLE_START_FILE_NAMES;
   @NonNls private static final String GRADLE_ENV_PROPERTY_NAME;
@@ -105,7 +84,7 @@ public class GradleInstallationManager {
       return null;
     }
 
-    List<File> result = ContainerUtilRt.newArrayList();
+    List<File> result = new ArrayList<>();
 
     File libs = new File(gradleHome, "lib");
     File[] files = libs.listFiles();
@@ -147,7 +126,14 @@ public class GradleInstallationManager {
 
     final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
     if (settings == null) {
-      return null;
+      Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
+      if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first) ||
+          ExternalSystemJdkUtil.isValidJdk(sdkPair.second.getHomePath())) {
+        return sdkPair.second;
+      }
+      else {
+        return null;
+      }
     }
 
     final String gradleJvm = settings.getGradleJvm();
@@ -377,7 +363,7 @@ public class GradleInstallationManager {
   /**
    * Allows to answer if given virtual file points to the gradle installation root.
    *
-   * @param file gradle installation root candidate
+   * @param gradleHomePath gradle installation root candidate
    * @return {@code true} if we consider that given file actually points to the gradle installation root;
    * {@code false} otherwise
    */
@@ -529,10 +515,10 @@ public class GradleInstallationManager {
     return ANY_GRADLE_JAR_FILE_PATTERN.matcher(fileName).matches()
            || ANT_JAR_PATTERN.matcher(fileName).matches()
            || IVY_JAR_PATTERN.matcher(fileName).matches()
-           || matchesGroovyAll(fileName);
+           || isGroovyJar(fileName);
   }
 
-  private void addRoots(@NotNull List<File> result, @Nullable File... files) {
+  private void addRoots(@NotNull List<? super File> result, @Nullable File... files) {
     if (files == null) return;
     for (File file : files) {
       if (file == null || !file.isDirectory()) continue;
@@ -568,11 +554,9 @@ public class GradleInstallationManager {
     return distFiles == null || distFiles.length == 0 ? null : distFiles[0];
   }
 
-  /**
-   * copied from org.jetbrains.plugins.groovy.config.GroovyConfigUtils#matchesGroovyAll(java.lang.String)
-   */
-  private static boolean matchesGroovyAll(@NotNull String name) {
-    return GROOVY_ALL_JAR_PATTERN.matcher(name).matches() && !name.contains("src") && !name.contains("doc");
+  private static boolean isGroovyJar(@NotNull String name) {
+    name = StringUtil.toLowerCase(name);
+    return name.startsWith("groovy-all-") && name.endsWith(".jar") && !name.contains("src") && !name.contains("doc");
   }
 
   @Nullable

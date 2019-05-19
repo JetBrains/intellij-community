@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.server.BuildManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.DefaultJavaProgramRunner
@@ -47,10 +32,12 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
-import org.jetbrains.org.objectweb.asm.Opcodes 
+import org.jetbrains.org.objectweb.asm.Opcodes
+
 /**
  * @author peter
  */
@@ -59,7 +46,7 @@ abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp()
     Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest").info(testStartMessage)
-    addGroovyLibrary(myModule)
+    addGroovyLibrary(module)
   }
 
   void testPlainGroovy() throws Throwable {
@@ -362,7 +349,7 @@ public class Transf implements ASTTransformation {
     Module dep1 = addModule('dependent1', true)
     Module dep2 = addModule('dependent2', true)
     ModuleRootModificationUtil.addDependency dep2, dep1
-    ModuleRootModificationUtil.addDependency myModule, dep2
+    ModuleRootModificationUtil.addDependency module, dep2
 
     addGroovyLibrary(dep1)
     addGroovyLibrary(dep2)
@@ -517,7 +504,7 @@ class Usage {
   }
 
   void "test with annotation processing enabled"() {
-    def profile = (ProcessorConfigProfile)CompilerConfiguration.getInstance(project).getAnnotationProcessingConfiguration(myModule)
+    def profile = (ProcessorConfigProfile)CompilerConfiguration.getInstance(project).getAnnotationProcessingConfiguration(module)
     profile.enabled = true
     profile.obtainProcessorsFromClasspath = true
 
@@ -569,14 +556,14 @@ class Indirect {
     def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
 
-    assertEmpty compileModule(myModule)
+    assertEmpty compileModule(module)
 
     touch(used.virtualFile)
     touch(main)
     assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
 
-    assertEmpty compileModule(myModule)
-    assertEmpty compileModule(myModule)
+    assertEmpty compileModule(module)
+    assertEmpty compileModule(module)
 
     setFileText(used, 'class Used2 {}')
     shouldFail { make() }
@@ -658,7 +645,7 @@ class Main {
 
   void "test module cycle"() {
     def dep = addDependentModule()
-    ModuleRootModificationUtil.addDependency(myModule, dep)
+    ModuleRootModificationUtil.addDependency(module, dep)
     addGroovyLibrary(dep)
 
     myFixture.addFileToProject('Foo.groovy', 'class Foo extends Bar { static void main(String[] args) { println "Hello from Foo" } }')
@@ -669,13 +656,13 @@ class Main {
     myFixture.addFileToProject("dependent/BarY.groovy", "class BarY extends FooX { }")
 
     def checkClassFiles = {
-      assert findClassFile('Foo', myModule)
-      assert findClassFile('FooX', myModule)
+      assert findClassFile('Foo', module)
+      assert findClassFile('FooX', module)
       assert findClassFile('Bar', dep)
       assert findClassFile('BarX', dep)
 
-      assert !findClassFile('Bar', myModule)
-      assert !findClassFile('BarX', myModule)
+      assert !findClassFile('Bar', module)
+      assert !findClassFile('BarX', module)
       assert !findClassFile('Foo', dep)
       assert !findClassFile('FooX', dep)
     }
@@ -686,7 +673,7 @@ class Main {
     assertEmpty(make())
     checkClassFiles()
 
-    assertOutput('Foo', 'Hello from Foo', myModule)
+    assertOutput('Foo', 'Hello from Foo', module)
     assertOutput('Bar', 'Hello from Bar', dep)
 
     checkClassFiles()
@@ -748,13 +735,8 @@ public class Main {
     setFileText(foo, 'class Foo implements Runnabl {}')
 
     def compilerTempRoot = BuildManager.instance.getProjectSystemDirectory(project).absolutePath
-    try {
-      VfsRootAccess.allowRootAccess(compilerTempRoot) //because compilation error points to file under 'groovyStubs' directory
-      shouldFail { make() }
-    }
-    finally {
-      VfsRootAccess.disallowRootAccess(compilerTempRoot)
-    }
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), compilerTempRoot) //because compilation error points to file under 'groovyStubs' directory
+    shouldFail { make() }
 
     setFileText(foo, 'class Foo {}')
 
@@ -769,7 +751,7 @@ public class Main {
 
     excludeFromCompilation(foo)
 
-    shouldFail { compileModule(myModule) }
+    shouldFail { compileModule(module) }
   }
 
   void "test stubs generated while processing groovy class file dependencies"() {
@@ -892,12 +874,12 @@ class AppTest {
     )
 
     File annotations = new File(PathManager.getJarPathForClass(NotNull.class))
-    PsiTestUtil.addLibrary(myModule, "annotations", annotations.getParent(), annotations.getName())
+    PsiTestUtil.addLibrary(module, "annotations", annotations.getParent(), annotations.getName())
 
     assertEmpty(make())
 
     final Ref<Boolean> exceptionFound = Ref.create(Boolean.FALSE)
-    ProcessHandler process = runProcess("Bar", myModule, DefaultRunExecutor.class, new ProcessAdapter() {
+    ProcessHandler process = runProcess("Bar", module, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
        void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         println "stdout: " + event.text
@@ -917,8 +899,8 @@ class AppTest {
     def anotherModule = addModule("another", true)
     addGroovyLibrary(anotherModule)
 
-    PsiTestUtil.addProjectLibrary(myModule, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
-    PsiTestUtil.addProjectLibrary(myModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
+    PsiTestUtil.addProjectLibrary(module, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
+    PsiTestUtil.addProjectLibrary(module, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
     PsiTestUtil.addProjectLibrary(anotherModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
@@ -974,7 +956,7 @@ class BuildContextImpl extends BuildContext {
 '''
     def sub = myFixture.addFileToProject('BuildContextImpl.groovy', subText)
     assertEmpty(make())
-    
+
     setFileText(sub, subText + ' ')
     assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
     def fileMessages = compileFiles(sub.virtualFile)
@@ -988,21 +970,21 @@ class BuildContextImpl extends BuildContext {
   void "test report real compilation errors"() {
     addModule('another', true)
 
-    myFixture.addClass('class Foo {}');
+    myFixture.addClass('class Foo {}')
     myFixture.addFileToProject('a.groovy', 'import goo.Goo; class Bar { }')
-    shouldFail { compileModule(myModule) }
+    shouldFail { compileModule(module) }
   }
 
   void "test honor bytecode version"() {
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8)
-    CompilerConfiguration.getInstance(project).setBytecodeTargetLevel(myModule, '1.8')
+    IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_1_8)
+    CompilerConfiguration.getInstance(project).setBytecodeTargetLevel(module, '1.8')
 
     myFixture.addFileToProject('a.groovy', 'class Foo { }')
     assertEmpty make()
     assert getClassFileVersion('Foo') == Opcodes.V1_8
 
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_6)
-    CompilerConfiguration.getInstance(project).setBytecodeTargetLevel(myModule, '1.6')
+    IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_1_6)
+    CompilerConfiguration.getInstance(project).setBytecodeTargetLevel(module, '1.6')
     assertEmpty rebuild()
     assert getClassFileVersion('Foo') == Opcodes.V1_6
   }
@@ -1017,6 +999,15 @@ class BuildContextImpl extends BuildContext {
       }
     }, 0)
     return version
+  }
+
+  void "test using trait from java"() {
+    myFixture.addFileToProject('a.groovy', 'trait Foo { }')
+    myFixture.addFileToProject('b.java', 'class Bar implements Foo { Foo f; }')
+    assertEmpty(make())
+
+    CompilerConfiguration.getInstance(project).buildProcessVMOptions = "-D$JpsGroovycRunner.GROOVYC_IN_PROCESS=false"
+    assertEmpty(rebuild())
   }
 
   static class GroovycTest extends GroovyCompilerTest {
@@ -1057,24 +1048,5 @@ class Bar {}'''
     protected List<String> chunkRebuildMessage(String builder) {
       return ['Builder "' + builder + '" requested rebuild of module chunk "mainModule"']
     }
-
-  }
-
-  static class EclipseTest extends GroovyCompilerTest {
-    @Override
-    protected void setUp() {
-      super.setUp()
-
-      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).defaultCompiler = new GreclipseIdeaCompiler(project)
-
-      def jarPath = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Groovy-Eclipse-Batch")[0]
-
-      GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
-    }
-
-    protected List<String> chunkRebuildMessage(String builder) {
-      return []
-    }
-
   }
 }

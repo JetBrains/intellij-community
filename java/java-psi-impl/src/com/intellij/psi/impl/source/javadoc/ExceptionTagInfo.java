@@ -12,7 +12,7 @@ import static com.intellij.codeInsight.javadoc.JavaDocUtil.resolveClassInTagValu
  * @author mike
  */
 class ExceptionTagInfo extends ClassReferenceTagInfo {
-  public ExceptionTagInfo(String name) {
+  ExceptionTagInfo(String name) {
     super(name);
   }
 

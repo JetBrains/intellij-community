@@ -214,7 +214,6 @@ public class UnsignedShortArrayList implements Cloneable {
 
   private void checkRange(int index) {
     if (index >= mySize || index < 0){
-      //noinspection HardCodedStringLiteral
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
   }

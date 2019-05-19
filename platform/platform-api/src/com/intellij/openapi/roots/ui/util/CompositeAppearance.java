@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
-import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
@@ -40,6 +25,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   private final List<TextSection> mySections = new ArrayList<>();
   private int myInsertionIndex = 0;
 
+  @Override
   public void customize(@NotNull SimpleColoredComponent component) {
     synchronized (mySections) {
       for (TextSection section : mySections) {
@@ -50,29 +36,20 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     }
   }
 
-  @Override
-  public void customize(@NotNull final HtmlListCellRenderer renderer) {
-    synchronized (mySections) {
-      for (TextSection section : mySections) {
-        final TextAttributes attributes = section.getTextAttributes();
-        renderer.append(section.getText(), SimpleTextAttributes.fromTextAttributes(attributes));
-      }
-      renderer.setIcon(myIcon);
-    }
-  }
-
   public Icon getIcon() {
     synchronized (mySections) {
       return myIcon;
     }
   }
 
+  @Override
   public void setIcon(@Nullable final Icon icon) {
     synchronized (mySections) {
       myIcon = icon;
     }
   }
 
+  @Override
   @NotNull
   public String getText() {
     synchronized (mySections) {
@@ -220,6 +197,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   }
 
   private class DequeBeginning extends DequeEnd {
+    @Override
     public void addSection(TextSection section) {
       synchronized (mySections) {
         addSectionAt(0, section);
@@ -229,6 +207,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   }
 
   private class DequeEnding extends DequeEnd {
+    @Override
     public void addSection(TextSection section) {
       synchronized (mySections) {
         addSectionAt(myInsertionIndex, section);
@@ -238,6 +217,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   }
 
   private class DequeSuffix extends DequeEnd {
+    @Override
     public void addSection(TextSection section) {
       synchronized (mySections) {
         addSectionAt(mySections.size(), section);

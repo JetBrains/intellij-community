@@ -46,13 +46,9 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiElement element = (PsiElement)infos[0];
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
     final boolean negated = (boolean)infos[1];
-    final PsiElement parent = element.getParent();
-    if (parent instanceof PsiExpressionStatement) {
-      return null;
-    }
-    return new EqualsToEqualityFix(negated);
+    return EqualsToEqualityFix.buildFix(methodCallExpression, negated);
   }
 
   @Override

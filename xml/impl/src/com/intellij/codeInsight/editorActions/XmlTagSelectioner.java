@@ -52,7 +52,7 @@ public class XmlTagSelectioner extends ExtendWordSelectionHandlerBase {
     return result;
   }
 
-  private static void addTagContentSelection(final PsiElement[] children, final List<TextRange> result, final CharSequence editorText) {
+  private static void addTagContentSelection(final PsiElement[] children, final List<? super TextRange> result, final CharSequence editorText) {
     PsiElement first = null;
     PsiElement last = null;
     for (PsiElement child : children) {

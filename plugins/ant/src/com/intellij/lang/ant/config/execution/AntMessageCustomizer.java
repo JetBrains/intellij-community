@@ -8,7 +8,7 @@ public abstract class AntMessageCustomizer {
   public static final ExtensionPointName<AntMessageCustomizer> EP_NAME = ExtensionPointName.create("AntSupport.AntMessageCustomizer");
 
   @Nullable
-  public AntMessage createCustomizedMessage(String text, int priority) {
+  public AntMessage createCustomizedMessage(String text, @AntMessage.Priority int priority) {
     return null;
   }
 }

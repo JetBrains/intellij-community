@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.popup.util;
 
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -30,7 +16,7 @@ import java.util.List;
 public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T> {
   private String myTitle;
   private List<T> myValues;
-  private List<Icon> myIcons;
+  private List<? extends Icon> myIcons;
   private int myDefaultOptionIndex = -1;
 
   @SafeVarargs
@@ -48,39 +34,43 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
 
   public BaseListPopupStep(@Nullable String aTitle, @NotNull List<? extends T> aValues, Icon aSameIcon) {
     List<Icon> icons = new ArrayList<>();
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < aValues.size(); i++) {
       icons.add(aSameIcon);
     }
     init(aTitle, aValues, icons);
   }
 
-  public BaseListPopupStep(@Nullable String title, @NotNull List<? extends T> values, List<Icon> icons) {
+  public BaseListPopupStep(@Nullable String title, @NotNull List<? extends T> values, List<? extends Icon> icons) {
     init(title, values, icons);
   }
 
   protected BaseListPopupStep() { }
 
-  protected final void init(@Nullable String title, @NotNull List<? extends T> values, @Nullable List<Icon> icons) {
+  protected final void init(@Nullable String title, @NotNull List<? extends T> values, @Nullable List<? extends Icon> icons) {
     myTitle = title;
     myValues = new ArrayList<>(values);
     myIcons = icons;
   }
 
+  @Override
   @Nullable
   public final String getTitle() {
     return myTitle;
   }
 
+  @Override
   @NotNull
   public final List<T> getValues() {
     return myValues;
   }
 
+  @Override
+  @Nullable
   public PopupStep onChosen(T selectedValue, final boolean finalChoice) {
     return FINAL_CHOICE;
   }
 
+  @Override
   public Icon getIconFor(T value) {
     int index = myValues.indexOf(value);
     if (index != -1 && myIcons != null && index < myIcons.size()) {
@@ -101,24 +91,29 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
     return null;
   }
 
+  @Override
   @NotNull
   public String getTextFor(T value) {
     return value.toString();
   }
 
+  @Override
   @Nullable
   public ListSeparator getSeparatorAbove(T value) {
     return null;
   }
 
+  @Override
   public boolean isSelectable(T value) {
     return true;
   }
 
+  @Override
   public boolean hasSubstep(T selectedValue) {
     return false;
   }
 
+  @Override
   public void canceled() {
   }
 
@@ -126,6 +121,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
     myDefaultOptionIndex = aDefaultOptionIndex;
   }
 
+  @Override
   public int getDefaultOptionIndex() {
     return myDefaultOptionIndex;
   }

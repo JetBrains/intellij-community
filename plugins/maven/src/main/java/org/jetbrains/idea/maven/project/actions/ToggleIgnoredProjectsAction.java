@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.project.MavenIgnoredFilesConfigurable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -31,7 +32,7 @@ import java.util.List;
 
 public class ToggleIgnoredProjectsAction extends MavenAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!isAvailable(e)) return;
 
@@ -52,7 +53,7 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
 
     final DataContext context = e.getDataContext();
@@ -88,6 +89,7 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final DataContext context = e.getDataContext();
     MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
     if(projectsManager == null) return;

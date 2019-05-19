@@ -69,7 +69,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
 
 
         if (configurationShouldBeProducedForElement(elementToRightClickOn)) {
-          @SuppressWarnings("unchecked") // Checked one line above
+          // Checked one line above
           final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
           Assert.assertTrue("Should use module sdk", typedConfiguration.isUseModuleSdk());
           checkConfiguration(typedConfiguration, elementToRightClickOn);

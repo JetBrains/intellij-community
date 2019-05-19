@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -33,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
@@ -42,7 +27,7 @@ import com.intellij.psi.impl.PsiExpressionEvaluator;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
 import com.intellij.psi.impl.search.MethodSuperSearcher;
-import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
+import com.intellij.psi.impl.source.tree.JavaASTFactory;
 import com.intellij.psi.impl.source.tree.PlainTextASTFactory;
 import com.intellij.psi.presentation.java.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
@@ -73,7 +58,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());
 
-    addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new CoreJavaASTFactory());
+    addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, JavaLanguage.INSTANCE, new JavaParserDefinition());
     addExplicitExtension(LanguageConstantExpressionEvaluator.INSTANCE, JavaLanguage.INSTANCE, new PsiExpressionEvaluator());
 
@@ -109,7 +94,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     addExtension(SuperMethodsSearch.EP_NAME, new MethodSuperSearcher());
   }
 
-  @SuppressWarnings("MethodMayBeStatic") // overridden in upsource
+  // overridden in upsource
   protected CoreJavaDirectoryService createJavaDirectoryService() {
     return new CoreJavaDirectoryService();
   }

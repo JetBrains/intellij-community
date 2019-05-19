@@ -124,15 +124,15 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
     // use wider scope to handle public method defined in package-private class which is subclassed by public class in the same package which is subclassed by public class from another package with redefined method
     SearchScope allScope = GlobalSearchScope.allScope(project);
-    boolean success = ClassInheritorsSearch.search(containingClass, allScope, true).forEach(inheritorsProcessor);
+    boolean success = ClassInheritorsSearch.search(containingClass, allScope, true).allowParallelProcessing().forEach(inheritorsProcessor);
     assert success;
     return result;
   }
 
   @Nullable
   public static PsiMethod findOverridingMethod(@NotNull PsiClass inheritor,
-                                        @NotNull PsiMethod method,
-                                        @NotNull PsiClass methodContainingClass) {
+                                               @NotNull PsiMethod method,
+                                               @NotNull PsiClass methodContainingClass) {
     String name = method.getName();
     if (inheritor.findMethodsByName(name, false).length > 0) {
       PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, getSuperSignature(inheritor, methodContainingClass, method), false);
@@ -156,7 +156,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
   @NotNull
   private static MethodSignature getSuperSignature(PsiClass inheritor, @NotNull PsiClass parentClass, PsiMethod method) {
-    PsiSubstitutor substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY, null);
+    PsiSubstitutor substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY);
     // if null, we have EJB custom inheritance here and still check overriding
     return method.getSignature(substitutor != null ? substitutor : PsiSubstitutor.EMPTY);
   }

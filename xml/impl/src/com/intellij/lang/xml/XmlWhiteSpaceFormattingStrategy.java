@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 12/6/11 4:51 PM
  */
 public class XmlWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrategyAdapter {
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
@@ -25,8 +24,17 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class ConvertFieldToLocalTest extends LightQuickFixParameterizedTestCase {
+  @Override
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/convert2Local";
+  }
 
-  private boolean myGenerateFinalLocals;
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.GENERATE_FINAL_LOCALS = StringUtil.containsIgnoreCase(getTestName(true), "final");
+  }
 
   @NotNull
   @Override
@@ -34,31 +42,6 @@ public class ConvertFieldToLocalTest extends LightQuickFixParameterizedTestCase 
     final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
     inspection.IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = false;
     return new LocalInspectionTool[] { inspection };
-  }
-
-  public void test() { doAllTests(); }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    JavaCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    myGenerateFinalLocals = settings.GENERATE_FINAL_LOCALS;
-    settings.GENERATE_FINAL_LOCALS = StringUtil.containsIgnoreCase(getTestName(true), "final");
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      CodeStyle.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS = myGenerateFinalLocals;
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-  
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/convert2Local";
   }
 
 }

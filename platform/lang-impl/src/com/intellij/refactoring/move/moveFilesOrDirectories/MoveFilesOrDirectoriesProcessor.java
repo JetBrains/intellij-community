@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
@@ -41,14 +42,12 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor");
@@ -112,7 +111,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  private void findElementUsages(ArrayList<UsageInfo> result, PsiElement element) {
+  private void findElementUsages(ArrayList<? super UsageInfo> result, PsiElement element) {
     if (!mySearchForReferences) {
       return;
     }
@@ -154,13 +153,13 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
     try {
 
-      final List<PsiFile> movedFiles = new ArrayList<>();
+      Map<PsiFile, FileASTNode> movedFiles = new LinkedHashMap<>();
       final Map<PsiElement, PsiElement> oldToNewMap = new HashMap<>();
       for (final PsiElement element : myElementsToMove) {
         final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
 
         if (element instanceof PsiDirectory) {
-          if (mySearchForReferences) encodeDirectoryFiles(element);
+          if (mySearchForReferences) encodeDirectoryFiles(element, movedFiles);
           MoveFilesOrDirectoriesUtil.doMoveDirectory((PsiDirectory)element, myNewParent);
           for (PsiElement psiElement : element.getChildren()) {
             processDirectoryFiles(movedFiles, oldToNewMap, psiElement);
@@ -168,6 +167,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         }
         else if (element instanceof PsiFile) {
           final PsiFile movedFile = (PsiFile)element;
+          FileASTNode node = movedFile.getNode();
           if (mySearchForReferences) FileReferenceContextUtil.encodeFileReferences(element);
           MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, myNewParent, oldToNewMap);
 
@@ -176,7 +176,10 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
             MoveFilesOrDirectoriesUtil.doMoveFile(movedFile, myNewParent);
           }
           moving = myNewParent.findFile(movedFile.getName());
-          movedFiles.add(moving);
+          if (moving != null) {
+            movedFiles.put(moving, moving.getNode());
+            ObjectUtils.reachabilityFence(node);
+          }
         }
 
         elementListener.elementMoved(element);
@@ -187,7 +190,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
       // fix references in moved files to outer files
-      for (PsiFile movedFile : movedFiles) {
+      for (PsiFile movedFile : movedFiles.keySet()) {
         MoveFileHandler.forElement(movedFile).updateMovedFile(movedFile);
         if (mySearchForReferences) FileReferenceContextUtil.decodeFileReferences(movedFile);
       }
@@ -200,8 +203,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         myMoveCallback.refactoringCompleted();
       }
       if (MoveFilesOrDirectoriesDialog.isOpenInEditor()) {
+        List<PsiFile> justFiles = new ArrayList<>(movedFiles.keySet());
         ApplicationManager.getApplication().invokeLater(() ->
-          EditorHelper.openFilesInEditor(movedFiles.stream().filter(PsiElement::isValid).toArray(PsiFile[]::new))
+          EditorHelper.openFilesInEditor(justFiles.stream().filter(PsiElement::isValid).toArray(PsiFile[]::new))
         );
       }
 
@@ -241,22 +245,23 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return data;
   }
 
-  private static void encodeDirectoryFiles(PsiElement psiElement) {
+  private static void encodeDirectoryFiles(PsiElement psiElement, Map<PsiFile, FileASTNode> movedFiles) {
     if (psiElement instanceof PsiFile) {
+      movedFiles.put((PsiFile)psiElement, ((PsiFile)psiElement).getNode());
       FileReferenceContextUtil.encodeFileReferences(psiElement);
     }
     else if (psiElement instanceof PsiDirectory) {
       for (PsiElement element : psiElement.getChildren()) {
-        encodeDirectoryFiles(element);
+        encodeDirectoryFiles(element, movedFiles);
       }
     }
   }
 
-  private static void processDirectoryFiles(List<PsiFile> movedFiles, Map<PsiElement, PsiElement> oldToNewMap, PsiElement psiElement) {
+  private static void processDirectoryFiles(Map<PsiFile, FileASTNode> movedFiles, Map<PsiElement, PsiElement> oldToNewMap, PsiElement psiElement) {
     if (psiElement instanceof PsiFile) {
       final PsiFile movedFile = (PsiFile)psiElement;
+      movedFiles.put(movedFile, movedFile.getNode());
       MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, movedFile.getParent(), oldToNewMap);
-      movedFiles.add(movedFile);
     }
     else if (psiElement instanceof PsiDirectory) {
       for (PsiElement element : psiElement.getChildren()) {
@@ -283,7 +288,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
           }
         }
         final PsiElement refElement = info.myReference.getElement();
-        if (refElement != null && refElement.isValid()) {
+        if (refElement.isValid()) {
           info.myReference.bindToElement(element);
         }
       } else if (usageInfo instanceof NonCodeUsageInfo) {
@@ -314,7 +319,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     int myIndex;
     PsiReference myReference;
 
-    public MyUsageInfo(PsiElement element, final int index, PsiReference reference) {
+    MyUsageInfo(PsiElement element, final int index, PsiReference reference) {
       super(element);
       myIndex = index;
       myReference = reference;

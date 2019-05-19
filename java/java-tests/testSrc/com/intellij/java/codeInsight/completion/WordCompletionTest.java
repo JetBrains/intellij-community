@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class WordCompletionTest extends CompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/word/";
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
@@ -129,6 +130,7 @@ public class WordCompletionTest extends CompletionTestCase {
 
   public void testCompleteStringLiteralCopy() throws Throwable {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
+    selectItem(myItems[1]);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 

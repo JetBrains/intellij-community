@@ -35,11 +35,10 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
     InspectionConfigTreeNode node = (InspectionConfigTreeNode)value;
 
     boolean reallyHasFocus = ((TreeTableTree)tree).getTreeTable().hasFocus();
-    final Color background = selected ? (reallyHasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground())
-                                      : UIUtil.getTreeTextBackground();
+    Color background = UIUtil.getTreeBackground(selected, reallyHasFocus);
     UIUtil.changeBackGround(component, background);
     Color foreground =
-      selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting() ? PlatformColors.BLUE : UIUtil.getTreeTextForeground();
+      selected ? UIUtil.getTreeSelectionForeground(reallyHasFocus) : node.isProperSetting() ? PlatformColors.BLUE : UIUtil.getTreeForeground();
 
     int style = SimpleTextAttributes.STYLE_PLAIN;
     String hint = null;
@@ -62,6 +61,10 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
   @Nullable
   private static String getHint(final Descriptor descriptor) {
     final InspectionToolWrapper toolWrapper = descriptor.getToolWrapper();
+
+    if (toolWrapper.getTool() instanceof InspectionToolWrapperWithHint) {
+      return ((InspectionToolWrapperWithHint)toolWrapper.getTool()).getHint();
+    }
     if (toolWrapper instanceof LocalInspectionToolWrapper ||
         toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).worksInBatchModeOnly()) {
       return null;

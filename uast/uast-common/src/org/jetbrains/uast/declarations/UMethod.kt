@@ -39,11 +39,6 @@ interface UMethod : UDeclaration, PsiMethod {
    */
   val uastParameters: List<UParameter>
 
-  /**
-   * Returns true, if the method overrides a method of a super class.
-   */
-  val isOverride: Boolean
-
   override fun getName(): String
 
   override fun getReturnType(): PsiType?
@@ -51,7 +46,7 @@ interface UMethod : UDeclaration, PsiMethod {
   override fun isConstructor(): Boolean
 
   @Deprecated("Use uastBody instead.", ReplaceWith("uastBody"))
-  override fun getBody(): PsiCodeBlock? = psi.body
+  override fun getBody(): PsiCodeBlock? = javaPsi.body
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitMethod(this)) return
@@ -66,7 +61,7 @@ interface UMethod : UDeclaration, PsiMethod {
       annotations.joinTo(buffer = this, separator = "\n", postfix = "\n", transform = UAnnotation::asRenderString)
     }
 
-    append(psi.renderModifiers())
+    append(javaPsi.renderModifiers())
     append("fun ").append(name)
 
     uastParameters.joinTo(this, prefix = "(", postfix = ")") { parameter ->
@@ -77,7 +72,7 @@ interface UMethod : UDeclaration, PsiMethod {
       annotationsText + parameter.name + ": " + parameter.type.canonicalText
     }
 
-    psi.returnType?.let { append(" : " + it.canonicalText) }
+    javaPsi.returnType?.let { append(" : " + it.canonicalText) }
 
     val body = uastBody
     append(when (body) {
@@ -90,6 +85,20 @@ interface UMethod : UDeclaration, PsiMethod {
     visitor.visitMethod(this, data)
 
   override fun asLogString(): String = log("name = $name")
+
+  @JvmDefault
+  val returnTypeReference: UTypeReferenceExpression?
+    get() {
+      val sourcePsi = sourcePsi ?: return null
+      for (child in sourcePsi.children) {
+        val expression = child.toUElement(UTypeReferenceExpression::class.java)
+        if (expression != null) {
+          return expression
+        }
+      }
+      return null
+    }
+
 }
 
 interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
@@ -100,7 +109,7 @@ interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
    */
   val uastDefaultValue: UExpression?
 
-  override fun getDefaultValue(): PsiAnnotationMemberValue? = psi.defaultValue
+  override fun getDefaultValue(): PsiAnnotationMemberValue? = (javaPsi as? PsiAnnotationMethod)?.defaultValue
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitMethod(this)) return

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.memberPullUp;
 
@@ -52,16 +38,16 @@ import java.util.*;
 
 public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpData {
   private static final Logger LOG = Logger.getInstance(PullUpProcessor.class);
-
+  @NotNull
   private final PsiClass mySourceClass;
   private final PsiClass myTargetSuperClass;
   private final MemberInfo[] myMembersToMove;
   private final DocCommentPolicy myJavaDocPolicy;
   private Set<PsiMember> myMembersAfterMove;
   private Set<PsiMember> myMovedMembers;
-  private final Map<Language, PullUpHelper<MemberInfo>> myProcessors = ContainerUtil.newHashMap();
+  private final Map<Language, PullUpHelper<MemberInfo>> myProcessors = new HashMap<>();
 
-  public PullUpProcessor(PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {
+  public PullUpProcessor(@NotNull PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {
     super(sourceClass.getProject());
     mySourceClass = sourceClass;
     myTargetSuperClass = targetSuperClass;
@@ -161,8 +147,8 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   }
 
   public void moveMembersToBase() throws IncorrectOperationException {
-    myMovedMembers = ContainerUtil.newLinkedHashSet();
-    myMembersAfterMove = ContainerUtil.newLinkedHashSet();
+    myMovedMembers = new LinkedHashSet<>();
+    myMembersAfterMove = new LinkedHashSet<>();
 
     // build aux sets
     for (MemberInfo info : myMembersToMove) {
@@ -318,6 +304,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
       return ContainerUtil.map(myMembersToMove, info -> info.getMember(), PsiElement.EMPTY_ARRAY);
     }
 
+    @NotNull
     @Override
     public String getCodeReferencesText(int usagesCount, int filesCount) {
       return "Class to pull up members to \"" + RefactoringUIUtil.getDescription(myTargetSuperClass, true) + "\"";

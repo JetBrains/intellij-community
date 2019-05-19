@@ -253,7 +253,7 @@ public class CvsInfo {
   }
 
   private static class MyInvalidCvsConnectionSettings extends CvsConnectionSettings {
-    public MyInvalidCvsConnectionSettings() {
+    MyInvalidCvsConnectionSettings() {
       super(CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance()));
     }
 
@@ -317,7 +317,7 @@ public class CvsInfo {
 
   @SuppressWarnings({"NonSynchronizedMethodOverridesSynchronizedMethod"})
   private static class DummyCvsInfo extends CvsInfo {
-    public DummyCvsInfo() {
+    DummyCvsInfo() {
       super(null);
     }
 

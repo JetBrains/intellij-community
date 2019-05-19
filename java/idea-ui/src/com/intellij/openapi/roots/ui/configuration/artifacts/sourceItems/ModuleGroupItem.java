@@ -68,7 +68,7 @@ public class ModuleGroupItem extends PackagingSourceItem {
   private static class ModuleGroupSourceItemPresentation extends SourceItemPresentation {
     private final String myGroupName;
 
-    public ModuleGroupSourceItemPresentation(String groupName) {
+    ModuleGroupSourceItemPresentation(String groupName) {
       myGroupName = groupName;
     }
 

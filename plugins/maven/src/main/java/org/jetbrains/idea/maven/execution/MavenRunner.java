@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,15 +11,17 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConsole;
-import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "MavenRunner", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
@@ -41,11 +43,13 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     return mySettings;
   }
 
+  @Override
   @NotNull
   public MavenRunnerSettings getState() {
     return mySettings;
   }
 
+  @Override
   public void loadState(@NotNull MavenRunnerSettings settings) {
     mySettings = settings;
   }
@@ -53,22 +57,22 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
   public void run(final MavenRunnerParameters parameters, final MavenRunnerSettings settings, final Runnable onComplete) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final MavenConsole console = createConsole();
+    final MavenConsole console = createConsole(myProject, parameters.getWorkingDirPath(), StringUtil.join(parameters.getGoals(), ", "), 0);
     try {
-      final MavenExecutor[] executor = new MavenExecutor[]{createExecutor(parameters, null, settings, console)};
+      final MavenExecutor executor = createExecutor(parameters, null, settings, console);
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, executor[0].getCaption(), true) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, executor.getCaption(), true) {
+        @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             try {
-              if (executor[0].execute(indicator)) {
+              if (executor.execute(indicator)) {
                 if (onComplete != null) onComplete.run();
               }
             }
             catch (ProcessCanceledException ignore) {
             }
 
-            executor[0] = null;
             updateTargetFolders();
           }
           finally {
@@ -76,8 +80,8 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
           }
         }
 
+        @NotNull
         @Override
-        @Nullable
         public NotificationInfo getNotificationInfo() {
           return new NotificationInfo("Maven", "Maven Task Finished", "");
         }
@@ -109,18 +113,21 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
                           @Nullable MavenRunnerSettings runnerSettings,
                           @Nullable final String action,
                           @Nullable ProgressIndicator indicator) {
-    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
 
     if (commands.isEmpty()) return true;
 
-    MavenConsole console
+    return runBatch(commands, coreSettings, runnerSettings, action, indicator, createConsole(myProject, myProject.getBasePath(), "Maven Batch", 0));
+  }
 
-    =ReadAction.compute(()->{
+  public boolean runBatch(List<MavenRunnerParameters> commands,
+                          @Nullable MavenGeneralSettings coreSettings,
+                          @Nullable MavenRunnerSettings runnerSettings,
+                          @Nullable final String action,
+                          @Nullable ProgressIndicator indicator,
+                          @NotNull MavenConsole mavenConsole) {
+    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
 
-      if (myProject.isDisposed()) return null;
-      return createConsole();
-    });
-    if (console == null) return false;
+    if (commands.isEmpty()) return true;
 
     try {
       int count = 0;
@@ -129,12 +136,9 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
           indicator.setFraction(((double)count++) / commands.size());
         }
 
-        MavenExecutor executor
-
-        = ReadAction.compute(()-> {
-
+        MavenExecutor executor = ReadAction.compute(() -> {
           if (myProject.isDisposed()) return null;
-          return createExecutor(command, coreSettings, runnerSettings, console);
+          return createExecutor(command, coreSettings, runnerSettings, mavenConsole);
         });
         if (executor == null) break;
 
@@ -148,10 +152,21 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
       updateTargetFolders();
     }
     finally {
-      console.finish();
+      mavenConsole.finish();
     }
 
     return true;
+  }
+
+  public static MavenConsole createConsole(@NotNull Project project,
+                                           @NotNull String workingDirPath,
+                                           @NotNull String title,
+                                           long executionId) {
+    boolean isDisposed = ReadAction.compute(() -> project.isDisposed());
+    if (isDisposed) {
+      return null;
+    }
+    return doCreateConsole(title, workingDirPath, project, executionId);
   }
 
   private void updateTargetFolders() {
@@ -159,17 +174,21 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     MavenProjectsManager.getInstance(myProject).updateProjectTargetFolders();
   }
 
-  private MavenConsole createConsole() {
+  private static MavenConsole doCreateConsole(@NotNull String title, @NotNull String workingDirPath, Project project, long executionId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new SoutMavenConsole();
     }
-    return new MavenConsoleImpl("Maven Goal", myProject);
+    AtomicReference<MavenConsole> result = new AtomicReference<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      result.set(MavenConsole.createGuiMavenConsole(project, title, workingDirPath, ToolWindowId.RUN, executionId));
+    });
+    return result.get();
   }
 
   private MavenExecutor createExecutor(MavenRunnerParameters taskParameters,
                                        @Nullable MavenGeneralSettings coreSettings,
                                        @Nullable MavenRunnerSettings runnerSettings,
-                                       MavenConsole console) {
+                                       @NotNull MavenConsole console) {
     return new MavenExternalExecutor(myProject, taskParameters, coreSettings, runnerSettings, console);
   }
 }

@@ -69,6 +69,7 @@ public class UnnecessaryInitCauseInspectionTest extends LightInspectionTestCase 
            "}");
   }
 
+  @SuppressWarnings("ThrowableNotThrown")
   public void testNotAccessible() {
     doTest("import java.util.*;" +
            "class X {" +

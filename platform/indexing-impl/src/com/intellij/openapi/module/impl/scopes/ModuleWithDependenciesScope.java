@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
@@ -25,6 +11,7 @@ import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -41,29 +28,26 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   public static final int CONTENT = 0x20;
 
   @MagicConstant(flags = {COMPILE_ONLY, LIBRARIES, MODULES, TESTS, CONTENT})
-  public @interface ScopeConstant {}
+  @interface ScopeConstant {}
 
   private final Module myModule;
   @ScopeConstant
   private final int myOptions;
-
   private final ProjectFileIndexImpl myProjectFileIndex;
 
   private volatile Set<Module> myModules;
   private final TObjectIntHashMap<VirtualFile> myRoots = new TObjectIntHashMap<>();
 
-  public ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
+  ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
     super(module.getProject());
     myModule = module;
     myOptions = options;
-
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
 
-    final LinkedHashSet<VirtualFile> roots = ContainerUtil.newLinkedHashSet();
-
+    Set<VirtualFile> roots = new LinkedHashSet<>();
     if (hasOption(CONTENT)) {
       Set<Module> modules = calcModules();
-      myModules = ContainerUtil.newTroveSet(modules);
+      myModules = new THashSet<>(modules);
       for (Module m : modules) {
         for (ContentEntry entry : ModuleRootManager.getInstance(m).getContentEntries()) {
           ContainerUtil.addIfNotNull(roots, entry.getFile());
@@ -87,10 +71,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private OrderEnumerator getOrderEnumeratorForOptions() {
     OrderEnumerator en = ModuleRootManager.getInstance(myModule).orderEntries();
     en.recursively();
-
-    if (hasOption(COMPILE_ONLY)) {
-      en.exportedOnly().compileOnly();
-    }
+    if (hasOption(COMPILE_ONLY)) en.exportedOnly().compileOnly();
     if (!hasOption(LIBRARIES)) en.withoutLibraries().withoutSdk();
     if (!hasOption(MODULES)) en.withoutDepModules();
     if (!hasOption(TESTS)) en.productionOnly();
@@ -101,7 +82,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private Set<Module> calcModules() {
     // In the case that hasOption(CONTENT), the order of the modules set matters for
     // ordering the content roots, so use a LinkedHashSet
-    final Set<Module> modules = ContainerUtil.newLinkedHashSet();
+    Set<Module> modules = new LinkedHashSet<>();
     OrderEnumerator en = getOrderEnumeratorForOptions();
     en.forEach(each -> {
       if (each instanceof ModuleOrderEntry) {
@@ -135,7 +116,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     Set<Module> allModules = myModules;
     if (allModules == null) {
-      myModules = allModules = ContainerUtil.newTroveSet(calcModules());
+      myModules = allModules = new THashSet<>(calcModules());
     }
     return allModules.contains(aModule);
   }
@@ -187,8 +168,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @TestOnly
   public Collection<VirtualFile> getRoots() {
-    //noinspection unchecked
-    List<VirtualFile> result = (List)ContainerUtil.newArrayList(myRoots.keys());
+    @SuppressWarnings("unchecked") List<VirtualFile> result = (List)ContainerUtil.newArrayList(myRoots.keys());
     Collections.sort(result, Comparator.comparingInt(myRoots::get));
     return result;
   }
@@ -203,16 +183,16 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   }
 
   @Override
-  public int hashCode() {
+  public int calcHashCode() {
     return 31 * myModule.hashCode() + myOptions;
   }
 
   @Override
   public String toString() {
-    return "Module with dependencies:" + myModule.getName() +
-           " compile only:" + hasOption(COMPILE_ONLY) +
-           " include libraries:" + hasOption(LIBRARIES) +
-           " include other modules:" + hasOption(MODULES) +
-           " include tests:" + hasOption(TESTS);
+    return "Module-with-dependencies:" + myModule.getName() +
+           " compile-only:" + hasOption(COMPILE_ONLY) +
+           " include-libraries:" + hasOption(LIBRARIES) +
+           " include-other-modules:" + hasOption(MODULES) +
+           " include-tests:" + hasOption(TESTS);
   }
 }

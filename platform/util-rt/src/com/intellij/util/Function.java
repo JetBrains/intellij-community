@@ -20,11 +20,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * Please use {@link java.util.function.Function} instead
+ *
  * @author max
- *
  * @see Functions for some common implementations
- *
- * Consider to use {@link java.util.function.Function} instead
  */
 public interface Function<Param, Result> {
   Result fun(Param param);
@@ -33,6 +32,11 @@ public interface Function<Param, Result> {
     public Object fun(Object o) {
       return o;
     }
+
+    @Override
+    public String toString() {
+      return "Function.ID";
+    }
   };
 
   Function NULL = NullableFunction.NULL;
@@ -40,6 +44,11 @@ public interface Function<Param, Result> {
   Function TO_STRING = new Function() {
     public Object fun(Object o) {
       return String.valueOf(o);
+    }
+
+    @Override
+    public String toString() {
+      return "Function.TO_STRING";
     }
   };
 

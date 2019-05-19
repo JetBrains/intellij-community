@@ -21,7 +21,6 @@ import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author max
- * @since Sep 5, 2003
  */
 public interface Fixer {
   void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException;

@@ -63,7 +63,7 @@ public class SuggestionList {
   /**
    * @param listener popup listener (will be called back when popup closed)
    */
-  public SuggestionList(@SuppressWarnings("NullableProblems") @NotNull final JBPopupListener listener) {
+  public SuggestionList(@NotNull final JBPopupListener listener) {
     myListener = listener;
   }
 

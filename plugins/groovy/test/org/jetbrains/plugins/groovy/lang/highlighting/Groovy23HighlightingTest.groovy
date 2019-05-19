@@ -1,12 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -21,11 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
  */
 class Groovy23HighlightingTest extends GrHighlightingTestBase {
 
-  @Override
-  @NotNull
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_2_3
-  }
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_3
 
   void testSam1() {
     testHighlighting('''
@@ -54,7 +49,7 @@ public <T> void exec(T t, Action<T> f) {
 
 def foo() {
     exec('foo') {print it.toUpperCase() ;print 2 }
-    exec('foo') {print it.<warning descr="Cannot resolve symbol 'intValue'">intValue</warning>() ;print 2 }
+    exec('foo') {print <weak_warning descr="Cannot infer argument types">it.<warning descr="Cannot resolve symbol 'intValue'">intValue</warning>()</weak_warning> ;print 2 }
 }
 ''')
   }

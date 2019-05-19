@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/27/2015
  */
 public interface ExternalSystemProgressEvent<T extends OperationDescriptor> extends Serializable {
   @NotNull

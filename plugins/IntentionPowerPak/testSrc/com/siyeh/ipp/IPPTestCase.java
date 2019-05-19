@@ -56,7 +56,9 @@ public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
     final Matcher matcher = PATTERN.matcher(before);
     assertTrue("No caret and intention name specified", matcher.find());
     myFixture.configureByText("a.java", matcher.replaceFirst("<caret>"));
-    myFixture.launchAction(myFixture.findSingleIntention(matcher.group(1)));
+    final String group = matcher.group(1);
+    final String intentionName = group.isEmpty() ? getIntentionName() : group;
+    myFixture.launchAction(myFixture.findSingleIntention(intentionName));
     myFixture.checkResult(after);
   }
 
@@ -64,7 +66,8 @@ public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
     final Matcher matcher = PATTERN.matcher(source);
     assertTrue("No caret and intention name specified", matcher.find());
     myFixture.configureByText("a.java", matcher.replaceFirst("<caret>"));
-    final String intentionName = matcher.group(1);
+    final String group = matcher.group(1);
+    final String intentionName = group.isEmpty() ? getIntentionName() : group;
     assertEmpty("Intention \'" + intentionName + "\' is available but should not", myFixture.filterAvailableIntentions(intentionName));
   }
 

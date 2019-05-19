@@ -159,6 +159,9 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
             //      (i.e. it was stored by a soft reference and was gc-ed).
             //  In either case, `myView.updateLater()` will eventually re-update the visible nodes.
             text = ourLoadingText;
+            // Since "loading..." text is not reflected in the node's cached state
+            // we must force the node to recalculate it's bounds on the next view update
+            node.forceUpdate();
             myView.updateLater();
           }
           for (int i = 0; i < text.length; i++) {

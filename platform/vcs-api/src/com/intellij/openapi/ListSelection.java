@@ -75,7 +75,7 @@ public class ListSelection<T> {
   }
 
   @NotNull
-  public <V> ListSelection<V> map(@NotNull NullableFunction<T, V> convertor) {
+  public <V> ListSelection<V> map(@NotNull NullableFunction<? super T, ? extends V> convertor) {
     int newSelectionIndex = -1;
     List<V> result = new ArrayList<>();
     for (int i = 0; i < myList.size(); i++) {

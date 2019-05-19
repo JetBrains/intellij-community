@@ -37,8 +37,7 @@ import org.intellij.plugins.relaxNG.compact.psi.impl.RncFileImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class RncParserDefinition implements ParserDefinition {
-  public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(RngCompactLanguage.INSTANCE);
-  private static final TokenSet myCommentTypes = TokenSet.orSet(RncTokenTypes.COMMENTS, RncTokenTypes.DOC_TOKENS);
+  private static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(RngCompactLanguage.INSTANCE);
 
   @Override
   @NotNull
@@ -65,7 +64,7 @@ public class RncParserDefinition implements ParserDefinition {
   @Override
   @NotNull
   public TokenSet getCommentTokens() {
-    return myCommentTypes;
+    return TokenSet.orSet(RncTokenTypes.COMMENTS, RncTokenTypes.DOC_TOKENS);
   }
 
   @Override
@@ -93,12 +92,12 @@ public class RncParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 
   private static class MyRncElement extends RncElementImpl {
-    public MyRncElement(ASTNode node) {
+    MyRncElement(ASTNode node) {
       super(node);
     }
 

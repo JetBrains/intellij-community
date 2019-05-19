@@ -233,7 +233,7 @@ public class Assertion extends Assert {
     }
   }
 
-  public <T> void singleOccurence(Collection<T> collection, T item) {
+  public <T> void singleOccurence(Collection<? extends T> collection, T item) {
     int number = countOccurences(collection, item);
     if (number != 1) {
       enumerate(collection);
@@ -241,7 +241,7 @@ public class Assertion extends Assert {
     }
   }
 
-  public static <T> int countOccurences(Collection<T> collection, T item) {
+  public static <T> int countOccurences(Collection<? extends T> collection, T item) {
     int counter = 0;
     for (T obj : collection) {
       if (Comparing.equal(item, obj)) counter++;

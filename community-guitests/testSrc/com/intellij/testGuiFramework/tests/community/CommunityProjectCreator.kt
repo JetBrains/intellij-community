@@ -2,14 +2,16 @@
 package com.intellij.testGuiFramework.tests.community
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
-import com.intellij.testGuiFramework.util.Key.A
-import com.intellij.testGuiFramework.util.Key.V
+import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone
+import com.intellij.testGuiFramework.util.Key.*
 import com.intellij.testGuiFramework.util.Modifier.CONTROL
 import com.intellij.testGuiFramework.util.Modifier.META
 import com.intellij.testGuiFramework.util.plus
+import com.intellij.testGuiFramework.util.step
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.exception.ComponentLookupException
@@ -31,7 +33,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
     with(guiTestCase) {
       welcomeFrame {
         actionLink("Create New Project").click()
-        GuiTestUtilKt.waitProgressDialogUntilGone(robot(), "Loading Templates")
+        waitProgressDialogUntilGone(robot = robot(), progressTitle = "Loading Templates", timeoutToAppear = Timeouts.seconds02)
         dialog("New Project") {
           jList("Java").clickItem("Java")
           button("Next").click()
@@ -54,12 +56,14 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
 
   private fun GuiTestCase.checkFileAlreadyExistsDialog() {
     try {
-      val dialogFixture = dialog(IdeBundle.message("title.file.already.exists"), false, 10L)
+      val dialogFixture = dialog(IdeBundle.message("title.file.already.exists"), false, timeout = Timeouts.seconds01)
       dialogFixture.button("Yes").click()
-    } catch (cle: ComponentLookupException) { /*do nothing here */ }
+    }
+    catch (cle: ComponentLookupException) { /*do nothing here */
+    }
   }
 
-  private fun GuiTestCase.openMainInCommandLineProject() {
+  fun GuiTestCase.openMainInCommandLineProject() {
     ideFrame {
       projectView {
         path(project.name, "src", "com.company", "Main").doubleClick()
@@ -68,7 +72,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
     }
   }
 
-  private fun GuiTestCase.openFileInCommandLineProject(fileName: String) {
+  fun GuiTestCase.openFileInCommandLineProject(fileName: String) {
     ideFrame {
       projectView {
         path(project.name, "src", "com.company", fileName).doubleClick()
@@ -77,7 +81,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
     }
   }
 
-  private fun GuiTestCase.waitForFirstIndexing() {
+  fun GuiTestCase.waitForFirstIndexing() {
     ideFrame {
       val secondToWaitIndexing = 10
       try {
@@ -96,12 +100,14 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
         projectView {
           path(project.name, "src", "com.company").rightClick()
         }
-        popup("New", "Java Class")
-        dialog("Create New Class") {
+        menu("New", "Java Class").click()
+        step("Find CreateWithTemplatesDialogPanel to detect popup for a new class") {
+          findComponentWithTimeout(null, CreateWithTemplatesDialogPanel::class.java,
+                                   Timeouts.seconds02)
           typeText(fileName)
-          button("OK").click()
+          shortcut(ENTER)
         }
-        editor(fileName + ".java") {
+        editor("$fileName.java") {
           shortcut(CONTROL + A, META + A)
           copyToClipboard(fileContent)
           shortcut(CONTROL + V, META + V)
@@ -113,10 +119,10 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
   /**
    * @projectName of importing project should be locate in the current module testData/
    */
-  fun importProject(projectName: String) {
-    val commandLineAppDirUrl = this.javaClass.classLoader.getResource(projectName)
-    val commandLineAppDir = File(commandLineAppDirUrl.toURI())
-    guiTestCase.guiTestRule.importProject(commandLineAppDir)
+  fun importProject(projectName: String): File {
+    val projectDirUrl = this.javaClass.classLoader.getResource(projectName)
+    val projectDirFile = File(projectDirUrl.toURI())
+    return guiTestCase.guiTestRule.importProject(projectDirFile)
   }
 
   fun importCommandLineApp() {

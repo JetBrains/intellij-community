@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages
 
 import com.intellij.openapi.components.*
@@ -9,7 +9,8 @@ import com.intellij.util.xmlb.annotations.Transient
 /**
  * Passed params will be used as default values, so, do not use constructor if instance will be used as a state (unless you want to change defaults)
  */
-@State(name = "UsageViewSettings", storages = [(Storage("usageView.xml")), (Storage(value = "other.xml", deprecated = true))])
+@Suppress("PropertyName")
+@State(name = "UsageViewSettings", storages = [Storage("usageView.xml")])
 open class UsageViewSettings(
   isGroupByFileStructure: Boolean = true,
   isGroupByModule: Boolean = true,
@@ -27,77 +28,77 @@ open class UsageViewSettings(
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByModule")
-  var GROUP_BY_MODULE: Boolean = isGroupByModule
+  var GROUP_BY_MODULE = isGroupByModule
 
   @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByUsageType")
-  var GROUP_BY_USAGE_TYPE: Boolean = isGroupByUsageType
+  var GROUP_BY_USAGE_TYPE = isGroupByUsageType
 
   @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByFileStructure")
-  var GROUP_BY_FILE_STRUCTURE: Boolean = isGroupByFileStructure
+  var GROUP_BY_FILE_STRUCTURE = isGroupByFileStructure
 
   @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByScope")
-  var GROUP_BY_SCOPE: Boolean = isGroupByScope
+  var GROUP_BY_SCOPE = isGroupByScope
 
   @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByPackage")
-  var GROUP_BY_PACKAGE: Boolean = isGroupByPackage
+  var GROUP_BY_PACKAGE = isGroupByPackage
 
   @Suppress("MemberVisibilityCanPrivate")
   @get:OptionTag("EXPORT_FILE_NAME")
-  internal var EXPORT_FILE_NAME by property("report.txt")
+  internal var EXPORT_FILE_NAME by string("report.txt")
 
   @get:OptionTag("IS_EXPANDED")
-  var isExpanded: Boolean by property(false)
+  var isExpanded by property(false)
 
   @get:OptionTag("IS_AUTOSCROLL_TO_SOURCE")
-  var isAutoScrollToSource: Boolean by property(false)
+  var isAutoScrollToSource by property(false)
 
   @get:OptionTag("IS_FILTER_DUPLICATED_LINE")
-  var isFilterDuplicatedLine: Boolean by property(true)
+  var isFilterDuplicatedLine by property(true)
 
   @get:OptionTag("IS_SHOW_METHODS")
-  var isShowModules: Boolean by property(false)
+  var isShowModules by property(false)
 
   @get:OptionTag("IS_PREVIEW_USAGES")
-  var isPreviewUsages: Boolean by property(false)
+  var isPreviewUsages by property(false)
 
   @get:OptionTag("IS_REPLACE_PREVIEW_USAGES")
-  var isReplacePreviewUsages: Boolean by property(true)
+  var isReplacePreviewUsages by property(true)
 
   @get:OptionTag("IS_SORT_MEMBERS_ALPHABETICALLY")
-  var isSortAlphabetically: Boolean by property(false)
+  var isSortAlphabetically by property(false)
 
   @get:OptionTag("PREVIEW_USAGES_SPLITTER_PROPORTIONS")
   var previewUsagesSplitterProportion: Float by property(0.5f)
 
   @get:OptionTag("GROUP_BY_USAGE_TYPE")
-  var isGroupByUsageType: Boolean by property(isGroupByUsageType)
+  var isGroupByUsageType by property(isGroupByUsageType)
 
   @get:OptionTag("GROUP_BY_MODULE")
-  var isGroupByModule: Boolean by property(isGroupByModule)
+  var isGroupByModule by property(isGroupByModule)
 
   @get:OptionTag("FLATTEN_MODULES")
-  var isFlattenModules: Boolean by property(true)
+  var isFlattenModules by property(true)
 
   @get:OptionTag("GROUP_BY_PACKAGE")
-  var isGroupByPackage: Boolean by property(isGroupByPackage)
+  var isGroupByPackage by property(isGroupByPackage)
 
   @get:OptionTag("GROUP_BY_FILE_STRUCTURE")
-  var isGroupByFileStructure: Boolean by property(isGroupByFileStructure)
+  var isGroupByFileStructure by property(isGroupByFileStructure)
 
   @get:OptionTag("GROUP_BY_SCOPE")
-  var isGroupByScope: Boolean by property(isGroupByScope)
+  var isGroupByScope by property(isGroupByScope)
 
   var exportFileName: String?
     @Transient
@@ -106,7 +107,7 @@ open class UsageViewSettings(
       EXPORT_FILE_NAME = PathUtil.toSystemIndependentName(value)
     }
 
-  override fun getState(): UsageViewSettings = this
+  override fun getState() = this
 
   @Suppress("DEPRECATION")
   override fun loadState(state: UsageViewSettings) {

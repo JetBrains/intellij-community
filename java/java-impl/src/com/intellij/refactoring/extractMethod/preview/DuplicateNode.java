@@ -14,6 +14,7 @@ public class DuplicateNode extends FragmentNode {
     super(duplicate.getMatchStart(), duplicate.getMatchEnd(), new ExtractableFragment(duplicate.getMatchStart(), duplicate.getMatchEnd()));
   }
 
+  @Override
   public boolean isExcluded() {
     return myExcluded;
   }

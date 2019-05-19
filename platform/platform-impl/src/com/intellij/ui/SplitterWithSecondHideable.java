@@ -18,7 +18,9 @@ package com.intellij.ui;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.PseudoSplitter;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.Panels;
 import com.intellij.util.ui.MouseEventHandler;
@@ -28,29 +30,31 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-import static com.intellij.icons.AllIcons.General.*;
+import static com.intellij.icons.AllIcons.General.ArrowDown;
+import static com.intellij.icons.AllIcons.General.ArrowRight;
 
 public abstract class SplitterWithSecondHideable {
-  public interface OnOffListener<T> {
-    void on(T t);
-    void off(T t);
+  public interface OnOffListener {
+    void on(int hideableHeight);
+    void off(int hideableHeight);
   }
 
   @NotNull private final PseudoSplitter mySplitter;
-  @NotNull private final AbstractTitledSeparatorWithIcon myTitledSeparator;
-  @NotNull private final OnOffListener<Integer> myListener;
+  @NotNull private final MyTitledSeparator myTitledSeparator;
+  @NotNull private final OnOffListener myListener;
   @NotNull private final JPanel myFictivePanel;
   private float myPreviousProportion;
 
   public SplitterWithSecondHideable(boolean vertical,
                                     @NotNull String separatorText,
                                     @NotNull JComponent firstComponent,
-                                    @NotNull OnOffListener<Integer> listener) {
+                                    @NotNull OnOffListener listener) {
     myListener = listener;
     myFictivePanel = Panels.simplePanel();
     myTitledSeparator = new MyTitledSeparator(separatorText, vertical);
     mySplitter = new MySplitter(vertical);
     mySplitter.setDoubleBuffered(true);
+    mySplitter.setHonorComponentsMinimumSize(false);
     mySplitter.setFirstComponent(firstComponent);
     mySplitter.setSecondComponent(myFictivePanel);
     mySplitter.setProportion(1.0f);
@@ -77,6 +81,10 @@ public abstract class SplitterWithSecondHideable {
     myTitledSeparator.initOn();
   }
 
+  public void setInitialProportion() {
+    myTitledSeparator.setInitialProportion();
+  }
+
   public void on() {
     myTitledSeparator.on();
   }
@@ -90,8 +98,8 @@ public abstract class SplitterWithSecondHideable {
   }
 
   private class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
-    public MyTitledSeparator(@NotNull String separatorText, boolean vertical) {
-      super(ComboArrowRight, vertical ? ComboArrowDown : ComboArrowRightPassive, separatorText);
+    MyTitledSeparator(@NotNull String separatorText, boolean vertical) {
+      super(ArrowRight, vertical ? ArrowDown : ObjectUtils.assertNotNull(IconLoader.getDisabledIcon(ArrowRight)), separatorText);
     }
 
     @Override
@@ -101,16 +109,16 @@ public abstract class SplitterWithSecondHideable {
 
     @Override
     protected void initOnImpl() {
-      float proportion = myPreviousProportion > 0 ? myPreviousProportion : getSplitterInitialProportion();
       mySplitter.setSecondComponent(myDetailsComponent.getPanel());
       mySplitter.setResizeEnabled(true);
+    }
 
-      SwingUtilities.invokeLater(() -> {
-        mySplitter.fixFirst(proportion);
-        mySplitter.invalidate();
-        mySplitter.validate();
-        mySplitter.repaint();
-      });
+    public void setInitialProportion() {
+      float proportion = myPreviousProportion > 0 ? myPreviousProportion : getSplitterInitialProportion();
+      mySplitter.fixFirst(proportion);
+      mySplitter.invalidate();
+      mySplitter.validate();
+      mySplitter.repaint();
     }
 
     @Override
@@ -165,7 +173,7 @@ public abstract class SplitterWithSecondHideable {
       }
     };
 
-    public MySplitter(boolean vertical) {
+    MySplitter(boolean vertical) {
       super(vertical);
       myTitledSeparator.mySeparator.addMouseListener(myMouseListener);
       myTitledSeparator.mySeparator.addMouseMotionListener(myMouseListener);

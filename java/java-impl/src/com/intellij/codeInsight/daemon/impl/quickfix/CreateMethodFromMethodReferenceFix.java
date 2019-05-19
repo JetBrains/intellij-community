@@ -75,7 +75,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
   @Override
   protected PsiElement getElement() {
     final PsiMethodReferenceExpression call = getMethodReference();
-    if (call == null || !call.getManager().isInProject(call)) return null;
+    if (call == null || !canModify(call)) return null;
     return call;
   }
 
@@ -86,6 +86,15 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
     PsiMethodReferenceExpression call = getMethodReference();
     if (call == null) return Collections.emptyList();
     return targets;
+  }
+
+  @Override
+  protected boolean canBeTargetClass(PsiClass psiClass) {
+    PsiMethodReferenceExpression reference = getMethodReference();
+    if (reference != null && reference.isConstructor()) {
+      return false;
+    }
+    return super.canBeTargetClass(psiClass);
   }
 
   @Override

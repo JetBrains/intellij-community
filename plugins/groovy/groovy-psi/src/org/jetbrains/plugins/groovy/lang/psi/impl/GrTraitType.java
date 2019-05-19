@@ -90,7 +90,7 @@ public class GrTraitType extends PsiType {
   }
 
   @NotNull
-  public static PsiType createTraitType(@NotNull PsiType type, @NotNull List<PsiType> traits) {
+  public static PsiType createTraitType(@NotNull PsiType type, @NotNull List<? extends PsiType> traits) {
     return createTraitType(ContainerUtil.prepend(traits, type instanceof GrTraitType ? ((GrTraitType)type).myDelegate : type));
   }
 

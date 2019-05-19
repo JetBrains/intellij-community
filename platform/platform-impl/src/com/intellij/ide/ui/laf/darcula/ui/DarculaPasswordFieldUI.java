@@ -3,7 +3,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
@@ -36,11 +35,13 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
     super.installListeners();
     JTextComponent passwordField = getComponent();
     focusListener = new FocusListener() {
-      @Override public void focusGained(FocusEvent e) {
+      @Override
+      public void focusGained(FocusEvent e) {
         passwordField.repaint();
       }
 
-      @Override public void focusLost(FocusEvent e) {
+      @Override
+      public void focusLost(FocusEvent e) {
         passwordField.repaint();
       }
     };
@@ -62,9 +63,9 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   }
 
   protected Dimension updatePreferredSize(Dimension size) {
+    JBInsets.addTo(size, getComponent().getMargin());
     Insets i = getComponent().getInsets();
     size.height = Math.max(size.height, getMinimumHeight() + i.top + i.bottom);
-    JBInsets.addTo(size, getComponent().getMargin());
     return size;
   }
 
@@ -104,7 +105,8 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
         }
 
         g2.fill(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2));
-      } finally {
+      }
+      finally {
         g2.dispose();
       }
     }
@@ -122,7 +124,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    getComponent().setMargin(JBUI.insets(0, 5));
+    getComponent().setMargin(JBUI.insets(2, 5));
   }
 
   @Override
@@ -135,7 +137,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
     super.installDefaults();
 
     JTextComponent component = getComponent();
-    if (SystemInfoRt.isMac && SystemProperties.getBooleanProperty("idea.ui.set.password.echo.char", false)) {
+    if (SystemInfoRt.isMac) {
       LookAndFeel.installProperty(component, "echoChar", '•');
     }
   }

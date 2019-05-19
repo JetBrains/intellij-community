@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Pavel.Dolgov
@@ -87,6 +89,11 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
     return myFragment.getTextRange();
   }
 
+  @Nullable
+  public ElementsRange getElementsRange() {
+    return myFragment.getElementsRange();
+  }
+
   private static int getLineNumber(@NotNull Document document, int offset) {
     if (document.getTextLength() == 0) return 0;
     if (offset >= document.getTextLength()) return document.getLineCount();
@@ -96,5 +103,12 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
   @Override
   public int compareTo(@NotNull FragmentNode o) {
     return myOffset - o.myOffset;
+  }
+
+  @Override
+  public String toString() {
+    if (myTextChunks == null) return "";
+    String lineNumber = myLineNumberChunk != null ? myLineNumberChunk.getText().trim() + ":" : "";
+    return Stream.of(myTextChunks).map(TextChunk::getText).collect(Collectors.joining("", lineNumber, ""));
   }
 }

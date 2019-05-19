@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -33,24 +34,24 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/29/2015
  */
 public class GradleConsoleFilter implements Filter {
+  @Nullable
   private final Project myProject;
   private static final TextAttributes HYPERLINK_ATTRIBUTES =
     EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
   private String myFilteredFileName;
   private int myFilteredLineNumber;
 
-  public GradleConsoleFilter(Project project) {
+  public GradleConsoleFilter(@Nullable Project project) {
     myProject = project;
   }
 
   @Nullable
   @Override
-  public Result applyFilter(final String line, final int entireLength) {
-    String[] filePrefixes = new String[]{"Build file '", "build file '"};
-    String[] linePrefixes = new String[]{"' line: ", "': "};
+  public Result applyFilter(@NotNull final String line, final int entireLength) {
+    String[] filePrefixes = new String[]{"Build file '", "build file '", "Settings file '"};
+    String[] linePrefixes = new String[]{"' line: ", "': ", "' line: "};
     String filePrefix = null;
     String linePrefix = null;
     for (int i = 0; i < filePrefixes.length; i++) {
@@ -104,9 +105,12 @@ public class GradleConsoleFilter implements Filter {
 
     int textStartOffset = entireLength - line.length() + filePrefix.length() + filePrefixIndex;
     int highlightEndOffset = textStartOffset + fileName.length();
-    OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(myProject, file, Math.max(lineNumber - 1, 0));
+    OpenFileHyperlinkInfo info = null;
+    if (myProject != null) {
+      info = new OpenFileHyperlinkInfo(myProject, file, Math.max(lineNumber - 1, 0));
+    }
     TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();
-    if (!ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file)) {
+    if (myProject != null && !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file)) {
       Color color = UIUtil.getInactiveTextColor();
       attributes.setForegroundColor(color);
       attributes.setEffectColor(color);

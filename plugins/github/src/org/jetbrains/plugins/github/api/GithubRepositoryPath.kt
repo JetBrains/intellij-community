@@ -2,6 +2,10 @@
 package org.jetbrains.plugins.github.api
 
 data class GithubRepositoryPath(private val serverPath: GithubServerPath, private val repositoryPath: GithubFullPath) {
+  fun toUrl(): String {
+    return serverPath.toUrl() + "/" + repositoryPath.fullName
+  }
+
   override fun toString(): String {
     return "$serverPath/${repositoryPath.fullName}"
   }

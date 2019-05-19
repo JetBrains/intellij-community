@@ -48,8 +48,6 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
     myTree = new Tree(treeModel);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(myTree);
-
     myTree.expandPath(TreeUtil.getPathFromRoot(myRoot));
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setCellRenderer(new MyTreeCellRenderer());
@@ -78,7 +76,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
            descriptor instanceof FileTemplateGroupDescriptor ? null : descriptor.getFileName());
     }
 
-    FileTemplateNode(String name, Icon icon, List<FileTemplateNode> children) {
+    FileTemplateNode(String name, Icon icon, List<? extends FileTemplateNode> children) {
       this(name, icon, children, null);
     }
 
@@ -86,7 +84,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
       this(templateName, icon, Collections.emptyList(), templateName);
     }
 
-    private FileTemplateNode(String name, Icon icon, List<FileTemplateNode> children, String templateName) {
+    private FileTemplateNode(String name, Icon icon, List<? extends FileTemplateNode> children, String templateName) {
       super(name);
       myIcon = icon;
       myTemplateName = templateName;
@@ -114,7 +112,12 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   private class MyTreeCellRenderer extends DefaultTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, false);
+      setBorderSelectionColor(null);
+      setBackgroundSelectionColor(null);
+      setBackgroundNonSelectionColor(null);
+      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+      setBackground(UIUtil.getTreeBackground(sel, hasFocus));
+      setForeground(UIUtil.getTreeForeground(sel, hasFocus));
 
       if (value instanceof FileTemplateNode) {
         final FileTemplateNode node = (FileTemplateNode)value;

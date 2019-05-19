@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -22,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +33,10 @@ public class SplitConditionUtil {
     boolean isAndExpression = acceptAnd && expression.getOperationTokenType() == JavaTokenType.ANDAND;
     boolean isOrExpression = acceptOr && expression.getOperationTokenType() == JavaTokenType.OROR;
     if (!isAndExpression && !isOrExpression) return null;
+    if (ErrorUtil.containsError(expression)) {
+      // Incomplete expression like "something &&"
+      return null;
+    }
 
     while (expression.getParent() instanceof PsiPolyadicExpression) {
       expression = (PsiPolyadicExpression)expression.getParent();
@@ -69,7 +60,7 @@ public class SplitConditionUtil {
       offsetInParent = next.getStartOffsetInParent();
     }
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
     String rOperands = expression.getText().substring(offsetInParent);
     return factory.createExpressionFromText(rOperands, expression.getParent());
   }
@@ -83,7 +74,7 @@ public class SplitConditionUtil {
     if (prev.getPrevSibling() instanceof PsiWhiteSpace) prev = prev.getPrevSibling();
     ct.markRangeUnchanged(expression.getFirstChild(), prev.getPrevSibling());
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
     String rOperands = expression.getText().substring(0, prev.getStartOffsetInParent());
     return factory.createExpressionFromText(rOperands, expression.getParent());
   }
@@ -120,6 +111,7 @@ public class SplitConditionUtil {
                                              CommentTracker tracker) {
     List<String> elseChain = new ArrayList<>();
     boolean chainFinished = false;
+    loop:
     while (!chainFinished) {
       PsiIfStatement nextIf = tryCast(ControlFlowUtils.stripBraces(elseBranch), PsiIfStatement.class);
       if (nextIf == null) break;
@@ -144,7 +136,7 @@ public class SplitConditionUtil {
         }
         if (nextOperands.length <= operands.length) break;
         for (int i = 0; i < operands.length; i++) {
-          if (!PsiEquivalenceUtil.areElementsEquivalent(nextOperands[i], operands[i])) break;
+          if (!PsiEquivalenceUtil.areElementsEquivalent(nextOperands[i], operands[i])) break loop;
         }
         PsiExpression nextExtracted =
           getROperands(nextPolyadic, nextPolyadic.getTokenBeforeOperand(nextOperands[operands.length]), tracker);
@@ -185,7 +177,7 @@ public class SplitConditionUtil {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(condition);
     return createIfString(tracker.text(stripped == null ? condition : stripped),
                           toThenBranchString(tracker.markUnchanged(thenBranch)),
-                          toElseBranchString(elseBranch != null ? tracker.markUnchanged(elseBranch) : null, false));
+                          toElseBranchString(tracker.markUnchanged(elseBranch), false));
   }
 
   @NotNull
@@ -205,7 +197,7 @@ public class SplitConditionUtil {
                                        CommentTracker tracker) {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(condition);
     return createIfString(tracker.text(stripped == null ? condition : stripped),
-                          thenBranch, toElseBranchString(elseBranch != null ? tracker.markUnchanged(elseBranch) : null, true));
+                          thenBranch, toElseBranchString(tracker.markUnchanged(elseBranch), true));
   }
 
   @NotNull

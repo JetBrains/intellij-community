@@ -23,10 +23,10 @@ import org.junit.runners.Suite
 import org.junit.runners.model.FrameworkMethod
 
 
-class GuiTestLocalRunner: BlockJUnit4ClassRunner, GuiTestRunnerInterface {
+open class GuiTestLocalRunner : BlockJUnit4ClassRunner, GuiTestRunnerInterface {
 
   override val ide: Ide?
-  private val runner: GuiTestRunner
+  protected open var runner: GuiTestRunner
   override var mySuiteClass: Class<*>? = null
 
   constructor(testClass: Class<*>, suiteClass: Class<*>, ide: Ide?) : this(testClass, ide) {
@@ -38,7 +38,11 @@ class GuiTestLocalRunner: BlockJUnit4ClassRunner, GuiTestRunnerInterface {
     runner = GuiTestRunner(this)
   }
 
-  constructor(testClass: Class<*>): this(testClass, null)
+  fun setTestRunner(testRunner: GuiTestRunner) {
+    runner = testRunner
+  }
+
+  constructor(testClass: Class<*>) : this(testClass, null)
 
   override fun getTestName(method: String): String {
     return method

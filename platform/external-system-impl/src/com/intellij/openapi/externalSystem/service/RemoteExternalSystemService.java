@@ -12,7 +12,6 @@ import java.rmi.RemoteException;
  * Generic interface with common functionality for all remote services that work with external system.
  * 
  * @author Denis Zhdanov
- * @since 8/9/11 3:19 PM
  */
 public interface RemoteExternalSystemService<S extends ExternalSystemExecutionSettings> extends Remote, ExternalSystemTaskAware {
 

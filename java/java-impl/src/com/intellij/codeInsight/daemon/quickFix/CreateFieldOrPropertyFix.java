@@ -3,13 +3,15 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.GenerateFieldOrPropertyHandler;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -98,12 +100,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
       if (prototypes.isEmpty()) return;
       final PsiElement scope = prototypes.get(0).getPsiMember().getContext();
       assert scope != null;
-      final Expression expression = new EmptyExpression() {
-        @Override
-        public Result calculateResult(final ExpressionContext context) {
-          return new TextResult(myType.getCanonicalText());
-        }
-      };
+      Expression expression = new ConstantNode(myType.getCanonicalText());
       final TemplateBuilderImpl builder = new TemplateBuilderImpl(scope);
       boolean first = true;
       @NonNls final String TYPE_NAME_VAR = "TYPE_NAME_VAR";

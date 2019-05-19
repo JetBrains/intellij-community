@@ -62,7 +62,7 @@ public class RefactoringChangeUtil {
       methodCallExpression = PsiTreeUtil.getParentOfType(methodCallExpression, PsiMethodCallExpression.class, true);
     }
     PsiReferenceExpression expressionFromText;
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (qualifyingClass == null) {
       PsiClass parentClass = PsiTreeUtil.getParentOfType(referenceExpression, PsiClass.class);
       final PsiClass containingClass = member.getContainingClass();
@@ -116,7 +116,7 @@ public class RefactoringChangeUtil {
   static <T extends PsiQualifiedExpression> T createQualifiedExpression(@NotNull PsiManager manager,
                                                                         PsiClass qualifierClass,
                                                                         @NotNull String qName) throws IncorrectOperationException {
-     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
      if (qualifierClass != null) {
        T qualifiedThis = (T)factory.createExpressionFromText("q." + qName, qualifierClass);
        qualifiedThis = (T)CodeStyleManager.getInstance(manager.getProject()).reformat(qualifiedThis);

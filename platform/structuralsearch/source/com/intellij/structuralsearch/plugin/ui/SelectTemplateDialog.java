@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -25,6 +11,7 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,13 +63,8 @@ public class SelectTemplateDialog extends DialogWrapper {
       }
     }
     else {
-      final TreePath selection = existingTemplatesComponent.getPatternTree().getSelectionPath();
-      if (selection != null) {
-        setPatternFromNode((DefaultMutableTreeNode)selection.getLastPathComponent());
-      }
-      else {
-        showPatternPreviewFromConfiguration(null);
-      }
+      final Configuration configuration = existingTemplatesComponent.getSelectedConfiguration();
+      showPatternPreviewFromConfiguration(configuration);
     }
 
     setupListeners();
@@ -101,12 +83,13 @@ public class SelectTemplateDialog extends DialogWrapper {
   }
 
   class MySelectionListener implements TreeSelectionListener, ListSelectionListener {
+    @Override
     public void valueChanged(TreeSelectionEvent e) {
-      if (e.getNewLeadSelectionPath() != null) {
-        setPatternFromNode((DefaultMutableTreeNode)e.getNewLeadSelectionPath().getLastPathComponent());
-      }
+      final Configuration configuration = existingTemplatesComponent.getSelectedConfiguration();
+      showPatternPreviewFromConfiguration(configuration);
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
       if (e.getValueIsAdjusting() || e.getLastIndex() == -1) return;
       int selectionIndex = existingTemplatesComponent.getHistoryList().getSelectedIndex();
@@ -117,11 +100,10 @@ public class SelectTemplateDialog extends DialogWrapper {
   }
 
   private void setPatternFromList(int index) {
-    showPatternPreviewFromConfiguration(
-      (Configuration)existingTemplatesComponent.getHistoryList().getModel().getElementAt(index)
-    );
+    showPatternPreviewFromConfiguration(existingTemplatesComponent.getHistoryList().getModel().getElementAt(index));
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel centerPanel = new JPanel(new BorderLayout());
     Splitter splitter;
@@ -169,7 +151,8 @@ public class SelectTemplateDialog extends DialogWrapper {
     myPreviewPanel = new JPanel(myCardLayout);
     myPreviewPanel.add(centerComponent, PREVIEW_CARD);
     JPanel selectPanel = new JPanel(new GridBagLayout());
-    GridBagConstraints gb = new GridBagConstraints(0,0,0,0,0,0,GridBagConstraints.CENTER,GridBagConstraints.NONE, new Insets(0,0,0,0),0,0);
+    GridBagConstraints gb =
+      new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0);
     selectPanel.add(new JLabel(SSRBundle.message("selecttemplate.template.label.please.select.template")), gb);
     myPreviewPanel.add(selectPanel, SELECT_TEMPLATE_CARD);
 
@@ -185,6 +168,7 @@ public class SelectTemplateDialog extends DialogWrapper {
     return centerPanel;
   }
 
+  @Override
   public void dispose() {
     EditorFactory.getInstance().releaseEditor(searchPatternEditor);
     if (replacePatternEditor != null) EditorFactory.getInstance().releaseEditor(replacePatternEditor);
@@ -192,12 +176,14 @@ public class SelectTemplateDialog extends DialogWrapper {
     super.dispose();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return showHistory ?
            existingTemplatesComponent.getHistoryList() :
            existingTemplatesComponent.getPatternTree();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.structuralsearch.plugin.ui.SelectTemplateDialog";
   }
@@ -224,22 +210,6 @@ public class SelectTemplateDialog extends DialogWrapper {
     }
   }
 
-  private void setPatternFromNode(DefaultMutableTreeNode node) {
-    if (node == null) return;
-    final Object userObject = node.getUserObject();
-    final Configuration configuration;
-
-    // root could be without search template
-    if (userObject instanceof Configuration) {
-      configuration = (Configuration)userObject;
-    }
-    else {
-      configuration = null;
-    }
-
-    showPatternPreviewFromConfiguration(configuration);
-  }
-
   private void showPatternPreviewFromConfiguration(@Nullable final Configuration configuration) {
     if (configuration == null) {
       myCardLayout.show(myPreviewPanel, SELECT_TEMPLATE_CARD);
@@ -256,7 +226,7 @@ public class SelectTemplateDialog extends DialogWrapper {
 
     if (replace) {
       String replacement = configuration instanceof ReplaceConfiguration
-                    ? ((ReplaceConfiguration)configuration).getReplaceOptions().getReplacement()
+                    ? configuration.getReplaceOptions().getReplacement()
                     : configuration.getMatchOptions().getSearchPattern();
 
       UIUtil.setContent(replacePatternEditor, replacement);
@@ -272,7 +242,7 @@ public class SelectTemplateDialog extends DialogWrapper {
     else {
       TreePath[] paths = existingTemplatesComponent.getPatternTree().getSelectionModel().getSelectionPaths();
       if (paths == null) {
-        return new Configuration[0];
+        return Configuration.EMPTY_ARRAY;
       }
       Collection<Configuration> configurations = new ArrayList<>();
       for (TreePath path : paths) {
@@ -283,7 +253,7 @@ public class SelectTemplateDialog extends DialogWrapper {
           configurations.add((Configuration)userObject);
         }
       }
-      return configurations.toArray(new Configuration[0]);
+      return configurations.toArray(Configuration.EMPTY_ARRAY);
     }
   }
 

@@ -20,9 +20,7 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.ui.ComboboxSpeedSearch;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +31,10 @@ import java.util.Collection;
 import java.util.Comparator;
 
 /**
- * Combobox which may show not only regular loaded modules but also unloaded modules. Use it instead of {@link ModulesComboBox} for
- * configuration elements which may refer to unloaded modules.
+ * Combobox which may show not only regular loaded modules but also unloaded modules.
+ * Use it instead of {@link ModulesComboBox} for configuration elements which may refer to unloaded modules.
+ *
+ * @see ModulesComboBox
  *
  * @author nik
  */
@@ -46,17 +46,7 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
     myModel = new SortedComboBoxModel<>(Comparator.comparing(description -> description != null ? description.getName() : "",
                                                              String.CASE_INSENSITIVE_ORDER));
     setModel(myModel);
-    new ComboboxSpeedSearch(this){
-      @Override
-      protected String getElementText(Object element) {
-        if (element instanceof ModuleDescription) {
-          return ((ModuleDescription)element).getName();
-        }
-        else {
-          return "";
-        }
-      }
-    };
+    setSwingPopup(false);
     setRenderer(new ModuleDescriptionListCellRenderer());
   }
 
@@ -66,7 +56,7 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
     setRenderer(new ModuleDescriptionListCellRenderer(emptySelectionText));
   }
 
-  public void setModules(@NotNull Collection<Module> modules) {
+  public void setModules(@NotNull Collection<? extends Module> modules) {
     myModel.clear();
     for (Module module : modules) {
       myModel.add(new LoadedModuleDescriptionImpl(module));
@@ -118,33 +108,24 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
     return selected != null ? selected.getName() : null;
   }
 
-  private static class ModuleDescriptionListCellRenderer extends ListCellRendererWrapper<ModuleDescription> {
+  private static class ModuleDescriptionListCellRenderer extends SimpleListCellRenderer<ModuleDescription> {
     private final String myEmptySelectionText;
 
-    public ModuleDescriptionListCellRenderer() {
+    ModuleDescriptionListCellRenderer() {
       this("[none]");
     }
 
-    public ModuleDescriptionListCellRenderer(@NotNull String emptySelectionText) {
+    ModuleDescriptionListCellRenderer(@NotNull String emptySelectionText) {
       myEmptySelectionText = emptySelectionText;
     }
 
     @Override
-    public void customize(JList list, ModuleDescription moduleDescription, int index, boolean selected, boolean hasFocus) {
-      if (moduleDescription == null) {
-        setText(myEmptySelectionText);
-      }
-      else {
-        if (moduleDescription instanceof LoadedModuleDescription) {
-          setIcon(ModuleType.get(((LoadedModuleDescription)moduleDescription).getModule()).getIcon());
-          setForeground(null);
-        }
-        else {
-          setIcon(AllIcons.Modules.UnloadedModule);
-          setForeground(JBColor.RED);
-        }
-        setText(moduleDescription.getName());
-      }
+    public void customize(JList<? extends ModuleDescription> list, ModuleDescription value, int index, boolean selected, boolean hasFocus) {
+      setText(value == null ? myEmptySelectionText : value.getName());
+      setIcon(value instanceof LoadedModuleDescription
+              ? ModuleType.get(((LoadedModuleDescription)value).getModule()).getIcon()
+              : value != null
+                ? AllIcons.Modules.UnloadedModule : null);
     }
   }
 }

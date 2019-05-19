@@ -31,12 +31,12 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class PathReference {
-  public static final NullableFunction<PathReference, Icon> NULL_ICON = new NullableConstantFunction<>((Icon)null);
+  public static final NullableFunction<PathReference, Icon> NULL_ICON = new NullableConstantFunction<>(null);
 
   private final String myPath;
   private final NullableLazyValue<Icon> myIcon;
 
-  public PathReference(@NotNull String path, final @NotNull Function<PathReference, Icon> icon) {
+  public PathReference(@NotNull String path, final @NotNull Function<? super PathReference, ? extends Icon> icon) {
     myPath = path;
     myIcon = new NullableLazyValue<Icon>() {
       @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -9,8 +9,8 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.isEmpty
 import gnu.trove.THashMap
-import net.jpountz.lz4.LZ4BlockInputStream
-import net.jpountz.lz4.LZ4BlockOutputStream
+import net.jpountz.lz4.LZ4FrameInputStream
+import net.jpountz.lz4.LZ4FrameOutputStream
 import org.jdom.Element
 import java.io.ByteArrayInputStream
 import java.util.*
@@ -18,13 +18,17 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 
 fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
   val byteOut = BufferExposingByteArrayOutputStream()
-  LZ4BlockOutputStream(byteOut).use {
+  LZ4FrameOutputStream(byteOut, LZ4FrameOutputStream.BLOCKSIZE.SIZE_256KB).use {
     serializeElementToBinary(state, it)
   }
   return byteOut
 }
 
-private fun unarchiveState(state: ByteArray) = LZ4BlockInputStream(ByteArrayInputStream(state)).use { deserializeElementFromBinary(it) }
+private fun unarchiveState(state: ByteArray): Element {
+  return LZ4FrameInputStream(ByteArrayInputStream(state)).use {
+    deserializeElementFromBinary(it)
+  }
+}
 
 fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
   val newBytes: ByteArray
@@ -72,7 +76,7 @@ class StateMap private constructor(private val names: Array<String>, private val
   override fun toString(): String = if (this == EMPTY) "EMPTY" else states.toString()
 
   companion object {
-    val EMPTY: StateMap = StateMap(emptyArray(), AtomicReferenceArray(0))
+    val EMPTY: StateMap = StateMap(ArrayUtil.EMPTY_STRING_ARRAY, AtomicReferenceArray(0))
 
     fun fromMap(map: Map<String, Any>): StateMap {
       if (map.isEmpty()) {
@@ -144,7 +148,12 @@ class StateMap private constructor(private val names: Array<String>, private val
       return null
     }
 
-    val prev = states.getAndUpdate(index, { state -> if (archive && state is Element) archiveState(state).toByteArray() else state })
+    val prev = states.getAndUpdate(index) { state ->
+      when {
+        archive && state is Element -> archiveState(state).toByteArray()
+        else -> state
+      }
+    }
     return prev as? Element
   }
 

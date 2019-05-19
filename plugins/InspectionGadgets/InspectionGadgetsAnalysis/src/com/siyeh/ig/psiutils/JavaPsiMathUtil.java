@@ -177,8 +177,13 @@ public class JavaPsiMathUtil {
     return null;
   }
 
+  /**
+   * Negate given number of type Integer, Long, Double or Float, preserving the original type
+   * @param value number to negate
+   * @return negated number; null if supplied value is not supported.
+   */
   @Nullable
-  private static Number negate(Object value) {
+  public static Number negate(Object value) {
     if (value instanceof Integer) {
       return -((Integer)value).intValue();
     }

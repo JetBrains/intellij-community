@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,9 @@ public interface ApplicationEx extends Application {
    */
   void load(@Nullable String configPath);
 
-  void load();
+  default void load() {
+    load(null);
+  }
 
   boolean isLoaded();
 
@@ -87,6 +90,7 @@ public interface ApplicationEx extends Application {
   /**
    * Runs modal process. For internal use only, see {@link Task}
    */
+  @ApiStatus.Internal
   boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                               @NotNull String progressTitle,
                                               boolean canBeCanceled,
@@ -95,6 +99,7 @@ public interface ApplicationEx extends Application {
   /**
    * Runs modal process. For internal use only, see {@link Task}
    */
+  @ApiStatus.Internal
   boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                               @NotNull String progressTitle,
                                               boolean canBeCanceled,
@@ -104,6 +109,7 @@ public interface ApplicationEx extends Application {
   /**
    * Runs modal process. For internal use only, see {@link Task}
    */
+  @ApiStatus.Internal
   boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                               @NotNull String progressTitle,
                                               boolean canBeCanceled,
@@ -123,11 +129,13 @@ public interface ApplicationEx extends Application {
   boolean tryRunReadAction(@NotNull Runnable action);
 
   /** DO NOT USE */
+  @Deprecated
   default void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     runnable.run();
   }
 
   /** DO NOT USE */
+  @Deprecated
   default boolean isInImpatientReader() {
     return false;
   }

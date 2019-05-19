@@ -47,6 +47,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
     myEventDispatcher.addListener(listener, disposable);
   }
 
+  @Override
   public State getState() {
     State result = new State();
     for (Map.Entry<String, List<File>> entry : myFiles.entrySet()) {

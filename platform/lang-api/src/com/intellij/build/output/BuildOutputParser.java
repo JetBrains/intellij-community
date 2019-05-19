@@ -1,7 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build.output;
 
-import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.BuildEvent;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.function.Consumer;
@@ -11,5 +11,5 @@ import java.util.function.Consumer;
  */
 @ApiStatus.Experimental
 public interface BuildOutputParser {
-  boolean parse(String line, BuildOutputInstantReader reader, Consumer<MessageEvent> messageConsumer);
+  boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super BuildEvent> messageConsumer);
 }

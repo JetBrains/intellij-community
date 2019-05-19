@@ -45,19 +45,21 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
 
       @JvmStatic fun getSettings(): DiffSettings = getSettings(null)
       @JvmStatic fun getSettings(place: String?): DiffSettings = service<DiffSettingsHolder>().getSettings(place)
+      internal fun getDefaultSettings(place: String): DiffSettings =
+        DiffSettings(SharedSettings(), service<DiffSettingsHolder>().defaultPlaceSettings(place))
     }
   }
 
   fun getSettings(place: String?): DiffSettings {
     val placeKey = place ?: DiffPlaces.DEFAULT
-    val placeSettings = myState.PLACES_MAP.getOrPut(placeKey, { defaultPlaceSettings(placeKey) })
+    val placeSettings = myState.PLACES_MAP.getOrPut(placeKey) { defaultPlaceSettings(placeKey) }
     return DiffSettings(myState.SHARED_SETTINGS, placeSettings)
   }
 
   private fun copyStateWithoutDefaults(): State {
     val result = State()
     result.SHARED_SETTINGS = myState.SHARED_SETTINGS
-    result.PLACES_MAP = DiffUtil.trimDefaultValues(myState.PLACES_MAP, { defaultPlaceSettings(it) })
+    result.PLACES_MAP = DiffUtil.trimDefaultValues(myState.PLACES_MAP) { defaultPlaceSettings(it) }
     return result
   }
 

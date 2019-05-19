@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.history.LocalHistory;
@@ -22,7 +8,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -35,6 +20,7 @@ import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class SvnTreeConflictResolver {
@@ -86,7 +72,7 @@ public class SvnTreeConflictResolver {
       final Status status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
 
       revert(ioFile);
-      if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+      if (status.is(StatusType.STATUS_ADDED)) {
         FileUtil.delete(ioFile);
       }
       pathDirty(myRevertPath);
@@ -104,15 +90,16 @@ public class SvnTreeConflictResolver {
     final File ioFile = myPath.getIOFile();
     Status status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
 
-    if (status == null || StatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus())) {
+    if (status == null || status.is(StatusType.STATUS_UNVERSIONED)) {
       revert(ioFile);
       updateFile(ioFile, Revision.HEAD);
-    } else if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+    }
+    else if (status.is(StatusType.STATUS_ADDED)) {
       revert(ioFile);
       updateFile(ioFile, Revision.HEAD);
       FileUtil.delete(ioFile);
     } else {
-      Set<File> usedToBeAdded = myPath.isDirectory() ? getDescendantsWithAddedStatus(ioFile) : ContainerUtil.newHashSet();
+      Set<File> usedToBeAdded = myPath.isDirectory() ? getDescendantsWithAddedStatus(ioFile) : new HashSet<>();
 
       revert(ioFile);
       for (File wasAdded : usedToBeAdded) {
@@ -124,11 +111,11 @@ public class SvnTreeConflictResolver {
 
   @NotNull
   private Set<File> getDescendantsWithAddedStatus(@NotNull File ioFile) throws SvnBindException {
-    final Set<File> result = ContainerUtil.newHashSet();
+    final Set<File> result = new HashSet<>();
     StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
 
-    statusClient.doStatus(ioFile, Revision.UNDEFINED, Depth.INFINITY, false, false, false, false, status -> {
-      if (status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+    statusClient.doStatus(ioFile, Depth.INFINITY, false, false, false, false, status -> {
+      if (status != null && status.is(StatusType.STATUS_ADDED)) {
         result.add(status.getFile());
       }
     });

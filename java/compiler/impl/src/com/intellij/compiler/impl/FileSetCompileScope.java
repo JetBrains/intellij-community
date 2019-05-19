@@ -25,20 +25,20 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since Jan 20, 2003
  */
 public class FileSetCompileScope extends ExportableUserDataHolderBase implements CompileScope {
   private final Set<VirtualFile> myRootFiles = new HashSet<>();
   private final Set<String> myDirectoryUrls = new HashSet<>();
-  private Set<String> myUrls = null; // urls caching
+  private Set<String> myUrls; // urls caching
   private final Module[] myAffectedModules;
 
-  public FileSetCompileScope(final Collection<VirtualFile> files, Module[] modules) {
+  public FileSetCompileScope(@NotNull Collection<VirtualFile> files, @NotNull Module[] modules) {
     myAffectedModules = modules;
     ApplicationManager.getApplication().runReadAction(
       () -> {
@@ -50,15 +50,18 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
     );
   }
 
+  @Override
   @NotNull
   public Module[] getAffectedModules() {
     return myAffectedModules;
   }
 
+  @NotNull
   public Collection<VirtualFile> getRootFiles() {
     return Collections.unmodifiableCollection(myRootFiles);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getFiles(final FileType fileType, boolean inSourceOnly) {
     final List<VirtualFile> files = new ArrayList<>();
@@ -80,7 +83,8 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
     return VfsUtilCore.toVirtualFileArray(files);
   }
 
-  public boolean belongs(String url) {
+  @Override
+  public boolean belongs(@NotNull String url) {
     //url = CompilerUtil.normalizePath(url, '/');
     if (getUrls().contains(url)) {
       return true;
@@ -93,6 +97,7 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
     return false;
   }
 
+  @NotNull
   private Set<String> getUrls() {
     if (myUrls == null) {
       myUrls = new HashSet<>();
@@ -104,7 +109,7 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
     return myUrls;
   }
 
-  private void addFile(VirtualFile file) {
+  private void addFile(@NotNull VirtualFile file) {
     if (file.isDirectory()) {
       myDirectoryUrls.add(file.getUrl() + "/");
     }
@@ -112,7 +117,7 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
     myUrls = null;
   }
 
-  private static void addRecursively(final Collection<VirtualFile> container, VirtualFile fromDirectory, final FileType fileType) {
+  private static void addRecursively(@NotNull Collection<? super VirtualFile> container, @NotNull VirtualFile fromDirectory, @Nullable FileType fileType) {
     VfsUtilCore.visitChildrenRecursively(fromDirectory, new VirtualFileVisitor(VirtualFileVisitor.SKIP_ROOT) {
       @Override
       public boolean visitFile(@NotNull VirtualFile child) {

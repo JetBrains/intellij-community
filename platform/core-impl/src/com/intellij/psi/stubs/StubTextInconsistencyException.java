@@ -98,7 +98,7 @@ public class StubTextInconsistencyException extends RuntimeException implements 
     for (int i = 0; i < fromPsi.size(); i++) {
       PsiFileStub psiStub = fromPsi.get(i);
       if (!DebugUtil.stubTreeToString(psiStub).equals(DebugUtil.stubTreeToString(fromText.get(i)))) {
-        throw new StubTextInconsistencyException("Stub is inconsistent with text in " + psiStub.getType().getLanguage(),
+        throw new StubTextInconsistencyException("Stub is inconsistent with text in " + file.getLanguage(),
                                                  file, fromText, fromPsi);
       }
     }

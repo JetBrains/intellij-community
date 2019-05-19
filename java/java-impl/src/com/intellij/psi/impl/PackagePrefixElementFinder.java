@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +25,11 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
   public PackagePrefixElementFinder(Project project) {
     myProject = project;
     myPackagePrefixIndex = new PackagePrefixIndex(project);
+  }
+
+  @NotNull
+  public static PackagePrefixElementFinder getInstance(@NotNull Project project) {
+    return PsiElementFinder.EP.findExtensionOrFail(PackagePrefixElementFinder.class, project);
   }
 
   @Override
@@ -75,14 +79,5 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
     }
 
     return false;
-  }
-
-  public static PackagePrefixElementFinder getInstance(Project project) {
-    for (PsiElementFinder o : Extensions.getExtensions(PsiElementFinder.EP_NAME, project)) {
-      if (o instanceof PackagePrefixElementFinder) {
-        return (PackagePrefixElementFinder) o;
-      }
-    }
-    throw new UnsupportedOperationException("couldn't find self");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet;
 
@@ -41,7 +41,7 @@ import java.util.function.Predicate;
 /**
  * @author nik
  */
-@State(name = FacetManagerImpl.COMPONENT_NAME)
+@State(name = FacetManagerImpl.COMPONENT_NAME, useLoadedStateAsExisting = false)
 public class FacetManagerImpl extends FacetManager implements ModuleComponent, PersistentStateComponent<FacetManagerState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.FacetManagerImpl");
   @NonNls public static final String COMPONENT_NAME = "FacetManager";
@@ -154,7 +154,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     }
   }
 
-  private void addFacets(final List<FacetState> facetStates, final Facet underlyingFacet, ModifiableFacetModel model) {
+  private void addFacets(final List<? extends FacetState> facetStates, final Facet underlyingFacet, ModifiableFacetModel model) {
 
     FacetTypeRegistry registry = FacetTypeRegistry.getInstance();
     for (FacetState child : facetStates) {
@@ -308,7 +308,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   }
 
   @NotNull
-  FacetManagerState saveState(Predicate<Facet> filter) {
+  FacetManagerState saveState(Predicate<? super Facet> filter) {
     FacetManagerState managerState = new FacetManagerState();
 
     final Facet[] facets = getSortedFacets();
@@ -498,13 +498,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       facet.initFacet();
     }
     myModuleAdded = true;
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return COMPONENT_NAME;
   }
 
   private static class FacetManagerModel extends FacetModelBase {

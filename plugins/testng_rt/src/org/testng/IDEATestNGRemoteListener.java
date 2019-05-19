@@ -1,6 +1,8 @@
 package org.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
+import org.testng.annotations.Test;
+import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlTest;
@@ -8,6 +10,7 @@ import org.testng.xml.XmlTest;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -59,7 +62,7 @@ public class IDEATestNGRemoteListener {
               }
             }
             if (!found) {
-              final String fullEscapedMethodName = escapeName(getShortName(method.getTestClass().getName()) + "." + method.getMethodName());
+              final String fullEscapedMethodName = escapeName(getShortName(method.getTestClass().getName()) + "/" + method.getMethodName());
               myPrintStream.println("##teamcity[testStarted name=\'" + fullEscapedMethodName + "\']");
               myPrintStream.println("##teamcity[testIgnored name=\'" + fullEscapedMethodName + "\']");
               myPrintStream.println("##teamcity[testFinished name=\'" + fullEscapedMethodName + "\']");
@@ -208,7 +211,7 @@ public class IDEATestNGRemoteListener {
     onSuiteStart(result.getTestHierarchy(), result, true);
     final String className = result.getClassName();
     final String methodName = result.getDisplayMethodName();
-    final String location = className + "." + result.getMethodName() + (invocationCount >= 0 ? "[" + invocationCount + "]" : "");
+    final String location = className + "/" + result.getMethodName() + (invocationCount >= 0 ? "[" + invocationCount + "]" : "");
     myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
                           "\' locationHint=\'java:test://" + escapeName(location) + (config ? "\' config=\'true" : "") + "\']");
   }
@@ -225,10 +228,19 @@ public class IDEATestNGRemoteListener {
     if (ex != null) {
       ComparisonFailureData notification;
       try {
-        notification = TestNGExpectedPatterns.createExceptionNotification(failureMessage);
+        notification = ComparisonFailureData.create(ex);
       }
       catch (Throwable e) {
         notification = null;
+      }
+
+      if (notification == null) {
+        try {
+          notification = TestNGExpectedPatterns.createExceptionNotification(failureMessage);
+        }
+        catch (Throwable e) {
+          notification = null;
+        }
       }
       ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
     }
@@ -253,7 +265,7 @@ public class IDEATestNGRemoteListener {
     final long duration = result.getDuration();
     myPrintStream.println("\n##teamcity[testFinished name=\'" +
                           escapeName(getTestMethodNameWithParams(result)) +
-                          (duration > 0 ? "\' duration=\'" + Long.toString(duration) : "") +
+                          (duration > 0 ? "\' duration=\'" + duration : "") +
                           "\']");
   }
 
@@ -345,7 +357,29 @@ public class IDEATestNGRemoteListener {
 
     public DelegatedResult(ITestResult result) {
       myResult = result;
-      myTestName = myResult.getTestName();
+      myTestName = calculateDisplayName();
+    }
+
+    //workaround for https://github.com/cbeust/testng/issues/1944
+    private String calculateDisplayName() {
+      String name = myResult.getTestName();
+      if (name != null && !name.equals(myResult.getTestClass().getTestName())) {
+        return name;
+      }
+      ITestNGMethod method = myResult.getMethod();
+      ConstructorOrMethod constructorOrMethod = method.getConstructorOrMethod();
+      AccessibleObject member = null;
+      if (constructorOrMethod.getMethod() != null) {
+        member = constructorOrMethod.getMethod();
+      }
+      if (constructorOrMethod.getConstructor() != null) {
+        member = constructorOrMethod.getConstructor();
+      }
+      if (member == null) return method.getMethodName();
+      Test annotation = member.getAnnotation(Test.class);
+      if (annotation == null) return method.getMethodName();
+      String testNameFromAnnotation = annotation.testName();
+      return testNameFromAnnotation == null || testNameFromAnnotation.length() == 0 ? method.getMethodName() : testNameFromAnnotation;
     }
 
     public Object[] getParameters() {
@@ -357,7 +391,7 @@ public class IDEATestNGRemoteListener {
     }
 
     public String getDisplayMethodName() {
-      return myTestName != null && myTestName.length() > 0 ? myTestName : myResult.getMethod().getMethodName();
+      return myTestName;
     }
 
     public String getClassName() {

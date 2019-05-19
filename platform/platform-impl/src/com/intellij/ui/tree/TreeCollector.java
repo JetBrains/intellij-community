@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreePath;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -20,9 +19,9 @@ import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 public final class TreeCollector<T> {
   private final AtomicReference<List<T>> reference = new AtomicReference<>();
   private final AtomicLong counter = new AtomicLong();
-  private final BiPredicate<T, T> predicate;
+  private final BiPredicate<? super T, ? super T> predicate;
 
-  private TreeCollector(@NotNull BiPredicate<T, T> predicate) {
+  private TreeCollector(@NotNull BiPredicate<? super T, ? super T> predicate) {
     this.predicate = predicate;
   }
 
@@ -46,19 +45,14 @@ public final class TreeCollector<T> {
             return false;
           }
         }
-        Iterator<T> iterator = list.iterator();
-        while (iterator.hasNext()) {
-          if (predicate.test(object, iterator.next())) {
-            iterator.remove();
-          }
-        }
+        list.removeIf(t -> predicate.test(object, t));
         list.add(object);
       }
       return true;
     }
   }
 
-  public void processLater(@NotNull Invoker invoker, @NotNull Consumer<List<T>> consumer) {
+  public void processLater(@NotNull Invoker invoker, @NotNull Consumer<? super List<T>> consumer) {
     long count = counter.incrementAndGet();
     invoker.invokeLater(() -> {
       // is this request still actual after 10 ms?

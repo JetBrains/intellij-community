@@ -44,7 +44,7 @@ class PlaceInfo {
     return "Shred " +
            (prefix.isEmpty() ? "" : "prefix='"+prefix+"' ") +
            (suffix.isEmpty() ? "" : "suffix='"+suffix+"' ") +
-           "in " + host + " with range " + host.getTextRange()+" "+
+           "in " + host + " with range " + host.getTextRange()+" ("+host.getClass()+") "+
            "inside range " + registeredRangeInsideHost;
   }
 

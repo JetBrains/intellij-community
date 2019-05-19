@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -27,33 +14,34 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.OrderedSet;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ReferenceType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
-import java.util.Collections;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   private static final Logger LOG = Logger.getInstance(JavaSmartStepIntoHandler.class);
@@ -64,21 +52,14 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     return file.getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
+  @NotNull
   @Override
-  public boolean doSmartStep(SourcePosition position, DebuggerSession session, TextEditor fileEditor) {
+  public Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
+    AsyncPromise<List<SmartStepTarget>> res = new AsyncPromise<>();
     session.getProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(session.getContextManager().getContext()) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        List<SmartStepTarget> targets =
-          ReadAction.compute(() -> findSmartStepTargets(position, suspendContext, getDebuggerContext()));
-        DebuggerUIUtil.invokeLater(() -> {
-          if (targets.isEmpty()) {
-            doStepInto(session, Registry.is("debugger.single.smart.step.force"), null);
-          }
-          else {
-            handleTargets(position, session, fileEditor, targets);
-          }
-        });
+        res.setResult(ReadAction.compute(() -> findSmartStepTargets(position, suspendContext, getDebuggerContext())));
       }
 
       @Override
@@ -86,7 +67,16 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         return Priority.NORMAL;
       }
     });
-    return true;
+    return res;
+  }
+
+  @NotNull
+  @Override
+  public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
+    if (DebuggerSettings.getInstance().ALWAYS_SMART_STEP_INTO) {
+      return findSmartStepTargetsAsync(position, session);
+    }
+    return Promises.rejectedPromise();
   }
 
   @NotNull
@@ -134,8 +124,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       }
       while (true);
 
-      //noinspection unchecked
-      final List<SmartStepTarget> targets = new OrderedSet<>();
+      final List<SmartStepTarget> targets = new ArrayList<>();
 
       final Ref<TextRange> textRange = new Ref<>(lineRange);
 
@@ -157,6 +146,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           }
         }
 
+        @Override
         public void visitLambdaExpression(PsiLambdaExpression expression) {
           boolean inLambda = myInsideLambda;
           myInsideLambda = true;
@@ -257,14 +247,19 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           return false;
         }
 
+        @Override
         public void visitExpressionList(PsiExpressionList expressionList) {
-          PsiMethod psiMethod = myContextStack.peekFirst();
+          visitArguments(expressionList, myContextStack.peekFirst());
+        }
+
+        void visitArguments(PsiExpressionList expressionList, PsiMethod psiMethod) {
           if (psiMethod != null) {
             final String methodName = psiMethod.getName();
             final PsiExpression[] expressions = expressionList.getExpressions();
             final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
             for (int idx = 0; idx < expressions.length; idx++) {
-              final String paramName = (idx < parameters.length && !parameters[idx].isVarArgs())? parameters[idx].getName() : "arg"+(idx+1);
+              final String paramName =
+                (idx < parameters.length && !parameters[idx].isVarArgs()) ? parameters[idx].getName() : "arg" + (idx + 1);
               myParamNameStack.push(methodName + ": " + paramName + ".");
               final PsiExpression argExpression = expressions[idx];
               try {
@@ -282,21 +277,46 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
         @Override
         public void visitCallExpression(final PsiCallExpression expression) {
+          int pos = -1;
+          if (myContextStack.isEmpty()) { // always move the outmost item in the group to the top
+            pos = targets.size();
+          }
           final PsiMethod psiMethod = expression.resolveMethod();
+          boolean isMethodCall = expression instanceof PsiMethodCallExpression;
+          if (isMethodCall) {
+            PsiExpression qualifier = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
+            if (qualifier != null) {
+              qualifier.accept(this);
+            }
+            visitArguments(expression.getArgumentList(), psiMethod);
+          }
           if (psiMethod != null) {
             myContextStack.push(psiMethod);
-            targets.add(new MethodSmartStepTarget(
+            MethodSmartStepTarget target = new MethodSmartStepTarget(
               psiMethod,
               null,
-              expression instanceof PsiMethodCallExpression?
-                ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement()
-                : expression instanceof PsiNewExpression? ((PsiNewExpression)expression).getClassOrAnonymousClassReference() : expression,
+              isMethodCall ?
+              ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement()
+                                                            : expression instanceof PsiNewExpression ? ((PsiNewExpression)expression)
+                                                              .getClassOrAnonymousClassReference() : expression,
               myInsideLambda || (expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getAnonymousClass() != null),
               null
-            ));
+            );
+            target.setOrdinal((int)existingMethodCalls(targets, psiMethod).count());
+            if (pos != -1) {
+              targets.add(pos, target);
+            }
+            else {
+              targets.add(target);
+            }
           }
           try {
-            super.visitCallExpression(expression);
+            if (isMethodCall) {
+              checkTextRange(expression, true);
+            }
+            else {
+              super.visitCallExpression(expression);
+            }
           }
           finally {
             if (psiMethod != null) {
@@ -322,29 +342,67 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       if (!targets.isEmpty()) {
         StackFrameProxyImpl frameProxy = suspendContext != null ? suspendContext.getFrameProxy() : null;
         if (frameProxy != null) {
+          // sanity check
           try {
-            Location location = frameProxy.location();
-            MethodBytecodeUtil.visit(location.method(), location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
-              boolean myLineMatch = false;
-
-              @Override
-              public void visitLineNumber(int line, Label start) {
-                myLineMatch = lines.isWithin(line - 1);
-              }
-
-              @Override
-              public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-                if (myLineMatch) {
-                  targets.removeIf(t -> {
-                    if (t instanceof MethodSmartStepTarget) {
-                      return DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)t).getMethod(),
-                                                           owner.replace("/", "."), name, desc, suspendContext.getDebugProcess());
-                    }
-                    return false;
-                  });
+            List<MethodSmartStepTarget> methodTargets =
+              StreamEx.of(targets)
+                .select(MethodSmartStepTarget.class)
+                .filter(target -> !target.needsBreakpointRequest())
+                .toList();
+            visitLinesMethods(frameProxy.location(), true, lines, (opcode, owner, name, desc, itf) -> {
+              if (name.startsWith("access$")) { // bridge method
+                ReferenceType cls = ContainerUtil.getFirstItem(frameProxy.getVirtualMachine().classesByName(owner));
+                if (cls != null) {
+                  Method method = DebuggerUtils.findMethod(cls, name, desc);
+                  if (method != null) {
+                    MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
+                      @Override
+                      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+                        if ("java/lang/AbstractMethodError".equals(owner)) {
+                          return;
+                        }
+                        removeMatchingMethod(methodTargets, owner, name, desc, suspendContext.getDebugProcess());
+                      }
+                    }, false);
+                  }
                 }
               }
-            }, true);
+              else {
+                removeMatchingMethod(methodTargets, owner, name, desc, suspendContext.getDebugProcess());
+              }
+            });
+            if (!methodTargets.isEmpty()) {
+              return Collections.emptyList();
+            }
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+
+          // remove already executed
+          try {
+            visitLinesMethods(frameProxy.location(), false, lines, (opcode, owner, name, desc, itf) -> {
+              Iterator<SmartStepTarget> iterator = targets.iterator();
+              while (iterator.hasNext()) {
+                SmartStepTarget e = iterator.next();
+                if (e instanceof MethodSmartStepTarget &&
+                    DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)e).getMethod(),
+                                                  owner.replace("/", "."), name, desc,
+                                                  suspendContext.getDebugProcess())) {
+                  iterator.remove();
+                  MethodSmartStepTarget target = (MethodSmartStepTarget)e;
+                  // fix ordinals
+                  existingMethodCalls(targets, target.getMethod())
+                    .forEach(t -> {
+                      int ordinal = t.getOrdinal();
+                      if (ordinal > target.getOrdinal()) {
+                        t.setOrdinal(ordinal - 1);
+                      }
+                    });
+                  break;
+                }
+              }
+            });
           }
           catch (Exception e) {
             LOG.info(e);
@@ -355,5 +413,48 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       }
     }
     return Collections.emptyList();
+  }
+
+  private static void removeMatchingMethod(List<MethodSmartStepTarget> targets,
+                                           String owner,
+                                           String name,
+                                           String desc,
+                                           DebugProcessImpl process) {
+    Iterator<MethodSmartStepTarget> iterator = targets.iterator();
+    while (iterator.hasNext()) {
+      if (DebuggerUtilsEx.methodMatches(iterator.next().getMethod(), owner.replace("/", "."), name, desc, process)) {
+        iterator.remove();
+        break;
+      }
+    }
+  }
+
+  private interface MethodInsnVisitor {
+    void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf);
+  }
+
+  private static void visitLinesMethods(Location location, boolean full, Range<Integer> lines, MethodInsnVisitor visitor) {
+    MethodBytecodeUtil.visit(location.method(), full ? Long.MAX_VALUE : location.codeIndex(), new MethodVisitor(Opcodes.API_VERSION) {
+      boolean myLineMatch = false;
+
+      @Override
+      public void visitLineNumber(int line, Label start) {
+        myLineMatch = lines.isWithin(line - 1);
+      }
+
+      @Override
+      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+        if (myLineMatch) {
+          visitor.visitMethodInsn(opcode, owner, name, desc, itf);
+        }
+      }
+    }, true);
+  }
+
+  private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {
+    return StreamEx.of(targets)
+      .select(MethodSmartStepTarget.class)
+      .filter(target -> !target.needsBreakpointRequest())
+      .filter(t -> t.getMethod().equals(psiMethod));
   }
 }

@@ -21,12 +21,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
 /**
  * @author Denis Zhdanov
- * @since 3/29/11 1:28 PM
  */
 public class CopyQuickDocAction extends AnAction implements DumbAware, HintManagerImpl.ActionToIgnore {
 
@@ -35,7 +35,7 @@ public class CopyQuickDocAction extends AnAction implements DumbAware, HintManag
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     String selected = e.getData(DocumentationManager.SELECTED_QUICK_DOC_TEXT);
     if (selected == null || selected.isEmpty()) {
       return;
@@ -45,7 +45,7 @@ public class CopyQuickDocAction extends AnAction implements DumbAware, HintManag
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     String selected = e.getData(DocumentationManager.SELECTED_QUICK_DOC_TEXT);
     e.getPresentation().setEnabled(selected != null && !selected.isEmpty());
   }

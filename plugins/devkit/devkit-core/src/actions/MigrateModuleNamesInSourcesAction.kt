@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions
 
 import com.intellij.icons.AllIcons
@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Factory
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -23,11 +24,10 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiPlainText
 import com.intellij.psi.search.*
+import com.intellij.serialization.SerializationException
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.*
 import com.intellij.util.Processor
-import com.intellij.util.loadElement
-import com.intellij.util.xmlb.XmlSerializationException
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
@@ -59,10 +59,10 @@ class MigrateModuleNamesInSourcesAction : AnAction("Find/Update Module Names in 
     val renamingScheme = try {
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
         File(VfsUtil.virtualToIoFile(project.baseDir), "module-renaming-scheme.xml"))?.let {
-        XmlSerializer.deserialize(loadElement(it.inputStream), ModuleRenamingHistoryState::class.java).oldToNewName
+        XmlSerializer.deserialize(JDOMUtil.load(it.inputStream), ModuleRenamingHistoryState::class.java).oldToNewName
       }
     }
-    catch (e: XmlSerializationException) {
+    catch (e: SerializationException) {
       LOG.error(e)
       return
     }
@@ -261,7 +261,7 @@ private val regularWordsUsedAsModuleNames = setOf(
   "commandLineTool", "chronon", "codeception", "common", "commander", "copyright", "coverage", "dependencies", "designer", "ddmlib", "doxygen", "draw9patch", "drupal", "duplicates", "drools", "eclipse", "el", "emma", "editorconfig",
   "extensions", "flex", "gherkin", "flags", "freemarker", "github", "gradle", "haml", "graph", "icons", "idea", "images", "ipnb", "jira", "joomla", "jbpm",
   "json", "junit", "layoutlib", "less", "localization", "manifest", "main", "markdown", "maven", "ognl", "openapi", "ninepatch", "perflib", "observable", "phing", "php", "phpspec",
-  "pixelprobe", "play", "profilers", "properties", "puppet", "postcss", "python", "quirksmode", "repository", "resources", "rs", "relaxng", "restClient", "rest", "ruby", "sass", "sdklib", "seam", "ssh",
+  "pixelprobe", "play", "profilers", "properties", "puppet", "postcss", "python", "repository", "resources", "rs", "relaxng", "restClient", "rest", "ruby", "sass", "sdklib", "seam", "ssh",
   "spellchecker", "stylus", "swift", "terminal", "tomcat", "textmate", "testData", "testFramework", "testng", "testRunner", "twig", "util", "updater", "vaadin", "vagrant", "vuejs", "velocity", "weblogic",
   "websocket", "wizard", "ws", "wordPress", "xml", "xpath", "yaml", "usageView", "error-prone", "spy-js", "WebStorm", "javac2", "dsm", "clion",
   "phpstorm", "WebComponents"

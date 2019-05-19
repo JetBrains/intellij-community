@@ -1,9 +1,8 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>Terminal</name>
   <id>org.jetbrains.plugins.terminal</id>
-  <version>0.1</version>
   <vendor>JetBrains</vendor>
-  <description>Embedded Terminal</description>
+  <description>Provides a toolwindow with an embedded terminal.</description>
   <depends>com.intellij.modules.platform</depends>
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>
@@ -15,6 +14,27 @@
             description="Open current file location in terminal"
             icon="TerminalIcons.OpenTerminal_13x13">
       <add-to-group group-id="RevealGroup" anchor="last"/>
+      <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
+    </action>
+    <action id="Terminal.RenameSession" class="org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction" text="Rename Session">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction" text="Move to Editor">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction"
+            text="Move Left">
+      <keyboard-shortcut first-keystroke="control shift LEFT" keymap="$default"/>
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action id="Terminal.MoveToolWindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction"
+            text="Move Right">
+      <keyboard-shortcut first-keystroke="control shift RIGHT" keymap="$default"/>
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action id="Terminal.SwitchFocusToEditor" class="org.jetbrains.plugins.terminal.action.TerminalSwitchFocusToEditorAction"
+            text="Switch Focus To Editor">
+      <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
     </action>
   </actions>
 

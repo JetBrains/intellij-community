@@ -37,6 +37,7 @@ public class ReplaceParameterAssignmentWithCall extends FixableUsageInfo {
     expression = element;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class);
     assert assignment != null;

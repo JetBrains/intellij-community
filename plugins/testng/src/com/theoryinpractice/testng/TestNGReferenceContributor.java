@@ -34,8 +34,10 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     return PlatformPatterns.psiElement(PsiLiteral.class).and(new FilterPattern(new TestAnnotationFilter(annotation)));
   }
 
+  @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(getElementPattern("dependsOnMethods"), new PsiReferenceProvider() {
+      @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new MethodReference[]{new MethodReference((PsiLiteral)element)};
@@ -43,18 +45,21 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     });
 
     registrar.registerReferenceProvider(getElementPattern("dataProvider"), new PsiReferenceProvider() {
+      @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new DataProviderReference[]{new DataProviderReference((PsiLiteral)element)};
       }
     });
     registrar.registerReferenceProvider(getElementPattern("groups"), new PsiReferenceProvider() {
+      @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteral)element)};
       }
     });
     registrar.registerReferenceProvider(getElementPattern("dependsOnGroups"), new PsiReferenceProvider() {
+      @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteral)element)};
@@ -64,7 +69,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
   private static class MethodReference extends PsiReferenceBase<PsiLiteral> {
 
-    public MethodReference(PsiLiteral element) {
+    MethodReference(PsiLiteral element) {
       super(element, false);
     }
 
@@ -76,6 +81,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       return super.bindToElement(element);
     }
 
+    @Override
     @Nullable
     public PsiElement resolve() {
       @NonNls String val = getValue();
@@ -100,6 +106,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
                                            : JavaPsiFacade.getInstance(element.getProject()).findClass(className, element.getResolveScope());
     }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       List<Object> list = new ArrayList<>();
@@ -131,16 +138,18 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
   private static class GroupReference extends PsiReferenceBase<PsiLiteral> {
     private final Project myProject;
 
-    public GroupReference(Project project, PsiLiteral element) {
+    GroupReference(Project project, PsiLiteral element) {
       super(element, false);
       myProject = project;
     }
 
+    @Override
     @Nullable
     public PsiElement resolve() {
       return null;
     }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       List<Object> list = new ArrayList<>();
@@ -164,10 +173,11 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
     private final String myParameterName;
 
-    public TestAnnotationFilter(@NotNull @NonNls String parameterName) {
+    TestAnnotationFilter(@NotNull @NonNls String parameterName) {
       myParameterName = parameterName;
     }
 
+    @Override
     public boolean isAcceptable(Object element, PsiElement context) {
       PsiNameValuePair pair = PsiTreeUtil.getParentOfType(context, PsiNameValuePair.class, false, PsiMember.class, PsiStatement.class, PsiCall.class);
       if (null == pair) return false;
@@ -178,6 +188,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       return true;
     }
 
+    @Override
     public boolean isClassAcceptable(Class hintClass) {
       return PsiLiteral.class.isAssignableFrom(hintClass);
     }

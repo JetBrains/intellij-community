@@ -19,7 +19,7 @@ public class ForwardAction extends NavigationAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     getHistory(e).forward();
   }
 }

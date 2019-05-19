@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Apr 21, 2010 4:49:49 PM
  */
 public class JavaChildBlockWrapFactory {
 

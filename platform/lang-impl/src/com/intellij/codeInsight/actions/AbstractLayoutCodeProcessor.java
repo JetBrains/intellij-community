@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -70,6 +56,7 @@ import java.util.concurrent.FutureTask;
 public abstract class AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor");
 
+  @NotNull
   protected final Project myProject;
   private final Module myModule;
 
@@ -84,18 +71,17 @@ public abstract class AbstractLayoutCodeProcessor {
   private boolean myProcessChangedTextOnly;
 
   protected AbstractLayoutCodeProcessor myPreviousCodeProcessor;
-  private List<VirtualFileFilter> myFilters = ContainerUtil.newArrayList();
+  private List<VirtualFileFilter> myFilters = new ArrayList<>();
 
   private LayoutCodeInfoCollector myInfoCollector;
 
-  protected AbstractLayoutCodeProcessor(Project project, String commandName, String progressText, boolean processChangedTextOnly) {
+  protected AbstractLayoutCodeProcessor(@NotNull Project project, String commandName, String progressText, boolean processChangedTextOnly) {
     this(project, (Module)null, commandName, progressText, processChangedTextOnly);
   }
 
   protected AbstractLayoutCodeProcessor(@NotNull AbstractLayoutCodeProcessor previous,
                                         @NotNull String commandName,
-                                        @NotNull String progressText)
-  {
+                                        @NotNull String progressText) {
     myProject = previous.myProject;
     myModule = previous.myModule;
     myDirectory = previous.myDirectory;
@@ -112,12 +98,11 @@ public abstract class AbstractLayoutCodeProcessor {
     myInfoCollector = previous.myInfoCollector;
   }
 
-  protected AbstractLayoutCodeProcessor(Project project,
+  protected AbstractLayoutCodeProcessor(@NotNull Project project,
                                         @Nullable Module module,
                                         String commandName,
                                         String progressText,
-                                        boolean processChangedTextOnly)
-  {
+                                        boolean processChangedTextOnly) {
     myProject = project;
     myModule = module;
     myDirectory = null;
@@ -128,13 +113,12 @@ public abstract class AbstractLayoutCodeProcessor {
     myProcessChangedTextOnly = processChangedTextOnly;
   }
 
-  protected AbstractLayoutCodeProcessor(Project project,
+  protected AbstractLayoutCodeProcessor(@NotNull Project project,
                                         PsiDirectory directory,
                                         boolean includeSubdirs,
                                         String progressText,
                                         String commandName,
-                                        boolean processChangedTextOnly)
-  {
+                                        boolean processChangedTextOnly) {
     myProject = project;
     myModule = null;
     myDirectory = directory;
@@ -145,12 +129,11 @@ public abstract class AbstractLayoutCodeProcessor {
     myProcessChangedTextOnly = processChangedTextOnly;
   }
 
-  protected AbstractLayoutCodeProcessor(Project project,
+  protected AbstractLayoutCodeProcessor(@NotNull Project project,
                                         PsiFile file,
                                         String progressText,
                                         String commandName,
-                                        boolean processChangedTextOnly)
-  {
+                                        boolean processChangedTextOnly) {
     myProject = project;
     myModule = null;
     myFile = file;
@@ -160,29 +143,19 @@ public abstract class AbstractLayoutCodeProcessor {
     myProcessChangedTextOnly = processChangedTextOnly;
   }
 
-  protected AbstractLayoutCodeProcessor(Project project,
+  protected AbstractLayoutCodeProcessor(@NotNull Project project,
                                         PsiFile[] files,
                                         String progressText,
                                         String commandName,
                                         @Nullable Runnable postRunnable,
-                                        boolean processChangedTextOnly)
-  {
+                                        boolean processChangedTextOnly) {
     myProject = project;
     myModule = null;
-    myFiles = filterFilesTo(files, new ArrayList<>());
+    myFiles = ContainerUtil.filter(files, AbstractLayoutCodeProcessor::canBeFormatted);
     myProgressText = progressText;
     myCommandName = commandName;
     myPostRunnable = postRunnable;
     myProcessChangedTextOnly = processChangedTextOnly;
-  }
-
-  private static List<PsiFile> filterFilesTo(PsiFile[] files, List<PsiFile> list) {
-    for (PsiFile file : files) {
-      if (canBeFormatted(file)) {
-        list.add(file);
-      }
-    }
-    return list;
   }
 
   public void setPostRunnable(Runnable postRunnable) {
@@ -209,9 +182,10 @@ public abstract class AbstractLayoutCodeProcessor {
     myFilters.add(filter);
   }
 
-  protected void setProcessChangedTextOnly(boolean value) {
+  void setProcessChangedTextOnly(boolean value) {
     myProcessChangedTextOnly = value;
   }
+
   /**
    * Ensures that given file is ready to reformatting and prepares it if necessary.
    *
@@ -252,38 +226,30 @@ public abstract class AbstractLayoutCodeProcessor {
       return;
     }
 
-    FileTreeIterator iterator;
-    if (myFiles != null) {
-      iterator = new FileTreeIterator(myFiles);
-    }
-    else {
-      iterator = myProcessChangedTextOnly ? buildChangedFilesIterator()
-                                          : buildFileTreeIterator();
-    }
-    runProcessFiles(iterator);
-  }
-
-  private FileTreeIterator buildFileTreeIterator() {
-    if (myDirectory != null) {
-      return new FileTreeIterator(myDirectory);
-    }
-    else if (myFiles != null) {
-      return new FileTreeIterator(myFiles);
-    }
-    else if (myModule != null) {
-      return new FileTreeIterator(myModule);
-    }
-    else if (myProject != null) {
-      return new FileTreeIterator(myProject);
-    }
-
-    return new FileTreeIterator(Collections.emptyList());
+    runProcessFiles();
   }
 
   @NotNull
-  private FileTreeIterator buildChangedFilesIterator() {
+  private FileRecursiveIterator build() {
+    if (myFiles != null) {
+      return new FileRecursiveIterator(myProject, myFiles);
+    }
+    if (myProcessChangedTextOnly) {
+      return buildChangedFilesIterator();
+    }
+    if (myDirectory != null) {
+      return new FileRecursiveIterator(myDirectory);
+    }
+    if (myModule != null) {
+      return new FileRecursiveIterator(myModule);
+    }
+    return new FileRecursiveIterator(myProject);
+  }
+
+  @NotNull
+  private FileRecursiveIterator buildChangedFilesIterator() {
     List<PsiFile> files = getChangedFilesFromContext();
-    return new FileTreeIterator(files);
+    return new FileRecursiveIterator(myProject, files);
   }
 
   @NotNull
@@ -293,16 +259,16 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   private List<PsiDirectory> getAllSearchableDirsFromContext() {
-    List<PsiDirectory> dirs = ContainerUtil.newArrayList();
+    List<PsiDirectory> dirs = new ArrayList<>();
     if (myDirectory != null) {
       dirs.add(myDirectory);
     }
     else if (myModule != null) {
-      List<PsiDirectory> allModuleDirs = FileTreeIterator.collectModuleDirectories(myModule);
+      List<PsiDirectory> allModuleDirs = FileRecursiveIterator.collectModuleDirectories(myModule);
       dirs.addAll(allModuleDirs);
     }
-    else if (myProject != null) {
-      List<PsiDirectory> allProjectDirs = FileTreeIterator.collectProjectDirectories(myProject);
+    else {
+      List<PsiDirectory> allProjectDirs = FileRecursiveIterator.collectProjectDirectories(myProject);
       dirs.addAll(allProjectDirs);
     }
     return dirs;
@@ -346,14 +312,17 @@ public abstract class AbstractLayoutCodeProcessor {
       }
       catch (CancellationException ignored) {
       }
-      catch (ExecutionException e) {
-        if (e.getCause() instanceof IndexNotReadyException) {
-          throw (IndexNotReadyException)e.getCause();
-        }
-        LOG.error(e);
-      }
       catch (Exception e) {
-        LOG.error(e);
+        Throwable cause = e.getCause();
+        if (cause != null) {
+          if (cause instanceof IndexNotReadyException) {
+            throw (IndexNotReadyException)e.getCause();
+          }
+          LOG.error(getClass().getSimpleName() + " failure, see the stack trace", cause);
+        }
+        else {
+          LOG.error(e);
+        }
       }
     };
     runLayoutCodeProcess(readAction, writeAction);
@@ -371,14 +340,12 @@ public abstract class AbstractLayoutCodeProcessor {
     }
   }
 
-  private void runProcessFiles(@NotNull final FileTreeIterator fileIterator) {
+  private void runProcessFiles() {
     boolean isSuccess = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       indicator.setIndeterminate(false);
-      ReformatFilesTask task = new ReformatFilesTask(fileIterator, indicator);
-      while (!task.isDone()) {
-        task.iteration();
-      }
+      ReformatFilesTask task = new ReformatFilesTask(indicator);
+      return task.process();
     }, myCommandName, true, myProject);
 
     if (isSuccess && myPostRunnable != null) {
@@ -456,7 +423,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private List<AbstractLayoutCodeProcessor> getAllProcessors() {
     AbstractLayoutCodeProcessor current = this;
-    List<AbstractLayoutCodeProcessor> all = ContainerUtil.newArrayList();
+    List<AbstractLayoutCodeProcessor> all = new ArrayList<>();
     while (current != null) {
       all.add(current);
       current = current.myPreviousCodeProcessor;
@@ -467,20 +434,20 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private class ReformatFilesTask implements SequentialTask {
     private final List<AbstractLayoutCodeProcessor> myProcessors;
-    
-    private final FileTreeIterator myFileTreeIterator;
-    private final FileTreeIterator myCountingIterator;
-    
+
+    private final FileRecursiveIterator myFileTreeIterator;
+    private final FileRecursiveIterator myCountingIterator;
+
     private final ProgressIndicator myProgressIndicator;
 
-    private int myTotalFiles = 0;
-    private int myFilesProcessed = 0;
+    private int myTotalFiles;
+    private int myFilesProcessed;
     private boolean myStopFormatting;
-    private boolean myFilesCountingFinished;
+    private PsiFile next;
 
-    ReformatFilesTask(@NotNull FileTreeIterator fileIterator, @NotNull ProgressIndicator indicator) {
-      myFileTreeIterator = fileIterator;
-      myCountingIterator = new FileTreeIterator(fileIterator);
+    ReformatFilesTask(@NotNull ProgressIndicator indicator) {
+      myFileTreeIterator = ReadAction.compute(() -> build());
+      myCountingIterator = ReadAction.compute(() -> build());
       myProcessors = getAllProcessors();
       myProgressIndicator = indicator;
     }
@@ -491,17 +458,11 @@ public abstract class AbstractLayoutCodeProcessor {
 
     @Override
     public boolean isDone() {
-      return myStopFormatting || !hasFilesToProcess(myFileTreeIterator);
+      return myStopFormatting;
     }
 
     private void countingIteration() {
-      if (hasFilesToProcess(myCountingIterator)) {
-        nextFile(myCountingIterator);
-        myTotalFiles++;
-      }
-      else {
-        myFilesCountingFinished = true;
-      }
+      myTotalFiles++;
     }
 
     @Override
@@ -510,16 +471,10 @@ public abstract class AbstractLayoutCodeProcessor {
         return true;
       }
 
-      if (!myFilesCountingFinished) {
-        updateIndicatorText(ApplicationBundle.message("bulk.reformat.prepare.progress.text"), "");
-        countingIteration();
-        return true;
-      }
-
       updateIndicatorFraction(myFilesProcessed);
 
-      if (hasFilesToProcess(myFileTreeIterator)) {
-        PsiFile file = nextFile(myFileTreeIterator);
+      if (next != null) {
+        PsiFile file = next;
         myFilesProcessed++;
 
         if (shouldProcessFile(file)) {
@@ -529,15 +484,6 @@ public abstract class AbstractLayoutCodeProcessor {
       }
 
       return true;
-    }
-
-    @NotNull
-    private PsiFile nextFile(FileTreeIterator it) {
-      return ReadAction.compute(it::next);
-    }
-
-    private boolean hasFilesToProcess(FileTreeIterator it) {
-      return it.hasNext();
     }
 
     private Boolean shouldProcessFile(PsiFile file) {
@@ -590,7 +536,20 @@ public abstract class AbstractLayoutCodeProcessor {
     public void stop() {
       myStopFormatting = true;
     }
-  
+
+    public boolean process() {
+      myCountingIterator.processAll(file -> {
+        updateIndicatorText(ApplicationBundle.message("bulk.reformat.prepare.progress.text"), "");
+        countingIteration();
+        return !isDone();
+      });
+
+      return myFileTreeIterator.processAll(file -> {
+        next = file;
+        iteration();
+        return !isDone();
+      });
+    }
   }
 
   private boolean acceptedByFilters(@NotNull PsiFile file) {
@@ -608,7 +567,7 @@ public abstract class AbstractLayoutCodeProcessor {
     return true;
   }
 
-  protected static List<TextRange> getSelectedRanges(@NotNull SelectionModel selectionModel) {
+  static List<TextRange> getSelectedRanges(@NotNull SelectionModel selectionModel) {
     final List<TextRange> ranges = new SmartList<>();
     if (selectionModel.hasSelection()) {
       TextRange range = TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
@@ -617,7 +576,7 @@ public abstract class AbstractLayoutCodeProcessor {
     return ranges;
   }
 
-  protected void handleFileTooBigException(Logger logger, FilesTooBigForDiffException e, @NotNull PsiFile file) {
+  void handleFileTooBigException(Logger logger, FilesTooBigForDiffException e, @NotNull PsiFile file) {
     logger.info("Error while calculating changed ranges for: " + file.getVirtualFile(), e);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Notification notification = new Notification(ApplicationBundle.message("reformat.changed.text.file.too.big.notification.groupId"),

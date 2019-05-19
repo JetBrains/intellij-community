@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
@@ -126,7 +127,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     assertSize(4, ClassInheritorsSearch.search(myFixture.findClass("one.Test.B")).findAll());
   }
 
-  public void testInheritorsInAnotherModuleWithNoDirectoDependency() throws IOException {
+  public void testInheritorsInAnotherModuleWithNoDirectDependency() throws IOException {
     myFixture.addFileToProject("A.java", "class A {}");
     myFixture.addFileToProject("mod1/B.java", "class B extends A {}");
     myFixture.addFileToProject("mod1/C.java", "class C extends B {}");
@@ -134,10 +135,23 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     Module mod1 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
     Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
 
-    ModuleRootModificationUtil.addDependency(mod1, myModule, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(mod1, getModule(), DependencyScope.COMPILE, false);
     ModuleRootModificationUtil.addDependency(mod2, mod1, DependencyScope.COMPILE, false);
 
     assertSize(2, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());
+  }
+
+  public void testInheritorsInAnotherModuleWithProductionOnTestDependency() throws IOException {
+    myFixture.addFileToProject("tests/B.java", "class B {}");
+    myFixture.addFileToProject("mod2/C.java", "class C extends B {}");
+
+    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().findOrCreateDir("tests"), true);
+    Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+
+    ModuleRootModificationUtil.updateModel(mod2, model ->
+      ((ModuleOrderEntryImpl)model.addModuleOrderEntry(getModule())).setProductionOnTestDependency(true));
+
+    assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("B")).findAll());
   }
 
   public void testSpaceBeforeSuperTypeGenerics() {

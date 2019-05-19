@@ -5,6 +5,9 @@ import java.util.stream.Stream;
 
 public class Test {
   public void testSetListSort(String[] args) {
+      // foo
+      // bar
+      /*baz*/
       System.out.println(Arrays.stream(args).distinct().sorted().toArray());
   }
 }

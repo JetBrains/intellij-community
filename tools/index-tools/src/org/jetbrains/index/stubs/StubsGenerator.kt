@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 /**
  * @author traff
  */
@@ -39,16 +25,15 @@ import org.jetbrains.index.IndexGenerator
 import java.io.File
 import java.util.*
 
-
 /**
  * Generates stubs and stores them in one persistent hash map
  */
 open class StubsGenerator(private val stubsVersion: String, private val stubsStorageFilePath: String) :
   IndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
 
-  private val serializationManager = SerializationManagerImpl(File(stubsStorageFilePath + ".names"))
+  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"))
 
-  fun buildStubsForRoots(roots: List<VirtualFile>) {
+  fun buildStubsForRoots(roots: Collection<VirtualFile>) {
     try {
       buildIndexForRoots(roots)
     }
@@ -83,7 +68,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
-    return PersistentHashMap(File(stubsStorageFilePath + ".input"),
+    return PersistentHashMap(File("$stubsStorageFilePath.input"),
                              HashCodeDescriptor.instance, StubTreeExternalizer())
   }
 
@@ -95,7 +80,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
 }
 
 fun writeStubsVersionFile(stubsStorageFilePath: String, stubsVersion: String) {
-  FileUtil.writeToFile(File(stubsStorageFilePath + ".version"), stubsVersion)
+  FileUtil.writeToFile(File("$stubsStorageFilePath.version"), stubsVersion)
 }
 
 fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String, projectPath: String, stubsVersion: String) {
@@ -106,7 +91,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
   try {
     val stubExternalizer = StubTreeExternalizer()
 
-    val storageFile = File(stubsFilePath, stubsFileName + ".input")
+    val storageFile = File(stubsFilePath, "$stubsFileName.input")
     if (storageFile.exists()) {
       storageFile.delete()
     }
@@ -114,7 +99,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
     val storage = PersistentHashMap<HashCode, SerializedStubTree>(storageFile,
                                                                   HashCodeDescriptor.instance, stubExternalizer)
 
-    val stringEnumeratorFile = File(stubsFilePath, stubsFileName + ".names")
+    val stringEnumeratorFile = File(stubsFilePath, "$stubsFileName.names")
     if (stringEnumeratorFile.exists()) {
       stringEnumeratorFile.delete()
     }
@@ -128,47 +113,46 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
     for (path in paths) {
       println("Reading stubs from $path")
       var count = 0
-      val fromStorageFile = File(path, stubsFileName + ".input")
+      val fromStorageFile = File(path, "$stubsFileName.input")
       val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile,
                                                                         HashCodeDescriptor.instance, stubExternalizer)
 
-      val serializationManager = SerializationManagerImpl(File(path, stubsFileName + ".names"))
+      val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"))
 
       try {
-        fromStorage.processKeysWithExistingMapping(
-          { key ->
-            count++
-            val value = fromStorage.get(key)
+        fromStorage.processKeysWithExistingMapping { key ->
+          count++
+          val value = fromStorage.get(key)
 
-            val stub = value.getStub(false, serializationManager)
+          val stub = value.getStub(false, serializationManager)
 
-            // re-serialize stub tree to correctly enumerate strings in the new string enumerator
-            val bytes = BufferExposingByteArrayOutputStream()
-            newSerializationManager.serialize(stub, bytes)
+          // re-serialize stub tree to correctly enumerate strings in the new string enumerator
+          val bytes = BufferExposingByteArrayOutputStream()
+          newSerializationManager.serialize(stub, bytes)
 
-            val newStubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), null, value.byteContentLength,
-                                                 value.charContentLength)
+          val newStubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), null, value.byteContentLength,
+                                               value.charContentLength)
 
-            if (storage.containsMapping(key)) {
-              if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
-                val s = storage.get(key).getStub(false, newSerializationManager)
+          if (storage.containsMapping(key)) {
+            if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
+              storage.get(key).getStub(false, newSerializationManager)
 
-                val bytes2 = BufferExposingByteArrayOutputStream()
-                newSerializationManager.serialize(stub, bytes2)
+              val bytes2 = BufferExposingByteArrayOutputStream()
+              newSerializationManager.serialize(stub, bytes2)
 
-                val newStubTree2 = SerializedStubTree(bytes2.internalBuffer, bytes2.size(), null, value.byteContentLength,
-                                                      value.charContentLength)
+              val newStubTree2 = SerializedStubTree(bytes2.internalBuffer, bytes2.size(), null, value.byteContentLength,
+                                                    value.charContentLength)
 
-                TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
-              }
-              map.put(key, map.get(key)!! + 1)
+              TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
             }
-            else {
-              storage.put(key, newStubTree)
-              map.put(key, 1)
-            }
-            true
-          })
+            map[key] = map[key]!! + 1
+          }
+          else {
+            storage.put(key, newStubTree)
+            map[key] = 1
+          }
+          true
+        }
 
       }
       finally {
@@ -189,7 +173,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
     writeStubsVersionFile(stringEnumeratorFile.nameWithoutExtension, stubsVersion)
 
     for (i in 2..paths.size) {
-      val count = map.entries.stream().filter({ e -> e.value == i }).count()
+      val count = map.entries.stream().filter { e -> e.value == i }.count()
       println("Intersection between $i: ${"%.2f".format(if (total > 0) 100.0 * count / total else 0.0)}%")
     }
   }
@@ -248,7 +232,9 @@ abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String, stubsSt
             }
             catch (e: AssertionError) {
               val msg = "Stubs are different for ${content.file.path} between Python versions $prevLanguageLevel and $languageLevel.\n"
-              TestCase.assertEquals(msg, DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(prevStub))
+              // Debug info
+              // TestCase.assertEquals(msg, DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(prevStub))
+              TestCase.assertTrue(msg, DebugUtil.stubTreeToString(stub)==DebugUtil.stubTreeToString(prevStub))
               TestCase.fail(msg + "But DebugUtil.stubTreeToString values of stubs are unfortunately equal.")
             }
           }
@@ -267,7 +253,8 @@ abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String, stubsSt
         throw e
       }
       println("Can't generate universal stub for ${fileContent.file.path}")
-      e.printStackTrace()
+      // Debug info
+      // e.printStackTrace()
       return null
     }
   }

@@ -23,7 +23,8 @@ public class JavaHierarchyUtil {
     return PsiUtil.getPackageName(psiClass);
   }
 
-  public static Comparator<NodeDescriptor> getComparator(Project project) {
+  @NotNull
+  public static Comparator<NodeDescriptor> getComparator(@NotNull Project project) {
     HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(project).getState();
     return state != null && state.SORT_ALPHABETICALLY ? AlphaComparator.INSTANCE : SourceComparator.INSTANCE;
   }

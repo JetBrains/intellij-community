@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.Application;
@@ -41,7 +27,8 @@ import java.util.Map;
  * Warning: PtyCommandLine works with ProcessHandler only in blocking read mode.
  * Please make sure that you use appropriate ProcessHandler implementation.
  *
- * Works for Linux, macOS, and Windows. On Windows PTY is emulated by creating an invisible console window (see pty4j and winpty implementation)
+ * Works for Linux, macOS, and Windows.
+ * On Windows, PTY is emulated by creating an invisible console window (see Pty4j and WinPty implementation).
  */
 public class PtyCommandLine extends GeneralCommandLine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.PtyCommandLine");
@@ -54,6 +41,8 @@ public class PtyCommandLine extends GeneralCommandLine {
   private static final String WIN_PTY_COLUMNS = "win.pty.cols";
   private static final String WIN_PTY_ROWS = "win.pty.rows";
 
+  public static final int MAX_COLUMNS = 2500;
+
   public static boolean isEnabled() {
     return Registry.is(RUN_PROCESSES_WITH_PTY);
   }
@@ -65,20 +54,74 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   public PtyCommandLine() { }
 
+  /**
+   * @deprecated use {@link #withUseCygwinLaunch(boolean)}
+   */
+  @Deprecated
   public void setUseCygwinLaunch(boolean useCygwinLaunch) {
-    myUseCygwinLaunch = useCygwinLaunch;
+    withUseCygwinLaunch(useCygwinLaunch);
   }
 
+  /**
+   * @deprecated use {@link #withConsoleMode(boolean)}
+   */
+  @Deprecated
   public void setConsoleMode(boolean consoleMode) {
-    myConsoleMode = consoleMode;
+    withConsoleMode(consoleMode);
   }
 
+  /**
+   * @deprecated use {@link #withInitialColumns(int)}
+   */
+  @Deprecated
   public void setInitialColumns(int initialColumns) {
-    myInitialColumns = initialColumns;
+    withInitialColumns(initialColumns);
   }
 
+  /**
+   * @deprecated use {@link #withInitialRows(int)}
+   */
+  @Deprecated
   public void setInitialRows(int initialRows) {
+    withInitialRows(initialRows);
+  }
+
+  public PtyCommandLine withUseCygwinLaunch(boolean useCygwinLaunch) {
+    myUseCygwinLaunch = useCygwinLaunch;
+    return this;
+  }
+
+  public PtyCommandLine withConsoleMode(boolean consoleMode) {
+    myConsoleMode = consoleMode;
+    return this;
+  }
+
+  public boolean isConsoleMode() {
+    return myConsoleMode;
+  }
+
+  public PtyCommandLine withInitialColumns(int initialColumns) {
+    myInitialColumns = initialColumns;
+    return this;
+  }
+
+  public PtyCommandLine withInitialRows(int initialRows) {
     myInitialRows = initialRows;
+    return this;
+  }
+
+  public PtyCommandLine(@NotNull List<String> command) {
+    super(command);
+  }
+
+  public PtyCommandLine(@NotNull GeneralCommandLine original) {
+    super(original);
+    if (original instanceof PtyCommandLine) {
+      myUseCygwinLaunch = ((PtyCommandLine)original).myUseCygwinLaunch;
+      myConsoleMode = ((PtyCommandLine)original).myConsoleMode;
+      myInitialColumns = ((PtyCommandLine)original).myInitialColumns;
+      myInitialRows = ((PtyCommandLine)original).myInitialRows;
+    }
   }
 
   @NotNull
@@ -145,7 +188,7 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   private static void setSystemProperty(@NotNull String propertyName,
                                         @Nullable String newPropertyValue,
-                                        @Nullable List<Pair<String, String>> backup) {
+                                        @Nullable List<? super Pair<String, String>> backup) {
     if (backup != null) {
       String oldValue = System.getProperty(propertyName);
       backup.add(Pair.create(propertyName, oldValue));
@@ -173,7 +216,8 @@ public class PtyCommandLine extends GeneralCommandLine {
       .setConsole(myConsoleMode)
       .setCygwin(cygwin)
       .setLogFile(getPtyLogFile())
-      .setRedirectErrorStream(isRedirectErrorStream());
+      .setRedirectErrorStream(isRedirectErrorStream())
+      .setWindowsAnsiColorEnabled(!Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode"));
     return builder.start();
   }
 }

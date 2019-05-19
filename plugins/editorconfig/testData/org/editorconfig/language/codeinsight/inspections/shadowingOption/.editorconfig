@@ -1,0 +1,6 @@
+[foo]
+charset=utf-1024
+
+[{foo, bar}]
+<warning>charset</warning>=utf-8
+

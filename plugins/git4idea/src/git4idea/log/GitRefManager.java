@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.dvcs.repo.RepositoryManager;
@@ -5,6 +6,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -30,18 +32,26 @@ import java.awt.*;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+
+import static com.intellij.ui.JBColor.namedColor;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitRefManager implements VcsLogRefManager {
-  public static final VcsRefType HEAD = new SimpleRefType("HEAD", true, VcsLogStandardColors.Refs.TIP);
-  public static final VcsRefType LOCAL_BRANCH = new SimpleRefType("LOCAL_BRANCH", true, VcsLogStandardColors.Refs.BRANCH);
-  public static final VcsRefType REMOTE_BRANCH = new SimpleRefType("REMOTE_BRANCH", true, VcsLogStandardColors.Refs.BRANCH_REF);
-  public static final VcsRefType TAG = new SimpleRefType("TAG", false, VcsLogStandardColors.Refs.TAG);
-  public static final VcsRefType OTHER = new SimpleRefType("OTHER", false, VcsLogStandardColors.Refs.TAG);
+  private static final JBColor HEAD_COLOR = namedColor("VersionControl.GitLog.headIconColor", VcsLogStandardColors.Refs.TIP);
+  private static final JBColor LOCAL_BRANCH_COLOR = namedColor("VersionControl.GitLog.localBranchIconColor", VcsLogStandardColors.Refs.BRANCH);
+  private static final JBColor REMOTE_BRANCH_COLOR = namedColor("VersionControl.GitLog.remoteBranchIconColor", VcsLogStandardColors.Refs.BRANCH_REF);
+  private static final JBColor TAG_COLOR = namedColor("VersionControl.GitLog.tagIconColor", VcsLogStandardColors.Refs.TAG);
+  private static final JBColor OTHER_COLOR = namedColor("VersionControl.GitLog.otherIconColor", VcsLogStandardColors.Refs.TAG);
+
+  public static final VcsRefType HEAD = new SimpleRefType("HEAD", true, HEAD_COLOR);
+  public static final VcsRefType LOCAL_BRANCH = new SimpleRefType("LOCAL_BRANCH", true, LOCAL_BRANCH_COLOR);
+  public static final VcsRefType REMOTE_BRANCH = new SimpleRefType("REMOTE_BRANCH", true, REMOTE_BRANCH_COLOR);
+  public static final VcsRefType TAG = new SimpleRefType("TAG", false, TAG_COLOR);
+  public static final VcsRefType OTHER = new SimpleRefType("OTHER", false, OTHER_COLOR);
 
   private static final List<VcsRefType> REF_TYPE_INDEX = Arrays.asList(HEAD, LOCAL_BRANCH, REMOTE_BRANCH, TAG, OTHER);
 
@@ -55,11 +65,9 @@ public class GitRefManager implements VcsLogRefManager {
     OTHER,
     HEAD,
     TAG,
-    NON_TRACKING_LOCAL_BRANCH,
-    NON_TRACKED_REMOTE_BRANCH,
-    TRACKING_LOCAL_BRANCH,
+    LOCAL_BRANCH,
     MASTER,
-    TRACKED_REMOTE_BRANCH,
+    REMOTE_BRANCH,
     ORIGIN_MASTER
   }
 
@@ -70,8 +78,8 @@ public class GitRefManager implements VcsLogRefManager {
 
   public GitRefManager(@NotNull Project project, @NotNull RepositoryManager<GitRepository> repositoryManager) {
     myRepositoryManager = repositoryManager;
-    myBranchLayoutComparator = new GitBranchLayoutComparator(repositoryManager);
-    myLabelsComparator = new GitLabelComparator(repositoryManager);
+    myBranchLayoutComparator = new GitBranchLayoutComparator();
+    myLabelsComparator = new GitLabelComparator();
     myBranchManager = ServiceManager.getService(project, GitBranchManager.class);
   }
 
@@ -89,9 +97,9 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
-    List<RefGroup> simpleGroups = ContainerUtil.newArrayList();
-    List<VcsRef> localBranches = ContainerUtil.newArrayList();
+  public List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs) {
+    List<RefGroup> simpleGroups = new ArrayList<>();
+    List<VcsRef> localBranches = new ArrayList<>();
     MultiMap<GitRemote, VcsRef> remoteRefGroups = MultiMap.create();
 
     MultiMap<VirtualFile, VcsRef> refsByRoot = groupRefsByRoot(refs);
@@ -127,7 +135,7 @@ public class GitRefManager implements VcsLogRefManager {
       }
     }
 
-    List<RefGroup> result = ContainerUtil.newArrayList();
+    List<RefGroup> result = new ArrayList<>();
     result.addAll(simpleGroups);
     if (!localBranches.isEmpty()) result.add(new SimpleRefGroup("Local", localBranches, false));
     for (Map.Entry<GitRemote, Collection<VcsRef>> entry : remoteRefGroups.entrySet()) {
@@ -138,11 +146,11 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean compact, boolean showTagNames) {
+  public List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> references, boolean compact, boolean showTagNames) {
     List<VcsRef> sortedReferences = ContainerUtil.sorted(references, myLabelsComparator);
     MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType);
 
-    List<RefGroup> result = ContainerUtil.newArrayList();
+    List<RefGroup> result = new ArrayList<>();
     if (groupedRefs.isEmpty()) return result;
 
     VcsRef head = null;
@@ -184,7 +192,7 @@ public class GitRefManager implements VcsLogRefManager {
   @NotNull
   private static List<RefGroup> getTrackedRefs(@NotNull MultiMap<VcsRefType, VcsRef> groupedRefs,
                                                @NotNull GitRepository repository) {
-    List<RefGroup> result = ContainerUtil.newArrayList();
+    List<RefGroup> result = new ArrayList<>();
 
     Collection<VcsRef> locals = groupedRefs.get(LOCAL_BRANCH);
     Collection<VcsRef> remotes = groupedRefs.get(REMOTE_BRANCH);
@@ -201,7 +209,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @Nullable
   private static SimpleRefGroup createTrackedGroup(@NotNull GitRepository repository,
-                                                   @NotNull Collection<VcsRef> references,
+                                                   @NotNull Collection<? extends VcsRef> references,
                                                    @NotNull VcsRef localRef) {
     List<VcsRef> remoteBranches = ContainerUtil.filter(references, ref -> ref.getType().equals(REMOTE_BRANCH));
 
@@ -229,7 +237,7 @@ public class GitRefManager implements VcsLogRefManager {
   }
 
   @Nullable
-  private GitRepository getRepository(@NotNull Collection<VcsRef> references) {
+  private GitRepository getRepository(@NotNull Collection<? extends VcsRef> references) {
     if (references.isEmpty()) return null;
 
     VcsRef ref = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references));
@@ -284,7 +292,7 @@ public class GitRefManager implements VcsLogRefManager {
   @NotNull
   private static Map<String, GitRemote> getAllRemoteBranches(@NotNull GitRepository repository) {
     Set<GitRemoteBranch> all = new HashSet<>(repository.getBranches().getRemoteBranches());
-    Map<String, GitRemote> allRemote = ContainerUtil.newHashMap();
+    Map<String, GitRemote> allRemote = new HashMap<>();
     for (GitRemoteBranch remoteBranch : all) {
       allRemote.put(remoteBranch.getName(), remoteBranch.getRemote());
     }
@@ -292,7 +300,7 @@ public class GitRefManager implements VcsLogRefManager {
   }
 
   @NotNull
-  private static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Iterable<VcsRef> refs) {
+  private static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Iterable<? extends VcsRef> refs) {
     MultiMap<VirtualFile, VcsRef> grouped = MultiMap.create();
     for (VcsRef ref : refs) {
       grouped.putValue(ref.getRoot(), ref);
@@ -319,9 +327,9 @@ public class GitRefManager implements VcsLogRefManager {
 
   private class RemoteRefGroup implements RefGroup {
     private final GitRemote myRemote;
-    private final Collection<VcsRef> myBranches;
+    private final Collection<? extends VcsRef> myBranches;
 
-    public RemoteRefGroup(GitRemote remote, Collection<VcsRef> branches) {
+    RemoteRefGroup(GitRemote remote, Collection<? extends VcsRef> branches) {
       myRemote = remote;
       myBranches = branches;
     }
@@ -354,18 +362,12 @@ public class GitRefManager implements VcsLogRefManager {
     private static final RefType[] ORDERED_TYPES = {
       RefType.HEAD,
       RefType.MASTER,
-      RefType.TRACKING_LOCAL_BRANCH,
-      RefType.NON_TRACKING_LOCAL_BRANCH,
       RefType.ORIGIN_MASTER,
-      RefType.TRACKED_REMOTE_BRANCH,
-      RefType.NON_TRACKED_REMOTE_BRANCH,
+      RefType.LOCAL_BRANCH,
+      RefType.REMOTE_BRANCH,
       RefType.TAG,
       RefType.OTHER
     };
-
-    GitLabelComparator(@NotNull RepositoryManager<GitRepository> repositoryManager) {
-      super(repositoryManager);
-    }
 
     @Override
     protected RefType[] getOrderedTypes() {
@@ -376,19 +378,13 @@ public class GitRefManager implements VcsLogRefManager {
   private static class GitBranchLayoutComparator extends GitRefComparator {
     private static final RefType[] ORDERED_TYPES = {
       RefType.ORIGIN_MASTER,
-      RefType.TRACKED_REMOTE_BRANCH,
+      RefType.REMOTE_BRANCH,
       RefType.MASTER,
-      RefType.TRACKING_LOCAL_BRANCH,
-      RefType.NON_TRACKING_LOCAL_BRANCH,
-      RefType.NON_TRACKED_REMOTE_BRANCH,
+      RefType.LOCAL_BRANCH,
       RefType.TAG,
       RefType.HEAD,
       RefType.OTHER
     };
-
-    GitBranchLayoutComparator(@NotNull RepositoryManager<GitRepository> repositoryManager) {
-      super(repositoryManager);
-    }
 
     @Override
     protected RefType[] getOrderedTypes() {
@@ -397,11 +393,6 @@ public class GitRefManager implements VcsLogRefManager {
   }
 
   private abstract static class GitRefComparator implements Comparator<VcsRef> {
-    @NotNull private final RepositoryManager<GitRepository> myRepositoryManager;
-
-    GitRefComparator(@NotNull RepositoryManager<GitRepository> repositoryManager) {
-      myRepositoryManager = repositoryManager;
-    }
 
     @Override
     public int compare(@NotNull VcsRef ref1, @NotNull VcsRef ref2) {
@@ -420,7 +411,7 @@ public class GitRefManager implements VcsLogRefManager {
     protected abstract RefType[] getOrderedTypes();
 
     @NotNull
-    private RefType getType(@NotNull VcsRef ref) {
+    private static RefType getType(@NotNull VcsRef ref) {
       VcsRefType type = ref.getType();
       if (type == HEAD) {
         return RefType.HEAD;
@@ -432,29 +423,17 @@ public class GitRefManager implements VcsLogRefManager {
         if (ref.getName().equals(MASTER)) {
           return RefType.MASTER;
         }
-        return isTracked(ref, false) ? RefType.TRACKING_LOCAL_BRANCH : RefType.NON_TRACKING_LOCAL_BRANCH;
+        return RefType.LOCAL_BRANCH;
       }
       else if (type == REMOTE_BRANCH) {
         if (ref.getName().equals(ORIGIN_MASTER)) {
           return RefType.ORIGIN_MASTER;
         }
-        return isTracked(ref, true) ? RefType.TRACKED_REMOTE_BRANCH : RefType.NON_TRACKED_REMOTE_BRANCH;
+        return RefType.REMOTE_BRANCH;
       }
       else {
         return RefType.OTHER;
       }
-    }
-
-    private boolean isTracked(@NotNull final VcsRef ref, final boolean remoteBranch) {
-      GitRepository repo = myRepositoryManager.getRepositoryForRoot(ref.getRoot());
-      if (repo == null) {
-        LOG.error("Undefined root " + ref.getRoot());
-        return false;
-      }
-      return ContainerUtil.exists(repo.getBranchTrackInfos(), info -> remoteBranch ?
-                                                                      info.getRemoteBranch().getNameForLocalOperations()
-                                                                          .equals(ref.getName()) :
-                                                                      info.getLocalBranch().getName().equals(ref.getName()));
     }
   }
 }

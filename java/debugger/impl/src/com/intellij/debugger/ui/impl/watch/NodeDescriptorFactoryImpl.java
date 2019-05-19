@@ -205,7 +205,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
 
     private final HashMap<NodeDescriptor, NodeDescriptor> mySearchedDescriptors = new HashMap<>();
 
-    public DescriptorTreeSearcher(MarkedDescriptorTree descriptorTree) {
+    DescriptorTreeSearcher(MarkedDescriptorTree descriptorTree) {
       myDescriptorTree = descriptorTree;
     }
 
@@ -236,7 +236,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   }
 
   private class DisplayDescriptorTreeSearcher extends DescriptorTreeSearcher {
-    public DisplayDescriptorTreeSearcher(MarkedDescriptorTree descriptorTree) {
+    DisplayDescriptorTreeSearcher(MarkedDescriptorTree descriptorTree) {
       super(descriptorTree);
     }
 

@@ -19,12 +19,16 @@ package com.intellij.stats.completion
 import com.intellij.stats.validation.EventLine
 import com.intellij.stats.validation.InputSessionValidator
 import com.intellij.stats.validation.SessionValidationResult
-import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import java.io.File
 
 class ValidatorTest {
+    private companion object {
+        const val SESSION_ID = "d09b94c2c1aa"
+    }
+
     lateinit var validator: InputSessionValidator
     val sessionStatuses = hashMapOf<String, Boolean>()
 
@@ -49,38 +53,28 @@ class ValidatorTest {
         return File(javaClass.classLoader.getResource(path).file)
     }
 
-    @Test
-    fun testValidData() {
-        val file = file("data/valid_data.txt")
+    private fun doTest(fileName: String, isValid: Boolean) {
+        val file = file("data/$fileName")
         validator.validate(file.readLines())
-        assertThat(sessionStatuses["fb16691974d3"]).isTrue()
+        Assert.assertEquals(isValid, sessionStatuses[SESSION_ID])
     }
 
     @Test
-    fun testDataWithAbsentFieldInvalid() {
-        val file = file("data/absent_field.txt")
-        validator.validate(file.readLines())
-        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
-    }
+    fun testValidData() = doTest("valid_data.txt", true)
 
     @Test
-    fun testInvalidWithoutBacket() {
-        val file = file("data/no_bucket.txt")
-        validator.validate(file.readLines())
-        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
-    }
+    fun testDataWithAbsentFieldInvalid() = doTest("absent_field.txt", false)
 
     @Test
-    fun testInvalidWithoutVersion() {
-        val file = file("data/no_version.txt")
-        validator.validate(file.readLines())
-        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
-    }
+    fun testInvalidWithoutBacket() = doTest("no_bucket.txt", false)
 
     @Test
-    fun testDataWithExtraFieldInvalid() {
-        val file = file("data/extra_field.txt")
-        validator.validate(file.readLines())
-        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
-    }
+    fun testInvalidWithoutVersion() = doTest("no_version.txt", false)
+
+    @Test
+    fun testDataWithExtraFieldInvalid() = doTest("extra_field.txt", false)
+
+    @Test
+    fun testWrongFactorsDiff() = doTest("wrong_factors_diff.txt", false)
+
 }

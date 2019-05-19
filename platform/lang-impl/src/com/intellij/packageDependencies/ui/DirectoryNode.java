@@ -71,7 +71,12 @@ public class DirectoryNode extends PackageDependenciesNode {
         }
       }
       else {
-        myFQName = FilePatternPackageSet.getLibRelativePath(myVDirectory, index);
+        if (myVDirectory.equals(index.getSourceRootForFile(myVDirectory)) || myVDirectory.equals(index.getClassRootForFile(myVDirectory))) {
+          myFQName = dirName;
+        }
+        else {
+          myFQName = FilePatternPackageSet.getLibRelativePath(myVDirectory, index);
+        }
       }
       dirName = myFQName;
     } else {
@@ -100,7 +105,7 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   @Override
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
     Boolean isRoot = null;

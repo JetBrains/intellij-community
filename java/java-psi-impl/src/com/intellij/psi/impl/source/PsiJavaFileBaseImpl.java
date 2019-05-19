@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -120,15 +106,34 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
     else if (!packageName.isEmpty()) {
+      cleanupBrokenPackageKeyword();
       PsiElement anchor = getFirstChild();
       if (PsiPackage.PACKAGE_INFO_FILE.equals(getName())) {
-        // If javadoc is already present in a package-info.java file, position a new package statement after it,
-        // so that the package becomes documented.
-        while (anchor instanceof PsiWhiteSpace || anchor instanceof PsiComment) {
-          anchor = anchor.getNextSibling();
+        // If javadoc is already present in a package-info.java file, try to position the new package statement after it,
+        // so the package becomes documented.
+        anchor = getImportList();
+        assert anchor != null; // import list always available inside package-info.java
+        final PsiElement prev = anchor.getPrevSibling();
+        if (prev instanceof PsiComment) {
+          final String text = prev.getText().trim();
+          if (text.startsWith("/*") && !text.endsWith("*/")) {
+            // close any open javadoc/comments before import list
+            prev.replace(factory.createCommentFromText(text + (StringUtil.containsLineBreak(text) ? "\n*/" : " */"), prev));
+          }
         }
       }
       addBefore(factory.createPackageStatement(packageName), anchor);
+    }
+  }
+
+  private void cleanupBrokenPackageKeyword() {
+    PsiElement child = getFirstChild();
+    while (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiErrorElement) {
+      if (child instanceof PsiErrorElement && child.getFirstChild() != null && child.getFirstChild().textMatches(PsiKeyword.PACKAGE)) {
+        child.delete();
+        break;
+      }
+      child = child.getNextSibling();
     }
   }
 
@@ -302,7 +307,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
     if (processor instanceof ClassResolverProcessor &&
         isPhysical() &&
-        (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue())) {
+        (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue()) &&
+        !PsiUtil.isInsideJavadocComment(place)) {
       final ClassResolverProcessor hint = (ClassResolverProcessor)processor;
       String name = hint.getName(state);
       MostlySingularMultiMap<String, SymbolCollectingProcessor.ResultWithContext> cache = myResolveCache.getValue();

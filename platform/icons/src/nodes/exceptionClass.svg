@@ -1,11 +1,6 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <title>exceptionClass</title>
-  <g>
-    <g id="_Group_" data-name="&lt;Group&gt;" opacity="0.6">
-      <circle cx="8" cy="8" r="7" fill="#40b6e0"/>
-    </g>
-    <g opacity="0.7">
-      <path d="M6.9999,13l2-4H4L8.9999,3l-1,4H12Z" fill="#231f20"/>
-    </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="none" fill-rule="evenodd">
+    <path fill="#40B6E0" fill-opacity=".6" d="M15,8 C15,11.866 11.866,15 8,15 C4.134,15 1,11.866 1,8 C1,4.134 4.134,1 8,1 C11.866,1 15,4.134 15,8"/>
+    <polygon fill="#231F20" fill-opacity=".7" points="7 13 9 9 4 9 9 3 8 7 12 7"/>
   </g>
 </svg>

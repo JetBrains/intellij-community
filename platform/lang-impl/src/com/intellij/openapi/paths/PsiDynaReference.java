@@ -21,10 +21,10 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     super(psiElement, true);
   }
 
-  public void addReferences(Collection<PsiReference> references) {
+  public void addReferences(Collection<? extends PsiReference> references) {
     myReferences.addAll(references);
     for (PsiReference reference : references) {
       if (!reference.isSoft()) mySoft = false;
@@ -80,24 +80,13 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     int end = range.getEndOffset();
     for (int i = 1; i < myReferences.size(); i++) {
       reference = myReferences.get(i);
-      final TextRange textRange = getRange(reference);
+      TextRange textRange = PsiMultiReference.getReferenceRange(reference, myElement);
       start = Math.min(start, textRange.getStartOffset());
       if (resolved == null) {
         end = Math.max(end, textRange.getEndOffset());
       }
     }
     return new TextRange(start, end);
-  }
-
-  private TextRange getRange(PsiReference reference) {
-    TextRange rangeInElement = reference.getRangeInElement();
-    PsiElement element = reference.getElement();
-    while(element != myElement) {
-      rangeInElement = rangeInElement.shiftRight(element.getStartOffsetInParent());
-      element = element.getParent();
-      if (element instanceof PsiFile) break;
-    }
-    return rangeInElement;
   }
 
   @Override
@@ -114,7 +103,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException{
     final PsiReference reference = chooseReference();
     if (reference != null) {
       return reference.handleElementRename(newElementName);
@@ -133,19 +122,13 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element){
+  public boolean isReferenceTo(@NotNull PsiElement element){
     for (PsiReference reference : myReferences) {
       if (reference.isReferenceTo(element)) return true;
     }
     return false;
   }
 
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
 
   @Override
   @NotNull

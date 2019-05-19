@@ -5,7 +5,6 @@ package com.intellij.ide.util;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -16,9 +15,11 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,7 +37,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     boolean isSelected,
     boolean cellHasFocus) {
     final Component listCellRendererComponent = super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
-    customizeCellRenderer(value, index, isSelected, cellHasFocus);
+    customizeCellRenderer(value, isSelected);
     return listCellRendererComponent;
   }
 
@@ -45,31 +46,21 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     return myText;
   }
 
-  protected void customizeCellRenderer(
-    Object value,
-    int index,
-    boolean selected,
-    boolean hasFocus
-  ) {
+  private void customizeCellRenderer(Object value, boolean selected) {
     myText = "";
     if (value instanceof PsiElement) {
       PsiElement element = (PsiElement)value;
       if (element.isValid()) {
-        PsiFile psiFile = element.getContainingFile();
-        Module module = ModuleUtil.findModuleForPsiElement(element);
-        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-        boolean isInLibraries = false;
-        if (psiFile != null) {
-          VirtualFile vFile = psiFile.getVirtualFile();
-          if (vFile != null) {
-            isInLibraries = fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile);
-            if (isInLibraries){
-              showLibraryLocation(fileIndex, vFile);
-            }
-          }
+        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
+        VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
+        if (vFile != null && fileIndex.isInLibrary(vFile)){
+          showLibraryLocation(fileIndex, vFile);
         }
-        if (module != null && !isInLibraries) {
-          showProjectLocation(psiFile, module, fileIndex);
+        else {
+          Module module = ModuleUtilCore.findModuleForPsiElement(element);
+          if (module != null) {
+            showProjectLocation(vFile, module, fileIndex);
+          }
         }
       }
     }
@@ -82,14 +73,8 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor());
   }
 
-  private void showProjectLocation(PsiFile psiFile, Module module, ProjectFileIndex fileIndex) {
-    boolean inTestSource = false;
-    if (psiFile != null) {
-      VirtualFile vFile = psiFile.getVirtualFile();
-      if (vFile != null) {
-        inTestSource = fileIndex.isInTestSourceContent(vFile);
-      }
-    }
+  private void showProjectLocation(@Nullable VirtualFile vFile, @NotNull Module module, @NotNull ProjectFileIndex fileIndex) {
+    boolean inTestSource = vFile != null && fileIndex.isInTestSourceContent(vFile);
     if (Registry.is("ide.show.folder.name.instead.of.module.name")) {
       String path = ModuleUtilCore.getModuleDirPath(module);
       myText = StringUtil.isEmpty(path) ? module.getName() : new File(path).getName();

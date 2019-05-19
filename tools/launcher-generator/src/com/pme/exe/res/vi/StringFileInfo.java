@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,11 @@
 
 package com.pme.exe.res.vi;
 
+/**
+ * @author Sergey Zhulin
+ * Date: May 10, 2006
+ * Time: 8:01:15 PM
+ */
 public class StringFileInfo extends VersionInfoBin {
   public StringFileInfo() {
     super("StringFileInfo", "StringFileInfo", new VersionInfoFactory() {

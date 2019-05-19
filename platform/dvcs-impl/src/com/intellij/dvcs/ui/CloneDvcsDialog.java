@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -20,7 +6,8 @@ import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.hosting.RepositoryHostingService;
 import com.intellij.dvcs.hosting.RepositoryListLoader;
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.dvcs.hosting.RepositoryListLoadingException;
+import com.intellij.dvcs.repo.ClonePathProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -43,7 +30,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBOptionButton;
@@ -64,14 +50,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
 import java.nio.file.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.intellij.util.ui.UI.PanelFactory;
@@ -109,6 +93,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @NotNull private final List<String> myLoadedRepositoryHostingServicesNames;
   @Nullable private Alarm myRepositoryUrlAutoCompletionTooltipAlarm;
   @NotNull private final Set<String> myUniqueAvailableRepositories;
+  @NotNull private final List<ValidationInfo> myRepositoryListLoadingErrors = new ArrayList<>();
 
   public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName) {
     this(project, displayName, vcsDirectoryName, null);
@@ -164,7 +149,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         Files.createDirectories(directoryPath);
       }
       else if (!Files.isDirectory(directoryPath) || !Files.isWritable(directoryPath)) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
+        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
       }
       return null;
     }
@@ -172,7 +157,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"));
     }
     catch (Exception e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
+      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
     }
   }
 
@@ -193,8 +178,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   private void initComponents(@Nullable String defaultUrl) {
-    String parentDirectory = getRememberedInputs().getCloneParentDir();
-
     myRepositoryUrlComboboxModel = new CollectionComboBoxModel<>();
     myRepositoryUrlField = TextFieldWithAutoCompletion.create(myProject,
                                                               myRepositoryUrlComboboxModel.getItems(),
@@ -215,13 +198,13 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
     myRepositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
-        myDirectoryField.trySetChildPath(defaultDirectoryName(myRepositoryUrlField.getText().trim()));
+      public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent event) {
+        myDirectoryField.trySetChildPath(defaultDirectoryPath(myRepositoryUrlField.getText().trim()));
       }
     });
     myRepositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
+      public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent event) {
         myRepositoryTestValidationInfo = null;
       }
     });
@@ -232,9 +215,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
     fcd.setHideIgnored(false);
-    myDirectoryField = new MyTextFieldWithBrowseButton(StringUtil.isEmptyOrSpaces(parentDirectory)
-                                                       ? ProjectUtil.getBaseDir()
-                                                       : parentDirectory);
+    myDirectoryField = new MyTextFieldWithBrowseButton(ClonePathProvider.defaultParentDirectoryPath(myProject, getRememberedInputs()));
     myDirectoryField.addBrowseFolderListener(DvcsBundle.getString("clone.destination.directory.browser.title"),
                                              DvcsBundle.getString("clone.destination.directory.browser.description"),
                                              myProject,
@@ -261,7 +242,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
     List<Action> loginActions = new ArrayList<>();
     Map<String, RepositoryListLoader> enabledLoaders = new HashMap<>();
-    for (RepositoryHostingService service : repositoryHostingServices) {
+    for (RepositoryHostingService service: repositoryHostingServices) {
       String serviceDisplayName = service.getServiceDisplayName();
       RepositoryListLoader loader = service.getRepositoryListLoader(myProject);
       if (loader == null) continue;
@@ -272,7 +253,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         loginActions.add(new AbstractAction(DvcsBundle.message("clone.repository.url.autocomplete.login.text", serviceDisplayName)) {
           @Override
           public void actionPerformed(ActionEvent e) {
-            if (loader.enable()) {
+            if (loader.enable(myLoginButtonComponent.getPanel())) {
               myLoginButtonComponent.removeAction(this);
               schedule(serviceDisplayName, loader);
             }
@@ -304,18 +285,23 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   private void schedule(@NotNull String serviceDisplayName, @NotNull RepositoryListLoader loader) {
     mySpinnerProgressManager.run(new Task.Backgroundable(myProject, "Not Visible") {
       private final List<String> myNewRepositories = new ArrayList<>();
+      private final List<RepositoryListLoadingException> myErrors = new ArrayList<>();
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        for (String repository : loader.getAvailableRepositories(indicator)) {
+        RepositoryListLoader.Result loadingResult =
+          loader.getAvailableRepositoriesFromMultipleSources(indicator);
+        for (String repository: loadingResult.getUrls()) {
           if (myUniqueAvailableRepositories.add(repository)) {
             myNewRepositories.add(repository);
           }
         }
+        myErrors.addAll(loadingResult.getErrors());
       }
 
       @Override
       public void onSuccess() {
+        if (mySpinnerProgressManager.getDisposed()) return;
         if (!myNewRepositories.isEmpty()) {
           // otherwise editor content will be reset
           myRepositoryUrlCombobox.setSelectedItem(myRepositoryUrlField.getText());
@@ -324,11 +310,16 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         }
         myLoadedRepositoryHostingServicesNames.add(serviceDisplayName);
         showRepositoryUrlAutoCompletionTooltip();
-      }
-
-      @Override
-      public void onThrowable(@NotNull Throwable error) {
-        //TODO: show warning
+        if (!myErrors.isEmpty()) {
+          for (RepositoryListLoadingException error: myErrors) {
+            StringBuilder errorMessageBuilder = new StringBuilder();
+            errorMessageBuilder.append(error.getMessage());
+            Throwable cause = error.getCause();
+            if (cause != null) errorMessageBuilder.append(": ").append(cause.getMessage());
+            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString()).asWarning().withOKEnabled());
+          }
+          startTrackingValidation();
+        }
       }
     });
   }
@@ -416,6 +407,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     ContainerUtil.addIfNotNull(infoList, myCreateDirectoryValidationInfo);
     ContainerUtil.addIfNotNull(infoList, urlValidation);
     ContainerUtil.addIfNotNull(infoList, directoryValidation);
+    infoList.addAll(myRepositoryListLoadingErrors);
     return infoList;
   }
 
@@ -518,16 +510,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     rememberedInputs.setCloneParentDir(getParentDirectory());
   }
 
-  @NotNull
-  private static String safeUrlDecode(@NotNull String encoded) {
-    try {
-      return URLDecoder.decode(encoded, CharsetToolkit.UTF8);
-    }
-    catch (Exception e) {
-      return encoded;
-    }
-  }
-
   /**
    * Get default name for checked out directory
    *
@@ -535,30 +517,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
    * @return a default repository name
    */
   @NotNull
-  private String defaultDirectoryName(@NotNull final String url) {
-    return stripSuffix(safeUrlDecode(getLastPathFragment(url)));
-  }
-
-  @NotNull
-  private String stripSuffix(@NotNull String directoryName) {
-    return directoryName.endsWith(myVcsDirectoryName)
-           ? directoryName.substring(0, directoryName.length() - myVcsDirectoryName.length())
-           : directoryName;
-  }
-
-  @NotNull
-  private static String getLastPathFragment(@NotNull final String url) {
-    // Suppose it's a URL
-    int i = url.lastIndexOf('/');
-
-    // No? Maybe win-style path?
-    if (i == -1 && File.separatorChar != '/') i = url.lastIndexOf(File.separatorChar);
-
-    if (i < 0) return "";
-
-    if (i == url.length() - 1) return getLastPathFragment(url.substring(0, i));
-
-    return url.substring(i + 1);
+  private String defaultDirectoryPath(@NotNull final String url) {
+    return StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(myProject, url), myVcsDirectoryName);
   }
 
   @Nullable
@@ -573,6 +533,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     return myLoginButtonComponent.getPanel();
   }
 
+  @Override
   @NotNull
   protected JComponent createCenterPanel() {
     JPanel panel = PanelFactory.grid()
@@ -614,7 +575,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       setText(myDefaultParentPath.toString());
       getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           myModifiedByUser = true;
         }
       });
@@ -639,7 +600,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     @NotNull private final JPanel myPanel;
     @NotNull private final List<Action> myActions;
 
-    public LoginButtonComponent(@NotNull List<Action> actions) {
+    LoginButtonComponent(@NotNull List<Action> actions) {
       myButton = new JBOptionButton(ContainerUtil.getFirstItem(actions), getActionsAfterFirst(actions));
       myPanel = PanelFactory.panel(myButton)
                             .withTooltip(DvcsBundle.getString("clone.repository.url.autocomplete.login.tooltip"))

@@ -18,9 +18,11 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.NotNull;
 
 public interface CustomPropertyScopeProvider {
   ExtensionPointName<CustomPropertyScopeProvider> EP_NAME = new ExtensionPointName<>("com.intellij.customPropertyScopeProvider");
 
-  SearchScope getScope(final Project project);
+  @NotNull
+  SearchScope getScope(@NotNull Project project);
 }

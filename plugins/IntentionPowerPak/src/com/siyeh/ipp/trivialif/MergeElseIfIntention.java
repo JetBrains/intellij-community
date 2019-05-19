@@ -69,7 +69,7 @@ public class MergeElseIfIntention extends Intention {
   /**
    * Before comments are added in reverse order of appearance in the code.
    */
-  private static void collectComments(PsiStatement statement, List<PsiComment> before, List<PsiComment> after) {
+  private static void collectComments(PsiStatement statement, List<? super PsiComment> before, List<? super PsiComment> after) {
     PsiElement prevSibling = statement.getPrevSibling();
     while (prevSibling != null) {
       if (prevSibling instanceof PsiComment) {

@@ -51,13 +51,15 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     return myRootPsiElement;
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRootElement;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(final Object element) {
+  public Object[] getChildElements(@NotNull final Object element) {
     if (myRootElement == element) {
       if (myRootPsiElement == null) {
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -118,7 +120,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     if (element == myRootElement) {
       return null;
     }
@@ -144,7 +146,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {
       return new NodeDescriptor(myProject, null) {
         @Override

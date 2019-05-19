@@ -17,6 +17,7 @@ package com.intellij.lang.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,18 +63,8 @@ final class MarkerProduction extends TIntArrayList {
   }
 
   private int findMarkerAtLexeme(int lexemeIndex) {
-    int low = 0;
-    int high = size() - LINEAR_SEARCH_LIMIT;
-
-    while (low <= high) {
-      int mid = (low + high) >>> 1;
-      int midVal = getLexemeIndexAt(mid);
-
-      if (midVal < lexemeIndex) low = mid + 1;
-      else if (midVal > lexemeIndex) high = mid - 1;
-      else return findSameLexemeGroupStart(lexemeIndex, mid);
-    }
-    return -1;
+    int i = ObjectUtils.binarySearch(0, size() - LINEAR_SEARCH_LIMIT, mid -> Integer.compare(getLexemeIndexAt(mid), lexemeIndex));
+    return i < 0 ? -1 : findSameLexemeGroupStart(lexemeIndex, i);
   }
 
   private int findSameLexemeGroupStart(int lexemeIndex, int prodIndex) {
@@ -98,7 +89,7 @@ final class MarkerProduction extends TIntArrayList {
 
   boolean hasErrorsAfter(@NotNull PsiBuilderImpl.StartMarker marker) {
     for (int i = indexOf(marker) + 1; i < size(); ++i) {
-      PsiBuilderImpl.ProductionMarker m = getStartingMarkerAt(i);
+      PsiBuilderImpl.ProductionMarker m = getStartMarkerAt(i);
       if (m != null && hasError(m)) return true;
     }
     return false;
@@ -121,7 +112,13 @@ final class MarkerProduction extends TIntArrayList {
   }
 
   @Nullable
-  PsiBuilderImpl.ProductionMarker getStartingMarkerAt(int index) {
+  PsiBuilderImpl.ProductionMarker getMarkerAt(int index) {
+    int id = get(index);
+    return myPool.get(id > 0 ? id : -id);
+  }
+
+  @Nullable
+  PsiBuilderImpl.ProductionMarker getStartMarkerAt(int index) {
     int id = get(index);
     return id > 0 ? myPool.get(id) : null;
   }
@@ -161,7 +158,7 @@ final class MarkerProduction extends TIntArrayList {
     }
 
     for (int i = endIdx - 1; i > idx; i--) {
-      PsiBuilderImpl.ProductionMarker item = getStartingMarkerAt(i);
+      PsiBuilderImpl.ProductionMarker item = getStartMarkerAt(i);
       if (item instanceof PsiBuilderImpl.StartMarker) {
         PsiBuilderImpl.StartMarker otherMarker = (PsiBuilderImpl.StartMarker)item;
         if (!otherMarker.isDone()) {

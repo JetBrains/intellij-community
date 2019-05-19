@@ -27,6 +27,7 @@ import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlAttributeDecl;
 import com.intellij.psi.xml.XmlElementDecl;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -86,7 +87,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AnAction(null, "Remove Entry", AllIcons.General.Remove) {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         if (myNamespaceMap.getModel().getRowCount() == 0 || myNamespaceMap.getSelectedRow() == -1) {
           e.getPresentation().setEnabled(false);
         } else {
@@ -95,7 +96,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         ((NamespaceMapModel)myNamespaceMap.getModel()).removeRow(myNamespaceMap.getSelectedRow());
       }
     });

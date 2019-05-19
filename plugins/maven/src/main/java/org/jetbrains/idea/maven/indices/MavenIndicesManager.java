@@ -1,31 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdomKt;
@@ -34,6 +17,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -73,8 +57,8 @@ public class MavenIndicesManager implements Disposable {
   private volatile MavenIndices myIndices;
 
   private final Object myUpdatingIndicesLock = new Object();
-  private final List<MavenIndex> myWaitingIndices = new ArrayList<>();
-  private volatile MavenIndex myUpdatingIndex;
+  private final List<MavenSearchIndex> myWaitingIndices = new ArrayList<>();
+  private volatile MavenSearchIndex myUpdatingIndex;
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
 
   private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<>();
@@ -110,10 +94,12 @@ public class MavenIndicesManager implements Disposable {
     };
     MavenServerManager.getInstance().addDownloadListener(myDownloadListener);
 
-    myIndices = new MavenIndices(myIndexer, getIndicesDir().toFile(), new MavenIndex.IndexListener() {
+    myIndices = new MavenIndices(myIndexer, getIndicesDir().toFile(), new MavenSearchIndex.IndexListener() {
       @Override
-      public void indexIsBroken(MavenIndex index) {
-        scheduleUpdate(null, Collections.singletonList(index), false);
+      public void indexIsBroken(@NotNull MavenSearchIndex index) {
+        if (index instanceof MavenIndex) {
+          scheduleUpdate(null, Collections.singletonList((MavenIndex)index), false);
+        }
       }
     });
 
@@ -164,41 +150,50 @@ public class MavenIndicesManager implements Disposable {
     return getIndicesObject().getIndices();
   }
 
-  public synchronized List<MavenIndex> ensureIndicesExist(Project project,
-                                                          File localRepository,
-                                                          Collection<Pair<String, String>> remoteRepositoriesIdsAndUrls) {
-    // MavenIndices.add method returns an existing index if it has already been added, thus we have to use set here.
-    LinkedHashSet<MavenIndex> result = new LinkedHashSet<>();
 
+  public synchronized MavenIndex ensureRemoteIndexExist(Project project, Pair<String, String> remoteIndexIdAndUrl) {
+    try {
+      MavenIndices indicesObjectCache = getIndicesObject();
+      return indicesObjectCache.add(remoteIndexIdAndUrl.first, remoteIndexIdAndUrl.second, MavenSearchIndex.Kind.REMOTE);
+    }
+    catch (MavenIndexException e) {
+      MavenLog.LOG.warn(e);
+      return null;
+    }
+  }
+
+  public synchronized @Nullable
+  MavenIndex createIndexForLocalRepo(Project project, File localRepository) {
     MavenIndices indicesObjectCache = getIndicesObject();
 
     try {
       MavenIndex localIndex = indicesObjectCache.add(LOCAL_REPOSITORY_ID, localRepository.getPath(), MavenIndex.Kind.LOCAL);
-      result.add(localIndex);
       if (localIndex.getUpdateTimestamp() == -1) {
         scheduleUpdate(project, Collections.singletonList(localIndex));
       }
+      return localIndex;
     }
     catch (MavenIndexException e) {
       MavenLog.LOG.warn(e);
+      return null;
     }
+  }
+
+  public synchronized List<MavenIndex> ensureIndicesExist(Project project,
+                                                          Collection<Pair<String, String>> remoteRepositoriesIdsAndUrls) {
+    // MavenIndices.add method returns an existing index if it has already been added, thus we have to use set here.
+    LinkedHashSet<MavenIndex> result = new LinkedHashSet<>();
 
     for (Pair<String, String> eachIdAndUrl : remoteRepositoriesIdsAndUrls) {
-      try {
-        result.add(indicesObjectCache.add(eachIdAndUrl.first, eachIdAndUrl.second, MavenIndex.Kind.REMOTE));
-      }
-      catch (MavenIndexException e) {
-        MavenLog.LOG.warn(e);
-      }
+      result.add(ensureRemoteIndexExist(project, eachIdAndUrl));
     }
-
     return new ArrayList<>(result);
   }
 
   private void addArtifact(File artifactFile, String relativePath) {
     String repositoryPath = getRepositoryUrl(artifactFile, relativePath);
 
-    MavenIndex index = getIndicesObject().find(repositoryPath, MavenIndex.Kind.LOCAL);
+    MavenIndex index = getIndicesObject().find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
     if (index != null) {
       index.addArtifact(artifactFile);
     }
@@ -223,10 +218,10 @@ public class MavenIndicesManager implements Disposable {
   }
 
   private Promise<Void> scheduleUpdate(final Project projectOrNull, List<MavenIndex> indices, final boolean fullUpdate) {
-    final List<MavenIndex> toSchedule = new ArrayList<>();
+    final List<MavenSearchIndex> toSchedule = new ArrayList<>();
 
     synchronized (myUpdatingIndicesLock) {
-      for (MavenIndex each : indices) {
+      for (MavenSearchIndex each : indices) {
         if (myWaitingIndices.contains(each)) continue;
         toSchedule.add(each);
       }
@@ -243,7 +238,7 @@ public class MavenIndicesManager implements Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           indicator.setIndeterminate(false);
-          doUpdateIndices(projectOrNull, toSchedule, fullUpdate, new MavenProgressIndicator(indicator));
+          doUpdateIndices(projectOrNull, toSchedule, fullUpdate, new MavenProgressIndicator(indicator,null));
         }
         catch (MavenProcessCanceledException ignore) {
         }
@@ -255,14 +250,17 @@ public class MavenIndicesManager implements Disposable {
     return promise;
   }
 
-  private void doUpdateIndices(final Project projectOrNull, List<MavenIndex> indices, boolean fullUpdate, MavenProgressIndicator indicator)
+  private void doUpdateIndices(final Project projectOrNull,
+                               List<MavenSearchIndex> indices,
+                               boolean fullUpdate,
+                               MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     MavenLog.LOG.assertTrue(!fullUpdate || projectOrNull != null);
 
-    List<MavenIndex> remainingWaiting = new ArrayList<>(indices);
+    List<MavenSearchIndex> remainingWaiting = new ArrayList<>(indices);
 
     try {
-      for (MavenIndex each : indices) {
+      for (MavenSearchIndex each : indices) {
         if (indicator.isCanceled()) return;
 
         indicator.setText(IndicesBundle.message("maven.indices.updating.index",
@@ -311,7 +309,7 @@ public class MavenIndicesManager implements Disposable {
     return settings;
   }
 
-  public IndexUpdatingState getUpdatingState(MavenIndex index) {
+  public IndexUpdatingState getUpdatingState(MavenSearchIndex index) {
     synchronized (myUpdatingIndicesLock) {
       if (myUpdatingIndex == index) return IndexUpdatingState.UPDATING;
       if (myWaitingIndices.contains(index)) return IndexUpdatingState.WAITING;
@@ -323,11 +321,13 @@ public class MavenIndicesManager implements Disposable {
     ensureInitialized();
     Set<MavenArchetype> result = new THashSet<>(myIndexer.getArchetypes());
     result.addAll(myUserArchetypes);
-    for (MavenIndex index : myIndices.getIndices()) {
-      result.addAll(index.getArchetypes());
+    for (MavenSearchIndex index : myIndices.getIndices()) {
+      if (index instanceof MavenIndex) {
+        result.addAll(((MavenIndex)index).getArchetypes());
+      }
     }
 
-    for (MavenArchetypesProvider each : Extensions.getExtensions(MavenArchetypesProvider.EP_NAME)) {
+    for (MavenArchetypesProvider each : MavenArchetypesProvider.EP_NAME.getExtensionList()) {
       result.addAll(each.getArchetypes());
     }
     return result;

@@ -229,7 +229,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return checkCanModify(sources);
   }
 
-  public boolean checkCanModify(final Collection<PackagingNodeSource> nodeSources) {
+  public boolean checkCanModify(final Collection<? extends PackagingNodeSource> nodeSources) {
     if (nodeSources.isEmpty()) {
       return true;
     }
@@ -339,7 +339,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     myArtifactsEditor.rebuildTries();
   }
 
-  public void removeNodes(final List<PackagingElementNode<?>> nodes) {
+  public void removeNodes(final List<? extends PackagingElementNode<?>> nodes) {
     Set<PackagingElement<?>> parents = new HashSet<>();
     for (PackagingElementNode<?> node : nodes) {
       final List<? extends PackagingElement<?>> toDelete = node.getPackagingElements();
@@ -367,13 +367,13 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     }
   }
 
-  private static Collection<PackagingNodeSource> getRootNodeSources(Collection<PackagingNodeSource> nodeSources) {
+  private static Collection<PackagingNodeSource> getRootNodeSources(Collection<? extends PackagingNodeSource> nodeSources) {
     Set<PackagingNodeSource> result = new HashSet<>();
     collectRootNodeSources(nodeSources, result);
     return result;
   }
 
-  private static void collectRootNodeSources(Collection<PackagingNodeSource> nodeSources, Set<PackagingNodeSource> result) {
+  private static void collectRootNodeSources(Collection<? extends PackagingNodeSource> nodeSources, Set<? super PackagingNodeSource> result) {
     for (PackagingNodeSource nodeSource : nodeSources) {
       final Collection<PackagingNodeSource> parentSources = nodeSource.getParentSources();
       if (parentSources.isEmpty()) {
@@ -623,6 +623,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private class LayoutTreeStructure extends SimpleTreeStructure {
     private ArtifactRootNode myRootNode;
 
+    @NotNull
     @Override
     public Object getRootElement() {
       if (myRootNode == null) {
@@ -637,7 +638,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   private class LayoutTreeBuilder extends SimpleTreeBuilder {
-    public LayoutTreeBuilder() {
+    LayoutTreeBuilder() {
       super(LayoutTreeComponent.this.myTree, LayoutTreeComponent.this.myTree.getBuilderModel(), LayoutTreeComponent.this.myTreeStructure,
             LayoutTreeComponent.this.getComparator());
     }

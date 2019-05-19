@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.util.containers.WeakList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,6 +114,10 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
     while (true) {
       if (popup != null && !popup.isDisposed()) {
+        Window window = UIUtil.getWindow(mouseEvent.getComponent());
+        if (window != null && window != popup.getPopupWindow() && SwingUtilities.isDescendingFrom(window, popup.getPopupWindow())) {
+          return false;
+        }
         final Component content = popup.getContent();
         if (!content.isShowing()) {
           popup.cancel();
@@ -202,15 +207,21 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   @Override
   public boolean close() {
     if (!closeActivePopup()) return false;
-    // try to close other popups in the stack
+
+    int size = myStack.size();
     while (closeActivePopup()) {
-      // close all popups one by one
+      int next = myStack.size();
+      if (size == next) {
+        // no popup was actually closed, break
+        break;
+      }
+      size = next;
     }
     return true; // at least one popup was closed
   }
 
   @Override
-  public void setRestoreFocusSilentely() {
+  public void setRestoreFocusSilently() {
     if (myStack.isEmpty()) return;
 
     for (JBPopup each : myAllPopups) {
@@ -228,7 +239,8 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     final AbstractPopup popup = (AbstractPopup)myStack.peek();
     if (popup != null && popup.isVisible() && popup.isCancelOnWindowDeactivation() && popup.canClose()) {
       popup.cancel();
-      return true;
+      // setCancelCallback(..) can override cancel()
+      return !popup.isVisible();
     }
     return false;
   }

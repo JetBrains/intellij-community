@@ -18,10 +18,6 @@ package com.intellij.java.codeInsight;
 import com.intellij.java.codeInsight.daemon.quickFix.LightQuickFixAvailabilityTestCase;
 
 public class ImplementAbstractFromNewTest extends LightQuickFixAvailabilityTestCase {
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/implementAbstractFromNew";

@@ -47,7 +47,7 @@ public interface LineIndentProvider {
    * leave the current caret position as is without any further formatter-based adjustment.
    */
   @Nullable
-  String getLineIndent(@NotNull Project project, @NotNull Editor editor, Language language, int offset);
-  
+  String getLineIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset);
+
   boolean isSuitableFor(@Nullable Language language);
 }

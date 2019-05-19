@@ -30,7 +30,6 @@ import javax.swing.event.HyperlinkEvent;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/1/14
  */
 public class OpenGradleSettingsCallback extends NotificationListener.Adapter {
 

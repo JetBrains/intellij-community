@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.GeneralSettings;
@@ -23,23 +9,19 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.LocalPathCellEditor;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import com.intellij.util.ui.table.TableModelEditor;
-import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -118,7 +100,7 @@ final class BrowserSettingsPanel {
         item.setSpecificSettings(value.createBrowserSpecificSettings());
       }
 
-      @Nullable
+      @NotNull
       @Override
       public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
         return IconTableCellRenderer.ICONABLE;
@@ -140,16 +122,16 @@ final class BrowserSettingsPanel {
   @SuppressWarnings("UnusedDeclaration")
   private JComponent browsersTable;
 
-  private ComboBox defaultBrowserPolicyComboBox;
+  private ComboBox<DefaultBrowserPolicy> defaultBrowserPolicyComboBox;
   private JBCheckBox showBrowserHover;
 
   private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
 
   private String customPathValue;
 
-  public BrowserSettingsPanel() {
+  BrowserSettingsPanel() {
     alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR);
-    defaultBrowserPanel.setBorder(TitledSeparator.EMPTY_BORDER);
+    defaultBrowserPanel.setBorder(TitledSeparator.createEmptyBorder());
 
     ArrayList<DefaultBrowserPolicy> defaultBrowserPolicies = new ArrayList<>();
     if (BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) {
@@ -158,8 +140,7 @@ final class BrowserSettingsPanel {
     defaultBrowserPolicies.add(DefaultBrowserPolicy.FIRST);
     defaultBrowserPolicies.add(DefaultBrowserPolicy.ALTERNATIVE);
 
-    //noinspection Since15,unchecked
-    defaultBrowserPolicyComboBox.setModel(new ListComboBoxModel<>(defaultBrowserPolicies));
+    defaultBrowserPolicyComboBox.setModel(new CollectionComboBoxModel<>(defaultBrowserPolicies));
     defaultBrowserPolicyComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(@NotNull ItemEvent e) {
@@ -176,30 +157,16 @@ final class BrowserSettingsPanel {
       }
     });
 
-    defaultBrowserPolicyComboBox.setRenderer(new ListCellRendererWrapper<DefaultBrowserPolicy>() {
-      @Override
-      public void customize(JList list, DefaultBrowserPolicy value, int index, boolean selected, boolean hasFocus) {
-        String name;
-        switch (value) {
-          case SYSTEM:
-            name = "System default";
-            break;
-          case FIRST:
-            name = "First listed";
-            break;
-          case ALTERNATIVE:
-            name = "Custom path";
-            break;
-          default:
-            throw new IllegalStateException();
-        }
-
-        setText(name);
-      }
-    });
-
+    defaultBrowserPolicyComboBox.setRenderer(SimpleListCellRenderer.create("", value -> {
+      String text = value == DefaultBrowserPolicy.SYSTEM ? "System default" :
+                    value == DefaultBrowserPolicy.FIRST ? "First listed" :
+                    value == DefaultBrowserPolicy.ALTERNATIVE ? "Custom path" :
+                    null;
+      if (text == null) throw new IllegalStateException(String.valueOf(value));
+      return text;
+    }));
     if (UIUtil.isUnderAquaLookAndFeel()) {
-      defaultBrowserPolicyComboBox.setBorder(new EmptyBorder(3, 0, 0, 0));
+      defaultBrowserPolicyComboBox.setBorder(JBUI.Borders.emptyTop(3));
     }
   }
 
@@ -363,7 +330,7 @@ final class BrowserSettingsPanel {
     if (policy != DefaultBrowserPolicy.SYSTEM || BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) {
       return policy;
     }
-    // if system default browser policy cannot be used 
+    // if system default browser policy cannot be used
     return DefaultBrowserPolicy.ALTERNATIVE;
   }
 

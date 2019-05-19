@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/5/13
  */
 public interface ModelBuilderService extends Serializable {
   boolean canBuild(String modelName);

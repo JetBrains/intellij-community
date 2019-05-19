@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public final class FileEditorPsiTreeChangeListener extends PsiTreeChangeAdapter {
   private static final Logger LOG = Logger.getInstance(FileEditorPsiTreeChangeListener.class);
 
-  private FileEditorManagerEx myFileEditorManager;
+  private final FileEditorManagerEx myFileEditorManager;
 
   public FileEditorPsiTreeChangeListener(FileEditorManagerEx psiAwareFileEditorManager) {
     myFileEditorManager = psiAwareFileEditorManager;

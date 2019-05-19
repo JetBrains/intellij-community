@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull
+
 class Foo implements Comparable<Foo> {
 
     def Foo next() {
@@ -9,7 +11,7 @@ class Foo implements Comparable<Foo> {
     }
 
     @Override
-    int compareTo(Foo o) {
+    int compareTo(@NotNull Foo o) {
         <selection>return 0</selection>
     }
 }

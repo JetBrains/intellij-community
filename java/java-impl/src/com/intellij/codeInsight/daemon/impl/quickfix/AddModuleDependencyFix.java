@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.ModuleListCellRenderer;
@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PointersKt;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,14 +24,10 @@ import com.intellij.util.modules.CircularModuleDependenciesDetector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author anna
- * @since 20.11.2012
  */
 class AddModuleDependencyFix extends OrderEntryFix {
   private final Module myCurrentModule;
@@ -41,7 +36,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
   private final boolean myExported;
   private final List<SmartPsiElementPointer<PsiClass>> myClasses;
 
-  public AddModuleDependencyFix(PsiReference reference, Module currentModule, DependencyScope scope, List<PsiClass> classes) {
+  AddModuleDependencyFix(PsiReference reference, Module currentModule, DependencyScope scope, List<? extends PsiClass> classes) {
     super(reference);
     myCurrentModule = currentModule;
     myModules = new LinkedHashSet<>();
@@ -65,11 +60,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
     return JavaResolveUtil.isAccessible(aClass, aClass.getContainingClass(), aClass.getModifierList(), refElement, aClass, null);
   }
 
-  public AddModuleDependencyFix(PsiJavaModuleReference reference,
-                                Module currentModule,
-                                Set<Module> modules,
-                                DependencyScope scope,
-                                boolean exported) {
+  AddModuleDependencyFix(PsiJavaModuleReference reference, Module currentModule, Set<Module> modules, DependencyScope scope, boolean exported) {
     super(reference);
     myCurrentModule = currentModule;
     myModules = modules;
@@ -109,7 +100,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
     }
     else {
       JBPopup popup = JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(ContainerUtil.newArrayList(myModules))
+        .createPopupChooserBuilder(new ArrayList<>(myModules))
         .setRenderer(new ModuleListCellRenderer())
         .setTitle(QuickFixBundle.message("orderEntry.fix.choose.module.to.add.dependency.on"))
         .setMovable(false)

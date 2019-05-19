@@ -14,13 +14,13 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.command;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.progress.IProgressViewer;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * All commands must extend this class. A command is essentially a
@@ -73,13 +73,13 @@ public abstract class Command {
          * The returned String is null if the specified String is null or contains
          * only white spaces.
          */
-        protected static final String getTrimmedString(String s) {
+        protected static String getTrimmedString(String s) {
                 if (s == null) {
                         return null;
                 }
 
                 s = s.trim();
-                if (s.length() == 0) {
+                if (s.isEmpty()) {
                         return null;
                 }
 

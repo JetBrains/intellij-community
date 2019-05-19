@@ -28,5 +28,5 @@ Groovy script
       Arguments
         PsiElement(()('(')
         Literal
-          PsiElement(string)('''')
+          PsiElement(single quoted string)('''')
         PsiElement())(')')

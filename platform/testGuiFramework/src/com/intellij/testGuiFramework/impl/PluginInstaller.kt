@@ -19,6 +19,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil
 import org.fest.swing.timing.Pause
 import org.junit.Assert
 import org.junit.Test
+import java.awt.Rectangle
 
 /**
  * @author Sergey Karashevich
@@ -34,14 +35,14 @@ class PluginInstaller: GuiTestCase() {
 
     welcomeFrame {
       actionLink("Configure").click()
-      popupClick("Plugins")
+      popupMenu("Plugins").clickSearchedItem()
       dialog("Plugins") {
         button("Install JetBrains plugin...").click()
         dialog("Browse JetBrains Plugins ") {
           textfield("").click()
           typeText(pluginName!!)
           pluginTable().selectPlugin(pluginName)
-          screenshot(this.target(), "BrowseJetBrainsPlugins")
+          screenshot("BrowseJetBrainsPlugins")
           button("Install").click()
           button("Restart IntelliJ IDEA").click()
           dialog("This should not be shown") {

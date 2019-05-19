@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -170,21 +171,20 @@ public class RunContentExecutor implements Disposable {
   }
 
   private class RerunAction extends AnAction {
-    public RerunAction(JComponent consolePanel) {
+    RerunAction(JComponent consolePanel) {
       super("Rerun", "Rerun",
             AllIcons.Actions.Restart);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), consolePanel);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myRerunAction.run();
     }
 
     @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setVisible(myRerunAction != null);
-      e.getPresentation().setEnabled(myRerunAction != null);
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myRerunAction != null);
     }
 
     @Override
@@ -194,18 +194,18 @@ public class RunContentExecutor implements Disposable {
   }
 
   private class StopAction extends AnAction implements DumbAware {
-    public StopAction() {
+    StopAction() {
       super("Stop", "Stop",
             AllIcons.Actions.Suspend);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myStopAction.run();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(myStopAction != null);
       e.getPresentation().setEnabled(myStopEnabled != null && myStopEnabled.compute());
     }

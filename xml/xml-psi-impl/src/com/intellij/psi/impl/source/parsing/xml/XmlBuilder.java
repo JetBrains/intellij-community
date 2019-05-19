@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.impl.source.parsing.xml;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface XmlBuilder {
@@ -40,5 +41,5 @@ public interface XmlBuilder {
 
   void entityRef(CharSequence ref, int startOffset, int endOffset);
 
-  void error(String message, int startOffset, int endOffset);
+  void error(@NotNull String message, int startOffset, int endOffset);
 }

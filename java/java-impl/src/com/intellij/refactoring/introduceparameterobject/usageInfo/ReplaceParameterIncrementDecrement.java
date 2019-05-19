@@ -39,6 +39,7 @@ public class ReplaceParameterIncrementDecrement extends FixableUsageInfo {
     this.expression = PsiTreeUtil.getParentOfType(element, PsiUnaryExpression.class);
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiJavaToken sign = expression.getOperationSign();
     final String operator = sign.getText();
@@ -46,7 +47,7 @@ public class ReplaceParameterIncrementDecrement extends FixableUsageInfo {
     final String newExpression =
       newParameterName + '.' + parameterSetterName + '(' + newParameterName + '.' + parameterGetterName + "()" + strippedOperator + "1)";
     if (expression.getParent() instanceof PsiBinaryExpression) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
       final PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
       statement.getParent().addBefore(factory.createStatementFromText(newExpression + ";", expression), statement);
       expression.replace(factory.createExpressionFromText(newParameterName + "." + parameterGetterName + "()", expression));

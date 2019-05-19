@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
@@ -33,14 +34,15 @@ public class GoToChangePopupBuilder {
   private static final Key<JBPopup> POPUP_KEY = Key.create("Diff.RequestChainGoToPopup");
 
   public interface Chain extends DiffRequestChain {
-    @NotNull
-    AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected);
+    @Nullable
+    AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected);
   }
 
   @NotNull
   public static AnAction create(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected) {
     if (chain instanceof Chain) {
-      return ((Chain)chain).createGoToChangeAction(onSelected);
+      AnAction action = ((Chain)chain).createGoToChangeAction(onSelected);
+      if (action != null) return action;
     }
     return new SimpleGoToChangePopupAction(chain, onSelected);
   }
@@ -74,7 +76,7 @@ public class GoToChangePopupBuilder {
       myChain.putUserData(POPUP_KEY, popup);
       popup.addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           if (myChain.getUserData(POPUP_KEY) == popup) {
             myChain.putUserData(POPUP_KEY, null);
           }
@@ -97,7 +99,7 @@ public class GoToChangePopupBuilder {
   private static class SimpleGoToChangePopupAction extends BaseGoToChangePopupAction<DiffRequestChain> {
     @NotNull protected final Consumer<Integer> myOnSelected;
 
-    public SimpleGoToChangePopupAction(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected) {
+    SimpleGoToChangePopupAction(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected) {
       super(chain);
       myOnSelected = onSelected;
     }
@@ -109,7 +111,7 @@ public class GoToChangePopupBuilder {
     }
 
     private class MyListPopupStep extends BaseListPopupStep<DiffRequestProducer> {
-      public MyListPopupStep() {
+      MyListPopupStep() {
         super("Go To Change", myChain.getRequests());
         setDefaultOptionIndex(myChain.getIndex());
       }

@@ -81,7 +81,7 @@ public class TypeCustomizerInspection extends BaseInspection {
 
     private final @NotNull SmartPsiElementPointer<PsiFile> myFilePointer;
 
-    public AddToResourceFix(@NotNull PsiFile file) {
+    AddToResourceFix(@NotNull PsiFile file) {
       myFilePointer = createSmartPointer(file);
     }
 

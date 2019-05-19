@@ -126,6 +126,8 @@ public final class Match {
     final List<PsiElement> currentValue = myParameterValues.get(psiVariable);
     final boolean isVararg = psiVariable instanceof PsiParameter && ((PsiParameter)psiVariable).isVarArgs();
     if (!(value instanceof PsiExpression)) return false;
+    final PsiElement parent = value.getParent();
+    if (parent instanceof PsiMethodCallExpression && value == ((PsiMethodCallExpression)parent).getMethodExpression()) return false;
     final PsiType type = ((PsiExpression)value).getType();
     final PsiType parameterType = parameter.getType();
     if (type == null) return false;
@@ -237,7 +239,7 @@ public final class Match {
     return element;
   }
 
-  public PsiElement replaceByStatement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, final PsiVariable outputVariable) throws IncorrectOperationException {
+  public PsiElement replaceByStatement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, final PsiVariable outputVariable, @Nullable PsiType returnType) throws IncorrectOperationException {
     PsiStatement statement = null;
     if (outputVariable != null) {
       ReturnValue returnValue = getOutputVariableValue(outputVariable);
@@ -245,13 +247,13 @@ public final class Match {
         returnValue = new FieldReturnValue((PsiField)outputVariable);
       }
       if (returnValue == null) return null;
-      statement = returnValue.createReplacement(extractedMethod, methodCallExpression);
+      statement = returnValue.createReplacement(extractedMethod, methodCallExpression, returnType);
     }
     else if (getReturnValue() != null) {
-      statement = getReturnValue().createReplacement(extractedMethod, methodCallExpression);
+      statement = getReturnValue().createReplacement(extractedMethod, methodCallExpression, returnType);
     }
     if (statement == null) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(methodCallExpression.getProject());
       PsiExpressionStatement expressionStatement = (PsiExpressionStatement) elementFactory.createStatementFromText("x();", null);
       final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getManager());
       expressionStatement = (PsiExpressionStatement)styleManager.reformat(expressionStatement);
@@ -271,12 +273,16 @@ public final class Match {
   }
 
   public PsiElement replace(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, PsiVariable outputVariable) throws IncorrectOperationException {
+    return replace(extractedMethod, methodCallExpression, outputVariable, null);
+  }
+
+  public PsiElement replace(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, PsiVariable outputVariable, @Nullable PsiType returnType) throws IncorrectOperationException {
     declareLocalVariables();
     if (getMatchStart() == getMatchEnd() && getMatchStart() instanceof PsiExpression) {
       return replaceWithExpression(methodCallExpression);
     }
     else {
-      return replaceByStatement(extractedMethod, methodCallExpression, outputVariable);
+      return replaceByStatement(extractedMethod, methodCallExpression, outputVariable, returnType);
     }
   }
 
@@ -302,7 +308,7 @@ public final class Match {
               final String name = variable.getName();
               LOG.assertTrue(name != null);
               PsiDeclarationStatement statement =
-                  JavaPsiFacade.getInstance(project).getElementFactory().createVariableDeclarationStatement(name, variable.getType(), null);
+                  JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement(name, variable.getType(), null);
               if (reassigned.contains(new ControlFlowUtil.VariableInfo(variable, null))) {
                 final PsiElement[] psiElements = statement.getDeclaredElements();
                 final PsiModifierList modifierList = ((PsiVariable)psiElements[0]).getModifierList();

@@ -16,6 +16,7 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -64,15 +65,11 @@ public class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
     public void visitSynchronizedStatement(
       @NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
-      final PsiExpression lockExpression = statement.getLockExpression();
+      final PsiExpression lockExpression = PsiUtil.skipParenthesizedExprDown(statement.getLockExpression());
       if (!(lockExpression instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReference reference = lockExpression.getReference();
-      if (reference == null) {
-        return;
-      }
-      final PsiElement element = reference.resolve();
+      final PsiElement element = ((PsiReferenceExpression)lockExpression).resolve();
       if (!(element instanceof PsiField)) {
         return;
       }

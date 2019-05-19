@@ -16,6 +16,8 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
@@ -34,13 +36,13 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.add.PyAddSdkDialog.Companion.create
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.*
 import com.jetbrains.python.sdk.detectVirtualEnvs
-import com.jetbrains.python.sdk.isAssociatedWithProject
+import com.jetbrains.python.sdk.isAssociatedWithModule
 import icons.PythonIcons
 import java.awt.CardLayout
 import java.awt.event.ActionEvent
+import java.util.function.Consumer
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -49,13 +51,13 @@ import javax.swing.JPanel
  * The dialog may look like the normal dialog with OK, Cancel and Help buttons
  * or the wizard dialog with Next, Previous, Finish, Cancel and Help buttons.
  *
- * Use [create] to instantiate the dialog.
+ * Use [show] to instantiate and show the dialog.
  *
  * @author vlan
  */
 class PyAddSdkDialog private constructor(private val project: Project?,
-                                         private val existingSdks: List<Sdk>,
-                                         private val newProjectPath: String?) : DialogWrapper(project) {
+                                         private val module: Module?,
+                                         private val existingSdks: List<Sdk>) : DialogWrapper(project) {
   /**
    * This is the main panel that supplies sliding effect for the wizard states.
    */
@@ -72,11 +74,14 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     val sdks = existingSdks
       .filter { it.sdkType is PythonSdkType && !PythonSdkType.isInvalid(it) }
       .sortedWith(PreferredSdkComparator())
-    val panels = arrayListOf<PyAddSdkView>(createVirtualEnvPanel(project, sdks, newProjectPath),
-                                           createAnacondaPanel(project),
-                                           PyAddSystemWideInterpreterPanel(existingSdks))
+    val panels = arrayListOf<PyAddSdkView>(createVirtualEnvPanel(project, module, sdks),
+                                           createAnacondaPanel(project, module),
+                                           PyAddSystemWideInterpreterPanel(module, existingSdks))
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
-      .mapNotNull { it.createView(project = project, newProjectPath = newProjectPath, existingSdks = existingSdks).registerIfDisposable() }
+      .mapNotNull {
+        it.safeCreateView(project = project, module = module, existingSdks = existingSdks)
+          .registerIfDisposable()
+      }
     panels.addAll(extendedPanels)
     mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels))
     return mainPanel
@@ -109,10 +114,11 @@ class PyAddSdkDialog private constructor(private val project: Project?,
            lazyMessage = { "${PyAddSdkDialog::class.java} is not ready for ${DialogStyle.COMPACT} dialog style" })
 
     return doCreateSouthPanel(leftButtons = listOf(),
-                                                           rightButtons = listOf(previousButton.value, nextButton.value,
-                                                                                 cancelButton.value))
+                              rightButtons = listOf(previousButton.value, nextButton.value,
+                                                    cancelButton.value))
   }
 
+  @Suppress("SuspiciousPackagePrivateAccess") //todo: remove suppression when everyone update to IDEA where IDEA-210216 is fixed
   private val nextAction: Action = object : DialogWrapperAction("Next") {
     override fun doAction(e: ActionEvent) {
       selectedPanel?.let {
@@ -126,6 +132,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   private val nextButton = lazy { createJButtonForAction(nextAction) }
 
+  @Suppress("SuspiciousPackagePrivateAccess")
   private val previousAction = object : DialogWrapperAction("Previous") {
     override fun doAction(e: ActionEvent) = onPrevious()
   }
@@ -201,31 +208,31 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   }
 
   private fun createVirtualEnvPanel(project: Project?,
-                                    existingSdks: List<Sdk>,
-                                    newProjectPath: String?): PyAddSdkPanel {
+                                    module: Module?,
+                                    existingSdks: List<Sdk>): PyAddSdkPanel {
     val newVirtualEnvPanel = when {
-      allowCreatingNewEnvironments(project) -> PyAddNewVirtualEnvPanel(project, existingSdks, newProjectPath)
+      allowCreatingNewEnvironments(project) -> PyAddNewVirtualEnvPanel(project, module, existingSdks, null)
       else -> null
     }
-    val existingVirtualEnvPanel = PyAddExistingVirtualEnvPanel(project, existingSdks, newProjectPath)
+    val existingVirtualEnvPanel = PyAddExistingVirtualEnvPanel(project, module, existingSdks, null)
     val panels = listOf(newVirtualEnvPanel,
                         existingVirtualEnvPanel)
       .filterNotNull()
     val defaultPanel = when {
-      detectVirtualEnvs(project, existingSdks).any { it.isAssociatedWithProject(project) } -> existingVirtualEnvPanel
+      detectVirtualEnvs(module, existingSdks).any { it.isAssociatedWithModule(module) } -> existingVirtualEnvPanel
       newVirtualEnvPanel != null -> newVirtualEnvPanel
       else -> existingVirtualEnvPanel
     }
     return PyAddSdkGroupPanel("Virtualenv environment", PythonIcons.Python.Virtualenv, panels, defaultPanel)
   }
 
-  private fun createAnacondaPanel(project: Project?): PyAddSdkPanel {
+  private fun createAnacondaPanel(project: Project?, module: Module?): PyAddSdkPanel {
     val newCondaEnvPanel = when {
-      allowCreatingNewEnvironments(project) -> PyAddNewCondaEnvPanel(project, existingSdks, newProjectPath)
+      allowCreatingNewEnvironments(project) -> PyAddNewCondaEnvPanel(project, module, existingSdks, null)
       else -> null
     }
     val panels = listOf(newCondaEnvPanel,
-                        PyAddExistingCondaEnvPanel(project, existingSdks, newProjectPath))
+                        PyAddExistingCondaEnvPanel(project, module, existingSdks, null))
       .filterNotNull()
     return PyAddSdkGroupPanel("Conda environment", PythonIcons.Python.Anaconda, panels, panels[0])
   }
@@ -312,6 +319,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   }
 
   companion object {
+    private val LOG: Logger = Logger.getInstance(PyAddSdkDialog::class.java)
+
     private fun allowCreatingNewEnvironments(project: Project?) =
       project != null || !PlatformUtils.isPyCharm() || PlatformUtils.isPyCharmEducational()
 
@@ -322,10 +331,31 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     private const val WIZARD_CARD_PANE = "Wizard"
 
     @JvmStatic
-    fun create(project: Project?, existingSdks: List<Sdk>, newProjectPath: String?): PyAddSdkDialog {
-      return PyAddSdkDialog(project = project, existingSdks = existingSdks, newProjectPath = newProjectPath).apply { init() }
+    fun show(project: Project?, module: Module?, existingSdks: List<Sdk>, sdkAddedCallback: Consumer<Sdk?>) {
+      val dialog = PyAddSdkDialog(project = project, module = module, existingSdks = existingSdks)
+      dialog.init()
+
+      val sdk = if (dialog.showAndGet()) dialog.getOrCreateSdk() else null
+      sdkAddedCallback.accept(sdk)
+    }
+
+    /**
+     * Fixes the problem when [PyAddDockerSdkProvider.createView] for Docker
+     * and Docker Compose types throws [NoClassDefFoundError] exception when
+     * `org.jetbrains.plugins.remote-run` plugin is disabled.
+     */
+    private fun PyAddSdkProvider.safeCreateView(project: Project?,
+                                                module: Module?,
+                                                existingSdks: List<Sdk>): PyAddSdkView? {
+      try {
+        return createView(project, module, null, existingSdks)
+      }
+      catch (e: NoClassDefFoundError) {
+        LOG.info(e)
+        return null
+      }
     }
   }
 }
 
-class CreateSdkInterrupted: Exception()
+class CreateSdkInterrupted : Exception()

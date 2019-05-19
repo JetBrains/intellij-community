@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
@@ -7,6 +8,8 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 class MockStreamProvider(private val dir: Path) : StreamProvider {
+  override val isExclusive = true
+
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
     dir.resolve(fileSpec).write(content, 0, size)
   }
@@ -23,8 +26,8 @@ class MockStreamProvider(private val dir: Path) : StreamProvider {
   }
 
   override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
-    dir.resolve(path).directoryStreamIfExists({ filter(it.fileName.toString()) }) {
-      for (file in it) {
+    dir.resolve(path).directoryStreamIfExists({ filter(it.fileName.toString()) }) { directoryStream ->
+      for (file in directoryStream) {
         val attributes = file.basicAttributesIfExists()
         if (attributes == null || attributes.isDirectory || file.isHidden()) {
           continue

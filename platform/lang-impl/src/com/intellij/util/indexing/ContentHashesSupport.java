@@ -30,7 +30,6 @@ import java.security.MessageDigest;
 
 /**
  * @author Maxim.Mossienko
- * @since 4/10/2014.
  */
 class ContentHashesSupport {
   private static volatile ContentHashesUtil.HashEnumerator ourHashesWithFileType;

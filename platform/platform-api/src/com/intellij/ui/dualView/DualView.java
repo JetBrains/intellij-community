@@ -28,7 +28,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.config.Storage;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
@@ -89,18 +88,22 @@ public class DualView extends JPanel {
     add(createFlatComponent(columns), FLAT);
 
     myTreeView.getTreeViewModel().addTreeModelListener(new TreeModelListener() {
+      @Override
       public void treeNodesInserted(TreeModelEvent e) {
         refreshFlatModel();
       }
 
+      @Override
       public void treeNodesRemoved(TreeModelEvent e) {
         refreshFlatModel();
       }
 
+      @Override
       public void treeStructureChanged(TreeModelEvent e) {
         refreshFlatModel();
       }
 
+      @Override
       public void treeNodesChanged(TreeModelEvent e) {
         refreshFlatModel();
       }
@@ -113,6 +116,7 @@ public class DualView extends JPanel {
     restoreState();
 
     myPropertyChangeListener = new PropertyChangeListener() {
+      @Override
       public void propertyChange(PropertyChangeEvent evt) {
         if (mySuppressStore) return;
         saveState();
@@ -145,14 +149,17 @@ public class DualView extends JPanel {
 
     final ColumnInfo firstColumn = columns[0];
     ColumnInfo firstTreeColumn = new ColumnInfo(firstColumn.getName()) {
+      @Override
       public Object valueOf(Object object) {
         return firstColumn.valueOf(object);
       }
 
+      @Override
       public Class getColumnClass() {
         return TreeTableModel.class;
       }
 
+      @Override
       public boolean isCellEditable(Object o) {
         return true;
       }
@@ -177,9 +184,7 @@ public class DualView extends JPanel {
     myCurrentView = view;
     if (myCurrentView != null) {
       myCurrentView.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-      if (myCurrentView instanceof JBTable) {
-        myCurrentView.setStriped(true);
-      }
+      myCurrentView.setStriped(true);
       final int row = myCurrentView.getSelectedRow();
       myCurrentView.scrollRectToVisible(myCurrentView.getCellRect(row, 0, true));
     }
@@ -201,6 +206,7 @@ public class DualView extends JPanel {
 
   private Component createTreeComponent(DualViewColumnInfo[] columns, TreeNode root) {
     myTreeView = new TreeTableView(new ListTreeTableModelOnColumns(root, createTreeColumns(columns))) {
+      @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         return createWrappedRenderer(super.getCellRenderer(row, column));
       }
@@ -235,6 +241,7 @@ public class DualView extends JPanel {
     ListTableModel flatModel = new ListTableModel(shownColumns.toArray(ColumnInfo.EMPTY_ARRAY));
     //noinspection unchecked
     myFlatView = new TableView(flatModel) {
+      @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         return createWrappedRenderer(super.getCellRenderer(row, column));
       }
@@ -319,12 +326,8 @@ public class DualView extends JPanel {
   }
 
   public List getSelection() {
-    List<Object> result = ContainerUtil.newArrayList();
     SelectionProvider visibleTable = (SelectionProvider)getVisibleTable();
-    for (Object aSelection : visibleTable.getSelection()) {
-      result.add(aSelection);
-    }
-    return result;
+    return new ArrayList<Object>(visibleTable.getSelection());
   }
 
   private JTable getVisibleTable() {
@@ -423,7 +426,7 @@ public class DualView extends JPanel {
   private class MyTableCellRendererWrapper implements TableCellRendererWrapper {
     @NotNull private final TableCellRenderer myRenderer;
 
-    public MyTableCellRendererWrapper(@NotNull TableCellRenderer renderer) {
+    MyTableCellRendererWrapper(@NotNull TableCellRenderer renderer) {
       myRenderer = renderer;
     }
 
@@ -433,6 +436,7 @@ public class DualView extends JPanel {
       return myRenderer;
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value,
                                                    boolean isSelected,

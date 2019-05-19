@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -16,16 +16,16 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -36,8 +36,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"))
 public class CustomActionsSchema implements PersistentStateComponent<Element> {
@@ -75,7 +75,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     if (TouchBarsManager.isTouchBarAvailable())
       myIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
 
-    ArrayList<Couple<String>> extList = ContainerUtil.newArrayList();
+    ArrayList<Couple<String>> extList = new ArrayList<>();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
       (groupId, groupTitle) -> extList.add(Couple.of(groupId, groupTitle));
     for (CustomizableActionGroupProvider provider : CustomizableActionGroupProvider.EP_NAME.getExtensions()) {
@@ -232,17 +232,12 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   @Override
   public Element getState() {
     Element element = new Element("state");
-    try {
-      //noinspection deprecation
-      DefaultJDOMExternalizer.writeExternal(this, element);
-      for (ActionUrl group : myActions) {
-        Element groupElement = new Element(GROUP);
-        group.writeExternal(groupElement);
-        element.addContent(groupElement);
-      }
-    }
-    catch (WriteExternalException e) {
-      throw new RuntimeException(e);
+    //noinspection deprecation
+    DefaultJDOMExternalizer.writeExternal(this, element);
+    for (ActionUrl group : myActions) {
+      Element groupElement = new Element(GROUP);
+      group.writeExternal(groupElement);
+      element.addContent(groupElement);
     }
     writeIcons(element);
     return element;
@@ -349,20 +344,20 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     for (String actionId : myIconCustomizations.keySet()) {
       AnAction anAction = actionManager.getAction(actionId);
       if (anAction != null) {
-        Icon icon;
-        String iconPath = myIconCustomizations.get(actionId);
-        if (iconPath != null && new File(FileUtil.toSystemDependentName(iconPath)).exists()) {
-          Image image = null;
-          try {
-            image = ImageLoader.loadFromStream(VfsUtilCore.convertToURL(VfsUtil.pathToUrl(iconPath)).openStream());
+        Icon icon = AllIcons.Toolbar.Unknown;
+        final String iconPath = myIconCustomizations.get(actionId);
+        if (iconPath != null) {
+          final File f = new File(FileUtil.toSystemDependentName(iconPath));
+          if (f.exists()) {
+            Image image = null;
+            try {
+              image = ImageLoader.loadCustomIcon(f);
+            } catch (IOException e) {
+              LOG.debug(e);
+            }
+            if (image != null)
+              icon = new JBImageIcon(image);
           }
-          catch (IOException e) {
-            LOG.debug(e);
-          }
-          icon = image == null ? null : new JBImageIcon(image);
-        }
-        else {
-          icon = AllIcons.Toolbar.Unknown;
         }
         anAction.getTemplatePresentation().setIcon(icon);
         anAction.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(icon));

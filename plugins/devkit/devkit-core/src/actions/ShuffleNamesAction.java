@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -24,16 +25,16 @@ import java.util.*;
  */
 public class ShuffleNamesAction extends AnAction {
   @Override
-  public void update(AnActionEvent e) {
-    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
+  public void update(@NotNull AnActionEvent e) {
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     e.getPresentation().setEnabled(editor != null && file != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (editor == null || file == null) return;
     final Project project = file.getProject();
     CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessorEx.getInstance();

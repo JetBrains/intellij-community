@@ -24,10 +24,10 @@ public class DeprecationInspectionFixTest extends LightQuickFixParameterizedTest
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new DeprecationInspection()};
+    DeprecationInspection inspection = new DeprecationInspection();
+    inspection.IGNORE_IN_SAME_OUTERMOST_CLASS = false;
+    return new LocalInspectionTool[]{inspection};
   }
-
-  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

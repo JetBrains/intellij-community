@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
 import com.intellij.concurrency.JobScheduler
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -21,6 +21,8 @@ import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import kotlin.properties.ObservableProperty
+import kotlin.reflect.KProperty
 
 /**
  * Various utility methods for the GutHub plugin.
@@ -30,7 +32,6 @@ object GithubUtil {
   @JvmField
   val LOG: Logger = Logger.getInstance("github")
   const val SERVICE_DISPLAY_NAME: String = "GitHub"
-  const val DEFAULT_TOKEN_NOTE: String = "IntelliJ Plugin"
   const val GIT_AUTH_PASSWORD_SUBSTITUTE: String = "x-oauth-basic"
 
   @JvmStatic
@@ -101,6 +102,14 @@ object GithubUtil {
     return Couple.of(subject, description)
   }
 
+  object Delegates {
+    inline fun <T> equalVetoingObservable(initialValue: T, crossinline onChange: (newValue: T) -> Unit) =
+      object : ObservableProperty<T>(initialValue) {
+        override fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T) = newValue == null || oldValue != newValue
+        override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) = onChange(newValue)
+      }
+  }
+
   //region Deprecated
   @JvmStatic
   @Deprecated("{@link GithubAuthenticationManager}")
@@ -111,7 +120,7 @@ object GithubUtil {
     val authManager = GithubAuthenticationManager.getInstance()
     var account = authManager.getSingleOrDefaultAccount(project)
     if (account == null) {
-      account = invokeAndWaitIfNeed(ModalityState.any()) { authManager.requestNewAccount(project) }
+      account = invokeAndWaitIfNeeded(ModalityState.any()) { authManager.requestNewAccount(project) }
     }
     if (account == null) throw ProcessCanceledException()
 

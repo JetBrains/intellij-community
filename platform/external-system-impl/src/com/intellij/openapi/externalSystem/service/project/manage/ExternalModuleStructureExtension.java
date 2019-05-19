@@ -42,7 +42,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/1/2016
  */
 public class ExternalModuleStructureExtension extends ModuleStructureExtension {
 

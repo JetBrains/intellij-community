@@ -29,6 +29,7 @@ public class GrMultiplicativeExpressionImpl extends GrBinaryExpressionImpl {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Multiplicative expression";
   }

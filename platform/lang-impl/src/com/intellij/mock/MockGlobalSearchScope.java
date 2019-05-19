@@ -30,11 +30,6 @@ public class MockGlobalSearchScope extends GlobalSearchScope {
   }
 
   @Override
-  public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
-    return 0;
-  }
-
-  @Override
   public boolean isSearchInModuleContent(@NotNull final Module aModule) {
     return true;
   }

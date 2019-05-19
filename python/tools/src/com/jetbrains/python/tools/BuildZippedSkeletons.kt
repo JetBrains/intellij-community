@@ -32,10 +32,12 @@ import java.util.zip.ZipOutputStream
  * @author traff
  */
 
-val PYCHARM_PYTHONS: String = "PYCHARM_PYTHONS"
+const val PYCHARM_PYTHONS: String = "PYCHARM_PYTHONS"
 
 fun main(args: Array<String>) {
+  println("Starting build process")
   val app = IdeaTestApplication.getInstance()
+  println("App started: ${app}")
   try {
 
     val root = System.getenv(PYCHARM_PYTHONS)
@@ -60,9 +62,9 @@ fun main(args: Array<String>) {
 
 
       val dirPacked = File(skeletonsDir.parent, DefaultPregeneratedSkeletonsProvider.getPregeneratedSkeletonsName(sdk, refresher.generatorVersion, true, true))
-      val zip = ZipOutputStream(FileOutputStream(dirPacked))
-      ZipUtil.addDirToZipRecursively(zip, dirPacked, skeletonsDir, "", null, null)
-      zip.close()
+      ZipOutputStream(FileOutputStream(dirPacked)).use {
+        ZipUtil.addDirToZipRecursively(it, dirPacked, skeletonsDir, "", null, null)
+      }
     }
   }
   catch (e: Exception) {

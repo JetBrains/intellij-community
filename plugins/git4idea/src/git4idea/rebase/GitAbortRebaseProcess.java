@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -24,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
@@ -36,11 +21,14 @@ import git4idea.util.GitFreezingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.dvcs.DvcsUtil.joinShortNames;
+import static com.intellij.openapi.ui.Messages.canShowMacSheetPanel;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh;
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
@@ -82,7 +70,7 @@ class GitAbortRebaseProcess {
 
   void abortWithConfirmation() {
     LOG.info("Abort rebase. " + (myRepositoryToAbort == null ? "Nothing to abort" : getShortRepositoryName(myRepositoryToAbort)) +
-              ". Roots to rollback: " + DvcsUtil.joinShortNames(myRepositoriesToRollback.keySet()));
+              ". Roots to rollback: " + joinShortNames(myRepositoriesToRollback.keySet()));
     final Ref<AbortChoice> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> ref.set(confirmAbort()));
 
@@ -95,27 +83,30 @@ class GitAbortRebaseProcess {
     }
   }
 
-  void abortAndRollback() {
-    LOG.info("Abort rebase. " + (myRepositoryToAbort == null ? "Nothing to abort" : getShortRepositoryName(myRepositoryToAbort)) +
-              ". Roots to rollback: " + DvcsUtil.joinShortNames(myRepositoriesToRollback.keySet()));
-    doAbort(true);
-  }
-
   @NotNull
   private AbortChoice confirmAbort() {
     String title = "Abort Rebase";
     if (myRepositoryToAbort != null) {
       if (myRepositoriesToRollback.isEmpty()) {
-        String message = "Are you sure you want to abort rebase" + GitUtil.mention(myRepositoryToAbort) + "?";
+        String message = "Abort rebase" + GitUtil.mention(myRepositoryToAbort) + "?";
+        if (canShowMacSheetPanel()) {
+          title = message;
+          message = "";
+        }
         int choice = DialogManager.showOkCancelDialog(myProject, message, title, "Abort", getCancelButtonText(), getQuestionIcon());
         if (choice == Messages.OK) {
           return AbortChoice.ABORT;
         }
       }
       else {
-        String message = "Do you want just to abort rebase" + GitUtil.mention(myRepositoryToAbort) + ",\n" +
-                         "or also rollback the successful rebase" + GitUtil.mention(myRepositoriesToRollback.keySet()) + "?";
-        int choice = DialogManager.showYesNoCancelDialog(myProject, message, title, "Abort & Rollback", "Abort",
+        String message = String.format("Abort rebase in %s only or also rollback rebase in %s?",
+                                       getShortRepositoryName(myRepositoryToAbort),
+                                       joinShortNames(myRepositoriesToRollback.keySet(), 5));
+        if (canShowMacSheetPanel()) {
+          title = message;
+          message = "";
+        }
+        int choice = DialogManager.showYesNoCancelDialog(myProject, message, title, "Abort and Rollback", "Abort Only",
                                                          getCancelButtonText(), getQuestionIcon());
         if (choice == Messages.YES) {
           return AbortChoice.ROLLBACK_AND_ABORT;
@@ -148,7 +139,7 @@ class GitAbortRebaseProcess {
 
   private void doAbort(final boolean rollback) {
     new GitFreezingProcess(myProject, "rebase", () -> {
-      List<GitRepository> repositoriesToRefresh = ContainerUtil.newArrayList();
+      List<GitRepository> repositoriesToRefresh = new ArrayList<>();
       try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
         if (myRepositoryToAbort != null) {
           myIndicator.setText2("git rebase --abort" + GitUtil.mention(myRepositoryToAbort));

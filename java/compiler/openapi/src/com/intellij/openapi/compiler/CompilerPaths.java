@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -25,15 +11,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerationHandler;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A set of utility methods for working with paths
@@ -45,7 +38,6 @@ public class CompilerPaths {
    * @return a root directory where generated files for various compilers are stored
    */
   public static File getGeneratedDataDirectory(Project project) {
-    //noinspection HardCodedStringLiteral
     return new File(getCompilerSystemDirectory(project), ".generated");
   }
 
@@ -53,7 +45,6 @@ public class CompilerPaths {
    * @return a root directory where compiler caches for the given project are stored
    */
   public static File getCacheStoreDirectory(final Project project) {
-    //noinspection HardCodedStringLiteral
     return new File(getCompilerSystemDirectory(project), ".caches");
   }
 
@@ -134,16 +125,6 @@ public class CompilerPaths {
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
   }
 
-  /**
-   * @return path to annotation-processors generated _production_ sources
-    Use {@link #getAnnotationProcessorsGenerationPath(Module, boolean)}
-   */
-  @Deprecated
-  @Nullable
-  public static String getAnnotationProcessorsGenerationPath(Module module) {
-    return getAnnotationProcessorsGenerationPath(module, false);
-  }
-
   @Nullable
   public static String getAnnotationProcessorsGenerationPath(Module module, boolean forTests) {
     final AnnotationProcessingConfiguration config = CompilerConfiguration.getInstance(module.getProject()).getAnnotationProcessingConfiguration(module);
@@ -167,4 +148,35 @@ public class CompilerPaths {
     return StringUtil.isEmpty(sourceDirName)? path : path + "/" + sourceDirName;
   }
 
+  @NotNull
+  public static String[] getOutputPaths(@NotNull Module[] modules) {
+    Set<String> outputPaths = new OrderedSet<>();
+    for (Module module : modules) {
+      CompilerModuleExtension compilerModuleExtension = !module.isDisposed()? CompilerModuleExtension.getInstance(module) : null;
+      if (compilerModuleExtension == null) continue;
+
+      String outputPathUrl = compilerModuleExtension.getCompilerOutputUrl();
+      if (outputPathUrl != null) {
+        outputPaths.add(VirtualFileManager.extractPath(outputPathUrl).replace('/', File.separatorChar));
+      }
+
+      String outputPathForTestsUrl = compilerModuleExtension.getCompilerOutputUrlForTests();
+      if (outputPathForTestsUrl != null) {
+        outputPaths.add(VirtualFileManager.extractPath(outputPathForTestsUrl).replace('/', File.separatorChar));
+      }
+
+      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      for (OrderEnumerationHandler.Factory handlerFactory : OrderEnumerationHandler.EP_NAME.getExtensions()) {
+        if (handlerFactory.isApplicable(module)) {
+          OrderEnumerationHandler handler = handlerFactory.createHandler(module);
+          List<String> outputUrls = new SmartList<>();
+          handler.addCustomModuleRoots(OrderRootType.CLASSES, moduleRootManager, outputUrls, true, true);
+          for (String outputUrl : outputUrls) {
+            outputPaths.add(VirtualFileManager.extractPath(outputUrl).replace('/', File.separatorChar));
+          }
+        }
+      }
+    }
+    return ArrayUtil.toStringArray(outputPaths);
+  }
 }

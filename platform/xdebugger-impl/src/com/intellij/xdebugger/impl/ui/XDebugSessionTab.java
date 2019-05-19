@@ -97,7 +97,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     super(session.getProject(), "Debug", session.getSessionName(), GlobalSearchScope.allScope(session.getProject()));
 
     setSession(session, environment, icon);
-
+    myUi.getOptions().setMinimizeActionEnabled(false);
     myUi.addContent(createFramesContent(), 0, PlaceInGrid.left, false);
 
     if (Registry.is("debugger.new.threads.view")) {
@@ -114,7 +114,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     myUi.addListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(ContentManagerEvent event) {
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
         Content content = event.getContent();
         if (mySession != null && content.isSelected() && getWatchesContentId().equals(ViewImpl.ID.get(content))) {
           myRebuildWatchesRunnable.run();
@@ -156,7 +156,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (XWatchesView.DATA_KEY.is(dataId)) {
       return myWatchesView;
     }
@@ -190,7 +190,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView);
     Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
                                         XDebuggerBundle.message("debugger.session.tab.variables.title"),
-                                        AllIcons.Debugger.Value, variablesView.getDefaultFocusedComponent());
+                                        null, variablesView.getDefaultFocusedComponent());
     result.setCloseable(false);
 
     ActionGroup group = getCustomizedActionGroup(XDebuggerActions.VARIABLES_TREE_TOOLBAR_GROUP);
@@ -202,7 +202,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
-                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watch, myWatchesView.getDefaultFocusedComponent());
+                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), null, myWatchesView.getDefaultFocusedComponent());
     watchesContent.setCloseable(false);
     return watchesContent;
   }
@@ -212,7 +212,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XFramesView framesView = new XFramesView(myProject);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
-                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), AllIcons.Debugger.Frame, framesView.getDefaultFocusedComponent());
+                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), /*AllIcons.Debugger.Frame*/null, framesView.getDefaultFocusedComponent());
     framesContent.setCloseable(false);
     return framesContent;
   }
@@ -222,7 +222,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XThreadsView stacksView = new XThreadsView(myProject, mySession);
     registerView(DebuggerContentInfo.THREADS_CONTENT, stacksView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.THREADS_CONTENT, stacksView.getPanel(),
-                                               XDebuggerBundle.message("debugger.session.tab.threads.title"), AllIcons.Debugger.Threads,
+                                               XDebuggerBundle.message("debugger.session.tab.threads.title"), null,
                                                stacksView.getDefaultFocusedComponent());
     framesContent.setCloseable(false);
     return framesContent;
@@ -344,12 +344,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  public static void showFramesView(@NotNull XDebugSessionImpl session) {
+  public static void showFramesView(@Nullable XDebugSessionImpl session) {
     showView(session, DebuggerContentInfo.FRAME_CONTENT);
   }
 
-  private static void showView(@NotNull XDebugSessionImpl session, String viewId) {
-    XDebugSessionTab tab = session.getSessionTab();
+  private static void showView(@Nullable XDebugSessionImpl session, String viewId) {
+    XDebugSessionTab tab = session != null ? session.getSessionTab() : null;
     if (tab != null) {
       tab.toFront(false, null);
       // restore watches tab if minimized

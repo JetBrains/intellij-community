@@ -1,7 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
+import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -10,12 +12,11 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.serialization.SerializationException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializationException;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -25,7 +26,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(
   name = "CodeInsightSettings",
@@ -33,6 +38,7 @@ import java.lang.reflect.Field;
 )
 public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightSettings");
+  private final List<PropertyChangeListener> myListeners = new CopyOnWriteArrayList<>();
 
   public static CodeInsightSettings getInstance() {
     return ServiceManager.getService(CodeInsightSettings.class);
@@ -41,12 +47,16 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public CodeInsightSettings() {
     Application application = ApplicationManager.getApplication();
     if (Registry.is("java.completion.argument.hints") ||
-        (application != null && application.isInternal() && !application.isUnitTestMode()) && 
-        Registry.is("java.completion.argument.hints.internal")) {
+        application != null && application.isInternal() && !application.isUnitTestMode() && Registry.is("java.completion.argument.hints.internal")) {
       SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = true;
       Registry.get("java.completion.argument.hints").setValue(false);
       Registry.get("java.completion.argument.hints.internal").setValue(false);
     }
+  }
+
+  public void addPropertyChangeListener(PropertyChangeListener listener, Disposable parentDisposable) {
+    myListeners.add(listener);
+    Disposer.register(parentDisposable, () -> myListeners.remove(listener));
   }
 
   @Override
@@ -61,7 +71,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   }
 
   public boolean SHOW_EXTERNAL_ANNOTATIONS_INLINE = true;
-  public boolean SHOW_INFERRED_ANNOTATIONS_INLINE = false;
+  public boolean SHOW_INFERRED_ANNOTATIONS_INLINE;
 
 
   public boolean SHOW_METHOD_CHAIN_TYPES_INLINE = true;
@@ -79,24 +89,41 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public static final int NONE = 2;
   public static final int FIRST_LETTER = 3;
 
+  /**
+   * @deprecated use accessors instead
+   */
   public boolean SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS;
+
+  public boolean isSelectAutopopupSuggestionsByChars() {
+    return SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS;
+  }
+
+  public void setSelectAutopopupSuggestionsByChars(boolean value) {
+    boolean oldValue = SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS;
+    if (oldValue != value) {
+      SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = value;
+      for (PropertyChangeListener listener : myListeners) {
+        listener.propertyChange(new PropertyChangeEvent(this, "SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS", oldValue, value));
+      }
+    }
+  }
+
   public boolean AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
 
+  @Deprecated
   public boolean AUTOCOMPLETE_COMMON_PREFIX = true;
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO;
 
-  public boolean SHOW_SOURCE_INFERRED_ANNOTATIONS = true;
-
   @OptionTag("SMART_BACKSPACE") // explicit name makes it work also for obfuscated private field's name
   private int SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT.ordinal();
-  
+
   @Transient
   @NotNull
   public SmartBackspaceMode getBackspaceMode() {
     SmartBackspaceMode[] values = SmartBackspaceMode.values();
-    return SMART_BACKSPACE >= 0 && SMART_BACKSPACE < values.length ? values[SMART_BACKSPACE] : SmartBackspaceMode.OFF; 
+    return SMART_BACKSPACE >= 0 && SMART_BACKSPACE < values.length ? values[SMART_BACKSPACE] : SmartBackspaceMode.OFF;
   }
 
   @Transient
@@ -111,7 +138,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean SMART_END_ACTION = true;
   public boolean JAVADOC_GENERATE_CLOSING_TAG = true;
 
-  public boolean SURROUND_SELECTION_ON_QUOTE_TYPED;
+  public boolean SURROUND_SELECTION_ON_QUOTE_TYPED = true;
 
   public boolean AUTOINSERT_PAIR_BRACKET = true;
   public boolean AUTOINSERT_PAIR_QUOTE = true;
@@ -143,13 +170,13 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   /**
    * @deprecated use {@link CodeInsightWorkspaceSettings#optimizeImportsOnTheFly}
    */
-  public boolean OPTIMIZE_IMPORTS_ON_THE_FLY;
+  @SuppressWarnings("MissingDeprecatedAnnotation") public boolean OPTIMIZE_IMPORTS_ON_THE_FLY;
 
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
   public boolean ADD_MEMBER_IMPORTS_ON_THE_FLY = true;
   public boolean JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
 
-  public boolean TAB_EXITS_BRACKETS_AND_QUOTES;
+  public boolean TAB_EXITS_BRACKETS_AND_QUOTES = true;
 
   /**
    * Names of classes and packages excluded from (Java) auto-import and completion. These are only IDE-specific settings
@@ -158,6 +185,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
    */
   @Property(surroundWithTag = false)
   @XCollection(elementName = "EXCLUDED_PACKAGE", valueAttributeName = "NAME")
+  @NotNull
   public String[] EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
 
   @Override
@@ -166,9 +194,9 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     setDefaults();
 
     try {
-      XmlSerializer.deserializeInto(this, state);
+      XmlSerializer.deserializeInto(state, this);
     }
-    catch (XmlSerializationException e) {
+    catch (SerializationException e) {
       LOG.info(e);
     }
   }
@@ -197,12 +225,19 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     return element;
   }
 
-  public void writeExternal(final Element element) {
+  public void writeExternal(@NotNull Element element) {
     try {
-      XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters());
+      XmlSerializer.serializeObjectInto(this, element);
     }
-    catch (XmlSerializationException e) {
+    catch (SerializationException e) {
       LOG.info(e);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    return ReflectionUtil.comparePublicNonFinalFields(this, o);
   }
 }

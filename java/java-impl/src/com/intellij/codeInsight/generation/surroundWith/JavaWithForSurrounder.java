@@ -35,7 +35,7 @@ public class JavaWithForSurrounder extends JavaStatementsSurrounder{
   @Override
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, true);
@@ -47,7 +47,7 @@ public class JavaWithForSurrounder extends JavaStatementsSurrounder{
     PsiForStatement forStatement = (PsiForStatement)factory.createStatementFromText(text, null);
     forStatement = (PsiForStatement)codeStyleManager.reformat(forStatement);
 
-    forStatement = (PsiForStatement)container.addAfter(forStatement, statements[statements.length - 1]);
+    forStatement = (PsiForStatement)addAfter(forStatement, container, statements);
 
     PsiStatement body = forStatement.getBody();
     if (!(body instanceof PsiBlockStatement)) {
@@ -55,7 +55,7 @@ public class JavaWithForSurrounder extends JavaStatementsSurrounder{
     }
     PsiCodeBlock bodyBlock = ((PsiBlockStatement)body).getCodeBlock();
     SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements);
-    bodyBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(bodyBlock, container, statements, false);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     forStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(forStatement);

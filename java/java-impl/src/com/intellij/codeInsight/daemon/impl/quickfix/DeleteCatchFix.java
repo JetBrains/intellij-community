@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -25,15 +26,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class DeleteCatchFix implements IntentionAction {
   private final PsiParameter myCatchParameter;
+  private final String myTypeText;
 
   public DeleteCatchFix(@NotNull PsiParameter myCatchParameter) {
     this.myCatchParameter = myCatchParameter;
+    myTypeText = JavaHighlightUtil.formatType(myCatchParameter.getType());
   }
 
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("delete.catch.text", JavaHighlightUtil.formatType(myCatchParameter.getType()));
+    return QuickFixBundle.message("delete.catch.text", myTypeText);
   }
 
   @Override
@@ -44,7 +47,7 @@ public class DeleteCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myCatchParameter.isValid() && PsiManager.getInstance(project).isInProject(myCatchParameter.getContainingFile());
+    return myCatchParameter.isValid() && BaseIntentionAction.canModify(myCatchParameter);
   }
 
   @NotNull
@@ -88,8 +91,8 @@ public class DeleteCatchFix implements IntentionAction {
             }
           }
           else {
-            tryParent.addBefore(tryBlock, tryStatement);
-            lastAddedStatement = tryBlock;
+            tryStatement.replace(tryBlock);
+            return tryBlock;
           }
         }
       }

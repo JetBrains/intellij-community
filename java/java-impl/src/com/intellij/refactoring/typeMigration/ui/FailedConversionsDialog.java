@@ -45,14 +45,17 @@ public class FailedConversionsDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), new ViewUsagesAction(), new CancelAction()};
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final JEditorPane messagePane = new JEditorPane(UIUtil.HTML_MIME, "");
+    messagePane.setEditorKit(UIUtil.getHTMLEditorKit());
     messagePane.setEditable(false);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane);
     scrollPane.setPreferredSize(JBUI.size(500, 400));
@@ -68,27 +71,30 @@ public class FailedConversionsDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.typeMigration.ui.FailedConversionsDialog";
   }
 
   private class CancelAction extends AbstractAction {
-    public CancelAction() {
+    CancelAction() {
       super(RefactoringBundle.message("cancel.button"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       doCancelAction();
     }
   }
 
   private class ViewUsagesAction extends AbstractAction {
-    public ViewUsagesAction() {
+    ViewUsagesAction() {
       super(RefactoringBundle.message("view.usages"));
       putValue(Action.MNEMONIC_KEY, new Integer('V'));
       putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       close(VIEW_USAGES_EXIT_CODE);
     }

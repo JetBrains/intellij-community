@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -57,17 +59,17 @@ public class FinalPrivateMethodInspection extends BaseInspection {
     return new RemoveModifierFix((String)infos[0]);
   }
 
-  private static class FinalPrivateMethodVisitor
-    extends BaseInspectionVisitor {
+  private static class FinalPrivateMethodVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      //no call to super, so we don't drill into anonymous classes
-      if (!method.hasModifierProperty(PsiModifier.FINAL)
-          || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (!method.hasModifierProperty(PsiModifier.FINAL) || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS, 0) && method.isVarArgs()) {
+      if (!PsiUtil.isLanguageLevel9OrHigher(method) && AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS, 0)) {
+        return;
+      }
+      if (HighlightUtil.isIllegalModifierCombination(method.getModifierList())) {
         return;
       }
       registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);

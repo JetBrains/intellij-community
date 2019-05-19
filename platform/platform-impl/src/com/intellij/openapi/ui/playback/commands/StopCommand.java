@@ -13,6 +13,7 @@ public class StopCommand extends AbstractCommand {
     super(text, line);
   }
 
+  @Override
   protected Promise<Object> _execute(PlaybackContext context) {
     context.message("Stopped", getLine());
     return Promises.resolvedPromise();

@@ -42,7 +42,7 @@ public class RecentStringInterner {
         }
 
         @Override
-        protected void putToProtectedQueue(String key, String value) {
+        protected void putToProtectedQueue(String key, @NotNull String value) {
           super.putToProtectedQueue(value, value);
         }
       };
@@ -51,12 +51,7 @@ public class RecentStringInterner {
 
     assert Integer.highestOneBit(stripes) == stripes;
     myStripeMask = stripes - 1;
-    LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        clear();
-      }
-    }, parentDisposable);
+    LowMemoryWatcher.register(this::clear, parentDisposable);
   }
 
   public String get(String s) {
@@ -65,7 +60,8 @@ public class RecentStringInterner {
     try {
       myStripeLocks[stripe].lock();
       return myInterns[stripe].get(s);
-    } finally {
+    }
+    finally {
       myStripeLocks[stripe].unlock();
     }
   }

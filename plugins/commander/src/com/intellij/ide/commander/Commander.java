@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.commander;
 
 import com.intellij.diff.actions.CompareFilesAction;
@@ -257,13 +257,12 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
     final AnAction backAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myHistory.back();
       }
 
       @Override
-      public void update(AnActionEvent e) {
-        super.update(e);
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.canGoBack());
       }
     };
@@ -272,13 +271,12 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
     final AnAction forwardAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myHistory.forward();
       }
 
       @Override
-      public void update(AnActionEvent e) {
-        super.update(e);
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.canGoForward());
       }
     };
@@ -414,9 +412,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     final CommanderPanel inactivePanel = getInactivePanel();
     inactivePanel.setActive(true);
     activePanel.setActive(false);
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(inactivePanel), true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(inactivePanel), true));
   }
 
   public void enterElementInActivePanel(final PsiElement element) {
@@ -455,9 +451,9 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return HelpID.COMMANDER;
+      return "viewingStructure.commander";
     }
     else if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;

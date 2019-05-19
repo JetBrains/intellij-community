@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.ImmutableList;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +41,8 @@ public class PyStringLiteralUtil {
    */
   public static final int MAX_PREFIX_LENGTH = 3;
   private static final ImmutableList<String> QUOTES = ImmutableList.of("'''", "\"\"\"", "'", "\"");
+
+  private static final Logger LOG = Logger.getInstance(PyStringLiteralUtil.class);
 
   private PyStringLiteralUtil() {
   }
@@ -71,7 +74,8 @@ public class PyStringLiteralUtil {
   public static boolean isStringLiteralToken(@NotNull String text) {
     final PythonLexer lexer = new PythonLexer();
     lexer.start(text);
-    return PyTokenTypes.STRING_NODES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == lexer.getBufferEnd();
+    return PyTokenTypes.STRING_NODES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == lexer.getBufferEnd() || 
+           PyTokenTypes.FSTRING_START == lexer.getTokenType();
   }
 
   /**
@@ -89,15 +93,21 @@ public class PyStringLiteralUtil {
   }
 
   /**
-   * Handles unicode and raw strings
-   *
-   * @param text
-   * @return open and close quote (including raw/unicode prefixes), null if no quotes present in string
-   *         'string' -> (', ')
-   *         UR"unicode raw string" -> (UR", ")
+   * Returns a pair where the first element is the prefix combined with the opening quote and the second is the closing quote.
+   * <p>
+   * If the given string literal is not properly quoted, e.g. the closing quote has fewer quotes as opposed to the
+   * opening one, or it's missing altogether this method returns null.
+   * <p>
+   * Examples:
+   * <pre>
+   *   ur"foo" -> ("ur, ")
+   *   ur'bar -> null
+   *   """baz""" -> (""", """)
+   *   '''quux' -> null
+   * </pre>
    */
   @Nullable
-  public static Pair<String, String> getQuotes(@NotNull final String text) {
+  public static Pair<String, String> getQuotes(@NotNull String text) {
     final String prefix = getPrefix(text);
     final String mainText = text.substring(prefix.length());
     for (String quote : QUOTES) {
@@ -107,6 +117,28 @@ public class PyStringLiteralUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Returns the range of the string literal text between the opening quote and the closing one.
+   * If the closing quote is either missing or mismatched, this range spans until the end of the literal.
+   */
+  @NotNull
+  public static TextRange getContentRange(@NotNull String text) {
+    LOG.assertTrue(isStringLiteralToken(text), "Text of a single string literal node expected: " + text);
+    int startOffset = getPrefixLength(text);
+    int delimiterLength = 1;
+    final String afterPrefix = text.substring(startOffset);
+    if (afterPrefix.startsWith("\"\"\"") || afterPrefix.startsWith("'''")) {
+      delimiterLength = 3;
+    }
+    final String delimiter = text.substring(startOffset, startOffset + delimiterLength);
+    startOffset += delimiterLength;
+    int endOffset = text.length();
+    if (text.substring(startOffset).endsWith(delimiter)) {
+      endOffset -= delimiterLength;
+    }
+    return new TextRange(startOffset, endOffset);
   }
 
   /**
@@ -124,6 +156,10 @@ public class PyStringLiteralUtil {
       }
     }
     return offset;
+  }
+
+  public static int getPrefixLength(@NotNull String text) {
+    return getPrefixEndOffset(text, 0);
   }
 
   @NotNull

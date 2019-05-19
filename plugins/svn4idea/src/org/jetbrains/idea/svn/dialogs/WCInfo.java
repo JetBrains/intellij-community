@@ -59,7 +59,6 @@ public class WCInfo {
 
   @NotNull
   public String getErrorMessage() {
-    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     SvnBindException error = getRootInfo().getNode().getError();
 
     return error != null ? error.getMessage() : "";

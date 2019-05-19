@@ -57,6 +57,7 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
     myEnumerationIndex = enumerationIndex;
   }
 
+  @Override
   public String getName() {
     return StringUtil.isEmpty(myName) ? myText.getText() : myName;
   }
@@ -68,6 +69,7 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
     return type != null ? type.name() : null;
   }
 
+  @Override
   protected PsiCodeFragment getEvaluationCode(final StackFrameContext context) throws EvaluateException {
     Pair<PsiElement, PsiType> psiClassAndType = DebuggerUtilsImpl.getPsiClassAndType(myTypeName, myProject);
     if (psiClassAndType.first == null) {
@@ -84,6 +86,7 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
     return myParentDescriptor;
   }
 
+  @Override
   protected EvaluationContextImpl getEvaluationContext(final EvaluationContextImpl evaluationContext) {
     return evaluationContext.createEvaluationContext(myParentDescriptor.getValue());
   }

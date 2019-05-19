@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -29,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ExecutionEnvironmentBuilder {
-  @NotNull private RunProfile myRunProfile;
+  private RunProfile myRunProfile;
   @NotNull private ExecutionTarget myTarget = DefaultExecutionTarget.INSTANCE;
 
   @NotNull private final Project myProject;
@@ -38,9 +24,9 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
-  @Nullable private String myRunnerId;
   private ProgramRunner<?> myRunner;
   private boolean myAssignNewId;
+  @Nullable private Long myExecutionId = null;
   @NotNull private Executor myExecutor;
   @Nullable private DataContext myDataContext;
   private final UserDataHolderBase myUserData = new UserDataHolderBase();
@@ -61,7 +47,7 @@ public final class ExecutionEnvironmentBuilder {
 
   @Nullable
   public static ExecutionEnvironmentBuilder createOrNull(@NotNull Project project, @NotNull Executor executor, @NotNull RunProfile runProfile) {
-    ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runProfile);
+    ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), runProfile);
     if (runner == null) {
       return null;
     }
@@ -70,8 +56,17 @@ public final class ExecutionEnvironmentBuilder {
 
   @Nullable
   public static ExecutionEnvironmentBuilder createOrNull(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
-    ExecutionEnvironmentBuilder builder = createOrNull(settings.getConfiguration().getProject(), executor, settings.getConfiguration());
+    ExecutionEnvironmentBuilder builder = createOrNull(executor, settings.getConfiguration());
     return builder == null ? null : builder.runnerAndSettings(builder.myRunner, settings);
+  }
+
+  @Nullable
+  public static ExecutionEnvironmentBuilder createOrNull(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
+    ExecutionEnvironmentBuilder builder = createOrNull(configuration.getProject(), executor, configuration);
+    if (builder != null) {
+      builder.runProfile(configuration);
+    }
+    return builder;
   }
 
   @NotNull
@@ -103,7 +98,6 @@ public final class ExecutionEnvironmentBuilder {
     myRunProfile = copySource.getRunProfile();
     myRunnerSettings = copySource.getRunnerSettings();
     myConfigurationSettings = copySource.getConfigurationSettings();
-    //noinspection deprecation
     myRunner = copySource.getRunner();
     myContentToReuse = copySource.getContentToReuse();
     myExecutor = copySource.getExecutor();
@@ -122,6 +116,7 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  @NotNull
   public ExecutionEnvironmentBuilder runnerAndSettings(@NotNull ProgramRunner runner,
                                                        @NotNull RunnerAndConfigurationSettings settings) {
     myRunnerAndConfigurationSettings = settings;
@@ -147,6 +142,7 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  @NotNull
   public ExecutionEnvironmentBuilder runner(@NotNull ProgramRunner<?> runner) {
     myRunner = runner;
     return this;
@@ -162,6 +158,12 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  public ExecutionEnvironmentBuilder executionId(long executionId) {
+    myExecutionId = executionId;
+    myAssignNewId = false;
+    return this;
+  }
+
   @NotNull
   public ExecutionEnvironment build() {
     ExecutionEnvironment environment = null;
@@ -172,12 +174,7 @@ public final class ExecutionEnvironmentBuilder {
     }
 
     if (environment == null && myRunner == null) {
-      if (myRunnerId == null) {
-        myRunner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), myRunProfile);
-      }
-      else {
-        myRunner = RunnerRegistry.getInstance().findRunnerById(myRunnerId);
-      }
+      myRunner = ProgramRunner.getRunner(myExecutor.getId(), myRunProfile);
     }
 
     if (environment == null && myRunner == null) {
@@ -191,6 +188,9 @@ public final class ExecutionEnvironmentBuilder {
 
     if (myAssignNewId) {
       environment.assignNewExecutionId();
+    }
+    if (myExecutionId != null) {
+      environment.setExecutionId(myExecutionId);
     }
     if (myDataContext != null) {
       environment.setDataContext(myDataContext);

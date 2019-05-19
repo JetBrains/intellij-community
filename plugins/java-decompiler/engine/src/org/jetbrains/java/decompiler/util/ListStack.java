@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
 import java.util.ArrayList;
@@ -10,10 +10,11 @@ public class ListStack<T> extends ArrayList<T> {
     super();
   }
 
-  public ListStack(ArrayList<T> list) {
+  public ListStack(ArrayList<? extends T> list) {
     super(list);
   }
 
+  @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   public ListStack<T> clone() {
     ListStack<T> copy = new ListStack<>(this);
@@ -62,6 +63,7 @@ public class ListStack<T> extends ArrayList<T> {
     pointer++;
   }
 
+  @Override
   public void clear() {
     super.clear();
     pointer = 0;

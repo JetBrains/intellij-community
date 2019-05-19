@@ -45,15 +45,15 @@ import java.nio.charset.Charset;
  *
  * Class is not final since it is overridden in Upsource
  */
-public class FileContentImpl extends UserDataHolderBase implements FileContent {
-  protected final VirtualFile myFile;
-  protected final String myFileName;
-  protected final FileType myFileType;
-  protected Charset myCharset;
-  protected byte[] myContent;
-  protected CharSequence myContentAsText;
-  protected final long myStamp;
-  protected byte[] myHash;
+public class FileContentImpl extends UserDataHolderBase implements PsiDependentFileContent {
+  private final VirtualFile myFile;
+  private final String myFileName;
+  private final FileType myFileType;
+  private Charset myCharset;
+  private byte[] myContent;
+  private CharSequence myContentAsText;
+  private final long myStamp;
+  private byte[] myHash;
   private boolean myLighterASTShouldBeThreadSafe;
   private final boolean myPhysicalContent;
 
@@ -73,8 +73,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
                           CharSequence contentAsText,
                           byte[] content,
                           long stamp,
-                          boolean physicalContent
-                          ) {
+                          boolean physicalContent) {
     myFile = file;
     myContentAsText = contentAsText;
     myContent = content;
@@ -92,12 +91,14 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
 
   private static final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
 
-  /**
-   * @return psiFile associated with the content. If the file was not set on FileContentCreation, it will be created on the spot
-   */
   @NotNull
   @Override
   public PsiFile getPsiFile() {
+    return getPsiFileForPsiDependentIndex();
+  }
+
+  @NotNull
+  private PsiFile getFileFromText() {
     PsiFile psi = getUserData(IndexingDataKeys.PSI_FILE);
 
     if (psi == null) {
@@ -112,8 +113,9 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     return psi;
   }
 
+  @Override
   @NotNull
-  public LighterAST getLighterASTForPsiDependentIndex() {
+  public LighterAST getLighterAST() {
     LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
       FileASTNode node = getPsiFileForPsiDependentIndex().getNode();
@@ -144,7 +146,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
                                            @NotNull VirtualFile file, @NotNull String fileName) {
     final Language language = fileType.getLanguage();
     final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
-    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(fileName, substitutedLanguage, text, false, false, true, file);
+    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(fileName, substitutedLanguage, text, false, false, false, file);
     if (psiFile == null) {
       throw new IllegalStateException("psiFile is null. language = " + language.getID() +
                                       ", substitutedLanguage = " + substitutedLanguage.getID());
@@ -153,7 +155,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
   }
 
   public static class IllegalDataException extends RuntimeException {
-    public IllegalDataException(final String message) {
+    IllegalDataException(final String message) {
       super(message);
     }
   }
@@ -267,8 +269,12 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
       }
     }
     if (psi == null) {
-      psi = getPsiFile();
+      psi = getFileFromText();
     }
     return psi;
+  }
+
+  public boolean isPhysicalContent() {
+    return myPhysicalContent;
   }
 }

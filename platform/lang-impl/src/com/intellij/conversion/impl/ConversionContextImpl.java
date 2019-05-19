@@ -113,7 +113,7 @@ public class ConversionContextImpl implements ConversionContext {
     return files;
   }
 
-  private static void addFilesRecursively(File file, Set<File> files) {
+  private static void addFilesRecursively(File file, Set<? super File> files) {
     if (file.isDirectory()) {
       final File[] children = file.listFiles();
       if (children != null) {
@@ -154,8 +154,10 @@ public class ConversionContextImpl implements ConversionContext {
     List<File> files = new ArrayList<>();
     for (Element module : modules.getChildren(ModuleManagerImpl.ELEMENT_MODULE)) {
       String filePath = module.getAttributeValue(ModuleManagerImpl.ATTRIBUTE_FILEPATH);
-      filePath = macros.substitute(filePath, true);
-      files.add(new File(FileUtil.toSystemDependentName(filePath)));
+      if (filePath != null) {
+        filePath = macros.substitute(filePath, true);
+        files.add(new File(FileUtil.toSystemDependentName(filePath)));
+      }
     }
     return files.toArray(new File[0]);
   }
@@ -409,7 +411,7 @@ public class ConversionContextImpl implements ConversionContext {
     return myWorkspaceFile;
   }
 
-  public void saveFiles(Collection<File> files, List<ConversionRunner> usedRunners) throws IOException {
+  public void saveFiles(Collection<? extends File> files, List<? extends ConversionRunner> usedRunners) throws IOException {
     Set<String> performedConversions = new HashSet<>();
     for (ConversionRunner runner : usedRunners) {
       final ConverterProvider provider = runner.getProvider();

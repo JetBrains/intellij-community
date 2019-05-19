@@ -64,14 +64,6 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
     }
   }
 
-  @Override
-  public void processTerminated(int exitCode) {
-  }
-
-  @Override
-  public void startFailed(Throwable exception) {
-  }
-
   public boolean hasHappened() {
     return myHappened;
   }

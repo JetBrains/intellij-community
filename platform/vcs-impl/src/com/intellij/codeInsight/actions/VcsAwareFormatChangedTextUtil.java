@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,10 +9,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.openapi.vcs.ex.RangesBuilder;
+import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -20,20 +17,21 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import java.util.function.Function;
 
 class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Override
   @NotNull
   public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
     ChangedRangesInfo helper = getChangedRangesInfo(file);
-    return helper != null ? helper.allChangedRanges : ContainerUtil.newArrayList();
+    return helper != null ? helper.allChangedRanges : new ArrayList<>();
   }
 
   @Override
@@ -72,7 +70,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Override
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
                                                            @NotNull Change[] changes,
-                                                           @NotNull Convertor<VirtualFile, List<T>> elementsConvertor) {
+                                                           @NotNull Function<? super VirtualFile, ? extends List<T>> elementsConvertor) {
     List<T> result = ContainerUtil.newSmartList();
     for (Change change : changes) {
       if (change.getType() == Change.Type.DELETED) continue;
@@ -84,7 +82,8 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) continue;
 
-      List<T> elements = elementsConvertor.convert(file);
+      List<T> apply = elementsConvertor.apply(file);
+      List<T> elements = apply == null ? null : ContainerUtil.skipNulls(apply);
       if (ContainerUtil.isEmpty(elements)) continue;
 
       BitSet changedLines = getChangedLines(project, document, change);
@@ -112,7 +111,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
     BitSet changedLines = new BitSet();
     for (Range range : ranges) {
       if (range.getType() == Range.DELETED) {
-        changedLines.set(range.getLine1() - 1, range.getLine1() + 1);
+        changedLines.set(Math.max(0, range.getLine1() - 1), range.getLine1() + 1);
       }
       else {
         changedLines.set(range.getLine1(), range.getLine2());
@@ -127,7 +126,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
     if (tracker != null) {
       if (change instanceof ChangeListChange && tracker instanceof PartialLocalLineStatusTracker) {
         String changeListId = ((ChangeListChange)change).getChangeListId();
-        List<PartialLocalLineStatusTracker.LocalRange> ranges = ((PartialLocalLineStatusTracker)tracker).getRanges();
+        List<LocalRange> ranges = ((PartialLocalLineStatusTracker)tracker).getRanges();
         if (ranges != null) {
           return ContainerUtil.filter(ranges, range -> range.getChangelistId().equals(changeListId));
         }
@@ -213,8 +212,8 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
 
   @NotNull
   private static ChangedRangesInfo getChangedTextRanges(@NotNull Document document, @NotNull List<? extends Range> changedRanges) {
-    final List<TextRange> ranges = ContainerUtil.newArrayList();
-    final List<TextRange> insertedRanges = ContainerUtil.newArrayList();
+    final List<TextRange> ranges = new ArrayList<>();
+    final List<TextRange> insertedRanges = new ArrayList<>();
 
     for (Range range : changedRanges) {
       if (range.getType() != Range.DELETED) {

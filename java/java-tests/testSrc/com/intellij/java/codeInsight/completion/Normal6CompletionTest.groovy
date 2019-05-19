@@ -2,10 +2,12 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
+@CompileStatic
 class Normal6CompletionTest extends NormalCompletionTestCase {
 
   void testMakeMultipleArgumentsFinalWhenInInner() {

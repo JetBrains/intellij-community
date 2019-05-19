@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.*;
@@ -22,7 +10,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -40,13 +30,11 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.dnd.Autoscroll;
 import java.awt.event.*;
-import java.lang.reflect.Array;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Map;
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable,
-                                           ComponentWithFileColors {
+                                           ComponentWithFileColors, TreePathBackgroundSupplier {
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -56,7 +44,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private Dimension myHoldSize;
   private final MySelectionModel mySelectionModel = new MySelectionModel();
-  private boolean myHorizontalAutoScrolling = Registry.is("ide.tree.horizontal.default.autoscrolling", false);
+  private ThreeState myHorizontalAutoScrolling = ThreeState.UNSURE;
 
   private TreePath rollOverPath;
 
@@ -117,8 +105,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void setUI(TreeUI ui) {
     TreeUI actualUI = ui;
-    if (!isCustomUI()) {
-      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection() && !UIUtil.isUnderGTKLookAndFeel()) {
+    if (!isCustomUI() && !Registry.is("ide.tree.ui.experimental")) {
+      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection()) {
         actualUI = new WideSelectionTreeUI(isWideSelection(), getWideSelectionBackgroundCondition());
       }
     }
@@ -155,7 +143,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * @return a strategy which determines if a wide selection should be drawn for a target row (it's number is
    * {@link Condition#value(Object) given} as an argument to the strategy)
    */
-  @SuppressWarnings("unchecked")
   @NotNull
   protected Condition<Integer> getWideSelectionBackgroundCondition() {
     return Conditions.alwaysTrue();
@@ -185,7 +172,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public Color getBackground() {
-    return isBackgroundSet() ? super.getBackground() : UIUtil.getTreeTextBackground();
+    return isBackgroundSet() ? super.getBackground() : UIUtil.getTreeBackground();
   }
 
   @Override
@@ -196,6 +183,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void addNotify() {
     super.addNotify();
+
+    // hack to invalidate sizes, see BasicTreeUI.Handler.propertyChange
+    // now the sizes calculated before the tree has the correct GraphicsConfiguration and may be incorrect on the secondary display
+    // see IDEA-184010
+    firePropertyChange("font", null, null);
 
     updateBusy();
   }
@@ -366,6 +358,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     config.restore();
   }
 
+  @Override
+  @Nullable
+  public Color getPathBackground(@NotNull TreePath path, int row) {
+    return isFileColorsEnabled() ? getFileColorForPath(path) : null;
+  }
+
   @Nullable
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
@@ -399,29 +397,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     MouseEvent e2 = e;
 
     if (SystemInfo.isMac) {
-      if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown() && e.getID() == MouseEvent.MOUSE_PRESSED) {
-        int modifiers = e.getModifiers() & ~(InputEvent.CTRL_MASK | InputEvent.BUTTON1_MASK) | InputEvent.BUTTON3_MASK;
-        e2 = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers, e.getX(), e.getY(), e.getClickCount(),
-                            true, MouseEvent.BUTTON3);
-      }
-    }
-    else if (UIUtil.isUnderGTKLookAndFeel()) {
-      if (SwingUtilities.isLeftMouseButton(e) && (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_CLICKED)) {
-        TreePath path = getClosestPathForLocation(e.getX(), e.getY());
-        if (path != null) {
-          Rectangle bounds = getPathBounds(path);
-          if (bounds != null &&
-              e.getY() > bounds.y && e.getY() < bounds.y + bounds.height &&
-              (e.getX() >= bounds.x + bounds.width ||
-               e.getX() < bounds.x && !isLocationInExpandControl(path, e.getX(), e.getY()))) {
-            int newX = bounds.x + bounds.width - 2;
-            e2 = MouseEventAdapter.convert(e, e.getComponent(), newX, e.getY());
-          }
-        }
-      }
+      e2 = MacUIUtil.fixMacContextMenuIssue(e);
     }
 
     super.processMouseEvent(e2);
+
+    if (e != e2 && e2.isConsumed()) e.consume();
   }
 
   /**
@@ -429,31 +410,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * in the area of row that is used to expand/collapse the node and
    * the node at {@code row} does not represent a leaf.
    */
+  @Deprecated
   protected boolean isLocationInExpandControl(@Nullable TreePath path, int mouseX) {
     if (path == null) return false;
     Rectangle bounds = getRowBounds(getRowForPath(path));
-    return isLocationInExpandControl(path, mouseX, bounds.y + bounds.height / 2);
-  }
-
-
-  private boolean isLocationInExpandControl(TreePath path, int x, int y) {
-    TreeUI ui = getUI();
-    if (!(ui instanceof BasicTreeUI)) return false;
-
-    try {
-      Class aClass = ui.getClass();
-      while (BasicTreeUI.class.isAssignableFrom(aClass) && !BasicTreeUI.class.equals(aClass)) {
-        aClass = aClass.getSuperclass();
-      }
-      Method method = ReflectionUtil.getDeclaredMethod(aClass, "isLocationInExpandControl", TreePath.class, int.class, int.class);
-      if (method != null) {
-        return (Boolean)method.invoke(ui, path, x, y);
-      }
-    }
-    catch (Throwable ignore) {
-    }
-
-    return false;
+    return TreeUtil.isLocationInExpandControl(this, path, mouseX, bounds.y + bounds.height / 2);
   }
 
   /**
@@ -655,7 +616,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return (PresentableNodeDescriptor)userObject;
   }
 
-  public TreePath getPath(PresentableNodeDescriptor node) {
+  public TreePath getPath(@NotNull PresentableNodeDescriptor node) {
     AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
     DefaultMutableTreeNode treeNode = builder.getNodeForElement(node);
 
@@ -715,7 +676,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       setPressed(event, false);
       if (event.getButton() == MouseEvent.BUTTON1 &&
           event.getClickCount() == 2 &&
-          isLocationInExpandControl(getClosestPathForLocation(event.getX(), event.getY()), event.getX())) {
+          TreeUtil.isLocationInExpandControl(Tree.this, event.getX(), event.getY())) {
         event.consume();
       }
     }
@@ -794,14 +755,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
+  @Deprecated
   public final void setLineStyleAngled() {
-    UIUtil.setLineStyleAngled(this);
   }
 
   @NotNull
-  public <T> T[] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<T> filter) {
+  public <T> T[] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<? super T> filter) {
     TreePath[] paths = getSelectionPaths();
-    if (paths == null) return (T[])Array.newInstance(nodeType, 0);
+    if (paths == null) return ArrayUtil.newArray(nodeType, 0);
 
     ArrayList<T> nodes = new ArrayList<>();
     for (TreePath path : paths) {
@@ -811,7 +772,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         nodes.add((T)last);
       }
     }
-    T[] result = (T[])Array.newInstance(nodeType, nodes.size());
+    T[] result = ArrayUtil.newArray(nodeType, nodes.size());
     nodes.toArray(result);
     return result;
   }
@@ -868,11 +829,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public boolean isHorizontalAutoScrollingEnabled() {
-    return myHorizontalAutoScrolling;
+    return myHorizontalAutoScrolling != ThreeState.UNSURE ? myHorizontalAutoScrolling == ThreeState.YES : Registry.is("ide.tree.horizontal.default.autoscrolling", false);
   }
 
   public void setHorizontalAutoScrollingEnabled(boolean enabled) {
-    myHorizontalAutoScrolling = enabled;
+    myHorizontalAutoScrolling = enabled ? ThreeState.YES : ThreeState.NO;
   }
 
   /**

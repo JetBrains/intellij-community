@@ -36,6 +36,7 @@ public class TestListenerFilter implements ClassFilter.ClassFilterWithScope
     this.project = project;
   }
 
+  @Override
   public boolean isAccepted(final PsiClass psiClass) {
     return ReadAction.compute(() -> {
       if (!ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(psiClass)) return false;
@@ -48,6 +49,7 @@ public class TestListenerFilter implements ClassFilter.ClassFilterWithScope
     return project;
   }
 
+  @Override
   public GlobalSearchScope getScope() {
     return scope;
   }

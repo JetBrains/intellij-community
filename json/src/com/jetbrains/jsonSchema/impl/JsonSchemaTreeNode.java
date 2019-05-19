@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.json.pointer.JsonPointerPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -34,7 +20,7 @@ public class JsonSchemaTreeNode {
   @NotNull private SchemaResolveState myResolveState = SchemaResolveState.normal;
 
   @Nullable private final JsonSchemaObject mySchema;
-  @NotNull private final List<JsonSchemaVariantsTreeBuilder.Step> mySteps = new SmartList<>();
+  @NotNull private final JsonPointerPosition myPosition;
 
   @Nullable private final JsonSchemaTreeNode myParent;
   @NotNull private final List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
@@ -44,9 +30,8 @@ public class JsonSchemaTreeNode {
     assert schema != null || parent != null;
     myParent = parent;
     mySchema = schema;
-    if (parent != null && !parent.getSteps().isEmpty()) {
-      mySteps.addAll(parent.getSteps().subList(1, parent.getSteps().size()));
-    }
+    final JsonPointerPosition steps = parent != null ? parent.getPosition().skip(1) : null;
+    myPosition = steps == null ? new JsonPointerPosition() : steps;
   }
 
   public void anyChild() {
@@ -83,7 +68,7 @@ public class JsonSchemaTreeNode {
   }
 
   private List<JsonSchemaTreeNode> convertToNodes(List<JsonSchemaObject> children) {
-    List<JsonSchemaTreeNode> nodes = ContainerUtil.newArrayListWithCapacity(children.size());
+    List<JsonSchemaTreeNode> nodes = new ArrayList<>(children.size());
     for (JsonSchemaObject child: children) {
       nodes.add(new JsonSchemaTreeNode(this, child));
     }
@@ -114,8 +99,8 @@ public class JsonSchemaTreeNode {
   }
 
   @NotNull
-  public List<JsonSchemaVariantsTreeBuilder.Step> getSteps() {
-    return mySteps;
+  public JsonPointerPosition getPosition() {
+    return myPosition;
   }
 
   @Nullable
@@ -132,9 +117,8 @@ public class JsonSchemaTreeNode {
     return myExcludingGroupNumber;
   }
 
-  public void setSteps(@NotNull List<JsonSchemaVariantsTreeBuilder.Step> steps) {
-    mySteps.clear();
-    mySteps.addAll(steps);
+  public void setPosition(@NotNull JsonPointerPosition steps) {
+    myPosition.updateFrom(steps);
   }
 
   @Override
@@ -147,9 +131,9 @@ public class JsonSchemaTreeNode {
     if (myAny != node.myAny) return false;
     if (myNothing != node.myNothing) return false;
     if (myResolveState != node.myResolveState) return false;
-    if (mySchema != null ? !mySchema.equals(node.mySchema) : node.mySchema != null) return false;
+    if (!Objects.equals(mySchema, node.mySchema)) return false;
     //noinspection RedundantIfStatement
-    if (!mySteps.equals(node.mySteps)) return false;
+    if (!myPosition.equals(node.myPosition)) return false;
 
     return true;
   }
@@ -160,14 +144,14 @@ public class JsonSchemaTreeNode {
     result = 31 * result + (myNothing ? 1 : 0);
     result = 31 * result + myResolveState.hashCode();
     result = 31 * result + (mySchema != null ? mySchema.hashCode() : 0);
-    result = 31 * result + mySteps.hashCode();
+    result = 31 * result + myPosition.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("NODE#" + hashCode() + "\n");
-    sb.append(mySteps.stream().map(Object::toString).collect(Collectors.joining("->", "steps: <", ">")));
+    sb.append(myPosition.toString());
     sb.append("\n");
     if (myExcludingGroupNumber >= 0) sb.append("in excluding group\n");
     if (myAny) sb.append("any");
@@ -175,12 +159,11 @@ public class JsonSchemaTreeNode {
     else if (!SchemaResolveState.normal.equals(myResolveState)) sb.append(myResolveState.name());
     else {
       assert mySchema != null;
-      final String name = mySchema.getSchemaFile().getName();
-      sb.append("schema from file: ").append(name).append("\n");
+      sb.append("schema").append("\n");
       if (mySchema.getRef() != null) sb.append("$ref: ").append(mySchema.getRef()).append("\n");
       else if (!mySchema.getProperties().isEmpty()) {
         sb.append("properties: ");
-        sb.append(mySchema.getProperties().keySet().stream().collect(Collectors.joining(", "))).append("\n");
+        sb.append(String.join(", ", mySchema.getProperties().keySet())).append("\n");
       }
       if (!myChildren.isEmpty()) {
         sb.append("OR children of NODE#").append(hashCode()).append(":\n----------------\n")

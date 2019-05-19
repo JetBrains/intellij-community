@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.Lists;
@@ -52,6 +38,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     pyVisitor.visitPyAssignmentStatement(this);
   }
 
+  @Override
   @NotNull
   public PyExpression[] getTargets() {
     PyExpression[] result = myTargets;
@@ -137,6 +124,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
   /**
    * @return rightmost expression in statement, which is supposedly the assigned value, or null.
    */
+  @Override
   @Nullable
   public PyExpression getAssignedValue() {
     PsiElement child = getLastChild();
@@ -147,6 +135,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return (PyExpression)child;
   }
 
+  @Override
   @NotNull
   public List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping() {
     List<Pair<PyExpression, PyExpression>> ret = new SmartList<>();
@@ -162,6 +151,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return ret;
   }
 
+  @Override
   @Nullable
   public PyExpression getLeftHandSideExpression() {
     PsiElement child = getFirstChild();
@@ -184,7 +174,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     PyExpression lhs_one = null;
     if (lhs instanceof PySequenceExpression) lhs_tuple = (PySequenceExpression)lhs;
     else if (lhs != null) lhs_one = lhs;
-    
+
     PySequenceExpression rhs_tuple = null;
     PyExpression rhs_one = null;
     if (rhs instanceof PyParenthesizedExpression) {
@@ -232,6 +222,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
            : IntStreamEx.range(size).mapToObj(index -> ContainerUtil.getOrElse(list, index, null)).toList();
   }
 
+  @Override
   @NotNull
   public List<PsiNamedElement> getNamedElements() {
     final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(getTargets());

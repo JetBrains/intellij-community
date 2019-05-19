@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * @since 10.01.2013
  */
 public class JavaFxCoercingTest extends AbstractJavaFXTestCase {
 

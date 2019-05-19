@@ -40,7 +40,6 @@ import java.util.List;
 
 /**
  * @author dsl
- * @since 07.05.2002
  */
 @TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceParameterTest extends LightRefactoringTestCase  {
@@ -159,6 +158,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
   }
 
   public void testNewWithRefToVararg() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, true, false, false, false);
+  }
+
+  public void testVarargMethodStricktlyCalled() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, true, false, false, false);
   }
 
@@ -337,6 +340,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
   }
 
   public void testConflictingNameWithParameterToDelete() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
+  }
+
+  public void testWrapVarargsParameter() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
   }
 

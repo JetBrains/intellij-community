@@ -5,6 +5,7 @@
       <element id="archive" name="util.jar">
         <element id="module-output" name="intellij.platform.util" />
         <element id="module-output" name="intellij.platform.util.rt" />
+        <element id="module-output" name="intellij.platform.util.classLoader" />
       </element>
       <element id="archive" name="jps-model.jar">
         <element id="module-output" name="intellij.platform.jps.model" />
@@ -44,7 +45,6 @@
       <element id="archive" name="testFramework.core.jar">
         <element id="module-output" name="intellij.platform.testFramework.core" />
       </element>
-      <element id="library" level="project" name="jetbrains-annotations-java5" />
     </root>
   </artifact>
 </component>

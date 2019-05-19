@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 class CustomFileTypeTokenizer extends Tokenizer<PsiElement> {
   private final SyntaxTable mySyntaxTable;
 
-  public CustomFileTypeTokenizer(@NotNull SyntaxTable syntaxTable) {
+  CustomFileTypeTokenizer(@NotNull SyntaxTable syntaxTable) {
     mySyntaxTable = syntaxTable;
   }
 

@@ -35,7 +35,7 @@ public class OctalEscapeInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public OctalEscapeVisitor(ProblemsHolder holder) {
+    OctalEscapeVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -57,7 +57,7 @@ public class OctalEscapeInspection extends LocalInspectionTool {
   private static class ReplaceWithHexEscapeFix implements LocalQuickFix {
     private final String myHex;
 
-    public ReplaceWithHexEscapeFix(String hex) {
+    ReplaceWithHexEscapeFix(String hex) {
       myHex = hex;
     }
 

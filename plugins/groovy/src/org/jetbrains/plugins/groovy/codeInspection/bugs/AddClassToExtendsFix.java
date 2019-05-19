@@ -70,7 +70,7 @@ public class AddClassToExtendsFix extends GroovyFix {
 
 
       final GrCodeReferenceElement _ref =
-        factory.createReferenceElementFromText(myInterfaceName + (addTypeParam ? "<" + AddMethodFix.generateTypeText(psiClass) + ">" : ""));
+        factory.createCodeReference(myInterfaceName + (addTypeParam ? "<" + AddMethodFix.generateTypeText(psiClass) + ">" : ""));
       final GrCodeReferenceElement ref = (GrCodeReferenceElement)list.add(_ref);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
     }

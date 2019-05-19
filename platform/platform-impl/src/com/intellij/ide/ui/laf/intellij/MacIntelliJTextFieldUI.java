@@ -8,9 +8,10 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.BW;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.MINIMUM_HEIGHT;
 
@@ -25,28 +26,19 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
   }
 
   @Override
-  protected void updateIconsLayout(Rectangle bounds) {
-    super.updateIconsLayout(bounds);
-    JTextComponent component = getComponent();
-    if (component == null || component.hasFocus()) return;
-    IconHolder clear = icons.get("clear");
-    if (clear == null || clear.icon != null) return;
-    IconHolder search = icons.get("search");
-    if (search == null || search.icon == null || search.isClickable()) return;
-    search.bounds.x = bounds.x + (bounds.width - search.bounds.width) / 2;
-  }
-
-  @Override
   protected int getMinimumHeight(int textHeight) {
     Insets i = getComponent().getInsets();
     Component c = getComponent();
-    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || UIUtil.getParentOfType(JSpinner.class, c) != null ?
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
+           UIUtil.getParentOfType(JSpinner.class, c) != null ||
+           isCompact(c) ?
            textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
   }
 
   @Override
   protected Insets getDefaultMargins() {
-    return JBUI.insets(1, 5);
+    Component c = getComponent();
+    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(1, 6);
   }
 
   @Override

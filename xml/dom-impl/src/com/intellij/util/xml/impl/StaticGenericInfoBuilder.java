@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import gnu.trove.THashMap;
@@ -126,7 +127,7 @@ public class StaticGenericInfoBuilder {
       }
     }
 
-    //noinspection ConstantIfStatement,ConstantConditions
+    // noinspection ConstantConditions
     if (false) {
       if (!methods.isEmpty()) {
         assert false : methods.stream().map(method -> "\n  " + method)
@@ -263,8 +264,11 @@ public class StaticGenericInfoBuilder {
     return false;
   }
 
+  private static final Set<JavaMethodSignature> ourDomElementMethods =
+    ContainerUtil.map2Set(DomElement.class.getMethods(), JavaMethodSignature::new);
+
   private static boolean isCoreMethod(final JavaMethod method) {
-    if (method.getSignature().findMethod(DomElement.class) != null) return true;
+    if (ourDomElementMethods.contains(method.getSignature())) return true;
 
     final Class<?> aClass = method.getDeclaringClass();
     return aClass.equals(GenericAttributeValue.class) || aClass.equals(GenericDomValue.class) && "getConverter".equals(method.getName());

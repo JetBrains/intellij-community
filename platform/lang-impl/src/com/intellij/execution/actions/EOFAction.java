@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -36,7 +37,7 @@ public class EOFAction extends DumbAwareAction implements AnAction.TransparentUp
   @NonNls public static final String ACTION_ID = "SendEOF";
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     RunContentDescriptor descriptor = StopAction.getRecentlyStartedContentDescriptor(e.getDataContext());
     ProcessHandler handler = descriptor != null ? descriptor.getProcessHandler() : null;
     e.getPresentation().setEnabledAndVisible(e.getData(LangDataKeys.CONSOLE_VIEW) != null
@@ -46,19 +47,17 @@ public class EOFAction extends DumbAwareAction implements AnAction.TransparentUp
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     RunContentDescriptor descriptor = StopAction.getRecentlyStartedContentDescriptor(e.getDataContext());
     ProcessHandler activeProcessHandler = descriptor != null ? descriptor.getProcessHandler() : null;
     if (activeProcessHandler == null || activeProcessHandler.isProcessTerminated()) return;
 
-    try {
-      OutputStream input = activeProcessHandler.getProcessInput();
+    try (OutputStream input = activeProcessHandler.getProcessInput()) {
       if (input != null) {
         ConsoleView console = e.getData(LangDataKeys.CONSOLE_VIEW);
         if (console != null) {
           console.print("^D\n", ConsoleViewContentType.SYSTEM_OUTPUT);
         }
-        input.close();
       }
     }
     catch (IOException ignored) {

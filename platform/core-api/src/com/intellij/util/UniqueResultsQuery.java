@@ -14,78 +14,43 @@ import java.util.*;
 /**
  * @author max
  */
-public class UniqueResultsQuery<T, M> implements Query<T> {
-  @NotNull private final Query<T> myOriginal;
-  @NotNull private final TObjectHashingStrategy<M> myHashingStrategy;
-  @NotNull private final Function<T, M> myMapper;
+public class UniqueResultsQuery<T, M> extends AbstractQuery<T> {
+  @NotNull private final Query<? extends T> myOriginal;
+  @NotNull private final TObjectHashingStrategy<? super M> myHashingStrategy;
+  @NotNull private final Function<? super T, ? extends M> myMapper;
 
-  public UniqueResultsQuery(@NotNull Query<T> original) {
+  public UniqueResultsQuery(@NotNull Query<? extends T> original) {
     //noinspection unchecked
     this(original, ContainerUtil.canonicalStrategy(), Function.ID);
   }
 
-  public UniqueResultsQuery(@NotNull Query<T> original, @NotNull TObjectHashingStrategy<M> hashingStrategy) {
+  public UniqueResultsQuery(@NotNull Query<? extends T> original, @NotNull TObjectHashingStrategy<? super M> hashingStrategy) {
     //noinspection unchecked
     this(original, hashingStrategy, Function.ID);
   }
 
-  public UniqueResultsQuery(@NotNull Query<T> original, @NotNull TObjectHashingStrategy<M> hashingStrategy, @NotNull Function<T, M> mapper) {
+  public UniqueResultsQuery(@NotNull Query<? extends T> original, @NotNull TObjectHashingStrategy<? super M> hashingStrategy, @NotNull Function<? super T, ? extends M> mapper) {
     myOriginal = original;
     myHashingStrategy = hashingStrategy;
     myMapper = mapper;
   }
 
   @Override
-  public T findFirst() {
-    return myOriginal.findFirst();
-  }
-
-  @Override
-  public boolean forEach(@NotNull final Processor<? super T> consumer) {
-    return process(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer);
+  protected boolean processResults(@NotNull Processor<? super T> consumer) {
+    return delegateProcessResults(myOriginal, new MyProcessor(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer));
   }
 
   @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super T> consumer) {
-    return processAsync(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer);
-  }
-
-  private boolean process(@NotNull Set<M> processedElements, @NotNull Processor<? super T> consumer) {
-    return myOriginal.forEach(new MyProcessor(processedElements, consumer));
-  }
-
-  @NotNull
-  private AsyncFuture<Boolean> processAsync(@NotNull Set<M> processedElements, @NotNull Processor<? super T> consumer) {
-    return myOriginal.forEachAsync(new MyProcessor(processedElements, consumer));
-  }
-
-  @Override
-  @NotNull
-  public Collection<T> findAll() {
-    List<T> result = Collections.synchronizedList(new ArrayList<>());
-    Processor<T> processor = Processors.cancelableCollectProcessor(result);
-    forEach(processor);
-    return result;
-  }
-
-  @NotNull
-  @Override
-  public T[] toArray(@NotNull final T[] a) {
-    return findAll().toArray(a);
-  }
-
-  @NotNull
-  @Override
-  public Iterator<T> iterator() {
-    return findAll().iterator();
+    return myOriginal.forEachAsync(new MyProcessor(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer));
   }
 
   private class MyProcessor implements Processor<T> {
-    private final Set<M> myProcessedElements;
+    private final Set<? super M> myProcessedElements;
     private final Processor<? super T> myConsumer;
 
-    public MyProcessor(@NotNull Set<M> processedElements, @NotNull Processor<? super T> consumer) {
+    MyProcessor(@NotNull Set<? super M> processedElements, @NotNull Processor<? super T> consumer) {
       myProcessedElements = processedElements;
       myConsumer = consumer;
     }

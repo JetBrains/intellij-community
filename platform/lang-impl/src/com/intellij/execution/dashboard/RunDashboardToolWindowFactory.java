@@ -18,6 +18,7 @@ package com.intellij.execution.dashboard;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
@@ -28,12 +29,12 @@ import org.jetbrains.annotations.NotNull;
 public class RunDashboardToolWindowFactory implements ToolWindowFactory, Condition<Project>, DumbAware {
   @Override
   public boolean value(Project project) {
-    return !RunDashboardManager.getInstance(project).getTypes().isEmpty();
+    return !Registry.is("ide.service.view") && !RunDashboardManager.getInstance(project).getTypes().isEmpty();
   }
 
   @Override
   public boolean shouldBeAvailable(@NotNull Project project) {
-    return RunDashboardManager.getInstance(project).isToolWindowAvailable();
+    return !Registry.is("ide.service.view") && RunDashboardManager.getInstance(project).isToolWindowAvailable();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.DataManager;
@@ -20,7 +20,6 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.ActionLink;
-import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import org.jetbrains.annotations.NotNull;
@@ -71,10 +70,6 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myPanel.myUseSecureConnection.isSelected() && !NetUtils.isSniEnabled()) {
-      throw new ConfigurationException(IdeBundle.message("update.sni.disabled.error"));
-    }
-
     boolean wasEnabled = mySettings.isCheckNeeded();
     mySettings.setCheckNeeded(myPanel.myCheckForUpdates.isSelected());
     if (wasEnabled != mySettings.isCheckNeeded()) {
@@ -90,30 +85,20 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     }
 
     mySettings.setSelectedChannelStatus(myPanel.getSelectedChannelType());
-    mySettings.setSecureConnection(myPanel.myUseSecureConnection.isSelected());
   }
 
   @Override
   public void reset() {
     myPanel.myCheckForUpdates.setSelected(mySettings.isCheckNeeded());
-    myPanel.myUseSecureConnection.setSelected(mySettings.isSecureConnection());
     myPanel.updateLastCheckedLabel();
     myPanel.setSelectedChannelType(mySettings.getSelectedActiveChannel());
   }
 
   @Override
   public boolean isModified() {
-    if (myPanel == null) {
-      return false;
-    }
-
-    if (mySettings.isCheckNeeded() != myPanel.myCheckForUpdates.isSelected() ||
-        mySettings.isSecureConnection() != myPanel.myUseSecureConnection.isSelected()) {
-      return true;
-    }
-
-    Object channel = myPanel.myUpdateChannels.getSelectedItem();
-    return channel != null && !channel.equals(mySettings.getSelectedActiveChannel());
+    return myPanel != null &&
+           (myPanel.myCheckForUpdates.isSelected() != mySettings.isCheckNeeded() ||
+            myPanel.myUpdateChannels.getSelectedItem() != mySettings.getSelectedActiveChannel());
   }
 
   @Override
@@ -128,28 +113,27 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     private JComboBox<ChannelStatus> myUpdateChannels;
     private JButton myCheckNow;
     private JBLabel myChannelWarning;
-    private JCheckBox myUseSecureConnection;
     private JLabel myBuildNumber;
     private JLabel myVersionNumber;
     private JLabel myLastCheckedDate;
     @SuppressWarnings("unused") private ActionLink myIgnoredBuildsLink;
 
-    public UpdatesSettingsPanel(boolean checkNowEnabled) {
+    UpdatesSettingsPanel(boolean checkNowEnabled) {
       mySettings = UpdateSettings.getInstance();
 
       ChannelStatus current = mySettings.getSelectedActiveChannel();
       myUpdateChannels.setModel(new CollectionComboBoxModel<>(mySettings.getActiveChannels(), current));
 
-      String packageManager = mySettings.getPackageManagerName();
-      if (packageManager != null) {
+      ExternalUpdateManager manager = ExternalUpdateManager.ACTUAL;
+      if (manager != null) {
         myCheckForUpdates.setText(IdeBundle.message("updates.settings.checkbox.external"));
         myUpdateChannels.setVisible(false);
-        myChannelWarning.setText(IdeBundle.message("updates.settings.external", packageManager));
+        myChannelWarning.setText(IdeBundle.message("updates.settings.external", manager.toolName));
         myChannelWarning.setForeground(JBColor.GRAY);
         myChannelWarning.setVisible(true);
         myChannelWarning.setBorder(new JBEmptyBorder(0, 0, 10, 0));
       }
-      else if (ApplicationInfoEx.getInstanceEx().isEAP() && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
+      else if (ApplicationInfoEx.getInstanceEx().isMajorEAP() && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
         myUpdateChannels.setEnabled(false);
         myUpdateChannels.setToolTipText(IdeBundle.message("updates.settings.channel.locked"));
       }
@@ -167,7 +151,6 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
           UpdateSettings settings = new UpdateSettings();
           settings.loadState(mySettings.getState());
           settings.setSelectedChannelStatus(getSelectedChannelType());
-          settings.setSecureConnection(myUseSecureConnection.isSelected());
           UpdateChecker.updateAndShowResult(project, settings);
           updateLastCheckedLabel();
         });
@@ -184,7 +167,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     private void createUIComponents() {
       myIgnoredBuildsLink = new ActionLink(IdeBundle.message("updates.settings.ignored"), new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           List<String> buildNumbers = mySettings.getIgnoredBuildNumbers();
           String text = StringUtil.join(buildNumbers, "\n");
           String result = Messages.showMultilineInputDialog(null, null, IdeBundle.message("updates.settings.ignored.title"), text, null, null);

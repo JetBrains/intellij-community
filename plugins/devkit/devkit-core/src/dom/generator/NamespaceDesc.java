@@ -22,8 +22,8 @@
  */
 package org.jetbrains.idea.devkit.dom.generator;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov

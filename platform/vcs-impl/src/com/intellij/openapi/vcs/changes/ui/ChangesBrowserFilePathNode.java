@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   }
 
   @Override
-  public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
+  public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final FilePath path = (FilePath)userObject;
     if (path.isDirectory() || !isLeaf()) {
       renderer.append(getRelativePath(path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -53,7 +54,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
 
   @NotNull
   protected String getRelativePath(FilePath path) {
-    return getRelativePath(safeCastToFilePath((ChangesBrowserNode)getParent()), path);
+    return getRelativePath(safeCastToFilePath(getParent()), path);
   }
 
   @Override
@@ -91,12 +92,14 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
     return isLocal ? FileUtil.toSystemDependentName(result) : result;
   }
 
+  @Override
   public int getSortWeight() {
     if (((FilePath)userObject).isDirectory()) return DIRECTORY_PATH_SORT_WEIGHT;
     return FILE_PATH_SORT_WEIGHT;
   }
 
+  @Override
   public int compareUserObjects(final FilePath o2) {
-    return getUserObject().getPath().compareToIgnoreCase(o2.getPath());
+    return compareFilePaths(getUserObject(), o2);
   }
 }

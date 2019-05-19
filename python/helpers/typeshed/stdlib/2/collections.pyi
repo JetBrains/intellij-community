@@ -1,9 +1,4 @@
-# Stubs for collections
-
-# Based on http://docs.python.org/2.7/library/collections.html
-
 # These are not exported.
-import typing
 from typing import Dict, Generic, TypeVar, Tuple, overload, Type, Optional, List, Union, Reversible
 
 # These are exported.
@@ -26,12 +21,13 @@ from typing import (
     ValuesView as ValuesView,
 )
 
+_S = TypeVar('_S')
 _T = TypeVar('_T')
 _KT = TypeVar('_KT')
 _VT = TypeVar('_VT')
 
 # namedtuple is special-cased in the type checker; the initializer is ignored.
-def namedtuple(typename: Union[str, unicode], field_names: Union[str, unicode, Iterable[Union[str, unicode]]], *,
+def namedtuple(typename: Union[str, unicode], field_names: Union[str, unicode, Iterable[Union[str, unicode]]],
                verbose: bool = ..., rename: bool = ...) -> Type[tuple]: ...
 
 class deque(Sized, Iterable[_T], Reversible[_T], Generic[_T]):
@@ -58,6 +54,7 @@ class deque(Sized, Iterable[_T], Reversible[_T], Generic[_T]):
     def __setitem__(self, i: int, x: _T) -> None: ...
     def __contains__(self, o: _T) -> bool: ...
     def __reversed__(self) -> Iterator[_T]: ...
+    def __iadd__(self: _S, iterable: Iterable[_T]) -> _S: ...
 
 _CounterT = TypeVar('_CounterT', bound=Counter)
 

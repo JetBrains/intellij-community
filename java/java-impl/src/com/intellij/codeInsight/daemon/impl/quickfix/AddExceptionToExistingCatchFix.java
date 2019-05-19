@@ -1,12 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -22,10 +21,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionAction {
@@ -39,18 +35,11 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     Context context = Context.from(myErrorElement);
     if (context == null) return;
 
-    List<PsiCatchSection> catchSections = context.myCatches;
-    List<PsiClassType> unhandledExceptions = context.myExceptions;
-    List<PsiCatchSection> catches = catchSections.stream()
-                                         .filter(s -> s.getCatchType() != null && s.getParameter() != null)
-                                         .collect(Collectors.toList());
+    List<? extends PsiClassType> unhandledExceptions = context.myExceptions;
+    List<? extends PsiCatchSection> catches = context.myCatches;
 
-    setText(context.getMessage());
-
-    Application application = ApplicationManager.getApplication();
-
-    if (catchSections.size() == 1 || application.isUnitTestMode()) {
-      PsiCatchSection selectedSection = catchSections.get(0);
+    if (catches.size() == 1) {
+      PsiCatchSection selectedSection = catches.get(0);
       addTypeToCatch(unhandledExceptions, selectedSection);
     }
     else {
@@ -69,8 +58,28 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       );
     }
   }
+  private static List<PsiCatchSection> findSuitableSections(List<? extends PsiCatchSection> sections, @NotNull List<? extends PsiClassType> exceptionTypes, boolean isJava7OrHigher) {
+    List<PsiCatchSection> finalSections = new ArrayList<>();
+    for (PsiCatchSection section : Lists.reverse(sections)) {
+      finalSections.add(section);
 
-  private static void addTypeToCatch(@NotNull List<PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
+      PsiType sectionType = section.getCatchType();
+      if (sectionType == null) continue;
+      for (PsiType exceptionType : exceptionTypes) {
+        if (exceptionType.isAssignableFrom(sectionType)) {
+          return finalSections;
+          // adding type to any upper leads to compilation error
+        }
+      }
+    }
+    if (!isJava7OrHigher) {
+      // if we get to this point, this means, that we can't generify any catch clause, so we can't suggest a fix
+      return Collections.emptyList();
+    }
+    return finalSections;
+  }
+
+  private static void addTypeToCatch(@NotNull List<? extends PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
     Project project = catchSection.getProject();
     WriteCommandAction.runWriteCommandAction(project, () -> {
       if (!catchSection.isValid() || !exceptionsToAdd.stream().allMatch(type -> type.isValid())) return;
@@ -86,7 +95,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     });
   }
 
-  private static String getTypeText(@NotNull List<PsiClassType> exceptionsToAdd,
+  private static String getTypeText(@NotNull List<? extends PsiClassType> exceptionsToAdd,
                                     PsiParameter parameter,
                                     PsiType parameterType,
                                     PsiElementFactory factory) {
@@ -102,7 +111,12 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return Context.from(myErrorElement) != null;
+    Context context = Context.from(myErrorElement);
+    if (context != null) {
+      setText(context.getMessage());
+      return true;
+    }
+    return false;
   }
 
   @Nls
@@ -112,37 +126,32 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     return QuickFixBundle.message("add.exception.to.existing.catch.family");
   }
 
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
-  }
-
   private static class Context {
-    private final List<PsiCatchSection> myCatches;
-    private final List<PsiClassType> myExceptions;
+    private final List<? extends PsiCatchSection> myCatches;
+    private final List<? extends PsiClassType> myExceptions;
 
 
-    private Context(List<PsiCatchSection> catches, List<PsiClassType> exceptions) {
+    private Context(List<? extends PsiCatchSection> catches, List<? extends PsiClassType> exceptions) {
       myCatches = catches;
       myExceptions = exceptions;
     }
 
     @Nullable
     static Context from(@NotNull PsiElement element) {
-      if (!element.isValid() || !PsiUtil.isLanguageLevel7OrHigher(element)) return null;
+      if (!element.isValid() || element instanceof PsiMethodReferenceExpression) return null;
+      boolean isJava7OrHigher = PsiUtil.isLanguageLevel7OrHigher(element);
       List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(element));
       if (unhandledExceptions.isEmpty()) return null;
       List<PsiTryStatement> tryStatements = getTryStatements(element);
       List<PsiCatchSection> sections =
         tryStatements.stream()
-                     .flatMap(stmt -> Arrays.stream(stmt.getCatchSections()))
-                     .filter(catchSection -> {
-                       PsiParameter parameter = catchSection.getParameter();
-                       if (parameter == null) return false;
-                       return parameter.getTypeElement() != null;
-                     })
-                     .collect(Collectors.toList());
+          .flatMap(stmt -> findSuitableSections(Arrays.asList(stmt.getCatchSections()), unhandledExceptions, isJava7OrHigher).stream())
+          .filter(catchSection -> {
+            PsiParameter parameter = catchSection.getParameter();
+            if (parameter == null) return false;
+            return parameter.getTypeElement() != null;
+          })
+          .collect(Collectors.toList());
       if (sections.isEmpty()) return null;
       return new Context(sections, unhandledExceptions);
     }
@@ -188,12 +197,12 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     if (catchType instanceof PsiDisjunctionType) {
       PsiDisjunctionType disjunction = (PsiDisjunctionType)catchType;
       for (PsiType type : disjunction.getDisjunctions()) {
-        if (type.isAssignableFrom(newException)) {
+        if (newException.isAssignableFrom(type)) {
           return true;
         }
       }
       return false;
     }
-    return catchType.isAssignableFrom(newException);
+    return newException.isAssignableFrom(catchType);
   }
 }

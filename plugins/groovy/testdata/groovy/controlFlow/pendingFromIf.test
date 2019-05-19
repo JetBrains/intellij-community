@@ -18,6 +18,6 @@ print res
 8(9) End element: IF statement
 9(10) READ print
 10(11) READ res
-11(12) ARGUMENT element: Reference expression
+11(12) ARGUMENTS element: Call expression
 12(13) element: Call expression MAYBE_RETURN
 13() element: null

@@ -20,7 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.utils.DfsUtil;
+import com.intellij.vcs.log.graph.utils.Dfs;
+import com.intellij.vcs.log.graph.utils.DfsUtilKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ public class GraphLayoutBuilder {
   private static final Logger LOG = Logger.getInstance(GraphLayoutBuilder.class);
 
   @NotNull
-  public static GraphLayoutImpl build(@NotNull LinearGraph graph, @NotNull Comparator<Integer> headNodeIndexComparator) {
+  public static GraphLayoutImpl build(@NotNull LinearGraph graph, @NotNull Comparator<? super Integer> headNodeIndexComparator) {
     List<Integer> heads = new ArrayList<>();
     for (int i = 0; i < graph.nodesCount(); i++) {
       if (getUpNodes(graph, i).size() == 0) {
@@ -73,28 +74,25 @@ public class GraphLayoutBuilder {
   }
 
   private void dfs(int nodeIndex) {
-    DfsUtil.walk(nodeIndex, new DfsUtil.NextNode() {
-      @Override
-      public int fun(int currentNode) {
-        boolean firstVisit = myLayoutIndex[currentNode] == 0;
-        if (firstVisit) myLayoutIndex[currentNode] = currentLayoutIndex;
+    DfsUtilKt.walk(nodeIndex, currentNode -> {
+      boolean firstVisit = myLayoutIndex[currentNode] == 0;
+      if (firstVisit) myLayoutIndex[currentNode] = currentLayoutIndex;
 
-        int childWithoutLayoutIndex = -1;
-        for (int childNodeIndex : getDownNodes(myGraph, currentNode)) {
-          if (myLayoutIndex[childNodeIndex] == 0) {
-            childWithoutLayoutIndex = childNodeIndex;
-            break;
-          }
+      int childWithoutLayoutIndex = -1;
+      for (int childNodeIndex : getDownNodes(myGraph, currentNode)) {
+        if (myLayoutIndex[childNodeIndex] == 0) {
+          childWithoutLayoutIndex = childNodeIndex;
+          break;
         }
+      }
 
-        if (childWithoutLayoutIndex == -1) {
-          if (firstVisit) currentLayoutIndex++;
+      if (childWithoutLayoutIndex == -1) {
+        if (firstVisit) currentLayoutIndex++;
 
-          return DfsUtil.NextNode.NODE_NOT_FOUND;
-        }
-        else {
-          return childWithoutLayoutIndex;
-        }
+        return Dfs.NextNode.NODE_NOT_FOUND;
+      }
+      else {
+        return childWithoutLayoutIndex;
       }
     });
   }

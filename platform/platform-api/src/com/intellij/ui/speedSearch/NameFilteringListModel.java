@@ -33,27 +33,26 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class NameFilteringListModel<T> extends FilteringListModel<T> {
-  private final Function<T, String> myNamer;
+  private final Function<? super T, String> myNamer;
   private int myFullMatchIndex = -1;
   private int myStartsWithIndex = -1;
   private final Computable<String> myPattern;
 
+  /** @deprecated explicitly sets model for a list. Use other constructors instead. */
+  @Deprecated
   public NameFilteringListModel(JList<T> list,
-                                final Function<T, String> namer,
-                                final Condition<String> filter,
-                                final SpeedSearch speedSearch) {
-    this(list, namer, filter, () -> speedSearch.getFilter());
+                                Function<? super T, String> namer,
+                                Condition<? super String> filter,
+                                SpeedSearchSupply speedSearch) {
+    this(list.getModel(), namer, filter, () -> StringUtil.notNullize(speedSearch.getEnteredPrefix()));
+    list.setModel(this);
   }
 
-  public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter, final SpeedSearchSupply speedSearch) {
-    this(list, namer, filter, () -> {
-      final String prefix = speedSearch.getEnteredPrefix();
-      return prefix == null ? "" : prefix;
-    });
-  }
-
-  public NameFilteringListModel(JList list, final Function<T, String> namer, final Condition<String> filter, Computable<String> pattern) {
-    super(list);
+  public NameFilteringListModel(ListModel<T> model,
+                                Function<? super T, String> namer,
+                                Condition<? super String> filter,
+                                Computable<String> pattern) {
+    super(model);
     myPattern = pattern;
     myNamer = namer;
     setFilter(namer != null ? (Condition<T>)t -> filter.value(namer.fun(t)) : null);

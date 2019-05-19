@@ -238,7 +238,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   }
 
   private class MyTextField extends JTextField {
-    public MyTextField() {
+    MyTextField() {
     }
 
     @Override

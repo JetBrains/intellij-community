@@ -41,6 +41,7 @@ public class XmlTagPanel extends AbstractInjectionPanel<XmlTagInjection> {
     init(injection.copy());
   }
 
+  @Override
   protected void apply(XmlTagInjection other) {
     String name = myNameTextField.getText();
     boolean useGenerated = myUseGeneratedName && Comparing.equal(myOrigInjection.getDisplayName(), name);
@@ -48,12 +49,14 @@ public class XmlTagPanel extends AbstractInjectionPanel<XmlTagInjection> {
     other.setDisplayName(newName);
   }
 
+  @Override
   protected void resetImpl() {
     myNameTextField.setText(myOrigInjection.getDisplayName());
 
     myUseGeneratedName = Comparing.equal(myOrigInjection.getDisplayName(), myOrigInjection.getGeneratedName());
   }
 
+  @Override
   public JPanel getComponent() {
     return myRoot;
   }

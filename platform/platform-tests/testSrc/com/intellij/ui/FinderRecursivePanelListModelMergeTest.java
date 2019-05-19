@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.ui.components.JBList;
@@ -99,7 +100,7 @@ public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCas
       @Override
       public void valueChanged(ListSelectionEvent e) {
         if (panel.isMergeListItemsRunning()) return;
-        assertTrue("selection changed", false);
+        fail("selection changed");
       }
     };
     list.addListSelectionListener(selectionListener);
@@ -114,19 +115,18 @@ public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCas
     list.removeListSelectionListener(selectionListener);
   }
 
-
   @NotNull
-  private StringFinderRecursivePanel createStringPanel(String[] initialItems) {
-    StringFinderRecursivePanel panel = new StringFinderRecursivePanel(initialItems);
+  private static StringFinderRecursivePanel createStringPanel(String[] initialItems) {
+    StringFinderRecursivePanel panel = new StringFinderRecursivePanel(initialItems, getProject());
     panel.initPanel();
     return panel;
   }
 
-  private class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
+  private static class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
     private final String[] myInitialItems;
 
-    public StringFinderRecursivePanel(String[] initialItems) {
-      super(FinderRecursivePanelListModelMergeTest.this.getProject(), null);
+    StringFinderRecursivePanel(String[] initialItems, @NotNull Project project) {
+      super(project, null);
       myInitialItems = initialItems;
     }
 

@@ -23,31 +23,22 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
  * @author anna
- * @since Jan 19, 2005
  */
 public abstract class DependenciesBuilder {
   private final Project myProject;
   private final AnalysisScope myScope;
-  private final AnalysisScope myScopeOfInterest;
   private final Map<PsiFile, Set<PsiFile>> myDependencies = new HashMap<>();
   protected int myTotalFileCount;
   protected int myFileCount = 0;
-  protected int myTransitive = 0;
 
   protected DependenciesBuilder(@NotNull final Project project, @NotNull final AnalysisScope scope) {
-    this(project, scope, null);
-  }
-
-  public DependenciesBuilder(final Project project, final AnalysisScope scope, @Nullable final AnalysisScope scopeOfInterest) {
     myProject = project;
     myScope = scope;
-    myScopeOfInterest = scopeOfInterest;
     myTotalFileCount = scope.getFileCount();
   }
 
@@ -75,8 +66,12 @@ public abstract class DependenciesBuilder {
     return myScope;
   }
 
+  /**
+   * @deprecated use {@link BackwardDependenciesBuilder#getScopeOfInterest()} instead
+   */
+  @Deprecated
   public AnalysisScope getScopeOfInterest() {
-    return myScopeOfInterest;
+    return null;
   }
 
   public Project getProject() {
@@ -145,12 +140,20 @@ public abstract class DependenciesBuilder {
     return result;
   }
 
+  /**
+   * @deprecated use {@link ForwardDependenciesBuilder#isTransitive()} instead
+   */
+  @Deprecated
   public boolean isTransitive() {
-    return myTransitive > 0;
+    return false;
   }
 
+  /**
+   * @deprecated use {@link ForwardDependenciesBuilder#getTransitiveBorder()} instead
+   */
+  @Deprecated
   public int getTransitiveBorder() {
-    return myTransitive;
+    return 0;
   }
 
   public String getRelativeToProjectPath(@NotNull VirtualFile virtualFile) {

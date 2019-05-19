@@ -18,37 +18,37 @@ package com.intellij.refactoring.memberPushDown;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.util.DocCommentPolicy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class PushDownData<MemberInfo extends MemberInfoBase<Member>,
-                          Member extends PsiElement
-  > {
+                          Member extends PsiElement> {
   private PsiElement mySourceClass;
   private final List<MemberInfo> myMembersToMove;
   private final DocCommentPolicy myCommentPolicy;
 
-  public PushDownData(PsiElement sourceClass,
-                      List<MemberInfo> membersToMove,
-                      DocCommentPolicy commentPolicy) {
+  PushDownData(@NotNull PsiElement sourceClass,
+               @NotNull List<MemberInfo> membersToMove,
+               @NotNull DocCommentPolicy commentPolicy) {
     mySourceClass = sourceClass;
     myMembersToMove = membersToMove;
     myCommentPolicy = commentPolicy;
   }
-
+  @NotNull
   public PsiElement getSourceClass() {
     return mySourceClass;
   }
-
+  @NotNull
   public List<MemberInfo> getMembersToMove() {
     return myMembersToMove;
   }
-
+  @NotNull
   public DocCommentPolicy getCommentPolicy() {
     return myCommentPolicy;
   }
 
-  public void setSourceClass(PsiElement sourceClass) {
+  public void setSourceClass(@NotNull PsiElement sourceClass) {
     mySourceClass = sourceClass;
   }
 }

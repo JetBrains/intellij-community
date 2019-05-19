@@ -57,7 +57,7 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
       for (UserDefinedJsonSchemaConfiguration.Item pattern : configuration.patterns) {
         if (pattern.mappingKind != JsonMappingKind.File) continue;
         VirtualFile relativeFile = VfsUtil.findRelativeFile(projectBaseDir, pattern.getPathParts());
-        if (Objects.equals(relativeFile, file) || file.getUrl().equals(pattern.path)) {
+        if (Objects.equals(relativeFile, file) || file.getUrl().equals(pattern.getPath())) {
           return configuration;
         }
       }
@@ -127,10 +127,10 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     @XCollection
     public Map<String, UserDefinedJsonSchemaConfiguration> myState = new TreeMap<>();
 
-    public MyState() {
+    MyState() {
     }
 
-    public MyState(Map<String, UserDefinedJsonSchemaConfiguration> state) {
+    MyState(Map<String, UserDefinedJsonSchemaConfiguration> state) {
       myState = state;
     }
   }

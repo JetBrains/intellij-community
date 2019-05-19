@@ -57,7 +57,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
     private final VcsContext vcsContext;
 
     private MyTask(VirtualFile selectedFile, AbstractVcs vcs, VcsContext vcsContext) {
-      super(vcsContext.getProject(), "Loading current revision", true);
+      super(vcsContext.getProject(), "Loading Current Revision...", true);
       this.selectedFile = selectedFile;
       this.vcs = vcs;
       this.vcsContext = vcsContext;
@@ -94,13 +94,13 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
 
   @Override
   protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
-    presentation.setEnabled(AbstractShowDiffAction.isEnabled(vcsContext, null));
+    presentation.setEnabled(AbstractShowDiffAction.isEnabled(vcsContext, false));
   }
 
   static class NotificationPanel extends JPanel {
     protected final JEditorPane myLabel;
 
-    public NotificationPanel() {
+    NotificationPanel() {
       super(new BorderLayout());
 
       myLabel = new JEditorPane(UIUtil.HTML_MIME, "");

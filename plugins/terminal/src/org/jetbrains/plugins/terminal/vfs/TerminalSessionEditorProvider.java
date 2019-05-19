@@ -1,27 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.ui.tabs.TabInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
+import org.jetbrains.plugins.terminal.TerminalTabState;
+import org.jetbrains.plugins.terminal.TerminalUtil;
+import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
 /**
  * @author traff
@@ -35,7 +28,24 @@ public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAw
   @NotNull
   @Override
   public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    return new TerminalSessionEditor(project, (TerminalSessionVirtualFileImpl)file);
+    if (file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != null) {
+      return new TerminalSessionEditor(project, (TerminalSessionVirtualFileImpl)file);
+    }
+    else {
+      TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)file;
+      JBTerminalWidget widget = terminalFile.getTerminalWidget();
+
+      TabInfo tabInfo = new TabInfo(widget).setText(terminalFile.getName());
+      TerminalTabState tts = new TerminalTabState();
+      tts.myWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, file.getName());
+      LocalTerminalDirectRunner runner = LocalTerminalDirectRunner.createTerminalRunner(project);
+      JBTerminalWidget newWidget = TerminalUtil.createTerminal(runner, tts, null);
+      TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(tabInfo, newWidget, terminalFile.getSettingsProvider());
+      tabInfo.setObject(newSessionVirtualFile);
+      TerminalSessionEditor editor = new TerminalSessionEditor(project, newSessionVirtualFile);
+      newWidget.moveDisposable(editor);
+      return editor;
+    }
   }
 
   @NotNull

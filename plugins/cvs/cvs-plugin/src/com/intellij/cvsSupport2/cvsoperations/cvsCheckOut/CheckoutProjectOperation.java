@@ -107,10 +107,12 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
     return current.getName();
   }
 
+  @Override
   protected ILocalFileReader createLocalFileReader() {
     return new LocalFileReader(new SendTextFilePreprocessor());
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final CheckoutCommand command = new CheckoutCommand(() -> ((CheckoutAdminWriter) myAdminWriter).finish());
     command.setRecursive(true);
@@ -124,6 +126,7 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
     return command;
   }
 
+  @Override
   protected Collection<CvsRootProvider> getAllCvsRoots() {
     return Collections.singleton(CvsRootProvider.createOn(getRoot(), myEnvironment));
   }
@@ -132,14 +135,17 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
     return myRoot;
   }
 
+  @Override
   protected IIgnoreFileFilter getIgnoreFileFilter() {
     return new IgnoreFileFilter();
   }
 
+  @Override
   protected String getOperationName() {
     return "checkout";
   }
 
+  @Override
   public void modifyOptions(GlobalOptions options) {
     super.modifyOptions(options);
     options.setCheckedOutFilesReadOnly(myMakeNewFilesReadOnly);

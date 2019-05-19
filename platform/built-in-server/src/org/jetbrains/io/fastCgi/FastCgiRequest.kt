@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.fastCgi
 
 import com.intellij.openapi.util.io.FileUtil
@@ -13,14 +14,14 @@ import java.net.InetSocketAddress
 import java.nio.CharBuffer
 import java.util.*
 
-private val PARAMS = 4
-private val BEGIN_REQUEST = 1
-private val RESPONDER = 1
-private val FCGI_KEEP_CONNECTION = 1
-private val STDIN = 5
-private val VERSION = 1
+private const val PARAMS = 4
+private const val BEGIN_REQUEST = 1
+private const val RESPONDER = 1
+private const val FCGI_KEEP_CONNECTION = 1
+private const val STDIN = 5
+private const val VERSION = 1
 
-private val MAX_CONTENT_LENGTH = 0xFFFF
+private const val MAX_CONTENT_LENGTH = 0xFFFF
 
 class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
   private val params = allocator.ioBuffer(4096)

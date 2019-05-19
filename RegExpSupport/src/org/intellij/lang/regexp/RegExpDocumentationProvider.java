@@ -52,7 +52,7 @@ public final class RegExpDocumentationProvider extends AbstractDocumentationProv
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof RegExpGroup) {
       final RegExpGroup group = (RegExpGroup)element;
-      return StringUtil.escapeXml(group.getUnescapedText());
+      return StringUtil.escapeXmlEntities(group.getUnescapedText());
     } else {
       return null;
     }

@@ -1,12 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -17,12 +15,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
-/**
- * @author Max Medvedev
- */
-public class GrReferenceHighlighterFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  public GrReferenceHighlighterFactory(Project project, TextEditorHighlightingPassRegistrar registrar) {
-    super(project);
+final class GrReferenceHighlighterFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+  @Override
+  public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1);
   }
 
@@ -32,20 +27,15 @@ public class GrReferenceHighlighterFactory extends AbstractProjectComponent impl
     return groovyFile instanceof GroovyFileBase ? new GrReferenceHighlighter(editor.getDocument(), (GroovyFileBase)groovyFile) : null;
   }
 
+  static boolean shouldHighlight(@NotNull PsiFile file) {
+    return file instanceof GroovyFileBase && shouldHighlight((GroovyFileBase)file);
+  }
+
   static boolean shouldHighlight(@NotNull GroovyFileBase file) {
     return isSpecificScriptFile(file) || GrFileIndexUtil.isGroovySourceFile(file);
   }
 
   private static boolean isSpecificScriptFile(@NotNull GroovyFileBase file) {
-    if (!(file instanceof GroovyFile)) return false;
-    if (!file.isScript()) return false;
-
-    final GroovyFile groovyFile = (GroovyFile)file;
-    for (GroovyScriptTypeDetector detector : GroovyScriptTypeDetector.EP_NAME.getExtensions()) {
-      if (detector.isSpecificScriptFile(groovyFile)) {
-        return true;
-      }
-    }
-    return false;
+    return file instanceof GroovyFile && GroovyScriptTypeDetector.isScriptFile((GroovyFile)file);
   }
 }

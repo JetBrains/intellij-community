@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectImport;
 
 import com.intellij.CommonBundle;
@@ -48,44 +34,59 @@ import java.io.IOException;
 
 /**
  * @author anna
- * @since 12-Jul-2007
  */
 public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> extends ProjectOpenProcessor {
+  @Nullable
   private final T myBuilder;
 
+  /**
+   * @deprecated Override {@link #doGetBuilder()} and use {@code ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(yourClass.class)}.
+   */
+  @Deprecated
   protected ProjectOpenProcessorBase(@NotNull final T builder) {
     myBuilder = builder;
   }
 
+  protected ProjectOpenProcessorBase() {
+    myBuilder = null;
+  }
+
+  @NotNull
+  protected T doGetBuilder() {
+    assert myBuilder != null;
+    return myBuilder;
+  }
+
+  @Override
+  @NotNull
   public String getName() {
     return getBuilder().getName();
   }
 
+  @Override
   @Nullable
   public Icon getIcon() {
     return getBuilder().getIcon();
   }
 
-  public boolean canOpenProject(final VirtualFile file) {
+  @Override
+  public boolean canOpenProject(@NotNull final VirtualFile file) {
     final String[] supported = getSupportedExtensions();
-    if (supported != null) {
-      if (file.isDirectory()) {
-        for (VirtualFile child : getFileChildren(file)) {
-          if (canOpenFile(child, supported)) return true;
-        }
-        return false;
+    if (file.isDirectory()) {
+      for (VirtualFile child : getFileChildren(file)) {
+        if (canOpenFile(child, supported)) return true;
       }
-      if (canOpenFile(file, supported)) return true;
+      return false;
     }
-    return false;
+    return canOpenFile(file, supported);
   }
 
   @NotNull
-  private static VirtualFile[] getFileChildren(VirtualFile file) {
+  private static VirtualFile[] getFileChildren(@NotNull VirtualFile file) {
     return ObjectUtils.chooseNotNull(file.getChildren(), VirtualFile.EMPTY_ARRAY);
   }
 
-  protected static boolean canOpenFile(VirtualFile file, String[] supported) {
+  protected static boolean canOpenFile(@NotNull VirtualFile file, @NotNull String[] supported) {
     final String fileName = file.getName();
     for (String name : supported) {
       if (fileName.equals(name)) {
@@ -95,18 +96,19 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
     return false;
   }
 
-  protected boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {
+  protected boolean doQuickImport(@NotNull VirtualFile file, @NotNull WizardContext wizardContext) {
     return false;
   }
 
   @NotNull
   public T getBuilder() {
-    return myBuilder;
+    return doGetBuilder();
   }
 
-  @Nullable
+  @NotNull
   public abstract String[] getSupportedExtensions();
 
+  @Override
   @Nullable
   public Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame) {
     try {
@@ -238,11 +240,12 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
     }
   }
 
-  public static String getUrl(@NonNls String path) {
+  @NotNull
+  public static String getUrl(@NonNls @NotNull String path) {
     try {
       path = FileUtil.resolveShortWindowsName(path);
     }
     catch (IOException ignored) { }
-    return VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path));
+    return VfsUtilCore.pathToUrl(path);
   }
 }

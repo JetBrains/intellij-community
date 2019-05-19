@@ -24,7 +24,7 @@ public class SearchInitializer {
   private final LinkedList<OperationChain> myQueue;
   private final LinkedHashMap<RefChainOperation, OperationChain> myChains;
 
-  public SearchInitializer(SortedSet<ChainOpAndOccurrences<? extends RefChainOperation>> indexValues,
+  public SearchInitializer(SortedSet<? extends ChainOpAndOccurrences<? extends RefChainOperation>> indexValues,
                            ChainCompletionContext context) {
     myContext = context;
     int size = indexValues.size();
@@ -48,7 +48,7 @@ public class SearchInitializer {
   }
 
   private void populateFrequentlyUsedMethod(SortedSet<? extends ChainOpAndOccurrences> operations,
-                                            List<OperationChain> chains) {
+                                            List<? super OperationChain> chains) {
     int bestOccurrences = -1;
     for (ChainOpAndOccurrences indexValue : operations) {
       OperationChain operationChain = OperationChain.create(indexValue.getOperation(), indexValue.getOccurrenceCount(), myContext);

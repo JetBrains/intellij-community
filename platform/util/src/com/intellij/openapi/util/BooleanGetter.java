@@ -15,20 +15,11 @@
  */
 package com.intellij.openapi.util;
 
+@FunctionalInterface
 public interface BooleanGetter {
-  BooleanGetter TRUE = new BooleanGetter() {
-    @Override
-    public boolean get() {
-      return true;
-    }
-  };
+  BooleanGetter TRUE = () -> true;
 
-  BooleanGetter FALSE = new BooleanGetter() {
-    @Override
-    public boolean get() {
-      return false;
-    }
-  };
+  BooleanGetter FALSE = () -> false;
 
   boolean get();
 }

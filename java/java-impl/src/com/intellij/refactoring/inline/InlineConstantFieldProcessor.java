@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
+import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author ven
@@ -103,7 +105,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myRefExpr)};
 
     List<UsageInfo> usages = new ArrayList<>();
-    for (PsiReference ref : ReferencesSearch.search(myField, GlobalSearchScope.projectScope(myProject), false)) {
+    for (PsiReference ref : ReferencesSearch.search(myField, myRefactoringScope, false)) {
       PsiElement element = ref.getElement();
       UsageInfo info = new UsageInfo(element);
       if (element instanceof PsiDocMethodOrFieldRef) {
@@ -123,13 +125,13 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       if (mySearchInCommentsAndStrings) {
         String stringToSearch =
           ElementDescriptionUtil.getElementDescription(myField, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
-        TextOccurrencesUtil.addUsagesInStringsAndComments(myField, stringToSearch, usages, nonCodeUsageFactory);
+        TextOccurrencesUtil.addUsagesInStringsAndComments(myField, myRefactoringScope, stringToSearch, usages, nonCodeUsageFactory);
       }
 
-      if (mySearchForTextOccurrences) {
+      if (mySearchForTextOccurrences && myRefactoringScope instanceof GlobalSearchScope) {
         String stringToSearch = ElementDescriptionUtil.getElementDescription(myField, NonCodeSearchDescriptionLocation.NON_JAVA);
-        TextOccurrencesUtil
-          .addTextOccurences(myField, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
+        TextOccurrencesUtil.addTextOccurrences(myField, stringToSearch, (GlobalSearchScope)myRefactoringScope,
+                                               usages, nonCodeUsageFactory);
       }
     }
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
@@ -200,7 +202,11 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
 
   private void inlineExpressionUsage(PsiExpression expr,
                                      PsiExpression initializer1,
-                                     Set<PsiAssignmentExpression> assignments) throws IncorrectOperationException {
+                                     Set<? super PsiAssignmentExpression> assignments) throws IncorrectOperationException {
+    if (expr instanceof PsiLiteralExpression) {
+      // Possible reflective usage
+      return;
+    }
     if (myField.isWritable()) {
       myField.normalizeDeclaration();
     }
@@ -267,6 +273,10 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
           if (!PsiTreeUtil.isAncestor(myField, element, false)) {
             conflicts.putValue(element, "Inlined field is used in javadoc");
           }
+        }
+        if (element instanceof PsiLiteralExpression &&
+            Stream.of(element.getReferences()).anyMatch(JavaLangClassMemberReference.class::isInstance)) {
+          conflicts.putValue(element, "Inlined field is used reflectively");
         }
       }
     }

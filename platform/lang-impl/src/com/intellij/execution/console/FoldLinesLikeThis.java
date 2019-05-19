@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -48,16 +49,15 @@ public class FoldLinesLikeThis extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
 
     final boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null &&  editor != null && getSingleLineSelection(editor) != null;
-    e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(enabled);
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     assert editor != null;
     final String selection = getSingleLineSelection(editor);

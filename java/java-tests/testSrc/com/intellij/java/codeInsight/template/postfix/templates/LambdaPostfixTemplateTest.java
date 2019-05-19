@@ -37,8 +37,10 @@ public class LambdaPostfixTemplateTest extends PostfixTemplateTestCase {
       LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myDefaultLanguageLevel);
       myDefaultLanguageLevel = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
-      //noinspection ThrowFromFinallyBlock
       super.tearDown();
     }
   }
@@ -54,7 +56,7 @@ public class LambdaPostfixTemplateTest extends PostfixTemplateTestCase {
   }
   
   public void testDoNotExpandOnJavaLess8() {
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_6, myFixture.getTestRootDisposable());
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_6, myFixture.getTestRootDisposable());
     doTest();
   }
 }

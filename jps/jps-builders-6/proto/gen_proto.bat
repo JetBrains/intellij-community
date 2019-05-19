@@ -1,1 +1,1 @@
-call protoc -I=. --java_out=../src javac_remote_proto.proto
+call protoc -I=. --java_out=../src --java_opt=annotate_code javac_remote_proto.proto

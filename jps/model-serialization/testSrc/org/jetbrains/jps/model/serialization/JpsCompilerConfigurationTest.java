@@ -17,10 +17,7 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
@@ -72,6 +69,12 @@ public class JpsCompilerConfigurationTest extends JpsSerializationTestCase {
     assertEquals(2, override.size());
     assertEquals("-param_1", override.get("mod_1"));
     assertEquals("-param_2", override.get("mod_2"));
+
+    JpsValidationConfiguration validationConfiguration = configuration.getValidationConfiguration();
+    assertTrue(validationConfiguration.isValidateOnBuild());
+    assertTrue(validationConfiguration.isValidatorEnabled("Jasper Validator"));
+    assertFalse(validationConfiguration.isValidatorEnabled("Hibernate Validator"));
+    assertTrue(validationConfiguration.isValidatorEnabled("JPA Validator"));
   }
 
   private boolean isExcluded(JpsCompilerExcludes excludes, final String path) {

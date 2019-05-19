@@ -24,7 +24,6 @@ import javax.swing.*;
 
 /**
  * @author anna
- * @since 17-May-2006
  */
 public abstract class LafManager {
   public static LafManager getInstance() {

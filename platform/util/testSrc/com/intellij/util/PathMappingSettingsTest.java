@@ -66,4 +66,116 @@ public class PathMappingSettingsTest {
 
     Assert.assertEquals("/management-data/users.db", myMappingSettings.convertToLocal("/management-data/users.db"));
   }
+
+  @Test
+  public void testConvertToRemoteWithFileWithTheSamePrefix() {
+    myMappingSettings.addMapping("C:/testPrj/src/test", "/web-project/foo");
+    myMappingSettings.addMapping("C:/testPrj/src", "/web-project");
+
+    Assert.assertEquals("/web-project/foo", myMappingSettings.convertToRemote("C:/testPrj/src/test"));
+    Assert.assertEquals("/web-project", myMappingSettings.convertToRemote("C:/testPrj/src"));
+    Assert.assertEquals("/web-project/foo/", myMappingSettings.convertToRemote("C:/testPrj/src/test/"));
+    Assert.assertEquals("/web-project/", myMappingSettings.convertToRemote("C:/testPrj/src/"));
+
+    Assert.assertEquals("/web-project/tests.php", myMappingSettings.convertToRemote("C:/testPrj/src/tests.php"));
+    Assert.assertEquals("/web-project/foo/info.php", myMappingSettings.convertToRemote("C:/testPrj/src/test/info.php"));
+  }
+
+  @Test
+  public void testConvertToRemoteWithFileWithTheSamePrefixWithTrailingSlashInLocal() {
+    myMappingSettings.addMapping("C:/testPrj/src/test", "/web-project/foo");
+    myMappingSettings.addMapping("C:/testPrj/src/", "/web-project");
+
+    Assert.assertEquals("/web-project/foo", myMappingSettings.convertToRemote("C:/testPrj/src/test"));
+    Assert.assertEquals("/web-project", myMappingSettings.convertToRemote("C:/testPrj/src"));
+    Assert.assertEquals("/web-project/foo/", myMappingSettings.convertToRemote("C:/testPrj/src/test/"));
+    Assert.assertEquals("/web-project/", myMappingSettings.convertToRemote("C:/testPrj/src/"));
+
+    Assert.assertEquals("/web-project/tests.php", myMappingSettings.convertToRemote("C:/testPrj/src/tests.php"));
+    Assert.assertEquals("/web-project/foo/info.php", myMappingSettings.convertToRemote("C:/testPrj/src/test/info.php"));
+  }
+
+  @Test
+  public void testConvertToRemoteWithFileWithTheSamePrefixWithTrailingSlashInRemote() {
+    myMappingSettings.addMapping("C:/testPrj/src/test", "/web-project/foo");
+    myMappingSettings.addMapping("C:/testPrj/src", "/web-project/");
+
+    Assert.assertEquals("/web-project/foo", myMappingSettings.convertToRemote("C:/testPrj/src/test"));
+    Assert.assertEquals("/web-project", myMappingSettings.convertToRemote("C:/testPrj/src"));
+    Assert.assertEquals("/web-project/foo/", myMappingSettings.convertToRemote("C:/testPrj/src/test/"));
+    Assert.assertEquals("/web-project/", myMappingSettings.convertToRemote("C:/testPrj/src/"));
+
+    Assert.assertEquals("/web-project/tests.php", myMappingSettings.convertToRemote("C:/testPrj/src/tests.php"));
+    Assert.assertEquals("/web-project/foo/info.php", myMappingSettings.convertToRemote("C:/testPrj/src/test/info.php"));
+  }
+
+  @Test
+  public void testConvertToRemoteWithFileWithTheSamePrefixWithTrailingSlash() {
+    myMappingSettings.addMapping("C:/testPrj/src/test", "/web-project/foo");
+    myMappingSettings.addMapping("C:/testPrj/src/", "/web-project/");
+
+    Assert.assertEquals("/web-project/foo", myMappingSettings.convertToRemote("C:/testPrj/src/test"));
+    Assert.assertEquals("/web-project", myMappingSettings.convertToRemote("C:/testPrj/src"));
+    Assert.assertEquals("/web-project/foo/", myMappingSettings.convertToRemote("C:/testPrj/src/test/"));
+    Assert.assertEquals("/web-project/", myMappingSettings.convertToRemote("C:/testPrj/src/"));
+
+    Assert.assertEquals("/web-project/tests.php", myMappingSettings.convertToRemote("C:/testPrj/src/tests.php"));
+    Assert.assertEquals("/web-project/foo/info.php", myMappingSettings.convertToRemote("C:/testPrj/src/test/info.php"));
+  }
+
+  @Test
+  public void testConvertToRemoteWithDirectorWithTheSamePrefix() {
+    myMappingSettings.addMapping("C:/testPrj/src/test", "/web-project/foo");
+    myMappingSettings.addMapping("C:/testPrj/src/tests", "/web-project/bar");
+
+    Assert.assertEquals("/web-project/bar", myMappingSettings.convertToRemote("C:/testPrj/src/tests"));
+    Assert.assertEquals("/web-project/foo", myMappingSettings.convertToRemote("C:/testPrj/src/test"));
+    Assert.assertEquals("/web-project/bar/", myMappingSettings.convertToRemote("C:/testPrj/src/tests/"));
+    Assert.assertEquals("/web-project/foo/", myMappingSettings.convertToRemote("C:/testPrj/src/test/"));
+
+    Assert.assertEquals("/web-project/bar/my-test.php", myMappingSettings.convertToRemote("C:/testPrj/src/tests/my-test.php"));
+    Assert.assertEquals("/web-project/foo/info.php", myMappingSettings.convertToRemote("C:/testPrj/src/test/info.php"));
+  }
+
+  @Test
+  public void testConvertToRemoteWithDirectorWithTheSamePrefixWithTrailingSlashInLocal() {
+    myMappingSettings.addMapping("C:/testPrj/src/test/", "/web-project/foo");
+    myMappingSettings.addMapping("C:/testPrj/src/tests/", "/web-project/bar");
+
+    Assert.assertEquals("/web-project/bar", myMappingSettings.convertToRemote("C:/testPrj/src/tests"));
+    Assert.assertEquals("/web-project/foo", myMappingSettings.convertToRemote("C:/testPrj/src/test"));
+    Assert.assertEquals("/web-project/bar/", myMappingSettings.convertToRemote("C:/testPrj/src/tests/"));
+    Assert.assertEquals("/web-project/foo/", myMappingSettings.convertToRemote("C:/testPrj/src/test/"));
+
+    Assert.assertEquals("/web-project/bar/my-test.php", myMappingSettings.convertToRemote("C:/testPrj/src/tests/my-test.php"));
+    Assert.assertEquals("/web-project/foo/info.php", myMappingSettings.convertToRemote("C:/testPrj/src/test/info.php"));
+  }
+
+  @Test
+  public void testConvertToRemoteWithDirectorWithTheSamePrefixWithTrailingSlashInRemote() {
+    myMappingSettings.addMapping("C:/testPrj/src/test", "/web-project/foo/");
+    myMappingSettings.addMapping("C:/testPrj/src/tests", "/web-project/bar/");
+
+    Assert.assertEquals("/web-project/bar", myMappingSettings.convertToRemote("C:/testPrj/src/tests"));
+    Assert.assertEquals("/web-project/foo", myMappingSettings.convertToRemote("C:/testPrj/src/test"));
+    Assert.assertEquals("/web-project/bar/", myMappingSettings.convertToRemote("C:/testPrj/src/tests/"));
+    Assert.assertEquals("/web-project/foo/", myMappingSettings.convertToRemote("C:/testPrj/src/test/"));
+
+    Assert.assertEquals("/web-project/bar/my-test.php", myMappingSettings.convertToRemote("C:/testPrj/src/tests/my-test.php"));
+    Assert.assertEquals("/web-project/foo/info.php", myMappingSettings.convertToRemote("C:/testPrj/src/test/info.php"));
+  }
+
+  @Test
+  public void testConvertToRemoteWithDirectorWithTheSamePrefixWithTrailingSlash() {
+    myMappingSettings.addMapping("C:/testPrj/src/test/", "/web-project/foo/");
+    myMappingSettings.addMapping("C:/testPrj/src/tests/", "/web-project/bar/");
+
+    Assert.assertEquals("/web-project/bar", myMappingSettings.convertToRemote("C:/testPrj/src/tests"));
+    Assert.assertEquals("/web-project/foo", myMappingSettings.convertToRemote("C:/testPrj/src/test"));
+    Assert.assertEquals("/web-project/bar/", myMappingSettings.convertToRemote("C:/testPrj/src/tests/"));
+    Assert.assertEquals("/web-project/foo/", myMappingSettings.convertToRemote("C:/testPrj/src/test/"));
+
+    Assert.assertEquals("/web-project/bar/my-test.php", myMappingSettings.convertToRemote("C:/testPrj/src/tests/my-test.php"));
+    Assert.assertEquals("/web-project/foo/info.php", myMappingSettings.convertToRemote("C:/testPrj/src/test/info.php"));
+  }
 }

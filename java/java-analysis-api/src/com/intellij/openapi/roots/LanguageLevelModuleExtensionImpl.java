@@ -45,6 +45,8 @@ public class LanguageLevelModuleExtensionImpl extends ModuleExtension implements
 
   @Override
   public void setLanguageLevel(final LanguageLevel languageLevel) {
+    if (myState.getLanguageLevel() == languageLevel) return;
+
     LOG.assertTrue(myWritable, "Writable model can be retrieved from writable ModifiableRootModel");
     myState.setLanguageLevel(languageLevel);
   }
@@ -60,6 +62,7 @@ public class LanguageLevelModuleExtensionImpl extends ModuleExtension implements
     myState = state;
   }
 
+  @NotNull
   @Override
   public ModuleExtension getModifiableModel(final boolean writable) {
     return new LanguageLevelModuleExtensionImpl(this, writable);

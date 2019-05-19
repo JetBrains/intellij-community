@@ -1,23 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
@@ -31,8 +21,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -45,8 +34,7 @@ public class JavaProjectRootsUtil {
     if (file == null) return false;
     if (file.getFileSystem() instanceof NonPhysicalFileSystem) return false;
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
-    return !projectFileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) && !projectFileIndex.isInLibrarySource(file)
-           && !projectFileIndex.isInLibraryClasses(file);
+    return !projectFileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) && !projectFileIndex.isInLibrary(file);
   }
 
   /**
@@ -61,7 +49,7 @@ public class JavaProjectRootsUtil {
     return roots;
   }
 
-  public static void collectSuitableDestinationSourceRoots(@NotNull Module module, @NotNull List<VirtualFile> result) {
+  public static void collectSuitableDestinationSourceRoots(@NotNull Module module, @NotNull List<? super VirtualFile> result) {
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       for (SourceFolder sourceFolder : entry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
         if (!isForGeneratedSources(sourceFolder)) {
@@ -71,7 +59,7 @@ public class JavaProjectRootsUtil {
     }
   }
 
-  public static boolean isForGeneratedSources(SourceFolder sourceFolder) {
+  public static boolean isForGeneratedSources(@NotNull SourceFolder sourceFolder) {
     JavaSourceRootProperties properties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
     JavaResourceRootProperties resourceProperties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.RESOURCES);
     return properties != null && properties.isForGeneratedSources() || resourceProperties != null && resourceProperties.isForGeneratedSources();
@@ -87,18 +75,78 @@ public class JavaProjectRootsUtil {
     VirtualFile sourceRoot = fileIndex.getSourceRootForFile(file);
     if (sourceRoot == null) return false;
 
-    for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-      for (SourceFolder folder : entry.getSourceFolders()) {
-        if (sourceRoot.equals(folder.getFile())) {
-          return isForGeneratedSources(folder);
-        }
-      }
-    }
-    return false;
+    SourceFolder folder = ProjectRootsUtil.findSourceFolder(module, sourceRoot);
+    return folder != null && isForGeneratedSources(folder);
   }
 
+  @NotNull
   public static GlobalSearchScope getScopeWithoutGeneratedSources(@NotNull GlobalSearchScope baseScope, @NotNull Project project) {
     return new NonGeneratedSourceScope(baseScope, project);
+  }
+
+  /**
+   * Returns order entries which are exported to {@code module} from its direct {@code dependency}, and which aren't available via other dependencies.
+   * @return map from a direct or transitive dependency of {@code dependency} parameter to a corresponding direct dependency of {@code dependency} parameter.
+   */
+  @NotNull
+  public static Map<OrderEntry, OrderEntry> findExportedDependenciesReachableViaThisDependencyOnly(@NotNull Module module,
+                                                                                                   @NotNull Module dependency,
+                                                                                                   @NotNull RootModelProvider rootModelProvider) {
+    ModuleOrderEntry moduleOrderEntry = OrderEntryUtil.findModuleOrderEntry(rootModelProvider.getRootModel(module), dependency);
+    if (moduleOrderEntry == null) {
+      throw new IllegalArgumentException("Cannot find dependency from " + module + " to " + dependency);
+    }
+
+    Condition<OrderEntry> withoutThisDependency = entry -> !(entry instanceof ModuleOrderEntry && entry.getOwnerModule().equals(module) &&
+                                                             dependency.equals(((ModuleOrderEntry)entry).getModule()));
+    OrderEnumerator enumerator =
+      rootModelProvider.getRootModel(module).orderEntries()
+        .satisfying(withoutThisDependency)
+        .using(rootModelProvider)
+        .compileOnly()
+        .recursively().exportedOnly();
+    if (moduleOrderEntry.getScope().isForProductionCompile()) {
+      enumerator = enumerator.productionOnly();
+    }
+
+    Set<Module> reachableModules = new HashSet<>();
+    Set<Library> reachableLibraries = new HashSet<>();
+    enumerator.forEach(entry -> {
+      if (entry instanceof ModuleSourceOrderEntry) {
+        reachableModules.add(entry.getOwnerModule());
+      }
+      else if (entry instanceof ModuleOrderEntry) {
+        ContainerUtil.addIfNotNull(reachableModules, ((ModuleOrderEntry)entry).getModule());
+      }
+      else if (entry instanceof LibraryOrderEntry) {
+        ContainerUtil.addIfNotNull(reachableLibraries, ((LibraryOrderEntry)entry).getLibrary());
+      }
+      return true;
+    });
+
+    Map<OrderEntry, OrderEntry> result = new LinkedHashMap<>();
+    rootModelProvider.getRootModel(dependency).orderEntries().using(rootModelProvider).exportedOnly().withoutSdk().withoutModuleSourceEntries().forEach(direct -> {
+      if (direct instanceof ModuleOrderEntry) {
+        Module depModule = ((ModuleOrderEntry)direct).getModule();
+        if (depModule != null && !reachableModules.contains(depModule)) {
+          result.put(direct, direct);
+          rootModelProvider.getRootModel(depModule).orderEntries().using(rootModelProvider).exportedOnly().withoutSdk().recursively().forEach(transitive -> {
+            if (transitive instanceof ModuleSourceOrderEntry && !reachableModules.contains(transitive.getOwnerModule()) && !depModule.equals(transitive.getOwnerModule())
+                || transitive instanceof LibraryOrderEntry && ((LibraryOrderEntry)transitive).getLibrary() != null && !reachableLibraries.contains(((LibraryOrderEntry)transitive).getLibrary())) {
+              if (!result.containsKey(transitive)) {
+                result.put(transitive, direct);
+              }
+            }
+            return true;
+          });
+        }
+      }
+      else if (direct instanceof LibraryOrderEntry && ((LibraryOrderEntry)direct).getLibrary() != null && !reachableLibraries.contains(((LibraryOrderEntry)direct).getLibrary())) {
+        result.put(direct, direct);
+      }
+      return true;
+    });
+    return result;
   }
 
   private static class NonGeneratedSourceScope extends DelegatingGlobalSearchScope {

@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ public class PluginConflictDialog extends DialogWrapper {
   public static final int WIDTH = 450;
 
   @NotNull
-  private final List<PluginId> myConflictingPlugins;
+  private final List<? extends PluginId> myConflictingPlugins;
 
   private final boolean myIsConflictWithPlatform;
   @Nullable
@@ -55,7 +56,7 @@ public class PluginConflictDialog extends DialogWrapper {
 
   private JPanel myConflictingPluginsListPanel;
 
-  public PluginConflictDialog(@NotNull List<PluginId> conflictingPlugins,
+  public PluginConflictDialog(@NotNull List<? extends PluginId> conflictingPlugins,
                               boolean isConflictWithPlatform) {
     super(false);
 
@@ -81,7 +82,7 @@ public class PluginConflictDialog extends DialogWrapper {
     myContentPane.setPreferredSize(JBUI.size(WIDTH, (int)myContentPane.getMinimumSize().getHeight()));
   }
 
-  private static String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
+  private static String getTopMessageText(@NotNull List<? extends PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
     final int pluginsNumber = conflictingPlugins.size();
     if (isConflictWithPlatform) {
       return DiagnosticBundle.message("error.dialog.conflict.plugin.header.platform", pluginsNumber);
@@ -110,16 +111,13 @@ public class PluginConflictDialog extends DialogWrapper {
     final ButtonGroup buttonGroup = new ButtonGroup();
 
     myConflictingPluginsListPanel = new JPanel(new GridLayout(0, 1));
-    final List<JPanel> pluginDescriptions = myConflictingPlugins.stream()
-      .map(plugin -> getChooserPanelForPlugin(buttonGroup, plugin))
-      .collect(Collectors.toList());
+    final List<JPanel> pluginDescriptions =
+      ContainerUtil.map(myConflictingPlugins, plugin -> getChooserPanelForPlugin(buttonGroup, plugin));
+    pluginDescriptions.forEach(myConflictingPluginsListPanel::add);
 
     if (!myIsConflictWithPlatform) {
-      pluginDescriptions.add(getChooserPanelForPlugin(buttonGroup, null));
-    }
-
-    for (JPanel panel : pluginDescriptions) {
-      myConflictingPluginsListPanel.add(panel);
+      JPanel chooserPanelForPlugin = getChooserPanelForPlugin(buttonGroup, null);
+      myConflictingPluginsListPanel.add(chooserPanelForPlugin);
     }
 
     setUpDefaultSelection();

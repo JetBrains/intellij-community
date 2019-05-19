@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +22,7 @@ public class ChangesViewContentEP implements PluginAware {
   public static final ExtensionPointName<ChangesViewContentEP> EP_NAME = new ExtensionPointName<>("com.intellij.changesViewContent");
 
   @Attribute("tabName")
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String tabName;
 
   @Attribute("className")
@@ -46,6 +34,7 @@ public class ChangesViewContentEP implements PluginAware {
   private PluginDescriptor myPluginDescriptor;
   private ChangesViewContentProvider myInstance;
 
+  @Override
   public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }

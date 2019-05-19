@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
 /*
@@ -47,6 +33,7 @@ import java.util.stream.Stream;
 // Null keys are NOT allowed
 // Null values are NOT allowed
 // NOT serializable
+@SuppressWarnings("ALL")
 
 /**
  * A hash table supporting full concurrency of retrievals and
@@ -234,8 +221,6 @@ import java.util.stream.Stream;
  * <p>This class is a member of the
  * <a href="{@docRoot}/../technotes/guides/collections/index.html">
  * Java Collections Framework</a>.
- *
- * @since 1.5
  * @author Doug Lea
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
@@ -818,7 +803,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /**
      * Creates a new, empty map with the default initial table size (16).
      */
-    public ConcurrentHashMap() {
+    ConcurrentHashMap() {
       this(DEFAULT_CAPACITY, LOAD_FACTOR);
     }
 
@@ -832,7 +817,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @throws IllegalArgumentException if the initial capacity of
      * elements is negative
      */
-    public ConcurrentHashMap(int initialCapacity) {
+    ConcurrentHashMap(int initialCapacity) {
       this(initialCapacity, LOAD_FACTOR);
     }
 
@@ -841,7 +826,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @param m the map
      */
-    public ConcurrentHashMap(Map<? extends K, ? extends V> m) {
+    ConcurrentHashMap(Map<? extends K, ? extends V> m) {
       this(DEFAULT_CAPACITY);
         putAll(m);
     }
@@ -858,10 +843,8 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * establishing the initial table size
      * @throws IllegalArgumentException if the initial capacity of
      * elements is negative or the load factor is nonpositive
-     *
-     * @since 1.6
      */
-    public ConcurrentHashMap(int initialCapacity, float loadFactor) {
+    ConcurrentHashMap(int initialCapacity, float loadFactor) {
         this(initialCapacity, loadFactor, 1);
     }
 
@@ -883,7 +866,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * negative or the load factor or concurrencyLevel are
      * nonpositive
      */
-    public ConcurrentHashMap(int initialCapacity,
+    ConcurrentHashMap(int initialCapacity,
                              float loadFactor, int concurrencyLevel) {
         this(initialCapacity, loadFactor,concurrencyLevel, THIS);
     }
@@ -899,7 +882,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
       throw new IncorrectOperationException();
     }
   };
-  public ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();
     }
@@ -914,7 +897,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     this.hashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
   }
 
-  public ConcurrentHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  ConcurrentHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
     this(DEFAULT_CAPACITY, LOAD_FACTOR, NCPU, hashingStrategy);
   }
     // Original (since JDK1.2) Map methods
@@ -2025,7 +2008,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * there are concurrent insertions or removals.
      *
      * @return the number of mappings
-     * @since 1.8
      */
     public long mappingCount() {
         long n = sumCount();
@@ -2038,7 +2020,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @param <K> the element type of the returned set
      * @return the new set
-     * @since 1.8
      */
     public static <K> KeySetView<K,Boolean> newKeySet() {
         return new KeySetView<K,Boolean>
@@ -2055,7 +2036,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @return the new set
      * @throws IllegalArgumentException if the initial capacity of
      * elements is negative
-     * @since 1.8
      */
     public static <K> KeySetView<K,Boolean> newKeySet(int initialCapacity) {
         return new KeySetView<K,Boolean>
@@ -3561,7 +3541,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param parallelismThreshold the (estimated) number of elements
      * needed for this operation to be executed in parallel
      * @param action the action
-     * @since 1.8
      */
     public void forEach(long parallelismThreshold,
                         BiConsumer<? super K,? super V> action) {
@@ -3582,7 +3561,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * which case the action is not applied)
      * @param action the action
      * @param <U> the return type of the transformer
-     * @since 1.8
      */
     public <U> void forEach(long parallelismThreshold,
                             BiFunction<? super K, ? super V, ? extends U> transformer,
@@ -3608,7 +3586,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param <U> the return type of the search function
      * @return a non-null result from applying the given search
      * function on each (key, value), or null if none
-     * @since 1.8
      */
     public <U> U search(long parallelismThreshold,
                         BiFunction<? super K, ? super V, ? extends U> searchFunction) {
@@ -3632,7 +3609,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param <U> the return type of the transformer
      * @return the result of accumulating the given transformation
      * of all (key, value) pairs
-     * @since 1.8
      */
     public <U> U reduce(long parallelismThreshold,
                         BiFunction<? super K, ? super V, ? extends U> transformer,
@@ -3657,7 +3633,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all (key, value) pairs
-     * @since 1.8
      */
     public double reduceToDouble(long parallelismThreshold,
                                  ToDoubleBiFunction<? super K, ? super V> transformer,
@@ -3683,7 +3658,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all (key, value) pairs
-     * @since 1.8
      */
     public long reduceToLong(long parallelismThreshold,
                              ToLongBiFunction<? super K, ? super V> transformer,
@@ -3709,7 +3683,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all (key, value) pairs
-     * @since 1.8
      */
     public int reduceToInt(long parallelismThreshold,
                            ToIntBiFunction<? super K, ? super V> transformer,
@@ -3728,7 +3701,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param parallelismThreshold the (estimated) number of elements
      * needed for this operation to be executed in parallel
      * @param action the action
-     * @since 1.8
      */
     public void forEachKey(long parallelismThreshold,
                            Consumer<? super K> action) {
@@ -3749,7 +3721,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * which case the action is not applied)
      * @param action the action
      * @param <U> the return type of the transformer
-     * @since 1.8
      */
     public <U> void forEachKey(long parallelismThreshold,
                                Function<? super K, ? extends U> transformer,
@@ -3775,7 +3746,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param <U> the return type of the search function
      * @return a non-null result from applying the given search
      * function on each key, or null if none
-     * @since 1.8
      */
     public <U> U searchKeys(long parallelismThreshold,
                             Function<? super K, ? extends U> searchFunction) {
@@ -3794,7 +3764,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating all keys using the given
      * reducer to combine values, or null if none
-     * @since 1.8
      */
     public K reduceKeys(long parallelismThreshold,
                         BiFunction<? super K, ? super K, ? extends K> reducer) {
@@ -3818,7 +3787,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param <U> the return type of the transformer
      * @return the result of accumulating the given transformation
      * of all keys
-     * @since 1.8
      */
     public <U> U reduceKeys(long parallelismThreshold,
                             Function<? super K, ? extends U> transformer,
@@ -3843,7 +3811,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all keys
-     * @since 1.8
      */
     public double reduceKeysToDouble(long parallelismThreshold,
                                      ToDoubleFunction<? super K> transformer,
@@ -3869,7 +3836,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all keys
-     * @since 1.8
      */
     public long reduceKeysToLong(long parallelismThreshold,
                                  ToLongFunction<? super K> transformer,
@@ -3895,7 +3861,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all keys
-     * @since 1.8
      */
     public int reduceKeysToInt(long parallelismThreshold,
                                ToIntFunction<? super K> transformer,
@@ -3914,7 +3879,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param parallelismThreshold the (estimated) number of elements
      * needed for this operation to be executed in parallel
      * @param action the action
-     * @since 1.8
      */
     public void forEachValue(long parallelismThreshold,
                              Consumer<? super V> action) {
@@ -3936,7 +3900,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * which case the action is not applied)
      * @param action the action
      * @param <U> the return type of the transformer
-     * @since 1.8
      */
     public <U> void forEachValue(long parallelismThreshold,
                                  Function<? super V, ? extends U> transformer,
@@ -3962,7 +3925,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param <U> the return type of the search function
      * @return a non-null result from applying the given search
      * function on each value, or null if none
-     * @since 1.8
      */
     public <U> U searchValues(long parallelismThreshold,
                               Function<? super V, ? extends U> searchFunction) {
@@ -3980,7 +3942,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * needed for this operation to be executed in parallel
      * @param reducer a commutative associative combining function
      * @return the result of accumulating all values
-     * @since 1.8
      */
     public V reduceValues(long parallelismThreshold,
                           BiFunction<? super V, ? super V, ? extends V> reducer) {
@@ -4004,7 +3965,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param <U> the return type of the transformer
      * @return the result of accumulating the given transformation
      * of all values
-     * @since 1.8
      */
     public <U> U reduceValues(long parallelismThreshold,
                               Function<? super V, ? extends U> transformer,
@@ -4029,7 +3989,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all values
-     * @since 1.8
      */
     public double reduceValuesToDouble(long parallelismThreshold,
                                        ToDoubleFunction<? super V> transformer,
@@ -4055,7 +4014,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all values
-     * @since 1.8
      */
     public long reduceValuesToLong(long parallelismThreshold,
                                    ToLongFunction<? super V> transformer,
@@ -4081,7 +4039,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all values
-     * @since 1.8
      */
     public int reduceValuesToInt(long parallelismThreshold,
                                  ToIntFunction<? super V> transformer,
@@ -4100,7 +4057,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param parallelismThreshold the (estimated) number of elements
      * needed for this operation to be executed in parallel
      * @param action the action
-     * @since 1.8
      */
     public void forEachEntry(long parallelismThreshold,
                              Consumer<? super Map.Entry<K,V>> action) {
@@ -4120,7 +4076,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * which case the action is not applied)
      * @param action the action
      * @param <U> the return type of the transformer
-     * @since 1.8
      */
     public <U> void forEachEntry(long parallelismThreshold,
                                  Function<Map.Entry<K,V>, ? extends U> transformer,
@@ -4146,7 +4101,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param <U> the return type of the search function
      * @return a non-null result from applying the given search
      * function on each entry, or null if none
-     * @since 1.8
      */
     public <U> U searchEntries(long parallelismThreshold,
                                Function<Map.Entry<K,V>, ? extends U> searchFunction) {
@@ -4164,7 +4118,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * needed for this operation to be executed in parallel
      * @param reducer a commutative associative combining function
      * @return the result of accumulating all entries
-     * @since 1.8
      */
     public Map.Entry<K,V> reduceEntries(long parallelismThreshold,
                                         BiFunction<Map.Entry<K,V>, Map.Entry<K,V>, ? extends Map.Entry<K,V>> reducer) {
@@ -4188,7 +4141,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param <U> the return type of the transformer
      * @return the result of accumulating the given transformation
      * of all entries
-     * @since 1.8
      */
     public <U> U reduceEntries(long parallelismThreshold,
                                Function<Map.Entry<K,V>, ? extends U> transformer,
@@ -4213,7 +4165,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all entries
-     * @since 1.8
      */
     public double reduceEntriesToDouble(long parallelismThreshold,
                                         ToDoubleFunction<Map.Entry<K,V>> transformer,
@@ -4239,7 +4190,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all entries
-     * @since 1.8
      */
     public long reduceEntriesToLong(long parallelismThreshold,
                                     ToLongFunction<Map.Entry<K,V>> transformer,
@@ -4265,7 +4215,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param reducer a commutative associative combining function
      * @return the result of accumulating the given transformation
      * of all entries
-     * @since 1.8
      */
     public int reduceEntriesToInt(long parallelismThreshold,
                                   ToIntFunction<Map.Entry<K,V>> transformer,
@@ -4444,8 +4393,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * {@link #keySet(Object) keySet(V)},
      * {@link #newKeySet() newKeySet()},
      * {@link #newKeySet(int) newKeySet(int)}.
-     *
-     * @since 1.8
      */
     public static class KeySetView<K,V> extends CollectionView<K,V,K>
         implements Set<K>, java.io.Serializable {
@@ -5270,7 +5217,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     ReduceKeysTask<K,V>
                         t = (ReduceKeysTask<K,V>)c,
                         s = t.rights;
@@ -5318,7 +5264,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     ReduceValuesTask<K,V>
                         t = (ReduceValuesTask<K,V>)c,
                         s = t.rights;
@@ -5364,7 +5309,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     ReduceEntriesTask<K,V>
                         t = (ReduceEntriesTask<K,V>)c,
                         s = t.rights;
@@ -5418,7 +5362,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceKeysTask<K,V,U>
                         t = (MapReduceKeysTask<K,V,U>)c,
                         s = t.rights;
@@ -5472,7 +5415,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceValuesTask<K,V,U>
                         t = (MapReduceValuesTask<K,V,U>)c,
                         s = t.rights;
@@ -5526,7 +5468,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceEntriesTask<K,V,U>
                         t = (MapReduceEntriesTask<K,V,U>)c,
                         s = t.rights;
@@ -5580,7 +5521,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceMappingsTask<K,V,U>
                         t = (MapReduceMappingsTask<K,V,U>)c,
                         s = t.rights;
@@ -5633,7 +5573,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceKeysToDoubleTask<K,V>
                         t = (MapReduceKeysToDoubleTask<K,V>)c,
                         s = t.rights;
@@ -5683,7 +5622,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceValuesToDoubleTask<K,V>
                         t = (MapReduceValuesToDoubleTask<K,V>)c,
                         s = t.rights;
@@ -5733,7 +5671,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceEntriesToDoubleTask<K,V>
                         t = (MapReduceEntriesToDoubleTask<K,V>)c,
                         s = t.rights;
@@ -5783,7 +5720,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceMappingsToDoubleTask<K,V>
                         t = (MapReduceMappingsToDoubleTask<K,V>)c,
                         s = t.rights;
@@ -5833,7 +5769,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceKeysToLongTask<K,V>
                         t = (MapReduceKeysToLongTask<K,V>)c,
                         s = t.rights;
@@ -5883,7 +5818,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceValuesToLongTask<K,V>
                         t = (MapReduceValuesToLongTask<K,V>)c,
                         s = t.rights;
@@ -5933,7 +5867,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceEntriesToLongTask<K,V>
                         t = (MapReduceEntriesToLongTask<K,V>)c,
                         s = t.rights;
@@ -5983,7 +5916,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceMappingsToLongTask<K,V>
                         t = (MapReduceMappingsToLongTask<K,V>)c,
                         s = t.rights;
@@ -6033,7 +5965,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceKeysToIntTask<K,V>
                         t = (MapReduceKeysToIntTask<K,V>)c,
                         s = t.rights;
@@ -6083,7 +6014,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceValuesToIntTask<K,V>
                         t = (MapReduceValuesToIntTask<K,V>)c,
                         s = t.rights;
@@ -6133,7 +6063,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceEntriesToIntTask<K,V>
                         t = (MapReduceEntriesToIntTask<K,V>)c,
                         s = t.rights;
@@ -6183,7 +6112,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceMappingsToIntTask<K,V>
                         t = (MapReduceMappingsToIntTask<K,V>)c,
                         s = t.rights;

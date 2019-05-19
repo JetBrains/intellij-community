@@ -29,7 +29,6 @@ import java.io.File;
  * This class is not singleton but offers single-point-of-usage field - {@link #INSTANCE}.
  * 
  * @author Denis Zhdanov
- * @since 5/15/13 12:45 PM
  */
 public class DefaultExternalSystemUiAware implements ExternalSystemUiAware {
 

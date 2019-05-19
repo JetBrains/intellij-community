@@ -11,37 +11,7 @@
 
     <!-- Numbers -->
     <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertIntegerToDecimalIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.numbers</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertIntegerToHexIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.numbers</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertToScientificNotationIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.numbers</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertToPlainIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.numbers</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertIntegerToOctalIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.numbers</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertIntegerToBinaryIntention</className>
+      <className>com.siyeh.ipp.integer.JavaNumberConversionIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.numbers</categoryKey>
     </intentionAction>
@@ -282,11 +252,6 @@
       <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.enumswitch.CreateEnumSwitchBranchesIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.control.flow</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.functional.ExtractToMethodReferenceIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.control.flow</categoryKey>
@@ -345,11 +310,6 @@
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.chartostring.StringToCharIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.strings</categoryKey>
-    </intentionAction>
 
     <!-- Try Statements -->
     <intentionAction>
@@ -376,6 +336,11 @@
     <!-- Other -->
     <intentionAction>
       <className>com.siyeh.ipp.expression.FlipExpressionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.expression.eliminate.EliminateParenthesesIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
@@ -445,11 +410,6 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.parenthesis.AddClarifyingParenthesesIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.unicode.UnicodeUnescapeIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
@@ -471,6 +431,11 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.collections.ReplaceWithArraysAsListIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.collections.ReplaceWithMutableCollectionIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

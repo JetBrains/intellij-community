@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
@@ -653,6 +654,31 @@ class Foobar {
 }
 ''', PsiClass
   }
+
+  void "test no recursion when resolving type parameter bound"() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    resolveByText '''\
+interface I {}
+class A {
+  def <T extends <caret>I> T foo() {}
+}
+''', PsiClass
+  }
+
+  void "test no recursion when resolving inner class in implements list"() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    fixture.addClass '''\
+package com.foo;
+public interface I {
+  interface Inner {}
+}
+'''
+    resolveByText '''\
+import com.foo.I;
+class A implements I.<caret>Inner {}
+''', PsiClass
+  }
+
 
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
 }

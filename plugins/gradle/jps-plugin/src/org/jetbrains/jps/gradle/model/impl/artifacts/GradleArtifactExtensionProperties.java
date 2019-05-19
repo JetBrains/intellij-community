@@ -23,7 +23,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/12/2016
  */
 public class GradleArtifactExtensionProperties {
   @Attribute("external-project-path")

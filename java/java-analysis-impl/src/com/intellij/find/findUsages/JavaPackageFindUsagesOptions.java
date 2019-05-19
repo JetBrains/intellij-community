@@ -39,7 +39,7 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
   }
 
   @Override
-  protected void addUsageTypes(@NotNull LinkedHashSet<String> to) {
+  protected void addUsageTypes(@NotNull LinkedHashSet<? super String> to) {
     if (this.isUsages || this.isClassesUsages) {
       to.add(FindBundle.message("find.usages.panel.title.usages"));
     }
@@ -47,8 +47,8 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!super.equals(this)) return false;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    if (getClass() != o.getClass()) return false;
 
     final JavaPackageFindUsagesOptions that = (JavaPackageFindUsagesOptions)o;
 

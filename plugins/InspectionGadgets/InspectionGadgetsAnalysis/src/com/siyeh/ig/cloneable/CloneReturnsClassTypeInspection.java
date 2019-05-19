@@ -1,12 +1,9 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -51,7 +48,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
 
     final String myClassName;
 
-    public CloneReturnsClassTypeFix(String className) {
+    CloneReturnsClassTypeFix(String className) {
       myClassName = className;
     }
 
@@ -82,13 +79,16 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       final PsiTypeElement newTypeElement = factory.createTypeElementFromText(myClassName, element);
       final PsiType newType = newTypeElement.getType();
       parent.accept(new JavaRecursiveElementVisitor() {
+
+        @Override
+        public void visitClass(PsiClass aClass) {}
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
         @Override
         public void visitReturnStatement(PsiReturnStatement statement) {
           super.visitReturnStatement(statement);
-          final PsiElement owner = PsiTreeUtil.getParentOfType(statement, PsiClass.class, PsiLambdaExpression.class, PsiMethod.class);
-          if (owner != parent) {
-            return;
-          }
           final PsiExpression returnValue = PsiUtil.deparenthesizeExpression(statement.getReturnValue());
           if (returnValue == null || newType.equals(returnValue.getType())) {
             return;
@@ -98,7 +98,6 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
         }
       });
       element.replace(newTypeElement);
-
     }
   }
 
@@ -120,7 +119,12 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       }
       final PsiType returnType = typeElement.getType();
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
-      final PsiClass containingClass = method.getContainingClass();
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass instanceof PsiAnonymousClass) {
+        final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)containingClass;
+        final PsiClassType baseClassType = anonymousClass.getBaseClassType();
+        containingClass = PsiUtil.resolveClassInClassTypeOnly(baseClassType);
+      }
       if (containingClass == null || containingClass.equals(aClass)) {
         return;
       }

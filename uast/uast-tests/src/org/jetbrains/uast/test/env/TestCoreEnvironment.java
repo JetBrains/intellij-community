@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.uast.test.env;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -41,7 +40,6 @@ import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.JavaClassSupersImpl;
 import com.intellij.psi.impl.PsiElementFinderImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
-import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
@@ -58,7 +56,7 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
   private final Disposable mDisposable;
   private volatile JavaCoreProjectEnvironment mProjectEnvironment = null;
 
-  public TestCoreEnvironment(Disposable disposable) {
+  public TestCoreEnvironment(@NotNull Disposable disposable) {
     mDisposable = disposable;
   }
 
@@ -93,6 +91,7 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
     getProjectEnvironment().addSourcesToClasspath(virtualFile);
   }
 
+  @Override
   public void addJar(@NotNull File root) {
     getProjectEnvironment().addJarToClassPath(root);
   }
@@ -167,16 +166,15 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
     CoreApplicationEnvironment.registerExtensionPoint(
       Extensions.getRootArea(), ContainerProvider.EP_NAME, ContainerProvider.class);
     CoreApplicationEnvironment.registerExtensionPoint(
-      Extensions.getRootArea(), ClsCustomNavigationPolicy.EP_NAME, ClsCustomNavigationPolicy.class);
-    CoreApplicationEnvironment.registerExtensionPoint(
       Extensions.getRootArea(), ClassFileDecompilers.EP_NAME, ClassFileDecompilers.Decompiler.class);
     CoreApplicationEnvironment.registerExtensionPoint(
       Extensions.getRootArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
   }
 
   private class TestJavaCoreProjectEnvironment extends JavaCoreProjectEnvironment {
-    TestJavaCoreProjectEnvironment(JavaCoreApplicationEnvironment coreEnvironment) {
-      super(TestCoreEnvironment.this.mDisposable, coreEnvironment);
+    TestJavaCoreProjectEnvironment(@NotNull JavaCoreApplicationEnvironment coreEnvironment) {
+      super(mDisposable, coreEnvironment);
+
       registerProjectExtensions();
     }
 
@@ -187,21 +185,17 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
 
     private void registerProjectExtensionPoints() {
       ExtensionsArea area = Extensions.getArea(myProject);
+      CoreApplicationEnvironment.registerExtensionPoint(area, PsiTreeChangePreprocessor.EP, PsiTreeChangePreprocessor.class);
       CoreApplicationEnvironment.registerExtensionPoint(
-        area, PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
-      CoreApplicationEnvironment.registerExtensionPoint(
-        area, PsiElementFinder.EP_NAME, PsiElementFinder.class);
+        area, PsiElementFinder.EP, PsiElementFinder.class);
     }
 
     private void registerProjectExtensions() {
-      ExtensionsArea area = Extensions.getArea(myProject);
-
       myProject.registerService(CoreJavaFileManager.class,
                                 ((CoreJavaFileManager)ServiceManager.getService(myProject, JavaFileManager.class)));
 
-      area.getExtensionPoint(PsiElementFinder.EP_NAME).registerExtension(
-        new PsiElementFinderImpl(myProject, ServiceManager
-          .getService(myProject, JavaFileManager.class)));
+      //noinspection TestOnlyProblems
+      PsiElementFinder.EP.getPoint(myProject).registerExtension(new PsiElementFinderImpl(myProject), mDisposable);
     }
   }
 }

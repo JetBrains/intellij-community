@@ -6,6 +6,7 @@ package com.intellij.slicer;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
@@ -18,6 +19,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author cdr
@@ -62,7 +65,7 @@ public class SliceHandler implements CodeInsightActionHandler {
     PsiElement atCaret = file.findElementAt(offset);
 
     SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(file);
-    if(provider == null){
+    if(provider == null || atCaret == null) {
       return null;
     }
     return provider.getExpressionAtCaret(atCaret, myDataFlowToThis);
@@ -74,17 +77,18 @@ public class SliceHandler implements CodeInsightActionHandler {
 
     Project myProject = element.getProject();
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
-    analysisUIOptions.save(storedSettingsBean.analysisUIOptions);
+    analysisUIOptions.loadState(storedSettingsBean.analysisUIOptions);
 
+    List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(myProject, analysisScope,
+                                                                        module, element);
     BaseAnalysisActionDialog dialog =
-      new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, module, true, analysisUIOptions,
-                                   element);
+      new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, items, analysisUIOptions, true);
     if (!dialog.showAndGet()) {
       return null;
     }
 
     AnalysisScope scope = dialog.getScope(analysisUIOptions, analysisScope, myProject, module);
-    storedSettingsBean.analysisUIOptions.save(analysisUIOptions);
+    storedSettingsBean.analysisUIOptions.loadState(analysisUIOptions);
 
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = scope;

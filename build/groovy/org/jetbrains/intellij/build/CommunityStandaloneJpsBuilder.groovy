@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.LayoutBuilder
@@ -21,6 +21,7 @@ class CommunityStandaloneJpsBuilder {
         jar("util.jar") {
           module("intellij.platform.util.rt")
           module("intellij.platform.util")
+          module("intellij.platform.util.classLoader")
         }
 
         jar("jps-launcher.jar") {
@@ -63,7 +64,6 @@ class CommunityStandaloneJpsBuilder {
         jar("maven-jps-plugin.jar") { module("intellij.maven.jps") }
         jar("aether-dependency-resolver.jar") { module("intellij.java.aetherDependencyResolver") }
         jar("gradle-jps-plugin.jar") { module("intellij.gradle.jps") }
-        moduleLibrary("intellij.maven.jps", "plexus-utils-2.0.6.jar")
 
         jar("eclipse-jps-plugin.jar") {
           module("intellij.eclipse.common")
@@ -74,8 +74,8 @@ class CommunityStandaloneJpsBuilder {
 
         [
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
-          "netty-codec-http", "netty-handler", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava",
-          "jetbrains-annotations-java5"
+          "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
+          "jetbrains-annotations-java5", "maven-model"
         ].each {
           projectLibrary(it)
         }
@@ -83,7 +83,6 @@ class CommunityStandaloneJpsBuilder {
           jpsLibrary(it)
         }
 
-        moduleLibrary("intellij.platform.jps.build.javac.rt", "optimizedFileManager.jar")
         jar("ant-jps-plugin.jar") { module("intellij.ant.jps") }
         include(additionalJars)
       }

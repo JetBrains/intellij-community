@@ -25,22 +25,21 @@ import org.jetbrains.intellij.build.ProductProperties
 @CompileStatic
 class VmOptionsGenerator {
   private static final String COMMON_VM_OPTIONS = "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
-                                          "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                          "-Dsun.io.useCanonPrefixCache=false -Djava.net.preferIPv4Stack=true " +
                                           "-Djdk.http.auth.tunneling.disabledSchemes=\"\" " +
-                                          "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow"
+                                          "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow " +
+                                          "-Djdk.attach.allowAttachSelf"
 
-  static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties, String yourkitSessionName = null) {
+  static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties) {
     String options = vmOptionsForArch(arch, productProperties) + " " + computeCommonVmOptions(isEAP)
-    if (yourkitSessionName != null) {
-      options += " " + yourkitOptions(yourkitSessionName, arch.fileSuffix)
-    }
     return options
   }
 
   static String computeCommonVmOptions(boolean isEAP) {
     String options = COMMON_VM_OPTIONS
     if (isEAP) {
-      options += " -XX:MaxJavaStackTraceDepth=-1"
+      //must be consistent with com.intellij.openapi.application.ConfigImportHelper.updateVMOptions
+      options += " -XX:MaxJavaStackTraceDepth=10000"
     }
     return options
   }
@@ -52,10 +51,6 @@ class VmOptionsGenerator {
       case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64 ?: "-Xms128m -Xmx750m -XX:ReservedCodeCacheSize=240m"
     }
     throw new AssertionError(arch)
-  }
-
-  static String yourkitOptions(String sessionName, String fileSuffix) {
-    "-agentlib:yjpagent$fileSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$sessionName".trim()
   }
 }
 

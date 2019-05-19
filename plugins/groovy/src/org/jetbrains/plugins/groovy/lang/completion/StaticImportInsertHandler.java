@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -38,7 +38,7 @@ class StaticImportInsertHandler implements InsertHandler<JavaGlobalMemberLookupE
   }
 
   @Override
-  public void handleInsert(InsertionContext context, JavaGlobalMemberLookupElement item) {
+  public void handleInsert(@NotNull InsertionContext context, @NotNull JavaGlobalMemberLookupElement item) {
     GroovyInsertHandler.INSTANCE.handleInsert(context, item);
     final PsiMember member = item.getObject();
     PsiDocumentManager.getInstance(member.getProject()).commitDocument(context.getDocument());

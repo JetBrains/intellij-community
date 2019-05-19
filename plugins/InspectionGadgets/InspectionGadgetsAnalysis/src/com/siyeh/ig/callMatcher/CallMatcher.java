@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.callMatcher;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -27,6 +14,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -43,13 +31,14 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    */
   Stream<String> names();
 
-  @Contract("null -> false")
+  @Contract(value = "null -> false", pure = true)
   boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef);
 
-  @Contract("null -> false")
+  @Override
+  @Contract(value = "null -> false", pure = true)
   boolean test(@Nullable PsiMethodCallExpression call);
 
-  @Contract("null -> false")
+  @Contract(value = "null -> false", pure = true)
   boolean methodMatches(@Nullable PsiMethod method);
 
   /**
@@ -147,7 +136,77 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.STATIC);
   }
 
+  static Simple enumValues() {
+    return Simple.ENUM_VALUES;
+  }
+
+  static Simple enumValueOf() {
+    return Simple.ENUM_VALUE_OF;
+  }
+
+  /**
+   * Matches given expression if its a call or a method reference returning a corresponding PsiReferenceExpression if match is successful.
+   *
+   * @param expression expression to match
+   * @return PsiReferenceExpression if match is successful, null otherwise
+   */
+  @Nullable
+  default PsiReferenceExpression getReferenceIfMatched(PsiExpression expression) {
+    if (expression instanceof PsiMethodReferenceExpression && methodReferenceMatches((PsiMethodReferenceExpression)expression)) {
+      return (PsiReferenceExpression)expression;
+    }
+    if (expression instanceof PsiMethodCallExpression && test((PsiMethodCallExpression)expression)) {
+      return ((PsiMethodCallExpression)expression).getMethodExpression();
+    }
+    return null;
+  }
+
+  /**
+   * @return call matcher with additional check before actual call matching
+   */
+  default CallMatcher withContextFilter(@NotNull Predicate<? super PsiElement> filter) {
+    return new CallMatcher() {
+      @Override
+      public Stream<String> names() {
+        return CallMatcher.this.names();
+      }
+
+      @Override
+      public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
+        if (methodRef == null || !filter.test(methodRef)) return false;
+        return CallMatcher.this.methodReferenceMatches(methodRef);
+      }
+
+      @Override
+      public boolean test(@Nullable PsiMethodCallExpression call) {
+        if (call == null || !filter.test(call)) return false;
+        return CallMatcher.this.test(call);
+      }
+
+      @Override
+      public boolean methodMatches(@Nullable PsiMethod method) {
+        if (method == null || !filter.test(method)) return false;
+        return CallMatcher.this.methodMatches(method);
+      }
+
+      @Override
+      public String toString() {
+        return CallMatcher.this.toString();
+      }
+    };
+  }
+
+  /**
+   * @return call matcher, that matches element for file with given language level or higher
+   */
+  default CallMatcher withLanguageLevelAtLeast(@NotNull LanguageLevel level) {
+    return withContextFilter(element -> PsiUtil.getLanguageLevel(element).isAtLeast(level));
+  }
+
   class Simple implements CallMatcher {
+    static final Simple ENUM_VALUES = new Simple("", Collections.singleton("values"), ArrayUtil.EMPTY_STRING_ARRAY, CallType.ENUM_STATIC);
+    static final Simple ENUM_VALUE_OF =
+      new Simple("", Collections.singleton("valueOf"), new String[]{CommonClassNames.JAVA_LANG_STRING}, CallType.ENUM_STATIC);
     private final @NotNull String myClassName;
     private final @NotNull Set<String> myNames;
     private final @Nullable String[] myParameters;
@@ -219,13 +278,13 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       if (!myNames.contains(name)) return false;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (myParameters != null && myParameters.length > 0) {
-        if (args.length < myParameters.length) return false;
+        if (args.length < myParameters.length - 1) return false;
       }
       PsiMethod method = call.resolveMethod();
       if (method == null) return false;
       PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() > args.length ||
-          (!MethodCallUtils.isVarArgCall(call) && parameterList.getParametersCount() < args.length)) {
+      int count = parameterList.getParametersCount();
+      if (count > args.length + 1 || (!MethodCallUtils.isVarArgCall(call) && count != args.length)) {
         return false;
       }
       return methodMatches(method);
@@ -238,6 +297,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
                           Simple::parameterTypeMatches).allMatch(Boolean.TRUE::equals);
     }
 
+    @Override
     @Contract("null -> false")
     public boolean methodMatches(PsiMethod method) {
       if (method == null) return false;
@@ -259,6 +319,12 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       @Override
       boolean matches(PsiClass aClass, String className, boolean isStatic) {
         return isStatic && className.equals(aClass.getQualifiedName());
+      }
+    },
+    ENUM_STATIC {
+      @Override
+      boolean matches(PsiClass aClass, String className, boolean isStatic) {
+        return isStatic && aClass.isEnum();
       }
     },
     INSTANCE {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -38,22 +24,27 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     return myPanel.getRepositories();
   }
 
+  @Override
   public void setDisplayName(final String name) {
     myProxyGroup.setName(name);
   }
 
+  @Override
   public ProxyGroup getEditableObject() {
     return myProxyGroup;
   }
 
+  @Override
   public String getBannerSlogan() {
     return myProxyGroup.getName();
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return myPanel.getMainPanel();
   }
 
+  @Override
   public String getDisplayName() {
     return myProxyGroup.getName();
   }
@@ -63,6 +54,7 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     return null;
   }
 
+  @Override
   public boolean isModified() {
     // not used
     return false;
@@ -75,6 +67,7 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     }
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myIsInitialized) {
       applyImpl();
@@ -118,6 +111,7 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     return true;
   }
 
+  @Override
   public void reset() {
     try {
       myPanel.setStringProperties(myProxyGroup.getProperties());

@@ -21,9 +21,7 @@ public class CodeInsightWorkspaceSettings implements PersistentStateComponent<Co
   public void setOptimizeImportsOnTheFly(boolean optimizeImportsOnTheFly, Disposable parentDisposable) {
     boolean prev = this.optimizeImportsOnTheFly;
     this.optimizeImportsOnTheFly = optimizeImportsOnTheFly;
-    Disposer.register(parentDisposable, () -> {
-      this.optimizeImportsOnTheFly = prev;
-    });
+    Disposer.register(parentDisposable, () -> this.optimizeImportsOnTheFly = prev);
   }
 
   public static CodeInsightWorkspaceSettings getInstance(@NotNull Project project) {

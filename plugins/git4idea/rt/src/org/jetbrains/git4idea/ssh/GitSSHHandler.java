@@ -114,7 +114,7 @@ public interface GitSSHHandler {
    * Ask password for the specified user name
    *
    * @param token         Access token.
-   * @param userName      a name of user to ask password for
+   * @param userName      a name of user to ask password for (ex: "user@host:port" string)
    * @param resetPassword a reset password if one was stored in password database
    * @param lastError     a last error
    * @return the password or null if authentication failed.

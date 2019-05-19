@@ -96,7 +96,7 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     //TODO?
     throw new UnsupportedOperationException();
   }
@@ -117,12 +117,13 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
     }
   }
 
+  @Override
   public String toString(){
     return "PsiJavaCodeReferenceElement:" + getText();
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!(element instanceof PsiPackage)) return false;
     return getManager().areElementsEquivalent(resolve(), element);
   }

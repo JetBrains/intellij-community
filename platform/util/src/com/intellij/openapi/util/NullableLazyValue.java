@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class NullableLazyValue<T> {
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("NullableLazyValue");
   private boolean myComputed;
   @Nullable private T myValue;
 
@@ -33,7 +32,7 @@ public abstract class NullableLazyValue<T> {
   public T getValue() {
     T value = myValue;
     if (!myComputed) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       value = compute();
       if (stamp.mayCacheNow()) {
         myValue = value;
@@ -44,7 +43,7 @@ public abstract class NullableLazyValue<T> {
   }
 
   @NotNull
-  public static <T> NullableLazyValue<T> createValue(@NotNull final Factory<T> value) {
+  public static <T> NullableLazyValue<T> createValue(@NotNull final Factory<? extends T> value) {
     return new NullableLazyValue<T>() {
 
       @Nullable

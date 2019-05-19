@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,7 +46,7 @@ public class SegmentArrayWithData extends SegmentArray {
 
   @Override
   public void remove(int startIndex, int endIndex) {
-    myData = remove(myData, startIndex, endIndex);
+    remove(myData, startIndex, endIndex);
     super.remove(startIndex, endIndex);
   }
 
@@ -90,12 +91,10 @@ public class SegmentArrayWithData extends SegmentArray {
     return newArray;
   }
 
-  @NotNull
-  private short[] remove(@NotNull short[] array, int startIndex, int endIndex) {
+  private void remove(@NotNull short[] array, int startIndex, int endIndex) {
     if (endIndex < mySegmentCount) {
       System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
     }
-    return array;
   }
 
   public short getSegmentData(int index) {
@@ -114,18 +113,16 @@ public class SegmentArrayWithData extends SegmentArray {
   @NotNull
   private static short[] reallocateArray(@NotNull short[] array, int index) {
     if (index < array.length) return array;
-
-    short[] newArray = new short[calcCapacity(array.length, index)];
-    System.arraycopy(array, 0, newArray, 0, array.length);
-    return newArray;
+    return ArrayUtil.realloc(array, calcCapacity(array.length, index));
   }
 
+  @NotNull
   public SegmentArrayWithData copy() {
     final SegmentArrayWithData sa = new SegmentArrayWithData();
-    sa.mySegmentCount = this.mySegmentCount;
-    sa.myStarts = this.myStarts.clone();
-    sa.myEnds = this.myEnds.clone();
-    sa.myData = this.myData.clone();
+    sa.mySegmentCount = mySegmentCount;
+    sa.myStarts = myStarts.clone();
+    sa.myEnds = myEnds.clone();
+    sa.myData = myData.clone();
     return sa;
   }
 }

@@ -40,6 +40,7 @@ public class ChangeKeywordSubstitutionPanel {
     KeywordSubstitutionWrapper.fillComboBox(myKeywordSubstitutionComboBox, defaultSubstitution);
 
     myChangeCheckbox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         setEnabling();
       }

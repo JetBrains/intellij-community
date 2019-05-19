@@ -93,7 +93,7 @@ public abstract class ArgumentFixerActionFactory {
           if (parameterType instanceof PsiWildcardType) continue;
           if (!GenericsUtil.isFromExternalTypeLanguage(parameterType)) continue;
           if (suggestedCasts.contains(parameterType.getCanonicalText())) continue;
-          if (exprType instanceof PsiPrimitiveType && parameterType instanceof PsiClassType) {
+          if (TypeConversionUtil.isPrimitiveAndNotNull(exprType) && parameterType instanceof PsiClassType) {
             PsiType unboxedParameterType = PsiPrimitiveType.getUnboxedType(parameterType);
             if (unboxedParameterType != null) {
               parameterType = unboxedParameterType;

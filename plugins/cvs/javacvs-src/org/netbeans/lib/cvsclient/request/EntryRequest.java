@@ -43,7 +43,8 @@ public final class EntryRequest extends AbstractRequest {
 
 	// Implemented ============================================================
 
-	public String getRequestString() {
+	@Override
+        public String getRequestString() {
 		return "Entry " + entry.toString() + "\n";
 	}
 }

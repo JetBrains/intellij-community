@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -17,9 +18,6 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.mac.touchbar.NSAutoreleaseLock;
-import com.intellij.ui.mac.touchbar.TBItemScrubber;
-import com.intellij.ui.mac.touchbar.TouchBar;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
@@ -38,14 +36,14 @@ import java.util.List;
 public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   private WeakReference<JBPopup> myActivePopupRef = null;
 
-  private static boolean isPlaceGlobal(AnActionEvent e) {
+  private static boolean isPlaceGlobal(@NotNull AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
   }
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     boolean enable = false;
     Icon icon = getTemplatePresentation().getIcon();
     String description = getTemplatePresentation().getDescription();
@@ -60,7 +58,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
       else if (stopCount == 1) {
           presentation.setText(ExecutionBundle.message("stop.configuration.action.name",
-                                                       StringUtil.escapeMnemonics(stoppableDescriptors.get(0).getDisplayName())));
+                                                       StringUtil.escapeMnemonics(
+                                                         StringUtil.notNullize(stoppableDescriptors.get(0).getDisplayName()))));
       }
     }
     else {
@@ -83,7 +82,9 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
       else {
         presentation.setText(ExecutionBundle.message("stop.configuration.action.name",
-                                                     StringUtil.escapeMnemonics(runProfile == null ? contentDescriptor.getDisplayName() : runProfile.getName())));
+                                                     StringUtil.escapeMnemonics(runProfile == null
+                                                                                ? StringUtil.notNullize(contentDescriptor.getDisplayName())
+                                                                                : runProfile.getName())));
       }
     }
 
@@ -93,7 +94,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(dataContext);
@@ -104,7 +105,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         return;
       }
 
-      if (e.getPlace().equals(ActionPlaces.TOUCHBAR_GENERAL)) {
+      if (e.getPlace().equals(ActionPlaces.TOUCHBAR_GENERAL) && !stoppableDescriptors.isEmpty()) {
         _showStopRunningBar(stoppableDescriptors);
         return;
       }
@@ -167,7 +168,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         })
         .addListener(new JBPopupAdapter() {
           @Override
-          public void onClosed(LightweightWindowEvent event) {
+          public void onClosed(@NotNull LightweightWindowEvent event) {
             myActivePopupRef = null;
           }
         })
@@ -198,7 +199,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @Nullable
-  private static Pair<List<HandlerItem>, HandlerItem> getItemsList(List<RunContentDescriptor> descriptors, RunContentDescriptor toSelect) {
+  private static Pair<List<HandlerItem>, HandlerItem> getItemsList(List<? extends RunContentDescriptor> descriptors, RunContentDescriptor toSelect) {
     if (descriptors.isEmpty()) {
       return null;
     }
@@ -262,30 +263,14 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
                || processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess());
   }
 
-  private static void _showStopRunningBar(List<RunContentDescriptor> stoppableDescriptors) {
+  private static void _showStopRunningBar(@NotNull List<? extends RunContentDescriptor> stoppableDescriptors) {
     if (!TouchBarsManager.isTouchBarAvailable())
       return;
 
-    final TouchBar tb;
-    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
-      tb = new TouchBar("select_running_to_stop", true, true);
-      tb.addButton(null, "Stop all", () -> {
-        for (RunContentDescriptor sd : stoppableDescriptors)
-          ExecutionManagerImpl.stopProcess(sd);
-        TouchBarsManager.closeTouchBar(tb, true);
-      });
-      final TBItemScrubber stopScrubber = tb.addScrubber();
-      List<TBItemScrubber.ItemData> scrubItems = new ArrayList<>();
-      for (RunContentDescriptor sd : stoppableDescriptors) {
-        scrubItems.add(new TBItemScrubber.ItemData(sd.getIcon(), sd.getDisplayName(), () -> {
-          ExecutionManagerImpl.stopProcess(sd);
-          TouchBarsManager.closeTouchBar(tb, true);
-        }));
-      }
-      stopScrubber.setItems(scrubItems);
-    }
-
-    TouchBarsManager.showStopRunningBar(tb);
+    List<Pair<RunContentDescriptor, Runnable>> descriptors = new ArrayList<>(stoppableDescriptors.size());
+    for (RunContentDescriptor sd : stoppableDescriptors)
+      descriptors.add(Pair.create(sd, ()->ApplicationManager.getApplication().invokeLater(()->ExecutionManagerImpl.stopProcess(sd))));
+    TouchBarsManager.showStopRunningBar(descriptors);
   }
 
   abstract static class HandlerItem {

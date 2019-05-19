@@ -31,8 +31,8 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!super.equals(this)) return false;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    if (getClass() != o.getClass()) return false;
 
     final JavaMethodFindUsagesOptions that = (JavaMethodFindUsagesOptions)o;
 
@@ -58,7 +58,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
   }
 
   @Override
-  protected void addUsageTypes(@NotNull LinkedHashSet<String> strings) {
+  protected void addUsageTypes(@NotNull LinkedHashSet<? super String> strings) {
     super.addUsageTypes(strings);
     if (isIncludeOverloadUsages) {
       strings.add(FindBundle.message("find.usages.panel.title.overloaded.methods.usages"));

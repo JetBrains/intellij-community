@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -53,6 +39,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     myVcsManager = ProjectLevelVcsManager.getInstance(vcs.getProject());
   }
 
+  @Override
   public void fillGroups(UpdatedFiles updatedFiles) {
     updatedFiles.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.property.conflicts"),
                                        VcsBundle.message("status.group.name.will.be.merged.with.property.conflicts"), false,
@@ -62,6 +49,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
                                        FileGroup.MERGED_WITH_TREE_CONFLICT, false));
   }
 
+  @Override
   @NotNull
   public UpdateSession updateDirectories(@NotNull final FilePath[] contentRoots,
                                          final UpdatedFiles updatedFiles,
@@ -115,6 +103,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
       if (! isDryRun()) {
         myGroupWorkers = Arrays.asList(new MyTextConflictWorker(), new MyConflictWorker(FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID) {
+          @Override
           protected List<VirtualFile> merge() {
             return null;
           }
@@ -131,6 +120,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       myDirtyScopeManager.filesDirty(vfColl, null);
     }
 
+    @Override
     public void onRefreshFilesCompleted() {
       // TODO: why do we need to mark all roots as dirty here???
       dirtyRoots();
@@ -142,6 +132,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
     // not a conflict worker; to correctly show replaced items
     private class MyReplacedWorker implements Runnable {
+      @Override
       public void run() {
         final FileGroup replacedGroup = myUpdatedFiles.getGroupById(REPLACED_ID);
         final FileGroup deletedGroup = myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID);
@@ -160,6 +151,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
     // at the moment no resolve, only refresh files & statuses
     private class MyTreeConflictWorker implements Runnable {
+      @Override
       public void run() {
         final LocalFileSystem lfs = LocalFileSystem.getInstance();
         final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_TREE_CONFLICT);
@@ -197,6 +189,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         super(FileGroup.MERGED_WITH_CONFLICT_ID);
       }
 
+      @Override
       protected List<VirtualFile> merge() {
         final List<VirtualFile> writable = prepareWritable(myFiles);
         final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(myVcs.getProject());
@@ -235,6 +228,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       @Nullable
       protected abstract List<VirtualFile> merge();
 
+      @Override
       public void run() {
         fillAndRefreshFiles();
         if (! myFiles.isEmpty()) {
@@ -297,6 +291,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
                                                  boolean totalUpdate,
                                                  ArrayList<VcsException> exceptions, UpdatedFiles updatedFiles);
 
+  @Override
   @Nullable
   public abstract Configurable createConfigurable(Collection<FilePath> collection);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.project.Project;
@@ -24,6 +24,7 @@ import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,7 +39,7 @@ public class SvnMergeInfoRootPanelManual {
   private JTextArea myMixedRevisions;
 
   @NotNull private final Project myProject;
-  @NotNull private final NotNullFunction<WCInfoWithBranches, WCInfoWithBranches> myRefresher;
+  @NotNull private final NotNullFunction<? super WCInfoWithBranches, ? extends WCInfoWithBranches> myRefresher;
   @NotNull private final Runnable myListener;
   private boolean myOnlyOneRoot;
   @NotNull private WCInfoWithBranches myInfo;
@@ -46,7 +47,7 @@ public class SvnMergeInfoRootPanelManual {
   private WCInfoWithBranches.Branch mySelectedBranch;
 
   public SvnMergeInfoRootPanelManual(@NotNull Project project,
-                                     @NotNull NotNullFunction<WCInfoWithBranches, WCInfoWithBranches> refresher,
+                                     @NotNull NotNullFunction<? super WCInfoWithBranches, ? extends WCInfoWithBranches> refresher,
                                      @NotNull Runnable listener,
                                      boolean onlyOneRoot,
                                      @NotNull WCInfoWithBranches info) {
@@ -55,7 +56,7 @@ public class SvnMergeInfoRootPanelManual {
     myProject = project;
     myRefresher = refresher;
     myListener = listener;
-    myBranchToLocal = ContainerUtil.newHashMap();
+    myBranchToLocal = new HashMap<>();
 
     init();
     myInclude.setVisible(!onlyOneRoot);

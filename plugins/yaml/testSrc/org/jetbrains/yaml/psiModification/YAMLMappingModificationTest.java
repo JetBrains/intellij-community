@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psiModification;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -38,7 +39,43 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
   public void testCreateSecondKeyLevelTwoCompact() {
     doMappingTest("key", "value");
   }
-  
+
+  public void testDeleteKeyInEmptyFile() {
+    doDeleteTest();
+  }
+
+  public void testDeleteKeyInFirstLine() {
+    doDeleteTest();
+  }
+
+  public void testDeleteKeyInInvalidSyntax() {
+    doDeleteTest();
+  }
+
+  public void testDeleteKeyInLastLine() {
+    doDeleteTest();
+  }
+
+  public void testDeleteKeyInNestedMapping() {
+    doDeleteTest();
+  }
+
+  public void testDeleteKeyInNestedMappingWithComment() {
+    doDeleteTest();
+  }
+
+  public void testDeleteKeyWithCommentOnNextLine() {
+    doDeleteTest();
+  }
+
+  public void testDeleteKeyWithCommentOnPreviousLine() {
+    doDeleteTest();
+  }
+
+  public void testDeleteKeyWithCommentOnSameLine() {
+    doDeleteTest();
+  }
+
   public void testReplaceValueScalarScalar() {
     doValueTest("newValue");
   }
@@ -48,7 +85,9 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
   }
   
   public void testReplaceValueScalarCompound() {
-    doValueTest("someKey: - bla\n                - bla");
+    doValueTest("someKey:\n" +
+                "- bla\n" +
+                "- bla");
   }
   
   public void testSetValueScalar() {
@@ -56,8 +95,9 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
   }
   
   public void testSetValueCompound() {
-    doValueTest("someKey: - bla\n" +
-                "            - bla");
+    doValueTest("someKey:\n" +
+                "- bla\n" +
+                "- bla");
   }
   
   private void doValueTest(final String valueText) {
@@ -100,5 +140,16 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
     }
 
     assertSameLinesWithFile(getTestDataPath() + getTestName(true) + ".txt", myFixture.getFile().getText(), false);
+  }
+
+  private void doDeleteTest() {
+    myFixture.configureByFile(getTestName(true) + ".yml");
+
+    final PsiElement element = myFixture.getElementAtCaret();
+    final YAMLKeyValue keyValue = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class, false);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> keyValue.getParentMapping().deleteKeyValue(keyValue));
+
+    assertSameLinesWithFile(getTestDataPath() + getTestName(true) + ".txt", myFixture.getFile().getText());
   }
 }

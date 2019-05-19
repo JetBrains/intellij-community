@@ -20,11 +20,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitFileRevision;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +51,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
   /**
    * {@inheritDoc}
    */
+  @Override
   @Nullable
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
     if (file.isDirectory()) {
@@ -81,6 +82,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
   /**
    * {@inheritDoc}
    */
+  @Override
   @Nullable
   public ItemLatestState getLastRevision(VirtualFile file) {
     if (file.isDirectory()) {
@@ -105,21 +107,32 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
            status == FileStatus.MERGED_WITH_CONFLICTS;
   }
 
+  @Nullable
+  @Override
+  public ContentRevision createCurrentFileContent(@NotNull VirtualFile file) {
+    if (file.isDirectory()) return null;
+    if (GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file) == null) return null;
+
+    VcsRevisionNumber revisionNumber = getCurrentRevision(file);
+    FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file.getPath()));
+    return GitContentRevision.createRevision(filePath, revisionNumber, myProject, file.getCharset());
+  }
+
   /**
    * {@inheritDoc}
    */
+  @Override
   @Nullable
   public ContentRevision createFileContent(VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
     if (selectedFile.isDirectory()) {
       return null;
     }
-    final String path = selectedFile.getPath();
-    if (GitUtil.gitRootOrNull(selectedFile) == null) {
+    if (GitRepositoryManager.getInstance(myProject).getRepositoryForFile(selectedFile) == null) {
       return null;
     }
 
     // faster, if there were no renames
-    FilePath filePath = VcsUtil.getFilePath(path);
+    FilePath filePath = VcsUtil.getFilePath(selectedFile);
     try {
       final CommittedChangesProvider committedChangesProvider = GitVcs.getInstance(myProject).getCommittedChangesProvider();
       final Pair<CommittedChangeList, FilePath> pair = committedChangesProvider.getOneList(selectedFile, revisionNumber);
@@ -128,7 +141,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
       }
     }
     catch (VcsException e) {
-      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", path));
+      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", selectedFile.getPresentableUrl()));
     }
 
     try {
@@ -151,11 +164,12 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
       }
     }
     catch (VcsException e) {
-      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", path));
+      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", selectedFile.getPresentableUrl()));
     }
     return null;
   }
 
+  @Override
   public ItemLatestState getLastRevision(FilePath filePath) {
     if (filePath.isDirectory()) {
       return null;
@@ -174,6 +188,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
     }
   }
 
+  @Override
   public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
     // todo
     return null;

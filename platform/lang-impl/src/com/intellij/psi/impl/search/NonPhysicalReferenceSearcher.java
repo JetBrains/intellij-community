@@ -26,6 +26,7 @@ public class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiReference
     super(true);
   }
 
+  @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;

@@ -1,36 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.mock.MockLocalFileSystem;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestsManager;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.RunAll;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author irengrig
@@ -45,11 +31,20 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-    myNewMappings = new NewMappings(myProject, vcsManager, FileStatusManager.getInstance(myProject));
+    myNewMappings = new NewMappings(myProject, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject),
+                                    FileStatusManager.getInstance(myProject), DefaultVcsRootPolicy.getInstance(myProject));
+    Disposer.register(getTestRootDisposable(), myNewMappings);
     myMockLocalFileSystem = new MyMockLocalFileSystem();
     myNewMappings.setFileWatchRequestsManager(new FileWatchRequestsManager(myProject, myNewMappings, myMockLocalFileSystem));
     myNewMappings.activateActiveVcses();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    new RunAll()
+      .append(() -> myMockLocalFileSystem.disposed())
+      .append(() -> super.tearDown())
+      .run();
   }
 
   public void testAdd() {
@@ -135,6 +130,7 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
   private static class MyMockLocalFileSystem extends MockLocalFileSystem {
     private final Set<String> myAdd;
     private final Set<String> myRemove;
+    private boolean myDisposed;
 
     private MyMockLocalFileSystem() {
       myAdd = new HashSet<>();
@@ -146,6 +142,12 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
     public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
                                                  @Nullable Collection<String> recursiveRoots,
                                                  @Nullable Collection<String> flatRoots) {
+      if (myDisposed) {
+        assertNullOrEmpty(recursiveRoots);
+        assertNullOrEmpty(flatRoots);
+        return Collections.emptySet();
+      }
+
       for (WatchRequest watchRequest : watchRequests) {
         assertTrue(myRemove.remove(watchRequest.getRootPath()));
       }
@@ -170,11 +172,17 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
     }
 
     public void add(final String path) {
+      assertFalse(myDisposed);
       myAdd.add(path);
     }
 
     public void remove(final String path) {
+      assertFalse(myDisposed);
       myRemove.add(path);
+    }
+
+    public void disposed() {
+      myDisposed = true;
     }
   }
 
@@ -183,11 +191,10 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
     private final String myPath;
     private final boolean myRecursively;
 
-    public MockKey(String path, boolean recursively) {
+    MockKey(String path, boolean recursively) {
       myPath = path;
       myRecursively = recursively;
     }
-
 
     @NotNull
     @Override

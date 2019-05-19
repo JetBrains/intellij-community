@@ -153,16 +153,8 @@ public class ManifestFileUtil {
   }
 
   public static Manifest readManifest(@NotNull VirtualFile manifestFile) {
-    try {
-      final InputStream inputStream = manifestFile.getInputStream();
-      final Manifest manifest;
-      try {
-        manifest = new Manifest(inputStream);
-      }
-      finally {
-        inputStream.close();
-      }
-      return manifest;
+    try (InputStream inputStream = manifestFile.getInputStream()) {
+      return new Manifest(inputStream);
     }
     catch (IOException ignored) {
       return new Manifest();
@@ -206,14 +198,8 @@ public class ManifestFileUtil {
     ManifestBuilder.setVersionAttribute(mainAttributes);
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      try {
-        final OutputStream outputStream = file.getOutputStream(ManifestFileUtil.class);
-        try {
-          manifest.write(outputStream);
-        }
-        finally {
-          outputStream.close();
-        }
+      try (OutputStream outputStream = file.getOutputStream(ManifestFileUtil.class)) {
+        manifest.write(outputStream);
       }
       catch (IOException e) {
         LOG.info(e);
@@ -277,20 +263,16 @@ public class ManifestFileUtil {
     try {
       return WriteAction.compute(() -> {
         VirtualFile dir = directory;
-          if (!dir.getName().equals(MANIFEST_DIR_NAME)) {
-            dir = VfsUtil.createDirectoryIfMissing(dir, MANIFEST_DIR_NAME);
-          }
-          final VirtualFile f = dir.createChildData(dir, MANIFEST_FILE_NAME);
-          final OutputStream output = f.getOutputStream(dir);
-          try {
-            final Manifest manifest = new Manifest();
-            ManifestBuilder.setVersionAttribute(manifest.getMainAttributes());
-            manifest.write(output);
-          }
-          finally {
-            output.close();
-          }
-          return f;
+        if (!dir.getName().equals(MANIFEST_DIR_NAME)) {
+          dir = VfsUtil.createDirectoryIfMissing(dir, MANIFEST_DIR_NAME);
+        }
+        final VirtualFile f = dir.createChildData(dir, MANIFEST_FILE_NAME);
+        try (OutputStream output = f.getOutputStream(dir)) {
+          final Manifest manifest = new Manifest();
+          ManifestBuilder.setVersionAttribute(manifest.getMainAttributes());
+          manifest.write(output);
+        }
+        return f;
       });
     }
     catch (IOException e) {
@@ -329,6 +311,7 @@ public class ManifestFileUtil {
 
   public static void setupMainClassField(final Project project, final TextFieldWithBrowseButton field) {
     field.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final PsiClass selected = selectMainClass(project, field.getText());
         if (selected != null) {
@@ -339,6 +322,7 @@ public class ManifestFileUtil {
   }
 
   private static class MainClassFilter implements ClassFilter {
+    @Override
     public boolean isAccepted(final PsiClass aClass) {
       return ReadAction
         .compute(() -> PsiMethodUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.hasMainMethod(aClass));

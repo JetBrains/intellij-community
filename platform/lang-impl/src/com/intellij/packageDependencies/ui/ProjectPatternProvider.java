@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -55,7 +54,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
   }
 
   @Override
-  public TreeModel createTreeModel(final Project project, final Set<PsiFile> deps, final Marker marker,
+  public TreeModel createTreeModel(final Project project, final Set<? extends PsiFile> deps, final Marker marker,
                                    final DependenciesPanel.DependencyPanelSettings settings) {
     return FileTreeModelBuilder.createTreeModel(project, false, deps, marker, settings);
   }
@@ -127,16 +126,6 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     return AllIcons.General.ProjectTab;
   }
 
-  @NotNull
-  static String getGroupModulePattern(ModuleGroupNode node) {
-    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(node.getProject())) {
-      return node.getModuleGroup().getQualifiedName() + "*";
-    }
-    else {
-      return "group:" + node.getModuleGroup().toString();
-    }
-  }
-
   private static final class CompactEmptyMiddlePackagesAction extends ToggleAction {
     private final Runnable myUpdate;
 
@@ -147,12 +136,12 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES = flag;
       myUpdate.run();
     }

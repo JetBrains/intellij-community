@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -30,7 +31,7 @@ import java.util.function.Function;
  */
 public class TreeTester {
   private final TreeNode myNode;
-  private Function<TreeNode, String> myPresenter = Object::toString;
+  private Function<? super TreeNode, String> myPresenter = Object::toString;
 
   public static TreeTester forTree(JTree tree) {
     return forNode((TreeNode)tree.getModel().getRoot());
@@ -44,15 +45,20 @@ public class TreeTester {
     myNode = node;
   }
 
-  public TreeTester withPresenter(Function<TreeNode, String> presenter) {
+  public TreeTester withPresenter(Function<? super TreeNode, String> presenter) {
     myPresenter = presenter;
     return this;
   }
 
-  public void assertStructureEquals(String expected) {
+  @NotNull
+  public String constructTextRepresentation() {
     StringBuilder buffer = new StringBuilder();
     printSubTree(myNode, 0, buffer);
-    Assert.assertEquals(expected, buffer.toString());
+    return buffer.toString();
+  }
+
+  public void assertStructureEquals(String expected) {
+    Assert.assertEquals(expected, constructTextRepresentation());
   }
 
   private void printSubTree(TreeNode node, int level, StringBuilder result) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,14 @@ public class TextLabelInSwitchStatementInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "text.label.in.switch.statement.display.name");
+    return InspectionGadgetsBundle.message("text.label.in.switch.statement.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "text.label.in.switch.statement.problem.descriptor");
+    return InspectionGadgetsBundle.message("text.label.in.switch.statement.problem.descriptor",
+                                           infos[0] instanceof PsiSwitchStatement ? 1 : 2);
   }
 
   @Override
@@ -42,31 +41,32 @@ public class TextLabelInSwitchStatementInspection extends BaseInspection {
     return new TextLabelInSwitchStatementVisitor();
   }
 
-  private static class TextLabelInSwitchStatementVisitor
-    extends BaseInspectionVisitor {
+  private static class TextLabelInSwitchStatementVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSwitchStatement(
-      @NotNull PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
-      final PsiCodeBlock body = statement.getBody();
+      visitSwitchBlock(statement);
+    }
+
+    @Override
+    public void visitSwitchExpression(PsiSwitchExpression expression) {
+      super.visitSwitchExpression(expression);
+      visitSwitchBlock(expression);
+    }
+
+    private void visitSwitchBlock(PsiSwitchBlock block) {
+      final PsiCodeBlock body = block.getBody();
       if (body == null) {
         return;
       }
-      final PsiStatement[] statements = body.getStatements();
-      for (PsiStatement statement1 : statements) {
-        checkForLabel(statement1);
+      for (PsiStatement statement : body.getStatements()) {
+        if (!(statement instanceof PsiLabeledStatement)) {
+          continue;
+        }
+        final PsiLabeledStatement labeledStatement = (PsiLabeledStatement)statement;
+        registerError(labeledStatement.getLabelIdentifier(), block);
       }
-    }
-
-    private void checkForLabel(PsiStatement statement) {
-      if (!(statement instanceof PsiLabeledStatement)) {
-        return;
-      }
-      final PsiLabeledStatement labeledStatement =
-        (PsiLabeledStatement)statement;
-      final PsiIdentifier label = labeledStatement.getLabelIdentifier();
-      registerError(label);
     }
   }
 }

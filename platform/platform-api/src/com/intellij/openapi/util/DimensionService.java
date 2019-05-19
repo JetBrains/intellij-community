@@ -224,16 +224,6 @@ public class DimensionService extends SimpleModificationTracker implements Persi
    * @deprecated Use {@link com.intellij.ide.util.PropertiesComponent}
    */
   @Deprecated
-  public void setExtendedState(String key, int extendedState) {
-    if (myKey2ExtendedState.put(key, extendedState) != extendedState || extendedState == 0) {
-      incModificationCount();
-    }
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.ide.util.PropertiesComponent}
-   */
-  @Deprecated
   public int getExtendedState(String key) {
     return myKey2ExtendedState.get(key);
   }

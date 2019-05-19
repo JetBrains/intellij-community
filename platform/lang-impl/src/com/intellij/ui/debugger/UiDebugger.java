@@ -1,33 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui.debugger;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,17 +20,18 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 public class UiDebugger extends JPanel implements Disposable {
 
   private final DialogWrapper myDialog;
   private final JBTabs myTabs;
-  private final UiDebuggerExtension[] myExtensions;
+  private final List<UiDebuggerExtension> myExtensions;
 
   public UiDebugger() {
     Disposer.register(Disposer.get("ui"), this);
 
-    myTabs = new JBTabsImpl(null, ActionManager.getInstance(), null, this);
+    myTabs = JBTabsFactory.createTabs(null, this);
     myTabs.getPresentation().setInnerInsets(new Insets(4, 0, 0, 0)).setPaintBorder(1, 0, 0, 0).setActiveTabFillIn(JBColor.GRAY).setUiDecorator(new UiDecorator() {
       @Override
       @NotNull
@@ -55,7 +40,7 @@ public class UiDebugger extends JPanel implements Disposable {
       }
     });
 
-    myExtensions = Extensions.getExtensions(UiDebuggerExtension.EP_NAME);
+    myExtensions = UiDebuggerExtension.EP_NAME.getExtensionList();
     addToUi(myExtensions);
 
     myDialog = new DialogWrapper((Project)null, true) {
@@ -130,7 +115,7 @@ public class UiDebugger extends JPanel implements Disposable {
     myDialog.getPeer().getWindow().toFront();
   }
 
-  private void addToUi(UiDebuggerExtension[] extensions) {
+  private void addToUi(List<UiDebuggerExtension> extensions) {
     for (UiDebuggerExtension each : extensions) {
       myTabs.addTab(new TabInfo(each.getComponent()).setText(each.getName()));
     }

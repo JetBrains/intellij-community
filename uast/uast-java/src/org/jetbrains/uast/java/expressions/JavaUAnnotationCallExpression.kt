@@ -6,6 +6,7 @@ package org.jetbrains.uast.java.expressions
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveResult
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
@@ -14,16 +15,16 @@ import org.jetbrains.uast.java.lz
 import org.jetbrains.uast.visitor.UastVisitor
 
 class JavaUAnnotationCallExpression(
-  override val psi: PsiAnnotation,
+  override val sourcePsi: PsiAnnotation,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionEx {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UMultiResolvable {
 
   val uAnnotation: JavaUAnnotation by lz {
-    JavaUAnnotation(psi, this)
+    JavaUAnnotation(sourcePsi, this)
   }
 
   override val returnType: PsiType?
-    get() = uAnnotation.qualifiedName?.let { PsiType.getTypeByName(it, psi.project, psi.resolveScope) }
+    get() = uAnnotation.qualifiedName?.let { PsiType.getTypeByName(it, sourcePsi.project, sourcePsi.resolveScope) }
 
   override val kind: UastCallKind
     get() = UastCallKind.CONSTRUCTOR_CALL
@@ -40,13 +41,13 @@ class JavaUAnnotationCallExpression(
     get() = null
 
   override val classReference: UReferenceExpression? by lz {
-    psi.nameReferenceElement?.let { ref ->
-      JavaConverter.convertReference(ref, this, null) as? UReferenceExpression
+    sourcePsi.nameReferenceElement?.let { ref ->
+      JavaConverter.convertReference(ref, this) as? UReferenceExpression
     }
   }
 
   override val valueArgumentCount: Int
-    get() = psi.parameterList.attributes.size
+    get() = sourcePsi.parameterList.attributes.size
 
   override val valueArguments: List<UNamedExpression> by lz {
     uAnnotation.attributeValues
@@ -65,4 +66,6 @@ class JavaUAnnotationCallExpression(
   override val typeArguments: List<PsiType> = emptyList()
 
   override fun resolve(): PsiMethod? = uAnnotation.resolve()?.constructors?.firstOrNull()
+
+  override fun multiResolve(): Iterable<ResolveResult> = uAnnotation.multiResolve()
 }

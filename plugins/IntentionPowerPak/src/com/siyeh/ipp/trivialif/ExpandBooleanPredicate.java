@@ -40,7 +40,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
-    final PsiExpression returnValue = returnStatement.getReturnValue();
+    final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
     if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
       return false;
     }
@@ -58,7 +58,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
-    final PsiExpression rhs = assignment.getRExpression();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
     if (rhs == null || rhs instanceof PsiLiteralExpression) {
       return false;
     }
@@ -80,7 +80,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiLocalVariable variable = (PsiLocalVariable)element;
-    final PsiExpression initializer = variable.getInitializer();
+    final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
     if (initializer == null || initializer instanceof PsiLiteralExpression) {
       return false;
     }

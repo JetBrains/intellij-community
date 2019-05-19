@@ -41,7 +41,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 10/30/12 5:28 PM
  */
 public class ArrangementMatchingRulesPanel extends JPanel implements DataProvider {
 
@@ -104,7 +103,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     return myControl.getSections();
   }
 
-  public void setSections(@Nullable List<ArrangementSectionRule> rules) {
+  public void setSections(@Nullable List<? extends ArrangementSectionRule> rules) {
     myControl.setSections(rules);
   }
 
@@ -123,7 +122,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (ArrangementSectionRulesControl.KEY.is(dataId)) {
       return myControl;
     }

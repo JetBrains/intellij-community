@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public abstract class MethodSignatureBase implements MethodSignature {
 
@@ -34,9 +35,6 @@ public abstract class MethodSignatureBase implements MethodSignature {
     myParameterTypes = PsiType.createArray(parameterTypes.length);
     for (int i = 0; i < parameterTypes.length; i++) {
       PsiType type = parameterTypes[i];
-      if (type != null) {
-        PsiUtil.ensureValidType(type);
-      }
       if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType) type).toArrayType();
       myParameterTypes[i] = substitutor.substitute(type);
     }
@@ -104,17 +102,12 @@ public abstract class MethodSignatureBase implements MethodSignature {
     return result;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     String s = getClass().getSimpleName() + ": ";
     final PsiTypeParameter[] typeParameters = getTypeParameters();
     if (typeParameters.length != 0) {
-      String sep = "<";
-      for (PsiTypeParameter typeParameter : typeParameters) {
-        s += sep + typeParameter.getName();
-        sep = ", ";
-      }
-      s += ">";
+      s += Arrays.stream(typeParameters).map(PsiTypeParameter::getName)
+              .collect(Collectors.joining(", ", "<", ">"));
     }
     s += getName() + "(" + Arrays.asList(getParameterTypes()) + ")";
     return s;

@@ -18,9 +18,6 @@ package org.intellij.lang.regexp;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.LayeredIcon;
-import icons.RegExpSupportIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,12 +31,7 @@ public class RegExpFileType extends LanguageFileType {
 
     private RegExpFileType() {
         super(RegExpLanguage.INSTANCE);
-        myIcon = new IconLoader.LazyIcon() {
-            @Override
-            protected Icon compute() {
-                return new LayeredIcon(AllIcons.FileTypes.Text, RegExpSupportIcons.Regexp_filetype_icon);
-            }
-        };
+        myIcon = AllIcons.FileTypes.Regexp;
     }
 
     public RegExpFileType(@NotNull Language language) {
@@ -48,12 +40,14 @@ public class RegExpFileType extends LanguageFileType {
         myIcon =  null;
     }
 
+    @Override
     @NotNull
     @NonNls
     public String getName() {
         return "RegExp";
     }
 
+    @Override
     @NotNull
     public String getDescription() {
         return "Regular Expression";
@@ -66,6 +60,7 @@ public class RegExpFileType extends LanguageFileType {
         return "regexp";
     }
 
+    @Override
     @Nullable
     public Icon getIcon() {
         return myIcon;

@@ -92,7 +92,7 @@ public abstract class RunAnythingNotifiableProvider<V> extends RunAnythingProvid
       if (rollbackAction != null) {
         AnAction action = new AnAction(IdeBundle.message("run.anything.custom.activity.rollback.action")) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             rollbackAction.run();
             notification.expire();
           }

@@ -98,7 +98,7 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor imple
   private static class MyRootDomChildrenDescription implements DomChildrenDescription {
     private final DomElement myDomElement;
 
-    public MyRootDomChildrenDescription(final DomElement domElement) {
+    MyRootDomChildrenDescription(final DomElement domElement) {
       myDomElement = domElement;
     }
 

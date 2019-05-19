@@ -22,7 +22,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 6/24/13 6:23 PM
  */
 public class DelegatingExternalSystemSettingsListener<S extends ExternalProjectSettings> implements ExternalSystemSettingsListener<S> {
   

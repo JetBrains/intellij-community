@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.module.Module;
@@ -28,6 +27,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
+import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
@@ -46,10 +46,28 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
   private static final NotNullFunction<PsiFile, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
     psiFile -> GotoRelatedItem.createItems(Collections.singleton(psiFile), "DevKit");
 
+  private final Option myDescriptionOption = new Option("devkit.description", "Description", DevkitIcons.Gutter.DescriptionFile);
+  private final Option myBeforeAfterOption = new Option("devkit.beforeAfter", "Before/After templates", DevkitIcons.Gutter.Diff);
+
+  @NotNull
+  @Override
+  public Option[] getOptions() {
+    return new Option[]{myDescriptionOption, myBeforeAfterOption};
+  }
+
+  @Override
+  public String getName() {
+    return "Description / Before|After Templates";
+  }
+
   @Override
   protected void process(@NotNull PsiElement highlightingElement,
                          @NotNull PsiClass psiClass,
                          @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
+    final boolean descriptionEnabled = myDescriptionOption.isEnabled();
+    final boolean beforeAfterEnabled = myBeforeAfterOption.isEnabled();
+    if (!descriptionEnabled && !beforeAfterEnabled) return;
+
     if (!PsiUtil.isInstantiable(psiClass)) return;
 
     Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
@@ -66,6 +84,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
       }
 
       if (type == DescriptionType.INSPECTION) {
+        if (!descriptionEnabled) return;
         final InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);
         if (info.hasDescriptionFile()) {
           addDescriptionFileGutterIcon(highlightingElement, info.getDescriptionFile(), result);
@@ -78,9 +97,13 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
         if (dir == null) continue;
         final PsiFile descriptionFile = dir.findFile("description.html");
         if (descriptionFile != null) {
-          addDescriptionFileGutterIcon(highlightingElement, descriptionFile, result);
+          if (descriptionEnabled) {
+            addDescriptionFileGutterIcon(highlightingElement, descriptionFile, result);
+          }
 
-          addBeforeAfterTemplateFilesGutterIcon(highlightingElement, dir, result);
+          if (beforeAfterEnabled) {
+            addBeforeAfterTemplateFilesGutterIcon(highlightingElement, dir, result);
+          }
           return;
         }
       }
@@ -92,7 +115,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
                                                    PsiFile descriptionFile,
                                                    Collection<? super RelatedItemLineMarkerInfo> result) {
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(AllIcons.FileTypes.Html, CONVERTER, RELATED_ITEM_PROVIDER)
+      .create(DevkitIcons.Gutter.DescriptionFile, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTarget(descriptionFile)
       .setTooltipText("Description")
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
@@ -116,7 +139,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
     if (templateFiles.isEmpty()) return;
 
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(AllIcons.Actions.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
+      .create(DevkitIcons.Gutter.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(templateFiles)
       .setPopupTitle("Select Template")
       .setTooltipText("Before/After Templates")

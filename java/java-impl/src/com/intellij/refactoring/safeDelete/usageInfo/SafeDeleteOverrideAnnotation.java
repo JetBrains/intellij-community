@@ -30,6 +30,7 @@ public class SafeDeleteOverrideAnnotation extends SafeDeleteUsageInfo implements
     return (PsiMethod)getElement();
   }
 
+  @Override
   public void performRefactoring() throws IncorrectOperationException {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(getMethod(), true, Override.class.getName());
     if (annotation != null) {

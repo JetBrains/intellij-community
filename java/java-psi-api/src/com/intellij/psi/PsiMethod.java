@@ -34,6 +34,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return the method return type, or null if the method is a constructor.
    */
+  @Override
   @Nullable
   PsiType getReturnType();
 
@@ -76,6 +77,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return true if the method is a constructor, false otherwise
    */
+  @Override
   boolean isConstructor();
 
   /**
@@ -83,6 +85,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return true if the method is varargs, false otherwise.
    */
+  @Override
   boolean isVarArgs();
 
   /**
@@ -165,6 +168,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *         or implement any other method.
    * @deprecated use {@link #findDeepestSuperMethods()} instead
    */
+  @Deprecated
   @Nullable
   PsiMethod findDeepestSuperMethod();
 

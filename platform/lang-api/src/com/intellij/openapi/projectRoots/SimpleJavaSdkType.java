@@ -1,13 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,21 +72,11 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return JdkUtil.checkForJdk(path);
   }
 
+  @NotNull
   @Override
-  public String suggestSdkName(String currentSdkName, String sdkHome) {
-    return suggestJavaSdkName(this, currentSdkName, sdkHome);
-  }
-
-  public static String suggestJavaSdkName(JavaSdkType javaSdkType, String currentSdkName, String sdkHome) {
-    assert javaSdkType instanceof SdkType;
-    JavaVersion version = JavaVersion.tryParse(((SdkType)javaSdkType).getVersionString(sdkHome));
-    if (version == null) return currentSdkName;
-
-    StringBuilder suggested = new StringBuilder();
-    if (version.feature < 9) suggested.append("1.");
-    suggested.append(version.feature);
-    if (version.ea) suggested.append("-ea");
-    return suggested.toString();
+  public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
+    String suggestedName = JdkUtil.suggestJdkName(getVersionString(sdkHome));
+    return suggestedName != null ? suggestedName : currentSdkName != null ? currentSdkName : "";
   }
 
   @Override
@@ -104,7 +91,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   }
 
   @NotNull
-  public static Condition<SdkTypeId> notSimpleJavaSdkType(@Nullable Condition<SdkTypeId> condition) {
+  public static Condition<SdkTypeId> notSimpleJavaSdkType(@Nullable Condition<? super SdkTypeId> condition) {
     return sdkTypeId -> notSimpleJavaSdkType().value(sdkTypeId) && (condition == null || condition.value(sdkTypeId));
   }
 }

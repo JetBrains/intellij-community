@@ -22,12 +22,13 @@ import java.util.Set;
 public class LogOperation extends CvsOperationOnFiles implements BranchesProvider{
   private final Set<String> branches = new THashSet<>();
 
-  public LogOperation(Collection<FilePath> files){
+  public LogOperation(Collection<? extends FilePath> files){
     for (final FilePath file : files) {
       addFile(file.getIOFile());
     }
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     LogCommand command = new LogCommand();
     addFilesToCommand(root, command);
@@ -35,6 +36,7 @@ public class LogOperation extends CvsOperationOnFiles implements BranchesProvide
     return command;
   }
 
+  @Override
   public void fileInfoGenerated(Object info) {
     super.fileInfoGenerated(info);
     if (info instanceof LogInformation) {
@@ -42,18 +44,22 @@ public class LogOperation extends CvsOperationOnFiles implements BranchesProvide
     }
   }
 
+  @Override
   public Collection<String> getAllBranches() {
     return branches;
   }
 
+  @Override
   public Collection<CvsRevisionNumber> getAllRevisions() {
     return null;
   }
 
+  @Override
   protected String getOperationName() {
     return "log";
   }
 
+  @Override
   public int getFilesToProcessCount() {
     return -1;
   }

@@ -7,9 +7,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
-import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
-import static com.intellij.util.AstLoadingFilter.forceEnableTreeLoading;
-
 public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCase {
 
   @Override
@@ -57,33 +54,33 @@ public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testDisabledLoading() throws Throwable {
+  public void testDisallowedLoading() {
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
     assertException(new AssertionCase(
-      () -> disableTreeLoading(
+      () -> AstLoadingFilter.disallowTreeLoading(
         () -> file.getNode()
       )
     ));
   }
 
-  public void testForceEnableLoading() throws Throwable {
+  public void testForceAllowLoading() {
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
     PsiFileImpl anotherFile = addAnotherFile();
     assertFalse(anotherFile.isContentsLoaded());
     assertNoException(new AssertionCase(
-      () -> disableTreeLoading(
-        () -> forceEnableTreeLoading(
-          file,                                                                 // enable for file
+      () -> AstLoadingFilter.disallowTreeLoading(
+        () -> AstLoadingFilter.forceAllowTreeLoading(
+          file,                                                                 // allow for file
           (ThrowableComputable<?, RuntimeException>)() -> file.getNode()        // access its node -> no exception
         )
       )
     ));
     assertException(new AssertionCase(
-      () -> disableTreeLoading(
-        () -> forceEnableTreeLoading(
-          file,                                                                 // enable for file
+      () -> AstLoadingFilter.disallowTreeLoading(
+        () -> AstLoadingFilter.forceAllowTreeLoading(
+          file,                                                                 // allow for file
           (ThrowableComputable<?, RuntimeException>)() -> anotherFile.getNode() // access another file node -> exception
         )
       )

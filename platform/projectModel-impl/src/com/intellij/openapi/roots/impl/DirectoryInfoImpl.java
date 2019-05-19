@@ -1,57 +1,50 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author nik
  */
-public class DirectoryInfoImpl extends DirectoryInfo {
-  public static final int MAX_ROOT_TYPE_ID = Byte.MAX_VALUE;
+class DirectoryInfoImpl extends DirectoryInfo {
   protected final VirtualFile myRoot;//original project root for which this information is calculated
   private final Module module; // module to which content it belongs or null
   private final VirtualFile libraryClassRoot; // class root in library
   private final VirtualFile contentRoot;
   private final VirtualFile sourceRoot;
-  protected final boolean myInModuleSource;
-  protected final boolean myInLibrarySource;
-  protected final boolean myExcluded;
-  private final byte mySourceRootTypeId;
-  private final String myUnloadedModuleName;
+  private final SourceFolder sourceRootFolder;
 
-  DirectoryInfoImpl(@NotNull VirtualFile root, Module module, VirtualFile contentRoot, VirtualFile sourceRoot, VirtualFile libraryClassRoot,
-                    boolean inModuleSource, boolean inLibrarySource, boolean isExcluded, int sourceRootTypeId, @Nullable String unloadedModuleName) {
+  private final boolean myInModuleSource;
+  private final boolean myInLibrarySource;
+  private final boolean myExcluded;
+  private final String myUnloadedModuleName;
+  // List of all DirectoryInfos which root is a child of myRoot and which have content root
+  // Only ever filled for excluded DirectoryInfos (myExcluded == true)
+  final List<DirectoryInfoImpl> myContentInfosBeneath = new SmartList<>();
+
+  DirectoryInfoImpl(@NotNull VirtualFile root, Module module, VirtualFile contentRoot,
+                    VirtualFile sourceRoot, @Nullable SourceFolder sourceRootFolder, VirtualFile libraryClassRoot,
+                    boolean inModuleSource, boolean inLibrarySource, boolean isExcluded, @Nullable String unloadedModuleName) {
     myRoot = root;
     this.module = module;
     this.libraryClassRoot = libraryClassRoot;
     this.contentRoot = contentRoot;
     this.sourceRoot = sourceRoot;
+    this.sourceRootFolder = sourceRootFolder;
     myInModuleSource = inModuleSource;
     myInLibrarySource = inLibrarySource;
     myExcluded = isExcluded;
     myUnloadedModuleName = unloadedModuleName;
-    if (sourceRootTypeId > MAX_ROOT_TYPE_ID) {
-      throw new IllegalArgumentException(
-        "Module source root type id " + sourceRootTypeId + " exceeds the maximum allowable value (" + MAX_ROOT_TYPE_ID + ")");
-    }
-    mySourceRootTypeId = (byte)sourceRootTypeId;
   }
 
   @Override
@@ -67,13 +60,12 @@ public class DirectoryInfoImpl extends DirectoryInfo {
     return myRoot.hashCode();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String toString() {
     return "DirectoryInfo{" +
            "module=" + getModule() +
            ", isInModuleSource=" + myInModuleSource +
-           ", rootTypeId=" + getSourceRootTypeId() +
-           ", isInLibrarySource=" + isInLibrarySource() +
+           ", rootType=" + (sourceRootFolder == null ? null : sourceRootFolder.getRootType()) +
            ", isExcludedFromModule=" + myExcluded +
            ", libraryClassRoot=" + getLibraryClassRoot() +
            ", contentRoot=" + getContentRoot() +
@@ -81,28 +73,34 @@ public class DirectoryInfoImpl extends DirectoryInfo {
            "}";
   }
 
-  public boolean isInProject() {
-    return !myExcluded;
-  }
-
   @Override
   public boolean isInProject(@NotNull VirtualFile file) {
     return !isExcluded(file);
   }
 
+  @Override
   public boolean isIgnored() {
     return false;
   }
 
+  @Override
   @Nullable
   public VirtualFile getSourceRoot() {
     return sourceRoot;
   }
 
+  @Override
+  @Nullable
+  public SourceFolder getSourceRootFolder() {
+    return sourceRootFolder;
+  }
+
+  @Override
   public VirtualFile getLibraryClassRoot() {
     return libraryClassRoot;
   }
 
+  @Override
   @Nullable
   public VirtualFile getContentRoot() {
     return contentRoot;
@@ -112,10 +110,7 @@ public class DirectoryInfoImpl extends DirectoryInfo {
     return myInModuleSource;
   }
 
-  public boolean isInLibrarySource() {
-    return myInLibrarySource;
-  }
-
+  @Override
   public boolean isInLibrarySource(@NotNull VirtualFile file) {
     return myInLibrarySource;
   }
@@ -134,12 +129,9 @@ public class DirectoryInfoImpl extends DirectoryInfo {
     return myInModuleSource;
   }
 
+  @Override
   public Module getModule() {
     return module;
-  }
-
-  public int getSourceRootTypeId() {
-    return mySourceRootTypeId;
   }
 
   @Override
@@ -150,5 +142,12 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   @NotNull
   public VirtualFile getRoot() {
     return myRoot;
+  }
+
+  @Override
+  public boolean processContentBeneathExcluded(@NotNull VirtualFile dir,
+                                               @NotNull Processor<? super VirtualFile> processor) {
+    return isExcluded(dir) &&
+           ContainerUtil.process(myContentInfosBeneath, child -> !VfsUtilCore.isAncestor(dir, child.myRoot, false) || processor.process(child.myRoot));
   }
 }

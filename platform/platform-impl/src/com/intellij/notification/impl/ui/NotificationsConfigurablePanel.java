@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationDisplayType;
@@ -28,12 +14,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SystemNotifications;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.IndexTreePathState;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -50,8 +36,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author spleaner
@@ -78,7 +64,6 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     mySystemNotifications = new JCheckBox("Enable system notifications");
     mySystemNotifications.setMnemonic('s');
-    mySystemNotifications.setVisible(SystemNotifications.getInstance().isAvailable());
 
     JPanel boxes = new JPanel();
     boxes.setLayout(new BoxLayout(boxes, BoxLayout.Y_AXIS));
@@ -100,6 +85,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     myTable.removeSelected();
   }
 
+  @Override
   public void dispose() {
     myTable = null;
   }
@@ -198,19 +184,19 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private static final int LOG_COLUMN = 2;
     private static final int READ_ALOUD_COLUMN = 3;
 
-    public NotificationsTreeTable() {
+    NotificationsTreeTable() {
       super(new NotificationsTreeTableModel());
       StripeTable.apply(this);
       setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       getTree().setCellRenderer(new TreeColumnCellRenderer(this));
 
-      final TableColumn idColumn = getColumnModel().getColumn(ID_COLUMN);
-      idColumn.setPreferredWidth(200);
+      initColumns();
+    }
 
-      final TableColumn displayTypeColumn = getColumnModel().getColumn(DISPLAY_TYPE_COLUMN);
-      displayTypeColumn.setMaxWidth(300);
-      displayTypeColumn.setPreferredWidth(250);
-      displayTypeColumn.setCellRenderer(new ComboBoxTableRenderer<NotificationDisplayType>(NotificationDisplayType.values()) {
+    private void initColumns() {
+      TableColumn displayTypeColumn = getColumnModel().getColumn(DISPLAY_TYPE_COLUMN);
+      ComboBoxTableRenderer<NotificationDisplayType> displayTypeRenderer =
+        new ComboBoxTableRenderer<NotificationDisplayType>(NotificationDisplayType.values()) {
         @Override
         protected void customizeComponent(NotificationDisplayType value, JTable table, boolean isSelected) {
           super.customizeComponent(myDisplayBalloons.isSelected() ? value : NotificationDisplayType.NONE, table, isSelected);
@@ -224,7 +210,8 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         protected String getTextFor(@NotNull NotificationDisplayType value) {
           return value.getTitle();
         }
-      });
+      };
+      displayTypeColumn.setCellRenderer(displayTypeRenderer);
 
       displayTypeColumn.setCellEditor(new ComboBoxTableRenderer<NotificationDisplayType>(NotificationDisplayType.values()) {
         @Override
@@ -255,19 +242,30 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         }
       });
 
-      final TableColumn logColumn = getColumnModel().getColumn(LOG_COLUMN);
-      logColumn.setMaxWidth(logColumn.getPreferredWidth());
-      logColumn.setCellRenderer(new BooleanTableCellRenderer());
+      displayTypeColumn.setPreferredWidth(displayTypeRenderer.getPreferredSize().width);
+      displayTypeColumn.setMaxWidth(displayTypeRenderer.getMinimumSize().width);
+
+      initBooleanColumn(LOG_COLUMN);
 
       if (SystemInfo.isMac) {
-        final TableColumn readAloudColumn = getColumnModel().getColumn(READ_ALOUD_COLUMN);
-        readAloudColumn.setMaxWidth(readAloudColumn.getPreferredWidth());
-        readAloudColumn.setCellRenderer(new BooleanTableCellRenderer());
+        initBooleanColumn(READ_ALOUD_COLUMN);
       }
 
       new TableSpeedSearch(this);
       getEmptyText().setText("No notifications configured");
       TreeUtil.expandAll(getTree());
+    }
+
+    private void initBooleanColumn(int columnIndex) {
+      TableColumn column = getColumnModel().getColumn(columnIndex);
+      BooleanTableCellRenderer renderer = new BooleanTableCellRenderer();
+      column.setCellRenderer(renderer);
+
+      Dimension headerSize = getTableHeader().getDefaultRenderer().
+        getTableCellRendererComponent(this, getModel().getColumnName(columnIndex), false, false, 0, columnIndex).
+        getPreferredSize();
+
+      column.setMaxWidth(Math.max(JBUI.scale(65), Math.max(headerSize.width, renderer.getPreferredSize().width)));
     }
 
     @Override
@@ -307,9 +305,8 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
   private static class TreeColumnCellRenderer extends JLabel implements TreeCellRenderer {
     private final JTable myTable;
 
-    public TreeColumnCellRenderer(@NotNull JTable table) {
+    TreeColumnCellRenderer(@NotNull JTable table) {
       myTable = table;
-      setHorizontalAlignment(SwingConstants.CENTER);
       setVerticalAlignment(SwingConstants.CENTER);
     }
 
@@ -331,7 +328,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private final List<SettingsWrapper> mySettings = new ArrayList<>();
     private JTree myTree;
 
-    public NotificationsTreeTableModel() {
+    NotificationsTreeTableModel() {
       super(null);
 
       List<DefaultMutableTreeNode> rootChildren = new ArrayList<>();

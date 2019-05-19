@@ -1,15 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 import static org.jetbrains.plugins.groovy.util.ThrowingTransformation.disableTransformations
 
@@ -19,7 +20,7 @@ import static org.jetbrains.plugins.groovy.util.ThrowingTransformation.disableTr
 @CompileStatic
 class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
 
-  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
 
   void 'test owner first method'() {
     assertScript '''\
@@ -169,21 +170,6 @@ def test() {
     assert obj.called
 }
 test()
-''', 'Foo'
-  }
-
-  void testInConstructor() {
-    assertScript '''
-        class Foo {
-          def foo() {}
-        }
-
-        class Abc {
-          def Abc(@DelegatesTo(Foo) Closure cl) {
-          }
-        }
-
-        new Abc({fo<caret>o()})
 ''', 'Foo'
   }
 
@@ -743,6 +729,24 @@ Methods.m1 {
 ''').with {
       assert it instanceof PsiClass
     }
+  }
+
+  void 'test implicit call'() {
+    resolveByText '''\
+class D { def foo() { 42 } }
+
+class C {
+  def call(@DelegatesTo(D) Closure cl) {
+    cl.delegate = new D()
+    cl()
+  }
+}
+
+def c = new C()
+c {
+  <caret>foo()
+}
+''', GrMethod
   }
 
   private void assertScript(String text, String resolvedClass) {

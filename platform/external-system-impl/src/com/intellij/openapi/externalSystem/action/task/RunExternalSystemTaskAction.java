@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/27/2014
  */
 public class RunExternalSystemTaskAction extends ExternalSystemNodeAction<TaskData> {
 

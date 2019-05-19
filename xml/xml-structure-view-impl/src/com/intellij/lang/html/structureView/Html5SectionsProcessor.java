@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.html.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.SortedList;
@@ -29,9 +16,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 
-
-// Algorithm described at http://www.w3.org/html/wg/drafts/html/master/sections.html#outlines
-// One of implementations: http://hoyois.github.com/html5outliner/ (https://github.com/hoyois/html5outliner)
+// Algorithm described on https://www.w3.org/TR/html51/sections.html#creating-an-outline
+// One of the implementations: http://hoyois.github.com/html5outliner/ (https://github.com/hoyois/html5outliner)
 class Html5SectionsProcessor {
 
   private static class SectionHolder {
@@ -59,7 +45,7 @@ class Html5SectionsProcessor {
     private Section myParent = null;
     private XmlTag myHeader = null;
 
-    public Section(final XmlTag tag) {
+    Section(final XmlTag tag) {
       super(tag);
     }
 
@@ -82,13 +68,13 @@ class Html5SectionsProcessor {
     }
   }
 
-  private static final String[] SECTIONING_ROOT_ELEMENTS = {"blockquote", "body", "details", "dialog", "fieldset", "figure", "td"};
+  private static final String[] SECTIONING_ROOT_ELEMENTS = {"blockquote", "body", "details", "fieldset", "figure", "td"};
   private static final String[] SECTIONING_CONTENT_ELEMENTS = {"article", "aside", "nav", "section"};
   private static final String[] HEADER_ELEMENTS = {"h1", "h2", "h3", "h4", "h5", "h6"};
   private static final String HGROUP_ELEMENT = "hgroup";
 
   private final Collection<SectionHolder> myRootSectionHolders = new SortedList<>(
-    (first, second) -> first.getTag().getTextRange().getStartOffset() - second.getTag().getTextRange().getStartOffset());
+    Comparator.comparingInt(holder -> holder.getTag().getTextRange().getStartOffset()));
 
   private SectionHolder myCurrentOutlinee = null;
   private Section myCurrentSection = null;
@@ -200,6 +186,9 @@ class Html5SectionsProcessor {
     final Collection<Html5SectionTreeElement> result = new ArrayList<>();
     for (SectionHolder sectionHolder : myRootSectionHolders) {
       for (Section section : sectionHolder.getChildren()) {
+        if ("td".equalsIgnoreCase(section.getTag().getName()) && section.getHeader() == null && section.getChildren().isEmpty()) {
+          continue;
+        }
         result.add(createHtml5SectionTreeElement(section));
       }
     }
@@ -229,7 +218,7 @@ class Html5SectionsProcessor {
 
     if (HGROUP_ELEMENT.equalsIgnoreCase(header.getLocalName())) {
       for (XmlTag subTag : header.getSubTags()) {
-        if (ArrayUtil.contains(subTag.getLocalName().toLowerCase(), HEADER_ELEMENTS)) {
+        if (ArrayUtil.contains(StringUtil.toLowerCase(subTag.getLocalName()), HEADER_ELEMENTS)) {
           if (buf.length() > 0) {
             buf.append(" ");
           }
@@ -259,15 +248,15 @@ class Html5SectionsProcessor {
   }
 
   private static boolean isSectioningRootElement(final XmlTag tag) {
-    return ArrayUtil.contains(tag.getLocalName().toLowerCase(), SECTIONING_ROOT_ELEMENTS);
+    return ArrayUtil.contains(StringUtil.toLowerCase(tag.getLocalName()), SECTIONING_ROOT_ELEMENTS);
   }
 
   private static boolean isSectioningContentElement(final XmlTag tag) {
-    return ArrayUtil.contains(tag.getLocalName().toLowerCase(), SECTIONING_CONTENT_ELEMENTS);
+    return ArrayUtil.contains(StringUtil.toLowerCase(tag.getLocalName()), SECTIONING_CONTENT_ELEMENTS);
   }
 
   private static boolean isHeader(final XmlTag tag) {
-    return ArrayUtil.contains(tag.getLocalName().toLowerCase(), HEADER_ELEMENTS) || HGROUP_ELEMENT.equalsIgnoreCase(tag.getLocalName());
+    return ArrayUtil.contains(StringUtil.toLowerCase(tag.getLocalName()), HEADER_ELEMENTS) || HGROUP_ELEMENT.equalsIgnoreCase(tag.getLocalName());
   }
 
   private static int compareHeaderRanks(final @NotNull XmlTag header1, final @NotNull XmlTag header2) {
@@ -279,7 +268,7 @@ class Html5SectionsProcessor {
       int minIndex = HEADER_ELEMENTS.length;
 
       for (XmlTag subTag : header.getSubTags()) {
-        final int index = ArrayUtil.indexOf(HEADER_ELEMENTS, subTag.getLocalName().toLowerCase());
+        final int index = ArrayUtil.indexOf(HEADER_ELEMENTS, StringUtil.toLowerCase(subTag.getLocalName()));
         if (index < minIndex) {
           minIndex = index;
           if (minIndex == 0) break;
@@ -294,7 +283,7 @@ class Html5SectionsProcessor {
       return minIndex + 1;
     }
 
-    final int index = ArrayUtil.indexOf(HEADER_ELEMENTS, header.getLocalName().toLowerCase());
+    final int index = ArrayUtil.indexOf(HEADER_ELEMENTS, StringUtil.toLowerCase(header.getLocalName()));
     if (index < 0) throw new IllegalArgumentException(header.getName());
     return index + 1;
   }

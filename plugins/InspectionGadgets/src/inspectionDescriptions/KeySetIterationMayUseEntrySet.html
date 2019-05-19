@@ -1,10 +1,12 @@
 <html>
 <body>
-Reports iteration over the <b>keySet()</b>
-of a <b>java.util.Map</b> instance,
+Reports iteration over the <b>keySet()</b> of a <b>java.util.Map</b> instance,
 where the iterated keys are used to retrieve the values from the map. Such
 iteration may be more efficiently replaced by iteration over the
-<b>entrySet()</b> of the map.
+<b>entrySet()</b> or <b>values()</b> (if key is not actually used). 
+Similarly <b>keySet().forEach(key -> ...)</b>
+can be replaced with <b>forEach((key, value) -> ...)</b> if values are retrieved
+inside lambda.
 <!-- tooltip end -->
 <p>
 

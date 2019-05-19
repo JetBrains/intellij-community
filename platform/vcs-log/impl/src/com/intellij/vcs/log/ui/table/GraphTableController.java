@@ -18,10 +18,13 @@ package com.intellij.vcs.log.ui.table;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
@@ -33,15 +36,14 @@ import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.util.VcsLogUiUtil;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PositionUtil;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
-import com.intellij.vcs.log.util.VcsUserUtil;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,8 +135,9 @@ public class GraphTableController {
       return;
     }
 
-    if (answer.getCursorToSet() != null) {
-      myTable.setCursor(answer.getCursorToSet());
+    Cursor cursorToSet = answer.getCursorToSet();
+    if (cursorToSet != null) {
+      myTable.setCursor(UIUtil.cursorIfNotDefault(cursorToSet));
     }
     if (answer.getCommitToJump() != null) {
       Integer row = myTable.getModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
@@ -162,7 +165,7 @@ public class GraphTableController {
   private String getArrowTooltipText(int commit, @Nullable Integer row) {
     VcsShortCommitDetails details;
     if (row != null && row >= 0) {
-      details = myTable.getModel().getShortDetails(row); // preload rows around the commit
+      details = myTable.getModel().getCommitMetadata(row); // preload rows around the commit
     }
     else {
       details = myLogData.getMiniDetailsGetter().getCommitData(commit, Collections.singleton(commit)); // preload just the commit
@@ -179,11 +182,7 @@ public class GraphTableController {
       }
     }
     else {
-      balloonText = "Jump to <b>\"" +
-                    StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
-                    "\"</b> by " +
-                    VcsUserUtil.getShortPresentation(details.getAuthor()) +
-                    CommitPresentationUtil.formatDateTime(details.getAuthorTime());
+      balloonText = "Jump to " + CommitPresentationUtil.getShortSummary(details);
     }
     return balloonText;
   }
@@ -224,18 +223,18 @@ public class GraphTableController {
 
   private void performRootColumnAction() {
     if (myColorManager.isMultipleRoots() && myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES)) {
-      VcsLogUtil.triggerUsage("RootColumnClick");
+      VcsLogUsageTriggerCollector.triggerUsage("RootColumnClick");
       myProperties.set(CommonUiProperties.SHOW_ROOT_NAMES, !myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES));
     }
   }
 
   private static void triggerElementClick(@NotNull PrintElement printElement) {
     if (printElement instanceof NodePrintElement) {
-      VcsLogUtil.triggerUsage("GraphNodeClick");
+      VcsLogUsageTriggerCollector.triggerUsage("GraphNodeClick");
     }
     else if (printElement instanceof EdgePrintElement) {
       if (((EdgePrintElement)printElement).hasArrow()) {
-        VcsLogUtil.triggerUsage("GraphArrowClick");
+        VcsLogUsageTriggerCollector.triggerUsage("GraphArrowClick");
       }
     }
   }
@@ -250,7 +249,7 @@ public class GraphTableController {
 
   private class MyMouseAdapter extends MouseAdapter {
     private static final int BORDER_THICKNESS = 3;
-    @NotNull private final TableLinkMouseListener myLinkListener = new SimpleColoredComponentLinkMouseListener();
+    @NotNull private final TableLinkMouseListener myLinkListener = new MyLinkMouseListener();
     @Nullable private Cursor myLastCursor = null;
 
     @Override
@@ -268,7 +267,8 @@ public class GraphTableController {
         // and by the left border otherwise
         int commitColumnIndex = myTable.convertColumnIndexToView(COMMIT_COLUMN);
         boolean useLeftBorder = c > commitColumnIndex;
-        if ((useLeftBorder ? isOnLeftBorder(e, c) : isOnRightBorder(e, c)) && (column == AUTHOR_COLUMN || column == DATE_COLUMN)) {
+        if ((useLeftBorder ? isOnLeftBorder(e, c) : isOnRightBorder(e, c)) &&
+            ArrayUtil.indexOf(DYNAMIC_COLUMNS, column) != -1) {
           myTable.resetColumnWidth(column);
         }
         else {
@@ -277,7 +277,8 @@ public class GraphTableController {
           int c2 =
             myTable.columnAtPoint(new Point(e.getPoint().x + (useLeftBorder ? 1 : -1) * JBUI.scale(BORDER_THICKNESS), e.getPoint().y));
           int column2 = myTable.convertColumnIndexToModel(c2);
-          if ((useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) && (column2 == AUTHOR_COLUMN || column2 == DATE_COLUMN)) {
+          if ((useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) &&
+              ArrayUtil.indexOf(DYNAMIC_COLUMNS, column) != -1) {
             myTable.resetColumnWidth(column2);
           }
         }
@@ -347,8 +348,8 @@ public class GraphTableController {
     }
 
     private void restoreCursor(int newCursorType) {
-      if (myLastCursor != null && myTable.getCursor().getType() == newCursorType) {
-        myTable.setCursor(myLastCursor);
+      if (myTable.getCursor().getType() == newCursorType) {
+        myTable.setCursor(UIUtil.cursorIfNotDefault(myLastCursor));
         myLastCursor = null;
       }
     }
@@ -361,6 +362,14 @@ public class GraphTableController {
     @Override
     public void mouseExited(MouseEvent e) {
       myTable.getExpandableItemsHandler().setEnabled(true);
+    }
+
+    private class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
+      @Nullable
+      @Override
+      public Object getTagAt(@NotNull MouseEvent e) {
+        return ObjectUtils.tryCast(super.getTagAt(e), SimpleColoredComponent.BrowserLauncherTag.class);
+      }
     }
   }
 }

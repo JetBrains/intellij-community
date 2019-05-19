@@ -29,6 +29,7 @@ import java.util.Set;
 
 class MergeParallelIfsPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaToken)) {
       return false;
@@ -132,7 +133,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
   }
 
   private static void addDeclarations(PsiDeclarationStatement statement,
-                                      Collection<String> declaredVariables) {
+                                      Collection<? super String> declaredVariables) {
     final PsiElement[] elements = statement.getDeclaredElements();
     for (final PsiElement element : elements) {
       if (element instanceof PsiVariable) {
@@ -162,6 +163,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
         final String testName = (String)declaration;
         if (testName.equals(name)) {
           hasConflict = true;
+          break;
         }
       }
     }

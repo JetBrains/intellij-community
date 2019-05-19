@@ -20,18 +20,17 @@ import java.util.Collection;
 
 /**
  * @author Konstantin Bulenkov
- * @since 12.0
  */
 public interface EditableTreeModel {
   /**
    * Adds a new node into a
-   * @param parent selected node, maybe used as parent or as a neighbour
+   * @param parentOrNeighbour selected node, maybe used as parent or as a neighbour
    * @return path to newly created element
    */
   TreePath addNode(TreePath parentOrNeighbour);
 
   void removeNode(TreePath path);
-  void removeNodes(Collection<TreePath> path);
+  void removeNodes(Collection<? extends TreePath> path);
 
   void moveNodeTo(TreePath parentOrNeighbour);
 }

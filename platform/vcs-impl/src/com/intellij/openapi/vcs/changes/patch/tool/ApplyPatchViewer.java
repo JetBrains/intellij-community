@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContentFactory;
@@ -57,10 +43,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.*;
 
 class ApplyPatchViewer implements DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(ApplyPatchViewer.class);
@@ -95,7 +79,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private boolean myDisposed;
 
-  public ApplyPatchViewer(@NotNull DiffContext context, @NotNull ApplyPatchRequest request) {
+  ApplyPatchViewer(@NotNull DiffContext context, @NotNull ApplyPatchRequest request) {
     myProject = context.getProject();
     myContext = context;
     myPatchRequest = request;
@@ -123,11 +107,11 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     ((EditorMarkupModel)myPatchEditor.getMarkupModel()).setErrorStripeVisible(false);
 
 
-    List<TextEditorHolder> holders = ContainerUtil.list(myResultHolder, myPatchHolder);
-    List<EditorEx> editors = ContainerUtil.list(myResultEditor, myPatchEditor);
+    List<TextEditorHolder> holders = Arrays.asList(myResultHolder, myPatchHolder);
+    List<EditorEx> editors = Arrays.asList(myResultEditor, myPatchEditor);
     JComponent resultTitle = DiffUtil.createTitle(myPatchRequest.getResultTitle());
     JComponent patchTitle = DiffUtil.createTitle(myPatchRequest.getPatchTitle());
-    List<JComponent> titleComponents = DiffUtil.createSyncHeightComponents(ContainerUtil.list(resultTitle, patchTitle));
+    List<JComponent> titleComponents = DiffUtil.createSyncHeightComponents(Arrays.asList(resultTitle, patchTitle));
 
     myContentPanel = new TwosideContentPanel(holders, titleComponents);
     myPanel = new SimpleDiffPanel(myContentPanel, this, myContext);
@@ -261,7 +245,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
@@ -416,7 +400,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   class MyModel extends MergeModelBase<ApplyPatchChange.State> {
-    public MyModel(@Nullable Project project, @NotNull Document document) {
+    MyModel(@Nullable Project project, @NotNull Document document) {
       super(project, document);
     }
 
@@ -483,7 +467,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
     @Override
-    protected void apply(@NotNull List<ApplyPatchChange> changes) {
+    protected void apply(@NotNull List<? extends ApplyPatchChange> changes) {
       for (int i = changes.size() - 1; i >= 0; i--) {
         replaceChange(changes.get(i));
       }
@@ -505,7 +489,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
     @Override
-    protected void apply(@NotNull List<ApplyPatchChange> changes) {
+    protected void apply(@NotNull List<? extends ApplyPatchChange> changes) {
       for (ApplyPatchChange change : changes) {
         markChangeResolved(change);
       }
@@ -515,7 +499,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   private abstract class ApplySelectedChangesActionBase extends DumbAwareAction {
     private final boolean myShortcut;
 
-    public ApplySelectedChangesActionBase(boolean shortcut) {
+    ApplySelectedChangesActionBase(boolean shortcut) {
       myShortcut = shortcut;
     }
 
@@ -530,7 +514,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
       Presentation presentation = e.getPresentation();
       Editor editor = e.getData(CommonDataKeys.EDITOR);
 
-      Side side = Side.fromValue(ContainerUtil.list(myResultEditor, myPatchEditor), editor);
+      Side side = Side.fromValue(Arrays.asList(myResultEditor, myPatchEditor), editor);
       if (side == null) {
         presentation.setEnabledAndVisible(false);
         return;
@@ -543,7 +527,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      final Side side = Side.fromValue(ContainerUtil.list(myResultEditor, myPatchEditor), editor);
+      final Side side = Side.fromValue(Arrays.asList(myResultEditor, myPatchEditor), editor);
       if (editor == null || side == null) return;
 
       final List<ApplyPatchChange> selectedChanges = getSelectedChanges(side);
@@ -551,62 +535,43 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
       String title = e.getPresentation().getText() + " in patch resolve";
 
-      executeCommand(title, () -> {
-        apply(selectedChanges);
-      });
+      executeCommand(title, () -> apply(selectedChanges));
     }
 
     private boolean isSomeChangeSelected(@NotNull Side side) {
       EditorEx editor = side.select(myResultEditor, myPatchEditor);
-      List<Caret> carets = editor.getCaretModel().getAllCarets();
-      if (carets.size() != 1) return true;
-      Caret caret = carets.get(0);
-      if (caret.hasSelection()) return true;
-
-      int line = editor.getDocument().getLineNumber(editor.getExpectedCaretOffset());
-
-      List<ApplyPatchChange> changes = myModelChanges;
-      for (ApplyPatchChange change : changes) {
-        if (!isEnabled(change)) continue;
-        LineRange range = side.select(change.getResultRange(), change.getPatchRange());
-        if (range == null) continue;
-
-        if (DiffUtil.isSelectedByLine(line, range.start, range.end)) return true;
-      }
-      return false;
+      return DiffUtil.isSomeRangeSelected(editor, lines -> ContainerUtil.exists(myModelChanges, change -> isChangeSelected(change, lines, side)));
     }
 
     @NotNull
     @CalledInAwt
     private List<ApplyPatchChange> getSelectedChanges(@NotNull Side side) {
-      final BitSet lines = DiffUtil.getSelectedLines(side.select(myResultEditor, myPatchEditor));
+      EditorEx editor = side.select(myResultEditor, myPatchEditor);
+      BitSet lines = DiffUtil.getSelectedLines(editor);
+      return ContainerUtil.filter(myModelChanges, change -> isChangeSelected(change, lines, side));
+    }
 
-      List<ApplyPatchChange> affectedChanges = new ArrayList<>();
-      for (ApplyPatchChange change : myModelChanges) {
-        if (!isEnabled(change)) continue;
-        LineRange range = side.select(change.getResultRange(), change.getPatchRange());
-        if (range == null) continue;
+    private boolean isChangeSelected(@NotNull ApplyPatchChange change, @NotNull BitSet lines, @NotNull Side side) {
+      if (!isEnabled(change)) return false;
+      LineRange range = side.select(change.getResultRange(), change.getPatchRange());
+      if (range == null) return false;
 
-        if (DiffUtil.isSelectedByLine(lines, range.start, range.end)) {
-          affectedChanges.add(change);
-        }
-      }
-      return affectedChanges;
+      return DiffUtil.isSelectedByLine(lines, range.start, range.end);
     }
 
     protected abstract boolean isEnabled(@NotNull ApplyPatchChange change);
 
     @CalledWithWriteLock
-    protected abstract void apply(@NotNull List<ApplyPatchChange> changes);
+    protected abstract void apply(@NotNull List<? extends ApplyPatchChange> changes);
   }
 
   private class ApplyNonConflictsAction extends DumbAwareAction {
-    public ApplyNonConflictsAction() {
+    ApplyNonConflictsAction() {
       ActionUtil.copyFrom(this, "Diff.ApplyNonConflicts");
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       boolean enabled = ContainerUtil.exists(myModelChanges, c -> {
         if (c.isResolved()) return false;
         if (c.getStatus() == AppliedTextPatch.HunkStatus.NOT_APPLIED) return false;
@@ -616,7 +581,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       List<ApplyPatchChange> changes = myModelChanges;
       if (changes.isEmpty()) return;
 
@@ -643,7 +608,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   //
 
   private class MyFocusOppositePaneAction extends FocusOppositePaneAction {
-    public MyFocusOppositePaneAction() {
+    MyFocusOppositePaneAction() {
       super(false);
     }
 
@@ -655,7 +620,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
-    public MyToggleExpandByDefaultAction() {
+    MyToggleExpandByDefaultAction() {
       super(getTextSettings());
     }
 
@@ -666,12 +631,12 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private class ShowDiffWithLocalAction extends DumbAwareAction {
-    public ShowDiffWithLocalAction() {
+    ShowDiffWithLocalAction() {
       super("Compare with local content", null, AllIcons.Actions.Diff);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       DocumentContent resultContent = myPatchRequest.getResultContent();
       DocumentContent localContent = DiffContentFactory.getInstance().create(myProject, myPatchRequest.getLocalContent(), resultContent);
 
@@ -749,7 +714,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private static class MyFoldingModel extends FoldingModelSupport {
-    public MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
+    MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
       super(new EditorEx[]{editor}, disposable);
     }
 

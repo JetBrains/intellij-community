@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,12 +12,14 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
-import git4idea.history.browser.SHAHash;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
@@ -141,12 +129,13 @@ public class GitChangeUtils {
       final ContentRevision before;
       final ContentRevision after;
       final String path = tokens[tokens.length - 1];
+      final FilePath filePath = GitContentRevision.createPathFromEscaped(vcsRoot, path);
       switch (tokens[0].charAt(0)) {
         case 'C':
         case 'A':
           before = null;
           status = FileStatus.ADDED;
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true);
+          after = GitContentRevision.createRevision(filePath, thisRevision, project);
           break;
         case 'U':
           status = FileStatus.MERGED_WITH_CONFLICTS;
@@ -154,23 +143,24 @@ public class GitChangeUtils {
           if (status == null) {
             status = FileStatus.MODIFIED;
           }
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true);
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true);
+          before = GitContentRevision.createRevision(filePath, parentRevision, project);
+          after = GitContentRevision.createRevision(filePath, thisRevision, project);
           break;
         case 'D':
           status = FileStatus.DELETED;
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true);
+          before = GitContentRevision.createRevision(filePath, parentRevision, project);
           after = null;
           break;
         case 'R':
           status = FileStatus.MODIFIED;
-          before = GitContentRevision.createRevision(vcsRoot, tokens[1], parentRevision, project, true);
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true);
+          final FilePath oldFilePath = GitContentRevision.createPathFromEscaped(vcsRoot, tokens[1]);
+          before = GitContentRevision.createRevision(oldFilePath, parentRevision, project);
+          after = GitContentRevision.createRevision(filePath, thisRevision, project);
           break;
         case 'T':
           status = FileStatus.MODIFIED;
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true);
-          after = GitContentRevision.createRevisionForTypeChange(project, vcsRoot, path, thisRevision, true);
+          before = GitContentRevision.createRevision(filePath, parentRevision, project);
+          after = GitContentRevision.createRevisionForTypeChange(filePath, thisRevision, project);
           break;
         default:
           throw new VcsException("Unknown file status: " + Arrays.asList(tokens));
@@ -264,8 +254,8 @@ public class GitChangeUtils {
   }
 
   @Nullable
-  public static SHAHash commitExists(final Project project, final VirtualFile root, final String anyReference,
-                                     List<VirtualFile> paths, final String... parameters) {
+  public static Hash commitExists(final Project project, final VirtualFile root, final String anyReference,
+                                  List<VirtualFile> paths, final String... parameters) {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.addParameters(parameters);
@@ -276,7 +266,7 @@ public class GitChangeUtils {
     try {
       final String output = Git.getInstance().runCommand(h).getOutputOrThrow().trim();
       if (StringUtil.isEmptyOrSpaces(output)) return null;
-      return new SHAHash(output);
+      return HashImpl.build(output);
     }
     catch (VcsException e) {
       return null;
@@ -408,13 +398,56 @@ public class GitChangeUtils {
 
   @NotNull
   public static Collection<Change> getStagedChanges(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    return getLocalChanges(project, root, "--cached", "-M");
+  }
+
+  @NotNull
+  public static Collection<Change> getUnstagedChanges(@NotNull Project project,
+                                                      @NotNull VirtualFile root,
+                                                      boolean detectMoves) throws VcsException {
+    if (detectMoves) {
+      return getLocalChanges(project, root, "-M");
+    }
+    else {
+      return getLocalChanges(project, root, "--no-renames");
+    }
+  }
+
+  @NotNull
+  private static Collection<Change> getLocalChanges(@NotNull Project project,
+                                                    @NotNull VirtualFile root,
+                                                    String... parameters) throws VcsException {
     GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
-    diff.addParameters("--name-status", "--cached", "-M");
+    diff.addParameters("--name-status");
+    diff.addParameters(parameters);
     String output = Git.getInstance().runCommand(diff).getOutputOrThrow();
 
     Collection<Change> changes = new ArrayList<>();
     parseChanges(project, root, null, GitRevisionNumber.HEAD, output, changes, emptySet());
     return changes;
+  }
+
+  @NotNull
+  public static List<File> getUnmergedFiles(@NotNull GitRepository repository) throws VcsException {
+    GitCommandResult result = Git.getInstance().getUnmergedFiles(repository);
+    if (!result.success()) {
+      throw new VcsException(result.getErrorOutputAsJoinedString());
+    }
+
+    String output = StringUtil.join(result.getOutput(), "\n");
+    HashSet<String> unmergedPaths = new HashSet<>();
+    for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
+      if (s.isEol()) {
+        s.nextLine();
+        continue;
+      }
+      s.boundedToken('\t');
+      String relative = s.line();
+      unmergedPaths.add(GitUtil.unescapePath(relative));
+    }
+
+    VirtualFile root = repository.getRoot();
+    return ContainerUtil.map(unmergedPaths, path -> new File(root.getPath(), path));
   }
 
   @NotNull

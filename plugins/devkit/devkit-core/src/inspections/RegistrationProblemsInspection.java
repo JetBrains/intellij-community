@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -28,7 +14,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,12 +40,14 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   public boolean CHECK_JAVA_CODE = true;
   public boolean CHECK_ACTIONS = true;
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return "ComponentRegistrationProblems";
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     final JPanel jPanel = new JPanel();
@@ -69,6 +57,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             DevKitBundle.message("inspections.registration.problems.option.check.plugin.xml"),
             CHECK_PLUGIN_XML);
     checkPluginXml.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         CHECK_PLUGIN_XML = checkPluginXml.isSelected();
       }
@@ -78,6 +67,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             DevKitBundle.message("inspections.registration.problems.option.check.java.actions"),
             CHECK_ACTIONS);
     checkJavaActions.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         CHECK_ACTIONS = checkJavaActions.isSelected();
       }
@@ -87,6 +77,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             DevKitBundle.message("inspections.registration.problems.option.check.java.code"),
             CHECK_JAVA_CODE);
     checkJavaCode.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         final boolean selected = checkJavaCode.isSelected();
         CHECK_JAVA_CODE = selected;
@@ -100,6 +91,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return jPanel;
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (CHECK_PLUGIN_XML && DescriptorUtil.isPluginXml(file)) {
@@ -108,6 +100,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return null;
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiIdentifier nameIdentifier = checkedClass.getNameIdentifier();
@@ -152,7 +145,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                                                        DevKitBundle.message("inspections.registration.problems.abstract"), isOnTheFly,
                                                        LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
-        return ArrayUtil.toObjectArray(problems, ProblemDescriptor.class);
+        return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
       }
     }
     return null;
@@ -200,7 +193,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     private final XmlFile myXmlFile;
     private final PsiManager myPsiManager;
     private final GlobalSearchScope myScope;
-    private final Set<String> myInterfaceClasses = new THashSet<>();
+    private final MultiMap<ComponentType, String> myInterfaceClasses = MultiMap.createSet();
     private final boolean myOnTheFly;
 
     private RegistrationChecker(InspectionManager manager, XmlFile xmlFile, boolean onTheFly) {
@@ -216,6 +209,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       return ClassUtil.findPsiClass(myPsiManager, fqn, null, true, myScope);
     }
 
+    @Override
     public boolean process(ComponentType type, XmlTag component, @Nullable XmlTagValue impl, @Nullable XmlTagValue intf) {
       if (impl == null) {
         addProblem(component,
@@ -256,17 +250,17 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             final String fqn = intfClass.getQualifiedName();
 
             if (type == ComponentType.MODULE) {
-              if (!checkInterface(fqn, intf)) {
+              if (!checkInterface(type, fqn, intf)) {
                 // module components can be restricted to modules of certain types
                 final String[] keys = makeQualifiedModuleInterfaceNames(component, fqn);
                 for (String key : keys) {
-                  checkInterface(key, intf);
-                  myInterfaceClasses.add(key);
+                  checkInterface(type, key, intf);
+                  myInterfaceClasses.putValue(type, key);
             }
               }
             } else {
-              checkInterface(fqn, intf);
-              myInterfaceClasses.add(fqn);
+              checkInterface(type, fqn, intf);
+              myInterfaceClasses.putValue(type, fqn);
             }
 
             if (intfClass != implClass && !implClass.isInheritor(intfClass, true)) {
@@ -280,8 +274,8 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       return true;
     }
 
-    private boolean checkInterface(String fqn, XmlTagValue value) {
-      if (myInterfaceClasses.contains(fqn)) {
+    private boolean checkInterface(ComponentType type, String fqn, XmlTagValue value) {
+      if (myInterfaceClasses.get(type).contains(fqn)) {
         addProblem(value,
             DevKitBundle.message("inspections.registration.problems.component.duplicate.interface", fqn),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
@@ -308,6 +302,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       return new String[]{ fqn };
     }
 
+    @Override
     public boolean process(ActionType type, XmlTag action) {
       final XmlAttribute attribute = action.getAttribute("class");
       if (attribute != null) {

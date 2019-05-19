@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.icons.AllIcons;
@@ -8,11 +6,13 @@ import com.intellij.ide.favoritesTreeView.AbstractFavoritesListProvider;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.CommonActionsPanel;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
@@ -29,8 +29,8 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvider<Object>
   implements BreakpointPanelProvider.BreakpointsListener {
@@ -42,12 +42,15 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   private final Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<>(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
   private final SingleAlarm myRebuildAlarm = new SingleAlarm(this::updateChildren, 100);
-  private final FavoritesManager myFavoritesManager;
 
-  public BreakpointsFavoriteListProvider(Project project, FavoritesManager favoritesManager) {
+  public BreakpointsFavoriteListProvider(@NotNull Project project) {
     super(project, "Breakpoints");
+
+    if (PlatformUtils.isDataGrip()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+
     myBreakpointPanelProviders = XBreakpointUtil.collectPanelProviders();
-    myFavoritesManager = favoritesManager;
     myTreeController = new BreakpointItemsTreeController(myRulesAvailable);
     myTreeController.setTreeView(new BreakpointsSimpleTree(myProject, myTreeController));
     for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
@@ -62,7 +65,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
     myRebuildAlarm.cancelAndRequest();
   }
 
-  private void getEnabledGroupingRules(Collection<XBreakpointGroupingRule> rules) {
+  private void getEnabledGroupingRules(Collection<? super XBreakpointGroupingRule> rules) {
     rules.clear();
     XBreakpointsDialogState settings = ((XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager()).getBreakpointsDialogSettings();
 
@@ -92,10 +95,10 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
         replicate((DefaultMutableTreeNode)child, myNode, myChildren);
       }
     }
-    myFavoritesManager.fireListeners(getListName(myProject));
+    FavoritesManager.getInstance(myProject).fireListeners(getListName(myProject));
   }
 
-  private void replicate(DefaultMutableTreeNode source, AbstractTreeNode destination, final List<AbstractTreeNode<Object>> destinationChildren) {
+  private void replicate(DefaultMutableTreeNode source, AbstractTreeNode destination, final List<? super AbstractTreeNode<Object>> destinationChildren) {
     final ArrayList<AbstractTreeNode<Object>> copyChildren = new ArrayList<>();
     AbstractTreeNode<Object> copy = new AbstractTreeNode<Object>(myProject, source.getUserObject()) {
       @NotNull
@@ -105,7 +108,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
       }
 
       @Override
-      protected void update(PresentationData presentation) {
+      protected void update(@NotNull PresentationData presentation) {
       }
     };
 

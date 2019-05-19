@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -74,9 +74,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
     final JTree tree = getTree();
     tree.repaint();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(tree, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(tree, true));
   }
 
   protected void onHidden() {
@@ -116,9 +114,8 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
     inplaceEditorComponent.validate();
     inplaceEditorComponent.paintImmediately(0,0,inplaceEditorComponent.getWidth(),inplaceEditorComponent.getHeight());
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(), true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+      () -> IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(), true));
 
     final ComponentAdapter componentListener = new ComponentAdapter() {
       @Override
@@ -264,7 +261,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
       }
     }
 
-    if (id != MouseEvent.MOUSE_RELEASED) { // do not cancel on release outside of the component
+    if (UIUtil.getWindow(sourceComponent) == UIUtil.getWindow(myInplaceEditorComponent) && id == MouseEvent.MOUSE_PRESSED) {
       doOKAction();
     }
   }

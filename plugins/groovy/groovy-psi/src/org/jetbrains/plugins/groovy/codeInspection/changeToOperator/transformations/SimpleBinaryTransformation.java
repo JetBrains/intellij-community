@@ -32,6 +32,7 @@ public class SimpleBinaryTransformation extends BinaryTransformation {
     replaceExpression(methodCall, format("%s %s %s", getLhs(methodCall).getText(), getOperatorText(), rhs.getText()));
   }
 
+  @Override
   protected boolean needParentheses(@NotNull GrMethodCall methodCall,
                                     @NotNull Options options) {
     GrExpression rhs = getRhs(methodCall);

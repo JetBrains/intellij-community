@@ -32,7 +32,6 @@ import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/29/13
  */
 public class ScalaModelBuilderImplTest extends AbstractModelBuilderTest {
 

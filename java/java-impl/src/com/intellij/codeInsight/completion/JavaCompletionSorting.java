@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -33,16 +19,15 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -64,6 +49,7 @@ public class JavaCompletionSorting {
     ContainerUtil.addIfNotNull(afterProximity, PreferMostUsedWeigher.create(position));
     afterProximity.add(new PreferContainingSameWords(expectedTypes));
     afterProximity.add(new PreferShorter(expectedTypes));
+    afterProximity.add(new DispreferTechnicalOverloads(position));
 
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
     if (!smart && afterNew) {
@@ -71,11 +57,15 @@ public class JavaCompletionSorting {
     } else if (PsiTreeUtil.getParentOfType(position, PsiReferenceList.class) == null) {
       sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorterClasses", true, new LiftShorterClasses(position));
     }
-    if (smart) {
-      sorter = sorter.weighAfter("priority", new PreferDefaultTypeWeigher(expectedTypes, parameters, false));
-    }
 
-    List<LookupElementWeigher> afterStats = ContainerUtil.newArrayList();
+    List<LookupElementWeigher> afterPriority = new ArrayList<>();
+    ContainerUtil.addIfNotNull(afterPriority, dispreferPreviousChainCalls(position));
+    if (smart) {
+      afterPriority.add(new PreferDefaultTypeWeigher(expectedTypes, parameters, false));
+    }
+    sorter = sorter.weighAfter("priority", afterPriority.toArray(new LookupElementWeigher[0]));
+
+    List<LookupElementWeigher> afterStats = new ArrayList<>();
     afterStats.add(new PreferByKindWeigher(type, position, expectedTypes));
     if (smart) {
       afterStats.add(new PreferDefaultTypeWeigher(expectedTypes, parameters, true));
@@ -96,6 +86,37 @@ public class JavaCompletionSorting {
     sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[0]));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[0]));
     return result.withRelevanceSorter(sorter);
+  }
+
+  @Nullable
+  private static LookupElementWeigher dispreferPreviousChainCalls(PsiElement position) {
+    TObjectIntHashMap<PsiMethod> previousChainCalls = new TObjectIntHashMap<>();
+    if (position.getParent() instanceof PsiReferenceExpression) {
+      PsiMethodCallExpression qualifier = getCallQualifier((PsiReferenceExpression)position.getParent());
+      while (qualifier != null) {
+        PsiMethod method = qualifier.resolveMethod();
+        if (method != null) {
+          String name = method.getName();
+          boolean seemsLikeExpectsMultipleCalls = name.startsWith("put") || name.startsWith("add");
+          if (!seemsLikeExpectsMultipleCalls) {
+            previousChainCalls.put(method, previousChainCalls.get(method) + 1);
+          }
+        }
+        qualifier = getCallQualifier(qualifier.getMethodExpression());
+      }
+    }
+    return previousChainCalls.isEmpty() ? null : new LookupElementWeigher("dispreferPreviousChainCalls") {
+      @Override
+      public Comparable weigh(@NotNull LookupElement element, @NotNull WeighingContext context) {
+        PsiElement psi = element.getPsiElement();
+        return psi instanceof PsiMethod && previousChainCalls.get((PsiMethod)psi) == 1;
+      }
+    };
+  }
+
+  @Nullable
+  private static PsiMethodCallExpression getCallQualifier(PsiReferenceExpression ref) {
+    return ObjectUtils.tryCast(ref.getQualifier(), PsiMethodCallExpression.class);
   }
 
   @NotNull
@@ -141,7 +162,9 @@ public class JavaCompletionSorting {
       @NotNull
       @Override
       public Comparable weigh(@NotNull LookupElement element) {
-        final Object o = element.getObject();
+        JavaConstructorCallElement call = element.as(JavaConstructorCallElement.class);
+        Object o = call != null ? call.getConstructedClass() : element.getObject();
+
         if (o instanceof PsiKeyword) return -3;
         if (!(o instanceof PsiMember) || element.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) {
           return 0;
@@ -281,8 +304,8 @@ public class JavaCompletionSorting {
     for (int i = 0; i < limit; i++) {
       String word = words.get(words.size() - i - 1);
       String expectedWord = expectedWords[expectedWords.length - i - 1];
-      if ( word.equalsIgnoreCase(expectedWord) || 
-           StringUtil.endsWithIgnoreCase(word, expectedWord) || 
+      if ( word.equalsIgnoreCase(expectedWord) ||
+           StringUtil.endsWithIgnoreCase(word, expectedWord) ||
            StringUtil.endsWithIgnoreCase(expectedWord, word)) {
         max = Math.max(max, i + 1);
       }
@@ -427,7 +450,7 @@ public class JavaCompletionSorting {
   private static class PreferAccessible extends LookupElementWeigher {
     private final PsiElement myPosition;
 
-    public PreferAccessible(PsiElement position) {
+    PreferAccessible(PsiElement position) {
       super("accessible");
       myPosition = position;
     }
@@ -452,7 +475,7 @@ public class JavaCompletionSorting {
   }
 
   private static class PreferNonGeneric extends LookupElementWeigher {
-    public PreferNonGeneric() {
+    PreferNonGeneric() {
       super("nonGeneric");
     }
 
@@ -475,7 +498,7 @@ public class JavaCompletionSorting {
   }
 
   private static class PreferSimple extends LookupElementWeigher {
-    public PreferSimple() {
+    PreferSimple() {
       super("simple");
     }
 
@@ -496,7 +519,7 @@ public class JavaCompletionSorting {
     private final List<PsiType> myExpectedClasses = new SmartList<>();
     private final String myExpectedMemberName;
 
-    public PreferExpected(boolean constructorPossible, ExpectedTypeInfo[] expectedTypes, PsiElement position) {
+    PreferExpected(boolean constructorPossible, ExpectedTypeInfo[] expectedTypes, PsiElement position) {
       super("expectedType");
       myConstructorPossible = constructorPossible;
       myExpectedTypes = expectedTypes;
@@ -543,7 +566,7 @@ public class JavaCompletionSorting {
   private static class PreferSimilarlyEnding extends LookupElementWeigher {
     private final ExpectedTypeInfo[] myExpectedTypes;
 
-    public PreferSimilarlyEnding(ExpectedTypeInfo[] expectedTypes) {
+    PreferSimilarlyEnding(ExpectedTypeInfo[] expectedTypes) {
       super("nameEnd");
       myExpectedTypes = expectedTypes;
     }
@@ -559,7 +582,7 @@ public class JavaCompletionSorting {
   private static class PreferContainingSameWords extends LookupElementWeigher {
     private final ExpectedTypeInfo[] myExpectedTypes;
 
-    public PreferContainingSameWords(ExpectedTypeInfo[] expectedTypes) {
+    PreferContainingSameWords(ExpectedTypeInfo[] expectedTypes) {
       super("sameWords");
       myExpectedTypes = expectedTypes;
     }
@@ -590,7 +613,7 @@ public class JavaCompletionSorting {
   private static class PreferShorter extends LookupElementWeigher {
     private final ExpectedTypeInfo[] myExpectedTypes;
 
-    public PreferShorter(ExpectedTypeInfo[] expectedTypes) {
+    PreferShorter(ExpectedTypeInfo[] expectedTypes) {
       super("shorter");
       myExpectedTypes = expectedTypes;
     }
@@ -608,11 +631,47 @@ public class JavaCompletionSorting {
     }
   }
 
+  /**
+   * Sometimes there's core vararg method and a couple of overloads of fixed arity to avoid runtime invocation costs of varargs.
+   * We prefer the vararg method then.
+   */
+  private static class DispreferTechnicalOverloads extends LookupElementWeigher {
+    private final PsiElement myPlace;
+
+    DispreferTechnicalOverloads(PsiElement place) {
+      super("technicalOverloads");
+      myPlace = place;
+    }
+
+    @NotNull
+    @Override
+    public Comparable weigh(@NotNull LookupElement element) {
+      Object object = element.getObject();
+      if (object instanceof PsiMethod && element.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) == null) {
+        PsiMethod method = (PsiMethod)object;
+        PsiClass containingClass = method.getContainingClass();
+        if (!method.isVarArgs() &&
+            containingClass != null &&
+            ContainerUtil.exists(containingClass.findMethodsByName(method.getName(), false), m -> isPurelyVarargOverload(method, m))) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private boolean isPurelyVarargOverload(PsiMethod original, PsiMethod candidate) {
+      return candidate.hasModifierProperty(PsiModifier.STATIC) == original.hasModifierProperty(PsiModifier.STATIC) &&
+             candidate.isVarArgs() &&
+             candidate.getParameterList().getParametersCount() == 1 &&
+             PsiResolveHelper.SERVICE.getInstance(candidate.getProject()).isAccessible(candidate, myPlace, null);
+    }
+  }
+
   private static class LiftShorterClasses extends ClassifierFactory<LookupElement> {
     final ProjectFileIndex fileIndex;
     private final PsiElement myPosition;
 
-    public LiftShorterClasses(PsiElement position) {
+    LiftShorterClasses(PsiElement position) {
       super("liftShorterClasses");
       myPosition = position;
       fileIndex = ProjectRootManager.getInstance(myPosition.getProject()).getFileIndex();

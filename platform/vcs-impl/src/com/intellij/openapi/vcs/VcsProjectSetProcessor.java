@@ -47,7 +47,7 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
   }
 
   @Override
-  public void processEntries(@NotNull final List<Pair<String, String>> entries,
+  public void processEntries(@NotNull final List<? extends Pair<String, String>> entries,
                              @NotNull final Context context,
                              @NotNull final Runnable runNext) {
 

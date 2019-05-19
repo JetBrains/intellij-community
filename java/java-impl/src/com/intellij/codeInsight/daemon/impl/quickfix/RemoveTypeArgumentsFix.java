@@ -54,7 +54,7 @@ public class RemoveTypeArgumentsFix extends LocalQuickFixAndIntentionActionOnPsi
   @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
-                     @Nullable("is null when called from inspection") Editor editor,
+                     @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiVariable psiVariable = (PsiVariable)startElement;

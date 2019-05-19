@@ -20,7 +20,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -35,7 +34,6 @@ import java.nio.charset.Charset;
  * @author Gregory.Shrago
  */
 public class SimpleJavaParameters extends SimpleProgramParameters {
-  private static final Logger LOG = Logger.getInstance(SimpleJavaParameters.class);
 
   private Sdk myJdk;
   private String myMainClass;
@@ -194,16 +192,4 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return processHandler;
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #isDynamicParameters()} (to be removed in IDEA 2018) */
-  public boolean isPassProgramParametersViaClasspathJar() {
-    return isDynamicParameters();
-  }
-
-  /** @deprecated use {@link #setUseDynamicParameters(boolean)} (to be removed in IDEA 2018) */
-  public void setPassProgramParametersViaClasspathJar(@SuppressWarnings("SameParameterValue") boolean passProgramParametersViaClasspathJar) {
-    LOG.assertTrue(myUseClasspathJar);
-    setUseDynamicParameters(passProgramParametersViaClasspathJar);
-  }
-  //</editor-fold>
 }

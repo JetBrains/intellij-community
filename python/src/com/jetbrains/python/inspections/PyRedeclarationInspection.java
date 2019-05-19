@@ -67,7 +67,7 @@ public class PyRedeclarationInspection extends PyInspection {
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
@@ -156,7 +156,7 @@ public class PyRedeclarationInspection extends PyInspection {
         if (writeElement != null && readElementRef.get() == null) {
           final List<LocalQuickFix> quickFixes = new ArrayList<>();
           if (suggestRename(element, writeElement)) {
-            quickFixes.add(new PyRenameElementQuickFix());
+            quickFixes.add(new PyRenameElementQuickFix(element));
           }
           final PsiElement identifier = element.getNameIdentifier();
           registerProblem(identifier != null ? identifier : element,

@@ -13,7 +13,9 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +62,7 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
       return;
     }
 
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     CommentTracker tracker = new CommentTracker();
@@ -108,7 +110,7 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
       if (token != null && sb.length() != 0) {
         sb.append(token.getText()).append(" ");
       }
-      sb.append(tracker.text(e));
+      sb.append(tracker.text(ObjectUtils.notNull(PsiUtil.skipParenthesizedExprDown(e), e)));
     }
     return factory.createExpressionFromText(sb.toString(), expression);
   }

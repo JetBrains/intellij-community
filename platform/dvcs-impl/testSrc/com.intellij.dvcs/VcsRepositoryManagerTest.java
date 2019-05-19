@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.repo.Repository;
@@ -39,14 +25,12 @@ import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.mkdir;
 
 public class VcsRepositoryManagerTest extends VcsPlatformTest {
-
   private ProjectLevelVcsManagerImpl myProjectLevelVcsManager;
   private VcsRepositoryManager myGlobalRepositoryManager;
   private MockAbstractVcs myVcs;
   private CountDownLatch CONTINUE_MODIFY;
   private CountDownLatch READY_TO_READ;
   private static final String LOCK_ERROR_TEXT = "Possible dead lock occurred!";
-  private VcsRepositoryCreator myMockCreator;
 
   @Override
   protected void setUp() throws Exception {
@@ -59,12 +43,11 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     READY_TO_READ = new CountDownLatch(1);
     CONTINUE_MODIFY = new CountDownLatch(1);
 
-    myMockCreator = createMockRepositoryCreator();
+    VcsRepositoryCreator mockCreator = createMockRepositoryCreator();
     ExtensionPoint<VcsRepositoryCreator> point = getExtensionPoint();
-    point.registerExtension(myMockCreator);
+    point.registerExtension(mockCreator, getTestRootDisposable());
 
     myGlobalRepositoryManager = new VcsRepositoryManager(myProject, myProjectLevelVcsManager);
-    myGlobalRepositoryManager.initComponent();
   }
 
   @NotNull
@@ -78,9 +61,9 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
       if (myProjectLevelVcsManager != null) {
         myProjectLevelVcsManager.unregisterVcs(myVcs);
       }
-      if (myMockCreator != null) {
-        getExtensionPoint().unregisterExtension(myMockCreator);
-      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

@@ -82,7 +82,6 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, this);
 
     getTree().setShowsRootHandles(true);
-    getTree().setLineStyleAngled();
     getTree().setRootVisible(showProjectNode);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     getTree().setCellRenderer(new DefaultTreeCellRenderer() {
@@ -185,10 +184,8 @@ public class AbstractFileTreeTable<T> extends TreeTable {
   @Override
   public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
     TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
-    UIUtil.setLineStyleAngled(tableRenderer);
     tableRenderer.setRootVisible(false);
     tableRenderer.setShowsRootHandles(true);
-
     return tableRenderer;
   }
 
@@ -352,7 +349,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
 
     @Override
-    protected void appendChildrenTo(@NotNull final Collection<ConvenientNode> children) {
+    protected void appendChildrenTo(@NotNull final Collection<? super ConvenientNode> children) {
       Project project = getObject();
       VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
 
@@ -379,7 +376,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
       return myObject;
     }
 
-    protected abstract void appendChildrenTo(@NotNull Collection<ConvenientNode> children);
+    protected abstract void appendChildrenTo(@NotNull Collection<? super ConvenientNode> children);
 
     @Override
     public int getChildCount() {
@@ -451,7 +448,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
 
     @Override
-    protected void appendChildrenTo(@NotNull final Collection<ConvenientNode> children) {
+    protected void appendChildrenTo(@NotNull final Collection<? super ConvenientNode> children) {
       for (VirtualFile child : getObject().getChildren()) {
         if (myFilter.accept(child)) {
           children.add(new FileNode(child, myProject, myFilter));

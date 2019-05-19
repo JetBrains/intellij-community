@@ -33,7 +33,8 @@ public class LibraryNode extends PackageDependenciesNode {
     myLibraryOrJdk = libraryOrJdk;
   }
 
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  @Override
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
     for (int i = 0; i < count; i++) {
@@ -46,6 +47,7 @@ public class LibraryNode extends PackageDependenciesNode {
     return myLibraryOrJdk.getPresentableName();
   }
 
+  @Override
   public int getWeight() {
     return 2;
   }
@@ -68,6 +70,7 @@ public class LibraryNode extends PackageDependenciesNode {
     return myLibraryOrJdk.hashCode();
   }
 
+  @Override
   public Icon getIcon() {
     return myLibraryOrJdk instanceof JdkOrderEntry ? AllIcons.Nodes.PpJdk : AllIcons.Nodes.PpLibFolder;
   }

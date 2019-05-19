@@ -41,7 +41,7 @@ public abstract class PostfixTemplatesUtils {
    */
   @NotNull
   public static Set<PostfixTemplate> getAvailableTemplates(@NotNull PostfixTemplateProvider provider) {
-    Set<PostfixTemplate> result = ContainerUtil.newHashSet(provider.getTemplates());
+    Set<PostfixTemplate> result = new HashSet<>(provider.getTemplates());
     for (PostfixTemplate template : PostfixTemplateStorage.getInstance().getTemplates(provider)) {
       if (template instanceof PostfixChangedBuiltinTemplate) {
         result.remove(((PostfixChangedBuiltinTemplate)template).getBuiltinTemplate());
@@ -107,7 +107,7 @@ public abstract class PostfixTemplatesUtils {
 
   @NotNull
   public static <T extends PostfixTemplateExpressionCondition> Set<T> readExternalConditions(@NotNull Element template,
-                                                                                             @NotNull Function<Element, T> conditionFactory) {
+                                                                                             @NotNull Function<? super Element, ? extends T> conditionFactory) {
     Element conditionsElement = template.getChild(CONDITIONS_TAG);
     if (conditionsElement != null) {
       Set<T> conditions = new LinkedHashSet<>();

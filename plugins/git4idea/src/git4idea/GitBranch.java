@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.vcs.log.Hash;
@@ -23,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * <p>Represents a Git branch, local or remote.</p>
+ * Represents a Git branch, local or remote.
  *
  * <p>Local and remote branches are different in that nature, that remote branch has complex name ("origin/master") containing both
  *    the name of the remote and the name of the branch. And while the standard name of the remote branch if origin/master,
@@ -35,8 +21,8 @@ import org.jetbrains.annotations.Nullable;
  * </p>
  *
  * <p>GitBranches are equal, if their full names are equal. That means that if two GitBranch objects have different hashes, they
- *    are considered equal. But in this case an error if logged, becase it means that one of this GitBranch instances is out-of-date, and
- *    it is required to use an {@link GitRepository#update(TrackedTopic...) updated} version.</p>
+ *    are considered equal. But in this case an error if logged, because it means that one of this GitBranch instances is out-of-date, and
+ *    it is required to use an {@link GitRepository#update()} updated} version.</p>
  */
 public abstract class GitBranch extends GitReference {
 
@@ -59,6 +45,7 @@ public abstract class GitBranch extends GitReference {
    */
   public abstract boolean isRemote();
 
+  @Override
   @NotNull
   public String getFullName() {
     return (isRemote() ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;

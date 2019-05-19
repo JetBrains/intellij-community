@@ -19,7 +19,6 @@ import java.awt.datatransfer.Transferable;
 
 /**
  * @author max
- * @since May 13, 2002
  */
 public class PasteAction extends TextComponentEditorAction {
   private static final Logger LOG = Logger.getInstance(PasteAction.class);

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.performance;
 
 import com.intellij.formatting.FormatterEx;
@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -20,12 +19,12 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 import static com.intellij.psi.SyntaxTraverser.astTraverser;
 
 /**
  * @author Maxim.Mossienko
- * @since Jan 26, 2007
  */
 public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
   private static final String BASE_PATH = "psi/formatter/java";
@@ -37,7 +36,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
 
   public void testPerformance1() throws Exception {
     File testFile = new File(PathManagerEx.getTestDataPath(), BASE_PATH + "/performance.java");
-    String text = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, CharsetToolkit.UTF8_CHARSET));
+    String text = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, StandardCharsets.UTF_8));
     PsiFile file = LightPlatformTestCase.createFile(testFile.getName(), text);
     astTraverser(SourceTreeToPsiMap.psiElementToTree(file)).forEach(node -> {});
 

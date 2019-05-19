@@ -11,10 +11,12 @@ public interface CommonJavaRunConfigurationParameters extends CommonProgramRunCo
 
   String getVMParameters();
 
+  @Override
   boolean isAlternativeJrePathEnabled();
 
   void setAlternativeJrePathEnabled(boolean enabled);
 
+  @Override
   @Nullable
   String getAlternativeJrePath();
 

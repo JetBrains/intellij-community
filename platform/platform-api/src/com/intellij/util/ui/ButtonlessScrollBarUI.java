@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
@@ -98,6 +99,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private double myMacScrollbarFadeLevel;
   private boolean myMacScrollbarHidden;
 
+  @SuppressWarnings("deprecation")
+  private final RegionPainter<Float> myThumbPainter = JBScrollPane.getThumbPainter(() -> scrollbar);
   private ScrollbarRepaintCallback myRepaintCallback;
   private boolean myDisposed;
 
@@ -214,21 +217,20 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     myAWTMouseListener = new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
-        if (event.getID() == MouseEvent.MOUSE_MOVED) {
-          
-            // user is moving inside the scrollpane of the scrollbar and fade-out hasn't started yet 
+        if (event.getID() == MouseEvent.MOUSE_MOVED && !myMacScrollbarHidden && myMacScrollbarFadeLevel == 0) {
+            // user is moving inside the scrollpane of the scrollbar and fade-out hasn't started yet
           Container scrollpane = SwingUtilities.getAncestorOfClass(JScrollPane.class, scrollbar);
           if (scrollpane != null) {
             Point loc = ((MouseEvent)event).getLocationOnScreen();
             SwingUtilities.convertPointFromScreen(loc, scrollpane);
-            if (scrollpane.contains(loc) && !myMacScrollbarHidden && myMacScrollbarFadeLevel == 0) {
+            if (scrollpane.contains(loc)) {
               startMacScrollbarFadeout();
             }
           }
         }
       }
     };
-    myWeakListener = new WeakLestener(myAWTMouseListener);
+    myWeakListener = new WeakListener(myAWTMouseListener);
     myNSScrollerListener = new NSScrollerHelper.ScrollbarStyleListener() {
       @Override
       public void styleChanged() {
@@ -643,7 +645,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       boolean vertical = isVertical();
 
       final Paint paint;
-      final Color start = adjustColor(UIUtil.getSlightlyDarkerColor(getTrackBackground()));
+      final Color start = adjustColor(ColorUtil.darker(getTrackBackground(), 1));
       final Color end = adjustColor(getTrackBackground().brighter());
 
       if (vertical) {
@@ -734,16 +736,26 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
           bounds.y += (bounds.height - max) / 2;
           bounds.height = max;
         }
-        float value = (float)myThumbFadeColorShift / getAnimationColorShift();
-        RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
-        painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
+        float value = fixAnimationValue((float)myThumbFadeColorShift / getAnimationColorShift());
+        myThumbPainter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
       }
       else {
-        float value = (float)myThumbFadeColorShift / getAnimationColorShift();
-        RegionPainter<Float> painter = isDark() ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
-        painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
+        float value = fixAnimationValue((float)myThumbFadeColorShift / getAnimationColorShift());
+        myThumbPainter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
       }
     }
+  }
+
+  private static float fixAnimationValue(float value) {
+    if (value < 0 || Double.isNaN(value)) {
+      LOG.debug("unexpected animation value: ", value);
+      return 0;
+    }
+    if (value > 1) {
+      LOG.debug("animation value is too big: ", value);
+      return 1;
+    }
+    return value;
   }
 
   @Deprecated
@@ -773,13 +785,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private void paintMacThumb(Graphics g, Rectangle thumbBounds) {
     if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) return;
 
-    thumbBounds = getMacScrollBarBounds(thumbBounds, true);
-    Graphics2D g2d = (Graphics2D)g;
-
-    float value = (float)(1 - myMacScrollbarFadeLevel);
     if (!myMacScrollbarHidden || alwaysPaintThumb()) {
-      RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
-      painter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
+      thumbBounds = getMacScrollBarBounds(thumbBounds, true);
+      Graphics2D g2d = (Graphics2D)g;
+
+      float value = fixAnimationValue((float)(1 - myMacScrollbarFadeLevel));
+      myThumbPainter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
     }
   }
   
@@ -905,10 +916,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  private static final class WeakLestener implements AWTEventListener {
+  private static final class WeakListener implements AWTEventListener {
     private final WeakReference<AWTEventListener> myReference;
 
-    private WeakLestener(AWTEventListener listener) {
+    private WeakListener(AWTEventListener listener) {
       myReference = new WeakReference<>(listener);
     }
 

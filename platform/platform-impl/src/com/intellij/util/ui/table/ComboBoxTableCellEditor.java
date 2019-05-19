@@ -16,11 +16,11 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.util.Iconable;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EnumComboBoxModel;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.PopupMenuListenerAdapter;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ListWithSelection;
-import org.jdesktop.swingx.combobox.ListComboBoxModel;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -37,8 +37,8 @@ public class ComboBoxTableCellEditor extends DefaultCellEditor {
   private final JComboBox comboBox;
 
   public ComboBoxTableCellEditor() {
-    //noinspection unchecked,UndesirableClassUsage
-    super(new JComboBox(new ListComboBoxModel(Collections.emptyList())));
+    //noinspection unchecked
+    super(new JComboBox(new CollectionComboBoxModel(Collections.emptyList())));
 
     comboBox = (JComboBox)getComponent();
 
@@ -55,21 +55,17 @@ public class ComboBoxTableCellEditor extends DefaultCellEditor {
       }
     });
 
-    //noinspection unchecked
-    comboBox.setRenderer(new ListCellRendererWrapper() {
-      @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        setIcon(value instanceof Iconable ? ((Iconable)value).getIcon(Iconable.ICON_FLAG_VISIBILITY) : null);
-      }
-    });
+    comboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      label.setIcon(value instanceof Iconable ? ((Iconable)value).getIcon(Iconable.ICON_FLAG_VISIBILITY) : null);
+      label.setText(value == null ? "" : value.toString());
+    }));
   }
 
   @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     if (value instanceof ListWithSelection) {
       ListWithSelection options = (ListWithSelection)value;
-      //noinspection unchecked
-      comboBox.setModel(new ListComboBoxModel(options));
+      comboBox.setModel(new CollectionComboBoxModel(options));
 
       if (options.getSelection() == null) {
         options.selectFirst();
@@ -79,7 +75,6 @@ public class ComboBoxTableCellEditor extends DefaultCellEditor {
     else {
       Enum enumValue = (Enum)value;
       Class enumClass = enumValue.getDeclaringClass();
-      //noinspection unchecked
       ComboBoxModel model = comboBox.getModel();
       if (!(model instanceof EnumComboBoxModel && model.getSize() > 0 && ((Enum)model.getElementAt(0)).getDeclaringClass() == enumClass)) {
         //noinspection unchecked

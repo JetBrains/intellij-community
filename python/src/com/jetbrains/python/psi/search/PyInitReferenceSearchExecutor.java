@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+  @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiReference> consumer) {
     PsiElement element = queryParameters.getElementToSearch();
     if (!(element instanceof PyFunction)) {

@@ -35,6 +35,7 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
 
   private static final Type myPanelType = Type.getType(JPanel.class);
 
+  @Override
   public String mapComponentClass(final String componentClassName) {
     if (componentClassName.equals(Spacer.class.getName())) {
       return JPanel.class.getName();
@@ -42,6 +43,7 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     return super.mapComponentClass(componentClassName);
   }
 
+  @Override
   public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
     generator.loadLocal(componentLocal);
 
@@ -64,6 +66,7 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
 
   }
 
+  @Override
   public void generateComponentLayout(final LwComponent component,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,

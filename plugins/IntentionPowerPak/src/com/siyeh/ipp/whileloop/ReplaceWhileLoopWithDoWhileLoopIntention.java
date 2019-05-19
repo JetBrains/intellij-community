@@ -26,11 +26,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWhileLoopWithDoWhileLoopIntention extends Intention {
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new WhileLoopPredicate();
   }
 
+  @Override
   protected void processIntention(@NotNull PsiElement element) {
     final PsiWhileStatement whileStatement = (PsiWhileStatement)element.getParent();
     if (whileStatement == null) {

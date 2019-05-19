@@ -24,15 +24,18 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author dsl
  */
-public class MethodDuplicatesAction extends BaseRefactoringAction {
+public class MethodDuplicatesAction extends BaseJavaRefactoringAction {
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return true;
   }
 
+  @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }
 
+  @Override
   protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new MethodDuplicatesHandler();
   }

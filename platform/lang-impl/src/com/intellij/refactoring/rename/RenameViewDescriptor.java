@@ -53,7 +53,8 @@ public class RenameViewDescriptor implements UsageViewDescriptor{
       if (element instanceof PsiDirectory/* || element instanceof PsiClass*/) {
         String fullName = UsageViewUtil.getLongName(element);
         int lastDot = fullName.lastIndexOf('.');
-        if (lastDot >= 0) {
+        if (lastDot >= 0 && 
+            lastDot + 1 < fullName.length() && ((PsiDirectory)element).getName().equals(fullName.substring(lastDot + 1))) {
           prefix = fullName.substring(0, lastDot + 1);
         }
       }
@@ -80,6 +81,7 @@ public class RenameViewDescriptor implements UsageViewDescriptor{
     return myProcessedElementsHeader;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);

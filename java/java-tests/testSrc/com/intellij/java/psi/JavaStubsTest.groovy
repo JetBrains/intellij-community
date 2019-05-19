@@ -28,12 +28,15 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 
 import java.util.concurrent.Callable
 
+@CompileStatic
 class JavaStubsTest extends LightCodeInsightFixtureTestCase {
 
   void "test resolve from annotation method default"() {
@@ -343,6 +346,54 @@ class A {
       myFixture.findClass("A").extendsList.referenceElements[0].delete()
     }
     PsiTestUtil.checkStubsMatchText(file)
+  }
+
+  void "test remove type argument list after space"() {
+    def file = myFixture.addFileToProject('a.java', 'class A { A <B>a; }')
+    WriteCommandAction.runWriteCommandAction(project) {
+      myFixture.findClass("A").fields[0].typeElement.innermostComponentReferenceElement.parameterList.delete()
+    }
+    PsiTestUtil.checkStubsMatchText(file)
+    PsiTestUtil.checkFileStructure(file)
+  }
+
+  void "test remove modifier making a comment a class javadoc"() {
+    def file = myFixture.addFileToProject('a.java', 'import foo; final /** @deprecated */ public class A { }')
+    WriteCommandAction.runWriteCommandAction(project) {
+      myFixture.findClass("A").modifierList.children[0].delete()
+    }
+    PsiTestUtil.checkFileStructure(file)
+    PsiTestUtil.checkStubsMatchText(file)
+  }
+
+  void "test add reference into broken extends list"() {
+    def file = myFixture.addFileToProject('a.java', 'class A extends.ends Foo { int a; }')
+    WriteCommandAction.runWriteCommandAction(project) {
+      myFixture.findClass("A").extendsList.add(JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, file.resolveScope))
+    }
+    PsiTestUtil.checkStubsMatchText(file)
+  }
+
+  void "test identifier dot before class"() {
+    def file = myFixture.addFileToProject('a.java', 'class A {{ public id.class B {}}}')
+    PsiTestUtil.checkStubsMatchText(file)
+  }
+
+  void "test removing orphan annotation"() {
+    String text = """\
+public class Foo {
+    public Foo() {
+    }
+
+    @Override
+  public void initSteps {
+  }
+}"""
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+    WriteCommandAction.runWriteCommandAction(project) {
+      PsiTreeUtil.findChildOfType(psiFile, PsiAnnotation).delete()
+    }
+    PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
 }

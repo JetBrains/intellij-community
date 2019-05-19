@@ -1,23 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -40,18 +24,18 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * VcsRepositoryManager creates,stores and updates all Repositories information using registered {@link VcsRepositoryCreator}
  * extension point in a thread safe way.
  */
-public class VcsRepositoryManager extends AbstractProjectComponent implements Disposable, VcsListener {
-
+public class VcsRepositoryManager implements Disposable, VcsListener {
   public static final Topic<VcsRepositoryMappingListener> VCS_REPOSITORY_MAPPING_UPDATED =
     Topic.create("VCS repository mapping updated", VcsRepositoryMappingListener.class);
 
+  @NotNull private final Project myProject;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
 
   @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
   @NotNull private final ReentrantReadWriteLock.WriteLock MODIFY_LOCK = new ReentrantReadWriteLock().writeLock();
 
-  @NotNull private final Map<VirtualFile, Repository> myRepositories = ContainerUtil.newHashMap();
-  @NotNull private final Map<VirtualFile, Repository> myExternalRepositories = ContainerUtil.newHashMap();
+  @NotNull private final Map<VirtualFile, Repository> myRepositories = new HashMap<>();
+  @NotNull private final Map<VirtualFile, Repository> myExternalRepositories = new HashMap<>();
   @NotNull private final List<VcsRepositoryCreator> myRepositoryCreators;
 
   private volatile boolean myDisposed;
@@ -62,14 +46,10 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
   }
 
   public VcsRepositoryManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
-    super(project);
+    myProject = project;
     myVcsManager = vcsManager;
-    myRepositoryCreators = Arrays.asList(Extensions.getExtensions(VcsRepositoryCreator.EXTENSION_POINT_NAME, project));
-  }
-
-  @Override
-  public void initComponent() {
-    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    myRepositoryCreators = Arrays.asList(VcsRepositoryCreator.EXTENSION_POINT_NAME.getExtensions(project));
+    project.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
   }
 
   @Override
@@ -95,7 +75,7 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
   }
 
   /**
-   * @Deprecated to delete in 2017.X
+   * @deprecated to delete in 2017.X
    */
   @Nullable
   @Deprecated
@@ -186,7 +166,7 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
   public Collection<Repository> getRepositories() {
     try {
       REPO_LOCK.readLock().lock();
-      return Collections.unmodifiableCollection(myRepositories.values());
+      return new ArrayList<>(myRepositories.values());
     }
     finally {
       REPO_LOCK.readLock().unlock();
@@ -201,7 +181,7 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
       try {
         REPO_LOCK.readLock().lock();
         if (myRepositories.containsKey(checkedRoot)) return;
-        repositories = ContainerUtil.newHashMap(myRepositories);
+        repositories = new HashMap<>(myRepositories);
       }
       finally {
         REPO_LOCK.readLock().unlock();
@@ -222,16 +202,16 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
       finally {
         REPO_LOCK.writeLock().unlock();
       }
-      BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
     }
     finally {
       MODIFY_LOCK.unlock();
     }
+    BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
   }
 
   @NotNull
   private Map<VirtualFile, Repository> findNewRoots(@NotNull Set<VirtualFile> knownRoots) {
-    Map<VirtualFile, Repository> newRootsMap = ContainerUtil.newHashMap();
+    Map<VirtualFile, Repository> newRootsMap = new HashMap<>();
     for (VcsRoot root : myVcsManager.getAllVcsRoots()) {
       VirtualFile rootPath = root.getPath();
       if (rootPath != null && !knownRoots.contains(rootPath)) {

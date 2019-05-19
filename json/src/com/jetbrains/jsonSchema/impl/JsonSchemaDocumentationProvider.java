@@ -1,29 +1,34 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.pointer.JsonPointerPosition;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    return findSchemaAndGenerateDoc(element, originalElement, true);
+    return findSchemaAndGenerateDoc(element, originalElement, true, null);
   }
 
   @Nullable
@@ -35,38 +40,84 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-    return findSchemaAndGenerateDoc(element, originalElement, false);
+    String forcedPropName = null;
+    if (element instanceof FakeDocElement) {
+      forcedPropName = ((FakeDocElement)element).myAltName;
+      element = ((FakeDocElement)element).myContextElement;
+    }
+    return findSchemaAndGenerateDoc(element, originalElement, false, forcedPropName);
   }
 
   @Nullable
-  public static String findSchemaAndGenerateDoc(PsiElement element, @Nullable PsiElement originalElement, final boolean preferShort) {
-    element = ObjectUtils.coalesce(originalElement, element);
+  public static String findSchemaAndGenerateDoc(PsiElement element,
+                                                @Nullable PsiElement originalElement,
+                                                final boolean preferShort,
+                                                @Nullable String forcedPropName) {
+    if (element instanceof FakePsiElement) return null;
+    element = isWhitespaceOrComment(originalElement) ? element : ObjectUtils.coalesce(originalElement, element);
+    if (originalElement != null && hasFileOrPointerReferences(originalElement.getReferences())) return null;
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
-    final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile.getViewProvider().getVirtualFile());
+    VirtualFile virtualFile = containingFile.getViewProvider().getVirtualFile();
+    if (!service.isApplicableToFile(virtualFile)) return null;
+    final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile);
     if (rootSchema == null) return null;
 
-    return generateDoc(element, rootSchema, preferShort);
+    return generateDoc(element, rootSchema, preferShort, forcedPropName);
+  }
+
+  private static boolean hasFileOrPointerReferences(PsiReference[] references) {
+    for (PsiReference reference : references) {
+      if (reference instanceof PsiFileReference
+          || reference instanceof JsonPointerReferenceProvider.JsonSchemaIdReference
+          || reference instanceof JsonPointerReferenceProvider.JsonPointerReference) return true;
+    }
+    return false;
+  }
+
+  private static boolean isWhitespaceOrComment(@Nullable PsiElement originalElement) {
+    return originalElement instanceof PsiWhiteSpace || originalElement instanceof PsiComment;
   }
 
   @Nullable
   public static String generateDoc(@NotNull final PsiElement element,
-                                   @NotNull final JsonSchemaObject rootSchema, final boolean preferShort) {
+                                   @NotNull final JsonSchemaObject rootSchema,
+                                   final boolean preferShort,
+                                   @Nullable String forcedPropName) {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, rootSchema);
     if (walker == null) return null;
 
-    final PsiElement checkable = walker.goUpToCheckable(element);
+    final PsiElement checkable = walker.findElementToCheck(element);
     if (checkable == null) return null;
-    final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true);
+    final JsonPointerPosition position = walker.findPosition(checkable, true);
     if (position == null) return null;
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
+    if (forcedPropName != null) {
+      if (isWhitespaceOrComment(element)) {
+        position.addFollowingStep(forcedPropName);
+      }
+      else {
+        if (position.isEmpty()) {
+          return null;
+        }
+        if (position.isArray(position.size() - 1)) return null;
+        position.replaceStep(position.size() - 1, forcedPropName);
+      }
+    }
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(element.getProject(), rootSchema, position).resolve();
 
     String htmlDescription = null;
-    List<JsonSchemaType> possibleTypes = ContainerUtil.newArrayList();
+    boolean deprecated = false;
+    List<JsonSchemaType> possibleTypes = new ArrayList<>();
     for (JsonSchemaObject schema : schemas) {
       if (htmlDescription == null) {
         htmlDescription = getBestDocumentation(preferShort, schema);
+        String message = schema.getDeprecationMessage();
+        if (message != null) {
+          if (htmlDescription == null) htmlDescription = message;
+          else htmlDescription = message + "<br/>" + htmlDescription;
+          deprecated = true;
+        }
       }
       if (schema.getType() != null && schema.getType() != JsonSchemaType._any) {
         possibleTypes.add(schema.getType());
@@ -74,38 +125,43 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       else if (schema.getTypeVariants() != null) {
         possibleTypes.addAll(schema.getTypeVariants());
       }
+      else {
+        final JsonSchemaType guessedType = schema.guessType();
+        if (guessedType != null) {
+          possibleTypes.add(guessedType);
+        }
+      }
     }
 
-    return htmlDescription == null
-           ? null
-           : appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription);
+    return appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription, deprecated, preferShort);
   }
 
   @Nullable
-  private static String concatTypeInfo(@NotNull List<JsonSchemaType> possibleTypes) {
-    if (possibleTypes.size() == 0) return null;
-    if (possibleTypes.size() == 1) return possibleTypes.get(0).getDescription();
-
-    return StringUtil.join(possibleTypes.stream().map(t -> t.getDescription()).distinct().sorted().collect(Collectors.toList()), " | ");
-  }
-  @NotNull
-  private static String appendNameTypeAndApi(@NotNull List<JsonSchemaVariantsTreeBuilder.Step> position,
+  private static String appendNameTypeAndApi(@NotNull JsonPointerPosition position,
                                              @NotNull String apiInfo,
                                              @NotNull List<JsonSchemaType> possibleTypes,
-                                             @NotNull String htmlDescription) {
+                                             @Nullable String htmlDescription,
+                                             boolean deprecated,
+                                             boolean preferShort) {
     if (position.size() == 0) return htmlDescription;
 
-    JsonSchemaVariantsTreeBuilder.Step lastStep = position.get(position.size() - 1);
-    String name = lastStep.getName();
+    String name = position.getLastName();
     if (name == null) return htmlDescription;
 
     String type = "";
-    String schemaType = concatTypeInfo(possibleTypes);
+    String schemaType = JsonSchemaObject.getTypesDescription(false, possibleTypes);
     if (schemaType != null) {
       type = ": " + schemaType;
     }
 
-    htmlDescription = "<b>" + name + "</b>" + type + apiInfo + "<br/><br/>" + htmlDescription;
+    String deprecationComment = deprecated ? " (deprecated)" : "";
+    if (preferShort) {
+      htmlDescription = "<b>" + name + "</b>" + type + apiInfo + deprecationComment + (htmlDescription == null ? "" : ("<br/>" + htmlDescription));
+    }
+    else {
+      htmlDescription = DocumentationMarkup.DEFINITION_START + name + type + apiInfo + deprecationComment + DocumentationMarkup.DEFINITION_END +
+                        (htmlDescription == null ? "" : (DocumentationMarkup.CONTENT_START + htmlDescription + DocumentationMarkup.CONTENT_END));
+    }
     return htmlDescription;
   }
 
@@ -114,7 +170,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
                                              @NotNull JsonSchemaObject rootSchema) {
     JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
     String apiInfo = "";
-    JsonSchemaFileProvider provider = service.getSchemaProvider(rootSchema.getSchemaFile());
+    JsonSchemaFileProvider provider = service.getSchemaProvider(rootSchema);
     if (provider != null) {
       String information = provider.getThirdPartyApiInformation();
       if (information != null) {
@@ -132,21 +188,28 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (preferShort && !StringUtil.isEmptyOrSpaces(title)) {
       return plainTextPostProcess(title);
     } else if (!StringUtil.isEmptyOrSpaces(htmlDescription)) {
-      return htmlDescription;
+      String desc = htmlDescription;
+      if (!StringUtil.isEmptyOrSpaces(title)) desc = plainTextPostProcess(title) + "<br/>" + desc;
+      return desc;
     } else if (!StringUtil.isEmptyOrSpaces(description)) {
-      return plainTextPostProcess(description);
+      String desc = plainTextPostProcess(description);
+      if (!StringUtil.isEmptyOrSpaces(title)) desc = plainTextPostProcess(title) + "<br/>" + desc;
+      return desc;
     }
     return null;
   }
 
   @NotNull
-  private static String plainTextPostProcess(String text) {
-    return StringUtil.escapeXml(text).replace("\\n", "<br/>");
+  private static String plainTextPostProcess(@NotNull String text) {
+    return StringUtil.escapeXmlEntities(text).replace("\\n", "<br/>");
   }
 
   @Nullable
   @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+    if ((element instanceof JsonProperty || isWhitespaceOrComment(element) && element.getParent() instanceof JsonObject) && object instanceof String) {
+      return new FakeDocElement(element instanceof JsonProperty ? ((JsonProperty)element).getNameElement() : element, StringUtil.unquoteString((String)object));
+    }
     return null;
   }
 
@@ -154,5 +217,26 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
+  }
+
+  private static class FakeDocElement extends FakePsiElement {
+    private final PsiElement myContextElement;
+    private final String myAltName;
+
+    private FakeDocElement(PsiElement context, String name) {
+      myContextElement = context;
+      myAltName = name;
+    }
+
+    @Override
+    public PsiElement getParent() {
+      return myContextElement;
+    }
+
+    @NotNull
+    @Override
+    public TextRange getTextRangeInParent() {
+      return myContextElement.getTextRange().shiftLeft(myContextElement.getTextOffset());
+    }
   }
 }

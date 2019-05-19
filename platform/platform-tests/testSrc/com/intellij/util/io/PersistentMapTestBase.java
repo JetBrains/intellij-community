@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,14 @@ abstract class PersistentMapTestBase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    clearMap(myFile, myMap);
-    myMap = null;
-    super.tearDown();
+    try {
+      clearMap(myFile, myMap);
+    }
+    finally {
+      myMap = null;
+
+      super.tearDown();
+    }
   }
 
   static void clearMap(final File file1, PersistentHashMap<?, ?> map) throws IOException {

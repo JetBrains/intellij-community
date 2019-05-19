@@ -3,7 +3,7 @@
 Groovy script
   Logical expression
     Literal
-      PsiElement(string)(''bugaga'')
+      PsiElement(single quoted string)(''bugaga'')
     PsiWhiteSpace(' ')
     PsiElement(==~)('==~')
     PsiWhiteSpace(' ')

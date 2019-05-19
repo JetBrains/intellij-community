@@ -15,17 +15,18 @@
  */
 package org.jetbrains.plugins.gradle.config;
 
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * @author sergey.evdokimov
  */
-public class GradleScriptTypeDetector extends GroovyScriptTypeDetector {
-
-
+public class GradleScriptTypeDetector extends GroovyScriptTypeDetector implements FileTypeUsageSchemaDescriptor {
   public GradleScriptTypeDetector() {
     super(GradleScriptType.INSTANCE, GradleConstants.EXTENSION);
   }
@@ -33,5 +34,12 @@ public class GradleScriptTypeDetector extends GroovyScriptTypeDetector {
   @Override
   public boolean isSpecificScriptFile(@NotNull GroovyFile script) {
     return GradleConstants.EXTENSION.equals(script.getViewProvider().getVirtualFile().getExtension());
+  }
+
+  @Override
+  public boolean describes(@NotNull VirtualFile file) {
+    String name = file.getName();
+    return file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE &&
+           (name.equals(GradleConstants.DEFAULT_SCRIPT_NAME) || name.equals(GradleConstants.SETTINGS_FILE_NAME));
   }
 }

@@ -17,18 +17,21 @@ package com.intellij.testFramework;
 
 import com.intellij.lang.TokenWrapper;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
@@ -55,7 +58,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
 
   @NotNull
   protected String getPathToTestDataFile(String extension) {
-    return PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + extension;
+    return IdeaTestExecutionPolicy.getHomePathWithPolicy() + "/" + getDirPath() + "/" + getTestName(true) + extension;
   }
 
   @NotNull
@@ -103,6 +106,48 @@ public abstract class LexerTestCase extends UsefulTestCase {
 
   protected String printTokens(String text, int start) {
     return printTokens(text, start, createLexer());
+  }
+
+  protected void checkCorrectRestartOnEveryToken(@NotNull String text) {
+    Lexer mainLexer = createLexer();
+    List<Trinity<IElementType, Integer, Integer>> allTokens = tokenize(text, 0, 0, mainLexer);
+    Lexer auxLexer = createLexer();
+    auxLexer.start(text);
+    int index = 0;
+    while (true) {
+      IElementType type = auxLexer.getTokenType();
+      if (type == null) {
+        break;
+      }
+      List<Trinity<IElementType, Integer, Integer>> subTokens = tokenize(text, auxLexer.getTokenStart(), auxLexer.getState(), mainLexer);
+      if (!allTokens.subList(index++, allTokens.size()).equals(subTokens)) {
+        assertEquals("Restarting impossible from offset " + auxLexer.getTokenStart() + " - " + auxLexer.getTokenText() + "\n" +
+                     "All tokens <type, offset, lexer state>: " + allTokens + "\n",
+                     allTokens.subList(index - 1, allTokens.size()),
+                     subTokens);
+      }
+      auxLexer.advance();
+    }
+  }
+
+  @NotNull
+  private static List<Trinity<IElementType, Integer, Integer>> tokenize(@NotNull String text,
+                                                                        int start,
+                                                                        int state,
+                                                                        @NotNull Lexer lexer) {
+    List<Trinity<IElementType, Integer, Integer>> allTokens = new ArrayList<>();
+    try {
+      lexer.start(text, start, text.length(), state);
+    }
+    catch (Throwable t) {
+      LOG.error("Restarting impossible from offset " + start, t);
+      throw new RuntimeException(t);
+    }
+    while (lexer.getTokenType() != null) {
+      allTokens.add(Trinity.create(lexer.getTokenType(), lexer.getTokenStart(), lexer.getState()));
+      lexer.advance();
+    }
+    return allTokens;
   }
 
   public static String printTokens(CharSequence text, int start, Lexer lexer) {

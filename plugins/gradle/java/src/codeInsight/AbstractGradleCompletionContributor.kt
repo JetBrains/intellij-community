@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 
 /**
  * @author Vladislav.Soroka
- * @since 11/1/13
  */
 abstract class AbstractGradleCompletionContributor : CompletionContributor() {
 

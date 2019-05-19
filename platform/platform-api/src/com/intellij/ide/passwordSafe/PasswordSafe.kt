@@ -1,12 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.passwordSafe
 
 import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.CredentialStore
 import com.intellij.credentialStore.Credentials
 import com.intellij.openapi.components.ServiceManager
 import org.jetbrains.concurrency.Promise
 
-abstract class PasswordSafe : PasswordStorage {
+/**
+ * [See documentation](http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_sensitive_data.html)
+ */
+abstract class PasswordSafe : PasswordStorage, CredentialStore {
   companion object {
     @JvmStatic
     val instance: PasswordSafe

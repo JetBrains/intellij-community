@@ -62,6 +62,12 @@ public class MessagesEx extends Messages {
     else showInfoMessage(message, title);
   }
 
+  /**
+   * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
+   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Component, String, String, String, String, Icon)} instead
+   */
+  @OkCancelResult
+  @Deprecated
   public static int showOkCancelDialog(@Nullable Component parent, String message, String title, Icon icon) {
     return parent != null ? Messages.showOkCancelDialog(parent, message, title, icon) : showOkCancelDialog(message, title, icon);
   }

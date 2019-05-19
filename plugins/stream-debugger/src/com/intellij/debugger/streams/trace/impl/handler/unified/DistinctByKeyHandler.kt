@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.trace.impl.handler.unified
 
 import com.intellij.debugger.streams.trace.dsl.*
@@ -14,10 +14,13 @@ import one.util.streamex.StreamEx
 /**
  * @author Vitaliy.Bibaev
  */
-open class DistinctByKeyHandler(callNumber: Int, private val myCall: IntermediateStreamCall, dsl: Dsl) : HandlerBase.Intermediate(dsl) {
+open class DistinctByKeyHandler(callNumber: Int,
+                                private val myCall: IntermediateStreamCall,
+                                dsl: Dsl,
+                                private val functionApplyName: String = "apply") : HandlerBase.Intermediate(dsl) {
   private companion object {
-    val KEY_EXTRACTOR_VARIABLE_PREFIX = "keyExtractor"
-    val TRANSITIONS_ARRAY_NAME = "transitionsArray"
+    const val KEY_EXTRACTOR_VARIABLE_PREFIX = "keyExtractor"
+    const val TRANSITIONS_ARRAY_NAME = "transitionsArray"
   }
 
   private val myPeekHandler = PeekTraceHandler(callNumber, "distinct", myCall.typeBefore, myCall.typeAfter, dsl)
@@ -48,13 +51,12 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
 
   override fun transformCall(call: IntermediateStreamCall): IntermediateStreamCall {
     val newKeyExtractor = dsl.lambda("x") {
-      val valueBefore = declare(dsl.variable(myCall.typeBefore, "valueBefore"), lambdaArg, false)
-      doReturn(myExtractorVariable.call("andThen", dsl.lambda("t") {
-        statement { myBeforeTimes.add(dsl.currentTime()) }
-        statement { myBeforeValues.add(valueBefore) }
-        statement { myKeys.add(lambdaArg) }
-        doReturn(lambdaArg)
-      }).call("apply", TextExpression("x")))
+      val key = dsl.variable(dsl.types.ANY, "key")
+      declare(key, myExtractorVariable.call(functionApplyName, lambdaArg), false)
+      statement { myBeforeTimes.add(dsl.currentTime()) }
+      statement { myBeforeValues.add(lambdaArg) }
+      statement { myKeys.add(key) }
+      doReturn(key)
     }.toCode()
     return call.updateArguments(listOf(CallArgumentImpl(myKeyExtractor.type, newKeyExtractor)))
   }
@@ -108,7 +110,7 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
       doReturn(myTime2ValueAfter.set(dsl.currentTime(), lambdaArg))
     }
 
-    callsAfter.add(dsl.createPeekCall(myTypeAfter, lambda.toCode()))
+    callsAfter.add(dsl.createPeekCall(myTypeAfter, lambda))
     return callsAfter
   }
 

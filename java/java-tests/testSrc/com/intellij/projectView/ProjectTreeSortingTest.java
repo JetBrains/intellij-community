@@ -55,6 +55,9 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
       myProjectView = null;
       myPane = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -248,7 +251,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     private final Project myProject;
     private final Map<String, Integer> myOrder = new LinkedHashMap<>();
 
-    public MyOrderProvider(Project project) {
+    MyOrderProvider(Project project) {
       myProject = project;
     }
 
@@ -329,7 +332,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
             }
 
             @Override
-            public void update(PresentationData presentation) {
+            public void update(@NotNull PresentationData presentation) {
             }
 
             @Override

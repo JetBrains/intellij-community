@@ -11,7 +11,7 @@ public interface FileHolder {
   FileHolder copy();
   HolderType getType();
 
-  void notifyVcsStarted(AbstractVcs scope);
+  void notifyVcsStarted(AbstractVcs<?> vcs);
 
   enum HolderType {
     DELETED,

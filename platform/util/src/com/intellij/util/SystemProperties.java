@@ -36,16 +36,19 @@ public class SystemProperties {
   }
 
   /** @deprecated use {@link SystemInfo#OS_NAME} (to be removed in IDEA 2020) */
+  @Deprecated
   public static String getOsName() {
     return SystemInfo.OS_NAME;
   }
 
   /** @deprecated use {@link SystemInfo#JAVA_VERSION} (to be removed in IDEA 2020) */
+  @Deprecated
   public static String getJavaVersion() {
     return SystemInfo.JAVA_VERSION;
   }
 
   /** @deprecated use {@link SystemInfo#JAVA_VENDOR} (to be removed in IDEA 2020) */
+  @Deprecated
   public static String getJavaVmVendor() {
     return SystemInfo.JAVA_VENDOR;
   }
@@ -82,6 +85,7 @@ public class SystemProperties {
   }
 
   /** @deprecated use {@link SystemInfo#JAVA_VENDOR} (to be removed in IDEA 2020) */
+  @Deprecated
   public static String getJavaVendor() {
     return SystemInfo.JAVA_VENDOR;
   }

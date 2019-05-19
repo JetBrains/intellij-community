@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -38,9 +24,7 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.get
 
 /**
  * @author Vladislav.Soroka
- * @since 4/2/2017
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleEnvironmentTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.5+")
@@ -64,7 +48,7 @@ public class GradleEnvironmentTest extends GradleImportingTestCase {
       "Support for this is available in Gradle 3.5 and all later versions."));
   }
 
-  private void importAndRunTask(Map<String, String> passedEnv, StringBuilder gradleEnv) throws IOException {
+  private void importAndRunTask(@NotNull Map<String, String> passedEnv, StringBuilder gradleEnv) throws IOException {
     importProject("task printEnv() {\n" +
                   "  doLast { println System.getenv().toMapString()}\n" +
                   "}");

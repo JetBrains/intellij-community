@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -17,10 +17,12 @@ import java.util.*;
  */
 public class ModulePackageRepr extends Proto {
   private static final DataExternalizer<Integer> INT_EXTERNALIZER = new DataExternalizer<Integer>() {
+    @Override
     public void save(@NotNull DataOutput out, Integer value) throws IOException {
       DataInputOutputUtil.writeINT(out, value);
     }
 
+    @Override
     public Integer read(@NotNull DataInput in) throws IOException {
       return DataInputOutputUtil.readINT(in);
     }
@@ -47,6 +49,7 @@ public class ModulePackageRepr extends Proto {
     return !myModuleNames.isEmpty();
   }
 
+  @Override
   public void save(DataOutput out) {
     super.save(out);
     RW.save(myModuleNames, INT_EXTERNALIZER, out);
@@ -67,7 +70,7 @@ public class ModulePackageRepr extends Proto {
   }
 
   public abstract static class Diff extends DifferenceImpl {
-    
+
     public abstract Specifier<Integer, Difference> targetModules();
 
     Diff(@NotNull Difference delegate) {
@@ -75,19 +78,23 @@ public class ModulePackageRepr extends Proto {
     }
   }
 
+  @Override
   public Diff difference(Proto past) {
     final Difference.Specifier<Integer, Difference> targetModulesDiff = Difference.make(((ModulePackageRepr)past).myModuleNames, myModuleNames);
     return new Diff(super.difference(past)) {
+      @Override
       public Specifier<Integer, Difference> targetModules() {
         return targetModulesDiff;
       }
 
+      @Override
       public boolean no() {
         return super.no() && targetModules().unchanged();
       }
     };
   }
 
+  @Override
   public void toStream(DependencyContext context, PrintStream stream) {
     final StringBuilder sb = new StringBuilder();
     sb.append("Module package: ").append(context.getValue(name));
@@ -108,10 +115,12 @@ public class ModulePackageRepr extends Proto {
 
   public static DataExternalizer<ModulePackageRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<ModulePackageRepr>() {
+      @Override
       public void save(@NotNull DataOutput out, ModulePackageRepr value) {
         value.save(out);
       }
 
+      @Override
       public ModulePackageRepr read(@NotNull DataInput in) {
         return new ModulePackageRepr(context, in);
       }

@@ -1,20 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -25,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -46,10 +37,10 @@ public class RemoveBomAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+  public void update(@NotNull AnActionEvent e) {
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files == null || files.length == 0) {
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
@@ -69,17 +60,19 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     }
 
     e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
     e.getPresentation().setDescription("Remove byte order mark from "+fromWhere);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files == null) {
       return;
     }
     List<VirtualFile> filesToProcess = getFilesWithBom(files);
     if (filesToProcess.isEmpty()) return;
+    List<VirtualFile> filesUnableToProcess = new ArrayList<>();
     new Task.Backgroundable(getEventProject(e), "Removing BOM", true, () -> false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -91,21 +84,42 @@ public class RemoveBomAction extends AnAction implements DumbAware {
           indicator.setText2(StringUtil.shortenPathWithEllipsis(virtualFile.getPath(), 40));
           byte[] bom = virtualFile.getBOM();
           if (virtualFile instanceof NewVirtualFile && bom != null) {
-            virtualFile.setBOM(null);
-            NewVirtualFile file = (NewVirtualFile)virtualFile;
-            try {
-              byte[] bytes = file.contentsToByteArray();
-              byte[] contentWithStrippedBom = new byte[bytes.length - bom.length];
-              System.arraycopy(bytes, bom.length, contentWithStrippedBom, 0, contentWithStrippedBom.length);
-              WriteAction.runAndWait(() -> file.setBinaryContent(contentWithStrippedBom));
+            if (isBOMMandatory(virtualFile) ) {
+              filesUnableToProcess.add(virtualFile);
             }
-            catch (IOException ex) {
-              LOG.warn("Unexpected exception occurred on attempt to remove BOM from file " + file, ex);
+            else {
+              doRemoveBOM(virtualFile, bom);
             }
           }
         }
+
+        if (!filesUnableToProcess.isEmpty()) {
+          String title = "Was unable to remove BOM in " + filesUnableToProcess.size() +" " +
+                         StringUtil.pluralize("file", filesUnableToProcess.size());
+          String msg = (filesUnableToProcess.size() == 1 ? "This file has" : "These files have") +
+                       " mandatory BOM:<br/>    " + StringUtil.join(filesUnableToProcess, VirtualFile::getName, "<br/>    ");
+          Notifications.Bus.notify(new Notification("Failed to remove BOM", title, msg, NotificationType.ERROR));
+        }
       }
     }.queue();
+  }
+
+  private static boolean isBOMMandatory(@NotNull VirtualFile file) {
+    return CharsetToolkit.getMandatoryBom(file.getCharset()) != null;
+  }
+
+  private static void doRemoveBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] bom) {
+    virtualFile.setBOM(null);
+    NewVirtualFile file = (NewVirtualFile)virtualFile;
+    try {
+      byte[] bytes = file.contentsToByteArray();
+      byte[] contentWithStrippedBom = new byte[bytes.length - bom.length];
+      System.arraycopy(bytes, bom.length, contentWithStrippedBom, 0, contentWithStrippedBom.length);
+      WriteAction.runAndWait(() -> file.setBinaryContent(contentWithStrippedBom));
+    }
+    catch (IOException ex) {
+      LOG.warn("Unexpected exception occurred on attempt to remove BOM from file " + file, ex);
+    }
   }
 
   /**
@@ -124,7 +138,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     return result;
   }
 
-  private static void getFilesWithBom(@NotNull VirtualFile root, @NotNull final List<VirtualFile> result) {
+  private static void getFilesWithBom(@NotNull VirtualFile root, @NotNull final List<? super VirtualFile> result) {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {

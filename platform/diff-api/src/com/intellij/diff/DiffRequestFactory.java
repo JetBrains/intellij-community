@@ -81,7 +81,7 @@ public abstract class DiffRequestFactory {
                                                   @NotNull List<String> textContents,
                                                   @Nullable String title,
                                                   @NotNull List<String> titles,
-                                                  @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException;
+                                                  @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 
   @NotNull
   public abstract MergeRequest createMergeRequest(@Nullable Project project,
@@ -89,7 +89,14 @@ public abstract class DiffRequestFactory {
                                                   @NotNull List<byte[]> byteContents,
                                                   @Nullable String title,
                                                   @NotNull List<String> contentTitles,
-                                                  @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException;
+                                                  @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
+
+  @NotNull
+  public abstract MergeRequest createMergeRequest(@Nullable Project project,
+                                                  @NotNull VirtualFile output,
+                                                  @NotNull List<byte[]> byteContents,
+                                                  @Nullable String title,
+                                                  @NotNull List<String> contentTitles) throws InvalidDiffRequestException;
 
   @NotNull
   public abstract TextMergeRequest createTextMergeRequest(@Nullable Project project,
@@ -97,7 +104,7 @@ public abstract class DiffRequestFactory {
                                                           @NotNull List<byte[]> byteContents,
                                                           @Nullable String title,
                                                           @NotNull List<String> contentTitles,
-                                                          @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException;
+                                                          @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 
   @NotNull
   public abstract MergeRequest createBinaryMergeRequest(@Nullable Project project,
@@ -105,27 +112,27 @@ public abstract class DiffRequestFactory {
                                                         @NotNull List<byte[]> byteContents,
                                                         @Nullable String title,
                                                         @NotNull List<String> contentTitles,
-                                                        @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException;
+                                                        @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 
   @NotNull
   public abstract MergeRequest createMergeRequestFromFiles(@Nullable Project project,
                                                            @NotNull VirtualFile output,
-                                                           @NotNull List<VirtualFile> contents,
-                                                           @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException;
+                                                           @NotNull List<? extends VirtualFile> contents,
+                                                           @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 
   @NotNull
   public abstract MergeRequest createMergeRequestFromFiles(@Nullable Project project,
                                                            @NotNull VirtualFile output,
-                                                           @NotNull List<VirtualFile> contents,
+                                                           @NotNull List<? extends VirtualFile> contents,
                                                            @Nullable String title,
                                                            @NotNull List<String> contentTitles,
-                                                           @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException;
+                                                           @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 
   @NotNull
   public abstract TextMergeRequest createTextMergeRequestFromFiles(@Nullable Project project,
                                                                    @NotNull VirtualFile output,
-                                                                   @NotNull List<VirtualFile> contents,
+                                                                   @NotNull List<? extends VirtualFile> contents,
                                                                    @Nullable String title,
                                                                    @NotNull List<String> contentTitles,
-                                                                   @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException;
+                                                                   @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
 }

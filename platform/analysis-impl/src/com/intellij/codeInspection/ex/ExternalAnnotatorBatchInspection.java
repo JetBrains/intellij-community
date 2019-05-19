@@ -49,7 +49,7 @@ public interface ExternalAnnotatorBatchInspection extends PairedUnfairLocalInspe
                                         @NotNull InspectionManager manager) {
     final String shortName = getShortName();
     final FileViewProvider viewProvider = file.getViewProvider();
-    final Set<Language> relevantLanguages = viewProvider.getLanguages();
+    final Set<Language> relevantLanguages = ReadAction.compute(() -> viewProvider.getLanguages());
     for (Language language : relevantLanguages) {
       PsiFile psiRoot = ReadAction.compute(() -> viewProvider.getPsi(language));
       final List<ExternalAnnotator> externalAnnotators = ExternalLanguageAnnotators.allForFile(language, psiRoot);

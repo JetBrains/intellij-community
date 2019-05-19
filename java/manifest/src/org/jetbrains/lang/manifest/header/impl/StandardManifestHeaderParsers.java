@@ -24,11 +24,11 @@
  */
 package org.jetbrains.lang.manifest.header.impl;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.lang.manifest.header.HeaderParser;
 import org.jetbrains.lang.manifest.header.HeaderParserProvider;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -38,7 +38,7 @@ public class StandardManifestHeaderParsers implements HeaderParserProvider {
   private final Map<String, HeaderParser> myParsers;
 
   public StandardManifestHeaderParsers() {
-    myParsers = ContainerUtil.newHashMap();
+    myParsers = new HashMap<>();
     myParsers.put("Manifest-Version", StandardHeaderParser.INSTANCE);
     myParsers.put("Created-By", StandardHeaderParser.INSTANCE);
     myParsers.put("Signature-Version", StandardHeaderParser.INSTANCE);

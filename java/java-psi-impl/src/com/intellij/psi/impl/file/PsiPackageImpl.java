@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
@@ -45,6 +31,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -247,7 +234,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }
     PsiClass[] result = partial.get(Pair.create(scope, name));
     if (result == null) {
-      List<PsiClass> fastClasses = ContainerUtil.newArrayList();
+      List<PsiClass> fastClasses = new ArrayList<>();
       for (PsiDirectory directory : getDirectories(scope)) {
         List<PsiFile> sameNamed = ContainerUtil.filter(directory.getFiles(), file -> file.getName().contains(name));
         Collections.addAll(fastClasses, CoreJavaDirectoryService.getPsiClasses(directory, sameNamed.toArray(PsiFile.EMPTY_ARRAY)));
@@ -270,11 +257,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     PsiClass[] allClasses = getCachedClassesByName(name, scope);
     if (allClasses.length == 0) return allClasses;
     if (allClasses.length == 1) {
-      return PsiSearchScopeUtil.isInScope(scope, allClasses[0]) ? allClasses : PsiClass.EMPTY_ARRAY;
+      return PsiSearchScopeUtil.isInScope(scope, allClasses[0]) ? allClasses.clone() : PsiClass.EMPTY_ARRAY;
     }
-    PsiClass[] array = ContainerUtil.findAllAsArray(allClasses, aClass -> PsiSearchScopeUtil.isInScope(scope, aClass));
-    Arrays.sort(array, PsiClassUtil.createScopeComparator(scope));
-    return array;
+    return StreamEx.of(allClasses)
+      .filter(aClass -> PsiSearchScopeUtil.isInScope(scope, aClass))
+      .sorted(PsiClassUtil.createScopeComparator(scope))
+      .toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -301,11 +289,21 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       if (providedName != null) {
-        final PsiClass[] classes = findClassByShortName(providedName, scope);
+        PsiClass[] classes = findClassByShortName(providedName, scope);
+        if (classes.length == 0 && PsiUtil.isInsideJavadocComment(place)) {
+          //extend scope for javadoc references when no classes are found in the resolve scope:
+
+          //always replacing the scope works bad for the case when multiple classes with the same FQName exist, because index return them in unpredictable order,
+          //so class not accessible from `place` may be used instead of another accessible class
+          classes = findClassByShortName(providedName, allScope());
+        }
         if (!processClasses(processor, state, classes, Conditions.alwaysTrue())) return false;
       }
       else {
         PsiClass[] classes = getClasses(scope);
+        if (classes.length == 0 && PsiUtil.isInsideJavadocComment(place)) {
+          classes = getClasses(allScope());
+        }
         if (!processClasses(processor, state, classes, nameCondition != null ? nameCondition : Conditions.alwaysTrue())) return false;
       }
     }
@@ -336,7 +334,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private static boolean processClasses(@NotNull PsiScopeProcessor processor,
                                         @NotNull ResolveState state,
                                         @NotNull PsiClass[] classes,
-                                        @NotNull Condition<String> nameCondition) {
+                                        @NotNull Condition<? super String> nameCondition) {
     for (PsiClass aClass : classes) {
       String name = aClass.getName();
       if (name != null && nameCondition.value(name)) {
@@ -369,10 +367,16 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     PsiPackageImplementationHelper.getInstance().navigate(this, requestFocus);
   }
 
+  public boolean mayHaveContentInScope(@NotNull GlobalSearchScope scope) {
+    return getDirectories(scope).length > 0 ||
+           getClasses(scope).length > 0 ||
+           ContainerUtil.exists(occursInPackagePrefixes(), scope::contains);
+  }
+
   private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {
     @Override
     public Result<PsiModifierList> compute() {
-      List<PsiModifierList> modifiers = ContainerUtil.newArrayList();
+      List<PsiModifierList> modifiers = new ArrayList<>();
       for(PsiDirectory directory: getDirectories()) {
         PsiFile file = directory.findFile(PACKAGE_INFO_FILE);
         PsiPackageStatement stmt = file == null ? null : PsiTreeUtil.getChildOfType(file, PsiPackageStatement.class);

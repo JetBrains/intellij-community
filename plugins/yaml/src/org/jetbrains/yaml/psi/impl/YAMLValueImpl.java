@@ -10,7 +10,7 @@ import org.jetbrains.yaml.psi.YAMLValue;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
 abstract class YAMLValueImpl extends YAMLPsiElementImpl implements YAMLValue {
-  public YAMLValueImpl(@NotNull ASTNode node) {
+  YAMLValueImpl(@NotNull ASTNode node) {
     super(node);
   }
 

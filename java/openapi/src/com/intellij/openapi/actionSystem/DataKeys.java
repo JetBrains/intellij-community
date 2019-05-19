@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,13 @@
 
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
 
-@SuppressWarnings({"deprecation"})
+/**
+ * @deprecated Please use {@link LangDataKeys}, {@link PlatformDataKeys} or {@link CommonDataKeys} directly.
+ */
+@Deprecated
 public final class DataKeys extends LangDataKeys {
   private DataKeys() {
   }
-
-  @Deprecated
-  public static final DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create("vcs.ChangeList");
-  @Deprecated
-  public static final DataKey<Change[]> CHANGES = DataKey.create("vcs.Change");
-
 }
 

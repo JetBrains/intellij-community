@@ -23,6 +23,9 @@ import java.util.function.Supplier;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class TreeTest implements Disposable {
+  public static final int FAST = 0;
+  public static final int SLOW = 10;
+
   private final AsyncPromise<Throwable> promise = new AsyncPromise<>();
   private JTree tree;
 
@@ -104,16 +107,16 @@ public class TreeTest implements Disposable {
   }
 
   public static void test(int minutes, Supplier<TreeNode> supplier, Consumer<TreeTest> consumer) {
-    new TreeTest(minutes, consumer, parent -> model(supplier, 0, false, null));
-    new TreeTest(minutes, consumer, parent -> model(supplier, 10, false, null));
-    new TreeTest(minutes, consumer, parent -> model(supplier, 0, true, new Invoker.EDT(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, 0, false, new Invoker.EDT(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, 10, true, new Invoker.EDT(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, 10, false, new Invoker.EDT(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, 0, true, new Invoker.BackgroundThread(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, 0, false, new Invoker.BackgroundThread(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, 10, true, new Invoker.BackgroundThread(parent)));
-    new TreeTest(minutes, consumer, parent -> model(supplier, 10, false, new Invoker.BackgroundThread(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, null));
+    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, null));
+    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, true, new Invoker.EDT(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, new Invoker.EDT(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, true, new Invoker.EDT(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, new Invoker.EDT(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, true, new Invoker.BackgroundThread(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, FAST, false, new Invoker.BackgroundThread(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, true, new Invoker.BackgroundThread(parent)));
+    new TreeTest(minutes, consumer, parent -> model(supplier, SLOW, false, new Invoker.BackgroundThread(parent)));
   }
 
   private static TreeModel model(Supplier<TreeNode> supplier, long delay, boolean showLoadingNode, Invoker invoker) {
@@ -201,7 +204,7 @@ public class TreeTest implements Disposable {
 
       @Override
       public Object getChild(Object parent, int index) {
-        pause();
+        if (index == 0) pause(); // do not pause for every child
         return super.getChild(parent, index);
       }
 

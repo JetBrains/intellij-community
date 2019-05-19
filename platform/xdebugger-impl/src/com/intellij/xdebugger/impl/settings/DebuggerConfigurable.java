@@ -18,7 +18,6 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 
 public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public static final String DISPLAY_NAME = XDebuggerBundle.message("debugger.configurable.display.name");
@@ -83,7 +82,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
         Configurable[] mergedArray = new Configurable[generalConfigurables.length + 1];
         System.arraycopy(generalConfigurables, 0, mergedArray, 0, generalConfigurables.length);
         mergedArray[generalConfigurables.length] = firstConfigurable;
-        myRootConfigurable = new MergedCompositeConfigurable("", "", null, mergedArray);
+        myRootConfigurable = new MergedCompositeConfigurable(getId(), getDisplayName(), null, mergedArray);
         myChildren = firstConfigurable instanceof SearchableConfigurable.Parent ? ((Parent)firstConfigurable).getConfigurables() : EMPTY_CONFIGURABLES;
       }
     }
@@ -93,11 +92,11 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     }
   }
 
-  private static void computeMergedConfigurables(@NotNull DebuggerConfigurableProvider[] providers, @NotNull List<Configurable> result) {
+  private static void computeMergedConfigurables(@NotNull DebuggerConfigurableProvider[] providers, @NotNull List<? super Configurable> result) {
     for (DebuggerSettingsCategory category : MERGED_CATEGORIES) {
       List<Configurable> configurables = getConfigurables(category, providers);
       if (!configurables.isEmpty()) {
-        String id = category.name().toLowerCase(Locale.ENGLISH);
+        String id = StringUtil.toLowerCase(category.name());
         result.add(new MergedCompositeConfigurable("debugger." + id, XDebuggerBundle.message("debugger." + id + ".display.name"),
                                                    getDefaultCategoryHelpTopic(category), configurables.toArray(new Configurable[0])));
       }
@@ -105,7 +104,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   @Nullable
-  private static MergedCompositeConfigurable computeGeneralConfigurables(@NotNull DebuggerConfigurableProvider[] providers) {
+  private MergedCompositeConfigurable computeGeneralConfigurables(@NotNull DebuggerConfigurableProvider[] providers) {
     List<Configurable> rootConfigurables = getConfigurables(DebuggerSettingsCategory.GENERAL, providers);
     if (rootConfigurables.isEmpty()) {
       return null;
@@ -117,7 +116,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
       return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
     });
-    return new MergedCompositeConfigurable("", "", null, mergedRootConfigurables);
+    return new MergedCompositeConfigurable(getId(), getDisplayName(), null, mergedRootConfigurables);
   }
 
   @Override

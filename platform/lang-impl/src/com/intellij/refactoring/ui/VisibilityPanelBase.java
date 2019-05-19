@@ -22,14 +22,13 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-@SuppressWarnings("deprecation")
 public abstract class VisibilityPanelBase<V> extends JPanel {
 
   /**
    * @deprecated To be removed in 2018.2. Actually replaced by 'private'.
    * Use {@link #stateChanged(ChangeEvent)} instead. This field will become private.
    */
-  protected final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
+  @Deprecated protected final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
   @Nullable
   public abstract V getVisibility();
@@ -37,10 +36,12 @@ public abstract class VisibilityPanelBase<V> extends JPanel {
   public abstract void setVisibility(V visibility);
 
   public void addListener(ChangeListener listener) {
+    //noinspection deprecation
     myEventDispatcher.addListener(listener);
   }
 
   protected void stateChanged(ChangeEvent e) {
+    //noinspection deprecation
     myEventDispatcher.getMulticaster().stateChanged(e);
   }
 }

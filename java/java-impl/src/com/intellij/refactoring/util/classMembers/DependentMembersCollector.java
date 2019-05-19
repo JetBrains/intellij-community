@@ -26,12 +26,14 @@ public class DependentMembersCollector extends DependentMembersCollectorBase<Psi
     super(clazz, superClass);
   }
 
+  @Override
   public void collect(PsiMember member) {
     member.accept(getVisitor());
   }
 
   private PsiElementVisitor getVisitor() {
     return new ClassMemberReferencesVisitor(getClazz()) {
+      @Override
       protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
         if (!existsInSuperClass(classMember)) {
           myCollection.add(classMember);

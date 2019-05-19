@@ -4,6 +4,12 @@
     <file>Test.java</file>
     <line>3</line>
     <entry_point TYPE="method" FQNAME="AbstractTest void testSmth()"/>
-    <description>Method is never used.</description>
+    <description>Method owner class is never instantiated OR An instantiation is not reachable from entry points.</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>1</line>
+    <entry_point TYPE="method" FQNAME="AbstractTest void testSmth()"/>
+    <description>Abstract class is not implemented.</description>
   </problem>
 </problems>

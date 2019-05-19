@@ -37,7 +37,7 @@ public class LookupElementPresentation {
   private String myItemText;
   private String myTypeText;
   private boolean myStrikeout;
-  private Color myItemTextForeground = JBColor.foreground();
+  private Color myItemTextForeground = JBColor.namedColor("CompletionPopup.foreground", JBColor.foreground());
   private boolean myItemTextBold;
   private boolean myItemTextUnderlined;
   private boolean myItemTextItalic;
@@ -158,12 +158,6 @@ public class LookupElementPresentation {
   @Deprecated
   public boolean isTailGrayed() {
     return myTail != null && myTail.get(0).myGrayed;
-  }
-
-  @Nullable
-  @Deprecated
-  public Color getTailForeground() {
-    return myTail != null ? myTail.get(0).myFgColor : null;
   }
 
   public boolean isItemTextBold() {

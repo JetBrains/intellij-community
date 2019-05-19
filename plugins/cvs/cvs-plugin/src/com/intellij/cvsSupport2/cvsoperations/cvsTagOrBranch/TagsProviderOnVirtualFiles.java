@@ -15,11 +15,9 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch;
 
-import com.intellij.cvsSupport2.cvsoperations.cvsLog.LogOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsLog.LocalPathIndifferentLogOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsLog.LocalPathIndifferentLogOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProvider;
+import com.intellij.cvsSupport2.cvsoperations.cvsLog.LocalPathIndifferentLogOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsLog.LogOperation;
 import com.intellij.openapi.vcs.FilePath;
 
 import java.util.Collection;
@@ -28,12 +26,13 @@ import java.util.Collection;
  * author: lesya
  */
 public class TagsProviderOnVirtualFiles implements TagsProvider {
-  private final Collection<FilePath> myFiles;
+  private final Collection<? extends FilePath> myFiles;
 
-  public TagsProviderOnVirtualFiles(Collection<FilePath> files) {
+  public TagsProviderOnVirtualFiles(Collection<? extends FilePath> files) {
     myFiles = files;
   }
 
+  @Override
   public CvsCommandOperation getOperation() {
     boolean containsOneFile = containsOneFile();
     if (containsOneFile) {

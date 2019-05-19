@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
+import static com.intellij.openapi.util.text.StringUtil.getShortName;
 
 /**
  * @author peter
@@ -27,6 +29,14 @@ public abstract class GrLiteralClassType extends PsiClassType {
     myScope = scope;
     myFacade = facade;
     myGroovyPsiManager = GroovyPsiManager.getInstance(myFacade.getProject());
+  }
+
+  protected GrLiteralClassType(@NotNull LanguageLevel languageLevel, @NotNull PsiElement context) {
+    super(languageLevel);
+    myScope = context.getResolveScope();
+    Project project = context.getProject();
+    myFacade = JavaPsiFacade.getInstance(project);
+    myGroovyPsiManager = GroovyPsiManager.getInstance(project);
   }
 
   @NotNull
@@ -105,7 +115,9 @@ public abstract class GrLiteralClassType extends PsiClassType {
 
   @Override
   @NotNull
-  public abstract String getClassName() ;
+  public String getClassName() {
+    return getShortName(getJavaClassName());
+  }
 
   @Override
   @NotNull
@@ -133,11 +145,6 @@ public abstract class GrLiteralClassType extends PsiClassType {
   @NotNull
   public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
-  }
-
-  @NotNull
-  public GlobalSearchScope getScope() {
-    return myScope;
   }
 
   @Override

@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.MutableErrorTreeView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +62,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     myCanHideWarnings = canHideWarnings;
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRoot;
@@ -92,8 +92,9 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return false;
   }
   
+  @NotNull
   @Override
-  public ErrorTreeElement[] getChildElements(Object element) {
+  public ErrorTreeElement[] getChildElements(@NotNull Object element) {
     if (element == myRoot) {
       final List<ErrorTreeElement> children = new ArrayList<>();
       // simple messages
@@ -119,7 +120,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
           }
         }
       }
-      return ArrayUtil.toObjectArray(children, ErrorTreeElement.class);
+      return children.toArray(ErrorTreeElement.EMPTY_ARRAY);
     }
     
     if (element instanceof GroupingElement) {
@@ -135,9 +136,9 @@ public class ErrorViewStructure extends AbstractTreeStructure {
               }
               filtered.add(navigatableMessageElement);
             }
-            return ArrayUtil.toObjectArray(filtered, ErrorTreeElement.class);
+            return filtered.toArray(ErrorTreeElement.EMPTY_ARRAY);
           }
-          return ArrayUtil.toObjectArray(children, NavigatableMessageElement.class);
+          return children.toArray(new NavigatableMessageElement[0]);
         }
       }
     }
@@ -164,7 +165,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     if (element instanceof GroupingElement || element instanceof SimpleMessageElement) {
       return myRoot;
     }
@@ -177,7 +178,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return new ErrorTreeNodeDescriptor(myProject, parentDescriptor, (ErrorTreeElement)element);
   }
 
@@ -239,20 +240,20 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
-  public void addFixedHotfixGroup(final String text, final List<SimpleErrorData> children) {
+  public void addFixedHotfixGroup(final String text, final List<? extends SimpleErrorData> children) {
     final FixedHotfixGroupElement group = new FixedHotfixGroupElement(text, null, null);
 
     addGroupPlusElements(text, group, children);
   }
 
-  public void addHotfixGroup(final HotfixData hotfixData, final List<SimpleErrorData> children, final MutableErrorTreeView view) {
+  public void addHotfixGroup(final HotfixData hotfixData, final List<? extends SimpleErrorData> children, final MutableErrorTreeView view) {
     final String text = hotfixData.getErrorText();
     final HotfixGroupElement group = new HotfixGroupElement(text, null, null, hotfixData.getFix(), hotfixData.getFixComment(), view);
 
     addGroupPlusElements(text, group, children);
   }
 
-  private void addGroupPlusElements(String text, GroupingElement group, List<SimpleErrorData> children) {
+  private void addGroupPlusElements(String text, GroupingElement group, List<? extends SimpleErrorData> children) {
     final List<NavigatableMessageElement> elements = new ArrayList<>();
     for (SimpleErrorData child : children) {
       elements.add(new MyNavigatableWithDataElement(

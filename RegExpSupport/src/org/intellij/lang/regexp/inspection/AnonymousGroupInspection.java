@@ -49,7 +49,7 @@ public class AnonymousGroupInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public AnonymousGroupVisitor(ProblemsHolder holder) {
+    AnonymousGroupVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 

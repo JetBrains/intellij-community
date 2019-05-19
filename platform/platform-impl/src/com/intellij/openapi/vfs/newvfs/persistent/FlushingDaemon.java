@@ -20,17 +20,20 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class FlushingDaemon {
+  public static final String NAME = "Flushing Daemon";
 
   private FlushingDaemon() {}
 
+
   @NotNull
   public static ScheduledFuture<?> everyFiveSeconds(@NotNull Runnable r) {
-    return JobScheduler.getScheduler().scheduleWithFixedDelay(r, 5, 5, TimeUnit.SECONDS);
+    return JobScheduler.getScheduler().scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable(NAME, r), 5, 5, TimeUnit.SECONDS);
   }
 }

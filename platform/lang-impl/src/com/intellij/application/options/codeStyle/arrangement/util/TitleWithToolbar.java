@@ -28,7 +28,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 11/12/12 4:05 PM
  */
 public class TitleWithToolbar extends JPanel {
 

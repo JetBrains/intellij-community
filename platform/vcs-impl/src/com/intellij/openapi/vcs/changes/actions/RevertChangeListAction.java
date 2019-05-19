@@ -15,13 +15,28 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.changes.Change;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class RevertChangeListAction extends RevertCommittedStuffAbstractAction {
   public RevertChangeListAction() {
-    super(e -> e.getData(VcsDataKeys.CHANGES), e -> e.getData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN));
+    super(true);
+  }
+
+  @Nullable
+  @Override
+  protected Change[] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate) {
+    if (isFromUpdate) {
+      return e.getData(VcsDataKeys.CHANGES);
+    }
+    else {
+      return e.getData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);
+    }
   }
 }

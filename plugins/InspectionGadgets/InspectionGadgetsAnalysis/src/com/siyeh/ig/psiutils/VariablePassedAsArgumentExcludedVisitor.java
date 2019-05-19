@@ -23,13 +23,13 @@ class VariablePassedAsArgumentExcludedVisitor extends JavaRecursiveElementWalkin
 
   @NotNull
   private final PsiVariable variable;
-  private final Processor<PsiCall> myCallProcessor;
+  private final Processor<? super PsiCall> myCallProcessor;
   private final boolean myBuilderPattern;
 
   private boolean passed;
 
   VariablePassedAsArgumentExcludedVisitor(@NotNull PsiVariable variable, boolean builderPattern,
-                                          @NotNull Processor<PsiCall> callProcessor) {
+                                          @NotNull Processor<? super PsiCall> callProcessor) {
     this.variable = variable;
     myCallProcessor = callProcessor;
     myBuilderPattern = builderPattern;

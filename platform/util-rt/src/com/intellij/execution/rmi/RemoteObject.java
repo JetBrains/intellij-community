@@ -65,7 +65,7 @@ public class RemoteObject implements Remote, Unreferenced {
     }
   }
 
-  public synchronized void unexportChildren(@NotNull Collection<WeakReference<RemoteObject>> children) throws RemoteException {
+  public synchronized void unexportChildren(@NotNull Collection<? extends WeakReference<RemoteObject>> children) throws RemoteException {
     if (children.isEmpty()) return;
     final ArrayList<RemoteObject> list = new ArrayList<RemoteObject>(children.size());
     for (WeakReference<? extends RemoteObject> child : children) {

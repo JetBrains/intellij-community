@@ -59,6 +59,7 @@ public class JpsUrlListImpl extends JpsElementBase<JpsUrlListImpl> implements Jp
     fireElementChanged();
   }
 
+  @Override
   public void applyChanges(@NotNull JpsUrlListImpl modified) {
     if (!myUrls.equals(modified.myUrls)) {
       myUrls.clear();

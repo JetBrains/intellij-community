@@ -1,6 +1,6 @@
 #import "Utils.h"
 
-//#define LOGGING_ERRORS_ENABLED
+#define LOGGING_ERRORS_ENABLED
 //#define LOGGING_TRACE_ENABLED
 
 void nserror(NSString *format, ...) {
@@ -55,19 +55,7 @@ NSImage * createImgFrom4ByteRGBA(const unsigned char *bytes, int w, int h) {
     return nsimg;
 }
 
-NSImage * getImg(ScrubberItemData * jdata) {
-    if (jdata == NULL)
-        return nil;
-    return createImgFrom4ByteRGBA((const unsigned char *)jdata->raster4ByteRGBA, jdata->rasterW, jdata->rasterH);
-}
-
-NSString * getText(ScrubberItemData * jdata) {
-    if (jdata == NULL || jdata->text == NULL)
-        return nil;
-    return [NSString stringWithUTF8String:jdata->text];
-}
-
-NSString * getString(const char * utf8) {
+NSString * createStringFromUTF8(const char *utf8) {
     if (utf8 == NULL)
         return nil;
     return [NSString stringWithUTF8String:utf8];

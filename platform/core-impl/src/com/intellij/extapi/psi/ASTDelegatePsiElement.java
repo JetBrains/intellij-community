@@ -201,7 +201,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   @NotNull
   protected <T extends PsiElement> T findNotNullChildByType(IElementType type) {
-    return notNullChild(this.<T>findChildByType(type));
+    return notNullChild(findChildByType(type));
   }
 
   @Nullable
@@ -212,7 +212,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   @NotNull
   protected <T extends PsiElement> T findNotNullChildByType(TokenSet type) {
-    return notNullChild(this.<T>findChildByType(type));
+    return notNullChild(findChildByType(type));
   }
 
   @Nullable

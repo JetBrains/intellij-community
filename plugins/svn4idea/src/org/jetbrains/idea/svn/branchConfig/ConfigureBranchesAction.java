@@ -9,15 +9,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import icons.SvnIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
 import static com.intellij.util.ArrayUtil.isEmpty;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class ConfigureBranchesAction extends DumbAwareAction {
+  public ConfigureBranchesAction() {
+    super(message("configure.branches.item"), message("configure.branches.item"), null);
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -27,10 +30,6 @@ public class ConfigureBranchesAction extends DumbAwareAction {
       presentation.setEnabledAndVisible(false);
       return;
     }
-
-    presentation.setText(SvnBundle.message("configure.branches.item"));
-    presentation.setDescription(SvnBundle.message("configure.branches.item"));
-    presentation.setIcon(SvnIcons.ConfigureBranches);
 
     presentation.setVisible(true);
 

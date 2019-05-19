@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -39,16 +37,13 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.IntStack;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Key<List<RangeHighlighter>> INDENT_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("INDENT_HIGHLIGHTERS_IN_EDITOR_KEY");
@@ -228,10 +223,14 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     int curRange = 0;
 
     if (oldHighlighters != null) {
+      // after document change some range highlighters could have become invalid, or the order could have been broken
+      oldHighlighters.sort(Comparator.comparing((RangeHighlighter h) -> !h.isValid())
+                                     .thenComparing(Segment.BY_START_OFFSET_THEN_END_OFFSET));
       int curHighlight = 0;
       while (curRange < myRanges.size() && curHighlight < oldHighlighters.size()) {
         TextRange range = myRanges.get(curRange);
         RangeHighlighter highlighter = oldHighlighters.get(curHighlight);
+        if (!highlighter.isValid()) break;
 
         int cmp = compare(range, highlighter);
         if (cmp < 0) {
@@ -251,6 +250,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
       for (; curHighlight < oldHighlighters.size(); curHighlight++) {
         RangeHighlighter highlighter = oldHighlighters.get(curHighlight);
+        if (!highlighter.isValid()) break;
         highlighter.dispose();
       }
     }
@@ -359,7 +359,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
   }
 
   private class IndentsCalculator {
-    @NotNull final Map<Language, TokenSet> myComments = ContainerUtilRt.newHashMap();
+    @NotNull final Map<Language, TokenSet> myComments = new HashMap<>();
     @NotNull final int[] lineIndents; // negative value means the line is empty (or contains a comment) and indent
     // (denoted by absolute value) was deduced from enclosing non-empty lines
     @NotNull final CharSequence myChars;

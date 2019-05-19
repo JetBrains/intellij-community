@@ -33,17 +33,17 @@ import org.jetbrains.annotations.Nullable;
  * It does not store output in order to save memory.
  * Parsed records are passed to the specified {@link Consumer}.
  */
-class GitLogOutputSplitter implements GitLineHandlerListener {
+class GitLogOutputSplitter<R extends GitLogRecord> implements GitLineHandlerListener {
   @NotNull private final GitLineHandler myHandler;
-  @NotNull private final GitLogParser myParser;
-  @NotNull private final Consumer<GitLogRecord> myRecordConsumer;
+  @NotNull private final GitLogParser<R> myParser;
+  @NotNull private final Consumer<? super R> myRecordConsumer;
 
   @NotNull private final StringBuilder myErrors = new StringBuilder();
   @Nullable private VcsException myException = null;
 
-  public GitLogOutputSplitter(@NotNull GitLineHandler handler,
-                              @NotNull GitLogParser parser,
-                              @NotNull Consumer<GitLogRecord> recordConsumer) {
+  GitLogOutputSplitter(@NotNull GitLineHandler handler,
+                       @NotNull GitLogParser<R> parser,
+                       @NotNull Consumer<? super R> recordConsumer) {
     myHandler = handler;
     myParser = parser;
     myRecordConsumer = recordConsumer;
@@ -74,7 +74,7 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
 
   private void processOutputLine(@NotNull String line) throws VcsException {
     try {
-      GitLogRecord record = myParser.parseLine(line);
+      R record = myParser.parseLine(line);
       if (record != null) {
         record.setUsedHandler(myHandler);
         myRecordConsumer.consume(record);
@@ -97,7 +97,7 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
     }
     else {
       try {
-        GitLogRecord record = myParser.finish();
+        R record = myParser.finish();
         if (record != null) {
           record.setUsedHandler(myHandler);
           myRecordConsumer.consume(record);
@@ -113,7 +113,7 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
   }
 
   @Override
-  public void startFailed(Throwable exception) {
+  public void startFailed(@NotNull Throwable exception) {
     myException = new VcsException(exception);
   }
 

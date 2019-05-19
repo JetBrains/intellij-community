@@ -77,6 +77,7 @@ public class TaskProjectConfiguration implements PersistentStateComponent<TaskPr
     myManager = manager;
   }
 
+  @Override
   public TaskProjectConfiguration getState() {
     LinkedHashSet<SharedServer> set = new LinkedHashSet<>(this.servers);
     for (TaskRepository repository : myManager.getAllRepositories()) {
@@ -92,6 +93,7 @@ public class TaskProjectConfiguration implements PersistentStateComponent<TaskPr
     return this;
   }
 
+  @Override
   public void loadState(@NotNull TaskProjectConfiguration state) {
     servers.clear();
     for (final SharedServer server : state.servers) {

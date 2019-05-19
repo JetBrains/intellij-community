@@ -1,31 +1,37 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.actions.*
-import com.intellij.lang.jvm.JvmAnnotation
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiModifierListOwner
-import com.intellij.psi.PsiType
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
+import java.util.*
 
-class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : JvmElementActionsFactory() {
+class JavaElementActionsFactory : JvmElementActionsFactory() {
+  private val renderer = JavaElementRenderer.getInstance()
 
-  override fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = with(
-    request) {
+  override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
     val declaration = target as PsiModifierListOwner
-    if (declaration.language != JavaLanguage.INSTANCE) return@with emptyList()
-    listOf(ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false))
+    if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
+    val fix = object : ModifierFix(declaration, renderer.render(request.modifier), request.shouldBePresent(), true) {
+      override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
+
+      override fun isAvailable(project: Project,
+                               file: PsiFile,
+                               editor: Editor?,
+                               startElement: PsiElement,
+                               endElement: PsiElement): Boolean =
+        request.isValid && super.isAvailable(project, file, editor, startElement, endElement)
+    }
+    return listOf(fix)
   }
 
   override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
@@ -37,9 +43,9 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
     val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
 
-    val constantRequested = request.constant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
+    val constantRequested = request.isConstant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
-    if (constantRequested || StringUtil.isCapitalized(request.fieldName)) {
+    if (constantRequested || request.fieldName.toUpperCase(Locale.ENGLISH) == request.fieldName) {
       result += CreateConstantAction(javaClass, request)
     }
     if (!constantRequested) {
@@ -80,6 +86,15 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
   override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
     val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
     return listOf(CreateConstructorAction(javaClass, request))
+  }
+
+  override fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> {
+    val psiMethod = target as? PsiMethod ?: return emptyList()
+    if (psiMethod.language != JavaLanguage.INSTANCE) return emptyList()
+
+    if (request.expectedParameters.any { it.expectedTypes.isEmpty() || it.semanticNames.isEmpty() }) return emptyList()
+
+    return listOf(ChangeMethodParameters(psiMethod, request))
   }
 }
 

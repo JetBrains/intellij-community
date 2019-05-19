@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.controlflow;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
@@ -39,11 +40,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author oleg
  */
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
+
+  @NotNull
+  private static final Set<String> EXCEPTION_SUPPRESSORS = ImmutableSet.of("suppress", "assertRaises", "assertRaisesRegex");
+
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
 
   public ControlFlow buildControlFlow(@NotNull final ScopeOwner owner) {
@@ -474,7 +480,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     boolean isStaticallyTrue = false;
     if (condition != null) {
       condition.accept(this);
-      isStaticallyTrue = PyEvaluator.evaluateAsBooleanNoResolve(condition, false);
+      isStaticallyTrue = loopHasAtLeastOneIteration(node);
     }
     final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
@@ -509,7 +515,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
-    if (elsePart == null && !PyEvaluator.evaluateAsBooleanNoResolve(source, false)) {
+    if (elsePart == null && !loopHasAtLeastOneIteration(node)) {
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     final PyStatementList list = forPart.getStatementList();
@@ -544,6 +550,16 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.flowAbrupted();
   }
 
+  private static boolean loopHasAtLeastOneIteration(@NotNull PyLoopStatement loopStatement) {
+    final PyExpression expression = loopStatement instanceof PyForStatement
+                                    ? ((PyForStatement)loopStatement).getForPart().getSource()
+                                    : loopStatement instanceof PyWhileStatement
+                                      ? ((PyWhileStatement)loopStatement).getWhilePart().getCondition()
+                                      : null;
+
+    return PyEvaluator.evaluateAsBooleanNoResolve(expression, false);
+  }
+
   @Override
   public void visitPyBreakStatement(final PyBreakStatement node) {
     myBuilder.startNode(node);
@@ -568,6 +584,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       }
       else {
         myBuilder.addPendingEdge(null, null);
+      }
+
+      // There is no edge between loop statement and next after loop instruction
+      // when loop has at least one iteration
+      // so `continue` is marked as one more last instruction in the loop
+      // see visitPyWhileStatement
+      // see visitPyForStatement
+      if (loopHasAtLeastOneIteration(loop)) {
+        myBuilder.addPendingEdge(loop, myBuilder.prevInstruction);
       }
     }
     myBuilder.flowAbrupted();
@@ -862,10 +887,20 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   @Override
   public void visitPyWithStatement(final PyWithStatement node) {
     super.visitPyWithStatement(node);
+
+    final boolean suppressor = StreamEx
+      .of(node.getWithItems())
+      .map(PyWithItem::getExpression)
+      .select(PyCallExpression.class)
+      .map(PyCallExpression::getCallee)
+      .select(PyReferenceExpression.class)
+      .anyMatch(it -> EXCEPTION_SUPPRESSORS.contains(it.getReferencedName()));
+
     myBuilder.processPending((pendingScope, instruction) -> {
       final PsiElement element = instruction.getElement();
-      if (element != null && PsiTreeUtil.isAncestor(node, element, true) &&
-          PsiTreeUtil.getParentOfType(element, PyRaiseStatement.class) != null) {
+      if (element != null &&
+          PsiTreeUtil.isAncestor(node, element, true) &&
+          (suppressor && canRaiseExceptions(instruction) || PsiTreeUtil.getParentOfType(element, PyRaiseStatement.class) != null)) {
         myBuilder.addPendingEdge(node, instruction);
       }
       myBuilder.addPendingEdge(pendingScope, instruction);

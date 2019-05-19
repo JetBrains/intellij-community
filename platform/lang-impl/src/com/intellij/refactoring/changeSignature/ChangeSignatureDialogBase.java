@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.icons.AllIcons;
@@ -151,7 +137,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     });
   }
 
-  public void setParameterInfos(List<ParamInfo> parameterInfos) {
+  public void setParameterInfos(List<? extends ParamInfo> parameterInfos) {
     myParametersTableModel.setParameterInfos(parameterInfos);
     updateSignature();
   }
@@ -242,12 +228,12 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     IJSwingUtilities.adjustComponentsOnMac(nameLabel, myNameField);
     myNamePanel.add(myNameField, BorderLayout.SOUTH);
 
-    createVisibilityPanel();
+    JPanel visibilityPanel = createVisibilityPanel();
 
     if (myMethod.canChangeVisibility() && myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
       ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myNameField);
-      myVisibilityPanel.setBorder(new EmptyBorder(0, 0, 0, 8));
-      panel.add(myVisibilityPanel, gbc);
+      visibilityPanel.setBorder(new EmptyBorder(0, 0, 0, 8));
+      panel.add(visibilityPanel, gbc);
       gbc.gridx++;
     }
 
@@ -365,7 +351,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     myPropagateParamChangesButton =
       new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, AllIcons.Hierarchy.Supertypes) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           final Ref<CallerChooserBase<Method>> chooser = new Ref<>();
           Consumer<Set<Method>> callback = callers -> {
             myMethodsToPropagateParameters = callers;
@@ -441,7 +427,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       public Component prepareEditor(final TableCellEditor editor, final int row, final int column) {
         final DocumentListener listener = new DocumentListener() {
           @Override
-          public void documentChanged(DocumentEvent e) {
+          public void documentChanged(@NotNull DocumentEvent e) {
             final TableCellEditor ed = myParametersTable.getCellEditor();
             if (ed != null) {
               Object editorValue = ed.getCellEditorValue();
@@ -675,7 +661,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     }
 
     @Override
-    public void documentChanged(DocumentEvent event) {
+    public void documentChanged(@NotNull DocumentEvent event) {
       update();
     }
 
@@ -695,7 +681,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       JBTableRowEditor editor = getRowEditor(getRowItem(row));
       editor.addDocumentListener(new JBTableRowEditor.RowDocumentListener() {
         @Override
-        public void documentChanged(DocumentEvent e, int column) {
+        public void documentChanged(@NotNull DocumentEvent e, int column) {
           if (String.class.equals(myParametersTableModel.getColumnClass(column))) {
             myParametersTableModel.setValueAtWithoutUpdate(e.getDocument().getText(), row, column);
           }

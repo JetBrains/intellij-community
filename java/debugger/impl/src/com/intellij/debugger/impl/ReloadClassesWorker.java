@@ -42,7 +42,7 @@ class ReloadClassesWorker {
   private final DebuggerSession  myDebuggerSession;
   private final HotSwapProgress  myProgress;
 
-  public ReloadClassesWorker(DebuggerSession session, HotSwapProgress progress) {
+  ReloadClassesWorker(DebuggerSession session, HotSwapProgress progress) {
     myDebuggerSession = session;
     myProgress = progress;
   }
@@ -245,7 +245,7 @@ class ReloadClassesWorker {
     private int myProcessedClassesCount;
     private int myPartiallyRedefinedClassesCount;
 
-    public RedefineProcessor(VirtualMachineProxyImpl virtualMachineProxy) {
+    RedefineProcessor(VirtualMachineProxyImpl virtualMachineProxy) {
       myVirtualMachineProxy = virtualMachineProxy;
     }
 

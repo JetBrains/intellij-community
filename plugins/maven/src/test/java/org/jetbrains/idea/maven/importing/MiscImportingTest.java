@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -26,7 +11,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -38,6 +25,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -51,12 +39,12 @@ public class MiscImportingTest extends MavenImportingTestCase {
     super.setUp();
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void beforeRootsChange(ModuleRootEvent event) {
+      public void beforeRootsChange(@NotNull ModuleRootEvent event) {
         beforeRootsChangedCount++;
       }
 
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         rootsChangedCount++;
       }
     });
@@ -274,7 +262,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
                        "    </plugin>" +
                        "  </plugins>" +
                        "</build>");
-      importProjectWithErrors(true);
+      importProjectWithErrors();
 
       List<MavenProjectProblem> problems = myProjectsTree.getRootProjects().get(0).getProblems();
       assertTrue(problems.size() > 0);
@@ -299,19 +287,19 @@ public class MiscImportingTest extends MavenImportingTestCase {
       setRepositoryPath(helper.getTestDataPath("plugins"));
       getMavenGeneralSettings().setWorkOffline(true);
 
-      importProjectWithMaven3("<groupId>test</groupId>" +
-                              "<artifactId>project</artifactId>" +
-                              "<version>1</version>" +
-                              "" +
-                              "<build>" +
-                              "  <extensions>" +
-                              "    <extension>" +
-                              "      <groupId>intellij.test</groupId>" +
-                              "      <artifactId>maven-extension</artifactId>" +
-                              "      <version>1.0</version>" +
-                              "    </extension>" +
-                              "  </extensions>" +
-                              "</build>");
+      importProject("<groupId>test</groupId>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
+                    "" +
+                    "<build>" +
+                    "  <extensions>" +
+                    "    <extension>" +
+                    "      <groupId>intellij.test</groupId>" +
+                    "      <artifactId>maven-extension</artifactId>" +
+                    "      <version>1.0</version>" +
+                    "    </extension>" +
+                    "  </extensions>" +
+                    "</build>");
 
       List<MavenProject> projects = myProjectsTree.getProjects();
       assertEquals(1, projects.size());
@@ -345,7 +333,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
                      "    </extension>" +
                      "  </extensions>" +
                      "</build>");
-    importProjectWithErrors(false);
+    importProjectWithErrors();
 
     List<MavenProject> projects = myProjectsTree.getProjects();
     assertEquals(1, projects.size());
@@ -392,39 +380,17 @@ public class MiscImportingTest extends MavenImportingTestCase {
     });
   }
 
-  public void testUserPropertiesCanBeCustomizedByMavenImportersForMaven3() {
-    NameSettingMavenImporter extension = new NameSettingMavenImporter("name-from-properties");
-    ExtensionPoint<MavenImporter> extensionPoint = Extensions.getRootArea().getExtensionPoint(MavenImporter.EXTENSION_POINT_NAME);
-    extensionPoint.registerExtension(extension);
-
+  public void testUserPropertiesCanBeCustomizedByMavenImporters() {
+    Disposable disposable = Disposer.newDisposable();
     try {
-      importProjectWithMaven3("<groupId>test</groupId>" +
-                              "<artifactId>project</artifactId>" +
-                              "<version>1</version>" +
-                              "<name>${myName}</name>");
-    }
-    finally {
-      extensionPoint.unregisterExtension(extension);
-    }
-
-    MavenProject project = myProjectsManager.findProject(new MavenId("test", "project", "1"));
-    assertNotNull(project);
-    assertEquals("name-from-properties", project.getName());
-  }
-
-  public void testUserPropertiesCanBeCustomizedByMavenImportersForMaven2() {
-    NameSettingMavenImporter extension = new NameSettingMavenImporter("name-from-properties");
-    ExtensionPoint<MavenImporter> extensionPoint = Extensions.getRootArea().getExtensionPoint(MavenImporter.EXTENSION_POINT_NAME);
-    extensionPoint.registerExtension(extension);
-
-    try {
+      PlatformTestUtil.maskExtensions(MavenImporter.EXTENSION_POINT_NAME, Collections.singletonList(new NameSettingMavenImporter("name-from-properties")), disposable);
       importProject("<groupId>test</groupId>" +
                     "<artifactId>project</artifactId>" +
                     "<version>1</version>" +
                     "<name>${myName}</name>");
     }
     finally {
-      extensionPoint.unregisterExtension(extension);
+      Disposer.dispose(disposable);
     }
 
     MavenProject project = myProjectsManager.findProject(new MavenId("test", "project", "1"));
@@ -440,7 +406,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
   private static class NameSettingMavenImporter extends MavenImporter {
     private final String myName;
 
-    public NameSettingMavenImporter(String name) {
+    NameSettingMavenImporter(String name) {
       super("gid", "id");
       myName = name;
     }

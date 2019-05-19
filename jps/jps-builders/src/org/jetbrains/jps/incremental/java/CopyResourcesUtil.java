@@ -48,17 +48,9 @@ public final class CopyResourcesUtil {
   }
 
   private static File copyStreamToFile(final InputStream stream, final File file) throws IOException {
-    try {
-      final FileOutputStream outputStream = new FileOutputStream(file);
-      try {
-        FileUtil.copy(stream, outputStream);
-      }
-      finally {
-        outputStream.close();
-      }
-    }
-    finally {
-      stream.close();
+    try (InputStream inputStream = stream;
+         FileOutputStream outputStream = new FileOutputStream(file)) {
+      FileUtil.copy(inputStream, outputStream);
     }
     return file;
   }

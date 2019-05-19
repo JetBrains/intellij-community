@@ -27,22 +27,27 @@ public class DeferingPrinter implements Printer {
     myCompositePrintable = new CompositePrintable();
   }
 
+  @Override
   public void print(final String text, final ConsoleViewContentType contentType) {
     myCompositePrintable.addLast(new Printable() {
+      @Override
       public void printOn(final Printer printer) {
         printer.print(text, contentType);
       }
     });
   }
 
+  @Override
   public void onNewAvailable(@NotNull final Printable printable) {
     myCompositePrintable.addLast(printable);
   }
 
+  @Override
   public void printHyperlink(final String text, final HyperlinkInfo info) {
     myCompositePrintable.addLast(new HyperLink(text, info));
   }
 
+  @Override
   public void mark() {
     myCompositePrintable.addLast(new PrinterMark());
   }

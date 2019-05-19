@@ -6,7 +6,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.impl.PsiLiteralStub;
@@ -23,8 +22,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
-
 public class PsiLiteralExpressionImpl
   extends JavaStubPsiElement<PsiLiteralStub>
        implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
@@ -32,7 +29,7 @@ public class PsiLiteralExpressionImpl
 
   public static final TokenSet INTEGER_LITERALS = TokenSet.create(JavaTokenType.INTEGER_LITERAL, JavaTokenType.LONG_LITERAL);
   public static final TokenSet REAL_LITERALS = TokenSet.create(JavaTokenType.FLOAT_LITERAL, JavaTokenType.DOUBLE_LITERAL);
-  public static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(INTEGER_LITERALS, REAL_LITERALS);
+  private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(INTEGER_LITERALS, REAL_LITERALS);
 
   public PsiLiteralExpressionImpl(@NotNull PsiLiteralStub stub) {
     super(stub, JavaStubElementTypes.LITERAL_EXPRESSION);
@@ -67,8 +64,9 @@ public class PsiLiteralExpressionImpl
       return PsiType.CHAR;
     }
     if (type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.RAW_STRING_LITERAL) {
-      PsiManagerEx manager = getManager();
-      GlobalSearchScope resolveScope = ResolveScopeManager.getElementResolveScope(this);
+      PsiFile file = getContainingFile();
+      PsiManager manager = file.getManager();
+      GlobalSearchScope resolveScope = ResolveScopeManager.getElementResolveScope(file);
       return PsiType.getJavaLangString(manager, resolveScope);
     }
     if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {
@@ -118,7 +116,7 @@ public class PsiLiteralExpressionImpl
       return getRawString();
     }
 
-    String text = NUMERIC_LITERALS.contains(type) ? getCanonicalText().toLowerCase(Locale.ENGLISH) : getCanonicalText();
+    String text = NUMERIC_LITERALS.contains(type) ? StringUtil.toLowerCase(getCanonicalText()) : getCanonicalText();
     final int textLength = text.length();
 
     if (type == JavaTokenType.INTEGER_LITERAL) {
@@ -134,18 +132,15 @@ public class PsiLiteralExpressionImpl
       return PsiLiteralUtil.parseDouble(text);
     }
     if (type == JavaTokenType.CHARACTER_LITERAL) {
-      if (StringUtil.endsWithChar(text, '\'')) {
-        if (textLength == 1) return null;
-        text = text.substring(1, textLength - 1);
+      if (textLength == 1 || !StringUtil.endsWithChar(text, '\'')) {
+        return null;
       }
-      else {
-        text = text.substring(1, textLength);
-      }
+      text = text.substring(1, textLength - 1);
       StringBuilder chars = new StringBuilder();
       boolean success = parseStringCharacters(text, chars, null);
       if (!success) return null;
       if (chars.length() != 1) return null;
-      return Character.valueOf(chars.charAt(0));
+      return chars.charAt(0);
     }
 
     return null;
@@ -203,7 +198,9 @@ public class PsiLiteralExpressionImpl
   @Override
   public boolean isValidHost() {
     IElementType elementType = getLiteralElementType();
-    return elementType == JavaTokenType.STRING_LITERAL || elementType == JavaTokenType.RAW_STRING_LITERAL;
+    return elementType == JavaTokenType.STRING_LITERAL
+           || elementType == JavaTokenType.RAW_STRING_LITERAL
+           || elementType == JavaTokenType.CHARACTER_LITERAL;
   }
 
   @Override

@@ -127,7 +127,7 @@ public interface DiffCorrection {
   }
 
   class BaseFragmentRunner<ActualRunner extends BaseFragmentRunner> {
-    private final ArrayList<DiffFragment> myItems = new ArrayList<DiffFragment>();
+    private final ArrayList<DiffFragment> myItems = new ArrayList<>();
     private int myIndex = 0;
     private DiffFragment[] myFragments;
 
@@ -148,7 +148,7 @@ public interface DiffCorrection {
 
     public DiffFragment[] getFragments() { return myFragments; }
 
-    public void processAll(DiffFragment[] fragments, FragmentProcessor<ActualRunner> processor) throws FilesTooBigForDiffException {
+    public void processAll(DiffFragment[] fragments, FragmentProcessor<? super ActualRunner> processor) throws FilesTooBigForDiffException {
       myFragments = fragments;
       for (;myIndex < myFragments.length; myIndex++) {
         DiffFragment fragment = myFragments[myIndex];
@@ -169,8 +169,8 @@ public interface DiffCorrection {
 
   class FragmentsCollector extends BaseFragmentRunner<FragmentsCollector> {
     public void addAll(DiffFragment[] fragments) {
-      for (int i = 0; i < fragments.length; i++) {
-        add(fragments[i]);
+      for (DiffFragment fragment : fragments) {
+        add(fragment);
       }
     }
   }
@@ -203,7 +203,7 @@ public interface DiffCorrection {
     }
 
     @Override
-    public void processAll(DiffFragment[] fragments, FragmentProcessor<FragmentBuffer> processor) throws FilesTooBigForDiffException {
+    public void processAll(DiffFragment[] fragments, FragmentProcessor<? super FragmentBuffer> processor) throws FilesTooBigForDiffException {
       super.processAll(fragments, processor);
       flushMarked();
     }

@@ -25,13 +25,8 @@ public class ComparatorUtil {
   }
 
   @NotNull
-  public static <Type, Aspect> Comparator<Type> compareBy(@NotNull final Convertor<Type, Aspect> aspect, @NotNull final Comparator<Aspect> comparator) {
-    return new Comparator<Type>() {
-      @Override
-      public int compare(Type element1, Type element2) {
-        return comparator.compare(aspect.convert(element1), aspect.convert(element2));
-      }
-    };
+  public static <Type, Aspect> Comparator<Type> compareBy(@NotNull final Convertor<? super Type, ? extends Aspect> aspect, @NotNull final Comparator<? super Aspect> comparator) {
+    return (element1, element2) -> comparator.compare(aspect.convert(element1), aspect.convert(element2));
   }
 
   @NotNull

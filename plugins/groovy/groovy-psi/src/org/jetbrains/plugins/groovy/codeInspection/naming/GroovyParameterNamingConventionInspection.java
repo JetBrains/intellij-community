@@ -30,12 +30,6 @@ public class GroovyParameterNamingConventionInspection extends ConventionInspect
   private static final int DEFAULT_MAX_LENGTH = 32;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Method parameter naming convention";
-  }
-
-  @Override
   protected GroovyFix buildFix(@NotNull PsiElement location) {
     return GroovyQuickFixFactory.getInstance().createRenameFix();
   }

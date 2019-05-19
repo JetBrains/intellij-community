@@ -42,14 +42,17 @@ public class SimpleRevision implements RevisionOrDate {
     }
   }
 
+  @Override
   public String getRevision() {
     return myRevision;
   }
 
+  @Override
   public void setForCommand(Command command) {
     command.setUpdateByRevisionOrDate(myRevision, null);
   }
 
+  @Override
   public CvsRevisionNumber getCvsRevisionNumber() {
     if (myRevision == null) return null;
     try {

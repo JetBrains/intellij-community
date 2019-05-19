@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.find.findUsages.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -35,7 +34,7 @@ public class UnusedSymbolUtil {
                                         @NotNull PsiModifierListOwner element,
                                         @Nullable ProgressIndicator progress) {
     if (isInjected(project, element)) return true;
-    for (ImplicitUsageProvider provider : Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
+    for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       ProgressManager.checkCanceled();
       if (provider.isImplicitUsage(element)) {
         return true;
@@ -50,7 +49,7 @@ public class UnusedSymbolUtil {
   }
 
   public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @Nullable ProgressIndicator progress) {
-    for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
+    for(ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       ProgressManager.checkCanceled();
       if (provider.isImplicitRead(element)) {
         return true;
@@ -66,7 +65,7 @@ public class UnusedSymbolUtil {
   public static boolean isImplicitWrite(@NotNull Project project,
                                         @NotNull PsiVariable element,
                                         @Nullable ProgressIndicator progress) {
-    for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
+    for(ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       ProgressManager.checkCanceled();
       if (provider.isImplicitWrite(element)) {
         return true;
@@ -84,8 +83,7 @@ public class UnusedSymbolUtil {
       return null; //filtered out
     }
 
-    UnusedDeclarationFixProvider[] fixProviders = Extensions.getExtensions(UnusedDeclarationFixProvider.EP_NAME);
-    for (UnusedDeclarationFixProvider provider : fixProviders) {
+    for (UnusedDeclarationFixProvider provider : UnusedDeclarationFixProvider.EP_NAME.getExtensionList()) {
       IntentionAction[] fixes = provider.getQuickFixes(element);
       for (IntentionAction fix : fixes) {
         QuickFixAction.registerQuickFixAction(info, fix);
@@ -188,7 +186,7 @@ public class UnusedSymbolUtil {
                                       @NotNull PsiMember member,
                                       @NotNull ProgressIndicator progress,
                                       @Nullable PsiFile ignoreFile,
-                                      @NotNull Processor<UsageInfo> usageInfoProcessor) {
+                                      @NotNull Processor<? super UsageInfo> usageInfoProcessor) {
     String name = member.getName();
     if (name == null) {
       log("* "+member.getName()+" no name; false");

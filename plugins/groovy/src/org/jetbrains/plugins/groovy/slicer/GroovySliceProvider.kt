@@ -39,7 +39,7 @@ class GroovySliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer 
     fun getInstance(): GroovySliceProvider = LanguageSlicing.INSTANCE.forLanguage(GroovyLanguage) as GroovySliceProvider
   }
 
-  override fun getExpressionAtCaret(atCaret: PsiElement?, dataFlowToThis: Boolean): PsiElement? {
+  override fun getExpressionAtCaret(atCaret: PsiElement, dataFlowToThis: Boolean): PsiElement? {
     val element = PsiTreeUtil.getParentOfType(atCaret, GrExpression::class.java, GrVariable::class.java)
     if (dataFlowToThis && element is GrLiteral) return null
     return element

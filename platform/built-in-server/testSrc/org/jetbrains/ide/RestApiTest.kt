@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.google.gson.stream.JsonWriter
@@ -67,7 +68,7 @@ internal class RestApiTest : BuiltInServerTestCase() {
     BuiltInServerManager.getInstance().configureRequestToWebServer(connection)
     assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
 
-    connection = URL("$serviceUrl").openConnection() as HttpURLConnection
+    connection = URL(serviceUrl).openConnection() as HttpURLConnection
     BuiltInServerManager.getInstance().configureRequestToWebServer(connection)
     connection.requestMethod = "POST"
     connection.doOutput = true

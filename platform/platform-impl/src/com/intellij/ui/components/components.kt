@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("FunctionName")
 
 package com.intellij.ui.components
@@ -8,32 +8,32 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComponentWithBrowseButton
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType
-import com.intellij.openapi.ui.TextComponentAccessor
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.FontUtil
+import com.intellij.util.SmartList
+import com.intellij.util.io.URLUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.util.regex.Pattern
 import javax.swing.*
+import javax.swing.event.DocumentEvent
+import javax.swing.event.HyperlinkListener
 import javax.swing.text.BadLocationException
+import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
 
-private val HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>")
-
 private val LINK_TEXT_ATTRIBUTES: SimpleTextAttributes
-  get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.link())
+  get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor())
 
 fun Label(text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false): JLabel {
   val finalText = BundleBase.replaceMnemonicAmpersand(text)
@@ -65,7 +65,7 @@ fun Link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit)
 
 @JvmOverloads
 fun noteComponent(note: String, linkHandler: ((url: String) -> Unit)? = null): JComponent {
-  val matcher = HREF_PATTERN.matcher(note)
+  val matcher = URLUtil.HREF_PATTERN.matcher(note)
   if (!matcher.find()) {
     return Label(note)
   }
@@ -78,7 +78,8 @@ fun noteComponent(note: String, linkHandler: ((url: String) -> Unit)? = null): J
     }
 
     val linkUrl = matcher.group(1)
-    noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, if (linkHandler == null) SimpleColoredComponent.BrowserLauncherTag(linkUrl) else Runnable { linkHandler(linkUrl) })
+    val tag = if (linkHandler == null) SimpleColoredComponent.BrowserLauncherTag(linkUrl) else Runnable { linkHandler(linkUrl) }
+    noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, tag)
     prev = matcher.end()
   }
   while (matcher.find())
@@ -93,14 +94,19 @@ fun noteComponent(note: String, linkHandler: ((url: String) -> Unit)? = null): J
 }
 
 @JvmOverloads
-fun htmlComponent(text: String = "", font: Font = UIUtil.getLabelFont(), background: Color? = null, foreground: Color? = null, lineWrap: Boolean = false): JEditorPane {
+fun htmlComponent(text: String = "",
+                  font: Font? = null,
+                  background: Color? = null,
+                  foreground: Color? = null,
+                  lineWrap: Boolean = false,
+                  hyperlinkListener: HyperlinkListener? = BrowserHyperlinkListener.INSTANCE): JEditorPane {
   val pane = SwingHelper.createHtmlViewer(lineWrap, font, background, foreground)
-  if (!text.isEmpty()) {
-    pane.text = "<html><head>${UIUtil.getCssFontDeclaration(font, UIUtil.getLabelForeground(), null, null)}</head><body>$text</body></html>"
-  }
+  pane.text = text
   pane.border = null
   pane.disabledTextColor = UIUtil.getLabelDisabledForeground()
-  pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+  if (hyperlinkListener != null) {
+    pane.addHyperlinkListener(hyperlinkListener)
+  }
   return pane
 }
 
@@ -119,6 +125,12 @@ fun Panel(title: String? = null, layout: LayoutManager2? = BorderLayout()): JPan
   return panel
 }
 
+fun DialogPanel(title: String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
+  val panel = DialogPanel(layout)
+  title?.let { setTitledBorder(it, panel) }
+  return panel
+}
+
 private fun setTitledBorder(title: String, panel: JPanel) {
   val border = IdeBorderFactory.createTitledBorder(title, false)
   panel.border = border
@@ -126,8 +138,9 @@ private fun setTitledBorder(title: String, panel: JPanel) {
 }
 
 /**
- * Consider using [UI DSL](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout#readme) to create panel.
+ * Consider using [UI DSL](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout#readme).
  */
+@JvmOverloads
 fun dialog(title: String,
            panel: JComponent,
            resizable: Boolean = false,
@@ -137,8 +150,9 @@ fun dialog(title: String,
            parent: Component? = null,
            errorText: String? = null,
            modality: IdeModalityType = IdeModalityType.IDE,
+           createActions: ((DialogManager) -> List<Action>)? = null,
            ok: (() -> List<ValidationInfo>?)? = null): DialogWrapper {
-  return object: DialogWrapper(project, parent, true, modality) {
+  return object : MyDialogWrapper(project, parent, modality) {
     init {
       setTitle(title)
       setResizable(resizable)
@@ -154,20 +168,60 @@ fun dialog(title: String,
 
     override fun createCenterPanel() = panel
 
-    override fun getPreferredFocusedComponent() = focusedComponent
+    override fun createActions(): Array<out Action> {
+      return if (createActions == null) super.createActions() else createActions(this).toTypedArray()
+    }
+
+    override fun getPreferredFocusedComponent() = focusedComponent ?: super.getPreferredFocusedComponent()
 
     override fun doOKAction() {
-      if (!okAction.isEnabled) {
-        return
+      if (okAction.isEnabled) {
+        performAction(ok)
       }
+    }
+  }
+}
 
-      val validationInfoList = ok?.invoke()
-      if (validationInfoList == null || validationInfoList.isEmpty()) {
-        super.doOKAction()
-      }
-      else {
-        setErrorInfoAll(validationInfoList)
-      }
+interface DialogManager {
+  fun performAction(action: (() -> List<ValidationInfo>?)? = null)
+}
+
+private abstract class MyDialogWrapper(project: Project?,
+                                       parent: Component?,
+                                       modality: IdeModalityType) : DialogWrapper(project, parent, true, modality), DialogManager {
+  override fun performAction(action: (() -> List<ValidationInfo>?)?) {
+    val validationInfoList = action?.invoke()
+    if (validationInfoList == null || validationInfoList.isEmpty()) {
+      super.doOKAction()
+    }
+    else {
+      setErrorInfoAll(validationInfoList)
+      clearErrorInfoOnFirstChange(validationInfoList)
+    }
+  }
+
+  private fun getTextField(info: ValidationInfo): JTextComponent? {
+    val component = info.component ?: return null
+    return when (component) {
+      is JTextComponent -> component
+      is TextFieldWithBrowseButton -> component.textField
+      else -> null
+    }
+  }
+
+  private fun clearErrorInfoOnFirstChange(validationInfoList: List<ValidationInfo>) {
+    val unchangedFields = SmartList<Component>()
+    for (info in validationInfoList) {
+      val textField = getTextField(info) ?: continue
+      unchangedFields.add(textField)
+      textField.document.addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) {
+          textField.document.removeDocumentListener(this)
+          if (unchangedFields.remove(textField) && unchangedFields.isEmpty()) {
+            setErrorInfoAll(emptyList())
+          }
+        }
+      })
     }
   }
 }
@@ -186,16 +240,16 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
   }
 
   component.addActionListener(
-      object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
-        override fun onFileChosen(chosenFile: VirtualFile) {
-          if (fileChosen == null) {
-            super.onFileChosen(chosenFile)
-          }
-          else {
-            textComponentAccessor.setText(myTextComponent.childComponent, fileChosen(chosenFile))
-          }
+    object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
+      override fun onFileChosen(chosenFile: VirtualFile) {
+        if (fileChosen == null) {
+          super.onFileChosen(chosenFile)
         }
-      })
+        else {
+          textComponentAccessor.setText(myTextComponent, fileChosen(chosenFile))
+        }
+      }
+    })
   FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, project)
 }
 
@@ -213,13 +267,31 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
     addHistoryOnExpansion(textFieldWithHistory, historyProvider)
   }
   installFileCompletionAndBrowseDialog(
-      project,
-      component,
-      component.childComponent.textEditor,
-      browseDialogTitle,
-      fileChooserDescriptor,
-      TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
-      fileChosen = fileChosen
+    project = project,
+    component = component,
+    textField = component.childComponent.textEditor,
+    browseDialogTitle = browseDialogTitle,
+    fileChooserDescriptor = fileChooserDescriptor,
+    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
+    fileChosen = fileChosen
+  )
+  return component
+}
+
+@JvmOverloads
+fun textFieldWithBrowseButton(project: Project?,
+                              browseDialogTitle: String,
+                              fileChooserDescriptor: FileChooserDescriptor,
+                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
+  val component = TextFieldWithBrowseButton()
+  installFileCompletionAndBrowseDialog(
+    project = project,
+    component = component,
+    textField = component.textField,
+    browseDialogTitle = browseDialogTitle,
+    fileChooserDescriptor = fileChooserDescriptor,
+    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+    fileChosen = fileChosen
   )
   return component
 }

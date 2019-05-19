@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.impl.TaskUiUtil;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -38,14 +39,14 @@ import java.util.List;
  * @author evgeny.zakrevsky
  */
 public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepository> {
-  private ComboBox myProjectCombobox;
-  private ComboBox myFilterCombobox;
+  private ComboBox<MantisProject> myProjectCombobox;
+  private ComboBox<MantisFilter> myFilterCombobox;
   private JBLabel myProjectLabel;
   private JBLabel myFilterLabel;
 
   private boolean myInitialized = false;
 
-  public MantisRepositoryEditor(Project project, MantisRepository repository, Consumer<MantisRepository> changeListener) {
+  public MantisRepositoryEditor(Project project, MantisRepository repository, Consumer<? super MantisRepository> changeListener) {
     super(project, repository, changeListener);
 
     myTestButton.setText("Login");
@@ -116,11 +117,11 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
   @Override
   protected JComponent createCustomPanel() {
     myProjectLabel = new JBLabel("Project:", SwingConstants.RIGHT);
-    myProjectCombobox = new ComboBox(200);
-    myProjectCombobox.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer("Login first"));
+    myProjectCombobox = new ComboBox<>(200);
+    myProjectCombobox.setRenderer(SimpleListCellRenderer.create("Login first", MantisProject::getName));
     myFilterLabel = new JBLabel("Filter:", SwingConstants.RIGHT);
-    myFilterCombobox = new ComboBox(200);
-    myFilterCombobox.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer("Login first"));
+    myFilterCombobox = new ComboBox<>(200);
+    myFilterCombobox.setRenderer(SimpleListCellRenderer.create("Login first", MantisFilter::getName));
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(myProjectLabel, myProjectCombobox)
       .addLabeledComponent(myFilterLabel, myFilterCombobox)

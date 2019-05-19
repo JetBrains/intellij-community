@@ -1,0 +1,40 @@
+package pkg;
+
+public final class TestFieldSingleAccess {
+   public Integer field;
+
+   public final void test() {
+      Integer var10000 = this.field;
+      if (var10000 != null) {
+         System.out.println(var10000);
+      }
+
+   }
+
+   public final void test1() {
+      synchronized(this.field) {
+         System.out.println('1');
+      }
+   }
+}
+
+class 'pkg/TestFieldSingleAccess' {
+   method 'test ()V' {
+      1      6
+      5      7
+      8      8
+      c      8
+      f      11
+   }
+
+   method 'test1 ()V' {
+      1      14
+      6      14
+      7      15
+      a      15
+      c      15
+      19      17
+   }
+}
+
+Lines mapping:

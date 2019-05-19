@@ -20,7 +20,7 @@ public class LockSupportTest {
 
   @Test(timeout = 30000)
   public void testUseCanonicalPathLock() throws Exception {
-    assumeTrue(!SystemInfo.isFileSystemCaseSensitive);
+    assumeTrue("case-insensitive system-only", !SystemInfo.isFileSystemCaseSensitive);
 
     String path1 = tempDir.getRoot().getPath();
     String path2 = path1.toUpperCase(Locale.ENGLISH);

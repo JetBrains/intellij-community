@@ -58,10 +58,12 @@ public class UneditAction extends AbstractActionFromEditGroup {
     super.actionPerformed(context);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.message("operation.name.unedit");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     return CommandCvsHandler.createUneditHandler(context.getSelectedFiles(),
                                                  CvsConfiguration.getInstance(context.getProject())

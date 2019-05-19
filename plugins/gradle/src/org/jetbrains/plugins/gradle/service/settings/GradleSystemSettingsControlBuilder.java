@@ -21,7 +21,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/21/2015
  */
 public interface GradleSystemSettingsControlBuilder {
   void fillUi(@NotNull PaintAwarePanel canvas, int indentLevel);

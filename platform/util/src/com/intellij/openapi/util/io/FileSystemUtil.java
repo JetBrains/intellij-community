@@ -1,14 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.Patches;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.LimitedPool;
 import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Locale;
+import java.util.HashSet;
 import java.util.Map;
 
 import static com.intellij.util.BitUtil.isSet;
@@ -30,10 +33,11 @@ import static com.intellij.util.BitUtil.isSet;
 /**
  * @version 11.1
  */
+@SuppressWarnings("NegativelyNamedBooleanVariable")
 public class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
   static final String FORCE_USE_FALLBACK_KEY = "idea.io.use.fallback";
-  static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
+  private static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileSystemUtil");
 
@@ -67,7 +71,7 @@ public class FileSystemUtil {
           error = t;
         }
       }
-      else if (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) {
+      else if ((SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) && JnaLoader.isLoaded()) {
         try {
           return check(new JnaUnixMediatorImpl());
         }
@@ -164,7 +168,7 @@ public class FileSystemUtil {
       else {
         realPath = ourMediator.resolveSymLink(path);
       }
-      if (realPath != null && new File(realPath).exists()) {
+      if (realPath != null && (SystemInfo.isWindows && realPath.startsWith("\\\\") || new File(realPath).exists())) {
         return realPath;
       }
     }
@@ -206,7 +210,6 @@ public class FileSystemUtil {
       return false;
     }
   }
-
 
   private static class Nio2MediatorImpl extends Mediator {
     private final Method myGetPath;
@@ -330,7 +333,7 @@ public class FileSystemUtil {
         Collection targetPermissions = getPermissions(targetPath);
         if (sourcePermissions != null && targetPermissions != null) {
           if (onlyPermissionsToExecute) {
-            Collection<Object> permissionsToSet = ContainerUtil.newHashSet();
+            Collection<Object> permissionsToSet = new HashSet<>();
             for (Object permission : targetPermissions) {
               if (!permission.toString().endsWith("_EXECUTE")) {
                 permissionsToSet.add(permission);
@@ -364,21 +367,42 @@ public class FileSystemUtil {
     private final IdeaWin32 myInstance = IdeaWin32.getInstance();
 
     @Override
-    protected FileAttributes getAttributes(@NotNull final String path) {
-      final FileInfo fileInfo = myInstance.getInfo(path);
+    protected FileAttributes getAttributes(@NotNull String path) {
+      FileInfo fileInfo = myInstance.getInfo(path);
       return fileInfo != null ? fileInfo.toFileAttributes() : null;
     }
 
     @Override
-    protected String resolveSymLink(@NotNull final String path) {
-      return myInstance.resolveSymLink(path);
+    protected String resolveSymLink(@NotNull String path) {
+      path = new File(path).getAbsolutePath();
+
+      char drive = Character.toUpperCase(path.charAt(0));
+      if (!(path.length() > 3 && drive >= 'A' && drive <= 'Z' && path.charAt(1) == ':' && path.charAt(2) == '\\')) {
+        return path;  // unknown format
+      }
+
+      int remainder = 4;
+      while (remainder < path.length()) {
+        int next = path.indexOf('\\', remainder);
+        String subPath = next > 0 ? path.substring(0, next) : path;
+        FileAttributes attributes = getAttributes(subPath);
+        if (attributes == null) {
+          return null;
+        }
+        if (attributes.isSymLink()) {
+          return myInstance.resolveSymLink(path);
+        }
+
+        remainder = next > 0 ? next + 1 : path.length();
+      }
+
+      return path;
     }
   }
 
-
   // thanks to SVNKit for the idea of platform-specific offsets
   private static class JnaUnixMediatorImpl extends Mediator {
-    @SuppressWarnings({"OctalInteger", "SpellCheckingInspection"})
+    @SuppressWarnings("OctalInteger")
     private static class LibC {
       static final int S_MASK = 0177777;
       static final int S_IFMT = 0170000;
@@ -396,7 +420,6 @@ public class FileSystemUtil {
       static native int access(String path, int mode);
     }
 
-    @SuppressWarnings("SpellCheckingInspection")
     private static class UnixLibC {
       static native int lstat(String path, Pointer stat);
       static native int stat(String path, Pointer stat);
@@ -431,9 +454,10 @@ public class FileSystemUtil {
     private final int myUid;
     private final int myGid;
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
+    private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
     private JnaUnixMediatorImpl() {
-           if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
+      if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
       else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_ARM32;
       else if ("linux-ppc".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_PPC32;
@@ -445,7 +469,7 @@ public class FileSystemUtil {
       else if ("sunos-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_64;
       else throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);
 
-      Map<String, String> options = Collections.singletonMap(Library.OPTION_STRING_ENCODING, System.getProperty("sun.jnu.encoding"));
+      Map<String, String> options = Collections.singletonMap(Library.OPTION_STRING_ENCODING, CharsetToolkit.getPlatformCharset().name());
       NativeLibrary lib = NativeLibrary.getInstance("c", options);
       Native.register(LibC.class, lib);
       Native.register(SystemInfo.isLinux ? LinuxLibC.class : UnixLibC.class, lib);
@@ -456,29 +480,34 @@ public class FileSystemUtil {
 
     @Override
     protected FileAttributes getAttributes(@NotNull String path) {
-      Memory buffer = new Memory(256);
-      int res = SystemInfo.isLinux ? LinuxLibC.__lxstat64(STAT_VER, path, buffer) : UnixLibC.lstat(path, buffer);
-      if (res != 0) return null;
+      Memory buffer = myMemoryPool.alloc();
+      try {
+        int res = SystemInfo.isLinux ? LinuxLibC.__lxstat64(STAT_VER, path, buffer) : UnixLibC.lstat(path, buffer);
+        if (res != 0) return null;
 
-      int mode = getModeFlags(buffer) & LibC.S_MASK;
-      boolean isSymlink = (mode & LibC.S_IFMT) == LibC.S_IFLNK;
-      if (isSymlink) {
-        if (!loadFileStatus(path, buffer)) {
-          return FileAttributes.BROKEN_SYMLINK;
+        int mode = getModeFlags(buffer) & LibC.S_MASK;
+        boolean isSymlink = (mode & LibC.S_IFMT) == LibC.S_IFLNK;
+        if (isSymlink) {
+          if (!loadFileStatus(path, buffer)) {
+            return FileAttributes.BROKEN_SYMLINK;
+          }
+          mode = getModeFlags(buffer) & LibC.S_MASK;
         }
-        mode = getModeFlags(buffer) & LibC.S_MASK;
+
+        boolean isDirectory = (mode & LibC.S_IFMT) == LibC.S_IFDIR;
+        boolean isSpecial = !isDirectory && (mode & LibC.S_IFMT) != LibC.S_IFREG;
+        long size = buffer.getLong(myOffsets[OFF_SIZE]);
+        long mTime1 = SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME]) : buffer.getLong(myOffsets[OFF_TIME]);
+        long mTime2 = myCoarseTs ? 0 : SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
+        long mTime = mTime1 * 1000 + mTime2 / 1000000;
+
+        boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
+
+        return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
       }
-
-      boolean isDirectory = (mode & LibC.S_IFMT) == LibC.S_IFDIR;
-      boolean isSpecial = !isDirectory && (mode & LibC.S_IFMT) != LibC.S_IFREG;
-      long size = buffer.getLong(myOffsets[OFF_SIZE]);
-      long mTime1 = SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME]) : buffer.getLong(myOffsets[OFF_TIME]);
-      long mTime2 = myCoarseTs ? 0 : SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
-      long mTime = mTime1 * 1000 + mTime2 / 1000000;
-
-      boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
-
-      return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
+      finally {
+        myMemoryPool.recycle(buffer);
+      }
     }
 
     @Override
@@ -488,7 +517,7 @@ public class FileSystemUtil {
       }
       catch (IOException e) {
         String message = e.getMessage();
-        if (message != null && message.toLowerCase(Locale.US).contains("too many levels of symbolic links")) {
+        if (message != null && StringUtil.toLowerCase(message).contains("too many levels of symbolic links")) {
           LOG.debug(e);
           return null;
         }

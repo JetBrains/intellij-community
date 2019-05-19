@@ -27,8 +27,6 @@ public class RemoveUnusedParameterTest extends LightQuickFixParameterizedTestCas
     enableInspectionTool(new UnusedDeclarationInspection());
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/removeUnusedParameter";

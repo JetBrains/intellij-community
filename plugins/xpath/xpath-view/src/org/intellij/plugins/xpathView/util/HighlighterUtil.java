@@ -92,7 +92,7 @@ public class HighlighterUtil {
         return false;
     }
 
-    @SuppressWarnings({"unchecked", "RawUseOfParameterizedType"})
+    @SuppressWarnings({"RawUseOfParameterizedType"})
     private static boolean purgeInvalidHighlighters(Editor editor, List<RangeHighlighter> hl) {
         final Set set = ContainerUtil.newIdentityTroveSet(Arrays.asList(editor.getMarkupModel().getAllHighlighters()));
         boolean hasHighlighter = false;
@@ -109,8 +109,7 @@ public class HighlighterUtil {
 
     public static List<RangeHighlighter> getHighlighters(Editor editor) {
         if (!hasHighlighters(editor)) {
-            //noinspection unchecked
-            return Collections.emptyList();
+          return Collections.emptyList();
         } else {
             return editor.getUserData(HIGHLIGHTERS_KEY);
         }

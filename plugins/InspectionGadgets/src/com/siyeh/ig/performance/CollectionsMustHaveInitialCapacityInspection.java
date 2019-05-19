@@ -22,6 +22,7 @@ import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.util.JdomKt;
 import com.intellij.util.ui.CheckBox;
 import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
@@ -60,7 +61,7 @@ public class CollectionsMustHaveInitialCapacityInspection
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     mySettings.writeSettings(node);
     if (myIgnoreFields) {
-      JDOMExternalizer.write(node, "ignoreFields", true);
+      JdomKt.addOptionTag(node, "ignoreFields", Boolean.toString(true), "setting");
     }
   }
 

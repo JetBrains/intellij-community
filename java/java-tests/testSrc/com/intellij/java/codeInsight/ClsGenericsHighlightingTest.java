@@ -17,7 +17,6 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
-  private Module myModule;
 
   @Override
   public void setUp() throws Exception {
@@ -48,9 +46,9 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
     builder.setLanguageLevel(getLanguageLevel());
     builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
     myFixture.setUp();
-    myModule = builder.getFixture().getModule();
   }
 
+  @NotNull
   protected abstract LanguageLevel getLanguageLevel();
 
   @Override
@@ -58,9 +56,11 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
-      myModule = null;
       super.tearDown();
     }
   }
@@ -73,7 +73,7 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
   }
 
   protected void addLibrary(@NotNull final String... libraryPath) {
-    ModuleRootModificationUtil.updateModel(myModule, model -> {
+    ModuleRootModificationUtil.updateModel(myFixture.getModule(), model -> {
       commitLibraryModel(model, myFixture.getTestDataPath(), libraryPath);
 
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,22 +25,24 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * The base class for actions which create new file elements.
- *
- * @since 5.1
  */
 public abstract class CreateElementActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
 
   protected CreateElementActionBase() {
   }
 
-  protected CreateElementActionBase(String text, String description, Icon icon) {
+  protected CreateElementActionBase(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                                    @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                                    Icon icon) {
     super(text, description, icon);
   }
 
@@ -54,7 +56,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
    * @return created elements. Never null.
    */
   @NotNull
-  protected abstract PsiElement[] create(String newName, PsiDirectory directory) throws Exception;
+  protected abstract PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception;
 
   protected abstract String getErrorTitle();
 
@@ -63,8 +65,8 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
   protected abstract String getActionName(PsiDirectory directory, String newName);
 
   @Override
-  public final void actionPerformed(final AnActionEvent e) {
-    final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
+    final IdeView view = getIdeView(e);
     if (view == null) {
       return;
     }
@@ -78,6 +80,11 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     for (PsiElement createdElement : createdElements) {
       view.selectElement(createdElement);
     }
+  }
+
+  @Nullable
+  protected IdeView getIdeView(@NotNull AnActionEvent e) {
+    return e.getData(LangDataKeys.IDE_VIEW);
   }
 
   public static String filterMessage(String message) {
@@ -106,7 +113,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     }
 
     @Override
-    public PsiElement[] create(String newName) throws Exception {
+    public PsiElement[] create(@NotNull String newName) throws Exception {
       return CreateElementActionBase.this.create(newName, myDirectory);
     }
 

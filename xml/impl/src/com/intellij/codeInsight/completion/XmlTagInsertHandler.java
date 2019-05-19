@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -21,10 +21,12 @@ import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -44,6 +46,7 @@ import com.intellij.xml.actions.GenerateXmlTagAction;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,19 +56,22 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
 
   @Override
-  public void handleInsert(InsertionContext context, LookupElement item) {
+  public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Project project = context.getProject();
     Editor editor = context.getEditor();
+    int startOffset = context.getStartOffset();
+    Document document = InjectedLanguageUtil.getTopLevelEditor(editor).getDocument();
+    Ref<PsiElement> currentElementRef = Ref.create();
     // Need to insert " " to prevent creating tags like <tagThis is my text
-    InjectedLanguageUtil.getTopLevelEditor(editor).getDocument().putUserData(XmlTagNameSynchronizer.SKIP_COMMAND, Boolean.TRUE);
-    final int offset = editor.getCaretModel().getOffset();
-    editor.getDocument().insertString(offset, " ");
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    PsiElement current = context.getFile().findElementAt(context.getStartOffset());
-    editor.getDocument().deleteString(offset, offset + 1);
-    InjectedLanguageUtil.getTopLevelEditor(editor).getDocument().putUserData(XmlTagNameSynchronizer.SKIP_COMMAND, null);
+    XmlTagNameSynchronizer.runWithoutCancellingSyncTagsEditing(document, () -> {
+      final int offset = editor.getCaretModel().getOffset();
+      editor.getDocument().insertString(offset, " ");
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      currentElementRef.set(context.getFile().findElementAt(startOffset));
+      editor.getDocument().deleteString(offset, offset + 1);
+    });
 
-    final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
+    final XmlTag tag = PsiTreeUtil.getContextOfType(currentElementRef.get(), XmlTag.class, true);
 
     if (tag == null) return;
 
@@ -147,7 +153,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
 
       @Override
-      public void templateFinished(final Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull final Template template, boolean brokenOff) {
         final int offset = editor.getCaretModel().getOffset();
 
         if (chooseAttributeName && offset > 0) {
@@ -212,7 +218,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         if (!shouldBeInserted) continue;
 
         AttributeValuePresentation presenter =
-          extension.getAttributeValuePresentation(attributeDecl, XmlEditUtil.getAttributeQuote(containingFile));
+          extension.getAttributeValuePresentation(attributeDecl, XmlEditUtil.getAttributeQuote(containingFile), containingFile);
         boolean htmlCode = HtmlUtil.hasHtml(containingFile) || HtmlUtil.supportsXmlTypedHandlers(containingFile);
         if (tag == null || tag.getAttributeValue(attributeName) == null) {
           if (!notRequiredAttributes.contains(attributeName)) {
@@ -318,7 +324,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   }
 
   private static boolean needAlLeastOneAttribute(XmlTag tag) {
-    for (XmlTagRuleProvider ruleProvider : XmlTagRuleProvider.EP_NAME.getExtensions()) {
+    for (XmlTagRuleProvider ruleProvider : XmlTagRuleProvider.EP_NAME.getExtensionList()) {
       for (XmlTagRuleProvider.Rule rule : ruleProvider.getTagRule(tag)) {
         if (rule.needAtLeastOneAttribute(tag)) {
           return true;
@@ -361,7 +367,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   }
 
   private static void completeTagTail(Template template, XmlElementDescriptor descriptor, PsiFile file, XmlTag context, boolean firstLevel) {
-    boolean completeIt = !firstLevel || descriptor.getAttributesDescriptors(null).length == 0;
+    boolean completeIt = !firstLevel || !canHaveAttributes(descriptor, context);
     switch (descriptor.getContentType()) {
       case XmlElementDescriptor.CONTENT_TYPE_UNKNOWN:
         return;
@@ -392,6 +398,14 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
          }
          break;
     }
+  }
+
+  private static boolean canHaveAttributes(XmlElementDescriptor descriptor, XmlTag context) {
+    XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(context);
+    int required = WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes() ?
+                   ArraysKt.count(attributes, (attribute) -> attribute.isRequired() && context.getAttribute(attribute.getName()) == null) :
+                   0;
+    return attributes.length - required > 0 ;
   }
 
   private static void addTagEnd(Template template, XmlElementDescriptor descriptor, XmlTag context) {

@@ -42,4 +42,15 @@ class GitDirectoryVirtualFile(
   }
 
   override fun getChildren(): Array<VirtualFile> = cachedChildren
+
+  override fun getLength(): Long = 0
+
+  override fun equals(other: Any?): Boolean {
+    val otherFile = other as? GitDirectoryVirtualFile ?: return false
+    return repo == otherFile.repo && path == otherFile.path && commit.id == otherFile.commit.id
+  }
+
+  override fun hashCode(): Int {
+    return repo.hashCode() * 31 * 31 + path.hashCode() * 31 + commit.id.hashCode()
+  }
 }

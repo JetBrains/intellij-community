@@ -86,10 +86,10 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
   private static class SpockVariableReference extends PsiReferenceBase<PsiElement> {
 
     private final PsiElement myLeafElement;
-    private final List<SpockVariableReference> myReferences;
+    private final List<? extends SpockVariableReference> myReferences;
     private final GrMethod myMethod;
 
-    public SpockVariableReference(PsiElement element, TextRange range, List<SpockVariableReference> references, GrMethod method) {
+    SpockVariableReference(PsiElement element, TextRange range, List<? extends SpockVariableReference> references, GrMethod method) {
       super(element, range);
       myReferences = references;
       myMethod = method;
@@ -121,7 +121,7 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       if (getElement().getFirstChild() != myLeafElement) { // Element already renamed.
         return getElement();
       }

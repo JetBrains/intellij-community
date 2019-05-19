@@ -1,7 +1,7 @@
 package com.siyeh.igtest.threading.access_to_static_field_locked_on_instance_data;
 
 import java.util.List;
-
+import javax.annotation.concurrent.ThreadSafe;
 
 
 public class AccessToStaticFieldLockedOnInstanceData {
@@ -30,6 +30,12 @@ public class AccessToStaticFieldLockedOnInstanceData {
             LIST.get(0);
         }
     }
+
+
+    private static final Safe safe = new Safe();
+    synchronized void safe() {
+        System.out.println(safe);
+    }
 }
 class StaticFieldNotLockedOnInstanceData
 {
@@ -51,3 +57,5 @@ class StaticFieldNotLockedOnInstanceData
         }
     }
 }
+@ThreadSafe
+class Safe {}

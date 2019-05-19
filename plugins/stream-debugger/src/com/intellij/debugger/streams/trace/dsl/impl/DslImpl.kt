@@ -67,6 +67,9 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
   override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall =
     statementFactory.createPeekCall(elementsType, lambda)
 
+  override fun createPeekCall(elementType: GenericType, lambda: Lambda): IntermediateStreamCall =
+    statementFactory.createPeekCall(elementType, lambda)
+
   override fun Expression.and(right: Expression): Expression = statementFactory.and(this, right)
 
   override fun Expression.equals(right: Expression): Expression = statementFactory.equals(this, right)

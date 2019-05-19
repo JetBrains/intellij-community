@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.psi.javadoc.*;
@@ -243,11 +229,9 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
    * If we'd call both visitReferenceElement and visitExpression in default implementation
    * of this method we can easily stuck with exponential algorithm if the derived visitor
    * extends visitElement() and accepts children there.
-   * PsiRecursiveElement visitor works that around and implements this method accordingly.
+   * {@link JavaRecursiveElementVisitor} knows that and implements this method accordingly.
    * All other visitor must decide themselves what implementation (visitReferenceElement() or visitExpression() or none or LOG.error())
    * is appropriate for them.
-   *
-   * @param expression
    */
   public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
@@ -280,6 +264,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   }
 
   public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+    visitStatement(statement);
+  }
+
+  public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
     visitStatement(statement);
   }
 
@@ -388,6 +376,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   }
 
   public void visitLambdaExpression(PsiLambdaExpression expression) {
+    visitExpression(expression);
+  }
+
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
     visitExpression(expression);
   }
 

@@ -1,0 +1,9 @@
+<!DOCTYPE tag SYSTEM "dtd/simple.dtd" [
+ <!ELEMENT tag (tag1)>
+ ]>
+
+
+<tag>
+<t<ref>ag1>
+</tag1>
+</tag>

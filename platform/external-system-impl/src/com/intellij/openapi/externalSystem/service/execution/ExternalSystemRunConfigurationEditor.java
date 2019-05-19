@@ -28,7 +28,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 23.05.13 18:34
  */
 public class ExternalSystemRunConfigurationEditor extends SettingsEditor<ExternalSystemRunConfiguration> {
 
@@ -41,7 +40,7 @@ public class ExternalSystemRunConfigurationEditor extends SettingsEditor<Externa
   @Override
   protected void resetEditorFrom(@NotNull ExternalSystemRunConfiguration s) {
     myControl.setOriginalSettings(s.getSettings());
-    myControl.reset();
+    myControl.reset(s.getProject());
   }
 
   @Override

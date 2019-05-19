@@ -24,7 +24,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
 
 /**
- * Py.test runner
+ * trial test runner
  */
 
 class PyTrialTestSettingsEditor(configuration: PyAbstractTestConfiguration) :

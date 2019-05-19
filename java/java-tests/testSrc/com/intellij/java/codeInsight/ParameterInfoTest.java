@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -23,7 +24,10 @@ import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoCon
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.EditorHintFixture.removeCurrentParameterColor;
 
 public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   @Override
@@ -63,6 +67,23 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertEquals("int i", list);
     PsiAnnotation[] annotations = AnnotationUtil.getAllAnnotations(method.getParameterList().getParameters()[0], false, null);
     assertEquals(1, annotations.length);
+  }
+
+  public void testWhenInferenceIsBoundedByEqualsBound() {
+    EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
+    myFixture.configureByText("x.java", 
+                                        "import java.util.function.Function;\n" +
+                                        "import java.util.function.Supplier;\n" +
+                                        "class X {\n" +
+                                        "    public <K> void foo(Supplier<K> extractKey, Function<String, K> right) {}\n" +
+                                        "    public void bar(Function<String, Integer> right) {\n" +
+                                        "        foo(<caret>() -> 1, right);\n" +
+                                        "    }\n" +
+                                        "}\n");
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals("<html><b>Supplier&lt;Integer&gt; extractKey</b>, Function&lt;String, Integer&gt; right</html>", hintFixture.getCurrentHintText());
   }
 
   public void testSelectionWithGenerics() {
@@ -113,6 +134,22 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
     UIUtil.dispatchAllInvocationEvents();
     assertEquals("<html><b>String s</b>, int... p</html>", hintFixture.getCurrentHintText());
+  }
+
+  public void testCompletionPolicyWithLowerBounds() {
+    EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
+    myFixture.configureByText("x.java",
+                              "class B {\n" +
+                              "  static <T> T[] foo(T[] args, int l) {\n" +
+                              "    return null;\n" +
+                              "  }\n" +
+                              "  void f(String[] args) {\n" +
+                              "    String[] a = foo(args, args.len<caret>gth);\n" +
+                              "  }\n" +
+                              "}");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals("<html>String[] args, <b>int l</b></html>", hintFixture.getCurrentHintText());
   }
 
   public void testPreselectionOfCandidatesInNestedMethod() {
@@ -188,7 +225,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     parameterContext.setUIComponentEnabled(true);
     PsiSubstitutor substitutor = ((MethodCandidateInfo)itemsToShow[0]).getSubstitutor();
     String presentation = MethodParameterInfoHandler.updateMethodPresentation(method, substitutor, parameterContext);
-    assertEquals("<html>Class&lt;T&gt; type, <b>boolean tags</b></html>", presentation);
+    assertEquals("<html>Class&lt;T&gt; type, <b>boolean tags</b></html>", removeCurrentParameterColor(presentation));
   }
 
   public void testNoParams() { doTestPresentation("<html>&lt;no parameters&gt;</html>", -1); }
@@ -199,7 +236,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   private void doTestPresentation(String expectedString, int parameterIndex) {
     myFixture.configureByFile(getTestName(false) + ".java");
     String presentation = parameterPresentation(parameterIndex);
-    assertEquals(expectedString, presentation);
+    assertEquals(expectedString, removeCurrentParameterColor(presentation));
   }
 
   private String parameterPresentation(int parameterIndex) {
@@ -234,7 +271,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testAnnotationWithGenerics() {
     myFixture.configureByFile(getTestName(false) + ".java");
     String text = annoParameterPresentation();
-    assertEquals("<html>Class&lt;List&lt;String[]&gt;&gt; <b>value</b>()</html>", text);
+    assertEquals("<html>Class&lt;List&lt;String[]&gt;&gt; <b>value</b>()</html>", removeCurrentParameterColor(text));
   }
 
   private String annoParameterPresentation() {
@@ -343,9 +380,21 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   }
 
   public void testInferredWithVarargs() {
-    myFixture.configureByText(JavaFileType.INSTANCE, 
-                              "import java.util.*; class C { void m(Object objects[], List<Object> list) { Collections.addAll(<caret>list, objects);} }");
-    assertEquals("<html>Collection&lt;? super Object&gt; collection, @NotNull Object... ts</html>", parameterPresentation(-1));
+    @Language("JAVA")
+    String text =
+      "import java.util.*;" +
+      "class C { " +
+      "  static <T> boolean addAll(Collection<? super T> c, T... elements) {" +
+      "    return false;" +
+      "  }" +
+      "  static void m(Object objects[], List<Object> list) { " +
+      "    addAll(/*caret*/list, objects);" +
+      "  } " +
+      "}";
+
+    myFixture.configureByText(JavaFileType.INSTANCE, text.replace("/*caret*/", "<caret>"));
+    assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
+    assertEquals("<html>Collection&lt;? super Object&gt; c, Object... elements</html>", parameterPresentation(-1));
   }
 
   private void checkHighlighted(int lineIndex) {
@@ -378,7 +427,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  public void testHighlightCurrentParameterAfterTypingFirstArgumentOfThree() throws Exception {
+  public void testHighlightCurrentParameterAfterTypingFirstArgumentOfThree() {
     configureJava("class A {\n" +
                   "    void foo() {}\n" +
                   "    void foo(int a, int b, int c) {}\n" +
@@ -392,7 +441,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                       "<html><b>int a</b>, int b, int c</html>");
     type("1, ");
     waitForAllAsyncStuff();
-    checkHintContents("<html><font color=gray>&lt;no parameters&gt;</font color=gray></html>\n" +
+    checkHintContents("<html><font color=a8a8a8>&lt;no parameters&gt;</font></html>\n" +
                       "-\n" +
                       "<html>int a, <b>int b</b>, int c</html>");
   }
@@ -415,10 +464,37 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                       "-\n" +
                       "<html><b>double v</b></html>\n" +
                       "-\n" +
-                      "<html><b>char[] chars</b></html>\n" +
+                      "<html><b>@NotNull char[] chars</b></html>\n" +
                       "-\n" +
                       "<html><b>@Nullable String s</b></html>\n" +
                       "-\n" +
                       "<html><b>@Nullable Object o</b></html>");
+  }
+
+  public void testParameterInfoIsAvailableAtMethodName() {
+    configureJava("class C { void m() { System.ex<caret>it(0); } }");
+    showParameterInfo();
+    checkHintContents("<html>int i</html>");
+  }
+
+  public void testVarargWithArrayArgument() {
+    configureJava("class C {\n" +
+                  "  void some(int a) {}\n" +
+                  "  void some(String... b) {}\n" +
+                  "  void m(String[] c) {\n" +
+                  "    some(c<caret>);\n" +
+                  "  }\n" +
+                  "}");
+    showParameterInfo();
+    checkHintContents("<html><b>int a</b></html>\n" +
+                      "-\n" +
+                      "[<html><b>String... b</b></html>]");
+  }
+
+  public void testDoNotShowUnrelatedInfoOnTyping() {
+    configureJava("class C { void m(String a, String b) { String s = <caret>a + b).trim(); } }");
+    type('(');
+    waitForAllAsyncStuff();
+    checkHintContents(null);
   }
 }

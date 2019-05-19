@@ -191,9 +191,8 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return false;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
-  protected Alignment getChildAlignment(@SuppressWarnings("UnusedParameters") ASTNode child) {
+  protected Alignment getChildAlignment(ASTNode child) {
     return null;
   }
 
@@ -226,7 +225,6 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return new ChildAttributes(Indent.getNormalIndent(), null);
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   protected Indent getDefaultMarkupIndent() {
     return Indent.getNormalIndent();
   }
@@ -246,8 +244,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   }
 
   @Nullable
-  @SuppressWarnings("MethodMayBeStatic")
-  protected Wrap getChildWrap(@SuppressWarnings("UnusedParameters") ASTNode child) {
+  protected Wrap getChildWrap(ASTNode child) {
     return Wrap.createWrap(WrapType.NONE, false);
   }
 

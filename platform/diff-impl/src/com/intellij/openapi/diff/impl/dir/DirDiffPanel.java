@@ -44,10 +44,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.FilterComponent;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -69,10 +66,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.util.ArrayUtil.toObjectArray;
 
 /**
  * @author Konstantin Bulenkov
@@ -158,7 +154,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     if (model.isOperationsEnabled()) {
       new DumbAwareAction("Change diff operation") {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           changeOperationForSelection();
         }
       }.registerCustomShortcutSet(CustomShortcutSet.fromString("SPACE"), myTable);
@@ -178,28 +174,12 @@ public class DirDiffPanel implements Disposable, DataProvider {
         }
       }.installOn(myTable);
     }
-    myTable.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        final int keyCode = e.getKeyCode();
 
-        int row;
-        if (keyCode == KeyEvent.VK_DOWN) {
-          row = getNextRow();
-        }
-        else if (keyCode == KeyEvent.VK_UP) {
-          row = getPrevRow();
-        }
-        else {
-          row = -1;
-        }
+    myTable.getActionMap().put(TableActions.Up.ID, createNavigationAction(false, false));
+    myTable.getActionMap().put(TableActions.Down.ID, createNavigationAction(true, false));
+    myTable.getActionMap().put(TableActions.ShiftUp.ID, createNavigationAction(false, true));
+    myTable.getActionMap().put(TableActions.ShiftDown.ID, createNavigationAction(true, true));
 
-        if (row != -1) {
-          selectRow(row, e.isShiftDown());
-          e.consume();
-        }
-      }
-    });
     final TableColumnModel columnModel = myTable.getColumnModel();
     for (int i = 0; i < columnModel.getColumnCount(); i++) {
       final String name = myModel.getColumnName(i);
@@ -361,6 +341,19 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
   }
 
+  @NotNull
+  private AbstractAction createNavigationAction(boolean goDown, boolean withSelection) {
+    return new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        int row = goDown ? getNextRow() : getPrevRow();
+        if (row != -1) {
+          selectRow(row, withSelection);
+        }
+      }
+    };
+  }
+
   private int getNextRow() {
     if (myTable.getSelectedRows().length == 0) return -1;
     int rowCount = myTable.getRowCount();
@@ -424,7 +417,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myDiffRequestProcessor.updateRequest(force);
   }
 
-  private void registerCustomShortcuts(DirDiffToolbarActions actions, JComponent component) {
+  private static void registerCustomShortcuts(DirDiffToolbarActions actions, JComponent component) {
     for (AnAction action : actions.getChildren(null)) {
       if (action instanceof ShortcutProvider) {
         final ShortcutSet shortcut = ((ShortcutProvider)action).getShortcut();
@@ -464,6 +457,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     return myTable;
   }
 
+  @Override
   public void dispose() {
     myModel.stopUpdating();
     PropertiesComponent.getInstance().setValue(DIVIDER_PROPERTY, mySplitPanel.getDividerLocation(), DIVIDER_PROPERTY_DEFAULT_VALUE);
@@ -494,7 +488,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myModel.getProject();
     }
@@ -513,7 +507,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     return null;
   }
 
-  @Nullable
+  @NotNull
   private Navigatable[] getNavigatableArray() {
     Project project = myModel.getProject();
     List<DirDiffElementImpl> elements = myModel.getSelectedElements();
@@ -526,7 +520,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       if (navigatable1 != null) navigatables.add(navigatable1);
       if (navigatable2 != null) navigatables.add(navigatable2);
     }
-    return toObjectArray(navigatables, Navigatable.class);
+    return navigatables.toArray(new Navigatable[0]);
   }
 
   private static class MyJBTable extends JBTable {
@@ -591,7 +585,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   private class MyDiffRequestProcessor extends CacheDiffRequestProcessor<ElementWrapper> {
-    public MyDiffRequestProcessor(@Nullable Project project) {
+    MyDiffRequestProcessor(@Nullable Project project) {
       super(project, DiffPlaces.DIR_DIFF);
     }
 
@@ -659,7 +653,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     @Nullable public final DiffElement sourceElement;
     @Nullable public final DiffElement targetElement;
 
-    public ElementWrapper(@NotNull DirDiffElementImpl element) {
+    ElementWrapper(@NotNull DirDiffElementImpl element) {
       sourceElement = element.getSource();
       targetElement = element.getTarget();
     }
@@ -670,11 +664,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       if (o == null || getClass() != o.getClass()) return false;
 
       ElementWrapper wrapper = (ElementWrapper)o;
-
-      if (sourceElement != null ? !sourceElement.equals(wrapper.sourceElement) : wrapper.sourceElement != null) return false;
-      if (targetElement != null ? !targetElement.equals(wrapper.targetElement) : wrapper.targetElement != null) return false;
-
-      return true;
+      return Objects.equals(sourceElement, wrapper.sourceElement) && Objects.equals(targetElement, wrapper.targetElement);
     }
 
     @Override
@@ -686,7 +676,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   private class MyFilterComponent extends FilterComponent {
-    public MyFilterComponent() {
+    MyFilterComponent() {
       super("dir.diff.filter", 15, false);
 
       DumbAwareAction.create(e -> userTriggeredFilter())

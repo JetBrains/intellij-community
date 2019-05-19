@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -26,13 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 
 public class GroovyLoopStatementThatDoesntLoopInspection extends BaseInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Loop statement that doesn't loop";
-  }
 
   @Override
   @Nullable

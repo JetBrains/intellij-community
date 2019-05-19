@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.tasks.actions.SwitchTaskAction;
 import com.intellij.tasks.config.TaskSettings;
+import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
@@ -82,8 +83,18 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     }
   }
 
+  public void testUnderscore() {
+    String summary = "foo_bar";
+    TaskManager.getManager(getProject()).activateTask(new LocalTaskImpl("", summary), false);
+    TestActionEvent event = new TestActionEvent();
+    event.IsFromActionToolbar = true;
+    new SwitchTaskAction().update(event);
+    assertEquals(summary, event.getPresentation().getText());
+  }
+
   private static Presentation doTest(AnAction action, ActionToolbarImpl toolbar) {
     TestActionEvent event = new TestActionEvent(toolbar.getPresentation(action));
+    event.IsFromActionToolbar = true;
     action.update(event);
     return event.getPresentation();
   }

@@ -15,9 +15,9 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,26 +29,27 @@ public class JavaSliceNullnessAnalyzer extends SliceNullnessAnalyzerBase {
 
   @NotNull
   @Override
-  protected Nullness checkNullness(PsiElement element) {
+  protected Nullability checkNullability(PsiElement element) {
     // null
     PsiElement value = element;
     if (value instanceof PsiExpression) {
       value = PsiUtil.deparenthesizeExpression((PsiExpression)value);
     }
     if (value instanceof PsiLiteralExpression) {
-      return ((PsiLiteralExpression)value).getValue() == null ? Nullness.NULLABLE : Nullness.NOT_NULL;
+      return ((PsiLiteralExpression)value).getValue() == null ? Nullability.NULLABLE : Nullability.NOT_NULL;
     }
 
     // not null
-    if (value instanceof PsiNewExpression) return Nullness.NOT_NULL;
-    if (value instanceof PsiThisExpression) return Nullness.NOT_NULL;
+    if (value instanceof PsiNewExpression) return Nullability.NOT_NULL;
+    if (value instanceof PsiThisExpression) return Nullability.NOT_NULL;
     if (value instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)value).resolveMethod();
-      if (method != null && NullableNotNullManager.isNotNull(method)) return Nullness.NOT_NULL;
-      if (method != null && NullableNotNullManager.isNullable(method)) return Nullness.NULLABLE;
+      if (method != null) {
+        return NullableNotNullManager.getNullability(method);
+      }
     }
     if (value instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)value).getOperationTokenType() == JavaTokenType.PLUS) {
-      return Nullness.NOT_NULL; // "xxx" + var
+      return Nullability.NOT_NULL; // "xxx" + var
     }
 
     // unfortunately have to resolve here, since there can be no subnodes
@@ -62,22 +63,22 @@ public class JavaSliceNullnessAnalyzer extends SliceNullnessAnalyzerBase {
     }
     if (value instanceof PsiParameter && ((PsiParameter)value).getDeclarationScope() instanceof PsiCatchSection) {
       // exception thrown is always not null
-      return Nullness.NOT_NULL;
+      return Nullability.NOT_NULL;
     }
 
     if (value instanceof PsiLocalVariable || value instanceof PsiParameter) {
-      Nullness result = DfaUtil.checkNullness((PsiVariable)value, context);
-      if (result != Nullness.UNKNOWN) {
+      Nullability result = DfaUtil.checkNullability((PsiVariable)value, context);
+      if (result != Nullability.UNKNOWN) {
         return result;
       }
     }
 
+    if (value instanceof PsiEnumConstant) return Nullability.NOT_NULL;
+
     if (value instanceof PsiModifierListOwner) {
-      if (NullableNotNullManager.isNotNull((PsiModifierListOwner)value)) return Nullness.NOT_NULL;
-      if (NullableNotNullManager.isNullable((PsiModifierListOwner)value)) return Nullness.NULLABLE;
+      return NullableNotNullManager.getNullability((PsiModifierListOwner)value);
     }
 
-    if (value instanceof PsiEnumConstant) return Nullness.NOT_NULL;
-    return Nullness.UNKNOWN;
+    return Nullability.UNKNOWN;
   }
 }

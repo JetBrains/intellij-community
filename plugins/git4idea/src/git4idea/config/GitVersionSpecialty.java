@@ -62,21 +62,18 @@ public enum GitVersionSpecialty {
     }
   },
 
+  CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.getType().equals(GitVersion.Type.MSYS) &&
+             version.isLaterOrEqual(new GitVersion(2, 3, 0, 0));
+    }
+  },
+
   STARTED_USING_RAW_BODY_IN_FORMAT {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 7, 2, 0));
-    }
-  },
-
-  /**
-   * Git understands {@code 'git status --porcelain'}.
-   * Since 1.7.0.
-   */
-  KNOWS_STATUS_PORCELAIN {
-    @Override
-    public boolean existsIn(@NotNull GitVersion version) {
-      return version.isLaterOrEqual(new GitVersion(1, 7, 0, 0));
     }
   },
 
@@ -157,6 +154,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 9, 0, 0));
+    }
+  },
+
   FOLLOW_IS_BUGGY_IN_THE_LOG {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
@@ -204,6 +208,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  SUPPORTS_FORCE_PUSH_WITH_LEASE {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 9, 4, 0));
+    }
+  },
+
   INCOMING_OUTGOING_BRANCH_INFO {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
@@ -223,6 +234,13 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 1, 0, 0));
+    }
+  },
+
+  ENV_GIT_OPTIONAL_LOCKS_ALLOWED {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 15, 0, 0));
     }
   },
 

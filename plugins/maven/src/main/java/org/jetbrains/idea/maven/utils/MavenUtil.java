@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -9,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.notification.Notification;
@@ -21,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -43,22 +43,27 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.DisposeAwareRunnable;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.VersionComparatorUtil;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashSet;
 import icons.MavenIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenServerEmbedder;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.xml.sax.Attributes;
@@ -71,6 +76,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -83,8 +89,12 @@ import java.util.zip.CRC32;
 import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
 import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.util.xml.NanoXmlBuilder.stop;
+import static org.jetbrains.idea.maven.server.MavenServerProgressIndicator.DEPENDENCIES_RESOLVE_PREFIX;
 
 public class MavenUtil {
+  @ApiStatus.Experimental
+  public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("MAVEN");
   public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
   public static final String SETTINGS_XML = "settings.xml";
   public static final String DOT_M2_DIR = ".m2";
@@ -98,6 +108,7 @@ public class MavenUtil {
   public static final String LIB_DIR = "lib";
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
+
 
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
@@ -136,7 +147,7 @@ public class MavenUtil {
       r.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(DisposeAwareRunnable.create(r, p), state);
+      ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed());
     }
   }
 
@@ -185,7 +196,7 @@ public class MavenUtil {
     }
   }
 
-  public static void runWhenInitialized(final Project project, final Runnable r) {
+  public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable r) {
     if (project.isDisposed()) return;
 
     if (isNoBackgroundMode()) {
@@ -238,7 +249,7 @@ public class MavenUtil {
   public static VirtualFile findProfilesXmlFile(VirtualFile pomFile) {
     if (pomFile == null) return null;
     VirtualFile parent = pomFile.getParent();
-    if (parent == null) return null;
+    if (parent == null || !parent.isValid()) return null;
     return parent.findChild(MavenConstants.PROFILES_XML);
   }
 
@@ -250,7 +261,7 @@ public class MavenUtil {
     return new File(parent.getPath(), MavenConstants.PROFILES_XML);
   }
 
-  public static <T, U> List<T> collectFirsts(List<Pair<T, U>> pairs) {
+  public static <T, U> List<T> collectFirsts(List<? extends Pair<T, U>> pairs) {
     List<T> result = new ArrayList<>(pairs.size());
     for (Pair<T, ?> each : pairs) {
       result.add(each.first);
@@ -258,7 +269,7 @@ public class MavenUtil {
     return result;
   }
 
-  public static <T, U> List<U> collectSeconds(List<Pair<T, U>> pairs) {
+  public static <T, U> List<U> collectSeconds(List<? extends Pair<T, U>> pairs) {
     List<U> result = new ArrayList<>(pairs.size());
     for (Pair<T, U> each : pairs) {
       result.add(each.second);
@@ -266,11 +277,11 @@ public class MavenUtil {
     return result;
   }
 
-  public static List<String> collectPaths(List<VirtualFile> files) {
+  public static List<String> collectPaths(List<? extends VirtualFile> files) {
     return ContainerUtil.map(files, file -> file.getPath());
   }
 
-  public static List<VirtualFile> collectFiles(Collection<MavenProject> projects) {
+  public static List<VirtualFile> collectFiles(Collection<? extends MavenProject> projects) {
     return ContainerUtil.map(projects, project -> project.getFile());
   }
 
@@ -282,6 +293,7 @@ public class MavenUtil {
     return (collection instanceof Set ? collection : new THashSet<>(collection));
   }
 
+  @NotNull
   public static <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
     return ContainerUtil.map2List(map.entrySet(), tuEntry -> Pair.create(tuEntry.getKey(), tuEntry.getValue()));
   }
@@ -318,7 +330,8 @@ public class MavenUtil {
         VirtualFile modulePath = file.getParent();
         VirtualFile parentModulePath = parentFile.getParent();
 
-        if (!Comparing.equal(modulePath.getParent(), parentModulePath) || !FileUtil.namesEqual(MavenConstants.POM_XML, parentFile.getName())) {
+        if (!Comparing.equal(modulePath.getParent(), parentModulePath) ||
+            !FileUtil.namesEqual(MavenConstants.POM_XML, parentFile.getName())) {
           String relativePath = VfsUtilCore.findRelativePath(file, parentModulePath, '/');
           if (relativePath != null) {
             conditions.setProperty("HAS_RELATIVE_PATH", "true");
@@ -354,7 +367,7 @@ public class MavenUtil {
     Matcher matcher = pattern.matcher(text);
     StringBuffer builder = new StringBuffer();
     while (matcher.find()) {
-      matcher.appendReplacement(builder, "\\$" + matcher.group(1).toUpperCase() + "\\$");
+      matcher.appendReplacement(builder, "\\$" + toUpperCase(matcher.group(1)) + "\\$");
     }
     matcher.appendTail(builder);
     text = builder.toString();
@@ -408,15 +421,17 @@ public class MavenUtil {
     return true;
   }
 
-  public static void run(Project project, String title, final MavenTask task) throws MavenProcessCanceledException {
+  public static void run(Project project, String title, final MavenTask task)
+    throws MavenProcessCanceledException {
     final Exception[] canceledEx = new Exception[1];
     final RuntimeException[] runtimeEx = new RuntimeException[1];
     final Error[] errorEx = new Error[1];
 
     ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
+      @Override
       public void run(@NotNull ProgressIndicator i) {
         try {
-          task.run(new MavenProgressIndicator(i));
+          task.run(new MavenProgressIndicator(i, null));
         }
         catch (MavenProcessCanceledException | ProcessCanceledException e) {
           canceledEx[0] = e;
@@ -440,15 +455,20 @@ public class MavenUtil {
                                                  final String title,
                                                  final boolean cancellable,
                                                  final MavenTask task) {
-    final MavenProgressIndicator indicator = new MavenProgressIndicator();
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+
+    final MavenProgressIndicator indicator = new MavenProgressIndicator(manager::getSyncConsole);
 
     Runnable runnable = () -> {
       if (project.isDisposed()) return;
 
       try {
+        manager.getSyncConsole().startTask(title);
         task.run(indicator);
+        manager.getSyncConsole().completeTask(title);
       }
-      catch (MavenProcessCanceledException | ProcessCanceledException ignore) {
+      catch (MavenProcessCanceledException | ProcessCanceledException e) {
+        manager.getSyncConsole().completeTask(title, e);
         indicator.cancel();
       }
     };
@@ -456,6 +476,7 @@ public class MavenUtil {
     if (isNoBackgroundMode()) {
       runnable.run();
       return new MavenTaskHandler() {
+        @Override
         public void waitFor() {
         }
       };
@@ -463,6 +484,7 @@ public class MavenUtil {
     else {
       final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
       final MavenTaskHandler handler = new MavenTaskHandler() {
+        @Override
         public void waitFor() {
           try {
             future.get();
@@ -475,6 +497,7 @@ public class MavenUtil {
       invokeLater(project, () -> {
         if (future.isDone()) return;
         new Task.Backgroundable(project, title, cancellable) {
+          @Override
           public void run(@NotNull ProgressIndicator i) {
             indicator.setIndicator(i);
             handler.waitFor();
@@ -538,6 +561,23 @@ public class MavenUtil {
     }
 
     return MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3);
+  }
+
+  public static void addEventListener(@NotNull String mavenVersion, @NotNull SimpleJavaParameters params) {
+    if (VersionComparatorUtil.compare(mavenVersion, "3.0.2") < 0) {
+      MavenLog.LOG.warn("Maven version less than 3.0.2 are not correctly displayed in Build Window");
+      return;
+    }
+    String listenerPath = MavenServerManager.getMavenEventListener().getAbsolutePath();
+    String extClassPath = params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH);
+    if (isEmpty(extClassPath)) {
+      params.getVMParametersList()
+        .addProperty(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH, listenerPath);
+    }
+    else {
+      params.getVMParametersList()
+        .addProperty(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH, extClassPath + File.pathSeparatorChar + listenerPath);
+    }
   }
 
   @Nullable
@@ -604,24 +644,30 @@ public class MavenUtil {
 
   @Nullable
   public static String getMavenVersion(@Nullable File mavenHome) {
-    if(mavenHome == null) return null;
+    if (mavenHome == null) return null;
     String[] libs = new File(mavenHome, "lib").list();
+
 
     if (libs != null) {
       for (String lib : libs) {
         File mavenLibFile = new File(mavenHome, "lib/" + lib);
+
         if (lib.equals("maven-core.jar")) {
+          MavenLog.LOG.debug("Choosing version by maven-core.jar");
           return getMavenLibVersion(mavenLibFile);
         }
         if (lib.startsWith("maven-core-") && lib.endsWith(".jar")) {
+          MavenLog.LOG.debug("Choosing version by maven-core.xxx.jar");
           String version = lib.substring("maven-core-".length(), lib.length() - ".jar".length());
           return contains(version, ".x") ? getMavenLibVersion(mavenLibFile) : version;
         }
         if (lib.startsWith("maven-") && lib.endsWith("-uber.jar")) {
+          MavenLog.LOG.debug("Choosing version by maven-xxx-uber.jar");
           return lib.substring("maven-".length(), lib.length() - "-uber.jar".length());
         }
       }
     }
+    MavenLog.LOG.warn("Cannot resolve maven version for " + mavenHome);
     return null;
   }
 
@@ -777,6 +823,29 @@ public class MavenUtil {
     return res;
   }
 
+  public static void notifySyncForUnresolved(@NotNull Project project, @NotNull Collection<MavenProjectReaderResult> results) {
+    Set<MavenId> unresolvedIds = new HashSet<>();
+    for (MavenProjectReaderResult result : results) {
+      if (result.mavenModel.getDependencies() != null) {
+        for (MavenArtifact artifact : result.mavenModel.getDependencies()) {
+          if (!artifact.isResolved()) {
+            unresolvedIds.add(artifact.getMavenId());
+          }
+        }
+      }
+    }
+
+    if (unresolvedIds.isEmpty()) {
+      return;
+    }
+
+    MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
+    for (MavenId id : unresolvedIds) {
+      syncConsole.startTask(DEPENDENCIES_RESOLVE_PREFIX + id.getKey());
+      syncConsole.completeTask(DEPENDENCIES_RESOLVE_PREFIX + id.getKey(), new RuntimeException(id + " not resolved"));
+    }
+  }
+
   public interface MavenTaskHandler {
     void waitFor();
   }
@@ -787,7 +856,7 @@ public class MavenUtil {
 
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.getXMLReader().setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-      parser.parse(in, new DefaultHandler(){
+      parser.parse(in, new DefaultHandler() {
 
         boolean textContentOccur = false;
         int spacesCrc;
@@ -939,6 +1008,10 @@ public class MavenUtil {
     return (V)res;
   }
 
+  public static boolean isMavenModule(@Nullable Module module) {
+    return module != null && MavenProjectsManager.getInstance(module.getProject()).isMavenizedModule(module);
+  }
+
   public static String getArtifactName(String packaging, Module module, boolean exploded) {
     return module.getName() + ":" + packaging + (exploded ? " exploded" : "");
   }
@@ -980,9 +1053,8 @@ public class MavenUtil {
       try {
         try (InputStream in = file.getInputStream()) {
           Ref<Boolean> isPomFile = Ref.create(false);
-          Reader reader = new BufferedReader(new InputStreamReader(in, CharsetToolkit.UTF8_CHARSET));
-          NanoXmlUtil.parse(reader, new NanoXmlUtil.IXMLBuilderAdapter() {
-
+          Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+          NanoXmlUtil.parse(reader, new NanoXmlBuilder() {
             @Override
             public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
               if ("project".equals(name)) {
@@ -1013,5 +1085,33 @@ public class MavenUtil {
   public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @Nullable VirtualFile root) {
     if (root == null) return Stream.empty();
     return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
+  }
+
+  public static void restartConfigHighlightning(Collection<MavenProject> projects) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      FileContentUtilCore.reparseFiles(getConfigFiles(projects));
+    });
+  }
+
+  public static VirtualFile[] getConfigFiles(Collection<MavenProject> projects) {
+    List<VirtualFile> result = new SmartList<>();
+    for (MavenProject project : projects) {
+      VirtualFile file = getConfigFile(project, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+      if (file != null) {
+        result.add(file);
+      }
+    }
+    if (result.isEmpty()) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
+    return result.toArray(VirtualFile.EMPTY_ARRAY);
+  }
+
+  public static VirtualFile getConfigFile(MavenProject mavenProject, String fileRelativePath) {
+    VirtualFile baseDir = VfsUtil.findFileByIoFile(getBaseDir(mavenProject.getDirectoryFile()), false);
+    if (baseDir != null) {
+      return baseDir.findFileByRelativePath(fileRelativePath);
+    }
+    return null;
   }
 }

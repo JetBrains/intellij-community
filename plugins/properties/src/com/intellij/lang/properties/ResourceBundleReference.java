@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -40,6 +41,11 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
     myBundleName = getValue().replace('/', '.');
   }
 
+  public ResourceBundleReference(final PsiElement element, TextRange textRange, boolean soft) {
+    super(element, textRange, soft);
+    myBundleName = getValue().replace('/', '.');
+  }
+
   @Override
   public boolean canResolveTo(Class<? extends PsiElement> elementClass) {
     return ReflectionUtil.isAssignable(PsiFile.class, elementClass);
@@ -67,7 +73,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     if (newElementName.endsWith(PropertiesFileType.DOT_DEFAULT_EXTENSION)) {
       newElementName = newElementName.substring(0, newElementName.lastIndexOf(PropertiesFileType.DOT_DEFAULT_EXTENSION));
     }
@@ -97,7 +103,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
 
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (element instanceof PropertiesFile) {
       final String name = ResourceBundleManager.getInstance(element.getProject()).getFullName((PropertiesFile)element);
       if (name != null && name.equals(myBundleName)) {

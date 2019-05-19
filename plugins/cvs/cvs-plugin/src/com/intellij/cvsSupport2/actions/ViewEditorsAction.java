@@ -37,15 +37,18 @@ import java.util.List;
 public class ViewEditorsAction extends AbstractActionFromEditGroup {
   private EditorsOperation myEditorsOperation;
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.getViewEditorsOperationName();
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     myEditorsOperation = new EditorsOperation(context.getSelectedFiles());
     return new CommandCvsHandler(CvsBundle.getViewEditorsOperationName(), myEditorsOperation);
   }
 
+  @Override
   protected void onActionPerformed(CvsContext context,
                                    CvsTabbedWindow tabbedWindow,
                                    boolean successfully,

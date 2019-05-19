@@ -60,10 +60,12 @@ public class InstanceFilter implements JDOMExternalizable{
     return new InstanceFilter(Long.parseLong(filter.getPattern()), filter.isEnabled());
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }

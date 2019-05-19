@@ -6,9 +6,7 @@ import com.intellij.codeInsight.completion.JavaMethodCallElement
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiCallExpression
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 
 class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   
@@ -17,7 +15,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   }
   
   override fun getHintInfo(element: PsiElement): MethodInfo? {
-    if (element is PsiCallExpression) {
+    if (element is PsiCallExpression && element !is PsiEnumConstant) {
       val resolvedElement = (if(JavaMethodCallElement.isCompletionMode(element)) CompletionMemory.getChosenMethod(element) else null)
                             ?: element.resolveMethodGenerics().element
       if (resolvedElement is PsiMethod) {
@@ -28,7 +26,9 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   }
 
   override fun getParameterHints(element: PsiElement): List<InlayInfo> {
-    if (element is PsiCallExpression) {
+    if (element is PsiCall) {
+      if (element is PsiEnumConstant && !isShowHintsForEnumConstants.get()) return emptyList()
+      if (element is PsiNewExpression && !isShowHintsForNewExpressions.get()) return emptyList()
       return JavaInlayHintsProvider.hints(element).toList()
     }
     return emptyList()
@@ -113,12 +113,27 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
                                                   "Do not show for methods with same-named numbered parameters",
                                                   true)
 
+  val isShowHintWhenExpressionTypeIsClear: Option = Option("java.clear.expression.type",
+                                                           "Show hints even when type of expression is clear",
+                                                           false)
+
+  val isShowHintsForEnumConstants: Option = Option("java.enums",
+                                                           "Show hints for enum constants",
+                                                           true)
+
+  val isShowHintsForNewExpressions: Option = Option("java.new.expr",
+                                                    "Show hints for 'new' expressions",
+                                                    true)
+
   override fun getSupportedOptions(): List<Option> {
     return listOf(
       isDoNotShowIfMethodNameContainsParameterName,
       isShowForParamsWithSameType,
       isDoNotShowForBuilderLikeMethods,
-      ignoreOneCharOneDigitHints
+      ignoreOneCharOneDigitHints,
+      isShowHintWhenExpressionTypeIsClear,
+      isShowHintsForEnumConstants,
+      isShowHintsForNewExpressions
     )
   }
 }

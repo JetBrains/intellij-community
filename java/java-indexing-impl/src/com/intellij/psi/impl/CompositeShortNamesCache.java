@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.Project;
@@ -32,14 +18,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 public class CompositeShortNamesCache extends PsiShortNamesCache {
-  private final PsiShortNamesCache[] myCaches;
+  private final List<PsiShortNamesCache> myCaches;
 
   public CompositeShortNamesCache(Project project) {
-    myCaches = project.isDefault() ? new PsiShortNamesCache[0] : project.getExtensions(PsiShortNamesCache.EP_NAME);
+    myCaches = project.isDefault() ? Collections.emptyList() : PsiShortNamesCache.EP_NAME.getExtensionList(project);
   }
 
   @Override
@@ -96,7 +83,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public boolean processAllClassNames(Processor<String> processor) {
+  public boolean processAllClassNames(@NotNull Processor<String> processor) {
     CommonProcessors.UniqueProcessor<String> uniqueProcessor = new CommonProcessors.UniqueProcessor<>(processor);
     for (PsiShortNamesCache cache : myCaches) {
       if (!cache.processAllClassNames(uniqueProcessor)) {
@@ -107,7 +94,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public boolean processAllClassNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllClassNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     for (PsiShortNamesCache cache : myCaches) {
       if (!cache.processAllClassNames(processor, scope, filter)) {
         return false;
@@ -117,7 +104,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public boolean processAllMethodNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllMethodNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     for (PsiShortNamesCache cache : myCaches) {
       if (!cache.processAllMethodNames(processor, scope, filter)) {
         return false;
@@ -127,7 +114,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public boolean processAllFieldNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllFieldNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     for (PsiShortNamesCache cache : myCaches) {
       if (!cache.processAllFieldNames(processor, scope, filter)) {
         return false;
@@ -290,6 +277,6 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Override
   public String toString() {
-    return "Composite cache: " + Arrays.asList(myCaches);
+    return "Composite cache: " + Collections.singletonList(myCaches);
   }
 }

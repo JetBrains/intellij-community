@@ -36,14 +36,19 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.MultiMap
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.apache.tools.ant.BuildException
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.api.CmdlineRemoteProto
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.build.Standalone
+import org.jetbrains.jps.builders.BuildTarget
+import org.jetbrains.jps.builders.impl.BuildTargetChunk
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.cmdline.JpsModelLoader
 import org.jetbrains.jps.incremental.MessageHandler
@@ -63,6 +68,7 @@ import org.jetbrains.jps.model.module.JpsModule
  */
 @CompileStatic
 class JpsCompilationRunner {
+  private static boolean ourToolsJarAdded
   private final CompilationContext context
   private final JpsCompilationData compilationData
 
@@ -82,6 +88,10 @@ class JpsCompilationRunner {
       }
     }
     runBuild(names, false, [], false, false)
+  }
+
+  void buildModulesWithoutDependencies(Collection<JpsModule> modules, boolean includeTests) {
+    runBuild(modules.collect { it.name }.toSet(), false, [], includeTests, false)
   }
 
   void resolveProjectDependencies() {
@@ -142,6 +152,9 @@ class JpsCompilationRunner {
 
   private void runBuild(final Set<String> modulesSet, final boolean allModules, Collection<String> artifactNames, boolean includeTests,
                         boolean resolveProjectDependencies) {
+    if (context.options.jdkVersion < 9 && (!modulesSet.isEmpty() || allModules)) {
+      addToolsJarToSystemClasspath(context.paths.jdkHome, context.messages)
+    }
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
     final AntMessageHandler messageHandler = new AntMessageHandler()
     AntLoggerFactory.ourMessageHandler = messageHandler
@@ -194,7 +207,7 @@ class JpsCompilationRunner {
         Standalone.runBuild(loader, compilationData.dataStorageRoot, messageHandler, scopes, false)
       }
       catch (Throwable e) {
-        context.messages.error("Compilation failed unexpectedly", e)
+        throw new BuildException("Compilation failed unexpectedly", e)
       }
     }
     if (!messageHandler.errorMessagesByCompiler.isEmpty()) {
@@ -207,6 +220,23 @@ class JpsCompilationRunner {
       context.messages.reportStatisticValue("Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart))
       compilationData.statisticsReported = true
     }
+  }
+
+  /**
+   * Add tools.jar to the system classloader's classpath. {@link javax.tools.ToolProvider} will load javac implementation classes by its own URLClassLoader,
+   * which uses the system classloader as its parent, so we need to ensure that tools.jar will be accessible from the system classloader,
+   * otherwise the loaded classes will be incompatible with the classes loaded by {@link org.jetbrains.jps.javac.ast.JavacReferenceCollectorListener}.
+   */
+  private static void addToolsJarToSystemClasspath(String jdkHome, BuildMessages messages) {
+    if (ourToolsJarAdded) {
+      return
+    }
+    File toolsJar = new File(jdkHome, "lib/tools.jar")
+    if (!toolsJar.exists()) {
+      messages.error("Failed to add tools.jar to classpath: $toolsJar doesn't exist")
+    }
+    BuildUtils.addToSystemClasspath(toolsJar)
+    ourToolsJarAdded = true
   }
 
   private class AntMessageHandler implements MessageHandler {
@@ -259,15 +289,36 @@ class JpsCompilationRunner {
         case BuildMessage.Kind.PROGRESS:
           if (msg instanceof ProgressMessage) {
             progress = ((ProgressMessage)msg).done
+            def currentTargets = getCurrentTargets(msg)
+            if (currentTargets != null) {
+              Collection<? extends BuildTarget<?>> buildTargets = currentTargets.targets as Collection
+              reportProgress(buildTargets, msg.messageText)
+            }
           }
           else if (msg instanceof BuildingTargetProgressMessage && ((BuildingTargetProgressMessage)msg).eventType == BuildingTargetProgressMessage.Event.STARTED) {
             def targets = ((BuildingTargetProgressMessage)msg).targets
-            def targetsString = targets.collect { StringUtil.decapitalize(it.presentableName) }.join(", ")
-            String progressText = progress > 0 ? " (${(int)(100 * progress)}%)" : ""
-            context.messages.progress("Compiling$progressText: $targetsString")
+            reportProgress(targets, "")
           }
           break
       }
+    }
+
+    @CompileDynamic
+    private BuildTargetChunk getCurrentTargets(ProgressMessage msg) {
+      try {
+        msg.currentTargets
+      }
+      catch (MissingPropertyException ignored) {
+        //todo[nik] remove this after we update bootstrap JPS version
+        null
+      }
+    }
+
+    private void reportProgress(Collection<? extends BuildTarget<?>> targets, String targetSpecificMessage) {
+      def targetsString = targets.collect { StringUtil.decapitalize(it.presentableName) }.join(", ")
+      String progressText = progress > 0 ? " (${(int)(100 * progress)}%)" : ""
+      String targetSpecificText = !targetSpecificMessage.isEmpty() ? ", $targetSpecificMessage" : ""
+      context.messages.progress("Compiling$progressText: $targetsString$targetSpecificText")
     }
   }
 

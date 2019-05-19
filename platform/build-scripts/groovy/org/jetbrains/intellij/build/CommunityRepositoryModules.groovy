@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -12,6 +12,10 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
  */
 @CompileStatic
 class CommunityRepositoryModules {
+  /**
+   * @deprecated use {@link ProductModulesLayout#productApiModules} instead of {@link ProductModulesLayout#platformApiModules} to avoid
+   * using this property
+   */
   static List<String> PLATFORM_API_MODULES = [
     "intellij.platform.analysis",
     "intellij.platform.builtInServer",
@@ -41,10 +45,15 @@ class CommunityRepositoryModules {
     "intellij.xml.structureView",
   ]
 
+  /**
+   * @deprecated use {@link ProductModulesLayout#productImplementationModules} instead of {@link ProductModulesLayout#platformImplementationModules}
+   * to avoid using this property
+   */
   static List<String> PLATFORM_IMPLEMENTATION_MODULES = [
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
+    "intellij.platform.util.ex",
     "intellij.platform.credentialStore",
     "intellij.platform.diff.impl",
     "intellij.platform.vcs.dvcs.impl",
@@ -55,6 +64,8 @@ class CommunityRepositoryModules {
     "intellij.platform.lang.impl",
     "intellij.platform.lvcs.impl",
     "intellij.platform.ide.impl",
+    "intellij.platform.objectSerializer",
+    "intellij.platform.objectSerializer.annotations",
     "intellij.platform.projectModel.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
@@ -97,8 +108,8 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
-      withOptionalModule("intellij.platform.remoteServers.git")
-      withOptionalModule("intellij.java.remoteServers.git", "remote-servers-git.jar")
+      withModule("intellij.platform.remoteServers.git")
+      withModule("intellij.java.remoteServers.git", "remote-servers-git.jar")
     },
     plugin("intellij.vcs.cvs") {
       directoryName = "cvsIntegration"
@@ -111,16 +122,17 @@ class CommunityRepositoryModules {
       withModule("intellij.xslt.debugger.rt", "rt/xslt-rt.jar")
     },
     plugin("intellij.platform.langInjection") {
-      withOptionalModule("intellij.java.langInjection", "IntelliLang.jar")
-      withOptionalModule("intellij.xml.langInjection", "IntelliLang.jar")
-      withOptionalModule("intellij.java.langInjection.jps", "intellilang-jps-plugin.jar")
+      withModule("intellij.java.langInjection", "IntelliLang.jar")
+      withModule("intellij.xml.langInjection", "IntelliLang.jar")
+      withModule("intellij.java.langInjection.jps", "intellilang-jps-plugin.jar")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.tasks.core") {
       directoryName = "tasks"
       withModule("intellij.tasks")
+      withModule("intellij.tasks.compatibility")
       withModule("intellij.tasks.jira")
-      withOptionalModule("intellij.tasks.java")
+      withModule("intellij.tasks.java")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.xslt.debugger") {
@@ -128,13 +140,11 @@ class CommunityRepositoryModules {
       withModule("intellij.xslt.debugger.engine.impl", "rt/xslt-debugger-engine-impl.jar")
       withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.engine.impl", "rt")
       withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.engine.impl", "rt")
-      withModuleLibrary("Xalan-2.7.1", "intellij.xslt.debugger.engine.impl", "rt")
+      withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.engine.impl", "rt")
       //todo[nik] unmark 'lib' directory as source root instead
       excludeFromModule("intellij.xslt.debugger.engine.impl", "rmi-stubs.jar")
       excludeFromModule("intellij.xslt.debugger.engine.impl", "saxon.jar")
       excludeFromModule("intellij.xslt.debugger.engine.impl", "saxon9he.jar")
-      excludeFromModule("intellij.xslt.debugger.engine.impl", "serializer.jar")
-      excludeFromModule("intellij.xslt.debugger.engine.impl", "xalan.jar")
     },
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")
@@ -143,27 +153,28 @@ class CommunityRepositoryModules {
       withModule("intellij.maven.server.m3.common")
       withModule("intellij.maven.server.m30.impl")
       withModule("intellij.maven.server.m3.impl")
+      withModule("intellij.maven.server.m36.impl")
+      withModule("intellij.maven.errorProne.compiler")
       withModule("intellij.maven.artifactResolver.m2", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.m3", "artifact-resolver-m3.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m3.jar")
       withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
-      withResource("maven3-server-impl/lib/maven3", "lib/maven3")
+      withArtifact("maven-event-listener", "")
+      withResource("maven36-server-impl/lib/maven3", "lib/maven3")
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")
       withResource("maven2-server-impl/lib/maven2", "lib/maven2")
-      withModuleLibrary("JAXB", "intellij.maven.server.m2.impl", "maven2-server-lib")
       [
-        "activation-1.1.jar",
         "archetype-common-2.0-alpha-4-SNAPSHOT.jar",
         "commons-beanutils.jar",
         "maven-dependency-tree-1.2.jar",
         "mercury-artifact-1.0-alpha-6.jar",
-        "nexus-indexer-1.2.3.jar",
-        "plexus-utils-1.5.5.jar"
+        "nexus-indexer-1.2.3.jar"
       ].each {withResource("maven2-server-impl/lib/$it", "lib/maven2-server-lib")}
       doNotCopyModuleLibrariesAutomatically([
-        "intellij.maven.server.m2.impl", "intellij.maven.server.m3.common", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
+        "intellij.maven.server.m2.impl", "intellij.maven.server.m3.common", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
+        "intellij.maven.server.m2.impl", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
         "intellij.maven.artifactResolver.common", "intellij.maven.artifactResolver.m2", "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31"
       ])
     },
@@ -175,6 +186,14 @@ class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension.impl")
       withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
+    },
+    plugin("intellij.platform.testGuiFramework") {
+      //the plugin is for internal use for now so it shouldn't be published
+      defaultPublishingSpec = PluginPublishingSpec.DO_NOT_UPLOAD_AUTOMATICALLY
+      mainJarName = "testGuiFramework"
+      withModule("intellij.platform.testGuiFramework")
+      withProjectLibrary("fest")
+      withProjectLibrary("fest-swing")
     },
     plugin("intellij.junit") {
       mainJarName = "idea-junit.jar"
@@ -197,7 +216,6 @@ class CommunityRepositoryModules {
       withModule("intellij.eclipse.common")
     },
     plugin("intellij.java.coverage") {
-      withModule("intellij.platform.coverage", mainJarName)
       withModule("intellij.java.coverage.rt")
       withProjectLibrary("JaCoCo") //todo[nik] convert to module library
     },
@@ -206,12 +224,12 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.cucumber.java") {
       withModule("intellij.cucumber.jvmFormatter")
-      withResource("../../community/lib/cucumber-core-1.2.4.jar", "lib")
-      withResource("../../community/lib/gherkin-2.12.2.jar", "lib")
+      withModule("intellij.cucumber.jvmFormatter3")
+      withModule("intellij.cucumber.jvmFormatter4")
+      withProjectLibrary("cucumber-core")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.cucumber.groovy") {
-      withResource("../../community/lib/cucumber-core-1.2.4.jar", "lib")//todo[nik] fix dependencies instead
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.java.decompiler") {
@@ -232,10 +250,11 @@ class CommunityRepositoryModules {
       withModule("intellij.android.smali")
     },
     plugin("intellij.statsCollector") {
+      bundlingRestrictions.includeInEapOnly = true
       withModule("intellij.statsCollector.features", "features.jar")
       withModule("intellij.statsCollector.logEvents")
-      withResource("features/resources", "lib")
-    }
+      withModule("intellij.statsCollector.completionRanker")
+    },
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
@@ -247,7 +266,11 @@ class CommunityRepositoryModules {
       withModule("intellij.android.buildCommon", "build-common.jar", null)
       withModule("intellij.android.rt", "android-rt.jar", null)
 
-      withModule("intellij.android", "android.jar", null)
+      withModule("intellij.android.core", "android.jar", null)
+      withModule("intellij.android.adb", "android.jar")
+      withModule("intellij.android.debuggers", "android.jar")
+      withModule("intellij.android.lang", "android.jar")
+      withModule("intellij.android.plugin", "android.jar")
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
@@ -257,65 +280,73 @@ class CommunityRepositoryModules {
       withModule("intellij.android.wizard", "android.jar")
       withModule("intellij.android.wizard.model", "android.jar")
       withModule("intellij.android.profilersAndroid", "android.jar")
+      withModule("intellij.android.deploy", "android.jar")
       withModule("intellij.android.perfdHost", "android-profilers.jar")
       withModule("intellij.android.profilers", "android-profilers.jar")
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
+      withModule("intellij.android.profilers.atrace", "android-profilers.jar")
+      withModule("intellij.android.nativeSymbolizer", "android.jar")
+      withModule("intellij.android.apkanalyzer", "android.jar")
+      withModule("intellij.android.projectSystem", "android.jar")
+      withModule("intellij.android.projectSystem.gradle", "android.jar")
+      withModule("intellij.android.layoutInspector", "android.jar")
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
-      withModule("intellij.android.sherpaUi", "constraint-layout.jar")
-      withModule("android.sdktools.sdklib", "sdklib.jar")
-      withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
-      withModule("android.sdktools.chunkio", "pixelprobe.jar")
-      withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
 
-      withModule("android.sdktools.binary-resources", "sdk-tools.jar")
-      withModule("android.sdktools.analyzer", "sdk-tools.jar")
       withModule("android.sdktools.dvlib", "sdk-tools.jar")
-      withModule("android.sdktools.draw9patch", "sdk-tools.jar")
-      withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
-      withModule("android.sdktools.instant-run-common", "sdk-tools.jar")
-      withModule("android.sdktools.ninepatch", "sdk-tools.jar")
+      withModule("android.sdktools.deployer", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
+      withModule("android.sdktools.usb-devices", "sdk-tools.jar")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
-      withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
-      withProjectLibrary("jgraphx") //todo[nik] move to module libraries
+      withProjectLibrary("freemarker") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
-      withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
-      withResourceFromModule("intellij.android","lib/antlr4-runtime-4.5.3.jar", "lib")
-      withResourceFromModule("intellij.android","lib/asm-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android","lib/asm-analysis-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android","lib/asm-tree-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android","lib/commons-io-2.4.jar", "lib")
-      withResourceFromModule("intellij.android","lib/commons-compress-1.8.1.jar", "lib")
-      withResourceFromModule("intellij.android","lib/javawriter-2.2.1.jar", "lib")
-      withResourceFromModule("intellij.android","lib/juniversalchardet-1.0.3.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/asm-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/asm-analysis-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/asm-tree-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/commons-compress-1.8.1.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/javawriter-2.2.1.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/android-extensions-ide.jar", "lib")
+      withResourceFromModule("intellij.android.core","lib/android-kotlin.jar", "lib")
 
-      withResourceFromModule("intellij.android","lib/androidWidgets", "lib/androidWidgets")
+      withResourceFromModule("intellij.android.core","lib/androidWidgets", "lib/androidWidgets")
       withResourceFromModule("intellij.android.artwork","resources/device-art-resources", "lib/device-art-resources")
-      withResourceFromModule("intellij.android","lib/sampleData", "lib/sampleData")
+      withResourceFromModule("intellij.android.core","lib/sampleData", "lib/sampleData")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/linux", "lib/libwebp/linux")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/mac", "lib/libwebp/mac")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/win", "lib/libwebp/win")
       withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
 
       // here go some differences from original Android Studio layout
       withResourceFromModule("android.sdktools.layoutlib-resources", ".", "lib/layoutlib") // todo replace this with runtime downloading
       withResourceFromModule("android.sdktools.sdklib", "../templates", "lib/templates")
 
-      // we put it to plugin instead of ide in original Android Studio layout
-      withModule("android.sdktools.common", "android-base-common.jar")
-
       withProjectLibrary("studio-profiler-grpc-1.0-jarjar")
-      withProjectLibrary("archive-patcher")
-      withProjectLibrary("com.android.tools.analytics-library:shared:26.0.0")
-      withProjectLibrary("com.android.tools.analytics-library:tracker:26.0.0")
-      withProjectLibrary("com.android.tools:annotations:26.0.0")
-      withProjectLibrary("com.android.tools:sdk-common:26.0.0")
-      withProjectLibrary("com.android.tools.build:manifest-merger:26.0.0")
-      withProjectLibrary("analytics-protos")
+      withProjectLibrary("com.android.tools.analytics-library:crash")
+      withProjectLibrary("com.android.tools.analytics-library:protos")
+      withProjectLibrary("com.android.tools.analytics-library:shared")
+      withProjectLibrary("com.android.tools.analytics-library:tracker")
+      withProjectLibrary("com.android.tools:annotations")
+      withProjectLibrary("com.android.tools.apkparser:apkanalyzer")
+      withProjectLibrary("com.android.tools.apkparser:binary-resources")
+      withProjectLibrary("com.android.tools.layoutlib:layoutlib-api")
+      withProjectLibrary("com.android.tools.lint:lint-api")
+      withProjectLibrary("com.android.tools.lint:lint-checks")
+      withProjectLibrary("com.android.tools:sdk-common")
+      withProjectLibrary("com.android.tools:sdklib")
+      withProjectLibrary("com.android.tools:common")
+      withProjectLibrary("com.android.tools:repository")
+      withProjectLibrary("com.android.tools:ninepatch")
+      withProjectLibrary("com.android.tools.ddms:ddmlib")
+      withProjectLibrary("com.android.tools.build:manifest-merger")
+      withProjectLibrary("com.android.tools.build:builder-model")
+      withProjectLibrary("com.android.tools.build:builder-test-api")
+      withProjectLibrary("com.android.tools.pixelprobe:pixelprobe")
 
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)

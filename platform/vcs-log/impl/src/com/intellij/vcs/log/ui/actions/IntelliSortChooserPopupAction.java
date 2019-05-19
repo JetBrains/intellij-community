@@ -40,7 +40,7 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
@@ -62,7 +62,7 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     e.getPresentation().setEnabled(properties != null);
@@ -78,9 +78,9 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
     private final VcsLogUi myUI;
     private final VcsLogUiProperties myProperties;
 
-    public SelectIntelliSortTypeAction(@NotNull VcsLogUi ui,
-                                       @NotNull VcsLogUiProperties properties,
-                                       @NotNull PermanentGraph.SortType sortType) {
+    SelectIntelliSortTypeAction(@NotNull VcsLogUi ui,
+                                @NotNull VcsLogUiProperties properties,
+                                @NotNull PermanentGraph.SortType sortType) {
       super(sortType.getName(), sortType.getDescription() + ".", null);
       myUI = ui;
       myProperties = properties;
@@ -94,13 +94,13 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myProperties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
              myProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE).equals(mySortType);
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state && myProperties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
         myProperties.set(MainVcsLogUiProperties.BEK_SORT_TYPE, mySortType);
       }

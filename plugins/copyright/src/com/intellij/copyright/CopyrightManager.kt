@@ -3,6 +3,7 @@ package com.intellij.copyright
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -26,8 +27,6 @@ import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.util.attribute
-import com.intellij.util.element
 import com.maddyhome.idea.copyright.CopyrightProfile
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor
 import com.maddyhome.idea.copyright.options.LanguageOptions
@@ -51,7 +50,7 @@ private val LOG = Logger.getInstance(CopyrightManager::class.java)
 class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): CopyrightManager = project.service<CopyrightManager>()
+    fun getInstance(project: Project) = project.service<CopyrightManager>()
   }
 
   private var defaultCopyrightName: String? = null
@@ -62,8 +61,8 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
       defaultCopyrightName = value?.name
     }
 
-  val scopeToCopyright: LinkedHashMap<String, String> = LinkedHashMap<String, String>()
-  val options: Options = Options()
+  val scopeToCopyright = LinkedHashMap<String, String>()
+  val options = Options()
 
   private val schemeWriter = { scheme: CopyrightProfile ->
     val element = scheme.writeScheme()
@@ -75,7 +74,7 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
   private val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                               name: String,
-                              attributeProvider: Function<String, String?>,
+                              attributeProvider: Function<in String, String?>,
                               isBundled: Boolean): SchemeWrapper<CopyrightProfile> {
       return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
     }
@@ -125,9 +124,11 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
       if (!scopeToCopyright.isEmpty()) {
         val map = Element(MODULE_TO_COPYRIGHT)
         for ((scopeName, profileName) in scopeToCopyright) {
-          map.element(ELEMENT)
-              .attribute(MODULE, scopeName)
-              .attribute(COPYRIGHT, profileName)
+          val e = Element(ELEMENT)
+          e
+            .setAttribute(MODULE, scopeName)
+            .setAttribute(COPYRIGHT, profileName)
+          map.addContent(e)
         }
         result.addContent(map)
       }
@@ -227,9 +228,9 @@ private class CopyrightManagerPostStartupActivity : StartupActivity {
           return
         }
 
-        ApplicationManager.getApplication().invokeLater(Runnable {
+        AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).execute {
           if (!virtualFile.isValid) {
-            return@Runnable
+            return@execute
           }
 
           val file = PsiManager.getInstance(project).findFile(virtualFile)
@@ -238,7 +239,7 @@ private class CopyrightManagerPostStartupActivity : StartupActivity {
               UpdateCopyrightProcessor(project, module, file).run()
             }
           }
-        }, ModalityState.NON_MODAL, project.disposed)
+        }
       }
     }, project)
   }
@@ -246,7 +247,7 @@ private class CopyrightManagerPostStartupActivity : StartupActivity {
 
 private fun wrapScheme(element: Element): Element {
   val wrapper = Element("component")
-      .attribute("name", "CopyrightManager")
+      .setAttribute("name", "CopyrightManager")
   wrapper.addContent(element)
   return wrapper
 }

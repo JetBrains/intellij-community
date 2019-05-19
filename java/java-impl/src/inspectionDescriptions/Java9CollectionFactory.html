@@ -1,7 +1,7 @@
 <html>
 <body>
 This inspection helps to convert unmodifiable collections created before Java 9 to new collection factory methods
-like <code>List.of</code> or <code>Set.of</code>.
+like <code>List.of</code> or <code>Set.of</code>. Also since Java 10 the conversion to <code>List.copyOf</code>, etc. could be suggested.
 <!-- tooltip end -->
 <p>Note that Java 9 collection factory methods do not accept null values. Also set elements and map keys are required to be different.
 It's not always possible to statically check whether original elements are different and not null. Using the checkbox you may enforce

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -80,7 +66,7 @@ public class ExtractLightMethodObjectHandler {
   public static ExtractedData extractLightMethodObject(final Project project,
                                                        @Nullable PsiElement originalContext,
                                                        @NotNull final PsiCodeFragment fragment,
-                                                       final String methodName,
+                                                       @NotNull String methodName,
                                                        @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
@@ -241,6 +227,11 @@ public class ExtractLightMethodObjectHandler {
       }
 
       @Override
+      protected PsiElement addInnerClass(PsiClass containingClass, PsiClass innerClass) {
+        return containingClass.addBefore(innerClass, containingClass.getLastChild());
+      }
+
+      @Override
       protected boolean isFoldingApplicable() {
         return false;
       }
@@ -325,13 +316,15 @@ public class ExtractLightMethodObjectHandler {
 
   private static class LightExtractMethodObjectDialog implements AbstractExtractDialog {
     private final ExtractMethodObjectProcessor myProcessor;
+    @NotNull
     private final String myMethodName;
 
-    public LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, String methodName) {
+    LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, @NotNull String methodName) {
       myProcessor = processor;
       myMethodName = methodName;
     }
 
+    @NotNull
     @Override
     public String getChosenMethodName() {
       return myMethodName;

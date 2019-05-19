@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.mvc;
 
@@ -40,6 +40,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -271,7 +272,7 @@ public abstract class MvcFramework {
   }
 
   public PathsList getApplicationClassPath(Module module) {
-    final List<VirtualFile> classPath = ContainerUtil.newArrayList();
+    final List<VirtualFile> classPath = new ArrayList<>();
     classPath.addAll(OrderEnumerator.orderEntries(module).recursively().withoutSdk().getPathsList().getVirtualFiles());
 
     retainOnlyJarsAndDirectories(classPath);
@@ -329,7 +330,7 @@ public abstract class MvcFramework {
     }
 
     final ConfigurationFactory factory = configurationType.getConfigurationFactories()[0];
-    final RunnerAndConfigurationSettings runSettings = runManager.createRunConfiguration(name,
+    final RunnerAndConfigurationSettings runSettings = runManager.createConfiguration(name,
                                                                                                                                  factory);
     final MvcRunConfiguration configuration = (MvcRunConfiguration)runSettings.getConfiguration();
     configuration.setModule(module);
@@ -519,7 +520,7 @@ public abstract class MvcFramework {
 
   public abstract String getSomeFrameworkClass();
 
-  public static void addAvailableSystemScripts(final Collection<String> result, @NotNull Module module) {
+  public static void addAvailableSystemScripts(final Collection<? super String> result, @NotNull Module module) {
     VirtualFile scriptRoot = null;
 
     GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
@@ -556,7 +557,7 @@ public abstract class MvcFramework {
 
   public abstract boolean isToReformatOnCreation(VirtualFile file);
 
-  public static void addAvailableScripts(final Collection<String> result, @Nullable final VirtualFile root) {
+  public static void addAvailableScripts(final Collection<? super String> result, @Nullable final VirtualFile root) {
     if (root == null || !root.isDirectory()) {
       return;
     }
@@ -621,6 +622,7 @@ public abstract class MvcFramework {
 
   public boolean isRunTargetActionSupported(Module module) { return false; }
 
+  @Contract("null -> null")
   @Nullable
   public static MvcFramework getInstance(@Nullable final Module module) {
     if (module == null) {

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -121,8 +122,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "manual.array.to.collection.copy.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Collections.addAll(...,...)");
     }
 
     @Override
@@ -283,7 +283,8 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(((PsiExpressionStatement)body).getExpression());
       if (!(expression instanceof PsiMethodCallExpression)) return null;
       final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      return ExpressionUtils.getQualifierOrThis(call.getMethodExpression()).getText();
+      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+      return qualifier != null ? qualifier.getText() : null;
     }
 
     @Nullable
@@ -590,8 +591,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
           return false;
         }
       }
-      else if (!VariableAccessUtils.evaluatesToVariable(argument,
-                                                        variable)) {
+      else if (!ExpressionUtils.isReferenceTo(argument, variable)) {
         return false;
       }
       final PsiMethod method = methodCallExpression.resolveMethod();

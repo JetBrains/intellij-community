@@ -2,7 +2,8 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('code:')
+        PsiElement(scalar key)('code')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
         YAML plain scalar text
@@ -12,7 +13,8 @@ YAML file
           PsiElement(text)('mode=0600')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('with_items:')
+        PsiElement(scalar key)('with_items')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
         YAML sequence

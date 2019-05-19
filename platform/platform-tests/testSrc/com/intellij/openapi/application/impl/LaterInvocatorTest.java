@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.Application;
@@ -26,7 +12,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.*;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +25,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotEquals;
 
 @SuppressWarnings({"SSBasedInspection", "SynchronizeOnThis"})
 @SkipInHeadlessEnvironment
@@ -97,7 +86,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   }
 
   @Override
-  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
+  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     runnable.run();
   }
 
@@ -214,7 +203,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
         LaterInvocator.invokeLater(new Runnable() {
           @Override
           public void run() {
-            TestCase.assertTrue(!LaterInvocator.isInModalContext());
+            assertFalse(LaterInvocator.isInModalContext());
           }
 
           public String toString() {
@@ -240,10 +229,9 @@ public class LaterInvocatorTest extends PlatformTestCase {
 
         SwingUtilities.invokeLater(LEAVE_MODAL);
         flushSwingQueue();
-        TestCase.assertTrue(!LaterInvocator.isInModalContext());
+        assertFalse(LaterInvocator.isInModalContext());
 
         checkOrder(1);
-
 
         LaterInvocator.leaveAllModals();
         myOrder.clear();
@@ -448,15 +436,16 @@ public class LaterInvocatorTest extends PlatformTestCase {
       }
     }
 
+    @Override
     public String toString() {
-      return "myrun " + myId;
+      return "run #" + myId;
     }
   }
 
   private static class Lock implements Runnable {
     private final Object myLock;
 
-    public Lock(Object lock) {
+    Lock(Object lock) {
       myLock = lock;
     }
 
@@ -556,7 +545,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
       fail("should fail");
     }
     catch (ExecutionException e) {
-      assertTrue(e.getMessage(), e.getMessage().contains("Access is allowed from event dispatch thread only"));
+      assertThat(e.getMessage()).contains("EventQueue.isDispatchThread()=false");
     }
   }
 
@@ -589,14 +578,19 @@ public class LaterInvocatorTest extends PlatformTestCase {
 
   }
 
+  @SuppressWarnings("StringOperationCanBeSimplified")
   public void testDifferentStatesAreNotEqualAfterGc() {
-    ModalityStateEx state1 = new ModalityStateEx("common", new String("foo"));
-    ModalityStateEx state2 = new ModalityStateEx("common", new String("bar"));
-    
-    assertFalse(state1.equals(state2));
+    String s1 = new String("foo");
+    String s2 = new String("bar");
+    ModalityStateEx state1 = new ModalityStateEx("common", s1);
+    ModalityStateEx state2 = new ModalityStateEx("common", s2);
+    assertNotEquals(state1, state2);
 
-    GCUtil.tryGcSoftlyReachableObjects();
-    assertFalse(state1.equals(state2));
+    GCWatcher watcher = GCWatcher.tracking(s1, s2);
+    //noinspection UnusedAssignment
+    s1 = s2 = null;
+    watcher.tryGc();
+    assertNotEquals(state1, state2);
   }
 
   public void testStateForComponentIdentity() {
@@ -616,7 +610,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   }
 
   public void testProgressModality() {
-    ApplicationManager.getApplication().invokeAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(myProject, "", false) {
+    ApplicationManager.getApplication().invokeAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(getProject(), "", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         ModalityState state = indicator.getModalityState();

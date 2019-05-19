@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "not": {
+    "properties": {
+      "a": {
+        "type": "number"
+      }
+    },
+    "patternProperties": {
+      "x": {
+        "type": "number"
+      }
+    }
+  }
+}
+

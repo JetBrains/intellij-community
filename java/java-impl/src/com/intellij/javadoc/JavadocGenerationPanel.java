@@ -56,6 +56,7 @@ final class JavadocGenerationPanel extends JPanel {
 
     myIndex.addChangeListener(
       new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           mySeparateIndex.setEnabled(myIndex.isSelected());
         }
@@ -64,6 +65,7 @@ final class JavadocGenerationPanel extends JPanel {
 
       myTagDeprecated.addChangeListener(
       new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           myDeprecatedList.setEnabled(myTagDeprecated.isSelected());
         }
@@ -86,6 +88,7 @@ final class JavadocGenerationPanel extends JPanel {
     myScopeSlider.setPaintLabels(true);
     myScopeSlider.setSnapToTicks(true);
     myScopeSlider.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         handleSlider();
       }

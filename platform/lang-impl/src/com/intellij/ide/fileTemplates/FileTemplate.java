@@ -38,6 +38,9 @@ public interface FileTemplate extends Cloneable {
   String ATTRIBUTE_DESCRIPTION = "DESCRIPTION";
   String ATTRIBUTE_DISPLAY_NAME = "DISPLAY_NAME";
 
+  String ATTRIBUTE_EXPRESSION = "EXPRESSION";
+  String ATTRIBUTE_EXPRESSION_TYPE = "EXPRESSION_TYPE";
+
   String ATTRIBUTE_RETURN_TYPE = "RETURN_TYPE";
   String ATTRIBUTE_DEFAULT_RETURN_VALUE = "DEFAULT_RETURN_VALUE";
   String ATTRIBUTE_CALL_SUPER = "CALL_SUPER";
@@ -94,5 +97,5 @@ public interface FileTemplate extends Cloneable {
   FileTemplate clone();
 
   @NotNull
-  String[] getUnsetAttributes(@NotNull Properties properties, Project project) throws ParseException;
+  String[] getUnsetAttributes(@NotNull Properties properties, @NotNull Project project) throws ParseException;
 }

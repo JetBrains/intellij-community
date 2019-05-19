@@ -11,6 +11,13 @@ class RedudantFieldInitialization {
   private String s = "";
   private short h = 1;
 
+  private int pi = <warning descr="Field initialization to '(0)' is redundant">(0)</warning>;
+  private float pf = <warning descr="Field initialization to '(0.0f)' is redundant">(0.0f)</warning>;
+  private double pd = <warning descr="Field initialization to '(0.0)' is redundant">(0.0)</warning>;
+  private boolean pe = <warning descr="Field initialization to '((false))' is redundant">((false))</warning>;
+  private byte pb = <warning descr="Field initialization to '((0))' is redundant">((0))</warning>;
+  private Object po = <warning descr="Field initialization to '((null))' is redundant">((null))</warning>;
+
   public static final int DEFAULT_TYPE = 0;
   private int type = DEFAULT_TYPE;
   private int type2 = ((DEFAULT_TYPE) + 0);

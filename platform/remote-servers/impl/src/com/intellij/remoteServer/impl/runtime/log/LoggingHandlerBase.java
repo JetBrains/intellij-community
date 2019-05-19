@@ -33,7 +33,13 @@ public abstract class LoggingHandlerBase implements Disposable {
 
   public abstract JComponent getComponent();
 
+  public JComponent getPreferredFocusableComponent() {
+    return getComponent();
+  }
+
   public abstract boolean isClosed();
+
+  public abstract void close();
 
   @Override
   public void dispose() {

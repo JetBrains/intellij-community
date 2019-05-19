@@ -16,10 +16,9 @@
 package git4idea.rebase;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Locale;
 
 /**
  * The entry for rebase editor
@@ -49,11 +48,11 @@ class GitRebaseEntry {
    * @param commit  the commit hash
    * @param subject the commit subject
    */
-  public GitRebaseEntry(String action, final String commit, final String subject) {
+  GitRebaseEntry(String action, final String commit, final String subject) {
     this(Action.fromString(action), commit, subject);
   }
 
-  public GitRebaseEntry(Action action, String commit, String subject) {
+  GitRebaseEntry(Action action, String commit, String subject) {
     myCommit = commit;
     mySubject = subject;
     myAction = action;
@@ -139,7 +138,7 @@ class GitRebaseEntry {
     @NotNull
     static Action fromString(@NonNls @NotNull String actionName) {
       try {
-        return valueOf(actionName.toUpperCase(Locale.ENGLISH));
+        return valueOf(StringUtil.toUpperCase(actionName));
       }
       catch (IllegalArgumentException e) {
         log.error(e);

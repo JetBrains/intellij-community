@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -26,19 +12,18 @@ import com.intellij.openapi.externalSystem.service.execution.TaskCompletionProvi
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TextAccessor;
-import com.intellij.util.containers.ContainerUtil;
 import icons.ExternalSystemIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/25/2014
  */
 public class GradleArgumentsCompletionProvider extends TaskCompletionProvider {
 
@@ -46,6 +31,7 @@ public class GradleArgumentsCompletionProvider extends TaskCompletionProvider {
     super(project, GradleConstants.SYSTEM_ID, workDirectoryField, GradleCommandLineOptionsProvider.getSupportedOptions());
   }
 
+  @Override
   protected List<LookupElement> getVariants(@NotNull final DataNode<ProjectData> projectDataNode, @NotNull final String modulePath) {
     final DataNode<ModuleData> moduleDataNode = findModuleDataNode(projectDataNode, modulePath);
     if (moduleDataNode == null) {
@@ -55,7 +41,7 @@ public class GradleArgumentsCompletionProvider extends TaskCompletionProvider {
     final ModuleData moduleData = moduleDataNode.getData();
     final boolean isRoot = projectDataNode.getData().getLinkedExternalProjectPath().equals(moduleData.getLinkedExternalProjectPath());
     final Collection<DataNode<TaskData>> tasks = ExternalSystemApiUtil.getChildren(moduleDataNode, ProjectKeys.TASK);
-    List<LookupElement> elements = ContainerUtil.newArrayListWithCapacity(tasks.size());
+    List<LookupElement> elements = new ArrayList<>(tasks.size());
 
     for (DataNode<TaskData> taskDataNode : tasks) {
       final TaskData taskData = taskDataNode.getData();

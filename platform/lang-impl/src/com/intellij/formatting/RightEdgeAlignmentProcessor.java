@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * {@link Alignment.Anchor#RIGHT anchors to the right block edge}.
  * 
  * @author Denis Zhdanov
- * @since 4/28/11 4:06 PM
  */
 public class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor {
 

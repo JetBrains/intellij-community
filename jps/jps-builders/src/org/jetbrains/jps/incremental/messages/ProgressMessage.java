@@ -15,19 +15,32 @@
  */
 package org.jetbrains.jps.incremental.messages;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.impl.BuildTargetChunk;
+
 /**
  * @author Eugene Zhuravlev
  */
 public class ProgressMessage extends BuildMessage {
   private volatile float myDone;
+  private final BuildTargetChunk myCurrentTargets;
+
+  public ProgressMessage(String messageText, BuildTargetChunk currentTargets) {
+    this(messageText, -1.0f, currentTargets);
+  }
 
   public ProgressMessage(String messageText) {
     this(messageText, -1.0f);
   }
 
   public ProgressMessage(String messageText, float done) {
+    this(messageText, done, null);
+  }
+
+  private ProgressMessage(String messageText, float done, BuildTargetChunk currentTargets) {
     super(messageText, Kind.PROGRESS);
     myDone = done;
+    myCurrentTargets = currentTargets;
   }
 
   public float getDone() {
@@ -36,5 +49,14 @@ public class ProgressMessage extends BuildMessage {
 
   public void setDone(float done) {
     myDone = done;
+  }
+
+  /**
+   * If this message reports a progress of building some build target (or set of build targets), returns the corresponding {@link BuildTargetChunk}.
+   * If this message is about the build process itself, returns {@code null}.
+   */
+  @Nullable
+  public BuildTargetChunk getCurrentTargets() {
+    return myCurrentTargets;
   }
 }

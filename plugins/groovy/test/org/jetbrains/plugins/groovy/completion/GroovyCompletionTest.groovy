@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.application.options.CodeStyle
@@ -10,7 +9,6 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
-import com.intellij.idea.Bombed
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
@@ -36,6 +34,7 @@ class GroovyCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected void tearDown() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    CodeInsightSettings.instance.AUTOCOMPLETE_ON_CODE_COMPLETION = true
     super.tearDown()
   }
 
@@ -930,7 +929,6 @@ class Instantiation {}
     assertEquals 'instanceof', myFixture.lookupElementStrings[0]
   }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testForFinal() {
     assert doContainsTest('final', '''
 class Fopppp {
@@ -1069,6 +1067,10 @@ class X {
   }
 
   void testClassNameBeforeParentheses() {
+    doBasicTest()
+  }
+
+  void testClassNameBeforeParentheses2() {
     doBasicTest()
   }
 
@@ -1220,7 +1222,6 @@ new Base().fie<caret>x''')
     assert myFixture.lookupElementStrings == ['field1']
   }
 
-  @Bombed(month = 6, day = 10, user = "daniil")
   void testForIn() {
     assert doContainsTest('in', 'for (int i i<caret>')
     assert doContainsTest('in', 'for (i i<caret>')
@@ -1950,5 +1951,21 @@ class C implements T<String> {
     configure('new U<caret>x')
     myFixture.completeBasic()
     assert myFixture.lookupElements[0].object == uClass
+  }
+
+  void "test after new editing prefix back and forth when sometimes there are expected type suggestions and sometimes not"() {
+    CodeInsightSettings.instance.AUTOCOMPLETE_ON_CODE_COMPLETION = false
+
+    myFixture.addClass("class Super {}")
+    myFixture.addClass("class Sub extends Super {}")
+    myFixture.addClass("package foo; public class SubOther {}")
+    myFixture.configureByText('a.groovy', "Super s = new SubO<caret>")
+
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'SubOther'
+    myFixture.type('\b')
+    myFixture.assertPreferredCompletionItems 0, 'Sub'
+    myFixture.type('O')
+    myFixture.assertPreferredCompletionItems 0, 'SubOther'
   }
 }

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectAndLibrariesScope;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +24,7 @@ public class ScratchesSearchScope extends GlobalSearchScope {
 
   private final ScratchFileService myService;
 
-  public ScratchesSearchScope(@NotNull Project project, @NotNull ScratchFileService service) {
+  private ScratchesSearchScope(@NotNull Project project, @NotNull ScratchFileService service) {
     super(project);
     myService = service;
   }
@@ -48,11 +47,6 @@ public class ScratchesSearchScope extends GlobalSearchScope {
   }
 
   @Override
-  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return 0;
-  }
-
-  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return false;
   }
@@ -60,13 +54,6 @@ public class ScratchesSearchScope extends GlobalSearchScope {
   @Override
   public boolean isSearchInLibraries() {
     return false;
-  }
-
-  @NotNull
-  @Override
-  public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
-    if (scope instanceof ProjectAndLibrariesScope) return this;
-    return super.intersectWith(scope);
   }
 
   @Override

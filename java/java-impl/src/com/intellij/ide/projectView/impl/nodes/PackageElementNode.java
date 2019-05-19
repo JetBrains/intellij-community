@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -23,17 +24,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PackageElementNode extends ProjectViewNode<PackageElement> {
+public class PackageElementNode extends ProjectViewNode<PackageElement> implements ValidateableNode {
   public PackageElementNode(@NotNull Project project,
-                            final PackageElement value,
+                            @NotNull PackageElement value,
                             final ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public PackageElementNode(@NotNull Project project,
-                            final Object value,
-                            final ViewSettings viewSettings) {
-    this(project, (PackageElement)value, viewSettings);
   }
 
   @Override
@@ -55,9 +50,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     if (module == null) {
       return ModuleUtilCore.projectContainsFile(getProject(), file, isLibraryElement());
     }
-    else {
-      return ModuleUtilCore.moduleContainsFile(module, file, isLibraryElement());
-    }
+    return ModuleUtilCore.moduleContainsFile(module, file, isLibraryElement());
   }
 
   private boolean isLibraryElement() {
@@ -94,14 +87,23 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
   @Override
   public boolean validate() {
-    PackageElement value = getValue();
-    return value != null && value.getPackage().isValid() && (value.getModule() == null || !value.getModule().isDisposed());
+    return super.validate() && isValid();
   }
 
   @Override
-  protected void update(final PresentationData presentation) {
+  public boolean isValid() {
+    PackageElement value = getValue();
+    if (value != null && value.getPackage().isValid()) {
+      Module module = value.getModule();
+      return module == null || !module.isDisposed();
+    }
+    return false;
+  }
+
+  @Override
+  protected void update(@NotNull final PresentationData presentation) {
     try {
-      if (validate()) {
+      if (isValid()) {
         updateValidData(presentation, getValue());
         return;
       }
@@ -120,14 +122,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
       return;
     }
 
-    PsiPackage parentPackage;
-    Object parentValue = getParentValue();
-    if (parentValue instanceof PackageElement) {
-      parentPackage = ((PackageElement)parentValue).getPackage();
-    }
-    else {
-      parentPackage = null;
-    }
+    PsiPackage parentPackage = getParentPackage();
     String qName = aPackage.getQualifiedName();
     String name = PackageUtil.getNodeName(getSettings(), aPackage,parentPackage, qName, showFQName(aPackage));
     presentation.setPresentableText(name);
@@ -183,9 +178,28 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     }
     if (element instanceof PsiDirectory) {
       final PsiDirectory directory = (PsiDirectory)element;
-      return Arrays.asList(value.getPackage().getDirectories()).contains(directory);
+      return isPackageUnderDirectory(value, directory.getVirtualFile());
+    }
+    if (element instanceof VirtualFile) {
+      VirtualFile file = (VirtualFile)element;
+      if (file.isDirectory()) return isPackageUnderDirectory(value, file);
     }
     return false;
+  }
+
+  private boolean isPackageUnderDirectory(@NotNull PackageElement element, @NotNull VirtualFile file) {
+    PsiPackage parent = getParentPackage();
+    for (PsiPackage p = element.getPackage(); p != null && !p.equals(parent); p = p.getParentPackage()) {
+      for (PsiDirectory directory : p.getDirectories()) {
+        if (directory.getVirtualFile().equals(file)) return true;
+      }
+    }
+    return false;
+  }
+
+  private PsiPackage getParentPackage() {
+    Object value = getParentValue();
+    return value instanceof PackageElement ? ((PackageElement)value).getPackage() : null;
   }
 
   @Override

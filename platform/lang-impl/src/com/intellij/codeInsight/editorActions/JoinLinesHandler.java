@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -28,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -56,9 +41,14 @@ public class JoinLinesHandler extends EditorActionHandler {
 
   @NotNull
   private static TextRange findStartAndEnd(@NotNull CharSequence text, int start, int end, int maxoffset) {
-    while (start > 0 && (text.charAt(start) == ' ' || text.charAt(start) == '\t')) start--;
-    while (end < maxoffset && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
+    while (start > 0 && isSpaceOrTab(text, start)) start--;
+    while (end < maxoffset && isSpaceOrTab(text, end)) end++;
     return new TextRange(start, end);
+  }
+
+  private static boolean isSpaceOrTab(@NotNull CharSequence text, int index) {
+    char c = text.charAt(index);
+    return c == ' ' || c == '\t';
   }
 
   @Override
@@ -103,11 +93,16 @@ public class JoinLinesHandler extends EditorActionHandler {
         Ref<Integer> caretRestoreOffset = new Ref<>(-1);
         CodeEditUtil.setNodeReformatStrategy(node -> node.getTextRange().getStartOffset() >= startReformatOffset);
         try {
-          for (int count = 0; count < lineCount; count++) {
+          int count = 0;
+          while (count < lineCount) {
             indicator.checkCanceled();
             indicator.setFraction(((double)count) / lineCount);
+            int beforeLines = doc.getLineCount();
             ProgressManager.getInstance().executeNonCancelableSection(
               () -> doJoinTwoLines(doc, project, docManager, psiFile, line, caretRestoreOffset));
+            int afterLines = doc.getLineCount();
+            // Single Join two lines procedure could join more than two (e.g. if it removes braces)
+            count += Math.max(beforeLines - afterLines, 1);
           }
         }
         finally {
@@ -154,11 +149,11 @@ public class JoinLinesHandler extends EditorActionHandler {
     int end = limits.getEndOffset();
     // run raw joiners
     int rc = -1;
-    for (JoinLinesHandlerDelegate delegate: Extensions.getExtensions(JoinLinesHandlerDelegate.EP_NAME)) {
+    for (JoinLinesHandlerDelegate delegate: JoinLinesHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate instanceof JoinRawLinesHandlerDelegate) {
         rc = ((JoinRawLinesHandlerDelegate)delegate).tryJoinRawLines(doc, psiFile, start, end);
         if (rc != CANNOT_JOIN) {
-          caretRestoreOffset.set(rc);
+          caretRestoreOffset.set(checkOffset(rc, delegate, doc));
           break;
         }
       }
@@ -192,17 +187,21 @@ public class JoinLinesHandler extends EditorActionHandler {
       // Check if we're joining splitted string literal.
       docManager.commitDocument(doc);
 
-      for(JoinLinesHandlerDelegate delegate: Extensions.getExtensions(JoinLinesHandlerDelegate.EP_NAME)) {
-        rc = delegate.tryJoinLines(doc, psiFile, start, end);
+      for(JoinLinesHandlerDelegate delegate: JoinLinesHandlerDelegate.EP_NAME.getExtensionList()) {
+        rc = checkOffset(delegate.tryJoinLines(doc, psiFile, start, end), delegate, doc);
         if (rc != CANNOT_JOIN) break;
       }
     }
-    docManager.doPostponedOperationsAndUnblockDocument(doc);
 
     if (rc != CANNOT_JOIN) {
-      if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(rc);
+      RangeMarker marker = doc.createRangeMarker(rc, rc);
+      docManager.doPostponedOperationsAndUnblockDocument(doc);
+      if (caretRestoreOffset.get() == CANNOT_JOIN && marker.isValid()) {
+        caretRestoreOffset.set(marker.getStartOffset());
+      }
       return;
     }
+    docManager.doPostponedOperationsAndUnblockDocument(doc);
 
     int replaceStart = start == offsets.lineEndOffset ? start : start + 1;
     if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(replaceStart);
@@ -212,21 +211,21 @@ public class JoinLinesHandler extends EditorActionHandler {
       boolean adjacentLineComments = false;
       if (text.charAt(end) == '*' && end < text.length() && text.charAt(end + 1) != '/') {
         end++;
-        while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
+        while (end < doc.getTextLength() && isSpaceOrTab(text, end)) end++;
       }
       else if (!offsets.isJoiningSameComment() &&
                !(replaceStart >= 2 && text.charAt(replaceStart - 2) == '*' && text.charAt(replaceStart - 1) == '/') &&
                text.charAt(end) == '/' && end + 1 < text.length() && text.charAt(end + 1) == '/') {
         adjacentLineComments = true;
         end += 2;
-        while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
+        while (end < doc.getTextLength() && isSpaceOrTab(text, end)) end++;
       }
 
       doc.replaceString(replaceStart, end, adjacentLineComments || offsets.isJoiningSameComment() ? " " : "");
       return;
     }
 
-    while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
+    while (end < doc.getTextLength() && isSpaceOrTab(text, end)) end++;
 
     int spacesToCreate = CodeStyleManager.getInstance(project).getSpacing(psiFile, end);
     if (spacesToCreate < 0) spacesToCreate = 1;
@@ -246,6 +245,19 @@ public class JoinLinesHandler extends EditorActionHandler {
     }
 
     docManager.commitDocument(doc);
+  }
+
+  private static int checkOffset(int offset, JoinLinesHandlerDelegate delegate, DocumentEx doc) {
+    if (offset == CANNOT_JOIN) return offset;
+    if (offset < 0) {
+      LOG.error("Handler returned negative offset: handler class="+delegate.getClass()+"; offset="+offset);
+      return 0;
+    } else if (offset > doc.getTextLength()) {
+      LOG.error("Handler returned an offset which exceeds the document length: handler class=" + delegate.getClass() + 
+                "; offset=" + offset + "; length=" + doc.getTextLength());
+      return doc.getTextLength();
+    }
+    return offset;
   }
 
   private static class JoinLinesOffsets {
@@ -274,8 +286,7 @@ public class JoinLinesHandler extends EditorActionHandler {
     offsets.commentAtLineStart = getCommentElement(elementAtNextLineStart);
 
     offsets.lastNonSpaceOffsetInStartLine = offsets.lineEndOffset;
-    while (offsets.lastNonSpaceOffsetInStartLine > 0 &&
-           (text.charAt(offsets.lastNonSpaceOffsetInStartLine - 1) == ' ' || text.charAt(offsets.lastNonSpaceOffsetInStartLine - 1) == '\t')) {
+    while (offsets.lastNonSpaceOffsetInStartLine > 0 && isSpaceOrTab(text, offsets.lastNonSpaceOffsetInStartLine - 1)) {
       offsets.lastNonSpaceOffsetInStartLine--;
     }
     int elemOffset = offsets.lastNonSpaceOffsetInStartLine > doc.getLineStartOffset(startLine) ? offsets.lastNonSpaceOffsetInStartLine - 1 : -1;

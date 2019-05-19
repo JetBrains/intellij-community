@@ -15,7 +15,6 @@ import org.gradle.launcher.daemon.registry.DaemonStopEvent;
 import org.gradle.launcher.daemon.registry.DaemonStopEvents;
 import org.gradle.launcher.daemon.server.expiry.DaemonExpirationStatus;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -45,9 +44,9 @@ public class DaemonStatusAction extends DaemonAction {
     private final IdGenerator<?> idGenerator;
     private final ReportStatusDispatcher reportStatusDispatcher;
 
-    public ReportDaemonStatusClient(DaemonRegistry daemonRegistry,
-                                    DaemonConnector connector,
-                                    IdGenerator<?> idGenerator) {
+    ReportDaemonStatusClient(DaemonRegistry daemonRegistry,
+                             DaemonConnector connector,
+                             IdGenerator<?> idGenerator) {
       this.daemonRegistry = daemonRegistry;
       this.connector = connector;
       this.idGenerator = idGenerator;

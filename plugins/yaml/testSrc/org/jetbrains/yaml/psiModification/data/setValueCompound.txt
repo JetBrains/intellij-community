@@ -1,5 +1,6 @@
 foo:
   bar:
-    someKey: - bla
-            - bla
+    someKey:
+      - bla
+      - bla
   baz: afoo

@@ -24,6 +24,7 @@ public class DocumentBasedReplaceHandler extends StructuralReplaceHandler {
     myProject = project;
   }
 
+  @Override
   public void replace(ReplacementInfo info, ReplaceOptions options) {
     final RangeMarker rangeMarker = myRangeMarkers.get(info);
     final Document document = rangeMarker.getDocument();
@@ -33,14 +34,14 @@ public class DocumentBasedReplaceHandler extends StructuralReplaceHandler {
 
   @Override
   public void prepare(ReplacementInfo info) {
-    final PsiElement firstElement = info.getMatch(0);
+    final PsiElement firstElement = StructuralSearchUtil.getPresentableElement(info.getMatch(0));
     if (firstElement == null) return;
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(firstElement.getContainingFile());
     assert document !=  null;
     final TextRange range = firstElement.getTextRange();
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
-    int count = info.getMatchesCount();
+    final int count = info.getMatchesCount();
     for (int i = 1; i < count; i++) {
       final PsiElement match = info.getMatch(i);
       if (match == null) {

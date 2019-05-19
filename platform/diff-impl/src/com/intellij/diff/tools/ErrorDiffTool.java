@@ -64,7 +64,7 @@ public class ErrorDiffTool implements FrameDiffTool {
 
     @NotNull private final JPanel myPanel;
 
-    public MyViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
+    MyViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
       myContext = context;
       myRequest = request;
 
@@ -124,9 +124,7 @@ public class ErrorDiffTool implements FrameDiffTool {
         if (fileName != null && FileTypeManager.getInstance().getFileTypeByFileName(fileName) != UnknownFileType.INSTANCE) {
           // FileType was assigned elsewhere (ex: by other UnknownFileTypeDiffRequest). We should reload request.
           if (myContext instanceof DiffContextEx) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              ((DiffContextEx)myContext).reloadDiffRequest();
-            }, ModalityState.current());
+            ApplicationManager.getApplication().invokeLater(() -> ((DiffContextEx)myContext).reloadDiffRequest(), ModalityState.current());
           }
         }
       }

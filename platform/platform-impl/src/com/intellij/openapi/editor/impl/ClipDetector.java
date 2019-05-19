@@ -48,7 +48,7 @@ public class ClipDetector {
       myVisualLineStartOffset = EditorUtil.getNotFoldedLineStartOffset(myEditor, startOffset);
       myVisualLineEndOffset = EditorUtil.getNotFoldedLineEndOffset(myEditor, startOffset);
       int visualLine = myEditor.offsetToVisualLine(startOffset);
-      int y = myEditor.visibleLineToY(visualLine);
+      int y = myEditor.visualLineToY(visualLine);
       myVisualLineClipStartOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(myClipRectangle.x, y)));
       myVisualLineClipEndOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(myClipRectangle.x +
                                                                                                           myClipRectangle.width, y)));

@@ -16,7 +16,7 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesTreeAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     if (getConsoleExecuteAction(e) != null) {
       e.getPresentation().setVisible(true);
       super.update(e);

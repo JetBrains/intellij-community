@@ -32,7 +32,7 @@ import java.util.List;
  * author: lesya
  */
 public class RestoreFileAction extends ActionOnSelectedElement {
-  
+
   protected final VirtualFile myParent;
   private final String myFileName;
 
@@ -43,15 +43,18 @@ public class RestoreFileAction extends ActionOnSelectedElement {
     myFileName = fileName;
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.message("operation.name.restore.file");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     return CommandCvsHandler.createRestoreFileHandler(
       myParent, myFileName, CvsConfiguration.getInstance(context.getProject()).MAKE_NEW_FILES_READONLY);
   }
 
+  @Override
   protected void onActionPerformed(CvsContext context,
                                    CvsTabbedWindow tabbedWindow,
                                    boolean successfully,

@@ -32,6 +32,7 @@ public class NameSuggesterUtil {
   private NameSuggesterUtil() {
   }
 
+  @NotNull
   private static String deleteNonLetterFromString(@NotNull final String string) {
     Pattern pattern = Pattern.compile("[^a-zA-Z_]+");
     Matcher matcher = pattern.matcher(string);

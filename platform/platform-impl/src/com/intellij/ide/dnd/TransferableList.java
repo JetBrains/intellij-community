@@ -40,7 +40,7 @@ abstract public class TransferableList<T> implements Transferable {
     this(Arrays.asList(array));
   }
 
-  public TransferableList(List<T> list) {
+  public TransferableList(List<? extends T> list) {
     myList = Collections.unmodifiableList(list);
   }
 
@@ -81,7 +81,7 @@ abstract public class TransferableList<T> implements Transferable {
     throw new UnsupportedFlavorException(flavor);
   }
 
-  protected String getHTML(List<T> list, boolean all) {
+  protected String getHTML(List<? extends T> list, boolean all) {
     StringBuilder sb = new StringBuilder();
     if (all) sb.append("<html><body>");
     sb.append("<ul>\n");
@@ -93,7 +93,7 @@ abstract public class TransferableList<T> implements Transferable {
     return sb.toString();
   }
 
-  protected String getText(List<T> list) {
+  protected String getText(List<? extends T> list) {
     StringBuilder sb = new StringBuilder();
     for (T object : list) {
       sb.append(toString(object)).append('\n');

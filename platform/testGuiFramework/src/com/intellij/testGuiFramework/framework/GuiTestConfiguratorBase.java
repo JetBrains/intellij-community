@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.framework;
 
 import org.fest.reflect.reference.TypeRef;
@@ -26,11 +12,6 @@ import java.util.Map;
 import static org.fest.reflect.core.Reflection.method;
 import static org.junit.Assert.assertNotNull;
 
-/**
- * Collects configuration information from a UI test method's {@link IdeGuiTest} and {@link IdeGuiTestSetup} annotations and applies it
- * to the test before execution, using the the IDE's {@code ClassLoader} (which is the {@code ClassLoader} used by UI tests, to be able to
- * access IDE's services, state and components.)
- */
 public class GuiTestConfiguratorBase {
   private static final String CLOSE_PROJECT_BEFORE_EXECUTION_KEY = "closeProjectBeforeExecution";
   private static final String RETRY_COUNT_KEY = "retryCount";
@@ -65,7 +46,7 @@ public class GuiTestConfiguratorBase {
   // Invoked using reflection and the IDE's ClassLoader.
   @NotNull
   private static Map<String, Object> extractTestConfiguration(@NotNull Method testMethod) {
-    Map<String, Object> config = new HashMap<String, Object>();
+    Map<String, Object> config = new HashMap<>();
     //TODO: replace with system properties (or VM options)
     config.put(SKIP_SOURCE_GENERATION_ON_SYNC_KEY, false);
     config.put(TAKE_SCREENSHOT_ON_TEST_FAILURE_KEY, true);

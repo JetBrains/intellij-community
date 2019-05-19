@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.actions;
 
@@ -97,7 +83,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
   }
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName, String templateName) {
+  protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
     return GroovyBundle.message("newclass.menu.action.text");
   }
 
@@ -107,12 +93,12 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
     if (!presentation.isVisible()) return;
 
-    IdeView view = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
+    IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     if (view == null) return;
     Project project = e.getProject();
     if (project == null) return;

@@ -1,0 +1,8 @@
+word ('foo')
+= ('=')
+( ('(')
+$ ('$')
+{ ('{')
+parameter_expansion_body ('foo[@]%% (*')
+} ('}')
+) (')')

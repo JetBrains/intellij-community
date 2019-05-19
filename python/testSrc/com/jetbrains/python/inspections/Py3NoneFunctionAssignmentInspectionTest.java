@@ -42,6 +42,20 @@ public class Py3NoneFunctionAssignmentInspectionTest extends PyInspectionTestCas
     );
   }
 
+  // PY-30467
+  public void testAssigningAbstractMethodResult() {
+    doTestByText("from abc import ABC, abstractmethod\n" +
+                 "\n" +
+                 "class A(ABC):\n" +
+                 "    def get_something(self):\n" +
+                 "        something = self.get_another_thing()\n" +
+                 "        return something\n" +
+                 "\n" +
+                 "    @abstractmethod\n" +
+                 "    def get_another_thing(self):\n" +
+                 "        pass\n");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

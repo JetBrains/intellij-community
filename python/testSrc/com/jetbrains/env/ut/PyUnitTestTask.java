@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -55,7 +56,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-/**
+/*
  * TODO: Move {@link com.jetbrains.python.gherkin.PyBDDEnvTestTask} to the new API and git rid of this class
  */
 
@@ -74,7 +75,7 @@ import java.util.List;
 public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   protected ProcessHandler myProcessHandler;
-  private final boolean shouldPrintOutput = false;
+  private static final boolean shouldPrintOutput = false;
   /**
    * Test root node
    */
@@ -143,6 +144,13 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
         mySetUp = false;
       }
     });
+    final CodeInsightTestFixture fixture = myFixture;
+    if (fixture != null) {
+      final Project project = fixture.getProject();
+      if (project != null && !project.isDisposed()) {
+        Disposer.dispose(project);
+      }
+    }
   }
 
   @Override
@@ -154,7 +162,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   protected void runConfiguration(ConfigurationFactory factory, String sdkHome, final Project project) throws Exception {
     final RunnerAndConfigurationSettings settings =
-      RunManager.getInstance(project).createRunConfiguration("test", factory);
+      RunManager.getInstance(project).createConfiguration("test", factory);
 
     AbstractPythonLegacyTestRunConfiguration config = (AbstractPythonLegacyTestRunConfiguration)settings.getConfiguration();
 
@@ -202,7 +210,6 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     else {
       environment = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), settings).build();
     }
-    //noinspection ConstantConditions
 
     Assert.assertTrue(environment.getRunner().canRun(DefaultRunExecutor.EXECUTOR_ID, config));
 
@@ -230,9 +237,10 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
               });
               myConsoleView = (SMTRunnerConsoleView)descriptor.getExecutionConsole();
               myTestProxy = myConsoleView.getResultsViewer().getTestsRootNode();
+              Disposer.register(myFixture.getProject(), myTestProxy);
               myConsoleView.getResultsViewer().addEventsListener(new TestResultsViewer.SMEventsAdapter() {
                 @Override
-                public void onTestingFinished(TestResultsViewer sender) {
+                public void onTestingFinished(@NotNull TestResultsViewer sender) {
                   s.up();
                 }
               });
@@ -288,6 +296,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     }
     return null;
   }
+
   public void assertFinished() {
     Assert.assertTrue("State is " + myTestProxy.getMagnitudeInfo().getTitle() + "\n" + output(),
                       myTestProxy.wasLaunched() && !myTestProxy.wasTerminated());
@@ -313,7 +322,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     final List<String> resultStrings = new ArrayList<>();
     final List<Pair<Integer, Integer>> resultRanges = new ArrayList<>();
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      /**
+      /*
        * To fetch data from console we need to flush it first.
        * It works locally, but does not work on TC (reasons are not clear yet and need to be investigated).
        * So, we flush it explicitly to make test run on TC.

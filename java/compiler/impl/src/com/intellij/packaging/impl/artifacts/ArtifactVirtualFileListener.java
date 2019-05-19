@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileMoveEvent;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement;
@@ -32,15 +19,16 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
  */
-public class ArtifactVirtualFileListener implements VirtualFileListener {
+final class ArtifactVirtualFileListener implements BulkFileListener {
   private final CachedValue<MultiValuesMap<String, Artifact>> myParentPathsToArtifacts;
   private final ArtifactManagerImpl myArtifactManager;
 
-  public ArtifactVirtualFileListener(Project project, final ArtifactManagerImpl artifactManager) {
+  ArtifactVirtualFileListener(@NotNull Project project, @NotNull ArtifactManagerImpl artifactManager) {
     myArtifactManager = artifactManager;
     myParentPathsToArtifacts =
       CachedValuesManager.getManager(project).createCachedValue(() -> {
@@ -67,11 +55,16 @@ public class ArtifactVirtualFileListener implements VirtualFileListener {
     return result;
   }
 
-
   @Override
-  public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-    final String oldPath = event.getOldParent().getPath() + "/" + event.getFileName();
-    filePathChanged(oldPath, event.getNewParent().getPath() + "/" + event.getFileName());
+  public void after(@NotNull List<? extends VFileEvent> events) {
+    for (VFileEvent event : events) {
+      if (event instanceof VFileMoveEvent) {
+        filePathChanged(((VFileMoveEvent)event).getOldPath(), event.getPath());
+      }
+      else if (event instanceof VFilePropertyChangeEvent) {
+        propertyChanged((VFilePropertyChangeEvent)event);
+      }
+    }
   }
 
   private void filePathChanged(@NotNull final String oldPath, @NotNull final String newPath) {
@@ -95,12 +88,12 @@ public class ArtifactVirtualFileListener implements VirtualFileListener {
     }
   }
 
-  @Override
-  public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+  private void propertyChanged(@NotNull VFilePropertyChangeEvent event) {
     if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-      final VirtualFile parent = event.getParent();
+      final VirtualFile parent = event.getFile().getParent();
       if (parent != null) {
-        filePathChanged(parent.getPath() + "/" + event.getOldValue(), parent.getPath() + "/" + event.getNewValue());
+        String parentPath = parent.getPath();
+        filePathChanged(parentPath + "/" + event.getOldValue(), parentPath + "/" + event.getNewValue());
       }
     }
   }

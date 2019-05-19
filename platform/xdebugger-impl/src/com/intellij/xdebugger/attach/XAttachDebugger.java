@@ -18,8 +18,11 @@ package com.intellij.xdebugger.attach;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * {@link XAttachDebugger} allows to attach to process with specified {@link ProcessInfo}
@@ -28,6 +31,16 @@ import org.jetbrains.annotations.NotNull;
 public interface XAttachDebugger {
   @NotNull
   String getDebuggerDisplayName();
+
+  /**
+   * @return title for `Attach to process` module window, which will be shown when choosing this debugger
+   */
+  @Nullable
+  default String getDebuggerSelectedTitle() {
+    String title = getDebuggerDisplayName();
+    title = StringUtil.shortenTextWithEllipsis(title, 50, 0);
+    return XDebuggerBundle.message("xdebugger.attach.popup.title", title);
+  }
 
   /**
    * Attaches this debugger to the specified process. The debugger is guaranteed to be

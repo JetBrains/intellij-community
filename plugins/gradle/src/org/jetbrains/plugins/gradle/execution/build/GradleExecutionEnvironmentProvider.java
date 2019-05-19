@@ -23,7 +23,6 @@ import com.intellij.task.ExecuteRunConfigurationTask;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/25/2016
  */
 public interface GradleExecutionEnvironmentProvider {
 

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.model;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public interface UnresolvedExternalDependency extends ExternalDependency {
   String getFailureMessage();

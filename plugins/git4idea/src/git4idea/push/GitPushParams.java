@@ -5,6 +5,8 @@ import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface GitPushParams {
   @NotNull
   GitRemote getRemote();
@@ -20,5 +22,14 @@ public interface GitPushParams {
 
   @Nullable
   String getTagMode();
+
+  @NotNull
+  List<ForceWithLease> getForceWithLease();
+
+
+  interface ForceWithLease {
+    @Nullable
+    String getParameter();
+  }
 }
 

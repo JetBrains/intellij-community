@@ -24,7 +24,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 11/8/12 12:58 PM
  */
 public class CalloutBorder implements Border {
 

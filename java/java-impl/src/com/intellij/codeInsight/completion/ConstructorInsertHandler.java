@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -56,11 +57,11 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
   }
 
   @Override
-  public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
-    @SuppressWarnings({"unchecked"}) final LookupElement delegate = item.getDelegate();
+  public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
+    final LookupElement delegate = item.getDelegate();
 
     PsiClass psiClass = (PsiClass)item.getObject();
-
+    SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.createPointer(psiClass);
     boolean isAbstract = psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
 
     if (Lookup.REPLACE_SELECT_CHAR == context.getCompletionChar()) {
@@ -80,7 +81,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     if (delegate instanceof PsiTypeLookupItem) {
       if (context.getDocument().getTextLength() > context.getTailOffset() &&
           context.getDocument().getCharsSequence().charAt(context.getTailOffset()) == '<') {
-        PsiJavaCodeReferenceElement ref = JavaClassNameInsertHandler.findJavaReference(context.getFile(), context.getTailOffset());
+        PsiJavaCodeReferenceElement ref = JavaClassNameInsertHandler.findJavaReference(context.getFile(), context.getTailOffset() - 1);
         if (ref != null) {
           PsiReferenceParameterList parameterList = ref.getParameterList();
           if (parameterList != null && context.getTailOffset() == parameterList.getTextRange().getStartOffset()) {
@@ -94,12 +95,14 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
     }
 
-    if (item.getDelegate() instanceof JavaPsiClassReferenceElement) {
-      PsiTypeLookupItem.addImportForItem(context, psiClass);
+    if (item.getDelegate() instanceof JavaPsiClassReferenceElement && classPointer.getElement() != null) {
+      PsiTypeLookupItem.addImportForItem(context, classPointer.getElement());
     }
 
 
-    insertParentheses(context, delegate, psiClass, !inAnonymous && isAbstract);
+    if (classPointer.getElement() != null) {
+      insertParentheses(context, delegate, classPointer.getElement(), !inAnonymous && isAbstract);
+    }
 
     if (inAnonymous) {
       return;
@@ -162,7 +165,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     if (state != null && insideBraces != null) {
       state.addTemplateStateListener(new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template, boolean brokenOff) {
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
           if (!brokenOff) {
             context.getEditor().getCaretModel().moveToOffset(context.getOffset(insideBraces));
             TransactionGuard.getInstance().submitTransactionAndWait(createOverrideRunnable(context.getEditor(), context.getFile(), context.getProject()));
@@ -224,10 +227,10 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     return false;
   }
 
-  public static boolean insertParentheses(InsertionContext context,
-                                          LookupElement delegate,
-                                          final PsiClass psiClass,
-                                          final boolean forAnonymous) {
+  public static boolean insertParentheses(@NotNull InsertionContext context,
+                                          @NotNull LookupElement delegate,
+                                          @NotNull PsiClass psiClass,
+                                          boolean forAnonymous) {
     if (context.getCompletionChar() == '[') {
       return false;
     }
@@ -370,7 +373,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       Template template = templateBuilder.buildInlineTemplate();
       TemplateManager.getInstance(project).startTemplate(editor, template, false, null, new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template, boolean brokenOff) {
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
           if (!brokenOff) {
             runnable.run();
           }

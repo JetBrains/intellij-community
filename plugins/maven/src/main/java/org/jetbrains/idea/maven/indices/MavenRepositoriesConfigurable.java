@@ -28,6 +28,8 @@ import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.idea.maven.indices.MavenSearchIndex.Kind.REMOTE;
+
 public class MavenRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final MavenProjectIndicesManager myManager;
 
@@ -51,21 +53,25 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
   private void configControls() {
     myUpdateButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doUpdateIndex();
       }
     });
 
     myIndicesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         updateButtonsState();
       }
     });
 
     myIndicesTable.addMouseMotionListener(new MouseMotionListener() {
+      @Override
       public void mouseDragged(MouseEvent e) {
       }
 
+      @Override
       public void mouseMoved(MouseEvent e) {
         int row = myIndicesTable.rowAtPoint(e.getPoint());
         if (row == -1) return;
@@ -88,7 +94,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   public void updateIndexHint(int row) {
-    MavenIndex index = getIndexAt(row);
+    MavenSearchIndex index = getIndexAt(row);
     String message = index.getFailureMessage();
     if (message == null) {
       myIndicesTable.setToolTipText(null);
@@ -115,6 +121,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     return model.getIndex(i);
   }
 
+  @Override
   public String getDisplayName() {
     return IndicesBundle.message("maven.repositories.title");
   }
@@ -124,18 +131,22 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     return "reference.settings.project.maven.repository.indices";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public JComponent createComponent() {
     return myMainPanel;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
   }
 
+  @Override
   public void reset() {
     myIndicesTable.setModel(new MyTableModel(myManager.getIndices()));
     myIndicesTable.getColumnModel().getColumn(0).setPreferredWidth(400);
@@ -147,6 +158,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     myUpdatingIcon.resume();
 
     myTimerListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myIndicesTable.repaint();
       }
@@ -155,6 +167,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     myRepaintTimer.start();
   }
 
+  @Override
   public void disposeUIResources() {
     if (myRepaintTimer == null) return; // has not yet been initialized and reset
 
@@ -173,10 +186,11 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
     private final List<MavenIndex> myIndices;
 
-    public MyTableModel(List<MavenIndex> indices) {
+    MyTableModel(List<MavenIndex> indices) {
       myIndices = indices;
     }
 
+    @Override
     public int getColumnCount() {
       return COLUMNS.length;
     }
@@ -186,6 +200,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
       return COLUMNS[index];
     }
 
+    @Override
     public int getRowCount() {
       return myIndices.size();
     }
@@ -196,13 +211,15 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
       return super.getColumnClass(columnIndex);
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      MavenIndex i = getIndex(rowIndex);
+      MavenSearchIndex i = getIndex(rowIndex);
       switch (columnIndex) {
         case 0:
           return i.getRepositoryPathOrUrl();
         case 1:
-          if (i.getKind() == MavenIndex.Kind.LOCAL) return "Local";
+          if (i.getKind() == MavenSearchIndex.Kind.LOCAL) return "Local";
+          if (i.getKind() == MavenSearchIndex.Kind.ONLINE) return "Online";
           return "Remote";
         case 2:
           if (i.getFailureMessage() != null) {
@@ -210,6 +227,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
           }
           long timestamp = i.getUpdateTimestamp();
           if (timestamp == -1) return IndicesBundle.message("maven.index.updated.never");
+          if (i.getKind() != REMOTE) return IndicesBundle.message("maven.index.updated.notapplicable");
           return DateFormatUtil.formatDate(timestamp);
         case 3:
           return myManager.getUpdatingState(i);
@@ -231,7 +249,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
       Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-      MavenIndex index = getIndexAt(row);
+      MavenSearchIndex index = getIndexAt(row);
       if (index.getFailureMessage() != null) {
         if (isSelected) {
           setForeground(JBColor.PINK);

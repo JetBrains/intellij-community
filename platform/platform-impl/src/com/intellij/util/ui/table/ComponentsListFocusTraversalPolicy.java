@@ -73,7 +73,7 @@ public abstract class ComponentsListFocusTraversalPolicy extends LayoutFocusTrav
   @NotNull
   protected abstract List<Component> getOrderedComponents();
 
-  private static Component searchShowing(@NotNull List<Component> components, int start, int direction) {
+  private static Component searchShowing(@NotNull List<? extends Component> components, int start, int direction) {
     for (int i = start; i >= 0 && i < components.size(); i += direction) {
       Component c = components.get(i);
       if (c != null && c.isShowing()) return c;

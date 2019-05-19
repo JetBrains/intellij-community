@@ -47,6 +47,7 @@ public class PluginException extends RuntimeException {
      * Get's the caused message.
      * @return  the caused message.
      */
+    @Override
     public String getMessage() {
         return message;
     }

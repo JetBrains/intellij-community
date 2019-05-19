@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -119,17 +119,28 @@ public class HighlightInfo implements Segment {
     return XmlStringUtil.wrapInHtml(decoded);
   }
 
-  private static String encodeTooltip(String toolTip, String description) {
-    if (toolTip == null || description == null) return toolTip;
-    String unescaped = StringUtil.unescapeXml(XmlStringUtil.stripHtml(toolTip));
+  /**
+   * Encodes \p tooltip so that substrings equal to a \p description
+   * are replaced with the special placeholder to reduce size of the
+   * tooltip. If encoding takes place, <html></html> tags are
+   * stripped of the tooltip.
+   *
+   * @param tooltip - html text
+   * @param description - plain text (not escaped)
+   *
+   * @return encoded tooltip (stripped html text with one or more placeholder characters)
+   *         or tooltip without changes.
+   */
+  private static String encodeTooltip(String tooltip, String description) {
+    if (tooltip == null || description == null || description.isEmpty()) return tooltip;
 
-    String encoded = description.isEmpty() ? unescaped : StringUtil.replace(unescaped, description, DESCRIPTION_PLACEHOLDER);
+    String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
     //noinspection StringEquality
-    if (encoded == unescaped) {
-      return toolTip;
+    if (encoded == tooltip) {
+      return tooltip;
     }
     if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;
-    return encoded;
+    return XmlStringUtil.stripHtml(encoded);
   }
 
   public String getDescription() {
@@ -383,6 +394,7 @@ public class HighlightInfo implements Segment {
     @NotNull Builder range(@NotNull TextRange textRange);
     @NotNull Builder range(@NotNull ASTNode node);
     @NotNull Builder range(@NotNull PsiElement element);
+    @NotNull Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement);
     @NotNull Builder range(@NotNull PsiElement element, int start, int end);
     @NotNull Builder range(int start, int end);
 
@@ -547,6 +559,13 @@ public class HighlightInfo implements Segment {
 
     @NotNull
     @Override
+    public Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement) {
+      TextRange absoluteRange = rangeInElement.shiftRight(element.getTextRange().getStartOffset());
+      return range(element, absoluteRange.getStartOffset(), absoluteRange.getEndOffset());
+    }
+
+    @NotNull
+    @Override
     public Builder range(@NotNull PsiElement element, int start, int end) {
       assert psiElement == null : " psiElement already set";
       psiElement = element;
@@ -647,7 +666,7 @@ public class HighlightInfo implements Segment {
 
   private static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
 
-  private static void appendFixes(@Nullable TextRange fixedRange, @NotNull HighlightInfo info, @Nullable List<Annotation.QuickFixInfo> fixes) {
+  private static void appendFixes(@Nullable TextRange fixedRange, @NotNull HighlightInfo info, @Nullable List<? extends Annotation.QuickFixInfo> fixes) {
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = fixedRange != null ? fixedRange : quickFixInfo.textRange;
@@ -682,7 +701,7 @@ public class HighlightInfo implements Segment {
   @NotNull
   public static ProblemHighlightType convertType(HighlightInfoType infoType) {
     if (infoType == HighlightInfoType.ERROR || infoType == HighlightInfoType.WRONG_REF) return ProblemHighlightType.ERROR;
-    if (infoType == HighlightInfoType.WARNING) return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+    if (infoType == HighlightInfoType.WARNING) return ProblemHighlightType.WARNING;
     if (infoType == HighlightInfoType.INFORMATION) return ProblemHighlightType.INFORMATION;
     return ProblemHighlightType.WEAK_WARNING;
   }
@@ -690,7 +709,7 @@ public class HighlightInfo implements Segment {
   @NotNull
   public static ProblemHighlightType convertSeverityToProblemHighlight(HighlightSeverity severity) {
     return severity == HighlightSeverity.ERROR ? ProblemHighlightType.ERROR :
-           severity == HighlightSeverity.WARNING ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
+           severity == HighlightSeverity.WARNING ? ProblemHighlightType.WARNING :
            severity == HighlightSeverity.INFO ? ProblemHighlightType.INFO :
            severity == HighlightSeverity.WEAK_WARNING ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
   }
@@ -932,7 +951,7 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  public void unregisterQuickFix(@NotNull Condition<IntentionAction> condition) {
+  public void unregisterQuickFix(@NotNull Condition<? super IntentionAction> condition) {
     quickFixActionRanges.removeIf(pair -> condition.value(pair.first.getAction()));
   }
 }

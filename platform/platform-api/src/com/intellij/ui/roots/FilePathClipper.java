@@ -41,12 +41,16 @@ public class FilePathClipper implements ComponentListener {
     componentToWatch.addComponentListener(new FilePathClipper(labelToClip, componentToWatch));
   }
 
+  @Override
   public void componentResized(ComponentEvent e) {
     final String optimalTextForComponent = FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getOptimalTextForComponent(myFile, myLabelToClip, myComponentToWatch.getWidth());
     myLabelToClip.setText(optimalTextForComponent);
   }
 
+  @Override
   public void componentHidden(ComponentEvent e) {}
+  @Override
   public void componentMoved(ComponentEvent e)  {}
+  @Override
   public void componentShown(ComponentEvent e)  {}
 }

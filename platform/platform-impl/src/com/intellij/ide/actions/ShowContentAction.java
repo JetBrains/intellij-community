@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.Disposable;
@@ -19,6 +19,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ShowContentAction extends AnAction implements DumbAware {
+  public static final String ACTION_ID = "ShowContent";
+
   private ToolWindow myWindow;
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -27,13 +29,13 @@ public class ShowContentAction extends AnAction implements DumbAware {
 
   public ShowContentAction(ToolWindow window, JComponent c, @NotNull Disposable parentDisposable) {
     myWindow = window;
-    AnAction original = ActionManager.getInstance().getAction("ShowContent");
+    AnAction original = ActionManager.getInstance().getAction(ACTION_ID);
     new ShadowAction(this, original, c, parentDisposable);
     copyFrom(original);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final ToolWindow window = getWindow(e);
     e.getPresentation().setEnabledAndVisible(window != null && window.getContentManager().getContentCount() > 1);
     e.getPresentation().setText(window == null || window.getContentUiType() == ToolWindowContentUiType.TABBED
@@ -42,7 +44,7 @@ public class ShowContentAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     getWindow(e).showContentPopup(e.getInputEvent());
   }
 
@@ -58,7 +60,7 @@ public class ShowContentAction extends AnAction implements DumbAware {
     final ToolWindow window = manager.getToolWindow(manager.getActiveToolWindowId());
     if (window == null) return null;
 
-    final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext());
+    final Component context = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (context == null) return null;
 
     return SwingUtilities.isDescendingFrom(window.getComponent(), context) ? window : null;

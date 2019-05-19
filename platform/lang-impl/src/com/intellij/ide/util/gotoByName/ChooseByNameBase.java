@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -15,7 +15,6 @@ import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,9 +62,9 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
@@ -75,33 +74,31 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
-
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
+import java.util.*;
 
 public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   public static final String TEMPORARILY_FOCUSABLE_COMPONENT_KEY = "ChooseByNameBase.TemporarilyFocusableComponent";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
-  @Nullable protected final Project myProject;
+
+  @Nullable
+  protected final Project myProject;
   protected final ChooseByNameModel myModel;
+  @NotNull
   protected ChooseByNameItemProvider myProvider;
-  protected final String myInitialText;
+  final String myInitialText;
   private boolean mySearchInAnyPlace;
 
-  protected Component myPreviouslyFocusedComponent;
+  Component myPreviouslyFocusedComponent;
   private boolean myInitialized;
 
-  protected final JPanelProvider myTextFieldPanel = new JPanelProvider();// Located in the layered pane
+  final JPanelProvider myTextFieldPanel = new JPanelProvider();// Located in the layered pane
   protected final MyTextField myTextField = new MyTextField();
   private final CardLayout myCard = new CardLayout();
   private final JPanel myCardContainer = new JPanel(myCard);
@@ -111,17 +108,17 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
    */
   private JComponent myToolArea;
 
-  protected JScrollPane myListScrollPane; // Located in the layered pane
+  JScrollPane myListScrollPane; // Located in the layered pane
   private final SmartPointerListModel<Object> myListModel = new SmartPointerListModel<>();
   protected final JList<Object> myList = new JBList<>(myListModel);
-  private final List<Pair<String, Integer>> myHistory = ContainerUtil.newArrayList();
-  private final List<Pair<String, Integer>> myFuture = ContainerUtil.newArrayList();
+  private final List<Pair<String, Integer>> myHistory = new ArrayList<>();
+  private final List<Pair<String, Integer>> myFuture = new ArrayList<>();
 
   protected ChooseByNamePopupComponent.Callback myActionListener;
 
   protected final Alarm myAlarm = new Alarm();
 
-  private boolean myDisposedFlag = false;
+  private boolean myDisposedFlag;
 
   private final String[][] myNames = new String[2][];
   private volatile CalcElementsThread myCalcElementsThread;
@@ -134,17 +131,16 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   private final int myRebuildDelay;
 
   private final Alarm myHideAlarm = new Alarm();
-  private boolean myShowListAfterCompletionKeyStroke = false;
-  protected JBPopup myTextPopup;
+  private static final boolean myShowListAfterCompletionKeyStroke = false;
+  JBPopup myTextPopup;
   protected JBPopup myDropdownPopup;
 
-  private boolean myClosedByShiftEnter = false;
-  protected final int myInitialIndex;
+  private boolean myClosedByShiftEnter;
+  final int myInitialIndex;
   private String myFindUsagesTitle;
   private ShortcutSet myCheckBoxShortcut;
-  protected boolean myInitIsDone;
-  static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
-  private boolean myAlwaysHasMore = false;
+  private final boolean myInitIsDone;
+  private boolean myAlwaysHasMore;
   private Point myFocusPoint;
   @Nullable SelectionSnapshot currentChosenInfo;
 
@@ -201,6 +197,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myInitIsDone = true;
   }
 
+  @Nullable
   @Override
   public Project getProject() {
     return myProject;
@@ -228,7 +225,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
    *
    * @param toolArea a tool area component
    */
-  public void setToolArea(JComponent toolArea) {
+  public void setToolArea(@NotNull JComponent toolArea) {
     if (myToolArea != null) {
       throw new IllegalStateException("Tool area is modifiable only before invoke()");
     }
@@ -252,14 +249,14 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   }
 
   public class JPanelProvider extends JPanel implements DataProvider, QuickSearchComponent {
-    private JBPopup myHint = null;
-    private boolean myFocusRequested = false;
+    private JBPopup myHint;
+    private boolean myFocusRequested;
 
     JPanelProvider() {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
         return myTextField.getText();
       }
@@ -284,15 +281,13 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
       else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
         final List<Object> chosenElements = getChosenElements();
-        if (chosenElements != null) {
-          List<PsiElement> result = new ArrayList<>(chosenElements.size());
-          for (Object element : chosenElements) {
-            if (element instanceof PsiElement) {
-              result.add((PsiElement)element);
-            }
+        List<PsiElement> result = new ArrayList<>(chosenElements.size());
+        for (Object element : chosenElements) {
+          if (element instanceof PsiElement) {
+            result.add((PsiElement)element);
           }
-          return PsiUtilCore.toPsiElementArray(result);
         }
+        return PsiUtilCore.toPsiElementArray(result);
       }
       else if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
         return getBounds();
@@ -301,14 +296,14 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    public void registerHint(JBPopup h) {
+    public void registerHint(@NotNull JBPopup h) {
       if (myHint != null && myHint.isVisible() && myHint != h) {
         myHint.cancel();
       }
       myHint = h;
     }
 
-    public boolean focusRequested() {
+    boolean focusRequested() {
       boolean focusRequested = myFocusRequested;
 
       myFocusRequested = false;
@@ -326,11 +321,6 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       myHint = null;
     }
 
-    @Override
-    public Component asComponent() {
-      return this;
-    }
-
     public void hideHint() {
       if (myHint != null) {
         myHint.cancel();
@@ -342,7 +332,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       return myHint;
     }
 
-    public void updateHint(PsiElement element) {
+    void updateHint(PsiElement element) {
       if (myHint == null || !myHint.isVisible()) return;
       final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
       if (updateProcessor != null) {
@@ -350,7 +340,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     }
 
-    public void repositionHint() {
+    void repositionHint() {
       if (myHint == null || !myHint.isVisible()) return;
       PopupPositionManager.positionPopupInBestPosition(myHint, null, null);
     }
@@ -418,6 +408,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ShowFindUsagesAction() {
+      @NotNull
       @Override
       public PsiElement[] getElements() {
         List<Object> objects = myListModel.getItems();
@@ -529,17 +520,12 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       });
     }
 
-    myCheckBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(@NotNull ItemEvent e) {
-        rebuildList(false);
-      }
-    });
+    myCheckBox.addItemListener(__ -> rebuildList(false));
     myCheckBox.setFocusable(false);
 
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         SelectionPolicy toSelect = currentChosenInfo != null && currentChosenInfo.hasSamePattern(ChooseByNameBase.this)
                                    ? PreserveSelection.INSTANCE : SelectMostRelevant.INSTANCE;
         rebuildList(toSelect, myRebuildDelay, ModalityState.current(), null);
@@ -598,12 +584,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     });
 
-    myTextField.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent actionEvent) {
-        if (!getChosenElements().isEmpty()) {
-          doClose(true);
-        }
+    myTextField.addActionListener(__ -> {
+      if (!getChosenElements().isEmpty()) {
+        doClose(true);
       }
     });
 
@@ -639,22 +622,23 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     ListCellRenderer modelRenderer = myModel.getListCellRenderer();
     //noinspection unchecked
-    myList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> disableTreeLoading(
+    myList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> AstLoadingFilter.disallowTreeLoading(
       () -> modelRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     ));
     myList.setVisibleRowCount(16);
     myList.setFont(editorFont);
 
-    myList.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(@NotNull ListSelectionEvent e) {
-        chosenElementMightChange();
-        updateDocumentation();
+    myList.addListSelectionListener(__ -> {
+      if (checkDisposed()) {
+        return;
+      }
 
-        List<Object> chosenElements = getChosenElements();
-        if (!chosenElements.isEmpty()) {
-          currentChosenInfo = new SelectionSnapshot(getTrimmedText(), new HashSet<>(chosenElements));
-        }
+      chosenElementMightChange();
+      updateDocumentation();
+
+      List<Object> chosenElements = getChosenElements();
+      if (!chosenElements.isEmpty()) {
+        currentChosenInfo = new SelectionSnapshot(getTrimmedText(), new HashSet<>(chosenElements));
       }
     });
 
@@ -682,20 +666,20 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
            SwingUtilities.isDescendingFrom(component, toolWindowComponent);
   }
 
-  private void addCard(JComponent comp, String cardId) {
+  private void addCard(@NotNull JComponent comp, @NotNull String cardId) {
     JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(comp, BorderLayout.EAST);
     myCardContainer.add(wrapper, cardId);
   }
 
-  public void setCheckBoxShortcut(ShortcutSet shortcutSet) {
+  public void setCheckBoxShortcut(@NotNull ShortcutSet shortcutSet) {
     myCheckBoxShortcut = shortcutSet;
   }
 
   @NotNull
   private static Set<KeyStroke> getShortcuts(@NotNull String actionId) {
     Set<KeyStroke> result = new HashSet<>();
-    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
+    for (Shortcut shortcut : KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts()) {
       if (shortcut instanceof KeyboardShortcut) {
         KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
         result.add(keyboardShortcut.getFirstKeyStroke());
@@ -735,8 +719,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
+  @NotNull
   @Override
-  public String transformPattern(String pattern) {
+  public String transformPattern(@NotNull String pattern) {
     return pattern;
   }
 
@@ -755,7 +740,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return false;
   }
 
-  protected void cancelListUpdater() {
+  void cancelListUpdater() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (checkDisposed()) return;
 
@@ -766,7 +751,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  @NotNull public String getTrimmedText() {
+  @NotNull
+  public String getTrimmedText() {
     return StringUtil.trimLeading(StringUtil.notNullize(myTextField.getText()));
   }
 
@@ -795,11 +781,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   @NotNull
   public String[] getNames(boolean checkboxState) {
-    if (ourLoadNamesEachTime) {
-      setNamesSync(checkboxState, null);
-      return ensureNamesLoaded(checkboxState);
-    }
-    return getNamesSync(checkboxState);
+    setNamesSync(checkboxState, null);
+    return ensureNamesLoaded(checkboxState);
   }
 
   private String[] getNamesSync(boolean checkboxState) {
@@ -860,12 +843,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(myTextPopup);
     }
 
-    Disposer.register(myTextPopup, new Disposable() {
-      @Override
-      public void dispose() {
-        cancelListUpdater();
-      }
-    });
+    Disposer.register(myTextPopup, () -> cancelListUpdater());
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     myTextPopup.show(layeredPane);
   }
@@ -888,10 +866,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return layeredPane;
   }
 
-  protected void rebuildList(SelectionPolicy pos,
-                             final int delay,
-                             @NotNull final ModalityState modalityState,
-                             @Nullable final Runnable postRunnable) {
+  void rebuildList(@NotNull SelectionPolicy pos,
+                   final int delay,
+                   @NotNull final ModalityState modalityState,
+                   @Nullable final Runnable postRunnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myInitialized) {
       return;
@@ -938,7 +916,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     });
   }
 
-  private void backgroundCalculationFinished(Collection<?> result, SelectionPolicy toSelect) {
+  private void backgroundCalculationFinished(@NotNull Collection<?> result, @NotNull SelectionPolicy toSelect) {
     myCalcElementsThread = null;
     setElementsToList(toSelect, result);
     myList.repaint();
@@ -949,19 +927,19 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  public void scheduleCalcElements(String text,
+  public void scheduleCalcElements(@NotNull String text,
                                    boolean checkboxState,
-                                   ModalityState modalityState,
-                                   SelectionPolicy policy,
-                                   Consumer<Set<?>> callback) {
-    new CalcElementsThread(text, checkboxState, callback, modalityState, policy).scheduleThread();
+                                   @NotNull ModalityState modalityState,
+                                   @NotNull SelectionPolicy policy,
+                                   @NotNull Consumer<? super Set<?>> callback) {
+    new CalcElementsThread(text, checkboxState, modalityState, policy, callback).scheduleThread();
   }
 
-  private boolean isShowListAfterCompletionKeyStroke() {
+  private static boolean isShowListAfterCompletionKeyStroke() {
     return myShowListAfterCompletionKeyStroke;
   }
 
-  private void setElementsToList(SelectionPolicy pos, @NotNull Collection<?> elements) {
+  private void setElementsToList(@NotNull SelectionPolicy pos, @NotNull Collection<?> elements) {
     if (checkDisposed()) return;
     if (isCloseByFocusLost() && Registry.is("focus.follows.mouse.workarounds")) {
       PointerInfo pointerInfo = MouseInfo.getPointerInfo();
@@ -995,7 +973,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   }
 
   @VisibleForTesting
-  public int calcSelectedIndex(Object[] modelElements, String trimmedText) {
+  public int calcSelectedIndex(@NotNull Object[] modelElements, @NotNull String trimmedText) {
     if (myModel instanceof Comparator) {
       return 0;
     }
@@ -1023,27 +1001,27 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return bestPosition;
   }
 
-  private static boolean isSpecialElement(Object modelElement) {
+  private static boolean isSpecialElement(@NotNull Object modelElement) {
     return EXTRA_ELEM.equals(modelElement);
   }
 
-  private int getUseCount(String statContext, Object modelElement) {
+  private int getUseCount(@NotNull String statContext, @NotNull Object modelElement) {
     String text = myModel.getFullName(modelElement);
     return text == null ? Integer.MIN_VALUE : StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
   }
 
-  private int matchingDegree(Matcher matcher, Object modelElement) {
+  private int matchingDegree(@NotNull Matcher matcher, @NotNull Object modelElement) {
     String name = myModel.getElementName(modelElement);
     return name != null && matcher instanceof MinusculeMatcher ? ((MinusculeMatcher)matcher).matchingDegree(name) : Integer.MIN_VALUE;
   }
 
   @NotNull
   @NonNls
-  protected String statisticsContext() {
+  String statisticsContext() {
     return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + getTrimmedText();
   }
 
-  private void appendToModel(@NotNull List<ModelDiff.Cmd> commands, @NotNull SelectionPolicy selection) {
+  private void appendToModel(@NotNull List<? extends ModelDiff.Cmd> commands, @NotNull SelectionPolicy selection) {
     for (ModelDiff.Cmd command : commands) {
       command.apply();
     }
@@ -1056,7 +1034,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  private void applySelection(SelectionPolicy selection) {
+  private void applySelection(@NotNull SelectionPolicy selection) {
     List<Integer> indices = selection.performSelection(this, myListModel);
     myList.setSelectedIndices(Ints.toArray(indices));
     if (!indices.isEmpty()) {
@@ -1094,12 +1072,12 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     private final KeyStroke forwardStroke;
     private final KeyStroke backStroke;
 
-    private boolean completionKeyStrokeHappened = false;
+    private boolean completionKeyStrokeHappened;
 
     private MyTextField() {
       super(40);
       // Set UI and border for Darcula and all except Win10, Mac and GTK
-      if (!UIUtil.isUnderGTKLookAndFeel() && !UIUtil.isUnderDefaultMacTheme() && !UIUtil.isUnderWin10LookAndFeel()) {
+      if (!UIUtil.isUnderDefaultMacTheme() && !UIUtil.isUnderWin10LookAndFeel()) {
         if (!(getUI() instanceof DarculaTextFieldUI)) {
           setUI(DarculaTextFieldUI.createUI(this));
         }
@@ -1124,8 +1102,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Nullable
-    private KeyStroke getShortcut(String actionCodeCompletion) {
-      final Shortcut[] shortcuts = getActiveKeymapShortcuts(actionCodeCompletion).getShortcuts();
+    private KeyStroke getShortcut(@NotNull String actionCodeCompletion) {
+      final Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionCodeCompletion).getShortcuts();
       for (final Shortcut shortcut : shortcuts) {
         if (shortcut instanceof KeyboardShortcut) {
           return ((KeyboardShortcut)shortcut).getFirstKeyStroke();
@@ -1135,7 +1113,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    public void calcData(final DataKey key, @NotNull final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (LangDataKeys.POSITION_ADJUSTER_POPUP.equals(key)) {
         if (myDropdownPopup != null && myDropdownPopup.isVisible()) {
           sink.put(key, myDropdownPopup);
@@ -1215,7 +1193,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       String commonPrefix = null;
       if (!list.isEmpty()) {
         for (String name : list) {
-          final String string = name.toLowerCase();
+          final String string = StringUtil.toLowerCase(name);
           if (commonPrefix == null) {
             commonPrefix = string;
           }
@@ -1233,7 +1211,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
         for (int i = 1; i < list.size(); i++) {
           final String string = list.get(i).substring(0, commonPrefix.length());
           if (!string.equals(commonPrefix)) {
-            commonPrefix = commonPrefix.toLowerCase();
+            commonPrefix = StringUtil.toLowerCase(commonPrefix);
             break;
           }
         }
@@ -1272,16 +1250,17 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       super.paintComponent(g);
     }
 
-    public boolean isCompletionKeyStroke() {
+    boolean isCompletionKeyStroke() {
       return completionKeyStrokeHappened;
     }
   }
 
+  @NotNull
   public ChooseByNameItemProvider getProvider() {
     return myProvider;
   }
 
-  protected void handlePaste(String str) {
+  private void handlePaste(@NotNull String str) {
     if (!myInitIsDone) return;
     if (myModel instanceof GotoClassModel2 && isFileName(str)) {
       //noinspection SSBasedInspection
@@ -1293,7 +1272,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  private static boolean isFileName(String name) {
+  private static boolean isFileName(@NotNull String name) {
     final int index = name.lastIndexOf('.');
     if (index > 0) {
       String ext = name.substring(index + 1);
@@ -1310,19 +1289,21 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   public static final String EXTRA_ELEM = "...";
 
   private class CalcElementsThread extends ReadTask {
+    @NotNull
     private final String myPattern;
     private final boolean myCheckboxState;
-    private final Consumer<Set<?>> myCallback;
+    @NotNull
+    private final Consumer<? super Set<?>> myCallback;
     private final ModalityState myModalityState;
     @NotNull private SelectionPolicy mySelectionPolicy;
 
     private final ProgressIndicator myProgress = new ProgressIndicatorBase();
 
-    CalcElementsThread(String pattern,
+    CalcElementsThread(@NotNull String pattern,
                        boolean checkboxState,
-                       Consumer<Set<?>> callback,
                        @NotNull ModalityState modalityState,
-                       @NotNull SelectionPolicy policy) {
+                       @NotNull SelectionPolicy policy,
+                       @NotNull Consumer<? super Set<?>> callback) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
@@ -1373,14 +1354,14 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }, myModalityState);
     }
 
-    private void scheduleIncrementalListUpdate(Set<Object> elements, int lastCount) {
+    private void scheduleIncrementalListUpdate(@NotNull Set<Object> elements, int lastCount) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       myUpdateListAlarm.addRequest(() -> {
         if (myCalcElementsThread != this || !myProgress.isRunning()) return;
 
         int count = elements.size();
         if (count > lastCount) {
-          setElementsToList(mySelectionPolicy, ContainerUtil.newArrayList(elements));
+          setElementsToList(mySelectionPolicy, new ArrayList<>(elements));
           if (currentChosenInfo != null) {
             mySelectionPolicy = PreserveSelection.INSTANCE;
           }
@@ -1389,7 +1370,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }, 200);
     }
 
-    private boolean populateElements(Set<Object> elements) {
+    private boolean populateElements(@NotNull Set<Object> elements) {
       boolean scopeExpanded = false;
       try {
         scopeExpanded = fillWithScopeExpansion(elements, myPattern);
@@ -1408,12 +1389,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       return scopeExpanded;
     }
 
-    private boolean fillWithScopeExpansion(Set<Object> elements, String pattern) {
-      if (!ourLoadNamesEachTime) ensureNamesLoaded(myCheckboxState);
+    private boolean fillWithScopeExpansion(@NotNull Set<Object> elements, @NotNull String pattern) {
       addElementsByPattern(pattern, elements, myProgress, myCheckboxState);
 
       if (elements.isEmpty() && !myCheckboxState) {
-        if (!ourLoadNamesEachTime) ensureNamesLoaded(true);
         addElementsByPattern(pattern, elements, myProgress, true);
         return true;
       }
@@ -1425,7 +1404,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       LOG.assertTrue(myCalcElementsThread == this, myCalcElementsThread);
 
       if (!isProjectDisposed() && !checkDisposed()) {
-        new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, mySelectionPolicy).scheduleThread();
+        new CalcElementsThread(myPattern, myCheckboxState, myModalityState, mySelectionPolicy, myCallback).scheduleThread();
       }
     }
 
@@ -1461,7 +1440,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     }
 
-    private void showCard(final String card, final int delay) {
+    private void showCard(@NotNull String card, final int delay) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       myShowCardAlarm.cancelAllRequests();
       myShowCardAlarm.addRequest(() -> {
@@ -1487,26 +1466,26 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   }
 
   @NotNull
-  private static String patternToLowerCase(String pattern) {
-    return pattern.toLowerCase(Locale.US);
+  private static String patternToLowerCase(@NotNull String pattern) {
+    return StringUtil.toLowerCase(pattern);
   }
-
 
   @Override
   public boolean canShowListForEmptyPattern() {
     return isShowListForEmptyPattern() || isShowListAfterCompletionKeyStroke() && lastKeyStrokeIsCompletion();
   }
 
-  protected boolean lastKeyStrokeIsCompletion() {
+  private boolean lastKeyStrokeIsCompletion() {
     return myTextField.isCompletionKeyStroke();
   }
 
+  @NotNull
   private static Matcher buildPatternMatcher(@NotNull String pattern) {
     return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   private static class HintLabel extends JLabel {
-    private HintLabel(String text) {
+    private HintLabel(@NotNull String text) {
       super(text, RIGHT);
       setForeground(JBColor.DARK_GRAY);
     }
@@ -1537,7 +1516,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   private static final String ACTION_NAME = "Show All in View";
 
   private abstract class ShowFindUsagesAction extends DumbAwareAction {
-    public ShowFindUsagesAction() {
+    ShowFindUsagesAction() {
       super(ACTION_NAME, ACTION_NAME, AllIcons.General.Pin_tab);
     }
 
@@ -1559,8 +1538,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       fillUsages(Arrays.asList(elements), usages, targets);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
         final boolean everywhere = myCheckBox.isSelected();
-        final Set<Object> collected = new LinkedHashSet<>();
         hideHint();
+        final Set<Object> collected = new LinkedHashSet<>();
         ProgressManager.getInstance().run(new Task.Modal(myProject, prefixPattern, true) {
           private ChooseByNameBase.CalcElementsThread myCalcUsagesThread;
           @Override
@@ -1568,7 +1547,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
             ensureNamesLoaded(everywhere);
             indicator.setIndeterminate(true);
             final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
-            myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, PreserveSelection.INSTANCE) {
+            myCalcUsagesThread = new CalcElementsThread(text, everywhere, ModalityState.NON_MODAL, PreserveSelection.INSTANCE, __->{}) {
               @Override
               protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
                 tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
@@ -1611,9 +1590,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     }
 
-    private void fillUsages(Collection<Object> matchElementsArray,
-                            Collection<Usage> usages,
-                            List<PsiElement> targets) {
+    private void fillUsages(@NotNull Collection<Object> matchElementsArray,
+                            @NotNull Collection<? super Usage> usages,
+                            @NotNull List<? super PsiElement> targets) {
       for (Object o : matchElementsArray) {
         if (o instanceof PsiElement) {
           PsiElement element = (PsiElement)o;
@@ -1627,8 +1606,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     }
 
-    private void showUsageView(@NotNull List<PsiElement> targets,
-                               @NotNull Collection<Usage> usages,
+    private void showUsageView(@NotNull List<? extends PsiElement> targets,
+                               @NotNull Collection<? extends Usage> usages,
                                @NotNull UsageViewPresentation presentation) {
       UsageTarget[] usageTargets = targets.isEmpty() ? UsageTarget.EMPTY_ARRAY :
                                    PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets));
@@ -1642,9 +1621,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
         return;
       }
       PsiElement[] elements = getElements();
-      e.getPresentation().setEnabled(elements != null && elements.length > 0);
+      e.getPresentation().setEnabled(elements.length > 0);
     }
 
+    @NotNull
     public abstract PsiElement[] getElements();
   }
 
@@ -1684,18 +1664,19 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
+  @NotNull
   public JTextField getTextField() {
     return myTextField;
   }
 
   private class MyCopyReferenceAction extends DumbAwareAction {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myTextField.getSelectedText() == null && getChosenElement() instanceof PsiElement);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       CopyReferenceAction.doCopy((PsiElement)getChosenElement(), myProject);
     }
   }

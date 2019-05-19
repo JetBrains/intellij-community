@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn;
 
 import com.intellij.ide.FrameStateListener;
-import com.intellij.ide.FrameStateManager;
 import com.intellij.idea.RareLogger;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -34,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -43,6 +43,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
@@ -74,14 +75,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 
-@SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
@@ -116,7 +119,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private SvnCopiesRefreshManager myCopiesRefreshManager;
   private SvnFileUrlMappingImpl myMapping;
-  private final MyFrameStateListener myFrameStateListener;
+
+  private Disposable myFrameStateListenerDisposable;
 
   //Consumer<Boolean>
   public static final Topic<Consumer> ROOTS_RELOADED = new Topic<>("ROOTS_RELOADED", Consumer.class);
@@ -164,8 +168,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       myVcsListener = () -> invokeRefreshSvnRoots();
     }
 
-    myFrameStateListener = project.isDefault() ? null : new MyFrameStateListener(ChangeListManager.getInstance(project),
-                                                                                 VcsDirtyScopeManager.getInstance(project));
     myChecker = new SvnExecutableChecker(this);
 
     Application app = ApplicationManager.getApplication();
@@ -227,6 +229,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
+  @TestOnly
+  SvnCopiesRefreshManager getCopiesRefreshManager() {
+    return myCopiesRefreshManager;
+  }
+
   private void upgradeIfNeeded(final MessageBus bus) {
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(ChangeListManagerImpl.LISTS_LOADED, lists -> {
@@ -249,7 +256,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     });
   }
 
-  public void processChangeLists(final List<LocalChangeList> lists) {
+  public void processChangeLists(final List<? extends LocalChangeList> lists) {
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstanceChecked(myProject);
     plVcsManager.startBackgroundVcsOperation();
     try {
@@ -293,9 +300,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void activate() {
+    MessageBusConnection busConnection = myProject.getMessageBus().connect();
     if (!myProject.isDefault()) {
       ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
-      myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
+      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
+        @Override
+        public void directoryMappingChanged() {
+          myVcsListener.directoryMappingChanged();
+          myRootsToWorkingCopies.directoryMappingChanged();
+        }
+      });
     }
 
     SvnApplicationSettings.getInstance().svnActivated();
@@ -304,7 +318,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
     // this will initialize its inner listener for committed changes upload
     LoadedRevisionsCache.getInstance(myProject);
-    FrameStateManager.getInstance().addListener(myFrameStateListener);
+    if (myFrameStateListenerDisposable == null && !myProject.isDefault()) {
+      myFrameStateListenerDisposable = Disposer.newDisposable();
+      busConnection.subscribe(FrameStateListener.TOPIC, new MyFrameStateListener(ChangeListManager.getInstance(myProject),
+                                                                                 VcsDirtyScopeManager.getInstance(myProject)));
+    }
 
     myAuthNotifier.init();
     mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(this);
@@ -331,7 +349,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
     });
 
-    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myRootsToWorkingCopies);
+    // not allowed to subscribe to the same topic several times, see subscribing above
+    if (myProject.isDefault()) {
+      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myRootsToWorkingCopies);
+    }
 
     myLoadedBranchesStorage.activate();
   }
@@ -350,7 +371,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void deactivate() {
-    FrameStateManager.getInstance().removeListener(myFrameStateListener);
+    Disposable frameStateListenerDisposable = myFrameStateListenerDisposable;
+    if (frameStateListenerDisposable != null) {
+      myFrameStateListenerDisposable = null;
+      Disposer.dispose(frameStateListenerDisposable);
+    }
 
     if (myEntriesFileListener != null) {
       VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
@@ -546,25 +571,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public void collectInfo(@NotNull Collection<File> files, @Nullable InfoConsumer handler) {
-    File first = ContainerUtil.getFirstItem(files);
+    File first = getFirstItem(files);
 
     if (first != null) {
-      ClientFactory factory = getFactory(first);
-
       try {
-        if (factory instanceof CmdClientFactory) {
-          factory.createInfoClient().doInfo(files, handler);
-        }
-        else {
-          // TODO: Generally this should be moved in SvnKit info client implementation.
-          // TODO: Currently left here to have exception logic as in handleInfoException to be applied for each file separately.
-          for (File file : files) {
-            Info info = getInfo(file);
-            if (handler != null) {
-              handler.consume(info);
-            }
-          }
-        }
+        getFactory(first).createInfoClient().doInfo(files, handler);
       }
       catch (SvnBindException e) {
         handleInfoException(e);
@@ -609,7 +620,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     WorkingCopyFormat format = WorkingCopyFormat.UNKNOWN;
 
     if (useMapping) {
-      RootUrlInfo rootInfo = getSvnFileUrlMapping().getWcRootForFilePath(ioFile);
+      RootUrlInfo rootInfo = getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(ioFile));
       format = rootInfo != null ? rootInfo.getFormat() : WorkingCopyFormat.UNKNOWN;
     }
 
@@ -719,16 +730,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     if (in.size() <= 1) return in;
 
     return Registry.is("svn.filter.unique.roots.by.url") ? filterUniqueByUrl(in, convertor) : filterUniqueByWorkingCopy(in, convertor);
   }
 
   @NotNull
-  private <S> List<S> filterUniqueByUrl(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
-    List<MyPair<S>> infos = newArrayList();
-    List<S> notMatched = newArrayList();
+  private <S> List<S> filterUniqueByUrl(@NotNull List<? extends S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+    List<MyPair<S>> infos = new ArrayList<>();
+    List<S> notMatched = new ArrayList<>();
     for (S s : in) {
       VirtualFile vf = convertor.apply(s);
       if (vf == null) continue;
@@ -752,13 +763,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @NotNull
-  private <S> List<S> filterUniqueByWorkingCopy(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
-    Map<VirtualFile, S> filesMap = StreamEx.of(in).mapToEntry(convertor, identity()).distinctKeys().toMap();
+  private <S> List<S> filterUniqueByWorkingCopy(@NotNull List<? extends S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+    Map<VirtualFile, S> filesMap = StreamEx.of(in).<VirtualFile, S>mapToEntry(convertor, identity()).distinctKeys().toMap();
     Map<VirtualFile, List<VirtualFile>> byWorkingCopy =
       StreamEx.of(filesMap.keySet())
               .mapToEntry(
                 file -> {
-                  RootUrlInfo wcRoot = getSvnFileUrlMapping().getWcRootForFilePath(virtualToIoFile(file));
+                  RootUrlInfo wcRoot = getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file));
                   return wcRoot != null ? wcRoot.getVirtualFile() : SvnUtil.getWorkingCopyRoot(file);
                 },
                 identity())

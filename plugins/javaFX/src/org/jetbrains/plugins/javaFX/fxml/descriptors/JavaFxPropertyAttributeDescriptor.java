@@ -106,7 +106,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
     final PsiClass aClass = getEnum();
     if (aClass != null) {
       final PsiField fieldByName = aClass.findFieldByName(value, true);
-      return fieldByName != null ? fieldByName : aClass.findFieldByName(value.toUpperCase(), true);
+      return fieldByName != null ? fieldByName : aClass.findFieldByName(StringUtil.toUpperCase(value), true);
     }
     return xmlElement;
   }
@@ -290,12 +290,6 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
 
   @Override
   public void init(PsiElement element) {
-  }
-
-  @NotNull
-  @Override
-  public Object[] getDependences() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

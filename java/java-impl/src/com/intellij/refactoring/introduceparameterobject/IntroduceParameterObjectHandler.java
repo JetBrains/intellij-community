@@ -46,6 +46,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     return false;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     final ScrollingModel scrollingModel = editor.getScrollingModel();
     scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -86,6 +87,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     return selectedMethod;
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) {
       return;

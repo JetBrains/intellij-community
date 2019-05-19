@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.invertBoolean;
 
 import com.intellij.openapi.editor.Editor;
@@ -41,14 +27,14 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
   public boolean isVisibleOnElement(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     final VirtualFile virtualFile = containingFile != null ? containingFile.getVirtualFile() : null;
-    if (virtualFile != null && 
+    if (virtualFile != null &&
         ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
       return false;
     }
     if (element instanceof PyTargetExpression || element instanceof PyNamedParameter) {
       return true;
     }
-    return element.getParent() instanceof PyBoolLiteralExpression;
+    return isBooleanLiteral(element.getParent());
   }
 
   @Override
@@ -60,15 +46,16 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
       if (assignmentStatement != null) {
         final PyExpression assignedValue = assignmentStatement.getAssignedValue();
         if (assignedValue == null) return false;
-        final String name = assignedValue.getText();
-        return name != null && (PyNames.TRUE.equals(name) || PyNames.FALSE.equals(name));
+        return isBooleanLiteral(assignedValue);
       }
     }
     if (element instanceof PyNamedParameter) {
       final PyExpression defaultValue = ((PyNamedParameter)element).getDefaultValue();
-      if (defaultValue instanceof PyBoolLiteralExpression) return true;
+      if (defaultValue != null && isBooleanLiteral(defaultValue)) {
+        return true;
+      }
     }
-    return element.getParent() instanceof PyBoolLiteralExpression;
+    return isBooleanLiteral(element.getParent());
   }
 
   @Nullable
@@ -99,6 +86,7 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
     }
   }
 
+  @Override
   public PsiElement getElementToInvert(PsiElement namedElement, PsiElement element) {
     if (element instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)element;
@@ -157,5 +145,12 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
       }
     }
     return elementGenerator.createExpressionFromText(LanguageLevel.forElement(expression), "not " + expression.getText());
+  }
+
+  private static boolean isBooleanLiteral(@Nullable PsiElement element) {
+    if (element instanceof PyBoolLiteralExpression) {
+      return true;
+    }
+    return element instanceof PyReferenceExpression && (PyNames.TRUE.equals(element.getText()) || PyNames.FALSE.equals(element.getText()));
   }
 }

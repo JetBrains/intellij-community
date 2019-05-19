@@ -1,6 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("UseExpressionBody")
-
 package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
 
 import com.intellij.psi.PsiElement
@@ -8,10 +6,7 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
-import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports
-import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
-import org.jetbrains.plugins.groovy.lang.resolve.imports.defaultImports
-import org.jetbrains.plugins.groovy.lang.resolve.imports.importKey
+import org.jetbrains.plugins.groovy.lang.resolve.imports.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.util.flatten
 
@@ -30,10 +25,13 @@ internal class GroovyFileImportsImpl(
 
   private val regularImports get() = getImports(ImportKind.Regular)
   private val staticImports get() = getImports(ImportKind.Static)
-  override val starImports get() = getImports(ImportKind.Star)
-  override val staticStarImports get() = getImports(ImportKind.StaticStar)
-  override val allNamedImports = flatten(getImports(ImportKind.Regular), getImports(ImportKind.Static))
-  private val allStarImports = flatten(getImports(ImportKind.Star), getImports(ImportKind.StaticStar))
+  override val starImports: Collection<StarImport> get() = getImports(ImportKind.Star)
+  override val staticStarImports: Collection<StaticStarImport> get() = getImports(ImportKind.StaticStar)
+  override val allNamedImports: Collection<GroovyNamedImport> = flatten(regularImports, staticImports)
+  private val allStarImports = flatten(starImports, staticStarImports)
+  private val allNamedImportsMap by lazy { allNamedImports.groupBy { it.name } }
+
+  override fun getImportsByName(name: String): Collection<GroovyNamedImport> = allNamedImportsMap[name] ?: emptyList()
 
   private fun ResolveState.putImport(import: GroovyImport): ResolveState {
     val state = put(importKey, import)

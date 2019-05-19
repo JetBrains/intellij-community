@@ -32,18 +32,20 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author peter
  */
 public class LightMethodBuilder extends LightElement implements PsiMethod, OriginInfoAwareElement {
   private final String myName;
-  private Computable<PsiType> myReturnType;
+  private Computable<? extends PsiType> myReturnType;
   private final PsiModifierList myModifierList;
   private final PsiParameterList myParameterList;
   private final PsiTypeParameterList myTypeParameterList;
@@ -179,7 +181,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     return myReturnType == null ? null : myReturnType.compute();
   }
 
-  public LightMethodBuilder setMethodReturnType(Computable<PsiType> returnType) {
+  public LightMethodBuilder setMethodReturnType(Computable<? extends PsiType> returnType) {
     myReturnType = returnType;
     return this;
   }
@@ -193,7 +195,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
       @NotNull
       @Override
       protected PsiType internalCompute() {
-        return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeByFQClassName(returnType, getResolveScope());
+        return JavaPsiFacade.getElementFactory(myManager.getProject()).createTypeByFQClassName(returnType, getResolveScope());
       }
     });
   }
@@ -334,6 +336,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     return this;
   }
 
+  @Override
   public String toString() {
     return myMethodKind + ":" + getName();
   }
@@ -397,28 +400,23 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     LightMethodBuilder that = (LightMethodBuilder)o;
 
     if (myConstructor != that.myConstructor) return false;
-    if (myBaseIcon != null ? !myBaseIcon.equals(that.myBaseIcon) : that.myBaseIcon != null) return false;
-    if (myContainingClass != null ? !myContainingClass.equals(that.myContainingClass) : that.myContainingClass != null) return false;
+    if (!Objects.equals(myContainingClass, that.myContainingClass)) return false;
     if (!myMethodKind.equals(that.myMethodKind)) return false;
-    if (!myModifierList.equals(that.myModifierList)) return false;
     if (!myName.equals(that.myName)) return false;
-    if (!myParameterList.equals(that.myParameterList)) return false;
-    if (myReturnType != null ? !myReturnType.equals(that.myReturnType) : that.myReturnType != null) return false;
+    if (!getParameterTypes().equals(that.getParameterTypes())) return false;
+    if (!Objects.equals(getReturnType(), that.getReturnType())) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myName.hashCode();
-    result = 31 * result + (myReturnType != null ? myReturnType.hashCode() : 0);
-    result = 31 * result + myModifierList.hashCode();
-    result = 31 * result + myParameterList.hashCode();
-    result = 31 * result + (myBaseIcon != null ? myBaseIcon.hashCode() : 0);
-    result = 31 * result + (myContainingClass != null ? myContainingClass.hashCode() : 0);
-    result = 31 * result + (myConstructor ? 1 : 0);
-    result = 31 * result + myMethodKind.hashCode();
-    return result;
+    return Objects.hash(myName, getReturnType(), myConstructor, myMethodKind, myContainingClass, getParameterTypes());
+  }
+
+  @NotNull
+  private List<PsiType> getParameterTypes() {
+    return ContainerUtil.map(getParameterList().getParameters(), PsiParameter::getType);
   }
 
   public LightMethodBuilder addTypeParameter(PsiTypeParameter parameter) {

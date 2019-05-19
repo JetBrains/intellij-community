@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -67,7 +68,7 @@ public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
     PlatformTestUtil.saveProject(getProject());
     myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         myRootsChangedCount++;
       }
     });
@@ -80,6 +81,6 @@ public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
       VirtualFile outputDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
       assertNotNull("output directory wasn't refreshed: " + dir.getAbsolutePath(), outputDir);
     }
-    System.out.println("myRootsChangedCount = " + myRootsChangedCount);
+    LOG.debug("myRootsChangedCount = " + myRootsChangedCount);
   }
 }

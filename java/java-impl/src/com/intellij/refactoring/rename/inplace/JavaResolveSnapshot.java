@@ -21,8 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameJavaMemberProcessor;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
-import java.util.HashMap;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -60,6 +60,7 @@ class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
     });
   }
 
+  @Override
   public void apply(String hidingLocalName) {
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     for (Map.Entry<SmartPsiElementPointer,SmartPsiElementPointer> entry : myReferencesMap.entrySet()) {

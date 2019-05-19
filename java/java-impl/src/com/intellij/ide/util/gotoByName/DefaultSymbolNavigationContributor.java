@@ -1,31 +1,16 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.actions.JavaQualifiedNameProvider;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
-import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -35,7 +20,6 @@ import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
@@ -43,50 +27,12 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Set;
 
 public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
-
-  @Override
-  @NotNull
-  public String[] getNames(Project project, boolean includeNonProjectItems) {
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    Set<String> set = new HashSet<>();
-    Collections.addAll(set, cache.getAllMethodNames());
-    Collections.addAll(set, cache.getAllFieldNames());
-    Collections.addAll(set, cache.getAllClassNames());
-    return ArrayUtil.toStringArray(set);
-  }
-
-  @Override
-  @NotNull
-  public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
-    GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-
-    Condition<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(pattern);
-
-    List<PsiMember> result = new ArrayList<>();
-    for (PsiMethod method : cache.getMethodsByName(name, scope)) {
-      if (!method.isConstructor() && isOpenable(method) && !hasSuperMethod(method, scope, qualifiedMatcher)) {
-        result.add(method);
-      }
-    }
-    for (PsiField field : cache.getFieldsByName(name, scope)) {
-      if (isOpenable(field)) {
-        result.add(field);
-      }
-    }
-    for (PsiClass aClass : cache.getClassesByName(name, scope)) {
-      if (isOpenable(aClass)) {
-        result.add(aClass);
-      }
-    }
-    PsiMember[] array = result.toArray(PsiMember.EMPTY_ARRAY);
-    Arrays.sort(array, MyComparator.INSTANCE);
-    return array;
-  }
 
   @Nullable
   @Override
@@ -110,9 +56,9 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   private static boolean hasSuperMethodCandidates(final PsiMethod method,
                                                   final GlobalSearchScope scope,
-                                                  final Condition<PsiMember> qualifiedMatcher) {
+                                                  final Condition<? super PsiMember> qualifiedMatcher) {
     if (method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    
+
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
 
@@ -130,9 +76,14 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       }
       return true;
     });
-    
+
   }
-  private static boolean hasSuperMethod(final PsiMethod method, final GlobalSearchScope scope, final Condition<PsiMember> qualifiedMatcher) {
+
+  private static boolean hasSuperMethod(PsiMethod method, GlobalSearchScope scope, Condition<? super PsiMember> qualifiedMatcher, String pattern) {
+    if (pattern.contains(".") && Registry.is("ide.goto.symbol.include.overrides.on.qualified.patterns")) {
+      return false;
+    }
+
     if (!hasSuperMethodCandidates(method, scope, qualifiedMatcher)) {
       return false;
     }
@@ -146,6 +97,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return false;
   }
 
+  @Override
   public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
     cache.processAllClassNames(processor, scope, filter);
@@ -186,7 +138,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       Iterator<PsiMethod> iterator = collectedMethods.iterator();
       while(iterator.hasNext()) {
         PsiMethod method = iterator.next();
-        if (!hasSuperMethod(method, scope, qualifiedMatcher) && !processor.process(method)) return;
+        if (!hasSuperMethod(method, scope, qualifiedMatcher, completePattern) && !processor.process(method)) return;
         ProgressManager.checkCanceled();
         iterator.remove();
       }
@@ -197,7 +149,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     if (completePattern.contains("#") && completePattern.endsWith(")")) {
       return member -> member instanceof PsiMethod && JavaQualifiedNameProvider.hasQualifiedName(completePattern, (PsiMethod)member);
     }
-    
+
     if (completePattern.contains(".") || completePattern.contains("#")) {
       String normalized = StringUtil.replace(StringUtil.replace(completePattern, "#", ".*"), ".", ".*");
       MinusculeMatcher matcher = NameUtil.buildMatcher("*" + normalized).build();
@@ -264,8 +216,8 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       }
     }
   }
-  
-  public static class JavadocSeparatorContributor implements ChooseByNameContributor, GotoClassContributor {
+
+  public static class JavadocSeparatorContributor implements ChooseByNameContributorEx, GotoClassContributor {
     @Nullable
     @Override
     public String getQualifiedName(NavigationItem item) {
@@ -278,17 +230,14 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       return "#";
     }
 
-    @NotNull
     @Override
-    public String[] getNames(Project project, boolean includeNonProjectItems) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+    public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     }
 
-    @NotNull
     @Override
-    public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
-      return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
+    public void processElementsWithName(@NotNull String name,
+                                        @NotNull Processor<NavigationItem> processor,
+                                        @NotNull FindSymbolParameters parameters) {
     }
   }
-
 }

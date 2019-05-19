@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -24,20 +11,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeBinding {
+final class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeBinding, NestedBinding {
   private final String myTagName;
+  private final MutableAccessor myAccessor;
 
-  public JDOMElementBinding(@NotNull MutableAccessor accessor) {
-    super(accessor);
+  JDOMElementBinding(@NotNull MutableAccessor accessor) {
+    myAccessor = accessor;
 
     Tag tag = myAccessor.getAnnotation(Tag.class);
-    assert tag != null : "jdom.Element property without @Tag annotation: " + accessor;
+    String tagName = tag == null ? null : tag.value();
+    myTagName = StringUtil.isEmpty(tagName) ? myAccessor.getName() : tagName;
+  }
 
-    String tagName = tag.value();
-    if (StringUtil.isEmpty(tagName)) {
-      tagName = myAccessor.getName();
-    }
-    myTagName = tagName;
+  @NotNull
+  @Override
+  public MutableAccessor getAccessor() {
+    return myAccessor;
   }
 
   @Override
@@ -54,7 +43,7 @@ class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeB
       return targetElement;
     }
     if (value instanceof Element[]) {
-      ArrayList<Element> result = new ArrayList<Element>();
+      ArrayList<Element> result = new ArrayList<>();
       for (Element element : ((Element[])value)) {
         result.add(element.clone().setName(myTagName));
       }
@@ -63,9 +52,9 @@ class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeB
     throw new XmlSerializationException("org.jdom.Element expected but " + value + " found");
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     if (myAccessor.getValueClass().isArray()) {
       myAccessor.set(context, elements.toArray(new Element[0]));
     }

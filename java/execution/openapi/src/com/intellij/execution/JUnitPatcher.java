@@ -19,6 +19,8 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class JUnitPatcher implements PluginAware {
@@ -28,6 +30,7 @@ public abstract class JUnitPatcher implements PluginAware {
    * Called by the framework. Allows to identify the plugin that provided this extension.
    * @param plugin
    */
+  @Override
   public void setPluginDescriptor(PluginDescriptor plugin) {
     myPlugin = plugin;
   }
@@ -42,7 +45,12 @@ public abstract class JUnitPatcher implements PluginAware {
   /**
    * @deprecated override {@link #patchJavaParameters(Module, JavaParameters)} instead
    */
+  @Deprecated
   public void patchJavaParameters(JavaParameters javaParameters) {
+  }
+
+  public void patchJavaParameters(@NotNull Project project, @Nullable Module module, JavaParameters javaParameters) {
+    patchJavaParameters(module, javaParameters);
   }
 
   public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {

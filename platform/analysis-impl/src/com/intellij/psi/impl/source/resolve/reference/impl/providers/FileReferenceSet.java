@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
@@ -204,6 +190,7 @@ public class FileReferenceSet {
     return myStartInElement;
   }
 
+  @Nullable
   public FileReference createFileReference(final TextRange range, final int index, final String text) {
     return new FileReference(this, range, index, text);
   }
@@ -234,7 +221,7 @@ public class FileReferenceSet {
       decoded = str;
       valueRange = TextRange.from(startInElement, decoded.length());
     }
-    List<FileReference> referencesList = ContainerUtil.newArrayList();
+    List<FileReference> referencesList = new ArrayList<>();
 
     for (int i = wsHead; i < decoded.length() && Character.isWhitespace(decoded.charAt(i)); i++) {
       wsHead++;     // skip head white spaces
@@ -250,7 +237,10 @@ public class FileReferenceSet {
     if (curSep >= 0 && decoded.length() == wsHead + sepLen + wsTail) {
       // add extra reference for the only & leading "/"
       TextRange r = TextRange.create(startInElement, offset(curSep + Math.max(0, sepLen - 1), escaper, valueRange) + 1);
-      referencesList.add(createFileReference(r, index ++, decoded.subSequence(curSep, curSep + sepLen).toString()));
+      FileReference reference = createFileReference(r, index++, decoded.subSequence(curSep, curSep + sepLen).toString());
+      if (reference != null) {
+        referencesList.add(reference);
+      }
     }
     curSep = curSep == wsHead ? curSep + sepLen : wsHead; // reset offsets & start again for simplicity
     sepLen = 0;
@@ -268,7 +258,10 @@ public class FileReferenceSet {
         LOG.error("Invalid range: (" + (refText + ", " + refEnd) + "), escaper=" + escaper + "\n" +
                   "text=" + refText + ", start=" + startInElement);
       }
-      referencesList.add(createFileReference(new TextRange(refStart, refEnd), index++, refText));
+      FileReference reference = createFileReference(new TextRange(refStart, refEnd), index++, refText);
+      if (reference != null) {
+        referencesList.add(reference);
+      }
       curSep = nextSep;
       sepLen = curSep > 0 ? findSeparatorLength(decoded, curSep) : 0;
     }
@@ -460,9 +453,9 @@ public class FileReferenceSet {
   }
 
   @NotNull
-  protected Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<VirtualFile> files) {
+  protected Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<? extends VirtualFile> files) {
     final PsiManager manager = getElement().getManager();
-    return ContainerUtil.mapNotNull(files, (NullableFunction<VirtualFile, PsiFileSystemItem>)file -> file != null ? manager.findDirectory(file) : null);
+    return ContainerUtil.mapNotNull(files, (NullableFunction<VirtualFile, PsiFileSystemItem>)file -> file != null && file.isValid() ? manager.findDirectory(file) : null);
   }
 
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {

@@ -31,14 +31,17 @@ public abstract class PsiNamedElementAutomaticRenamer<T extends PsiNamedElement>
     super(elements, oldName, newName);
   }
 
+  @Override
   protected String getName(T element) {
     return element.getName();
   }
 
+  @Override
   protected void doRenameElement(final T t) throws IncorrectOperationException {
     t.setName(getNewElementName(t));
   }
 
+  @Override
   protected String suggestName(T element) {
     String elementName = getName(element);
     final NameSuggester suggester = new NameSuggester(getOldName(), getNewName());

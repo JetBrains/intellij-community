@@ -78,7 +78,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
               setMergeDescription(String.format("The following files have unresolved conflicts. You need to resolve them before %s.",
                                                 operationName)).
               setErrorNotificationTitle("Unresolved files remain.");
-            new GitConflictResolver(myProject, myGit, GitUtil.getRootsFromRepositories(repositories), params).merge();
+            new GitConflictResolver(myProject, GitUtil.getRootsFromRepositories(repositories), params).merge();
           }
         }
       }
@@ -92,7 +92,6 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
       String description = String.format("<html>You have to resolve all merge conflicts before %s.<br/>%s</html>",
                                          operationName, rollbackProposal);
       // suppressing: this message looks ugly if capitalized by words
-      //noinspection DialogTitleCapitalization
       ok.set(YES == DialogManager.showOkCancelDialog(myProject, description, unmergedFilesErrorTitle(operationName),
                                                      "Rollback", "Don't rollback", Messages.getErrorIcon()));
     });
@@ -124,9 +123,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                                                  @NotNull String operation,
                                                                  @Nullable String forceButtonTitle) {
     Ref<GitSmartOperationDialog.Choice> exitCode = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      exitCode.set(GitSmartOperationDialog.show(project, changes, paths, operation, forceButtonTitle));
-    });
+    ApplicationManager.getApplication().invokeAndWait(() -> exitCode.set(GitSmartOperationDialog.show(project, changes, paths, operation, forceButtonTitle)));
     return exitCode.get();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -17,7 +17,6 @@ import java.awt.*;
 import java.util.List;
 
 
-@SuppressWarnings({"RefusedBequest"})
 public class ReplaceDialog extends SearchDialog {
   private Editor replaceCriteriaEdit;
   private JCheckBox shortenFQN;
@@ -147,7 +146,7 @@ public class ReplaceDialog extends SearchDialog {
     if (!super.isValid()) return false;
 
     try {
-      Replacer.checkSupportedReplacementPattern(searchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getReplaceOptions());
+      Replacer.checkReplacementPattern(searchContext.getProject(), myConfiguration.getReplaceOptions());
     }
     catch (UnsupportedPatternException ex) {
       reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), replaceCriteriaEdit);

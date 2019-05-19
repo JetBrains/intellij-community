@@ -34,8 +34,8 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import com.intellij.remoteServer.impl.configuration.RemoteServerConnectionTester;
 import com.intellij.remoteServer.util.CloudBundle;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.util.ui.FormBuilder;
@@ -177,14 +177,11 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
 
       mySourceListModel.addAll(deploymentConfigurator.getAvailableDeploymentSources());
       mySourceComboBox = new ComboBox<>(mySourceListModel);
-      mySourceComboBox.setRenderer(new ListCellRendererWrapper<DeploymentSource>() {
-        @Override
-        public void customize(JList list, DeploymentSource value, int index, boolean selected, boolean hasFocus) {
-          if (value == null) return;
-          setIcon(value.getIcon());
-          setText(value.getPresentableName());
-        }
-      });
+      mySourceComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+        if (value == null) return;
+        label.setIcon(value.getIcon());
+        label.setText(value.getPresentableName());
+      }));
       mySourceComboBox.addActionListener(e -> updateDeploymentSettingsEditor());
     }
 
@@ -236,7 +233,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
   private static class WithAutoDetectCombo<S extends ServerConfiguration> extends RemoteServerCombo<S> {
     private AutoDetectedItem myAutoDetectedItem;
 
-    public WithAutoDetectCombo(@NotNull ServerType<S> serverType) {
+    WithAutoDetectCombo(@NotNull ServerType<S> serverType) {
       super(serverType);
     }
 
@@ -294,7 +291,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
       private volatile RemoteServer<S> myServerInstance;
       private volatile long myLastStartedTestConnectionMillis = -1;
 
-      public AutoDetectedItem() {
+      AutoDetectedItem() {
         super(null);
       }
 
@@ -350,20 +347,20 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
         assert myLastStartedTestConnectionMillis > 0;
         waitABit(2000);
 
-        final RemoteServer testedServer = myServerInstance;
-        myServerInstance = null;
-
         if (wasConnected) {
           setTestConnectionState(TestConnectionState.SUCCESSFUL);
           UIUtil.invokeLaterIfNeeded(() -> {
             if (!Disposer.isDisposed(WithAutoDetectCombo.this)) {
-              RemoteServersManager.getInstance().addServer(testedServer);
-              refillModel(testedServer);
+              assert myServerInstance != null;
+              RemoteServersManager.getInstance().addServer(myServerInstance);
+              refillModel(myServerInstance);
             }
+            myServerInstance = null;
           });
         }
         else {
           setTestConnectionState(TestConnectionState.FAILED);
+          myServerInstance = null;
         }
       }
 

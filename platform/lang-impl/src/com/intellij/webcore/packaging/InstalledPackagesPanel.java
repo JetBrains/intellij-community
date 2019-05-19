@@ -1,7 +1,7 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.webcore.packaging;
 
 import com.google.common.collect.Lists;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -21,7 +21,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +35,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -56,8 +55,8 @@ public class InstalledPackagesPanel extends JPanel {
   protected volatile PackageManagementService myPackageManagementService;
   protected final Project myProject;
   protected final PackagesNotificationPanel myNotificationArea;
-  private final Set<String> myCurrentlyInstalling = ContainerUtil.newHashSet();
-  private final Map<InstalledPackage, String> myWaitingToUpgrade = ContainerUtil.newHashMap();
+  private final Set<String> myCurrentlyInstalling = new HashSet<>();
+  private final Map<InstalledPackage, String> myWaitingToUpgrade = new HashMap<>();
 
   public InstalledPackagesPanel(@NotNull Project project, @NotNull PackagesNotificationPanel area) {
     super(new BorderLayout());
@@ -239,8 +238,8 @@ public class InstalledPackagesPanel extends JPanel {
               ApplicationManager.getApplication().invokeLater(() -> {
                 myPackagesTable.clearSelection();
                 updatePackages(selPackageManagementService);
-                myPackagesTable.setPaintBusy(false);
                 myCurrentlyInstalling.remove(packageName);
+                myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
                 if (errorDescription == null) {
                   myNotificationArea.showSuccess("Package " + packageName + " successfully upgraded");
                 }
@@ -279,7 +278,7 @@ public class InstalledPackagesPanel extends JPanel {
     return ObjectUtils.tryCast(myPackageManagementService, PackageManagementServiceEx.class);
   }
 
-  private void updateUninstallUpgrade() {
+  protected void updateUninstallUpgrade() {
     final int[] selected = myPackagesTable.getSelectedRows();
     boolean upgradeAvailable = false;
     boolean canUninstall = selected.length != 0;
@@ -350,7 +349,7 @@ public class InstalledPackagesPanel extends JPanel {
           ApplicationManager.getApplication().invokeLater(() -> {
             myPackagesTable.clearSelection();
             updatePackages(selPackageManagementService);
-            myPackagesTable.setPaintBusy(false);
+            myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
             if (errorDescription == null) {
               if (packageName != null) {
                 myNotificationArea.showSuccess("Package '" + packageName + "' successfully uninstalled");
@@ -399,7 +398,7 @@ public class InstalledPackagesPanel extends JPanel {
   }
 
   private void onUpdateFinished() {
-    myPackagesTable.setPaintBusy(false);
+    myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
     myPackagesTable.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
     updateUninstallUpgrade();
     // Action button presentations won't be updated if no events occur (e.g. mouse isn't moving, keys aren't being pressed).
@@ -534,7 +533,7 @@ public class InstalledPackagesPanel extends JPanel {
               final RepoPackage repoPackage = packageMap.get(pyPackage.getName());
               myPackagesTableModel.setValueAt(repoPackage == null ? null : repoPackage.getLatestVersion(), i, 2);
             }
-            myPackagesTable.setPaintBusy(false);
+            myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
           }, ModalityState.stateForComponent(myPackagesTable));
         }
         catch (IOException ignored) {
@@ -545,7 +544,7 @@ public class InstalledPackagesPanel extends JPanel {
     });
   }
 
-  private Map<String, RepoPackage> buildNameToPackageMap(List<RepoPackage> packages) {
+  private Map<String, RepoPackage> buildNameToPackageMap(List<? extends RepoPackage> packages) {
     try {
       return doBuildNameToPackageMap(packages);
     }
@@ -557,7 +556,7 @@ public class InstalledPackagesPanel extends JPanel {
     }
   }
 
-  private static Map<String, RepoPackage> doBuildNameToPackageMap(List<RepoPackage> packages) {
+  private static Map<String, RepoPackage> doBuildNameToPackageMap(List<? extends RepoPackage> packages) {
     final Map<String, RepoPackage> packageMap = new HashMap<>();
     for (RepoPackage aPackage : packages) {
       packageMap.put(aPackage.getName(), aPackage);
@@ -575,7 +574,7 @@ public class InstalledPackagesPanel extends JPanel {
       boolean update = column == 2 &&
                        StringUtil.isNotEmpty(availableVersion) &&
                        isUpdateAvailable(version, availableVersion);
-      cell.setIcon(update ? AllIcons.Vcs.Arrow_right : null);
+      cell.setIcon(update ? IconUtil.getMoveUpIcon() : null);
       final Object pyPackage = table.getValueAt(row, 0);
       if (pyPackage instanceof InstalledPackage) {
         cell.setToolTipText(((InstalledPackage) pyPackage).getTooltipText());

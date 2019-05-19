@@ -1,16 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -126,7 +126,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     configureSoftWraps(7);
     Inlay inlay = addInlay(1);
     assertNotNull(myEditor.getSoftWrapModel().getSoftWrap(5));
-    WriteCommandAction.writeCommandAction(ourProject).run(() -> myEditor.getDocument().setText(" "));
+    runWriteCommand(() -> myEditor.getDocument().setText(" "));
     assertFalse(inlay.isValid());
   }
 
@@ -300,7 +300,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     initText("abc");
     Inlay i1 = addInlay(1, false);
     Inlay i2 = addInlay(2, true);
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> {
+    runWriteCommand(() -> {
       myEditor.getDocument().insertString(2, " ");
       myEditor.getDocument().insertString(1, " ");
     });
@@ -313,9 +313,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     addInlay(2);
     right();
     right();
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> {
-      myEditor.getDocument().replaceString(1, 2, "b");
-    });
+    runWriteCommand(() -> myEditor.getDocument().replaceString(1, 2, "b"));
     checkCaretPosition(2, 2, 2);
   }
 
@@ -324,6 +322,76 @@ public class EditorInlayTest extends AbstractEditorTest {
     addInlay(2);
     myEditor.getCaretModel().moveToOffset(2);
     checkCaretPosition(2, 2, 3);
+  }
+
+  public void testInlayOrderAfterMerge() {
+    initText("ab");
+    Inlay i0 = addInlay(0);
+    Inlay i1 = addInlay(1);
+    Inlay i2 = addInlay(2);
+    runWriteCommand(() -> {
+      myEditor.getDocument().deleteString(0, 1);
+      myEditor.getDocument().deleteString(0, 1);
+    });
+    assertEquals(Arrays.asList(i0, i1, i2), myEditor.getInlayModel().getInlineElementsInRange(0, 0));
+  }
+
+  public void testInlayOrderAfterDocumentModification() {
+    initText("abc");
+    Inlay i1 = addInlay(2);
+    runWriteCommand(() -> myEditor.getDocument().deleteString(1, 2));
+    Inlay i2 = addInlay(1);
+    assertEquals(Arrays.asList(i1, i2), myEditor.getInlayModel().getInlineElementsInRange(1, 1));
+  }
+
+  public void testYToVisualLineCalculationForBlockInlay() {
+    initText("abc\ndef");
+    addBlockInlay(1);
+    assertEquals(1, myEditor.yToVisualLine((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT * 2)));
+  }
+
+  public void testYToVisualLineCalculationForBlockInlayAnotherCase() {
+    initText("abc\ndef\nghi");
+    addBlockInlay(1);
+    assertEquals(1, myEditor.yToVisualLine((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT * 2)));
+  }
+
+  public void testInlayIsAddedIntoCollapsedFoldRegion() {
+    initText("abc");
+    addCollapsedFoldRegion(0, 3, "...");
+    addBlockInlay(0);
+    assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT), myEditor.visualLineToY(1));
+  }
+
+  public void testVerticalCaretMovementInPresenceOfBothTypesOfInlays() {
+    initText("abc\nd<caret>ef\nghi");
+    addBlockInlay(0);
+    addInlay(4, TEST_CHAR_WIDTH * 2);
+    down();
+    checkResultByText("abc\ndef\nghi<caret>");
+  }
+
+  public void testInlayAtLineEndCausesSoftWrapping() {
+    initText("abcd efgh");
+    addInlay(9, TEST_CHAR_WIDTH * 3);
+    configureSoftWraps(10);
+    verifySoftWrapPositions(5);
+  }
+
+  public void testBlockInlayImpactsEditorWidth() {
+    initText("");
+    myEditor.getSettings().setAdditionalColumnsCount(0);
+    myEditor.getInlayModel().addBlockElement(0, false, false, 0, new EditorCustomElementRenderer() {
+      @Override
+      public int calcWidthInPixels(@NotNull Inlay inlay) { return 123;}
+
+      @Override
+      public void paint(@NotNull Inlay inlay,
+                        @NotNull Graphics g,
+                        @NotNull Rectangle targetRegion,
+                        @NotNull TextAttributes textAttributes) {}
+    });
+    assertEquals(123, myEditor.getContentComponent().getPreferredSize().width);
   }
 
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,

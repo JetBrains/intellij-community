@@ -54,8 +54,8 @@ public class AnnotateOperation extends LocalPathIndifferentOperation {
   public AnnotateOperation(File cvsLightweightFile, String revision, CvsEnvironment env, boolean annotateBinary) {
     this(cvsLightweightFile, revision, env, new LocalPathIndifferentOperationHelper(revision), annotateBinary);
   }
-  
-  private AnnotateOperation(File cvsLightweightFile, String revision, CvsEnvironment env, 
+
+  private AnnotateOperation(File cvsLightweightFile, String revision, CvsEnvironment env,
                             LocalPathIndifferentOperationHelper helper, boolean annotateBinary){
     super(helper.getAdminReader(), env);
     myHelper = helper;
@@ -64,6 +64,7 @@ public class AnnotateOperation extends LocalPathIndifferentOperation {
     myAnnotateBinary = annotateBinary;
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final AnnotateCommand result = new AnnotateCommand();
     myHelper.addFilesTo(result);
@@ -80,6 +81,7 @@ public class AnnotateOperation extends LocalPathIndifferentOperation {
     return myBuffer.toString();
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     super.messageSent(message, byteMessage, error, tagged);
     if (!error) {
@@ -93,6 +95,7 @@ public class AnnotateOperation extends LocalPathIndifferentOperation {
     }
   }
 
+  @Override
   protected String getOperationName() {
     return "annotate";
   }

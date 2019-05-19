@@ -73,7 +73,7 @@ public class FluentIterableConversionUtil {
     }
     if (PsiTypesUtil.compareTypes(parameters[0], targetParameters[0], false)) {
       return new TypeConversionDescriptor("$q$.toArray($type$)", null) {
-        PsiType myType = parameters[0];
+        final PsiType myType = parameters[0];
 
         @Override
         public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
@@ -157,7 +157,7 @@ public class FluentIterableConversionUtil {
   }
 
   static class TransformAndConcatConversionRule extends GuavaTypeConversionDescriptor {
-    public TransformAndConcatConversionRule(PsiExpression context) {
+    TransformAndConcatConversionRule(PsiExpression context) {
       super("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)", context);
     }
 
@@ -212,7 +212,7 @@ public class FluentIterableConversionUtil {
     }
 
     private static boolean determineType(PsiExpression retValue,
-                                         List<Pair<PsiExpression, Boolean>> iterableReturnValues,
+                                         List<? super Pair<PsiExpression, Boolean>> iterableReturnValues,
                                          PsiClass iterable,
                                          PsiClass collection) {
       if (retValue == null) return false;
@@ -255,7 +255,7 @@ public class FluentIterableConversionUtil {
   }
 
   private static class GuavaFilterInstanceOfConversionDescriptor extends TypeConversionDescriptor {
-    public GuavaFilterInstanceOfConversionDescriptor(String filterClassQName) {
+    GuavaFilterInstanceOfConversionDescriptor(String filterClassQName) {
       super("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "(" + filterClassQName + ".class::isInstance)." + StreamApiConstants.MAP + "(" + filterClassQName + ".class::cast)");
     }
   }
@@ -297,7 +297,7 @@ public class FluentIterableConversionUtil {
   }
 
   static class CopyIntoConversionDescriptor extends TypeConversionDescriptor {
-    public CopyIntoConversionDescriptor() {
+    CopyIntoConversionDescriptor() {
       super("$it$.copyInto($c$)", null);
     }
 

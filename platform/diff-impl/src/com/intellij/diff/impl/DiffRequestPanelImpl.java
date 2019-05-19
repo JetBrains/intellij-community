@@ -87,7 +87,7 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
     @NotNull private DiffRequest myRequest = NoDiffRequest.INSTANCE;
     @Nullable private Object myRequestIdentity = null;
 
-    public MyDiffRequestProcessor(@Nullable Project project, @Nullable Window window) {
+    MyDiffRequestProcessor(@Nullable Project project, @Nullable Window window) {
       super(project);
       myWindow = window;
     }

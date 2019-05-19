@@ -6,16 +6,11 @@ package com.intellij.java.navigation
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.application.ModalityState
 import com.intellij.psi.*
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.Consumer
-import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
 /**
  * @author peter
  */
@@ -141,6 +136,12 @@ class Intf {
     def i = addEmptyFile("foo/i.txt")
     def index = addEmptyFile("index.html")
     assert gotoFile('i') == [i, index]
+  }
+
+  void "test prefer shorter filename match"() {
+    def shorter = addEmptyFile("foo/cp-users.txt")
+    def longer = addEmptyFile("cp-users-and-smth.html")
+    assert gotoFile('cpusers') == [shorter, longer]
   }
 
   void "test consider dot-idea files out of project"() {
@@ -396,12 +397,19 @@ class Intf {
 
     assert gotoFile("barindex") == [fooBarFile]
     assert gotoFile("fooindex") == [fooBarFile]
-    assert gotoFile("fbindex") == [fbFile, someFbFile, fooBarFile, fbSomeFile]
+    assert gotoFile("fbindex") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
     assert gotoFile("fbhtml") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
 
     // partial slashes
     assert gotoFile("somefb/index.html") == [someFbFile]
     assert gotoFile("somefb\\index.html") == [someFbFile]
+  }
+
+  void "test file path matching with spaces instead of slashes"() {
+    def good = addEmptyFile("config/app.txt")
+    addEmptyFile("src/Configuration/ManagesApp.txt")
+
+    assert gotoFile("config app.txt")[0] == good
   }
 
   void "test multiple slashes in goto file"() {
@@ -489,6 +497,30 @@ class Intf {
     assert gotoClass('java.Str*Builder', true) == [sb, asb]
   }
 
+  void "test include overridden qualified name method matches"() {
+    def m1 = myFixture.addClass('interface HttpRequest { void start() {} }').methods[0]
+    def m2 = myFixture.addClass('interface Request extends HttpRequest { void start() {} }').methods[0]
+    assert gotoSymbol('Request.start') == [m1, m2]
+    assert gotoSymbol('start') == [m1] // works as usual for non-qualified patterns
+  }
+
+  void "test colon in search end"() {
+    def foo = myFixture.addClass('class Foo { }')
+    assert gotoClass('Foo:') == [foo]
+  }
+
+  void "test multi-word class name with only first letter of second word"() {
+    myFixture.addClass('class Foo { }')
+    def fooBar = myFixture.addClass('class FooBar { }')
+    assert gotoClass('Foo B') == [fooBar]
+  }
+
+  void "test prefer filename match regardless of package match"() {
+    def f1 = addEmptyFile('resolve/ResolveCache.java')
+    def f2 = addEmptyFile('abc/ResolveCacheSettings.xml')
+    assert gotoFile('resolvecache') == [f1, f2]
+  }
+
   private List<Object> gotoClass(String text, boolean checkboxState = false) {
     return getPopupElements(new GotoClassModel2(project), text, checkboxState)
   }
@@ -505,22 +537,8 @@ class Intf {
     return calcPopupElements(createPopup(model), text, checkboxState)
   }
 
-  static ArrayList<Object> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
-    List<Object> elements = ['empty']
-    def semaphore = new Semaphore(1)
-    popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, SelectMostRelevant.INSTANCE, { set ->
-      elements = set as List<Object>
-      semaphore.up()
-    } as Consumer<Set<?>>)
-    def start = System.currentTimeMillis()
-    while (!semaphore.waitFor(10) && System.currentTimeMillis() - start < 10_000_000) {
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-    }
-    if (!semaphore.waitFor(10)) {
-      printThreadDump()
-      fail()
-    }
-    return elements
+  static List<Object> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
+    return popup.calcPopupElements(text, checkboxState)
   }
 
   private ChooseByNamePopup createPopup(ChooseByNameModel model, PsiElement context = null) {

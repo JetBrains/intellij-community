@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.Disposable;
@@ -24,9 +10,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.EnumComboBoxModel;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.vcs.commit.CommitMessageInspectionsPanel;
+import com.intellij.vcs.commit.message.CommitMessageInspectionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,6 +22,7 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
   private JBCheckBox myShowUnversionedFiles;
   private JPanel myMainPanel;
   private CommitMessageInspectionsPanel myInspectionsPanel;
+  private CommitOptionsConfigurable myCommitOptions;
   private JBCheckBox myClearInitialCommitMessage;
   private JBCheckBox myForceNonEmptyCommitMessage;
   private JBCheckBox myMoveUncommittedToAnotherChangeList;
@@ -45,12 +32,8 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
   public CommitDialogSettingsPanel(@NotNull Project project) {
     myProject = project;
     myMoveToFailedCommitChangeListModel = new EnumComboBoxModel<>(VcsShowConfirmationOption.Value.class);
-    myMoveToFailedCommitChangeList.setRenderer(new ListCellRendererWrapper<VcsShowConfirmationOption.Value>() {
-      @Override
-      public void customize(JList list, VcsShowConfirmationOption.Value value, int index, boolean selected, boolean hasFocus) {
-        setText(getConfirmationOptionText(value));
-      }
-    });
+    myMoveToFailedCommitChangeList.setRenderer(
+      SimpleListCellRenderer.create("", CommitDialogSettingsPanel::getConfirmationOptionText));
     myMoveToFailedCommitChangeList.setModel(myMoveToFailedCommitChangeListModel);
   }
 
@@ -62,6 +45,7 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
     myMoveUncommittedToAnotherChangeList.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
     myMoveToFailedCommitChangeListModel.setSelectedItem(settings.MOVE_TO_FAILED_COMMIT_CHANGELIST);
     myInspectionsPanel.reset();
+    myCommitOptions.reset();
   }
 
   @Override
@@ -71,7 +55,7 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
            settings.FORCE_NON_EMPTY_COMMENT != myForceNonEmptyCommitMessage.isSelected() ||
            settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT != myMoveUncommittedToAnotherChangeList.isSelected() ||
            settings.MOVE_TO_FAILED_COMMIT_CHANGELIST != myMoveToFailedCommitChangeListModel.getSelectedItem() ||
-           myInspectionsPanel.isModified();
+           myInspectionsPanel.isModified() || myCommitOptions.isModified();
   }
 
   @Override
@@ -82,6 +66,7 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
     settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = myMoveUncommittedToAnotherChangeList.isSelected();
     settings.MOVE_TO_FAILED_COMMIT_CHANGELIST = myMoveToFailedCommitChangeListModel.getSelectedItem();
     myInspectionsPanel.apply();
+    myCommitOptions.apply();
   }
 
   @NotNull
@@ -92,11 +77,13 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
 
   private void createUIComponents() {
     myInspectionsPanel = new CommitMessageInspectionsPanel(myProject);
+    myCommitOptions = new CommitOptionsConfigurable(myProject);
   }
 
   @Override
   public void dispose() {
     Disposer.dispose(myInspectionsPanel);
+    Disposer.dispose(myCommitOptions);
   }
 
   @NotNull

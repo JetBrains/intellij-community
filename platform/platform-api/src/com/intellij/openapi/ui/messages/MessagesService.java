@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.messages;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,7 +28,7 @@ public interface MessagesService {
                         @Nullable Component parentComponent,
                         String message,
                         String title,
-                        String[] options,
+                        @NotNull String[] options,
                         int defaultOptionIndex,
                         int focusedOptionIndex,
                         Icon icon,
@@ -50,9 +52,12 @@ public interface MessagesService {
                                     int defaultOptionIndex,
                                     int focusedOptionIndex,
                                     Icon icon,
-                                    PairFunction<Integer, JCheckBox, Integer> exitFunc);
+                                    PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc);
 
   String showPasswordDialog(Project project, String message, String title, Icon icon, InputValidator validator);
+
+  @Nullable
+  char[] showPasswordDialog(@NotNull Component parentComponent, String message, String title, Icon icon, @Nullable InputValidator validator);
 
   String showInputDialog(@Nullable Project project,
                          @Nullable Component parentComponent,
@@ -64,7 +69,7 @@ public interface MessagesService {
                          @Nullable TextRange selection,
                          @Nullable String comment);
 
-  String showMultilineInputDialog(Project project, String message, String title, String initialValue, Icon icon, InputValidator validator);
+  String showMultilineInputDialog(Project project, String message, String title, String initialValue, Icon icon, @Nullable InputValidator validator);
 
   Pair<String, Boolean> showInputDialogWithCheckBox(String message,
                                                     String title,
@@ -88,10 +93,19 @@ public interface MessagesService {
   void showTextAreaDialog(JTextField textField,
                           String title,
                           String dimensionServiceKey,
-                          Function<String, List<String>> parser,
-                          Function<List<String>, String> lineJoiner);
+                          Function<? super String, ? extends List<String>> parser,
+                          Function<? super List<String>, String> lineJoiner);
 
   static MessagesService getInstance() {
+    if (ApplicationManager.getApplication() != null) {
       return ServiceManager.getService(MessagesService.class);
     }
+
+    try {
+      return (MessagesService) MessagesService.class.getClassLoader().loadClass("com.intellij.ui.messages.MessagesServiceImpl").newInstance();
+    }
+    catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.application.options.CodeStyle;
@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -14,6 +16,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -21,6 +24,7 @@ import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -58,6 +62,7 @@ class TextPainter extends BasePainter {
   private int myCurrentMethodSeparator;
   private final CodeStyleSettings myCodeStyleSettings;
   private final FileType myFileType;
+  private final Color myMethodSeparatorColor;
   private boolean myPerformActualDrawing;
   
   private final String myPrintDate;
@@ -76,7 +81,7 @@ class TextPainter extends BasePainter {
   @NonNls private static final String DATE_FORMAT = "yyyy-MM-dd";
   @NonNls private static final String TIME_FORMAT = "HH:mm:ss";    
 
-  public TextPainter(@NotNull DocumentEx editorDocument,
+  TextPainter(@NotNull DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fullFileName,
                      String shortFileName,
@@ -86,7 +91,7 @@ class TextPainter extends BasePainter {
          FileSeparatorProvider.getFileSeparators(psiFile, editorDocument), CodeStyle.getSettings(psiFile));
   }
 
-  public TextPainter(@NotNull DocumentEx editorDocument,
+  TextPainter(@NotNull DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fullFileName,
                      String shortFileName,
@@ -117,6 +122,12 @@ class TextPainter extends BasePainter {
     Date date = new Date();
     myPrintDate = new SimpleDateFormat(DATE_FORMAT).format(date);
     myPrintTime = new SimpleDateFormat(TIME_FORMAT).format(date);
+
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    myMethodSeparatorColor = colorsManager.isDarkEditor()
+                             ? colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME)
+                               .getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
+                             : null;
   }
 
   public void setSegment(int segmentStart, int segmentEnd) {
@@ -350,7 +361,7 @@ class TextPainter extends BasePainter {
     double lineY = position.getY();
 
     if (myPerformActualDrawing) {
-      getMethodSeparator(lIterator.getLineNumber());
+      getMethodSeparatorColor(lIterator.getLineNumber());
     }
 
     char[] text = myDocument.getCharsSequence().toString().toCharArray();
@@ -373,10 +384,10 @@ class TextPainter extends BasePainter {
         myOffset = lEnd;
 
         if (myPerformActualDrawing) {
-          LineMarkerInfo marker = getMethodSeparator(lIterator.getLineNumber());
-          if (marker != null) {
+          Color markerColor = getMethodSeparatorColor(lIterator.getLineNumber());
+          if (markerColor != null) {
             Color save = g.getColor();
-            setForegroundColor(g, marker.separatorColor);
+            setForegroundColor(g, markerColor);
             UIUtil.drawLine(g, 0, (int)lineY, (int)clip.getWidth(), (int)lineY);
             setForegroundColor(g, save);
           }
@@ -422,7 +433,8 @@ class TextPainter extends BasePainter {
     g.translate(-clip.getX(), 0);
   }
 
-  private LineMarkerInfo getMethodSeparator(int line) {
+  @Nullable
+  private Color getMethodSeparatorColor(int line) {
     LineMarkerInfo marker = null;
     LineMarkerInfo tmpMarker;
     while (myCurrentMethodSeparator < myMethodSeparators.length &&
@@ -431,7 +443,7 @@ class TextPainter extends BasePainter {
       marker = tmpMarker;
       myCurrentMethodSeparator++;
     }
-    return marker;
+    return marker == null ? null : myMethodSeparatorColor == null ? marker.separatorColor : myMethodSeparatorColor;
   }
 
   private double drawHeader(Graphics2D g, Rectangle2D clip) {
@@ -443,18 +455,16 @@ class TextPainter extends BasePainter {
     boolean wasDrawn = false;
 
     String headerText1 = myPrintSettings.FOOTER_HEADER_TEXT1;
-    if (headerText1 != null && headerText1.length() > 0 &&
-        PrintSettings.HEADER.equals(myPrintSettings.FOOTER_HEADER_PLACEMENT1)) {
+    if (!StringUtil.isEmpty(headerText1) && myPrintSettings.FOOTER_HEADER_PLACEMENT1 == PrintSettings.Placement.Header) {
       h = drawHeaderOrFooterLine(g, x, y, w, headerText1, myPrintSettings.FOOTER_HEADER_ALIGNMENT1);
       wasDrawn = true;
       y += h;
     }
 
     String headerText2 = myPrintSettings.FOOTER_HEADER_TEXT2;
-    if (headerText2 != null && headerText2.length() > 0 &&
-        PrintSettings.HEADER.equals(myPrintSettings.FOOTER_HEADER_PLACEMENT2)) {
-      if (PrintSettings.LEFT.equals(myPrintSettings.FOOTER_HEADER_ALIGNMENT1) &&
-          PrintSettings.RIGHT.equals(myPrintSettings.FOOTER_HEADER_ALIGNMENT2) &&
+    if (!StringUtil.isEmpty(headerText1) && myPrintSettings.FOOTER_HEADER_PLACEMENT2 == PrintSettings.Placement.Header) {
+      if (myPrintSettings.FOOTER_HEADER_ALIGNMENT1 == PrintSettings.Alignment.Left &&
+          myPrintSettings.FOOTER_HEADER_ALIGNMENT2 == PrintSettings.Alignment.Right &&
           wasDrawn) {
         y -= h;
       }
@@ -474,18 +484,16 @@ class TextPainter extends BasePainter {
     double h = 0;
     y -= lineMetrics.getHeight();
     String headerText2 = myPrintSettings.FOOTER_HEADER_TEXT2;
-    if (headerText2 != null && headerText2.length() > 0 &&
-        PrintSettings.FOOTER.equals(myPrintSettings.FOOTER_HEADER_PLACEMENT2)) {
+    if (!StringUtil.isEmpty(headerText2) && myPrintSettings.FOOTER_HEADER_PLACEMENT2 == PrintSettings.Placement.Footer) {
       h = drawHeaderOrFooterLine(g, x, y, w, headerText2, myPrintSettings.FOOTER_HEADER_ALIGNMENT2);
       wasDrawn = true;
     }
 
     String headerText1 = myPrintSettings.FOOTER_HEADER_TEXT1;
-    if (headerText1 != null && headerText1.length() > 0 &&
-        PrintSettings.FOOTER.equals(myPrintSettings.FOOTER_HEADER_PLACEMENT1)) {
+    if (!StringUtil.isEmpty(headerText1) && myPrintSettings.FOOTER_HEADER_PLACEMENT1 == PrintSettings.Placement.Footer) {
       y -= lineMetrics.getHeight();
-      if (PrintSettings.LEFT.equals(myPrintSettings.FOOTER_HEADER_ALIGNMENT1) &&
-          PrintSettings.RIGHT.equals(myPrintSettings.FOOTER_HEADER_ALIGNMENT2) &&
+      if (myPrintSettings.FOOTER_HEADER_ALIGNMENT1 == PrintSettings.Alignment.Left &&
+          myPrintSettings.FOOTER_HEADER_ALIGNMENT2 == PrintSettings.Alignment.Right &&
           wasDrawn) {
         y += h;
       }
@@ -495,8 +503,7 @@ class TextPainter extends BasePainter {
     return wasDrawn ? clip.getY() + clip.getHeight() - y + lineMetrics.getHeight() / 4 : 0;
   }
 
-  private double drawHeaderOrFooterLine(Graphics2D g, double x, double y, double w, String headerText,
-                                        String alignment) {
+  private double drawHeaderOrFooterLine(Graphics2D g, double x, double y, double w, String headerText, PrintSettings.Alignment alignment) {
     FontRenderContext fontRenderContext = g.getFontRenderContext();
     LineMetrics lineMetrics = getHeaderFooterLineMetrics(g);
     float lineHeight = lineMetrics.getHeight();
@@ -507,12 +514,10 @@ class TextPainter extends BasePainter {
       float descent = lineMetrics.getDescent();
       double width = myHeaderFont.getStringBounds(headerText, fontRenderContext).getWidth() + getCharWidth(g);
       float yPos = (float) (lineHeight - descent + y);
-      if (PrintSettings.LEFT.equals(alignment)) {
-        drawStringToGraphics(g, headerText, x, yPos);
-      } else if (PrintSettings.CENTER.equals(alignment)) {
-        drawStringToGraphics(g, headerText, (float) (x + (w - width) / 2), yPos);
-      } else if (PrintSettings.RIGHT.equals(alignment)) {
-        drawStringToGraphics(g, headerText, (float) (x + w - width), yPos);
+      switch (alignment) {
+        case Left: drawStringToGraphics(g, headerText, x, yPos); break;
+        case Center: drawStringToGraphics(g, headerText, (float) (x + (w - width) / 2), yPos); break;
+        case Right: drawStringToGraphics(g, headerText, (float) (x + w - width), yPos); break;
       }
     }
     return lineHeight;

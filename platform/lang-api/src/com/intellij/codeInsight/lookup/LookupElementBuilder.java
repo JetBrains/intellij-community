@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup;
 
@@ -31,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -105,6 +92,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withInsertHandler(InsertHandler)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {
     return withInsertHandler(insertHandler);
@@ -119,6 +107,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withRenderer(LookupElementRenderer)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setRenderer(@Nullable LookupElementRenderer<LookupElement> renderer) {
     return withRenderer(renderer);
@@ -138,6 +127,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withIcon(Icon)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setIcon(@Nullable Icon icon) {
     return withIcon(icon);
@@ -165,6 +155,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withLookupString(String)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder addLookupString(@NotNull String another) {
     return withLookupString(another);
@@ -173,6 +164,13 @@ public final class LookupElementBuilder extends LookupElement {
   public LookupElementBuilder withLookupString(@NotNull String another) {
     final THashSet<String> set = new THashSet<>(myAllLookupStrings);
     set.add(another);
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation, myPsiElement,
+                                    Collections.unmodifiableSet(set), myCaseSensitive);
+  }
+  @Contract(pure=true)
+  public LookupElementBuilder withLookupStrings(@NotNull Collection<String> another) {
+    final THashSet<String> set = new THashSet<>(myAllLookupStrings);
+    set.addAll(another);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation, myPsiElement,
                                     Collections.unmodifiableSet(set), myCaseSensitive);
   }
@@ -185,6 +183,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withCaseSensitivity(boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setCaseSensitive(boolean caseSensitive) {
     return withCaseSensitivity(caseSensitive);
@@ -213,6 +212,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withItemTextForeground(Color)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setItemTextForeground(@NotNull Color itemTextForeground) {
     return withItemTextForeground(itemTextForeground);
@@ -227,6 +227,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withItemTextUnderlined(boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setItemTextUnderlined(boolean underlined) {
     return withItemTextUnderlined(underlined);
@@ -238,9 +239,6 @@ public final class LookupElementBuilder extends LookupElement {
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation, myPsiElement, myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @since 2018.2
-   */
   @Contract(pure=true)
   public LookupElementBuilder withItemTextItalic(boolean italic) {
     final LookupElementPresentation presentation = copyPresentation();
@@ -251,6 +249,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withTypeText(String)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setTypeText(@Nullable String typeText) {
     return withTypeText(typeText);
@@ -263,6 +262,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withTypeText(String, boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setTypeText(@Nullable String typeText, boolean grayed) {
     return withTypeText(typeText, grayed);
@@ -282,9 +282,6 @@ public final class LookupElementBuilder extends LookupElement {
                                     myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @since 2018.1
-   */
   public LookupElementBuilder withTypeIconRightAligned(boolean typeIconRightAligned) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTypeIconRightAligned(typeIconRightAligned);
@@ -295,6 +292,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withPresentableText(String)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setPresentableText(@NotNull String presentableText) {
     return withPresentableText(presentableText);
@@ -310,6 +308,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #bold()}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setBold() {
     return bold();
@@ -322,6 +321,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withBoldness(boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setBold(boolean bold) {
     return withBoldness(bold);
@@ -337,6 +337,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #strikeout()}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setStrikeout() {
     return strikeout();
@@ -349,6 +350,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withStrikeoutness(boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setStrikeout(boolean strikeout) {
     return withStrikeoutness(strikeout);
@@ -364,6 +366,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withTailText(String)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setTailText(@Nullable String tailText) {
     return withTailText(tailText);
@@ -376,6 +379,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withTailText(String, boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setTailText(@Nullable String tailText, boolean grayed) {
     return withTailText(tailText, grayed);
@@ -425,7 +429,7 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   @Override
-  public void handleInsert(InsertionContext context) {
+  public void handleInsert(@NotNull InsertionContext context) {
     if (myInsertHandler != null) {
       myInsertHandler.handleInsert(context, this);
     }

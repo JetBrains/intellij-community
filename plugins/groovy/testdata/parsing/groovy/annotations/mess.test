@@ -16,12 +16,12 @@ Groovy script
             PsiElement(=)('=')
             PsiWhiteSpace(' ')
             Literal
-              PsiElement(string)(''5'')
+              PsiElement(single quoted string)(''5'')
           PsiElement(,)(',')
           PsiWhiteSpace(' ')
           Annotation member value pair
             Literal
-              PsiElement(string)(''foo'')
+              PsiElement(single quoted string)(''foo'')
           PsiElement(,)(',')
           PsiErrorElement:<annotation attribute> expected, got ','
             <empty list>

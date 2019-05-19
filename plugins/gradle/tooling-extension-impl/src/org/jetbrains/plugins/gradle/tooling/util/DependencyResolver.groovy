@@ -25,7 +25,6 @@ import org.jetbrains.plugins.gradle.model.ExternalDependency
 
 /**
  * @author Vladislav.Soroka
- * @since 8/19/2015
  */
 interface DependencyResolver {
   Collection<ExternalDependency> resolveDependencies(@Nullable String configurationName)

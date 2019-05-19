@@ -23,7 +23,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/21/2015
  */
 public class Jar implements Serializable {
   private static final long serialVersionUID = 1L;

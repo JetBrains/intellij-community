@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.CommonBundle;
@@ -40,6 +26,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +41,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
+
+  @NotNull @NonNls public static final String RETURN_SYMBOL = "\u23ce";
+
   private List<Data> myAllContents;
   private Editor     myViewer;
 
@@ -65,6 +55,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   private final boolean    myAllowMultipleSelections;
   private final Alarm      myUpdateAlarm;
   private Icon myListEntryIcon = AllIcons.FileTypes.Text;
+  private boolean myUseNumbering = true;
 
   public ContentChooser(Project project, String title, boolean useIdeaEditor) {
     this(project, title, useIdeaEditor, false);
@@ -100,6 +91,10 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   public void setSplitterOrientation(boolean vertical) {
     mySplitter.setOrientation(vertical);
+  }
+
+  public void setUseNumbering(boolean useNumbering) {
+    myUseNumbering = useNumbering;
   }
 
   @Override
@@ -156,7 +151,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           doOKAction();
         }
-        else {
+        else if (myUseNumbering) {
           SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myList);
           if (supply != null && supply.isPopupActive()) return;
           char aChar = e.getKeyChar();
@@ -339,7 +334,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     @Override
     protected void customizeCellRenderer(@NotNull JList list, Item value, int index, boolean selected, boolean hasFocus) {
       setIcon(myListEntryIcon);
-      if (myUseIdeaEditor) {
+      if (myUseIdeaEditor && myUseNumbering) {
         int max = list.getModel().getSize();
         String indexString = String.valueOf(index + 1);
         int count = String.valueOf(max).length() - indexString.length();
@@ -348,11 +343,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         String prefix = indexString + new String(spaces) + "  ";
         append(prefix, SimpleTextAttributes.GRAYED_ATTRIBUTES, false);
       }
-      else if (UIUtil.isUnderGTKLookAndFeel()) {
-        // Fix GTK background
-        Color background = selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
-        UIUtil.changeBackGround(this, background);
-      }
+
       String text = value.getShortText(previewChars);
       append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES, true);
       SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected);
@@ -383,11 +374,11 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       if (!hasSlashR) {
         String s = StringUtil.first(longText, maxChars, true);
         trimmed = s != longText;
-        shortText = StringUtil.convertLineSeparators(s, "\u23ce");
+        shortText = StringUtil.convertLineSeparators(s, RETURN_SYMBOL);
       }
       else {
         String s = StringUtil.first(longText, maxChars * 2 + 1, false);
-        String s2 = StringUtil.convertLineSeparators(s, "\u23ce");
+        String s2 = StringUtil.convertLineSeparators(s, RETURN_SYMBOL);
         shortText = StringUtil.first(s2, maxChars, true);
         trimmed = s != longText || s2 != shortText;
       }

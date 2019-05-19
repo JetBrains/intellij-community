@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.URLUtil;
 import com.jetbrains.python.debugger.*;
 import com.thoughtworks.xstream.io.naming.NoNameCoder;
 import com.thoughtworks.xstream.io.xml.XppReader;
@@ -12,8 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.xmlpull.mxp1.MXParser;
 
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -67,7 +66,7 @@ public class ProtocolParser {
       throw new PyDebuggerException("Expected <threading_event> or <asyncio_event>, found " + reader.getNodeName());
     }
 
-    final Long time = Long.parseLong(readString(reader, "time", ""));
+    final long time = Long.parseLong(readString(reader, "time", ""));
     final String name = readString(reader, "name", "");
     final String thread_id = readString(reader, "thread_id", "");
     final String type = readString(reader, "type", "");
@@ -156,15 +155,6 @@ public class ProtocolParser {
     return payload;
   }
 
-  public static String decode(final String value) throws PyDebuggerException {
-    try {
-      return URLDecoder.decode(value, "UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new PyDebuggerException("Unable to decode: " + value + ", reason: " + e.getMessage());
-    }
-  }
-
   public static String encodeExpression(final String expression) {
     return StringUtil.replace(expression, "\n", "@LINE@");
   }
@@ -222,7 +212,7 @@ public class ProtocolParser {
     final String file = readString(reader, "file", null);
     final int line = readInt(reader, "line", 0);
 
-    return new PyStackFrameInfo(threadId, id, name, positionConverter.create(file, line));
+    return new PyStackFrameInfo(threadId, id, name, positionConverter.convertPythonToFrame(file, line));
   }
 
   @NotNull
@@ -397,6 +387,12 @@ public class ProtocolParser {
     return values;
   }
 
+  public static String parseWarning(final String text) throws PyDebuggerException {
+    final XppReader reader = openReader(text, true);
+    reader.moveDown();
+    return readString(reader, "id", null);
+  }
+
   private static XppReader openReader(final String text, final boolean checkForContent) throws PyDebuggerException {
     final XppReader reader = new XppReader(new StringReader(text), new MXParser(), new NoNameCoder());
     if (checkForContent && !reader.hasMoreChildren()) {
@@ -429,6 +425,6 @@ public class ProtocolParser {
     if (value == null && isRequired) {
       throw new PyDebuggerException("Attribute not found: " + name);
     }
-    return value == null ? null : decode(value);
+    return value == null ? null : URLUtil.decode(value);
   }
 }

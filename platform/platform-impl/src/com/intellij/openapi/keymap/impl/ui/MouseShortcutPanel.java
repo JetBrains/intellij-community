@@ -7,7 +7,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacGestureSupportForMouseShortcutPanel;
 
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -63,6 +63,7 @@ public final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
     setOpaque(true);
   }
 
+  @Override
   public void setShortcut(MouseShortcut shortcut) {
     MouseShortcut old = getShortcut();
     if (old != null || shortcut != null) {

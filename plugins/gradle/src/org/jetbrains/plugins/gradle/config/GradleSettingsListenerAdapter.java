@@ -6,10 +6,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
+import org.jetbrains.plugins.gradle.settings.TestRunner;
 
 /**
  * @author Denis Zhdanov
- * @since 3/13/12 3:53 PM
  */
 public abstract class GradleSettingsListenerAdapter extends ExternalSystemSettingsListenerAdapter<GradleProjectSettings>
   implements GradleSettingsListener
@@ -29,5 +29,13 @@ public abstract class GradleSettingsListenerAdapter extends ExternalSystemSettin
 
   @Override
   public void onGradleVmOptionsChange(@Nullable String oldOptions, @Nullable String newOptions) {
+  }
+
+  @Override
+  public void onBuildDelegationChange(boolean delegatedBuild, @NotNull String linkedProjectPath) {
+  }
+
+  @Override
+  public void onTestRunnerChange(@NotNull TestRunner currentTestRunner, @NotNull String linkedProjectPath) {
   }
 }

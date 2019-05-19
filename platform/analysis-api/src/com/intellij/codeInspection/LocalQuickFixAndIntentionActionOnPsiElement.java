@@ -28,13 +28,14 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
   protected LocalQuickFixAndIntentionActionOnPsiElement(@Nullable PsiElement element) {
     this(element, element);
   }
+
   protected LocalQuickFixAndIntentionActionOnPsiElement(@Nullable PsiElement startElement, @Nullable PsiElement endElement) {
     super(startElement, endElement);
   }
 
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (file == null||myStartElement==null) return;
+    if (file == null || myStartElement == null) return;
     final PsiElement startElement = myStartElement.getElement();
     final PsiElement endElement = myEndElement == null ? startElement : myEndElement.getElement();
     if (startElement == null || endElement == null) return;
@@ -51,12 +52,24 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
            startElement.isValid() &&
            (endElement == startElement || endElement.isValid()) &&
            file != null &&
-           isAvailable(project, file, startElement, endElement);
+           isAvailable(project, file, editor, startElement, endElement);
   }
 
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @Nullable Editor editor,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    return isAvailable(project, file, startElement, endElement);
+  }
+
+  /**
+   * Performs the action.
+   * @param editor the editor where the action is invoked or {@code null} if it's invoked from batch inspections results' tool window.
+   */
   public abstract void invoke(@NotNull Project project,
                               @NotNull PsiFile file,
-                              @Nullable("is null when called from inspection") Editor editor,
+                              @Nullable Editor editor,
                               @NotNull PsiElement startElement,
                               @NotNull PsiElement endElement);
 

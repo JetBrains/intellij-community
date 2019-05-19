@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("CredentialPromptDialog")
 package com.intellij.credentialStore
 
 import com.intellij.CommonBundle
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AppIcon
 import com.intellij.ui.components.CheckBox
@@ -14,6 +14,8 @@ import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
 import javax.swing.JCheckBox
 import javax.swing.JPasswordField
+import javax.swing.text.BadLocationException
+import javax.swing.text.Segment
 
 /**
  * @param project The context project (might be null)
@@ -55,7 +57,7 @@ fun askCredentials(project: Project?,
     }
   }
 
-  return invokeAndWaitIfNeed(ModalityState.any()) {
+  return invokeAndWaitIfNeeded(ModalityState.any()) {
     val passwordField = JPasswordField()
     val rememberCheckBox = RememberCheckBoxState.createCheckBox(toolTip = "The password will be stored between application sessions.")
 
@@ -67,19 +69,19 @@ fun askCredentials(project: Project?,
 
     AppIcon.getInstance().requestAttention(project, true)
     if (!dialog(dialogTitle, project = project, panel = panel, focusedComponent = passwordField, errorText = error).showAndGet()) {
-      return@invokeAndWaitIfNeed null
+      return@invokeAndWaitIfNeeded null
     }
 
     RememberCheckBoxState.update(rememberCheckBox)
 
-    val credentials = Credentials(attributes.userName, passwordField.password.nullize())
+    val credentials = Credentials(attributes.userName, passwordField.getTrimmedChars())
     if (isSaveOnOk && rememberCheckBox.isSelected) {
       store.set(attributes, credentials)
       credentials.getPasswordAsString()
     }
 
     // for memory only store isRemember is true, because false doesn't matter
-    return@invokeAndWaitIfNeed CredentialRequestResult(credentials, isRemember = rememberCheckBox.isSelected)
+    return@invokeAndWaitIfNeeded CredentialRequestResult(credentials, isRemember = rememberCheckBox.isSelected)
   }
 }
 
@@ -101,4 +103,43 @@ object RememberCheckBoxState {
       toolTip = toolTip
     )
   }
+}
+
+// do not trim trailing whitespace
+fun JPasswordField.getTrimmedChars(): CharArray? {
+  val doc = document
+  val size = doc.length
+  if (size == 0) {
+     return null
+  }
+
+  val segment = Segment()
+  try {
+    doc.getText(0, size, segment)
+  }
+  catch (e: BadLocationException) {
+    return null
+  }
+
+  val chars = segment.array
+  var startOffset = segment.offset
+  while (Character.isWhitespace(chars[startOffset])) {
+    startOffset++
+  }
+  // exclusive
+  var endIndex = segment.count
+  while (endIndex > startOffset && Character.isWhitespace(chars[endIndex - 1])) {
+    endIndex--
+  }
+
+  if (startOffset >= endIndex) {
+    return null
+  }
+  else if (startOffset == 0 && endIndex == chars.size) {
+    return chars
+  }
+
+  val result = chars.copyOfRange(startOffset, endIndex)
+  chars.fill(0.toChar(), segment.offset, segment.count)
+  return result
 }

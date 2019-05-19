@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationStarter;
@@ -25,8 +25,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
+import gnu.trove.THashSet;
 import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -52,16 +51,14 @@ import javax.swing.*;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
  * @author anna
- * @since Nov 22, 2004
  */
 public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
@@ -142,8 +139,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     return null;
   }
 
+  @NotNull
   @Override
-  public String suggestSdkName(String currentSdkName, String sdkHome) {
+  public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
     if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) return "Local IDEA [" + sdkHome + "]";
     String buildNumber = getBuildNumber(sdkHome);
     return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");
@@ -333,36 +331,32 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
     JpsModel model = JpsSerializationManager.getInstance().loadModel(sdkHome, PathManager.getOptionsPath());
     JpsSdkReference<JpsDummyElement> sdkRef = model.getProject().getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
-    String sdkName = sdkRef == null ? null : sdkRef.getSdkName();
-    Sdk internalJava = sdkModel.findSdk(sdkName);
+    Sdk internalJava = sdkRef == null ? null : sdkModel.findSdk(sdkRef.getSdkName());
     if (internalJava != null && isValidInternalJdk(sdk, internalJava)) {
       setInternalJdk(sdk, sdkModificator, internalJava);
     }
-    Set<VirtualFile> addedRoots = ContainerUtil.newTroveSet();
-    VirtualFileManager vfsManager = VirtualFileManager.getInstance();
-    JpsJavaExtensionService javaService = JpsJavaExtensionService.getInstance();
-    boolean isUltimate = vfsManager.findFileByUrl(VfsUtilCore.pathToUrl(sdkHome + "/ultimate/ultimate-resources")) != null;
-    Set<String> suppressedModules = ContainerUtil.newTroveSet("jps-plugin-system");
-    Set<String> ultimateModules = ContainerUtil.newTroveSet(
-      "intellij.platform.commercial", "intellij.idea.ultimate.resources",
-      "intellij.platform.commercial.verifier", "intellij.platform.commercial.license",
-      "intellij.platform.propertyInspector",
-      "intellij.platform.graph", "intellij.platform.graph.impl",
-      "intellij.diagram", "intellij.diagram.impl", "intellij.uml");
-    List<JpsModule> modules = JBIterable.from(model.getProject().getModules())
-      .filter(o -> {
-        if (suppressedModules.contains(o.getName())) return false;
-        if (o.getName().endsWith("-ide")) return false;
-        String contentUrl = ContainerUtil.getFirstItem(o.getContentRootsList().getUrls());
-        if (contentUrl == null) return true;
-        // add only community modules/plugins to avoid EP duplicates & minor IDE conflicts
-        return !isUltimate ||
-               contentUrl.contains("/community/") && !contentUrl.contains("/community/python") ||
-               ultimateModules.contains(o.getName());
-      })
-      .toList();
+
+    Map<String, JpsModule> moduleByName = model.getProject().getModules().stream().collect(Collectors.toMap(JpsModule::getName, Function.identity()));
+    String[] mainModuleCandidates = {
+      "intellij.idea.ultimate.main",
+      "intellij.idea.community.main",
+      "main",
+      "community-main"
+    };
+    JpsModule mainModule = Arrays.stream(mainModuleCandidates).map(moduleByName::get).filter(Objects::nonNull).findFirst().orElse(null);
+    if (mainModule == null) {
+      LOG.error("Cannot find main module (" + Arrays.toString(mainModuleCandidates) + ") in IntelliJ IDEA sources at " + sdkHome);
+      return;
+    }
+
+    Set<JpsModule> modules = new LinkedHashSet<>();
+    JpsJavaExtensionService.dependencies(mainModule).recursively().processModules(modules::add);
+
     indicator.setIndeterminate(false);
     double delta = 1 / (2 * Math.max(0.5, modules.size()));
+    JpsJavaExtensionService javaService = JpsJavaExtensionService.getInstance();
+    VirtualFileManager vfsManager = VirtualFileManager.getInstance();
+    Set<VirtualFile> addedRoots = new THashSet<>();
     for (JpsModule o : modules) {
       indicator.setFraction(indicator.getFraction() + delta);
       for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {
@@ -536,7 +530,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull Sdk sdk, Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Sdk sdk, @NotNull Element additional) {
     Sandbox sandbox = new Sandbox(sdk);
     try {
       sandbox.readExternal(additional);

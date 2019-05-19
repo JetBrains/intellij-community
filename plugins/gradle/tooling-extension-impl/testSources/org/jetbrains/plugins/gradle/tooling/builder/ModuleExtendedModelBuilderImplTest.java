@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -21,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
 import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
@@ -34,12 +21,14 @@ import static org.junit.Assert.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/16/14
  */
 public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest {
 
+  private final boolean is50OrBetter;
+
   public ModuleExtendedModelBuilderImplTest(@NotNull String gradleVersion) {
     super(gradleVersion);
+    is50OrBetter = GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("5.0")) >= 0;
   }
 
   @Test
@@ -54,11 +43,11 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
 
         assertNotNull(moduleExtendedModel);
 
-        List<String> sourceDirectories = ContainerUtil.newArrayList();
-        List<String> resourceDirectories = ContainerUtil.newArrayList();
-        List<String> testResourceDirectories = ContainerUtil.newArrayList();
-        List<String> testDirectories = ContainerUtil.newArrayList();
-        List<String> excludeDirectories = ContainerUtil.newArrayList();
+        List<String> sourceDirectories = new ArrayList<>();
+        List<String> resourceDirectories = new ArrayList<>();
+        List<String> testResourceDirectories = new ArrayList<>();
+        List<String> testDirectories = new ArrayList<>();
+        List<String> excludeDirectories = new ArrayList<>();
 
         fillDirectories(moduleExtendedModel,
                         sourceDirectories, resourceDirectories,
@@ -112,11 +101,19 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
           assertEquals(ContainerUtil.newArrayList(".gradle", "build", "some-extra-exclude-folder"), excludeDirectories);
         }
         else if (module.getName().equals("withIdeaPluginCustomization2")) {
-          assertEquals(ContainerUtil.newArrayList("src/main/java", "src/test/java", "src/test/resources"), sourceDirectories);
-          assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
-          assertTrue(testDirectories.isEmpty());
-          assertTrue(testResourceDirectories.isEmpty());
-          assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+          if (is50OrBetter) {
+            assertEquals(ContainerUtil.newArrayList("src/main/java", "src/test/java"), sourceDirectories);
+            assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
+            assertTrue(testDirectories.isEmpty());
+            assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
+            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+          } else {
+            assertEquals(ContainerUtil.newArrayList("src/main/java", "src/test/java", "src/test/resources"), sourceDirectories);
+            assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
+            assertTrue(testDirectories.isEmpty());
+            assertTrue(testResourceDirectories.isEmpty());
+            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+          }
         }
         else if (module.getName().equals("withIdeaPluginCustomization3")) {
           assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);

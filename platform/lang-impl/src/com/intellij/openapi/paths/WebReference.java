@@ -57,12 +57,6 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
     return myUrl != null ? myUrl : getValue();
   }
 
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return EMPTY_ARRAY;
-  }
-
   class MyFakePsiElement extends FakePsiElement implements SyntheticElement {
     @Override
     public PsiElement getParent() {

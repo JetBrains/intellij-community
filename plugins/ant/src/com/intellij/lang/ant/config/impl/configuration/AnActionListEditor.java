@@ -17,10 +17,6 @@ package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -44,10 +40,11 @@ public class AnActionListEditor<T> extends JPanel {
     add(myForm.myWholePanel, BorderLayout.CENTER);
   }
 
-  public void addAddAction(final Factory<T> newItemFactory) {
+  public void addAddAction(final Factory<? extends T> newItemFactory) {
     ReorderableListController<T>.AddActionDescription description = myForm.getListActionsBuilder().addAddAction(
       AntBundle.message("add.action.name"), newItemFactory, true);
     description.addPostHandler(new ReorderableListController.ActionNotification<T>() {
+      @Override
       public void afterActionPerformed(T value) {
         myAdded.add(value);
       }
@@ -55,9 +52,10 @@ public class AnActionListEditor<T> extends JPanel {
     description.setShowText(true);
   }
 
-  public void addRemoveButtonForAnt(final Condition<T> removeCondition, String actionName) {
+  public void addRemoveButtonForAnt(final Condition<? super T> removeCondition, String actionName) {
     final ReorderableListController<T>.RemoveActionDescription description = myForm.getListActionsBuilder().addRemoveAction(actionName);
     description.addPostHandler(new ReorderableListController.ActionNotification<List<T>>() {
+      @Override
       public void afterActionPerformed(List<T> list) {
         for (T item : list) {
           if (myAdded.contains(item)) {
@@ -107,7 +105,7 @@ public class AnActionListEditor<T> extends JPanel {
     return myRemoved;
   }
 
-  public void setItems(Collection<T> items) {
+  public void setItems(Collection<? extends T> items) {
     DefaultListModel model = myForm.getListModel();
     model.removeAllElements();
     for (T item : items) {
@@ -131,7 +129,7 @@ public class AnActionListEditor<T> extends JPanel {
     private JList myList;
     private final ReorderableListToolbar<T> myListController;
 
-    public Form() {
+    Form() {
       myList.setModel(new DefaultListModel());
       if (ApplicationManager.getApplication() == null) {
         myListController = new ReorderableListToolbar<>(myList);

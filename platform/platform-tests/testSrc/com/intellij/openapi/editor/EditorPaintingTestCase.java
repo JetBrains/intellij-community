@@ -21,13 +21,19 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.ui.Graphics2DDelegate;
@@ -41,7 +47,6 @@ import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   protected static final String TEST_DATA_PATH = "platform/platform-tests/testData/editor/painting";
@@ -57,13 +62,20 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     try {
       FontLayoutService.setInstance(null);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
   }
 
   protected void checkResult() throws IOException {
-    checkResult(getFileName());
+    checkResult(getFileName(), false);
+  }
+
+  protected void checkResultWithGutter() throws IOException {
+    checkResult(getFileName(), true);
   }
 
   @NotNull
@@ -71,28 +83,76 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     return getTestName(true) + ".png";
   }
 
-  protected static void setUniformEditorHighlighter(TextAttributes attributes) {
+  protected static void setUniformEditorHighlighter(@NotNull TextAttributes attributes) {
     ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(attributes));
   }
 
-  protected static void addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
-    addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
+  protected static RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
+    return addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
   }
 
-  protected static void addLineHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
-    addLineHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
+  protected static RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
+    return addLineHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
   }
 
-  protected static void addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
-    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.EXACT_RANGE);
+  protected static RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
+    return myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
-  protected static void addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
-    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+  protected static RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
+    return myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
 
-  protected static void addBorderHighlighter(int startOffset, int endOffset, int layer, Color borderColor) {
-    addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(null, null, borderColor, EffectType.BOXED, Font.PLAIN));
+  protected static RangeHighlighter addBorderHighlighter(int startOffset, int endOffset, int layer, Color borderColor) {
+    return addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(null, null, borderColor, EffectType.BOXED, Font.PLAIN));
+  }
+
+  @Override
+  protected void configureSoftWraps(int charCountToWrapAt) {
+    int charWidthInPixels = BitmapFont.CHAR_WIDTH;
+    // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
+    EditorTestUtil.configureSoftWraps(myEditor, (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
+    ((SoftWrapModelImpl)myEditor.getSoftWrapModel()).setSoftWrapPainter(new SoftWrapPainter() {
+      @Override
+      public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
+        g.setColor(myEditor.getColorsScheme().getDefaultForeground());
+        int xStart = x + charWidthInPixels / 4;
+        int xEnd = x + charWidthInPixels * 3 / 4;
+        int yStart = y + lineHeight / 4;
+        int yEnd = y + lineHeight * 3 / 4;
+        switch (drawingType) {
+          case BEFORE_SOFT_WRAP_LINE_FEED:
+            g.drawLine(xEnd, yStart, xEnd, yEnd);
+            g.drawLine(xStart, yEnd, xEnd, yEnd);
+            break;
+          case AFTER_SOFT_WRAP:
+            g.drawLine(xStart, yStart, xStart, yEnd);
+            g.drawLine(xStart, yEnd, xEnd, yEnd);
+            break;
+        }
+        return charWidthInPixels;
+      }
+
+      @Override
+      public int getDrawingHorizontalOffset(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
+        return charWidthInPixels;
+      }
+
+      @Override
+      public int getMinDrawingWidth(@NotNull SoftWrapDrawingType drawingType) {
+        return charWidthInPixels;
+      }
+
+      @Override
+      public boolean canUse() {
+        return true;
+      }
+
+      @Override
+      public void reinit() {
+
+      }
+    });
   }
 
   @NotNull
@@ -105,23 +165,35 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     return new File(PathManagerEx.findFileUnderCommunityHome(directory), fileName);
   }
 
+  @Override
   @NotNull
   protected String getTestDataPath() {
     return TEST_DATA_PATH;
   }
 
-  private void checkResult(@TestDataFile String expectedResultFileName) throws IOException {
+  private void checkResult(@TestDataFile String expectedResultFileName, boolean withGutter) throws IOException {
     myEditor.getSettings().setAdditionalLinesCount(0);
     myEditor.getSettings().setAdditionalColumnsCount(1);
+
     JComponent editorComponent = myEditor.getContentComponent();
-    Dimension size = editorComponent.getPreferredSize();
-    editorComponent.setSize(size);
+    JComponent gutterComponent = withGutter ? ((EditorImpl)myEditor).getGutterComponentEx() : new MyEmptyPanel();
+
+    Dimension editorSize = editorComponent.getPreferredSize();
+    Dimension gutterSize = gutterComponent.getPreferredSize();
+    Dimension imageSize = new Dimension(editorSize.width + gutterSize.width, Math.max(editorSize.height, gutterSize.height));
+
+    editorComponent.setSize(editorSize.width, imageSize.height);
+    gutterComponent.setSize(gutterSize.width, imageSize.height);
+
     //noinspection UndesirableClassUsage
-    BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_INT_ARGB);
     BitmapFont plainFont = BitmapFont.loadFromFile(getFontFile(false));
     BitmapFont boldFont = BitmapFont.loadFromFile(getFontFile(true));
     MyGraphics graphics = new MyGraphics(image.createGraphics(), plainFont, boldFont);
     try {
+      gutterComponent.paint(graphics);
+      graphics.translate(gutterComponent.getWidth(), 0);
+
       editorComponent.paint(graphics);
     }
     finally {
@@ -131,7 +203,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     File fileWithExpectedResult = getTestDataFile(getTestDataPath(), expectedResultFileName);
     if (OVERWRITE_TESTDATA) {
       ImageIO.write(image, "png", fileWithExpectedResult);
-      System.out.println("File " + fileWithExpectedResult.getPath() + " created.");
+      System.err.println("File " + fileWithExpectedResult.getPath() + " created.");
     }
     if (fileWithExpectedResult.exists()) {
       BufferedImage expectedResult = ImageIO.read(fileWithExpectedResult);
@@ -173,18 +245,6 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
       myBoldFont = boldFont;
     }
 
-    @Override
-    public void addRenderingHints(Map hints) {
-    }
-
-    @Override
-    public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue) {
-    }
-
-    @Override
-    public void setRenderingHints(Map hints) {
-    }
-
     @NotNull
     @Override
     public Graphics create() {
@@ -213,6 +273,11 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
         drawChar(str.charAt(i), (int)x, (int)y);
         x += BitmapFont.CHAR_WIDTH;
       }
+    }
+
+    @Override
+    public void drawString(String str, int x, int y) {
+      drawString(str, (float)x, (float)y);
     }
 
     private void drawChar(char c, int x, int y) {
@@ -278,10 +343,11 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   private static class UniformHighlighter implements EditorHighlighter {
+    @NotNull
     private final TextAttributes myAttributes;
     private Document myDocument;
 
-    private UniformHighlighter(TextAttributes attributes) {
+    private UniformHighlighter(@NotNull TextAttributes attributes) {
       myAttributes = attributes;
     }
 
@@ -299,7 +365,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     private class Iterator implements HighlighterIterator {
       private int myOffset;
 
-      public Iterator(int startOffset) {
+      Iterator(int startOffset) {
         myOffset = startOffset;
       }
 
@@ -338,6 +404,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
         return myOffset == myDocument.getTextLength();
       }
 
+      @NotNull
       @Override
       public Document getDocument() {
         return myDocument;
@@ -347,10 +414,10 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
 
   protected static class MyInlayRenderer implements EditorCustomElementRenderer {
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) { return 10; }
+    public int calcWidthInPixels(@NotNull Inlay inlay) { return 10; }
 
     @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
       g.setColor(JBColor.CYAN);
       g.drawRect(r.x, r.y, r.width - 1, r.height - 1);
     }
@@ -363,5 +430,12 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     plainFont.saveToFile(getFontFile(false));
     BitmapFont boldBont = BitmapFont.createFromFont(font.deriveFont(Font.BOLD));
     boldBont.saveToFile(getFontFile(true));
+  }
+
+  private static class MyEmptyPanel extends JComponent {
+    @Override
+    public Dimension getPreferredSize() {
+      return new Dimension(0, 0);
+    }
   }
 }

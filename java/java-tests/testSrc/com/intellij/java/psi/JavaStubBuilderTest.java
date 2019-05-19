@@ -551,7 +551,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
                  "    FIELD:PsiFieldStub[BIG:BigInteger=;INITIALIZER_NOT_STORED;]\n" +
                  "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n",
                  DebugUtil.stubTreeToString(tree));
-    System.out.println("SOE depth=" + i + ", time=" + t + "ms");
+    LOG.debug("SOE depth=" + i + ", time=" + t + "ms");
   }
 
   public void testPerformance() throws IOException {
@@ -559,7 +559,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     String text = FileUtil.loadFile(new File(path));
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", text);
     String message = "Source file size: " + text.length();
-    PlatformTestUtil.startPerformanceTest(message, 500, () -> myBuilder.buildStubTree(file)).assertTiming();
+    PlatformTestUtil.startPerformanceTest(message, 700, () -> myBuilder.buildStubTree(file)).assertTiming();
   }
 
   private void doTest(String source, String expected) {

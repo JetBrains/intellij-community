@@ -1,8 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
+import com.intellij.serialization.ClassUtil;
+import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -15,13 +15,13 @@ import java.util.List;
 class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   private final String myTextIfEmpty;
 
-  public TagBinding(@NotNull MutableAccessor accessor, @NotNull Tag tagAnnotation) {
+  TagBinding(@NotNull MutableAccessor accessor, @NotNull Tag tagAnnotation) {
     super(accessor, tagAnnotation.value(), null);
 
     myTextIfEmpty = tagAnnotation.textIfEmpty();
   }
 
-  public TagBinding(@NotNull MutableAccessor accessor, @NotNull String suggestedName) {
+  TagBinding(@NotNull MutableAccessor accessor, @NotNull String suggestedName) {
     super(accessor, suggestedName, null);
 
     myTextIfEmpty = "";
@@ -31,18 +31,18 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   @Override
   public Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
-    Element serialized = new Element(myName);
     if (value == null) {
-      return serialized;
+      return null;
     }
 
+    Element serialized = new Element(myName);
     if (myBinding == null) {
       serialized.addContent(new Text(XmlSerializerImpl.convertToString(value)));
     }
     else {
       Object node = myBinding.serialize(value, serialized, filter);
       if (node != null && node != serialized) {
-        addContent(serialized, node);
+        Binding.addContent(serialized, node);
       }
     }
     return serialized;
@@ -50,17 +50,16 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(@NotNull Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@NotNull Object context, @NotNull List<? extends Element> elements) {
     List<Element> children;
     if (elements.size() == 1) {
       children = elements.get(0).getChildren();
     }
     else {
       String name = elements.get(0).getName();
-      children = new ArrayList<Element>();
+      children = new ArrayList<>();
       for (Element element : elements) {
         assert element.getName().equals(name);
-        //noinspection unchecked
         children.addAll(element.getChildren());
       }
     }
@@ -78,7 +77,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   public Object deserialize(@NotNull Object context, @NotNull Element element) {
     if (myBinding == null) {
       String value = XmlSerializerImpl.getTextValue(element, myTextIfEmpty);
-      XmlSerializerImpl.doSet(context, value, myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
+      XmlSerializerImpl.doSet(context, value, myAccessor, ClassUtil.typeToClass(myAccessor.getGenericType()));
     }
     else {
       deserialize(context, element.getChildren());
@@ -86,9 +85,9 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
     return context;
   }
 
-  private void deserialize(@NotNull Object context, @NotNull List<Element> children) {
+  private void deserialize(@NotNull Object context, @NotNull List<? extends Element> children) {
     assert myBinding != null;
-    if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
+    if (myBinding instanceof BeanBinding && !myAccessor.isWritable()) {
       ((BeanBinding)myBinding).deserializeInto(context, children.get(0));
     }
     else {
@@ -97,7 +96,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   }
 
   @Override
-  public boolean isBoundTo(@NotNull Element node) {
-    return node.getName().equals(myName);
+  public boolean isBoundTo(@NotNull Element element) {
+    return element.getName().equals(myName);
   }
 }

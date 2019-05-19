@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,17 +25,17 @@ import java.util.ListIterator;
 import static javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
 
 public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
-  private final boolean myCanExpand;
+  protected boolean myCanExpand;
 
   private static final Convertor<TreePath, String> TO_STRING = path -> path.getLastPathComponent().toString();
-  private final Convertor<TreePath, String> myToStringConvertor;
+  private final Convertor<? super TreePath, String> myToStringConvertor;
   public static final Convertor<TreePath, String> NODE_DESCRIPTOR_TOSTRING = path -> {
-    NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, path.getLastPathComponent());
+    NodeDescriptor descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, path);
     if (descriptor != null) return descriptor.toString();
     return TO_STRING.convert(path);
   };
 
-  public TreeSpeedSearch(JTree tree, Convertor<TreePath, String> toStringConvertor) {
+  public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toStringConvertor) {
     this(tree, toStringConvertor, false);
   }
 
@@ -44,15 +43,15 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     this(tree, TO_STRING);
   }
 
-  public TreeSpeedSearch(Tree tree, Convertor<TreePath, String> toString) {
+  public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString) {
     this(tree, toString, false);
   }
 
-  public TreeSpeedSearch(Tree tree, Convertor<TreePath, String> toString, boolean canExpand) {
+  public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
     this((JTree)tree, toString, canExpand);
   }
 
-  public TreeSpeedSearch(JTree tree, Convertor<TreePath, String> toString, boolean canExpand) {
+  public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
     super(tree);
     setComparator(new SpeedSearchComparator(false, true));
     myToStringConvertor = toString;
@@ -120,7 +119,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     @NotNull private final JTree myTree;
     @NotNull private final TreeSpeedSearch mySearch;
 
-    public MySelectAllAction(@NotNull JTree tree, @NotNull TreeSpeedSearch search) {
+    MySelectAllAction(@NotNull JTree tree, @NotNull TreeSpeedSearch search) {
       myTree = tree;
       mySearch = search;
       copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL));
@@ -128,13 +127,13 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(mySearch.isPopupActive() &&
                                      myTree.getSelectionModel().getSelectionMode() == DISCONTIGUOUS_TREE_SELECTION);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       TreeSelectionModel sm = myTree.getSelectionModel();
 
       String query = mySearch.getEnteredPrefix();
@@ -158,7 +157,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
         TreePath currentElement = (TreePath)mySearch.findElement(query);
         TreePath anchor = ObjectUtils.chooseNotNull(currentElement, filtered.get(0));
 
-        sm.setSelectionPaths(ArrayUtil.toObjectArray(filtered, TreePath.class));
+        sm.setSelectionPaths(filtered.toArray(new TreePath[0]));
         myTree.setAnchorSelectionPath(anchor);
       }
     }

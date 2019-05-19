@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,16 +15,15 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.getOkButtonText;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
+import static com.intellij.openapi.util.text.StringUtil.trimLeading;
 import static git4idea.DialogManager.showOkCancelDialog;
 import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
 
@@ -47,13 +32,10 @@ import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
  * dialog with the specified file. If user accepts the changes, it saves file and returns 0,
  * otherwise it just returns error code.
  */
-public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEditorHandler {
+public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler {
   private final static Logger LOG = Logger.getInstance(GitInteractiveRebaseEditorHandler.class);
-  private final GitRebaseEditorService myService;
   private final Project myProject;
   private final VirtualFile myRoot;
-  @NotNull private final UUID myHandlerNo;
-  private boolean myIsClosed;
 
   /**
    * If interactive rebase editor (with the list of commits) was shown, this is true.
@@ -61,21 +43,20 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    */
   protected boolean myRebaseEditorShown = false;
 
-  private boolean myEditorCancelled;
+  private boolean myCommitListCancelled;
+  private boolean myUnstructuredEditorCancelled;
 
-  public GitInteractiveRebaseEditorHandler(@NotNull GitRebaseEditorService service, @NotNull Project project, @NotNull VirtualFile root) {
-    myService = service;
+  public GitInteractiveRebaseEditorHandler(@NotNull Project project, @NotNull VirtualFile root) {
     myProject = project;
     myRoot = root;
-    myHandlerNo = service.registerHandler(this, project);
   }
 
+  @Override
   public int editCommits(@NotNull String path) {
-    ensureOpen();
     try {
       if (myRebaseEditorShown) {
-        myEditorCancelled = !handleUnstructuredEditor(path);
-        return 0;
+        myUnstructuredEditorCancelled = !handleUnstructuredEditor(path);
+        return myUnstructuredEditorCancelled ? ERROR_EXIT_CODE : 0;
       }
       else {
         setRebaseEditorShown();
@@ -84,7 +65,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
           return 0;
         }
         else {
-          myEditorCancelled = true;
+          myCommitListCancelled = true;
           return ERROR_EXIT_CODE;
         }
       }
@@ -98,7 +79,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   protected boolean handleUnstructuredEditor(@NotNull String path) throws IOException {
     String encoding = GitConfigUtil.getCommitEncoding(myProject, myRoot);
     File file = new File(path);
-    String initialText = ignoreComments(FileUtil.loadFile(file, encoding));
+    String initialText = trimLeading(ignoreComments(FileUtil.loadFile(file, encoding)));
 
     String newText = showUnstructuredEditor(initialText);
     if (newText == null) {
@@ -181,29 +162,13 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     myRebaseEditorShown = true;
   }
 
-  /**
-   * Check that handler has not yet been closed
-   */
-  private void ensureOpen() {
-    if (myIsClosed) {
-      throw new IllegalStateException("The handler was already closed");
-    }
-  }
-
-  public void close() {
-    ensureOpen();
-    myIsClosed = true;
-    myService.unregisterHandler(myHandlerNo);
+  @Override
+  public boolean wasCommitListEditorCancelled() {
+    return myCommitListCancelled;
   }
 
   @Override
-  @NotNull
-  public UUID getHandlerNo() {
-    return myHandlerNo;
-  }
-
-  @Override
-  public boolean wasEditorCancelled() {
-    return myEditorCancelled;
+  public boolean wasUnstructuredEditorCancelled() {
+    return myUnstructuredEditorCancelled;
   }
 }

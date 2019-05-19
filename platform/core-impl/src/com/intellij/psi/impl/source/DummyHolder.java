@@ -109,7 +109,7 @@ public class DummyHolder extends PsiFileImpl {
     visitor.visitFile(this);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String toString() {
     return "DummyHolder";
   }
@@ -152,7 +152,7 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   @Override
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "MethodDoesntCallSuperMethod"})
+  @SuppressWarnings({"MethodDoesntCallSuperMethod"})
   protected PsiFileImpl clone() {
     DummyHolder psiClone = (DummyHolder)cloneImpl((FileElement)calcTreeElement().clone());
     DummyHolderViewProvider dummyHolderViewProvider = new DummyHolderViewProvider(getManager());

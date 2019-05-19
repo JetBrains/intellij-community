@@ -21,11 +21,11 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.RlogCommand;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.Command;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 public class GetAllBranchesOperation extends LocalPathIndifferentOperation implements BranchesProvider {
   private final Collection<String> myTags = new HashSet<>();
@@ -43,6 +43,7 @@ public class GetAllBranchesOperation extends LocalPathIndifferentOperation imple
     myModuleName = moduleName;
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final RlogCommand command = new RlogCommand();
     command.setModuleName(myModuleName);
@@ -51,6 +52,7 @@ public class GetAllBranchesOperation extends LocalPathIndifferentOperation imple
     return command;
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     if (error) return;
     if (tagged) return;
@@ -73,14 +75,17 @@ public class GetAllBranchesOperation extends LocalPathIndifferentOperation imple
     }
   }
 
+  @Override
   public Collection<String> getAllBranches(){
     return myTags;
   }
 
+  @Override
   public Collection<CvsRevisionNumber> getAllRevisions() {
     return null;
   }
 
+  @Override
   protected String getOperationName() {
     return "rlog";
   }

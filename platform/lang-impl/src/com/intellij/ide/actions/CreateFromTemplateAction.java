@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -47,7 +33,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   }
 
   @Override
-  public final void actionPerformed(final AnActionEvent e) {
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
@@ -64,30 +50,32 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     buildDialog(project, dir, builder);
 
     final Ref<String> selectedTemplateName = Ref.create(null);
-    final T createdElement =
-      builder.show(getErrorTitle(), getDefaultTemplateName(dir), new CreateFileFromTemplateDialog.FileCreator<T>() {
+    builder.show(getErrorTitle(), getDefaultTemplateName(dir),
+                 new CreateFileFromTemplateDialog.FileCreator<T>() {
 
-        @Override
-        public T createFile(@NotNull String name, @NotNull String templateName) {
-          selectedTemplateName.set(templateName);
-          return CreateFromTemplateAction.this.createFile(name, templateName, dir);
-        }
+                   @Override
+                   public T createFile(@NotNull String name, @NotNull String templateName) {
+                     selectedTemplateName.set(templateName);
+                     return CreateFromTemplateAction.this.createFile(name, templateName, dir);
+                   }
 
-        @Override
-        public boolean startInWriteAction() {
-          return CreateFromTemplateAction.this.startInWriteAction();
-        }
+                   @Override
+                   public boolean startInWriteAction() {
+                     return CreateFromTemplateAction.this.startInWriteAction();
+                   }
 
-        @Override
-        @NotNull
-        public String getActionName(@NotNull String name, @NotNull String templateName) {
-          return CreateFromTemplateAction.this.getActionName(dir, name, templateName);
-        }
-      });
-    if (createdElement != null) {
-      view.selectElement(createdElement);
-      postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
-    }
+                   @Override
+                   @NotNull
+                   public String getActionName(@NotNull String name, @NotNull String templateName) {
+                     return CreateFromTemplateAction.this.getActionName(dir, name, templateName);
+                   }
+                 },
+                 createdElement -> {
+                   if (createdElement != null) {
+                     view.selectElement(createdElement);
+                     postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
+                   }
+                 });
   }
 
   protected void postProcess(T createdElement, String templateName, Map<String,String> customProperties) {
@@ -110,14 +98,13 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
 
     final boolean enabled = isAvailable(dataContext);
 
-    presentation.setVisible(enabled);
-    presentation.setEnabled(enabled);
+    presentation.setEnabledAndVisible(enabled);
   }
 
   protected boolean isAvailable(DataContext dataContext) {
@@ -126,8 +113,9 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     return project != null && view != null && view.getDirectories().length != 0;
   }
 
-  protected abstract String getActionName(PsiDirectory directory, String newName, String templateName);
+  protected abstract String getActionName(PsiDirectory directory, @NotNull String newName, String templateName);
 
+  @NotNull
   protected String getErrorTitle() {
     return CommonBundle.getErrorTitle();
   }

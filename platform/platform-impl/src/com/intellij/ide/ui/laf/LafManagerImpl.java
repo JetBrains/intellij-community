@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -9,70 +9,68 @@ import com.intellij.ide.ui.*;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
-import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
-import javax.swing.plaf.synth.Region;
-import javax.swing.plaf.synth.SynthLookAndFeel;
-import javax.swing.plaf.synth.SynthStyle;
-import javax.swing.plaf.synth.SynthStyleFactory;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
-@State(
-  name = "LafManager",
-  storages = {
-    @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS),
-    @Storage(value = "options.xml", deprecated = true)
-  }
-)
-public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable, ApplicationComponent {
+@State(name = "LafManager", storages = @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS))
+public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
   @NonNls private static final String ELEMENT_LAF = "laf";
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
   @NonNls private static final String ATTRIBUTE_THEME_NAME = "themeId";
-  @NonNls private static final String GNOME_THEME_PROPERTY_NAME = "gnome.Net/ThemeName";
+
+  private static final String DARCULA_EDITOR_THEME_KEY = "Darcula.SavedEditorTheme";
+  private static final String DEFAULT_EDITOR_THEME_KEY = "Default.SavedEditorTheme";
 
   @NonNls private static final String[] ourPatchableFontResources = {"Button.font", "ToggleButton.font", "RadioButton.font",
     "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font", "MenuItem.font",
@@ -84,49 +82,43 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @NonNls private static final String[] ourFileChooserTextKeys = {"FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
     "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
 
-  private static final String[] ourAlloyComponentsToPatchSelection = {"Tree", "MenuItem", "Menu", "List",
-    "ComboBox", "Table", "TextArea", "EditorPane", "TextPane", "FormattedTextField", "PasswordField",
-    "TextField", "RadioButtonMenuItem", "CheckBoxMenuItem"};
-
   private final EventDispatcher<LafManagerListener> myEventDispatcher = EventDispatcher.create(LafManagerListener.class);
   private final UIManager.LookAndFeelInfo[] myLaFs;
+  private final UIDefaults ourDefaults;
   private UIManager.LookAndFeelInfo myCurrentLaf;
-  private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
+  private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<>();
 
-  private static final Map<String, String> ourLafClassesAliases = ContainerUtil.newHashMap();
+  // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
+  public static final String WINDOW_ALPHA = "Window.alpha";
+
+  private static final Map<String, String> ourLafClassesAliases = new HashMap<>();
+
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
   }
 
-  public static boolean useIntelliJInsteadOfAqua() {
-    return Registry.is("ide.mac.yosemite.laf") && isIntelliJLafEnabled() && SystemInfo.isMacOSYosemite;
-  }
+  private boolean myFirstSetup = true;
 
   /**
    * Invoked via reflection.
    */
   LafManagerImpl() {
-    List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
+    ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
 
+    List<UIManager.LookAndFeelInfo> lafList = new ArrayList<>();
     if (SystemInfo.isMac) {
-      String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : UIManager.getSystemLookAndFeelClassName();
-      lafList.add(new UIManager.LookAndFeelInfo("Light", className));
+      lafList.add(new UIManager.LookAndFeelInfo("Light", IntelliJLaf.class.getName()));
     }
     else {
-      if (isIntelliJLafEnabled()) {
-        lafList.add(new IntelliJLookAndFeelInfo());
-      }
-      else {
-        lafList.add(new IdeaLookAndFeelInfo());
-      }
+      lafList.add(new IntelliJLookAndFeelInfo());
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
         if (!"Metal".equalsIgnoreCase(name)
             && !"CDE/Motif".equalsIgnoreCase(name)
             && !"Nimbus".equalsIgnoreCase(name)
-            && !"Windows Classic".equalsIgnoreCase(name)
-            && !name.startsWith("JGoodies")
-            && !("Windows".equalsIgnoreCase(name) && SystemInfo.isWin8OrNewer)) {
+            && !name.startsWith("Windows")
+            && !"GTK+".equalsIgnoreCase(name)
+            && !name.startsWith("JGoodies")) {
           lafList.add(laf);
         }
       }
@@ -135,11 +127,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     lafList.add(new DarculaLookAndFeelInfo());
 
 
-    lafList.addAll(Arrays.stream(UIThemeProvider.EP_NAME.getExtensions())
-                         .map(UIThemeProvider::createTheme)
-                         .filter(x -> x != null)
-                         .map(UIThemeBasedLookAndFeelInfo::new)
-                         .collect(Collectors.toList()));
+    for (UIThemeProvider provider : UIThemeProvider.EP_NAME.getExtensionList()) {
+      UITheme x = provider.createTheme();
+      if (x != null) {
+        lafList.add(new UIThemeBasedLookAndFeelInfo(x));
+      }
+    }
     myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[0]);
 
     if (!SystemInfo.isMac) {
@@ -154,10 +147,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     myCurrentLaf = getDefaultLaf();
-  }
-
-  private static boolean isIntelliJLafEnabled() {
-    return !Registry.is("idea.4.5.laf.enabled");
   }
 
   @Override
@@ -177,7 +166,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void initComponent() {
-    if (myCurrentLaf != null) {
+    if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
         boolean needUninstall = UIUtil.isUnderDarcula();
@@ -186,27 +175,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    updateUI();
-
-    if (SystemInfo.isXWindow) {
-      PropertyChangeListener themeChangeListener = new PropertyChangeListener() {
-        @Override
-        public void propertyChange(final PropertyChangeEvent evt) {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> {
-            fixGtkPopupStyle();
-            patchGtkDefaults(UIManager.getLookAndFeelDefaults());
-          });
-        }
-      };
-      Toolkit.getDefaultToolkit().addPropertyChangeListener(GNOME_THEME_PROPERTY_NAME, themeChangeListener);
-      Disposer.register(this, new Disposable() {
-        @Override
-        public void dispose() {
-          Toolkit.getDefaultToolkit().removePropertyChangeListener(GNOME_THEME_PROPERTY_NAME, themeChangeListener);
-        }
-      });
+    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && !((UIThemeBasedLookAndFeelInfo)myCurrentLaf).isInitialised()) {
+      setCurrentLookAndFeel(myCurrentLaf);
     }
+
+    updateUI();
   }
 
   public void updateWizardLAF(boolean wasUnderDarcula) {
@@ -228,24 +201,19 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public void loadState(@NotNull final Element element) {
     String className = null;
-    String themeId = null;
     UIManager.LookAndFeelInfo laf = null;
     Element lafElement = element.getChild(ELEMENT_LAF);
     if (lafElement != null) {
       className = lafElement.getAttributeValue(ATTRIBUTE_CLASS_NAME);
-      themeId = lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME);
-      if (themeId != null) {
-        for (UIManager.LookAndFeelInfo f : myLaFs) {
-          if (f instanceof UIThemeBasedLookAndFeelInfo) {
-            if (((UIThemeBasedLookAndFeelInfo)f).getTheme().getId().equals(themeId)) {
-              laf = f;
-              break;
-            }
-          }
-        }
-      }
       if (className != null && ourLafClassesAliases.containsKey(className)) {
         className = ourLafClassesAliases.get(className);
+      }
+
+      String themeId = lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME);
+      if (themeId != null) {
+        laf = Arrays.stream(myLaFs).
+          filter(l -> l instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)l).getTheme().getId().equals(themeId)).
+          findFirst().orElse(null);
       }
     }
 
@@ -257,25 +225,24 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       laf = getDefaultLaf();
     }
 
-    if (myCurrentLaf != null && !laf.getClassName().equals(myCurrentLaf.getClassName())) {
-      setCurrentLookAndFeel(laf);
-      updateUI();
-    }
-
     myCurrentLaf = laf;
   }
 
   @Override
   public Element getState() {
     Element element = new Element("state");
-    if (myCurrentLaf != null) {
-      String className = myCurrentLaf.getClassName();
+    UIManager.LookAndFeelInfo laf = myCurrentLaf;
+    if (laf instanceof TempUIThemeBasedLookAndFeelInfo) {
+      laf = ((TempUIThemeBasedLookAndFeelInfo)laf).getPreviousLaf();
+    }
+    if (laf != null) {
+      String className = laf.getClassName();
       if (className != null) {
         Element child = new Element(ELEMENT_LAF);
         child.setAttribute(ATTRIBUTE_CLASS_NAME, className);
 
-        if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
-          child.setAttribute(ATTRIBUTE_THEME_NAME, ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().getId());
+        if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+          child.setAttribute(ATTRIBUTE_THEME_NAME, ((UIThemeBasedLookAndFeelInfo)laf).getTheme().getId());
         }
         element.addContent(child);
       }
@@ -303,7 +270,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     if (SystemInfo.isMac) {
-      String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : UIManager.getSystemLookAndFeelClassName();
+      String className = IntelliJLaf.class.getName();
       UIManager.LookAndFeelInfo laf = findLaf(className);
       if (laf != null) return laf;
       LOG.error("Could not find OS X L&F: " + className);
@@ -316,7 +283,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find app L&F: " + appLafName);
     }
 
-    String defaultLafName = isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME;
+    String defaultLafName = IntelliJLaf.class.getName();
     UIManager.LookAndFeelInfo laf = findLaf(defaultLafName);
     if (laf != null) return laf;
     throw new IllegalStateException("No default L&F found: " + defaultLafName);
@@ -324,15 +291,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Nullable
   private UIManager.LookAndFeelInfo findLaf(@Nullable String className) {
-    if (className == null) {
-      return null;
-    }
-    for (UIManager.LookAndFeelInfo laf : myLaFs) {
-      if (Comparing.equal(laf.getClassName(), className)) {
-        return laf;
-      }
-    }
-    return null;
+    return Arrays.stream(myLaFs).
+      filter(l -> !(l instanceof UIThemeBasedLookAndFeelInfo) && Comparing.equal(l.getClassName(), className)).
+      findFirst().
+      orElse(null);
   }
 
   /**
@@ -340,10 +302,20 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    */
   @Override
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    UIManager.LookAndFeelInfo oldLaf = myCurrentLaf;
+
+    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+      ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).dispose();
+    }
+
     if (findLaf(lookAndFeelInfo.getClassName()) == null) {
       LOG.error("unknown LookAndFeel : " + lookAndFeelInfo);
       return;
     }
+
+    UIManager.getDefaults().clear();
+    UIManager.getDefaults().putAll(ourDefaults);
+
     // Set L&F
     if (IdeaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) { // that is IDEA default LAF
       IdeaLaf laf = new IdeaLaf();
@@ -381,6 +353,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         if (laf instanceof MetalLookAndFeel) {
           MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
         }
+        if (laf instanceof UserDataHolder && lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
+          ((UserDataHolder)laf).putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
+        }
         UIManager.setLookAndFeel(laf);
       }
       catch (Exception e) {
@@ -395,7 +370,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       try {
-        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getDefaults());
+        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getLookAndFeelDefaults());
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -407,16 +382,55 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
+    if (SystemInfo.isMacOSYosemite) {
+      installMacOSXFonts(UIManager.getLookAndFeelDefaults());
+    }
+
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
+
+    if (!myFirstSetup) {
+      ApplicationManager.getApplication().invokeLater(() -> updateEditorSchemeIfNecessary(oldLaf));
+    }
+    myFirstSetup = false;
+  }
+
+  private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf) {
+    if (oldLaf instanceof TempUIThemeBasedLookAndFeelInfo || myCurrentLaf instanceof TempUIThemeBasedLookAndFeelInfo) return;
+    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+      if (((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().getEditorSchemeName() != null) {
+        return;
+      }
+    }
+
+    boolean dark = UIUtil.isUnderDarcula();
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    EditorColorsScheme current = colorsManager.getGlobalScheme();
+    boolean wasUITheme = oldLaf instanceof UIThemeBasedLookAndFeelInfo;
+    if (dark != ColorUtil.isDark(current.getDefaultBackground()) || wasUITheme) {
+      String targetScheme = dark ? DarculaLaf.NAME : EditorColorsScheme.DEFAULT_SCHEME_NAME;
+      PropertiesComponent properties = PropertiesComponent.getInstance();
+      String savedEditorThemeKey = dark ? DARCULA_EDITOR_THEME_KEY : DEFAULT_EDITOR_THEME_KEY;
+      String toSavedEditorThemeKey = dark ? DEFAULT_EDITOR_THEME_KEY : DARCULA_EDITOR_THEME_KEY;
+      String themeName =  properties.getValue(savedEditorThemeKey);
+      if (themeName != null && colorsManager.getScheme(themeName) != null) {
+        targetScheme = themeName;
+      }
+      if (!wasUITheme) {
+        properties.setValue(toSavedEditorThemeKey, current.getName(), dark ? EditorColorsScheme.DEFAULT_SCHEME_NAME : DarculaLaf.NAME);
+      }
+
+      EditorColorsScheme scheme = colorsManager.getScheme(targetScheme);
+      if (scheme != null) {
+        colorsManager.setGlobalScheme(scheme);
+      }
+    }
+    UISettings.getShadowInstance().fireUISettingsChanged();
+    ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 
   public static void updateForDarcula(boolean isDarcula) {
     JBColor.setDark(isDarcula);
     IconLoader.setUseDarkIcons(isDarcula);
-  }
-
-  public void setLookAndFeelAfterRestart(UIManager.LookAndFeelInfo lookAndFeelInfo) {
-    myCurrentLaf = lookAndFeelInfo;
   }
 
   @Nullable
@@ -447,15 +461,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     fixPopupWeight();
 
-    fixGtkPopupStyle();
-
     fixMenuIssues(uiDefaults);
 
     if (UIUtil.isUnderAquaLookAndFeel()) {
       uiDefaults.put("Panel.opaque", Boolean.TRUE);
-    }
-    else if (UIUtil.isWinLafOnVista()) {
-      uiDefaults.put("ComboBox.border", null);
     }
 
     initInputMapDefaults(uiDefaults);
@@ -467,9 +476,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     patchLafFonts(uiDefaults);
 
-    patchHiDPI(uiDefaults);
+    patchListUI(uiDefaults);
+    patchTreeUI(uiDefaults);
 
-    patchGtkDefaults(uiDefaults);
+    patchHiDPI(uiDefaults);
 
     fixSeparatorColor(uiDefaults);
 
@@ -478,20 +488,88 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     fixOptionButton(uiDefaults);
 
     for (Frame frame : Frame.getFrames()) {
-      // OSX/Aqua fix: Some image caching components like ToolWindowHeader use
-      // com.apple.laf.AquaNativeResources$CColorPaintUIResource
-      // a Java wrapper for ObjC MagicBackgroundColor class (Java RGB values ignored).
-      // MagicBackgroundColor always reports current Frame background.
-      // So we need to set frames background to exact and correct value.
-      if (SystemInfo.isMac) {
-        //noinspection UseJBColor
-        frame.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
-      }
-
       updateUI(frame);
     }
 
     myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
+  }
+
+  @NotNull
+  private static FontUIResource getFont(String yosemite, int size, @JdkConstants.FontStyle int style) {
+    if (SystemInfo.isMacOSElCapitan) {
+      // Text family should be used for relatively small sizes (<20pt), don't change to Display
+      // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
+      Font font = new Font(".SF NS Text", style, size);
+      if (!UIUtil.isDialogFont(font)) {
+        return new FontUIResource(font);
+      }
+    }
+    return new FontUIResource(yosemite, style, size);
+  }
+
+
+  public static void installMacOSXFonts(UIDefaults defaults) {
+    final String face = "HelveticaNeue-Regular";
+    final FontUIResource uiFont = getFont(face, 13, Font.PLAIN);
+    initFontDefaults(defaults, uiFont);
+    for (Object key : new HashSet<>(defaults.keySet())) {
+      Object value = defaults.get(key);
+      if (value instanceof FontUIResource) {
+        FontUIResource font = (FontUIResource)value;
+        if (font.getFamily().equals("Lucida Grande") || font.getFamily().equals("Serif")) {
+          if (!key.toString().contains("Menu")) {
+            defaults.put(key, getFont(face, font.getSize(), font.getStyle()));
+          }
+        }
+      }
+    }
+
+    FontUIResource uiFont11 = getFont(face, 11, Font.PLAIN);
+    defaults.put("TableHeader.font", uiFont11);
+
+    FontUIResource buttonFont = getFont("HelveticaNeue-Medium", 13, Font.PLAIN);
+    defaults.put("Button.font", buttonFont);
+    Font menuFont = getFont("Lucida Grande", 14, Font.PLAIN);
+    defaults.put("Menu.font", menuFont);
+    defaults.put("MenuItem.font", menuFont);
+    defaults.put("MenuItem.acceleratorFont", menuFont);
+    defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
+  }
+
+  private static void patchBorder(UIDefaults defaults, String key) {
+    if (defaults.getBorder(key) == null) {
+      defaults.put(key, JBUI.Borders.empty(1, 0).asUIResource());
+    }
+  }
+
+  private static void patchListUI(UIDefaults defaults) {
+    patchBorder(defaults, "List.border");
+  }
+
+  private static void patchTreeUI(UIDefaults defaults) {
+    patchBorder(defaults, "Tree.border");
+    if (Registry.is("ide.tree.ui.experimental")) {
+      defaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
+      defaults.put("Tree.repaintWholeRow", true);
+    }
+    if (isUnsupported(defaults.getIcon("Tree.collapsedIcon"))) {
+      defaults.put("Tree.collapsedIcon", LafIconLookup.getIcon("treeCollapsed"));
+      defaults.put("Tree.collapsedSelectedIcon", LafIconLookup.getSelectedIcon("treeCollapsed"));
+    }
+    if (isUnsupported(defaults.getIcon("Tree.expandedIcon"))) {
+      defaults.put("Tree.expandedIcon", LafIconLookup.getIcon("treeExpanded"));
+      defaults.put("Tree.expandedSelectedIcon", LafIconLookup.getSelectedIcon("treeExpanded"));
+    }
+  }
+
+  /**
+   * @param icon an icon retrieved from L&F
+   * @return {@code true} if an icon is not specified or if it is declared in some Swing L&F
+   * (such icons do not have a variant to paint in selected row)
+   */
+  private static boolean isUnsupported(@Nullable Icon icon) {
+    String name = icon == null ? null : icon.getClass().getName();
+    return name == null || name.startsWith("javax.swing.plaf.") || name.startsWith("com.sun.java.swing.plaf.");
   }
 
   private static void patchHiDPI(UIDefaults defaults) {
@@ -503,7 +581,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                            "Tree.rightChildIndent",
-                                           "Tree.rowHeight");
+                                           "Tree.rowHeight",
+                                           "SettingsTree.rowHeight",
+                                           "Table.rowHeight",
+                                           "List.rowHeight");
 
     List<String> myDimensionKeys = Arrays.asList("Slider.horizontalSize",
                                                  "Slider.verticalSize",
@@ -544,7 +625,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (UIUtil.isUnderWin10LookAndFeel()) {
       uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
     } else if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
-      uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.Actions.Right));
+      uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.General.ArrowRight));
     }
 
     uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
@@ -553,7 +634,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static void fixSeparatorColor(UIDefaults uiDefaults) {
     if (UIUtil.isUnderAquaLookAndFeel()) {
       uiDefaults.put("Separator.background", UIUtil.AQUA_SEPARATOR_BACKGROUND_COLOR);
-      uiDefaults.put("Separator.foreground", UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
+      uiDefaults.put("Separator.separatorColor", UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
     }
   }
 
@@ -582,7 +663,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static void fixPopupWeight() {
     int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
     String property = System.getProperty("idea.popup.weight");
-    if (property != null) property = property.toLowerCase(Locale.ENGLISH).trim();
+    if (property != null) property = StringUtil.toLowerCase(property).trim();
     if (SystemInfo.isMacOSLeopard) {
       // force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
       popupWeight = OurPopupFactory.WEIGHT_HEAVY;
@@ -597,13 +678,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       if ("light".equals(property)) {
         popupWeight = OurPopupFactory.WEIGHT_LIGHT;
       }
-      else if ("medium".equals(property)) {
-        popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
-      }
       else if ("heavy".equals(property)) {
         popupWeight = OurPopupFactory.WEIGHT_HEAVY;
       }
-      else {
+      else if (!"medium".equals(property)) {
         LOG.error("Illegal value of property \"idea.popup.weight\": " + property);
       }
     }
@@ -616,60 +694,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     PopupUtil.setPopupType(factory, popupWeight);
   }
 
-  private static void fixGtkPopupStyle() {
-    if (!UIUtil.isUnderGTKLookAndFeel()) return;
-
-    final SynthStyleFactory original = SynthLookAndFeel.getStyleFactory();
-
-    SynthLookAndFeel.setStyleFactory(new SynthStyleFactory() {
-      @Override
-      public SynthStyle getStyle(final JComponent c, final Region id) {
-        final SynthStyle style = original.getStyle(c, id);
-        if (id == Region.POPUP_MENU) {
-          final Integer x = ReflectionUtil.getField(style.getClass(), style, int.class, "xThickness");
-          if (x != null && x == 0) {
-            // workaround for Sun bug #6636964
-            ReflectionUtil.setField(style.getClass(), style, int.class, "xThickness", 1);
-            ReflectionUtil.setField(style.getClass(), style, int.class, "yThickness", 3);
-          }
-        }
-        return style;
-      }
-    });
-
-    new JBPopupMenu();  // invokes updateUI() -> updateStyle()
-
-    SynthLookAndFeel.setStyleFactory(original);
-  }
-
   private static void patchFileChooserStrings(final UIDefaults defaults) {
     if (!defaults.containsKey(ourFileChooserTextKeys[0])) {
       // Alloy L&F does not define strings for names of context menu actions, so we have to patch them in here
       for (String key : ourFileChooserTextKeys) {
         defaults.put(key, IdeBundle.message(key));
       }
-    }
-  }
-
-  private static void patchGtkDefaults(UIDefaults defaults) {
-    if (!UIUtil.isUnderGTKLookAndFeel()) return;
-
-    Map<String, Icon> map = ContainerUtil.newHashMap(
-      Arrays.asList("OptionPane.errorIcon", "OptionPane.informationIcon", "OptionPane.warningIcon", "OptionPane.questionIcon"),
-      Arrays.asList(AllIcons.General.ErrorDialog, AllIcons.General.InformationDialog, AllIcons.General.WarningDialog, AllIcons.General.QuestionDialog));
-    // GTK+ L&F keeps icons hidden in style
-    SynthStyle style = SynthLookAndFeel.getStyle(new JOptionPane(""), Region.DESKTOP_ICON);
-    for (String key : map.keySet()) {
-      if (defaults.get(key) != null) continue;
-
-      Object icon = style == null ? null : style.get(null, key);
-      defaults.put(key, icon instanceof Icon ? icon : map.get(key));
-    }
-
-    Color fg = defaults.getColor("Label.foreground");
-    Color bg = defaults.getColor("Label.background");
-    if (fg != null && bg != null) {
-      defaults.put("Label.disabledForeground", UIUtil.mix(fg, bg, 0.5));
     }
   }
 
@@ -819,7 +849,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     private final PopupFactory myDelegate;
 
-    public OurPopupFactory(final PopupFactory delegate) {
+    OurPopupFactory(final PopupFactory delegate) {
       myDelegate = delegate;
     }
 
@@ -827,7 +857,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     public Popup getPopup(final Component owner, final Component contents, final int x, final int y) {
       final Point point = fixPopupLocation(contents, x, y);
 
-      final int popupType = UIUtil.isUnderGTKLookAndFeel() ? WEIGHT_HEAVY : PopupUtil.getPopupType(this);
+      final int popupType = PopupUtil.getPopupType(this);
       if (popupType == WEIGHT_HEAVY && OurHeavyWeightPopup.isEnabled()) {
         return new OurHeavyWeightPopup(owner, contents, point.x, point.y);
       }
@@ -841,29 +871,31 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != UIUtil.getWindow(owner);
       if (isHeavyWeightPopup) {
         UIUtil.markAsTypeAheadAware(window);
+        window.setMinimumSize(null); // clear min-size from prev invocations on JBR11
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
-        ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, cleanupKey);
+        final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
+        rootPane.putClientProperty(WINDOW_ALPHA, 1.0f);
+        rootPane.putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {
           @Override
           public void windowOpened(WindowEvent e) {
             // cleanup will be handled by AbstractPopup wrapper
-            if (PopupUtil.getPopupContainerFor(((RootPaneContainer)window).getRootPane()) != null) {
+            if (PopupUtil.getPopupContainerFor(rootPane) != null) {
               window.removeWindowListener(this);
-              ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
+              rootPane.putClientProperty(cleanupKey, null);
             }
           }
 
           @Override
           public void windowClosed(WindowEvent e) {
             window.removeWindowListener(this);
-            ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
-            DialogWrapper.cleanupRootPane(((RootPaneContainer)window).getRootPane());
+            rootPane.putClientProperty(cleanupKey, null);
+            DialogWrapper.cleanupRootPane(rootPane);
             DialogWrapper.cleanupWindowListeners(window);
           }
         });
       }
-      fixPopupSize(popup, contents);
       return popup;
     }
 
@@ -895,24 +927,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
 
       return rec.getLocation();
-    }
-
-    private static void fixPopupSize(final Popup popup, final Component contents) {
-      if (!UIUtil.isUnderGTKLookAndFeel() || !(contents instanceof JPopupMenu)) return;
-
-      for (Class<?> aClass = popup.getClass(); aClass != null && Popup.class.isAssignableFrom(aClass); aClass = aClass.getSuperclass()) {
-        try {
-          final Method getComponent = aClass.getDeclaredMethod("getComponent");
-          getComponent.setAccessible(true);
-          final Object component = getComponent.invoke(popup);
-          if (component instanceof JWindow) {
-            ((JWindow)component).setSize(new Dimension(0, 0));
-          }
-          break;
-        }
-        catch (Exception ignored) {
-        }
-      }
     }
   }
 
@@ -951,7 +965,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private static class DefaultMenuArrowIcon extends MenuArrowIcon {
     private static final boolean invert = UIUtil.isUnderDarcula();
-    private DefaultMenuArrowIcon(Icon icon) {
+    private DefaultMenuArrowIcon(@NotNull Icon icon) {
       super(invert ? IconUtil.brighter(icon, 2) : IconUtil.darker(icon, 2),
             IconUtil.brighter(icon, 8),
             invert ? IconUtil.darker(icon, 2) : IconUtil.brighter(icon, 2));
@@ -965,5 +979,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             LafIconLookup.getSelectedIcon(NAME),
             LafIconLookup.getDisabledIcon(NAME));
     }
+  }
+
+  private static LafManagerImpl ourTestInstance;
+  @TestOnly
+  public static LafManagerImpl getTestInstance() {
+    if (ourTestInstance == null) {
+      ourTestInstance = new LafManagerImpl();
+    }
+    return ourTestInstance;
   }
 }

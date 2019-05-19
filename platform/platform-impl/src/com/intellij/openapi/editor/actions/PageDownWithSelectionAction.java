@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -43,12 +42,7 @@ public class PageDownWithSelectionAction extends EditorAction {
       }
       else {
         if (caret == null) {
-          editor.getCaretModel().runForEachCaret(new CaretAction() {
-            @Override
-            public void perform(Caret caret) {
-              EditorActionUtil.moveCaretPageDown(editor, true);
-            }
-          });
+          editor.getCaretModel().runForEachCaret(__ -> EditorActionUtil.moveCaretPageDown(editor, true));
         }
         else {
           // assuming caret is equal to CaretModel.getCurrentCaret()

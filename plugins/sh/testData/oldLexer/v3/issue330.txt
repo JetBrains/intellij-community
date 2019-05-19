@@ -1,0 +1,6 @@
+eval ('eval')
+WHITE_SPACE (' ')
+OPEN_QUOTE ('"')
+var ('$a')
+STRING_CONTENT ('=()')
+CLOSE_QUOTE ('"')

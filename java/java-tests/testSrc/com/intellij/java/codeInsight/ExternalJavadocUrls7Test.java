@@ -15,14 +15,26 @@
  */
 package com.intellij.java.codeInsight;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
+  private static final ProjectDescriptor DESCRIPTOR = new ProjectDescriptor(LanguageLevel.JDK_1_7) {
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      setMockJavadocUrl(model);
+    }
+  };
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_7;
+    return DESCRIPTOR;
   }
 
   @Override
@@ -31,7 +43,7 @@ public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
            "  void <caret>foo(Class<?>... cl) { }\n" +
            "}",
 
-           "foo(java.lang.Class...)", "foo(java.lang.Class<?>...)", "foo-java.lang.Class...-", "foo-java.lang.Class<?>...-"
+           "foo(java.lang.Class...)", "foo-java.lang.Class...-"
     );
   }
 
@@ -42,7 +54,15 @@ public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
            "}\n" +
            "class Comparator<X>{}",
 
-           "sort(T[], Comparator)", "sort(T[], Comparator<? super T>)", "sort-T:A-Comparator-", "sort-T:A-Comparator<? super T>-"
+           "sort(T[], Comparator)", "sort(T[],Comparator)", "sort-T:A-Comparator-"
     );
+  }
+
+  @Override
+  public void testConstructor() {
+    doTest("class Test {\n" +
+           "  Test<caret>() { }\n" +
+           "}",
+           "Test()", "<init>()", "Test--");
   }
 }

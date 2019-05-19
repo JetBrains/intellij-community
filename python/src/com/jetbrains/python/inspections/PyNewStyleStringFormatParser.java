@@ -17,7 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +79,7 @@ public class PyNewStyleStringFormatParser {
 
   private PyNewStyleStringFormatParser(@NotNull String nodeText) {
     myNodeText = nodeText;
-    myNodeContentRange = PyStringLiteralExpressionImpl.getNodeTextRange(nodeText);
+    myNodeContentRange = PyStringLiteralUtil.getContentRange(nodeText);
   }
 
   private void parseTopLevel() {

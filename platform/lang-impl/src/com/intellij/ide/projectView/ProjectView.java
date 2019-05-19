@@ -76,19 +76,30 @@ public abstract class ProjectView {
 
   public abstract boolean isHideEmptyMiddlePackages(String paneId);
 
-  public abstract void setHideEmptyPackages(boolean hideEmptyPackages, @NotNull String paneId);
+  public abstract void setHideEmptyPackages(@NotNull String paneId, boolean hideEmptyPackages);
+
+  public boolean isCompactDirectories(String paneId) {
+    return false;
+  }
+
+  public void setCompactDirectories(@NotNull String paneId, boolean compactDirectories) {
+  }
+
+  public boolean isShowExcludedFiles(String paneId) {
+    return true;
+  }
 
   public abstract boolean isShowLibraryContents(String paneId);
 
-  public abstract void setShowLibraryContents(boolean showLibraryContents, @NotNull String paneId);
+  public abstract void setShowLibraryContents(@NotNull String paneId, boolean showLibraryContents);
 
   public abstract boolean isShowModules(String paneId);
 
-  public abstract void setShowModules(boolean showModules, @NotNull String paneId);
+  public abstract void setShowModules(@NotNull String paneId, boolean showModules);
 
   public abstract boolean isFlattenModules(String paneId);
 
-  public abstract void setFlattenModules(boolean flattenModules, @NotNull String paneId);
+  public abstract void setFlattenModules(@NotNull String paneId, boolean flattenModules);
 
   public abstract boolean isShowURL(String paneId);
 
@@ -102,7 +113,7 @@ public abstract class ProjectView {
 
   public abstract boolean isAbbreviatePackageNames(String paneId);
 
-  public abstract void setAbbreviatePackageNames(boolean abbreviatePackageNames, @NotNull String paneId);
+  public abstract void setAbbreviatePackageNames(@NotNull String paneId, boolean abbreviatePackageNames);
 
   /**
    * e.g. {@link com.intellij.ide.projectView.impl.ProjectViewPane#ID}
@@ -110,7 +121,7 @@ public abstract class ProjectView {
    */
   public abstract String getCurrentViewId();
 
-  public abstract void selectPsiElement(PsiElement element, boolean requestFocus);
+  public abstract void selectPsiElement(@NotNull PsiElement element, boolean requestFocus);
 
   public abstract boolean isManualOrder(String paneId);
   public abstract void setManualOrder(@NotNull String paneId, final boolean enabled);

@@ -18,15 +18,16 @@ package com.intellij.debugger.memory.action;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
+import org.jetbrains.annotations.NotNull;
 
 public class ShowTrackedAction extends ToggleAction {
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return MemoryViewManager.getInstance().isNeedShowTrackedOnly();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     if (e.getProject() != null) {
       MemoryViewManager.getInstance().setShowTrackedOnly(state);
     }

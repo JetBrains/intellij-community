@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.SearchTopHitProvider;
@@ -9,11 +9,12 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AbbreviationManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +25,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.util.IconUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,18 +34,22 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-public class TopHitSEContributor implements SearchEverywhereContributor {
+public class TopHitSEContributor implements SearchEverywhereContributor<Object> {
 
   private final Collection<SearchTopHitProvider> myTopHitProviders = Arrays.asList(SearchTopHitProvider.EP_NAME.getExtensions());
-  private final Consumer<String> searchStringSetter;
 
-  public TopHitSEContributor(Consumer<String> setter) {
-    searchStringSetter = setter;
+  private final Project myProject;
+  private final Component myContextComponent;
+  private final Consumer<? super String> mySearchStringSetter;
+
+  public TopHitSEContributor(Project project, Component component, Consumer<? super String> setter) {
+    myProject = project;
+    myContextComponent = component;
+    mySearchStringSetter = setter;
   }
 
   @NotNull
@@ -59,11 +65,6 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
   }
 
   @Override
-  public String includeNonProjectItemsText() {
-    return null;
-  }
-
-  @Override
   public int getSortWeight() {
     return 50;
   }
@@ -74,105 +75,35 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
   }
 
   @Override
-  public ContributorSearchResult<Object> search(Project project,
-                                                String pattern,
-                                                boolean everywhere,
-                                                ProgressIndicator progressIndicator,
-                                                int elementsLimit) {
-    Collection<Object> res = new LinkedHashSet<>();
-    final Function<Object, Boolean> consumer = o -> {
-      if (elementsLimit < 0 || res.size() < elementsLimit) {
-        res.add(o);
-        return true;
-      }
-      else {
-        return false;
-      }
-    };
-
-    boolean interrupted = fill(project, pattern, consumer);
-    return new ContributorSearchResult<>(new ArrayList<>(res), interrupted);
+  public void fetchElements(@NotNull String pattern,
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Processor<? super Object> consumer) {
+    fill(pattern, consumer);
   }
 
   @NotNull
   @Override
-  public DataContext getDataContextForItem(Object element) {
-    return DataContext.EMPTY_CONTEXT;
-  }
-
-  private boolean fill(Project project, String pattern, Function<Object, Boolean> consumer) {
-    if (pattern.startsWith("#") && !pattern.contains(" ")) {
-      return fillOptionProviders(pattern, consumer);
-    } else {
-      if (fillActions(project, pattern, consumer)) {
-        return true;
-      }
-      return fillFromExtensions(project, pattern, consumer);
-    }
-  }
-
-  private boolean fillFromExtensions(Project project, String pattern, Function<Object, Boolean> consumer) {
-    for (SearchTopHitProvider provider : myTopHitProviders) {
-      if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) {
-        continue;
-      }
-      boolean[] interrupted = {false};
-      provider.consumeTopHits(pattern, o -> interrupted[0] = consumer.apply(o), project);
-      if (interrupted[0]) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private boolean fillActions(Project project, String pattern, Function<Object, Boolean> consumer) {
-    ActionManager actionManager = ActionManager.getInstance();
-    List<String> actions = AbbreviationManager.getInstance().findActions(pattern);
-    for (String actionId : actions) {
-      AnAction action = actionManager.getAction(actionId);
-      if (!isEnabled(project, action)) {
-        continue;
-      }
-
-      if (!consumer.apply(action)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private boolean fillOptionProviders(String pattern, Function<Object, Boolean> consumer) {
-    String id = pattern.substring(1);
-    final HashSet<String> ids = new HashSet<>();
+  public List<SearchEverywhereCommandInfo> getSupportedCommands() {
+    List<SearchEverywhereCommandInfo> res = new ArrayList<>();
+    final HashSet<String> found = new HashSet<>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
       if (provider instanceof OptionsTopHitProvider) {
         final String providerId = ((OptionsTopHitProvider)provider).getId();
-        if (!ids.contains(providerId) && StringUtil.startsWithIgnoreCase(providerId, id)) {
-          if (!consumer.apply(provider)) {
-            return true;
-          }
-          ids.add(providerId);
+        if (!found.contains(providerId)) {
+          found.add(providerId);
+          res.add(new SearchEverywhereCommandInfo(providerId, "", this));
         }
       }
     }
-
-    return false;
-  }
-
-  private boolean isEnabled(Project project, final AnAction action) {
-    //todo actions from SeaEverywhereAction
-    Presentation presentation = action.getTemplatePresentation();
-    if (ActionUtil.isDumbMode(project) && !action.isDumbAware()) {
-      return false;
-    }
-
-    return presentation.isEnabled() && presentation.isVisible() && !StringUtil.isEmpty(presentation.getText());
+    return res;
   }
 
   @Override
-  public boolean processSelectedItem(Project project, Object selected, int modifiers) {
+  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
+    return null;
+  }
+
+  @Override
+  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String text) {
     if (selected instanceof BooleanOptionDescription) {
       final BooleanOptionDescription option = (BooleanOptionDescription) selected;
       option.setOptionState(!option.isOptionEnabled());
@@ -180,31 +111,75 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
     }
 
     if (selected instanceof OptionsTopHitProvider) {
-      setSearchString("#" + ((OptionsTopHitProvider) selected).getId() + " ");
+      setSearchString(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider) selected).getId() + " ");
       return false;
     }
 
     if (isActionValue(selected) || isSetting(selected)) {
-      Component component = getProjectCurrentEditor(project);
-      GotoActionAction.openOptionOrPerformAction(selected, "", project, component);
+      GotoActionAction.openOptionOrPerformAction(selected, "", myProject, myContextComponent);
       return true;
     }
 
     return false;
   }
 
-  private Component getProjectCurrentEditor(Project project) {
-    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    return editor == null ? null : editor.getComponent();
+  @NotNull
+  @Override
+  public ListCellRenderer<? super Object> getElementsRenderer() {
+    return new TopHitRenderer(myProject);
   }
 
-  @Override
-  public ListCellRenderer getElementsRenderer(Project project) {
-    return new TopHitRenderer(project);
+  private void fill(@NotNull String pattern, @NotNull Processor<Object> consumer) {
+    if (pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !pattern.contains(" ")) {
+      return;
+    }
+
+    if (fillActions(pattern, consumer)) {
+      return;
+    }
+
+    fillFromExtensions(pattern, consumer);
+  }
+
+  private void fillFromExtensions(@NotNull String pattern, Processor<Object> consumer) {
+    for (SearchTopHitProvider provider : myTopHitProviders) {
+      boolean[] interrupted = {false};
+      provider.consumeTopHits(pattern, o -> interrupted[0] = consumer.process(o), myProject);
+      if (interrupted[0]) {
+        return;
+      }
+    }
+  }
+
+  private boolean fillActions(String pattern, Processor<Object> consumer) {
+    ActionManager actionManager = ActionManager.getInstance();
+    List<String> actions = AbbreviationManager.getInstance().findActions(pattern);
+    for (String actionId : actions) {
+      AnAction action = actionManager.getAction(actionId);
+      if (action == null || !isEnabled(action)) {
+        continue;
+      }
+
+      if (!consumer.process(action)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private boolean isEnabled(final AnAction action) {
+    //todo actions from SeaEverywhereAction
+    Presentation presentation = action.getTemplatePresentation();
+    if (ActionUtil.isDumbMode(myProject) && !action.isDumbAware()) {
+      return false;
+    }
+
+    return presentation.isEnabled() && presentation.isVisible() && !StringUtil.isEmpty(presentation.getText());
   }
 
   private void setSearchString(String str) {
-    searchStringSetter.accept(str);
+    mySearchStringSetter.accept(str);
   }
 
   private static class TopHitRenderer extends ColoredListCellRenderer<Object> {
@@ -218,7 +193,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
 
     private static class MyAccessiblePanel extends JPanel {
       private Accessible myAccessible;
-      public MyAccessiblePanel() {
+      MyAccessiblePanel() {
         super(new BorderLayout());
         setOpaque(false);
       }
@@ -237,7 +212,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
 
       if (value instanceof BooleanOptionDescription) {
         final JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(UIUtil.getListBackground(selected));
+        panel.setBackground(UIUtil.getListBackground(selected, true));
         panel.add(cmp, BorderLayout.CENTER);
         final Component rightComponent;
 
@@ -251,7 +226,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
 
       Color bg = cmp.getBackground();
       if (bg == null) {
-        cmp.setBackground(UIUtil.getListBackground(selected));
+        cmp.setBackground(UIUtil.getListBackground(selected, true));
         bg = cmp.getBackground();
       }
 
@@ -304,7 +279,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
           append(text, attrs);
         }
         else if (value instanceof OptionsTopHitProvider) {
-          append("#" + ((OptionsTopHitProvider)value).getId());
+          append(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId());
         }
         else {
           ItemPresentation presentation = null;
@@ -338,7 +313,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor {
     if (hit == null) {
       hit = value.getOption();
     }
-    hit = StringUtil.unescapeXml(hit);
+    hit = StringUtil.unescapeXmlEntities(hit);
     if (hit.length() > 60) {
       hit = hit.substring(0, 60) + "...";
     }

@@ -121,6 +121,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     return classWriter.toByteArray();
   }
 
+  @NotNull
   public static String getGeneratedClassName() {
     return GEN_CLASS_NAME;
   }

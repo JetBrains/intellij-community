@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -23,6 +21,7 @@ import com.intellij.remoteServer.configuration.deployment.*;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerSettingsEditor.AnySource;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerSettingsEditor.LockedSource;
 import com.intellij.remoteServer.impl.runtime.DeployToServerState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -32,15 +31,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author nik
  */
-public class DeployToServerRunConfiguration<S extends ServerConfiguration, D extends DeploymentConfiguration> extends RunConfigurationBase
+public class DeployToServerRunConfiguration<S extends ServerConfiguration, D extends DeploymentConfiguration> extends RunConfigurationBase<Element>
   implements LocatableConfiguration {
   private static final Logger LOG = Logger.getInstance(DeployToServerRunConfiguration.class);
   private static final String DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE = "type";
   @NonNls public static final String SETTINGS_ELEMENT = "settings";
-  public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
+  private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private final ServerType<S> myServerType;
   private final DeploymentConfigurator<D, S> myDeploymentConfigurator;
   private String myServerName;
@@ -73,7 +74,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   }
 
   @NotNull
-  public DeploymentConfigurator<D, S> getDeploymentConfigurator() {
+  private DeploymentConfigurator<D, S> getDeploymentConfigurator() {
     return myDeploymentConfigurator;
   }
 
@@ -186,10 +187,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       String typeId = deploymentTag.getAttributeValue(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE);
       final DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
       if (type != null) {
-        myDeploymentSource = ReadAction.compute(() -> {
-
-          return type.load(deploymentTag, getProject());
-        });
+        myDeploymentSource = ReadAction.compute(() -> type.load(deploymentTag, getProject()));
         myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
         ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), deploymentTag.getChild(SETTINGS_ELEMENT));
       }
@@ -253,6 +251,29 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       LOG.error(e);
     }
     return result;
+  }
+
+  @Override
+  public void onNewConfigurationCreated() {
+    if (getServerName() == null) {
+      RemoteServer<?> server = ContainerUtil.getFirstItem(RemoteServersManager.getInstance().getServers(myServerType));
+      if (server != null) {
+        setServerName(server.getName());
+      }
+    }
+
+    if (getDeploymentSource() == null) {
+      DeploymentConfigurator<D, S> deploymentConfigurator = getDeploymentConfigurator();
+      List<DeploymentSource> sources = deploymentConfigurator.getAvailableDeploymentSources();
+      DeploymentSource source = ContainerUtil.getFirstItem(sources);
+      if (source != null) {
+        setDeploymentSource(source);
+        setDeploymentConfiguration(deploymentConfigurator.createDefaultConfiguration(source));
+        DeploymentSourceType type = source.getType();
+        //noinspection unchecked
+        type.setBuildBeforeRunTask(this, source);
+      }
+    }
   }
 
   public static class ConfigurationState {

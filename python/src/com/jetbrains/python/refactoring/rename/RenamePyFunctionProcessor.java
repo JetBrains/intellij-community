@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
@@ -54,7 +55,8 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
 
   @Override
   public PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor) {
-    final PyFunction function = toImplementationOtherwiseAsIs((PyFunction)element);
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(element.getProject());
+    final PyFunction function = ObjectUtils.notNull(PyiUtil.getImplementation((PyFunction)element, context), (PyFunction)element);
 
     final PyClass containingClass = function.getContainingClass();
     if (containingClass == null) {
@@ -130,12 +132,6 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
         addRename(allRenames, newName, property.getDeleter());
       }
     }
-  }
-
-  @NotNull
-  private static PyFunction toImplementationOtherwiseAsIs(@NotNull PyFunction function) {
-    final PyFunction implementation = PyiUtil.getImplementation(function);
-    return implementation != null ? implementation : function;
   }
 
   private static void addRename(@NotNull Map<PsiElement, String> renames, @NotNull String newName, @NotNull Maybe<PyCallable> accessor) {

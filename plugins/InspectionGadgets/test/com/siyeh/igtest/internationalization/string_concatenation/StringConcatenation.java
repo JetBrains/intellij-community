@@ -10,9 +10,9 @@ public class StringConcatenation
 
     public void foo()
     {
-        final String concat = "foo" + "bar";
-        System.out.println("concat = " + concat);
-        System.out.println("a" + "b" + "c");
+        final String concat = "foo" <warning descr="String concatenation '+' in an internationalized context">+</warning> "bar";
+        System.out.println("concat = " <warning descr="String concatenation '+' in an internationalized context">+</warning> concat);
+        System.out.println("a" <warning descr="String concatenation '+' in an internationalized context">+</warning> "b" <warning descr="String concatenation '+' in an internationalized context">+</warning> "c");
     }
 
     public void boom() {

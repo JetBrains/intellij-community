@@ -54,11 +54,13 @@ public class AgreementDialog extends DialogWrapper {
     getOKAction().setEnabled(false);
   }
 
+  @Override
   protected void doOKAction() {
     myOK = true;
     super.doOKAction();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     String text = myBundle.getString("license.agreement.prompt");
     JLabel licensePrompt = new JLabel(text);
@@ -74,6 +76,7 @@ public class AgreementDialog extends DialogWrapper {
     return myOK && myAcceptCheckBox.isSelected();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JTextArea licenseTextArea = new JTextArea(myText, 20, 50);
     licenseTextArea.getCaret().setDot(0);
@@ -90,6 +93,7 @@ public class AgreementDialog extends DialogWrapper {
     myAcceptCheckBox.setFont(myFont);
     agreePanel.add(myAcceptCheckBox);
     myAcceptCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent event) {
         getOKAction().setEnabled(myAcceptCheckBox.isSelected());
       }

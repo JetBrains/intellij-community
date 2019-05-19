@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,17 +39,17 @@ public class ClassInnerStuffCache {
 
   @NotNull
   public PsiField[] getFields() {
-    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(getAllFields())));
+    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcFields())));
   }
 
   @NotNull
   public PsiMethod[] getMethods() {
-    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(getAllMethods())));
+    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcMethods())));
   }
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(getAllInnerClasses())));
+    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcInnerClasses())));
   }
 
   @Nullable
@@ -100,21 +101,21 @@ public class ClassInnerStuffCache {
   }
 
   @NotNull
-  private PsiField[] getAllFields() {
+  private PsiField[] calcFields() {
     List<PsiField> own = myClass.getOwnFields();
     List<PsiField> ext = PsiAugmentProvider.collectAugments(myClass, PsiField.class);
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
   }
 
   @NotNull
-  private PsiMethod[] getAllMethods() {
+  private PsiMethod[] calcMethods() {
     List<PsiMethod> own = myClass.getOwnMethods();
     List<PsiMethod> ext = PsiAugmentProvider.collectAugments(myClass, PsiMethod.class);
     return ArrayUtil.mergeCollections(own, ext, PsiMethod.ARRAY_FACTORY);
   }
 
   @NotNull
-  private PsiClass[] getAllInnerClasses() {
+  private PsiClass[] calcInnerClasses() {
     List<PsiClass> own = myClass.getOwnInnerClasses();
     List<PsiClass> ext = PsiAugmentProvider.collectAugments(myClass, PsiClass.class);
     return ArrayUtil.mergeCollections(own, ext, PsiClass.ARRAY_FACTORY);
@@ -140,7 +141,7 @@ public class ClassInnerStuffCache {
     PsiMethod[] methods = getMethods();
     if (methods.length == 0) return Collections.emptyMap();
 
-    Map<String, List<PsiMethod>> collectedMethods = ContainerUtil.newHashMap();
+    Map<String, List<PsiMethod>> collectedMethods = new HashMap<>();
     for (PsiMethod method : methods) {
       List<PsiMethod> list = collectedMethods.get(method.getName());
       if (list == null) {
@@ -149,7 +150,7 @@ public class ClassInnerStuffCache {
       list.add(method);
     }
 
-    Map<String, PsiMethod[]> cachedMethods = ContainerUtil.newTroveMap();
+    Map<String, PsiMethod[]> cachedMethods = new THashMap<>();
     for (Map.Entry<String, List<PsiMethod>> entry : collectedMethods.entrySet()) {
       List<PsiMethod> list = entry.getValue();
       cachedMethods.put(entry.getKey(), list.toArray(PsiMethod.EMPTY_ARRAY));
@@ -184,7 +185,7 @@ public class ClassInnerStuffCache {
   }
 
   private PsiMethod getSyntheticMethod(String text) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myClass.getProject());
     PsiMethod method = factory.createMethodFromText(text, myClass);
     return new LightMethod(myClass.getManager(), method, myClass) {
       @Override

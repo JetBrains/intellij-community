@@ -20,7 +20,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/31/14
  */
 public class ScalaCompileOptionsData implements Serializable {
   private static final long serialVersionUID = 1L;
@@ -46,6 +45,7 @@ public class ScalaCompileOptionsData implements Serializable {
   /**
    * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
    */
+  @Deprecated
   public boolean isUseCompileDaemon() {
     return useCompileDaemon;
   }
@@ -57,6 +57,7 @@ public class ScalaCompileOptionsData implements Serializable {
   /**
    * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
    */
+  @Deprecated
   public String getDaemonServer() {
     return daemonServer;
   }
@@ -164,6 +165,7 @@ public class ScalaCompileOptionsData implements Serializable {
   /**
    * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
    */
+  @Deprecated
   public boolean isFork() {
     return fork;
   }
@@ -175,6 +177,7 @@ public class ScalaCompileOptionsData implements Serializable {
   /**
    * @deprecated see https://docs.gradle.org/3.0/release-notes#ant-based-scala-compiler-has-been-removed
    */
+  @Deprecated
   public boolean isUseAnt() {
     return useAnt;
   }

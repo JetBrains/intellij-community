@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +39,7 @@ public class PyDunderSlotsReference extends PsiReferenceBase<PyStringLiteralExpr
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (element instanceof PyExpression && PyUtil.isInstanceAttribute((PyExpression)element)) {
       PyClass elementClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
       PyClass referenceClass = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
@@ -53,12 +52,6 @@ public class PyDunderSlotsReference extends PsiReferenceBase<PyStringLiteralExpr
       }
     }
     return false;
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

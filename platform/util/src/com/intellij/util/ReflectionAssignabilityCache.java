@@ -24,16 +24,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class ReflectionAssignabilityCache {
   private final ConcurrentMap<Class, ConcurrentMap<Class, Boolean>> myCache =
-    ConcurrentFactoryMap.createMap(new Function<Class, ConcurrentMap<Class, Boolean>>() {
-      @Override
-      public ConcurrentMap<Class, Boolean> fun(final Class anc) {
-        return ConcurrentFactoryMap.createMap(
-          new Function<Class, Boolean>() {
-            @Override
-            public Boolean fun(Class desc) {return anc.isAssignableFrom(desc);}
-          });
-      }
-    });
+    ConcurrentFactoryMap.createMap(anc -> ConcurrentFactoryMap.createMap(
+      desc -> anc.isAssignableFrom(desc)));
 
   public boolean isAssignable(Class ancestor, Class descendant) {
     return ancestor == descendant || myCache.get(ancestor).get(descendant).booleanValue();

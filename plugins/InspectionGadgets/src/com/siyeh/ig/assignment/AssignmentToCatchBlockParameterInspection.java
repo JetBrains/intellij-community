@@ -15,16 +15,37 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiParameter;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentToCatchBlockParameterInspection extends AssignmentToCatchBlockParameterInspectionBase {
+public class AssignmentToCatchBlockParameterInspection extends BaseAssignmentToParameterInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new ExtractParameterAsLocalVariableFix();
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.problem.descriptor");
+  }
+
+  @Override
+  protected boolean isApplicable(PsiParameter parameter) {
+    return parameter.getDeclarationScope() instanceof PsiCatchSection;
   }
 }

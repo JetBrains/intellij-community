@@ -49,7 +49,7 @@ public class TestStackTraceParser {
     if (stacktrace == null || url == null) return;
     int i = url.indexOf("//");
     if (i == -1) return;
-    String path = "\tat " + url.substring(i + 2);
+    String path = "\tat " + url.substring(i + 2).replaceFirst("/", ".");
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
 
     try (BufferedReader reader = new BufferedReader(new StringReader(stacktrace))) {

@@ -67,7 +67,7 @@ public class HideableDecorator {
   }
 
   private void updateIcon() {
-    Icon icon = myOn ? AllIcons.General.SplitDown : AllIcons.General.SplitRight;
+    Icon icon = myOn ? AllIcons.General.ArrowDown : AllIcons.General.ArrowRight;
     myTitledSeparator.getLabel().setIcon(icon);
     myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(icon, 0.5f));
   }
@@ -166,7 +166,7 @@ public class HideableDecorator {
           if (myOn) off(); else on();
         }
       });
-      Character c = UIUtil.removeMnemonic(getTitle()).toUpperCase(Locale.getDefault()).charAt(mnemonicIndex);
+      char c = UIUtil.removeMnemonic(getTitle()).toUpperCase(Locale.getDefault()).charAt(mnemonicIndex);
       myPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(c, InputEvent.ALT_MASK, false), ACTION_KEY);
     }
   }

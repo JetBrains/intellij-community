@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,22 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.NormalizeDeclarationFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class CStyleArrayDeclarationInspection extends BaseInspection {
+public class CStyleArrayDeclarationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean ignoreVariables = false;
 
@@ -60,53 +60,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection {
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new CStyleArrayDeclarationFix();
-  }
-
-  private static class CStyleArrayDeclarationFix
-    extends InspectionGadgetsFix {
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "c.style.array.declaration.replace.quickfix");
-    }
-
-    @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement().getParent();
-      if (element instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable)element;
-        variable.normalizeDeclaration();
-        CodeStyleManager.getInstance(project).reformat(variable);
-      }
-      else if (element instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)element;
-        final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
-        if (returnTypeElement == null) {
-          return;
-        }
-        final PsiType returnType = method.getReturnType();
-        if (returnType == null) {
-          return;
-        }
-        PsiElement child = method.getParameterList();
-        while (!(child instanceof PsiCodeBlock)) {
-          final PsiElement element1 = child;
-          child = child.getNextSibling();
-          if (element1 instanceof PsiJavaToken) {
-            final PsiJavaToken token = (PsiJavaToken)element1;
-            final IElementType tokenType = token.getTokenType();
-            if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
-              token.delete();
-            }
-          }
-        }
-        final PsiTypeElement typeElement = JavaPsiFacade.getElementFactory(project).createTypeElement(returnType);
-        returnTypeElement.replace(typeElement);
-      }
-    }
+    return new NormalizeDeclarationFix(true);
   }
 
   @Override
@@ -134,7 +88,12 @@ public class CStyleArrayDeclarationInspection extends BaseInspection {
       if (elementType.equals(declaredType)) {
         return;
       }
-      registerVariableError(variable, variable);
+      if (InspectionProjectProfileManager.isInformationLevel(getShortName(), variable)) {
+        registerError(variable, variable);
+      }
+      else {
+        registerVariableError(variable, variable);
+      }
     }
 
     @Override
@@ -151,6 +110,24 @@ public class CStyleArrayDeclarationInspection extends BaseInspection {
       final PsiType type = typeElement.getType();
       if (type.equals(returnType)) {
         return;
+      }
+      if (InspectionProjectProfileManager.isInformationLevel(getShortName(), method)) {
+        registerError(typeElement, method);
+        PsiElement child = method.getParameterList();
+        PsiJavaToken first = null;
+        PsiJavaToken last = null;
+        while (!(child instanceof PsiCodeBlock)) {
+          if (child instanceof PsiJavaToken) {
+            PsiJavaToken token = (PsiJavaToken)child;
+            final IElementType tokenType = token.getTokenType();
+            if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
+              if (first == null) first = token;
+              last = token;
+            }
+          }
+          child = child.getNextSibling();
+        }
+        if (first != null) registerErrorAtRange(first, last, method);
       }
       registerMethodError(method, method);
     }

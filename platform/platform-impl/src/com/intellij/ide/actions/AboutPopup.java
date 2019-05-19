@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -23,6 +24,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
@@ -46,9 +50,11 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -137,13 +143,13 @@ public class AboutPopup {
     private float myShowCopyAlpha;
     private final Alarm myAlarm = new Alarm();
 
-    public InfoSurface(Icon image, final boolean showDebugInfo) {
+    InfoSurface(Icon image, final boolean showDebugInfo) {
       ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
 
       myImage = image;
       //noinspection UseJBColor
       myColor = Color.white;
-      myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : JBColor.link();
+      myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : JBUI.CurrentTheme.Link.linkColor();
       myShowDebugInfo = showDebugInfo;
 
       setOpaque(false);
@@ -169,11 +175,14 @@ public class AboutPopup {
 
       myLines.add(new AboutBoxLine(""));
 
-      LicensingFacade provider = LicensingFacade.getInstance();
-      if (provider != null) {
-        myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true));
-        appendLast();
-        for (String message : provider.getLicenseRestrictionsMessages()) {
+      LicensingFacade la = LicensingFacade.getInstance();
+      if (la != null) {
+        final String licensedTo = la.getLicensedToMessage();
+        if (licensedTo != null) {
+          myLines.add(new AboutBoxLine(licensedTo, true));
+          appendLast();
+        }
+        for (String message : la.getLicenseRestrictionsMessages()) {
           myLines.add(new AboutBoxLine(message));
           appendLast();
         }
@@ -413,7 +422,7 @@ public class AboutPopup {
     }
 
     public String getText() {
-      return myInfo.toString() + SystemInfo.getOsNameAndVersion();
+      return myInfo.toString() + getExtraInfo();
     }
 
     private class TextRenderer {
@@ -432,7 +441,7 @@ public class AboutPopup {
 
       public class OverflowException extends Exception { }
 
-      public TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
+      TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
         this.xBase = xBase;
         this.yBase = yBase;
         this.w = w;
@@ -444,7 +453,7 @@ public class AboutPopup {
         }
       }
 
-      public void render(int indentX, int indentY, List<AboutBoxLine> lines) throws OverflowException {
+      public void render(int indentX, int indentY, List<? extends AboutBoxLine> lines) throws OverflowException {
         x = indentX;
         y = indentY;
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
@@ -535,17 +544,17 @@ public class AboutPopup {
       private boolean myKeepWithNext;
       private final Runnable myRunnable;
 
-      public AboutBoxLine(final String text, final boolean bold) {
+      AboutBoxLine(final String text, final boolean bold) {
         myText = text;
         myBold = bold;
         myRunnable = null;
       }
 
-      public AboutBoxLine(final String text) {
+      AboutBoxLine(final String text) {
         this(text, false);
       }
 
-      public AboutBoxLine(final String text, @NotNull Runnable runnable) {
+      AboutBoxLine(final String text, @NotNull Runnable runnable) {
         myText = text;
         myBold = false;
         myRunnable = runnable;
@@ -613,6 +622,24 @@ public class AboutPopup {
         return AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(text);
       }
     }
+  }
+
+  @NotNull
+  private static String getExtraInfo() {
+    return SystemInfo.getOsNameAndVersion() + "\n" +
+
+           "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
+             .map(GarbageCollectorMXBean::getName).collect(StringUtil.joining()) + "\n" +
+
+           "Memory: " + (Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE) + "M" + "\n" +
+
+           "Cores: " + Runtime.getRuntime().availableProcessors() + "\n" +
+
+           "Registry: " + Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
+             .map(v -> v.getKey() + "=" + v.asString()).collect(StringUtil.joining()) + "\n" +
+
+           "Non-Bundled Plugins: " + Arrays.stream(PluginManagerCore.getPlugins()).filter(p -> !p.isBundled() && p.isEnabled())
+             .map(p -> p.getPluginId().getIdString()).collect(StringUtil.joining());
   }
 
   public static class PopupPanel extends JPanel {

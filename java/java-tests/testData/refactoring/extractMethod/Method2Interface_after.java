@@ -3,7 +3,7 @@ interface I {
         newMethod();
     }
 
-    private default void newMethod() {
+    default void newMethod() {
         System.out.println("hello");
     }
 }

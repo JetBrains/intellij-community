@@ -27,7 +27,6 @@ import com.intellij.psi.tree.TokenSet;
  *
  * @author Denis Zhdanov
  * @see AlignmentInColumnsHelper
- * @since May 24, 2010 3:17:40 PM
  */
 public class AlignmentInColumnsConfig {
   private final TokenSet myStopMultilineCheckElementTypes;

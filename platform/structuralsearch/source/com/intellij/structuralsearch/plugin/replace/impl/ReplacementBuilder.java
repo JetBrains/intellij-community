@@ -19,12 +19,12 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author maxim
@@ -155,7 +155,7 @@ public final class ReplacementBuilder {
     if (scriptSupport == null) {
       final String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
       final List<String> variableNames =
-        options.getVariableDefinitions().stream().map(o -> o.getName()).collect(Collectors.toList());
+        ContainerUtil.map(options.getVariableDefinitions(), o -> o.getName());
       scriptSupport = new ScriptSupport(myProject, StringUtil.unquoteString(constraint), info.getName(), variableNames);
       replacementVarsMap.put(info.getName(), scriptSupport);
     }

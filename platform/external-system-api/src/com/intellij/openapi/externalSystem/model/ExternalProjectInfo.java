@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/22/2014
  */
 public interface ExternalProjectInfo {
   @NotNull
@@ -36,6 +35,8 @@ public interface ExternalProjectInfo {
   long getLastSuccessfulImportTimestamp();
 
   long getLastImportTimestamp();
+
+  String getBuildNumber();
 
   ExternalProjectInfo copy();
 }

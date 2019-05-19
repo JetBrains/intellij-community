@@ -1,33 +1,21 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class DfaConstValue extends DfaValue {
@@ -40,15 +28,15 @@ public class DfaConstValue extends DfaValue {
     private final DfaConstValue dfaFail;
     private final DfaConstValue dfaSentinel;
     private final DfaValueFactory myFactory;
-    private final Map<Object, DfaConstValue> myValues = ContainerUtil.newHashMap();
+    private final Map<Object, DfaConstValue> myValues = new HashMap<>();
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
-      dfaNull = new DfaConstValue(null, PsiType.NULL, factory, null);
-      dfaFalse = new DfaConstValue(Boolean.FALSE, PsiType.BOOLEAN, factory, null);
-      dfaTrue = new DfaConstValue(Boolean.TRUE, PsiType.BOOLEAN, factory, null);
-      dfaFail = new DfaConstValue(ourThrowable, PsiType.VOID, factory, null);
-      dfaSentinel = new DfaConstValue(SENTINEL, PsiType.VOID, factory, null);
+      dfaNull = new DfaConstValue(null, PsiType.NULL, factory);
+      dfaFalse = new DfaConstValue(Boolean.FALSE, PsiType.BOOLEAN, factory);
+      dfaTrue = new DfaConstValue(Boolean.TRUE, PsiType.BOOLEAN, factory);
+      dfaFail = new DfaConstValue(ourThrowable, PsiType.VOID, factory);
+      dfaSentinel = new DfaConstValue(SENTINEL, PsiType.VOID, factory);
     }
 
     @Nullable
@@ -58,7 +46,7 @@ public class DfaConstValue extends DfaValue {
       if (PsiType.NULL.equals(type)) return dfaNull;
       Object value = expr.getValue();
       if (value == null) return null;
-      return createFromValue(value, type, null);
+      return createFromValue(value, type);
     }
 
     @Nullable
@@ -69,19 +57,19 @@ public class DfaConstValue extends DfaValue {
       if (value == null) {
         Boolean boo = computeJavaLangBooleanFieldReference(variable);
         if (boo != null) {
-          DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN, variable);
-          return myFactory.getBoxedFactory().createBoxed(unboxed);
+          DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN);
+          return myFactory.getBoxedFactory().createBoxed(unboxed, PsiType.BOOLEAN.getBoxedType(variable));
         }
         PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
         if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
           return dfaNull;
         }
         if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
-          return createFromValue(variable, type, variable);
+          return createFromValue(variable, type);
         }
         return null;
       }
-      return createFromValue(value, type, variable);
+      return createFromValue(value, type);
     }
 
     @Nullable
@@ -101,27 +89,28 @@ public class DfaConstValue extends DfaValue {
      */
     @NotNull
     public DfaConstValue createDefault(@NotNull PsiType type) {
-      return createFromValue(PsiTypesUtil.getDefaultValue(type), type, null);
+      return createFromValue(PsiTypesUtil.getDefaultValue(type), type);
     }
 
     @NotNull
-    public DfaConstValue createFromValue(Object value, @NotNull PsiType type, @Nullable PsiVariable constant) {
+    public DfaConstValue createFromValue(Object value, @NotNull PsiType type) {
       if (Boolean.TRUE.equals(value)) return dfaTrue;
       if (Boolean.FALSE.equals(value)) return dfaFalse;
       if (value == null) return dfaNull;
 
       if (TypeConversionUtil.isNumericType(type) && !TypeConversionUtil.isFloatOrDoubleType(type)) {
         type = PsiType.LONG;
-        value = TypeConversionUtil.computeCastTo(value, type);
+        Object numeric = TypeConversionUtil.computeCastTo(value, type);
+        if (numeric != null) {
+          value = numeric;
+        }
       }
-      if (value instanceof Double || value instanceof Float) {
-        double doubleValue = ((Number)value).doubleValue();
-        if (doubleValue == -0.0) doubleValue = +0.0;
-        value = doubleValue;
+      if (value instanceof Float) {
+        value = ((Float)value).doubleValue();
       }
       DfaConstValue instance = myValues.get(value);
       if (instance == null) {
-        instance = new DfaConstValue(value, type, myFactory, constant);
+        instance = new DfaConstValue(value, type, myFactory);
         myValues.put(value, instance);
       }
 
@@ -154,34 +143,29 @@ public class DfaConstValue extends DfaValue {
   }
 
   private final Object myValue;
-  @Nullable private final PsiVariable myConstant;
   @NotNull private final PsiType myType;
 
-  private DfaConstValue(Object value, @NotNull PsiType type, DfaValueFactory factory, @Nullable PsiVariable constant) {
+  private DfaConstValue(Object value, @NotNull PsiType type, DfaValueFactory factory) {
     super(factory);
     myValue = value;
     myType = type;
-    myConstant = constant;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     if (myValue == null) return "null";
+    if (myValue instanceof String) return '"' + StringUtil.escapeStringCharacters((String)myValue) + '"';
     return myValue.toString();
   }
 
+  @Override
   @NotNull
   public PsiType getType() {
     return myType;
   }
 
+  @Nullable
   public Object getValue() {
     return myValue;
-  }
-
-  @Nullable
-  public PsiVariable getConstant() {
-    return myConstant;
   }
 
   @Override
@@ -189,5 +173,16 @@ public class DfaConstValue extends DfaValue {
     if (this == myFactory.getConstFactory().getTrue()) return myFactory.getConstFactory().getFalse();
     if (this == myFactory.getConstFactory().getFalse()) return myFactory.getConstFactory() .getTrue();
     return DfaUnknownValue.getInstance();
+  }
+
+  /**
+   * Checks whether given value is a special value representing method failure, according to its contract
+   *
+   * @param value value to check
+   * @return true if specified value represents method failure
+   */
+  @Contract("null -> false")
+  public static boolean isContractFail(DfaValue value) {
+    return value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == ourThrowable;
   }
 }

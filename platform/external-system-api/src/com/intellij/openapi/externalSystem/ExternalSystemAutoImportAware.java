@@ -36,7 +36,6 @@ import java.util.List;
  * the functionality described above should implement this interface.
  * 
  * @author Denis Zhdanov
- * @since 6/7/13 6:44 PM
  */
 public interface ExternalSystemAutoImportAware {
 

@@ -25,6 +25,8 @@ public class AssertEqualsBetweenInconvertibleTypes {
         Collection<B> c2 = null;
         assertEquals(c1, c2);
         assertEquals(new ArrayList<String>(){}, new ArrayList<String>());
+        assertEquals(new TreeSet<String>(){}, new HashSet<String>());
+        <warning descr="'assertEquals()' between objects of inconvertible types 'TreeSet<Integer>' and 'HashSet<String>'">assertEquals</warning>(new TreeSet<Integer>(), new HashSet<String>());
     }
 
     interface A {}

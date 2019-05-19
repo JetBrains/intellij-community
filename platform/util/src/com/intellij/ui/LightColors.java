@@ -16,7 +16,7 @@
 
 package com.intellij.ui;
 
-import java.awt.Color;
+import java.awt.*;
 
 /**
  * @author max
@@ -25,7 +25,7 @@ public interface LightColors {
   Color YELLOW = new JBColor(new Color(0xffffcc), new Color(0x525229));
   Color GREEN = new JBColor(new Color(0xccffcc), new Color(0x356936));
   Color BLUE = new JBColor(new Color(0xccccff), new Color(0x589df6));
-  Color RED = new JBColor(new Color(0xffcccc), new Color(0x743A3A));
+  Color RED = JBColor.namedColor("SearchField.errorBackground", new JBColor(0xffcccc, 0x743A3A));
   Color CYAN = new JBColor(new Color(0xccffff), new Color(100, 138, 138));
 
   Color SLIGHTLY_GREEN = new JBColor(new Color(0xeeffee), new Color(0x515B51));

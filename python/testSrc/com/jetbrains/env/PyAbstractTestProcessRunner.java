@@ -24,6 +24,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.actions.RerunFailedActionsTestTools;
+import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy.SMRootTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
@@ -33,7 +34,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
@@ -123,7 +123,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
    */
   @NotNull
   public AbstractTestProxy findTestByName(@NotNull final String testName) {
-    final AbstractTestProxy test = findTestByName(testName, myProxyManager.getProxy());
+    final AbstractTestProxy test = BaseSMTRunnerTestCase.findTestByName(testName, myProxyManager.getProxy());
     assert test != null : "No test found with name" + testName;
     return test;
   }
@@ -136,63 +136,11 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     return myProxyManager.getProxy();
   }
 
-  /**
-   * @return Test tree using poorman's graphics
-   */
   @NotNull
   public final String getFormattedTestTree() {
-    final StringBuilder builder = new StringBuilder("Test tree:\n");
-
-    final SMRootTestProxy proxy = getTestProxy();
-    if (proxy.wasTerminated()) {
-      return "Test terminated";
-    }
-    formatLevel(proxy, 0, builder);
-
-    return builder.toString();
+    return BaseSMTRunnerTestCase.getFormattedTestTree(getTestProxy());
   }
 
-  private static void formatLevel(@NotNull final SMTestProxy test, final int level, @NotNull final StringBuilder builder) {
-    builder.append(StringUtil.repeat(".", level));
-    builder.append(test.getName());
-    if (test.isLeaf()) {
-      if (test.wasTerminated()) {
-        builder.append("[T]");
-      } else if (test.isPassed()) {
-        builder.append("(+)");
-      } else if (test.isIgnored()) {
-        builder.append("(~)");
-      } else {
-        builder.append("(-)");
-      }
-    }
-    builder.append('\n');
-    for (SMTestProxy child : test.getChildren()) {
-      formatLevel(child, level + 1, builder);
-    }
-  }
-
-
-  /**
-   * Searches for test by its name recursevly in test, passed as arumuent.
-   *
-   * @param testName test name to find
-   * @param test     root test
-   * @return test or null if not found
-   */
-  @Nullable
-  private static AbstractTestProxy findTestByName(@NotNull final String testName, @NotNull final AbstractTestProxy test) {
-    if (test.getName().equals(testName)) {
-      return test;
-    }
-    for (final AbstractTestProxy testProxy : test.getChildren()) {
-      final AbstractTestProxy result = findTestByName(testName, testProxy);
-      if (result != null) {
-        return result;
-      }
-    }
-    return null;
-  }
 
   /**
    * @return number of failed tests
@@ -227,7 +175,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
       return null;
     }
 
-    assert getFailedTestsCount() > 0: String.format("No failed tests on iteration %d, not sure what to rerun", myCurrentRerunStep);
+    assert getFailedTestsCount() > 0 : String.format("No failed tests on iteration %d, not sure what to rerun", myCurrentRerunStep);
     final Logger logger = Logger.getInstance(PyAbstractTestProcessRunner.class);
     logger.info(String.format("Starting iteration %s", myCurrentRerunStep));
 

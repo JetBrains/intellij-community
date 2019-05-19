@@ -38,7 +38,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
   @NotNull private final Document myDocument;
   @NotNull private final List<Element> myPieces;
 
-  public UnifiedEditorHighlighter(@NotNull Document document,
+  UnifiedEditorHighlighter(@NotNull Document document,
                                   @NotNull EditorHighlighter highlighter1,
                                   @NotNull EditorHighlighter highlighter2,
                                   @NotNull List<HighlightRange> ranges,
@@ -143,6 +143,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
   }
 
   private static class ProxyIterator implements HighlighterIterator {
+    @NotNull
     private final Document myDocument;
     private int myIdx;
     private final List<Element> myPieces;
@@ -192,6 +193,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
       return myIdx < 0 || myIdx >= myPieces.size();
     }
 
+    @NotNull
     @Override
     public Document getDocument() {
       return myDocument;

@@ -30,6 +30,7 @@ public final class FieldData extends DescriptorData<FieldDescriptorImpl>{
     myField = field;
   }
 
+  @Override
   protected FieldDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new FieldDescriptorImpl(project, myObjRef, myField);
   }
@@ -46,6 +47,7 @@ public final class FieldData extends DescriptorData<FieldDescriptorImpl>{
     return myObjRef.hashCode() + myField.hashCode();
   }
 
+  @Override
   public DisplayKey<FieldDescriptorImpl> getDisplayKey() {
     return new SimpleDisplayKey<>(myField);
   }

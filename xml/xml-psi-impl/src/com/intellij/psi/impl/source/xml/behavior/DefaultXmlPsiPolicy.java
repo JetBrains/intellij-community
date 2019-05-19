@@ -16,9 +16,9 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -36,12 +36,14 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
 
   @Override
   public ASTNode encodeXmlTextContents(String displayText, PsiElement text) {
-    final PsiFile containingFile = text.getContainingFile();
+    if (displayText.isEmpty()) {
+      return null;
+    }
     CharTable charTable = SharedImplUtil.findCharTableByTree(text.getNode());
     final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, charTable).getTreeElement();
     final XmlTag rootTag =
-      ((XmlFile)PsiFileFactory.getInstance(containingFile.getProject())
-        .createFileFromText("a.xml", "<a>" + displayText + "</a>")).getRootTag();
+      ((XmlFile)PsiFileFactory.getInstance(text.getProject())
+        .createFileFromText("a.xml", XMLLanguage.INSTANCE, "<a>" + displayText + "</a>", false, true)).getRootTag();
 
     assert rootTag != null;
     final XmlTagChild[] tagChildren = rootTag.getValue().getChildren();

@@ -24,10 +24,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.Map;
 
 public class FilenameIndexImpl extends ScalarIndexExtension<String> {
   @NonNls static final ID<String, Void> NAME = FilenameIndex.NAME;
+
   @NotNull
   @Override
   public ID<String,Void> getName() {
@@ -37,13 +37,7 @@ public class FilenameIndexImpl extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
-    return new DataIndexer<String, Void, FileContent>() {
-      @NotNull
-      @Override
-      public Map<String, Void> map(@NotNull FileContent inputData) {
-        return Collections.singletonMap(inputData.getFileName(), null);
-      }
-    };
+    return inputData -> Collections.singletonMap(inputData.getFileName(), null);
   }
 
   @NotNull
@@ -70,11 +64,11 @@ public class FilenameIndexImpl extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 2 + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 1 : 0);
+    return 3;
   }
 
   @Override
   public boolean traceKeyHashToVirtualFileMapping() {
-    return FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+    return true;
   }
 }

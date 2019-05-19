@@ -12,7 +12,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
@@ -60,12 +60,12 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void projectOpened() {
-    final EditorMouseMotionAdapter myMouseMotionListener = new EditorMouseMotionAdapter() {
+    final EditorMouseMotionListener myMouseMotionListener = new EditorMouseMotionListener() {
       LightweightHint myCurrentHint;
       FoldRegion myCurrentFold;
 
       @Override
-      public void mouseMoved(EditorMouseEvent e) {
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
         if (myProject.isDisposed()) return;
         LightweightHint hint = null;
         try {
@@ -214,7 +214,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void scheduleAsyncFoldingUpdate(@NotNull Editor editor) {
-    editor.putUserData(FoldingUpdate.CODE_FOLDING_KEY, null);
+    FoldingUpdate.clearFoldingCache(editor);
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
@@ -258,23 +258,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     if (runnable != null) {
       runnable.run();
     }
-  }
-
-  @Override
-  public void forceDefaultState(@NotNull final Editor editor) {
-    PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
-    Runnable runnable = updateFoldRegions(editor, true, false);
-    if (runnable != null) {
-      runnable.run();
-    }
-
-    final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
-    editor.getFoldingModel().runBatchFoldingOperation(() -> {
-      for (FoldRegion region : regions) {
-        Boolean collapsedByDefault = region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
-        if (collapsedByDefault != null) region.setExpanded(!collapsedByDefault);
-      }
-    });
   }
 
   @Override

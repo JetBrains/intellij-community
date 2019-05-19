@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisUIOptions;
-import com.intellij.find.impl.FindDialog;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
@@ -39,16 +37,11 @@ class FileFilterPanel {
   private JPanel myPanel;
 
   void init(AnalysisUIOptions options) {
-    FindDialog.initFileFilter(myFileMask, myUseFileMask);
+    FindInProjectUtil.initFileFilter(myFileMask, myUseFileMask);
     myUseFileMask.setSelected(StringUtil.isNotEmpty(options.FILE_MASK));
     myFileMask.setEnabled(StringUtil.isNotEmpty(options.FILE_MASK));
     myFileMask.setSelectedItem(options.FILE_MASK);
-    ActionListener listener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        options.FILE_MASK = myUseFileMask.isSelected() ? (String)myFileMask.getSelectedItem() : null;
-      }
-    };
+    ActionListener listener = __ -> options.FILE_MASK = myUseFileMask.isSelected() ? (String)myFileMask.getSelectedItem() : null;
     myUseFileMask.addActionListener(listener);
     myFileMask.addActionListener(listener);
   }
@@ -64,11 +57,6 @@ class FileFilterPanel {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
         return patternCondition.value(file.getNameSequence());
-      }
-
-      @Override
-      public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-        return 0;
       }
 
       @Override

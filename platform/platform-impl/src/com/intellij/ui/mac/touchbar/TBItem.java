@@ -4,16 +4,20 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 abstract class TBItem {
-  final String myUid;
-  protected ID myNativePeer = ID.NIL; // java wrapper holds native object
-  protected boolean myIsVisible = true;
+  final @NotNull String myUid;
+  final @Nullable ItemListener myListener;
+  @NotNull ID myNativePeer = ID.NIL; // java wrapper holds native object
+  boolean myIsVisible = true;
 
-  TBItem(@NotNull String uid) { myUid = uid; }
+  @Nullable String myOptionalContextName;
 
-  void setVisible(boolean visible) { myIsVisible = visible; }
-  boolean isVisible() { return myIsVisible; }
+  TBItem(@NotNull String uid, ItemListener listener) { myUid = uid; myListener = listener; }
+
+  @Override
+  public String toString() { return myUid; }
 
   ID getNativePeer() {
     // called from AppKit (when NSTouchBarDelegate create items)
@@ -26,16 +30,13 @@ abstract class TBItem {
       return;
     _updateNativePeer();
   }
-  final void releaseNativePeer() {
+  void releaseNativePeer() {
     if (myNativePeer == ID.NIL)
       return;
-    _releaseChildBars();
     Foundation.invoke(myNativePeer, "release");
     myNativePeer = ID.NIL;
   }
 
   protected abstract void _updateNativePeer();  // called from EDT
   protected abstract ID _createNativePeer();    // called from AppKit
-
-  protected void _releaseChildBars() {}         // called from EDT
 }

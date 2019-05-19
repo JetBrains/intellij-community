@@ -53,7 +53,7 @@ import java.util.function.Supplier;
 /**
  * @author traff
  */
-public abstract class PythonRemoteInterpreterManager {
+public abstract class PythonRemoteInterpreterManager implements PyRemoteFilesChooser {
   public final static ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
   public static final String WEB_DEPLOYMENT_PLUGIN_IS_DISABLED =
@@ -170,6 +170,7 @@ public abstract class PythonRemoteInterpreterManager {
                                                    @NotNull PyRemoteSdkAdditionalDataBase data,
                                                    @Nullable PyRemotePathMapper pathMapper);
 
+  @NotNull
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
   public abstract PyConsoleProcessHandler createConsoleProcessHandler(@NotNull Process process,
@@ -186,7 +187,9 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract String getInterpreterVersion(@Nullable Project project, PyRemoteSdkAdditionalDataBase data) throws RemoteSdkException;
 
-  public abstract String[] chooseRemoteFiles(Project project, @NotNull PyRemoteSdkAdditionalDataBase data, boolean foldersOnly)
+  @Override
+  @NotNull
+  public abstract String[] chooseRemoteFiles(@NotNull Project project, @NotNull PyRemoteSdkAdditionalDataBase data, boolean foldersOnly)
     throws ExecutionException, InterruptedException;
 
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {

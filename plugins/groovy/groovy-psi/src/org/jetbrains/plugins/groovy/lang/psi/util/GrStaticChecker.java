@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.psi.*;
@@ -29,6 +27,7 @@ public class GrStaticChecker {
                                     @Nullable PsiElement resolveContext,
                                     boolean filterStaticAfterInstanceQualifier) {
     if (!(member instanceof PsiMember)) return true;
+    if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) return true;
 
     if (!(place instanceof GrReferenceExpression)) return true;
 
@@ -213,8 +212,8 @@ public class GrStaticChecker {
   }
 
   public static boolean isPropertyAccessInStaticMethod(@NotNull GrReferenceExpression referenceExpression) {
-    return isInStaticContext(referenceExpression) &&
+    return !referenceExpression.isQualified() &&
            !(referenceExpression.getParent() instanceof GrMethodCall) &&
-           referenceExpression.getQualifier() == null;
+           isInStaticContext(referenceExpression);
   }
 }

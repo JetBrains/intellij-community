@@ -140,8 +140,8 @@ public class DomHighlightingLiteTest extends DomTestCase {
     assertEmpty(holder.getAllProblems(new MyDomElementsInspection()));
   }
 
-  private static DomElementAnnotationHolderImpl createHolder() {
-    return new DomElementAnnotationHolderImpl(true);
+  private DomElementAnnotationHolderImpl createHolder() {
+    return new DomElementAnnotationHolderImpl(true, myElement);
   }
 
   private static DomElementsProblemsHolderImpl assertNotEmptyHolder(final DomElementsProblemsHolder holder1) {
@@ -283,12 +283,13 @@ public class DomHighlightingLiteTest extends DomTestCase {
   }
 
   public void testRequiredAttributeWithoutAttributeValue() {
+    myElement.setFileDescription(new DomFileDescription<>(DomElement.class, "a"));
     final MyElement element = createElement("<a id />", MyElement.class);
     new MyBasicDomElementsInspection().checkDomElement(element.getId(), createHolder(), DomHighlightingHelperImpl.INSTANCE);
   }
 
   private static class MyDomElementsInspection extends DomElementsInspection<DomElement> {
-    public MyDomElementsInspection() {
+    MyDomElementsInspection() {
       super(DomElement.class);
     }
 
@@ -312,7 +313,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
   }
 
   private static class MyBasicDomElementsInspection extends BasicDomElementsInspection<DomElement> {
-    public MyBasicDomElementsInspection() {
+    MyBasicDomElementsInspection() {
       super(DomElement.class);
     }
 
@@ -342,7 +343,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
 
 
   private static class MyNonHighlightingDomFileDescription extends DomFileDescription<DomElement> {
-    public MyNonHighlightingDomFileDescription() {
+    MyNonHighlightingDomFileDescription() {
       super(DomElement.class, "a");
     }
 

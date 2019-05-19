@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.testframework;
 
@@ -30,10 +16,14 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +31,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.util.Collection;
 import java.util.Iterator;
 
-public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters> extends SMTRunnerConsoleProperties {
+public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element> & CommonJavaRunConfigurationParameters> extends SMTRunnerConsoleProperties {
   public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
     super(configuration, testFrameworkName, executor);
     setPrintTestingStartedTime(false);
@@ -103,8 +93,10 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
         int lineNumber = lastLine.getLineNumber();
         PsiFile psiFile = containingClass.getContainingFile();
         Document document = PsiDocumentManager.getInstance(containingClass.getProject()).getDocument(psiFile);
-        PsiElement elementAtLineStart = document != null ? psiFile.findElementAt(document.getLineStartOffset(lineNumber)) : null;
-        if (elementAtLineStart != null && PsiTreeUtil.isAncestor(containingMethod, elementAtLineStart, false)) {
+        TextRange textRange = containingMethod.getTextRange();
+        if (textRange == null || document == null || 
+            lineNumber < 0 || lineNumber >= document.getLineCount() || 
+            textRange.contains(document.getLineStartOffset(lineNumber))) {
           return new OpenFileDescriptor(containingClass.getProject(), psiFile.getVirtualFile(), lineNumber, 0);
         }
       }

@@ -25,7 +25,7 @@ import java.util.Map;
 
 public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter {
 
-  private Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter");
+  private final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter");
 
   public MavenCompilerAnnotationProcessorPathsImporter() {
     super("org.apache.maven.plugins", "maven-compiler-plugin");

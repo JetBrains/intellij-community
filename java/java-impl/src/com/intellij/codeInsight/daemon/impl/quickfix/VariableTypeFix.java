@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,10 +55,11 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   @NotNull
   @Override
   public String getText() {
+    PsiType type = getReturnType();
     return QuickFixBundle.message("fix.variable.type.text",
                                   UsageViewUtil.getType(getStartElement()),
                                   myName,
-                                  getReturnType().getCanonicalText());
+                                  type == null || !type.isValid() ? "???" : type.getCanonicalText());
   }
 
   @Override
@@ -77,19 +79,19 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
+    PsiType type = getReturnType();
     return myVariable.getTypeElement() != null
-        && myVariable.getManager().isInProject(myVariable)
-        && getReturnType() != null
-        && !LambdaUtil.notInferredType(getReturnType())
-        && getReturnType().isValid()
-        && !TypeConversionUtil.isNullType(getReturnType())
-        && !TypeConversionUtil.isVoidType(getReturnType());
+           && BaseIntentionAction.canModify(myVariable)
+           && type != null && type.isValid()
+           && !LambdaUtil.notInferredType(type)
+           && !TypeConversionUtil.isNullType(type)
+           && !TypeConversionUtil.isVoidType(type);
   }
 
   @Override
   public void invoke(@NotNull final Project project,
                      @NotNull final PsiFile file,
-                     @Nullable("is null when called from inspection") Editor editor,
+                     @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
@@ -100,7 +102,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
         final PsiTypeElement typeElement = myVariable.getTypeElement();
         LOG.assertTrue(typeElement != null, myVariable.getClass());
         final PsiTypeElement newTypeElement =
-          JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(getReturnType());
+          JavaPsiFacade.getElementFactory(file.getProject()).createTypeElement(getReturnType());
         typeElement.replace(newTypeElement);
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
         UndoUtil.markPsiFileForUndo(file);

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -15,26 +15,27 @@ import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XSourcePosition;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,7 +48,7 @@ public class TraceStreamAction extends AnAction {
 
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
   private final List<SupportedLibrary> mySupportedLibraries =
-    LibrarySupportProvider.getList().stream().map(SupportedLibrary::new).collect(Collectors.toList());
+    ContainerUtil.map(LibrarySupportProvider.getList(), SupportedLibrary::new);
   private final Set<String> mySupportedLanguages = StreamEx.of(mySupportedLibraries).map(x -> x.languageId).toSet();
   private int myLastVisitedPsiElementHash;
 
@@ -68,7 +69,6 @@ public class TraceStreamAction extends AnAction {
         presentation.setEnabled(chainExists);
         final int elementHash = System.identityHashCode(element);
         if (chainExists && myLastVisitedPsiElementHash != elementHash) {
-          UsageTrigger.trigger("debugger.streams." + languageId.toLowerCase(Locale.US) + ".activated");
           myLastVisitedPsiElementHash = elementHash;
         }
       }
@@ -81,10 +81,11 @@ public class TraceStreamAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final XDebugSession session = getCurrentSession(e);
-    Extensions.getExtensions(LibrarySupportProvider.EP_NAME);
+    LibrarySupportProvider.EP_NAME.getExtensionList();
+    XSourcePosition position = session.getCurrentPosition();
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
 
-    if (element != null) {
+    if (element != null || position == null) {
       final List<StreamChainWithLibrary> chains = mySupportedLibraries.stream()
         .filter(library -> library.languageId.equals(element.getLanguage().getID()))
         .filter(library -> library.builder.isChainExists(element))
@@ -99,13 +100,12 @@ public class TraceStreamAction extends AnAction {
         runTrace(chains.get(0).chain, chains.get(0).library, session);
       }
       else {
-        final Editor editor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(element);
-        if (editor == null) {
-          throw new RuntimeException("editor not found");
-        }
-
-        new MyStreamChainChooser(editor).show(chains.stream().map(StreamChainOption::new).collect(Collectors.toList()),
-                                              provider -> runTrace(provider.chain, provider.library, session));
+        Project project = session.getProject();
+        VirtualFile file = position.getFile();
+        final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
+        ApplicationManager.getApplication()
+          .invokeLater(() -> new MyStreamChainChooser(editor).show(ContainerUtil.map(chains, StreamChainOption::new),
+                                                                   provider -> runTrace(provider.chain, provider.library, session)));
       }
     }
     else {
@@ -125,7 +125,6 @@ public class TraceStreamAction extends AnAction {
 
   private static void runTrace(@NotNull StreamChain chain, @NotNull SupportedLibrary library, @NotNull XDebugSession session) {
     final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
-    UsageTrigger.trigger("debugger.streams." + library.languageId.toLowerCase(Locale.US) + ".used");
     ApplicationManager.getApplication().invokeLater(window::show);
     final Project project = session.getProject();
     final TraceExpressionBuilder expressionBuilder = library.createExpressionBuilder(project);

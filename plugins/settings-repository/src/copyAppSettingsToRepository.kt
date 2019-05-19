@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.ROOT_CONFIG
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.getExportableComponentsMap
 import com.intellij.configurationStore.removeMacroIfStartsWith
+import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore

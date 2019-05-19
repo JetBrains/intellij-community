@@ -18,10 +18,10 @@ package com.intellij.application.options.codeStyle.arrangement.action;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 8/23/12 11:41 AM
  */
 public class ArrangementRemoveConditionAction extends AnAction {
 
@@ -31,6 +31,6 @@ public class ArrangementRemoveConditionAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
   }
 }

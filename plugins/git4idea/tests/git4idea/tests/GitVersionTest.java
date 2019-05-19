@@ -44,7 +44,8 @@ public class GitVersionTest {
     new TestGitVersion("git version 1.6.4.msysgit.0", 1, 6, 4, 0),
     new TestGitVersion("git version 1.7.3.3.msysgit.1", 1, 7, 3, 3),
     new TestGitVersion("git version 1.7.3.2.msysgit", 1, 7, 3, 2),
-    new TestGitVersion("git version 1.7.3.5.msysgit.gb27be", 1, 7, 3, 5)
+    new TestGitVersion("git version 1.7.3.5.msysgit.gb27be", 1, 7, 3, 5),
+    new TestGitVersion("git version 2.19.1.windows.1", 2, 19, 1, 0),
   };
 
   /**
@@ -128,7 +129,7 @@ public class GitVersionTest {
     private final int rev;
     private final int patch;
 
-    public TestGitVersion(String output, int major, int minor, int rev, int patch) {
+    TestGitVersion(String output, int major, int minor, int rev, int patch) {
       this.output = output;
       this.major = major;
       this.minor = minor;

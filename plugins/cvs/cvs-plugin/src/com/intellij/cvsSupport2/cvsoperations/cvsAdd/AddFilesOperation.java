@@ -72,6 +72,7 @@ public class AddFilesOperation extends CompositeOperation {
     return myAlreadyProcessedParentToOperation.get(parent);
   }
 
+  @Override
   public int getFilesToProcessCount() {
     if (myFilesCount == -1){
       myFilesCount = calculateAllFilesCount();

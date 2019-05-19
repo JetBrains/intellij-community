@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
+public class FileTypeRenderer extends SimpleListCellRenderer<FileType> {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private static final Pattern CLEANUP = Pattern.compile("(?i)\\s+file(?:s)?$");
 
@@ -48,21 +34,20 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
   }
 
   @Override
-  public void customize(JList list, FileType type, int index, boolean selected, boolean hasFocus) {
+  public void customize(JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
-    final Icon icon = type.getIcon();
+    Icon icon = value.getIcon();
     if (icon != null) {
       layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
     }
 
     setIcon(layeredIcon);
 
-    String description = type.getDescription();
+    String description = value.getDescription();
     String trimmedDescription = StringUtil.capitalizeWords(CLEANUP.matcher(description).replaceAll(""), true);
     if (isDuplicated(description)) {
-      setText(trimmedDescription + " (" + type.getName() + ")");
-
+      setText(trimmedDescription + " (" + value.getName() + ")");
     }
     else {
       setText(trimmedDescription);
@@ -88,10 +73,11 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
   private static class DefaultFileTypeListProvider implements FileTypeListProvider {
     private final List<FileType> myFileTypes;
 
-    public DefaultFileTypeListProvider() {
+    DefaultFileTypeListProvider() {
       myFileTypes = Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes());
     }
 
+    @Override
     public Iterable<FileType> getCurrentFileTypeList() {
       return myFileTypes;
     }

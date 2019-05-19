@@ -17,9 +17,7 @@ package com.intellij.openapi.vcs.roots;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 class VcsRootConfiguration {
 
@@ -30,7 +28,7 @@ class VcsRootConfiguration {
   @NotNull private Collection<String> myExtraErrors;
 
 
-  public VcsRootConfiguration() {
+  VcsRootConfiguration() {
     myVcsRoots = Collections.emptyList();
     myMappings = Collections.emptyList();
     myContentRoots = Collections.emptyList();
@@ -75,7 +73,9 @@ class VcsRootConfiguration {
 
   @NotNull
   public Collection<String> getContentRoots() {
-    return myContentRoots;
+    Set<String> result = new HashSet<>(myContentRoots);
+    result.addAll(myVcsRoots);
+    return result;
   }
 
   @NotNull

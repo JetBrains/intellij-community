@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMemberFix;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -30,16 +17,13 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
 * @author peter
 */
 public abstract class StaticMemberProcessor {
-  private final Set<PsiClass> myStaticImportedClasses = ContainerUtil.newHashSet();
+  private final Set<PsiClass> myStaticImportedClasses = new HashSet<>();
   private final PsiElement myPosition;
   private final Project myProject;
   private final PsiResolveHelper myResolveHelper;
@@ -57,7 +41,7 @@ public abstract class StaticMemberProcessor {
     ContainerUtil.addIfNotNull(myStaticImportedClasses, psiClass);
   }
 
-  public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<LookupElement> consumer) {
+  public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
     final GlobalSearchScope scope = myPosition.getResolveScope();
     Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(myProject);
     for (final String memberName : CompletionUtil.sortMatching(matcher, memberNames)) {
@@ -101,7 +85,7 @@ public abstract class StaticMemberProcessor {
 
   private void showHint(boolean shouldImport) {
     if (!myHintShown && !shouldImport) {
-      final String shortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+      final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
       if (StringUtil.isNotEmpty(shortcut)) {
         CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);
       }
@@ -109,8 +93,8 @@ public abstract class StaticMemberProcessor {
     }
   }
 
-  public List<PsiMember> processMembersOfRegisteredClasses(final PrefixMatcher matcher, PairConsumer<PsiMember, PsiClass> consumer) {
-    final ArrayList<PsiMember> result = ContainerUtil.newArrayList();
+  public List<PsiMember> processMembersOfRegisteredClasses(final PrefixMatcher matcher, PairConsumer<? super PsiMember, ? super PsiClass> consumer) {
+    final ArrayList<PsiMember> result = new ArrayList<>();
     for (final PsiClass psiClass : myStaticImportedClasses) {
       for (final PsiMethod method : psiClass.getAllMethods()) {
         if (matcher.prefixMatches(method.getName())) {
@@ -146,5 +130,5 @@ public abstract class StaticMemberProcessor {
   @Nullable
   protected abstract LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport);
 
-  protected abstract LookupElement createLookupElement(@NotNull List<PsiMethod> overloads, @NotNull PsiClass containingClass, boolean shouldImport);
+  protected abstract LookupElement createLookupElement(@NotNull List<? extends PsiMethod> overloads, @NotNull PsiClass containingClass, boolean shouldImport);
 }

@@ -20,7 +20,6 @@ import com.siyeh.ig.bugs.CastConflictsWithInstanceofInspection;
 
 /**
  * @author anna
- * @since 16-Jun-2009
  */
 public class CastConflictsWithInstanceofFixesTest extends IGQuickFixesTestCase {
   @Override

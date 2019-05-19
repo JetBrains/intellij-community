@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.options;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 public interface SettingsEditorListener<Settings> extends EventListener {
-  void stateChanged(SettingsEditor<Settings> editor);
+  void stateChanged(@NotNull SettingsEditor<Settings> editor);
 }

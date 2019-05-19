@@ -159,7 +159,7 @@ public class ExpectedTypeUtil {
 
     private XPathType myExpectedType = XPathType.UNKNOWN;
 
-    public ExpectedTypeVisitor(XPathExpression expression) {
+    ExpectedTypeVisitor(XPathExpression expression) {
       myExpression = expression;
     }
 

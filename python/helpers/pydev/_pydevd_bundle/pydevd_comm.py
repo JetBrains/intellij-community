@@ -58,14 +58,12 @@ each command has a format:
     * PYDB - pydevd, the python end
 '''
 
-import os
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR
 
 from _pydev_bundle.pydev_imports import _queue
-from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
-from _pydev_imps._pydev_saved_modules import socket
-from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
+from _pydev_imps._pydev_saved_modules import time
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
     IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON
 
@@ -79,12 +77,13 @@ if IS_IRONPYTHON:
     def unquote(s):
         return s
 
-import pydevconsole
+from _pydevd_bundle import pydevd_console_integration
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_tracing
 from _pydevd_bundle import pydevd_vm_type
-from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, norm_file_to_client
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client, is_real_file
+import os
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
@@ -163,6 +162,8 @@ CMD_PROCESS_CREATED = 149
 CMD_SHOW_CYTHON_WARNING = 150
 CMD_LOAD_FULL_VALUE = 151
 
+CMD_PROCESS_CREATED_MSG_RECEIVED = 159
+
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901
@@ -223,6 +224,8 @@ ID_TO_MEANING = {
     '150': 'CMD_SHOW_CYTHON_WARNING',
     '151': 'CMD_LOAD_FULL_VALUE',
 
+    '159': 'CMD_PROCESS_CREATED_MSG_RECEIVED',
+
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
     '901': 'CMD_ERROR',
@@ -235,6 +238,15 @@ VERSION_STRING = "@@BUILD_NUMBER@@"
 
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 file_system_encoding = getfilesystemencoding()
+
+
+class CommunicationRole(object):
+    """The class that contains the constants of roles that `PyDB` can play in
+    the communication with the IDE.
+    """
+    CLIENT = 0
+    SERVER = 1
+
 
 #--------------------------------------------------------------------------------------------------- UTILITIES
 
@@ -608,9 +620,10 @@ class NetCommandFactory:
         cmdText = '<process/>'
         return NetCommand(CMD_PROCESS_CREATED, 0, cmdText)
 
-    def make_show_cython_warning_message(self):
+    def make_show_warning_message(self, message_id):
         try:
-            return NetCommand(CMD_SHOW_CYTHON_WARNING, 0, '')
+            cmdText = '<xml><warning id="%s" /></xml>' % message_id
+            return NetCommand(CMD_SHOW_CYTHON_WARNING, 0, cmdText)
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
@@ -707,14 +720,19 @@ class NetCommandFactory:
 
                 abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(curr_frame)
 
-                myFile = norm_file_to_client(abs_path_real_path_and_base[0])
-                if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
-                    # myFile is a byte string encoded using the file system encoding
-                    # convert it to utf8
-                    myFile = myFile.decode(file_system_encoding).encode("utf-8")
+                my_file = abs_path_real_path_and_base[0]
 
-                #print "file is ", myFile
-                #myFile = inspect.getsourcefile(curr_frame) or inspect.getfile(frame)
+                if is_real_file(my_file):
+                    # if filename is Jupyter cell id
+                    my_file = norm_file_to_client(abs_path_real_path_and_base[0])
+
+                if file_system_encoding.lower() != "utf-8" and hasattr(my_file, "decode"):
+                    # my_file is a byte string encoded using the file system encoding
+                    # convert it to utf8
+                    my_file = my_file.decode(file_system_encoding).encode("utf-8")
+
+                #print "file is ", my_file
+                #my_file = inspect.getsourcefile(curr_frame) or inspect.getfile(frame)
 
                 myLine = str(curr_frame.f_lineno)
                 #print "line is ", myLine
@@ -724,7 +742,7 @@ class NetCommandFactory:
 
                 variables = ''
                 append('<frame id="%s" name="%s" ' % (my_id , make_valid_xml_value(my_name)))
-                append('file="%s" line="%s">' % (quote(myFile, '/>_= \t'), myLine))
+                append('file="%s" line="%s">' % (quote(my_file, '/>_= \t'), myLine))
                 append(variables)
                 append("</frame>")
                 curr_frame = curr_frame.f_back
@@ -1127,7 +1145,7 @@ class InternalGetFrame(InternalThreadCommand):
         try:
             frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             if frame is not None:
-                hidden_ns = pydevconsole.get_ipython_hidden_vars()
+                hidden_ns = pydevd_console_integration.get_ipython_hidden_vars()
                 xml = "<xml>"
                 xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, hidden_ns)
                 del frame
@@ -1445,7 +1463,7 @@ class InternalConsoleExec(InternalThreadCommand):
                 #don't trace new threads created by console command
                 disable_trace_thread_modules()
 
-                result = pydevconsole.console_exec(self.thread_id, self.frame_id, self.expression, dbg)
+                result = pydevd_console_integration.console_exec(self.thread_id, self.frame_id, self.expression, dbg)
                 xml = "<xml>"
                 xml += pydevd_xml.var_to_xml(result, "")
                 xml += "</xml>"

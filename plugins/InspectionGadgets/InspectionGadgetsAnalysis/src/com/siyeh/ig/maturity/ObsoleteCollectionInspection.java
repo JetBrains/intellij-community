@@ -142,13 +142,8 @@ public class ObsoleteCollectionInspection extends BaseInspection {
     private boolean checkReferences(PsiNamedElement namedElement) {
       final PsiFile containingFile = namedElement.getContainingFile();
       if (!isOnTheFly() || isCheapToSearchInFile(namedElement)) {
-        return !ReferencesSearch.search(namedElement, GlobalSearchScope.fileScope(containingFile)).forEach(ref -> {
-          final PsiElement element = ref.getElement();
-          if (isRequiredObsoleteCollectionElement(element)) {
-            return false;
-          }
-          return true;
-        });
+        return ReferencesSearch.search(namedElement, GlobalSearchScope.fileScope(containingFile))
+          .anyMatch(ref -> isRequiredObsoleteCollectionElement(ref.getElement()));
       }
       return true;
     }
@@ -233,12 +228,19 @@ public class ObsoleteCollectionInspection extends BaseInspection {
   }
 
   private static boolean isCheapToSearchInFile(@NotNull PsiNamedElement element) {
-    String name = element.getName();
-    if (name == null) return false;
+    if (element.getName() == null) return false;
     return CachedValuesManager.getCachedValue(element, () -> {
       PsiFile file = element.getContainingFile();
-      int[] occurrences = new StringSearcher(name, true, true).findAllOccurrences(file.getViewProvider().getContents());
-      return CachedValueProvider.Result.create(occurrences.length <= MAX_OCCURRENCES, file);
+      return CachedValueProvider.Result.create(calcCheapEnoughToSearchInFile(element, file), file);
     });
+  }
+
+  private static boolean calcCheapEnoughToSearchInFile(@NotNull PsiNamedElement element, PsiFile file) {
+    String name = element.getName();
+    if (name == null) return false;
+    StringSearcher searcher = new StringSearcher(name, true, true);
+    CharSequence contents = file.getViewProvider().getContents();
+    int[] count = new int[1];
+    return searcher.processOccurrences(contents, __->++count[0] <= MAX_OCCURRENCES);
   }
 }

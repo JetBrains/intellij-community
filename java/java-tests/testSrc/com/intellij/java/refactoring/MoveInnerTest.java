@@ -16,33 +16,26 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.move.moveInner.MoveInnerDialog;
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
  */
-public class MoveInnerTest extends MultiFileTestCase {
+public class MoveInnerTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
-  
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/moveInner/";
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveInner/";
   }
 
   public void testScr13730() {
@@ -58,6 +51,12 @@ public class MoveInnerTest extends MultiFileTestCase {
   }
 
   public void testXmlReferences() {
+    doTest(createAction("pack1.Outer.Inner", "Inner", false, null, true, true, null));
+  }
+
+  public void testMostInnerClassImport() {
+    JavaCodeStyleSettings javaCodeStyleSettings = CodeStyle.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS = true;
     doTest(createAction("pack1.Outer.Inner", "Inner", false, null, true, true, null));
   }
 
@@ -125,26 +124,26 @@ public class MoveInnerTest extends MultiFileTestCase {
                                false, false, null) {
       @Override
       protected boolean isPassOuterClass() {
-        final PsiClass outerClass = getJavaFacade().findClass("pack1.DImpl", GlobalSearchScope.moduleScope(myModule));
+        final PsiClass outerClass = myFixture.getJavaFacade().findClass("pack1.DImpl", GlobalSearchScope.moduleScope(getModule()));
         assertNotNull(outerClass);
-        final PsiClass innerClass = getJavaFacade().findClass(innerClassName, GlobalSearchScope.moduleScope(myModule));
+        final PsiClass innerClass = myFixture.getJavaFacade().findClass(innerClassName, GlobalSearchScope.moduleScope(getModule()));
         assertNotNull(innerClass);
         return MoveInnerDialog.isThisNeeded(innerClass, outerClass);
       }
     });
   }
 
-  private PerformAction createAction(@NonNls final String innerClassName,
-                                     @NonNls final String newClassName,
-                                     final boolean passOuterClass,
-                                     @NonNls final String parameterName,
-                                     final boolean searchInComments,
-                                     final boolean searchInNonJava,
-                                     @NonNls @Nullable final String packageName) {
+  private ThrowableRunnable<Exception> createAction(@NonNls final String innerClassName,
+                                         @NonNls final String newClassName,
+                                         final boolean passOuterClass,
+                                         @NonNls final String parameterName,
+                                         final boolean searchInComments,
+                                         final boolean searchInNonJava,
+                                         @NonNls @Nullable final String packageName) {
     return new MyPerformAction(innerClassName, newClassName, passOuterClass, parameterName, searchInComments, searchInNonJava, packageName);
   }
 
-  private class MyPerformAction implements PerformAction {
+  private class MyPerformAction implements ThrowableRunnable<Exception> {
     private final String myInnerClassName;
     private final String myPackageName;
     private final String myNewClassName;
@@ -153,7 +152,7 @@ public class MoveInnerTest extends MultiFileTestCase {
     private final boolean mySearchInComments;
     private final boolean mySearchInNonJava;
 
-    public MyPerformAction(String innerClassName, String newClassName, boolean passOuterClass, String parameterName, boolean searchInComments,
+    MyPerformAction(String innerClassName, String newClassName, boolean passOuterClass, String parameterName, boolean searchInComments,
                            boolean searchInNonJava,
                            String packageName) {
       myInnerClassName = innerClassName;
@@ -166,17 +165,14 @@ public class MoveInnerTest extends MultiFileTestCase {
     }
 
     @Override
-    public void performAction(VirtualFile rootDir, VirtualFile rootAfter) {
-      final JavaPsiFacade manager = getJavaFacade();
-      final PsiClass aClass = manager.findClass(myInnerClassName, GlobalSearchScope.moduleScope(myModule));
-      final MoveInnerProcessor moveInnerProcessor = new MoveInnerProcessor(myProject, null);
+    public void run() {
+      final JavaPsiFacade manager = myFixture.getJavaFacade();
+      final PsiClass aClass = manager.findClass(myInnerClassName, GlobalSearchScope.moduleScope(getModule()));
+      final MoveInnerProcessor moveInnerProcessor = new MoveInnerProcessor(getProject(), null);
       final PsiElement targetContainer = myPackageName != null ? findDirectory(myPackageName) : MoveInnerImpl.getTargetContainer(aClass, false);
       assertNotNull(targetContainer);
       moveInnerProcessor.setup(aClass, myNewClassName, isPassOuterClass(), myParameterName, mySearchInComments, mySearchInNonJava, targetContainer);
       moveInnerProcessor.run();
-      PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      FileDocumentManager.getInstance().saveAllDocuments();
     }
 
     protected boolean isPassOuterClass() {
@@ -184,7 +180,7 @@ public class MoveInnerTest extends MultiFileTestCase {
     }
 
     private PsiElement findDirectory(final String packageName) {
-      final PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
+      final PsiPackage aPackage = myFixture.getJavaFacade().findPackage(packageName);
       assert aPackage != null;
       final PsiDirectory[] directories = aPackage.getDirectories();
       return directories [0];

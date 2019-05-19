@@ -36,7 +36,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since 30.09.2011
  */
 public class ProjectPaths {
   private ProjectPaths() { }
@@ -100,7 +99,7 @@ public class ProjectPaths {
     return files;
   }
 
-  private static void addFile(Set<File> classpath, @Nullable String url) {
+  private static void addFile(Set<? super File> classpath, @Nullable String url) {
     if (url != null) {
       classpath.add(JpsPathUtil.urlToFile(url));
     }
@@ -142,7 +141,7 @@ public class ProjectPaths {
     return sourcePaths;
   }
 
-  private static void processModulesRecursively(ModuleChunk chunk, JpsJavaClasspathKind kind, Consumer<JpsModule> processor) {
+  private static void processModulesRecursively(ModuleChunk chunk, JpsJavaClasspathKind kind, Consumer<? super JpsModule> processor) {
     JpsJavaExtensionService.getInstance().enumerateDependencies(chunk.getModules()).includedIn(kind).recursively().processModules(processor);
   }
 

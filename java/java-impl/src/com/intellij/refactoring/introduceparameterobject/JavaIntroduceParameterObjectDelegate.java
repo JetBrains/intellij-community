@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -69,7 +70,7 @@ public class JavaIntroduceParameterObjectDelegate
   @Override
   public ParameterInfoImpl createMergedParameterInfo(JavaIntroduceParameterObjectClassDescriptor descriptor,
                                                      PsiMethod method,
-                                                     List<ParameterInfoImpl> oldMethodParameters) {
+                                                     List<? extends ParameterInfoImpl> oldMethodParameters) {
     final PsiCodeBlock body = method.getBody();
     String baseParameterName = StringUtil.decapitalize(descriptor.getClassName());
     final Project project = method.getProject();
@@ -134,7 +135,7 @@ public class JavaIntroduceParameterObjectDelegate
       PsiNewExpression newClassExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(callExpression.getProject())
         .shortenClassReferences(facade.getElementFactory().createExpressionFromText(newExpression.toString(), expr));
       if (PsiDiamondTypeUtil.canChangeContextForDiamond(newClassExpression, newClassExpression.getType())) {
-        PsiDiamondTypeUtil.replaceExplicitWithDiamond(newClassExpression.getClassOrAnonymousClassReference().getParameterList());
+        RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(newClassExpression.getClassOrAnonymousClassReference().getParameterList());
       }
       return newClassExpression;
     }
@@ -182,7 +183,7 @@ public class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public <M1 extends PsiNamedElement, P1 extends ParameterInfo> ReadWriteAccessDetector.Access collectInternalUsages(Collection<FixableUsageInfo> usages,
+  public <M1 extends PsiNamedElement, P1 extends ParameterInfo> ReadWriteAccessDetector.Access collectInternalUsages(Collection<? super FixableUsageInfo> usages,
                                                                                                                      PsiMethod overridingMethod,
                                                                                                                      IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
                                                                                                                      P1 parameterInfo,
@@ -223,7 +224,7 @@ public class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public void collectUsagesToGenerateMissedFieldAccessors(Collection<FixableUsageInfo> usages,
+  public void collectUsagesToGenerateMissedFieldAccessors(Collection<? super FixableUsageInfo> usages,
                                                           PsiMethod method,
                                                           JavaIntroduceParameterObjectClassDescriptor descriptor,
                                                           ReadWriteAccessDetector.Access[] accessors) {
@@ -252,7 +253,7 @@ public class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public void collectAdditionalFixes(Collection<FixableUsageInfo> usages,
+  public void collectAdditionalFixes(Collection<? super FixableUsageInfo> usages,
                                      final PsiMethod method,
                                      final JavaIntroduceParameterObjectClassDescriptor descriptor) {
 

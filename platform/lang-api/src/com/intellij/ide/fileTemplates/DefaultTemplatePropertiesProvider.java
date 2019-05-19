@@ -18,6 +18,7 @@ package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Properties;
 
@@ -25,7 +26,6 @@ import java.util.Properties;
  * Provides default variables which are available in file templates.
  *
  * @author yole
- * @since 8.0
  */
 public interface DefaultTemplatePropertiesProvider {
   ExtensionPointName<DefaultTemplatePropertiesProvider> EP_NAME = ExtensionPointName.create("com.intellij.defaultTemplatePropertiesProvider");
@@ -36,5 +36,5 @@ public interface DefaultTemplatePropertiesProvider {
    * @param directory the directory in which the file is created.
    * @param props the map in which the defined properties should be stored.
    */
-  void fillProperties(PsiDirectory directory, Properties props);
+  void fillProperties(@NotNull PsiDirectory directory, @NotNull Properties props);
 }

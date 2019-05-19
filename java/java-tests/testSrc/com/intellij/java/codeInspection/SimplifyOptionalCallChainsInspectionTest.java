@@ -20,22 +20,19 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SimplifyOptionalCallChainsInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class SimplifyOptionalCallChainsInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk9();
+    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk9());
   }
 
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new SimplifyOptionalCallChainsInspection()};
-  }
-
-  public void test() {
-    doAllTests();
   }
 
   @Override

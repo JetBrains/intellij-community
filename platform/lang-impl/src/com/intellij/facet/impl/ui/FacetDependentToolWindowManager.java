@@ -1,36 +1,19 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.*;
 import com.intellij.facet.ui.FacetDependentToolWindow;
-import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Dmitry Avdeev
- */
-public class FacetDependentToolWindowManager extends AbstractProjectComponent {
-
+public class FacetDependentToolWindowManager implements ProjectComponent {
+  private final Project myProject;
   private final ProjectWideFacetListenersRegistry myFacetListenersRegistry;
   private final ProjectFacetManager myFacetManager;
   private final ToolWindowManagerEx myToolWindowManager;
@@ -39,7 +22,7 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
                                             ProjectWideFacetListenersRegistry facetListenersRegistry,
                                             ProjectFacetManager facetManager,
                                             ToolWindowManagerEx toolWindowManager) {
-    super(project);
+    myProject = project;
     myFacetListenersRegistry = facetListenersRegistry;
     myFacetManager = facetManager;
     myToolWindowManager = toolWindowManager;
@@ -49,14 +32,14 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
   public void projectOpened() {
     myFacetListenersRegistry.registerListener(new ProjectWideFacetAdapter<Facet>() {
       @Override
-      public void facetAdded(Facet facet) {
+      public void facetAdded(@NotNull Facet facet) {
         for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
           ensureToolWindowExists(extension);
         }
       }
 
       @Override
-      public void facetRemoved(Facet facet) {
+      public void facetRemoved(@NotNull Facet facet) {
         if (!myFacetManager.hasFacets(facet.getTypeId())) {
           for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
             ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);
@@ -73,8 +56,7 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
       }
     }, myProject);
 
-    FacetDependentToolWindow[] extensions = Extensions.getExtensions(FacetDependentToolWindow.EXTENSION_POINT_NAME);
-    loop: for (FacetDependentToolWindow extension : extensions) {
+    loop: for (FacetDependentToolWindow extension : FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList()) {
       for (FacetType type : extension.getFacetTypes()) {
         if (myFacetManager.hasFacets(type.getId())) {
           ensureToolWindowExists(extension);
@@ -92,8 +74,7 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
   }
 
   private static List<FacetDependentToolWindow> getDependentExtensions(final Facet facet) {
-    FacetDependentToolWindow[] extensions = Extensions.getExtensions(FacetDependentToolWindow.EXTENSION_POINT_NAME);
-    return ContainerUtil.filter(extensions, toolWindowEP -> {
+    return ContainerUtil.filter(FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList(), toolWindowEP -> {
       for (String id : toolWindowEP.getFacetIds()) {
         if (facet.getType().getStringId().equals(id)) return true;
       }

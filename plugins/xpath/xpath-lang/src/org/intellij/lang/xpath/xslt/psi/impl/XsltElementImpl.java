@@ -30,6 +30,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.completion.CompletionLists;
 import org.intellij.lang.xpath.context.ContextProvider;
@@ -43,7 +44,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.reflect.*;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 abstract class XsltElementImpl extends LightElement implements Iconable, PsiElementNavigationItem, XsltElement, ItemPresentation {
 
@@ -60,35 +64,40 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
         myElementFactory = XsltElementFactory.getInstance();
     }
 
+    @Override
     public PsiElement copy() {
         return myElementFactory.wrapElement((XmlTag)myElement.copy(), getClass());
     }
 
+    @Override
     public String getText() {
         return myElement.getText();
     }
 
+    @Override
     public XmlTag getTag() {
         return myElement;
     }
 
     @Override
-    @Nullable
+    @NotNull
     public final ItemPresentation getPresentation() {
         return this;
     }
 
+    @Override
     @Nullable
     public Icon getIcon(boolean open) {
         return getIcon(0);
     }
 
+    @Override
     @Nullable
     public String getLocationString() {
         return "(in " + getContainingFile().getName() + ")";
     }
 
-    @SuppressWarnings({"ConstantConditions"})
+    @Override
     public String getPresentableText() {
         return getName();
     }
@@ -98,6 +107,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
         return myElement;
     }
 
+    @Override
     @Nullable
     public String getName() {
         final XmlAttributeValue nameElement = getNameElement();
@@ -118,6 +128,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
         if (myNavigationElement == null && myElement.isValid()) {
             final Class[] allInterfaces = CompletionLists.getAllInterfaces(myElement.getClass());
             myNavigationElement = (PsiElement)Proxy.newProxyInstance(getClass().getClassLoader(), allInterfaces, new InvocationHandler() {
+                @Override
                 @Nullable
                 @SuppressWarnings({"StringEquality", "AutoBoxing", "AutoUnboxing"})
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -157,12 +168,8 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
 
     @Nullable
     private XmlAttributeValue getNameElement() {
-        final XmlAttribute attribute = getNameAttribute();
-        if (attribute != null) {
-            final XmlAttributeValue valueElement = attribute.getValueElement();
-            return valueElement != null ? valueElement : null;
-        }
-        return null;
+        XmlAttribute attribute = getNameAttribute();
+        return attribute != null ? attribute.getValueElement() : null;
     }
 
     @Override
@@ -203,6 +210,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
       visitor.visitXPathElement((XPathElement)this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
       if (visitor instanceof XPathElementVisitor && this instanceof XPathElement) {
         accept((XPathElementVisitor)visitor);
@@ -314,8 +322,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
     }
 
     protected static <S, T extends S> T[] convertArray(S[] elements, Class<T> aClass) {
-        //noinspection unchecked
-        final T[] t = (T[])Array.newInstance(aClass, elements.length);
+        final T[] t = ArrayUtil.newArray(aClass, elements.length);
         //noinspection SuspiciousSystemArraycopy
         System.arraycopy(elements, 0, t, 0, elements.length);
         return t;

@@ -28,7 +28,7 @@ import java.util.Collection;
 
 public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.smartTree.TreeElementWrapper");
-  public TreeElementWrapper(Project project, TreeElement value, TreeModel treeModel) {
+  public TreeElementWrapper(Project project, @NotNull TreeElement value, @NotNull TreeModel treeModel) {
     super(project, value, treeModel);
   }
 
@@ -37,7 +37,7 @@ public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     if (((StructureViewTreeElement)getValue()).getValue() != null) {
       presentation.updateFrom(getValue().getPresentation());
     }

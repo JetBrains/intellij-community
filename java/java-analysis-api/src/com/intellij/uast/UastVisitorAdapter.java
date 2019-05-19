@@ -30,19 +30,6 @@ public class UastVisitorAdapter extends PsiElementVisitor {
   private final boolean directOnly;
 
   /**
-   * @deprecated {@link UastVisitor} is recursive by default, when {@link PsiElementVisitor} is not recursive,
-   * thus, passing arbitrary {@code UastVisitor} to this constructor is error-prone (IDEA-181783).
-   * Make sure your {@code UastVisitor} is non-recursive,
-   * in case of doubts implement {@link PsiElementVisitor#visitElement(PsiElement)} yourself
-   * and convert passed @{code PsiElement} to required Uast type with {@link UastContextKt#toUElement(PsiElement, Class)}
-   */
-  @Deprecated
-  public UastVisitorAdapter(UastVisitor visitor) {
-    myUastVisitor = visitor;
-    directOnly = false;
-  }
-
-  /**
    * @param visitor    a non-recursive Uast Visitor. (Note: visitor methods should return <b>true</b> to be non-recursive)
    * @param directOnly if true only elements which are directly converted from passed {@link PsiElement} will be processed.
    *                   Setting to true is useful to avoid duplicating reports on {@code sourcePsi} elements.

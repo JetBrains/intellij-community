@@ -18,7 +18,6 @@ package com.intellij.lang.ant.dom;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
@@ -33,22 +32,22 @@ import java.util.List;
  */
 public abstract class AntDomPropertyDefiningElement extends AntDomElement implements PropertiesProvider {
 
-  @NotNull 
+  @Override
+  @NotNull
   public final Iterator<String> getNamesIterator() {
     final List<GenericAttributeValue<String>> attribs = getPropertyDefiningAttributes();
     final List<String> result = new ArrayList<>(attribs.size());
     for (GenericAttributeValue<String> attribValue : attribs) {
       final String name = attribValue.getStringValue();
-      if (name != null && name.length() > 0) {
+      if (name != null && !name.isEmpty()) {
         result.add(name);
       }
     }
-    for (String name : getImplicitPropertyNames()) {
-      result.add(name);
-    }
+    result.addAll(getImplicitPropertyNames());
     return result.iterator();
   }
 
+  @Override
   public final PsiElement getNavigationElement(String propertyName) {
     for (GenericAttributeValue<String> value : getPropertyDefiningAttributes()) {
       if (!propertyName.equals(value.getStringValue())) {
@@ -57,7 +56,7 @@ public abstract class AntDomPropertyDefiningElement extends AntDomElement implem
       final DomTarget domTarget = DomTarget.getTarget(this, value);
       return domTarget != null? PomService.convertToPsi(domTarget) : null;
     }
-    
+
     for (String propName : getImplicitPropertyNames()) {
       if (propertyName.equals(propName)) {
         final DomTarget domTarget = DomTarget.getTarget(this);
@@ -70,7 +69,8 @@ public abstract class AntDomPropertyDefiningElement extends AntDomElement implem
     }
     return null;
   }
-  
+
+  @Override
   public final String getPropertyValue(final String propertyName) {
     for (GenericAttributeValue<String> value : getPropertyDefiningAttributes()) {
       if (propertyName.equals(value.getStringValue())) {

@@ -14,7 +14,6 @@ import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
 import java.util.LinkedHashSet;
-import java.util.Locale;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -44,7 +43,7 @@ public class YamlBooleanType extends YamlEnumType {
   private static class StandardYamlBoolean extends YamlBooleanType {
     private static final StandardYamlBoolean SHARED = new StandardYamlBoolean();
 
-    public StandardYamlBoolean() {
+    StandardYamlBoolean() {
       super("yaml:boolean");
       setDisplayName("boolean");
       withLiterals("true", "false");
@@ -91,12 +90,12 @@ public class YamlBooleanType extends YamlEnumType {
 
     @NotNull
     protected static String lower(@NotNull String text) {
-      return text.toLowerCase(Locale.ENGLISH);
+      return StringUtil.toLowerCase(text);
     }
 
     @NotNull
     protected static String CAPS(@NotNull String text) {
-      return text.toUpperCase(Locale.ENGLISH);
+      return StringUtil.toUpperCase(text);
     }
 
     @NotNull

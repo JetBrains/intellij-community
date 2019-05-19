@@ -1,46 +1,20 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 
+/**
+ * @author max
+ */
 public class Page {
   public static final int PAGE_SIZE = SystemProperties.getIntProperty("idea.io.page.size", 8 * 1024);
 
-  private static final LimitedPool<ByteBuffer> ourBufferPool = new LimitedPool<ByteBuffer>(10, new LimitedPool.ObjectFactory<ByteBuffer>() {
-    @NotNull
-    @Override
-    public ByteBuffer create() {
-      return ByteBuffer.allocate(PAGE_SIZE);
-    }
-
-    @Override
-    public void cleanup(@NotNull final ByteBuffer byteBuffer) {
-    }
-  });
+  private static final LimitedPool<ByteBuffer> ourBufferPool = new LimitedPool<>(10, () -> ByteBuffer.allocate(PAGE_SIZE));
 
   private final long offset;
   private final RandomAccessDataFile owner;
@@ -102,7 +76,7 @@ public class Page {
   private final Range myContinuousRange = new Range();
 
   @Nullable
-  private Range calcContinousRange(final BitSet mask) {
+  private Range calcContinuousRange(final BitSet mask) {
     int lowestByte = mask.nextSetBit(0);
     int highestByte;
     if (lowestByte >= 0) {
@@ -136,9 +110,9 @@ public class Page {
         int start = 0;
         int end = PAGE_SIZE;
         if (myWriteMask != null) {
-          Range range = calcContinousRange(myWriteMask);
+          Range range = calcContinuousRange(myWriteMask);
           if (range == null) {
-  //          System.out.println("Discountinous write of: " + myWriteMask.cardinality() + " bytes. Performing ensure read before flush.");
+  //          System.out.println("Discontinuous write of: " + myWriteMask.cardinality() + " bytes. Performing ensure read before flush.");
             ensureRead();
           }
           else {

@@ -19,13 +19,17 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Maxim.Medvedev
  */
-public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceListStub> implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList {
+public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceListStub>
+  implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList, PsiListLikeElement {
+
   private static final Logger LOG = Logger.getInstance(GrReferenceListImpl.class);
-  
+
   private PsiClassType[] myCachedTypes;
 
   public GrReferenceListImpl(@NotNull ASTNode node) {
@@ -79,7 +83,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
       final String[] baseClasses = stub.getBaseClasses();
       final GrCodeReferenceElement[] result = new GrCodeReferenceElement[baseClasses.length];
       for (int i = 0; i < baseClasses.length; i++) {
-        result[i] = GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(baseClasses[i], this);
+        result[i] = GroovyPsiElementFactory.getInstance(getProject()).createCodeReference(baseClasses[i], this);
       }
       return result;
     }
@@ -128,4 +132,10 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
 
   @Nullable
   protected abstract IElementType getKeywordType();
+
+  @NotNull
+  @Override
+  public List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getReferenceElementsGroovy());
+  }
 }

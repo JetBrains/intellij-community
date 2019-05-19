@@ -15,6 +15,8 @@
  */
 package org.intellij.lang.regexp;
 
+import java.util.EnumSet;
+
 /**
  * @author yole
  */
@@ -53,6 +55,11 @@ public enum RegExpCapability {
   COMMENT_MODE,
 
   /**
+   * In comment mode, spaces, tabs, etc in a class are also whitespace. Comments also work inside classes (Java).
+   */
+  WHITESPACE_IN_CLASS,
+
+  /**
    * '\h'
    */
   ALLOW_HEX_DIGIT_CLASS,
@@ -76,6 +83,11 @@ public enum RegExpCapability {
    * supports for property negations like \p{^Alnum}
    */
   CARET_NEGATED_PROPERTIES,
+
+  /**
+   * supports properties with name and value like \p{name=value}
+   */
+  PROPERTY_VALUES,
 
   /**
    * \\u, \l, \\U, \L, and \E
@@ -116,4 +128,14 @@ public enum RegExpCapability {
    * MySQL character classes [=c=] [.class.] [:<:] [:>:]
    */
   MYSQL_BRACKET_EXPRESSIONS,
+
+  /**
+   * \g{[integer]} \g[unsigned integer]
+   */
+  PCRE_BACK_REFERENCES,
+  ;
+  static final EnumSet<RegExpCapability> DEFAULT_CAPABILITIES = EnumSet.of(NESTED_CHARACTER_CLASSES,
+                                                                           ALLOW_HORIZONTAL_WHITESPACE_CLASS,
+                                                                           UNICODE_CATEGORY_SHORTHAND,
+                                                                           EXTENDED_UNICODE_CHARACTER);
 }

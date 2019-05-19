@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.string;
 
 import com.intellij.openapi.diff.LineTokenizerBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -335,13 +334,13 @@ public class DiffString extends CharArrayCharSequence {
 
     @NotNull
     public DiffString[] execute() {
-      ArrayList<DiffString> lines = new ArrayList<DiffString>();
+      ArrayList<DiffString> lines = new ArrayList<>();
       doExecute(lines);
-      return ContainerUtil.toArray(lines, new DiffString[lines.size()]);
+      return lines.toArray(new DiffString[0]);
     }
 
     @Override
-    protected void addLine(List<DiffString> lines, int start, int end, boolean appendNewLine) {
+    protected void addLine(List<? super DiffString> lines, int start, int end, boolean appendNewLine) {
       if (appendNewLine) {
         lines.add(myText.substring(start, end).append('\n'));
       }

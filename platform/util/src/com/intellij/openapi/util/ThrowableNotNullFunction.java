@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
 
+@FunctionalInterface
 public interface ThrowableNotNullFunction<T, R, E extends Throwable> {
   @NotNull
   R fun(@NotNull T t) throws E;

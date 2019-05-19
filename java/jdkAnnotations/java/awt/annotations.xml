@@ -137,6 +137,9 @@
       <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}" />
     </annotation>
   </item>
+  <item name='java.awt.Font java.awt.Font deriveFont(float)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.awt.Font java.awt.Font deriveFont(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}" />
@@ -151,6 +154,12 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}" />
     </annotation>
+  </item>
+  <item name='java.awt.FontMetrics int stringWidth(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Graphics void drawString(java.lang.String, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.awt.KeyboardFocusManager void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
@@ -247,6 +256,9 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
+  </item>
+  <item name='java.awt.Toolkit java.awt.Cursor createCustomCursor(java.awt.Image, java.awt.Point, java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.awt.Window void setLocation(java.awt.Point) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

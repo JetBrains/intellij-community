@@ -44,6 +44,7 @@ public class ConfigFileMetaDataRegistryImpl implements ConfigFileMetaDataRegistr
     }
   }
 
+  @Override
   @NotNull
   public ConfigFileMetaData[] getMetaData() {
     if (myCachedMetaData == null) {
@@ -52,11 +53,13 @@ public class ConfigFileMetaDataRegistryImpl implements ConfigFileMetaDataRegistr
     return myCachedMetaData;
   }
 
+  @Override
   @Nullable
   public ConfigFileMetaData findMetaData(@NonNls @NotNull final String id) {
     return myId2MetaData.get(id);
   }
 
+  @Override
   public void registerMetaData(@NotNull final ConfigFileMetaData... metaData) {
     for (ConfigFileMetaData data : metaData) {
       myMetaData.add(data);

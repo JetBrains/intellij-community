@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.project
 
 import com.intellij.CommonBundle
@@ -14,13 +14,13 @@ import com.intellij.openapi.module.impl.ModuleRenamingHistoryState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.util.loadElement
+import com.intellij.serialization.SerializationException
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.write
-import com.intellij.util.xmlb.XmlSerializationException
 import com.intellij.util.xmlb.XmlSerializer
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -42,9 +42,9 @@ class LoadModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQu
     }
 
     val renamingState = try {
-      XmlSerializer.deserialize(loadElement(file.inputStream), ModuleRenamingHistoryState::class.java)
+      XmlSerializer.deserialize(JDOMUtil.load(file.inputStream), ModuleRenamingHistoryState::class.java)
     }
-    catch (e: XmlSerializationException) {
+    catch (e: SerializationException) {
       LOG.info(e)
       showError(e.message ?: "unknown error")
       return

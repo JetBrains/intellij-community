@@ -48,8 +48,10 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
     // Handles only string literals containing quoted types
     final PyInjectionUtil.InjectionResult result = super.registerInjection(registrar, context);
     
-    if (result == PyInjectionUtil.InjectionResult.EMPTY && context.getContainingFile() instanceof PyFile && 
-        context instanceof PsiComment && context instanceof PsiLanguageInjectionHost) {
+    if (result == PyInjectionUtil.InjectionResult.EMPTY &&
+        context instanceof PsiComment &&
+        context instanceof PsiLanguageInjectionHost &&
+        context.getContainingFile() instanceof PyFile) {
       return registerCommentInjection(registrar, (PsiLanguageInjectionHost)context);
     }
     return result;
@@ -74,7 +76,7 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
     final String annotationText = PyTypingTypeProvider.getTypeCommentValue(text);
     if (annotationText != null) {
       final Language language;
-      if ("ignore".equals(annotationText)) {
+      if (PyTypingTypeProvider.IGNORE.equals(annotationText)) {
         language = null;
       }
       else if (isFunctionTypeComment(host)) {

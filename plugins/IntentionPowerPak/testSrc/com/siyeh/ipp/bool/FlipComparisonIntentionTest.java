@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.bool;
 
 import com.siyeh.ipp.IPPTestCase;
@@ -34,6 +20,16 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
            "    boolean b = 2 < 1;}");
   }
 
+  public void testGreater() {
+    doTest("class X {{" +
+           "  if(a+b>/*_Flip '>' to '<'*/c);" +
+           "}}",
+
+           "class X {{" +
+           "  if(c < a + b);" +
+           "}}");
+  }
+
   public void testBrokenCode() {
     doTestIntentionNotAvailable("import java.util.*;" +
                                 "class X {" +
@@ -41,5 +37,38 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
                                 "  }" +
                                 "  {x(HashSet</*_Flip '>' to '<'*/>());}" +
                                 "}");
+  }
+
+  public void testBrokenCode2() {
+    doTestIntentionNotAvailable("class Builder {\n" +
+                                "    Builder b = !(new//simple end comment\n" +
+                                "         </*_Flip '>=' to '<='*/>   Builder().method( >= caret) >1).method(2);\n" +
+                                "}");
+  }
+
+  public void testBrokenCode3() {
+    doTest("@Anno(\n" +
+           "  param//test comment\n" +
+           "  /*_Flip '<' to '>'*/<foo>",
+
+           "@Anno(\n" +
+           "        //test comment\n" +
+           "        foo > param >");
+  }
+
+  public void testBrokenCode4() {
+    doTestIntentionNotAvailable("class A{\n" +
+           "  {\n" +
+           "    \"\"<foo>\"//simple/*_Flip '>' to '<'*/ end comment\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testBrokenCode5() {
+    doTestIntentionNotAvailable("class A{\n" +
+           "  {\n" +
+           "    /*_Flip '>' to '<'*/a > b > c" +
+           "  }\n" +
+           "}");
   }
 }

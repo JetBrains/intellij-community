@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * Implementations of this interface are not obliged to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 8/8/12 11:13 AM
  */
 public interface ArrangementMatchCondition extends Cloneable {
 

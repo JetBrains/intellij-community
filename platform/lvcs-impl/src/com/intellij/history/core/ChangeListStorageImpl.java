@@ -223,7 +223,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   @Override
-  public synchronized void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor) {
+  public synchronized void purge(long period, int intervalBetweenActivities, Consumer<? super ChangeSet> processor) {
     if (isCompletelyBroken) return;
 
     TIntHashSet recursionGuard = new TIntHashSet(1000);

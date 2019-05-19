@@ -64,7 +64,7 @@ final class MarkerOptionalData extends BitSet {
     return myCollapsed.contains(markerId);
   }
 
-  void setErrorMessage(int markerId, String message) {
+  void setErrorMessage(int markerId, @NotNull String message) {
     markAsHavingOptionalData(markerId);
     myDoneErrors.put(markerId, message);
   }

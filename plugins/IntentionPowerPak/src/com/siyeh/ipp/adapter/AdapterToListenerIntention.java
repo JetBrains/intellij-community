@@ -171,8 +171,7 @@ public class AdapterToListenerIntention extends MutablyNamedIntention {
     final PsiModifierList modifierList = newMethod.getModifierList();
     modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
     final Project project = aClass.getProject();
-    final JavaCodeStyleSettings codeStyleSettings =
-      JavaCodeStyleSettings.getInstance(project);
+    final JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(aClass.getContainingFile());
     if (codeStyleSettings.INSERT_OVERRIDE_ANNOTATION &&
         PsiUtil.isLanguageLevel6OrHigher(aClass)) {
       modifierList.addAnnotation("java.lang.Override");

@@ -17,6 +17,7 @@ public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditi
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Conditional expression";
   }
@@ -52,7 +53,7 @@ public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditi
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitConditionalExpression(this);
   }
 }

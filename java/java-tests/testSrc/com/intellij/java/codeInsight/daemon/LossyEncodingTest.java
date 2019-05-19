@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.java.codeInsight.daemon;
 
@@ -26,7 +12,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
@@ -34,6 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 
@@ -48,8 +34,15 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    UIUtil.dispatchAllInvocationEvents(); // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
-    super.tearDown();
+    try {
+      UIUtil.dispatchAllInvocationEvents(); // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testText() throws Exception {
@@ -57,7 +50,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     Charset ascii = CharsetToolkit.forName("US-ASCII");
     VirtualFile myVFile = myFile.getVirtualFile();
     FileDocumentManager.getInstance().saveAllDocuments();
-    EncodingManager.getInstance().setEncoding(myVFile, ascii);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(myVFile, ascii);
     UIUtil.dispatchAllInvocationEvents(); // wait for reload requests to bubble up
     assertEquals(ascii, myVFile.getCharset());
     int start = myEditor.getCaretModel().getOffset();
@@ -119,7 +112,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testNativeEncoding() throws Exception {
-    EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, true);
+    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
     UIUtil.dispatchAllInvocationEvents();
     configureByFile(BASE_PATH + "/" + "NativeEncoding.properties");
 
@@ -128,12 +121,12 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
 
   public void testDetectWrongEncoding() {
     VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/Win1251.txt");
-    virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+    virtualFile.setCharset(StandardCharsets.UTF_8);
     configureByExistingFile(virtualFile);
     Document document = ObjectUtils.notNull(FileDocumentManager.getInstance().getDocument(virtualFile));
 
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
-    assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
+    assertEquals(StandardCharsets.UTF_8, virtualFile.getCharset());
 
     doHighlighting();
     List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileLevelHighlights(getProject(), getFile());
@@ -143,12 +136,12 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
 
   public void testSurrogateUTF8() {
     VirtualFile virtualFile = getVirtualFile(BASE_PATH + "/" + "surrogate.txt");
-    virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+    virtualFile.setCharset(StandardCharsets.UTF_8);
     configureByExistingFile(virtualFile);
     final Document document = ObjectUtils.notNull(FileDocumentManager.getInstance().getDocument(virtualFile));
 
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
-    assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
+    assertEquals(StandardCharsets.UTF_8, virtualFile.getCharset());
 
     assertEmpty(doHighlighting());
   }

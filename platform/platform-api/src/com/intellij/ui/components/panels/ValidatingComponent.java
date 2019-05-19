@@ -80,6 +80,7 @@ public abstract class ValidatingComponent<T extends JComponent> extends NonOpaqu
     return label;
   }
 
+  @Override
   public void doLayout() {
     super.doLayout();
     if (myLabel != null) {

@@ -5,7 +5,6 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.sun.jdi.*;
@@ -23,20 +22,20 @@ public class BoxingEvaluator implements Evaluator{
     myOperand = DisableGC.create(operand);
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    final Object result = myOperand.evaluate(context);
-    if (result == null || result instanceof ObjectReference) {
-      return result;
-    }
+    return box(myOperand.evaluate(context), context);
+  }
 
-    if (result instanceof PrimitiveValue) {
-      PrimitiveValue primitiveValue = (PrimitiveValue)result;
+  public static Object box(Object value, EvaluationContextImpl context) throws EvaluateException {
+    if (value instanceof PrimitiveValue) {
+      PrimitiveValue primitiveValue = (PrimitiveValue)value;
       PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name());
       if (primitiveType != null) {
         return convertToWrapper(context, primitiveValue, primitiveType.getBoxedTypeName());
       }
     }
-    throw new EvaluateException("Cannot perform boxing conversion for a value of type " + ((Value)result).type().name());
+    return value;
   }
 
   private static Value convertToWrapper(EvaluationContextImpl context, PrimitiveValue value, String wrapperTypeName) throws
@@ -55,6 +54,6 @@ public class BoxingEvaluator implements Evaluator{
 
     Method finalMethod = method;
     List<PrimitiveValue> args = Collections.singletonList(value);
-    return DebuggerUtilsEx.computeAndKeep(() -> process.invokeMethod(context, wrapperClass, finalMethod, args), context);
+    return context.computeAndKeep(() -> process.invokeMethod(context, wrapperClass, finalMethod, args));
   }
 }

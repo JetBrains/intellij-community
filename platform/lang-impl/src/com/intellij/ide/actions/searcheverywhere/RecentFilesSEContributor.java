@@ -5,20 +5,29 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
+
+  public RecentFilesSEContributor(@Nullable Project project, @Nullable PsiElement context) {
+    super(project, context);
+  }
 
   @NotNull
   @Override
@@ -33,33 +42,59 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   }
 
   @Override
-  public String includeNonProjectItemsText() {
-    return null;
-  }
-
-  @Override
   public int getSortWeight() {
     return 70;
   }
 
   @Override
-  public ContributorSearchResult<Object> search(Project project, String pattern, boolean everywhere, ProgressIndicator progressIndicator, int elementsLimit) {
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
-    List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(project).getSelectedFiles());
-    List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(project).getFileList());
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
+    return super.getElementPriority(element, searchPattern) + 5;
+  }
 
-    PsiManager psiManager = PsiManager.getInstance(project);
-    Stream<VirtualFile> stream = history.stream();
-    if (!StringUtil.isEmptyOrSpaces(pattern)) {
-      stream = stream.filter(file -> matcher.matches(file.getName()));
+  @Override
+  public void fetchElements(@NotNull String pattern,
+                            @NotNull ProgressIndicator progressIndicator,
+                            @NotNull Processor<? super Object> consumer) {
+    if (myProject == null) {
+      return; //nothing to search
     }
-    List<Object> res = stream.filter(vf -> !opened.contains(vf) && vf.isValid())
-                             .distinct()
-                             .map(vf -> psiManager.findFile(vf))
-                             .collect(Collectors.toList());
 
-    return res.size() > elementsLimit
-           ? new ContributorSearchResult<>(res.subList(0, elementsLimit), true)
-           : new ContributorSearchResult<>(res);
+    String searchString = filterControlSymbols(pattern);
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + searchString).build();
+    List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
+    List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(myProject).getFileList());
+
+    List<Object> res = new ArrayList<>();
+    ProgressIndicatorUtils.yieldToPendingWriteActions();
+    ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
+      () -> {
+        PsiManager psiManager = PsiManager.getInstance(myProject);
+        Stream<VirtualFile> stream = history.stream();
+        if (!StringUtil.isEmptyOrSpaces(searchString)) {
+          stream = stream.filter(file -> matcher.matches(file.getName()));
+        }
+        res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
+                     .distinct()
+                     .map(vf -> psiManager.findFile(vf))
+                     .filter(file -> file != null)
+                     .collect(Collectors.toList())
+        );
+
+        for (Object element : res) {
+          if (!consumer.process(element)) {
+            return;
+          }
+        }
+      }, progressIndicator);
+  }
+
+  @Override
+  public boolean isEmptyPatternSupported() {
+    return true;
+  }
+
+  @Override
+  public boolean isShownInSeparateTab() {
+    return false;
   }
 }

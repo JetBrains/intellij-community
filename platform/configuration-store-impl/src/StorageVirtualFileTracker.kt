@@ -1,5 +1,7 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -15,7 +17,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class StorageVirtualFileTracker(private val messageBus: MessageBus) {
   private val filePathToStorage: ConcurrentMap<String, TrackedStorage> = ContainerUtil.newConcurrentMap()
-  private @Volatile var hasDirectoryBasedStorages = false
+  @Volatile
+  private var hasDirectoryBasedStorages = false
 
   private val vfsListenerAdded = AtomicBoolean()
 
@@ -50,6 +53,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
   private fun addVfsChangesListener() {
     messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
+        var storageEvents: LinkedHashMap<ComponentManager, LinkedHashSet<StateStorage>>? = null
         eventLoop@ for (event in events) {
           var storage: StateStorage?
           if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME == event.propertyName) {
@@ -89,7 +93,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
               }
             }
             is VFileCreateEvent -> {
-              if (storage is FileBasedStorage && event.requestor !is StateStorage.SaveSession) {
+              if (storage is FileBasedStorage && event.requestor !is SaveSession) {
                 storage.setFile(event.file, null)
               }
             }
@@ -104,8 +108,17 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
             is VFileCopyEvent -> continue@eventLoop
           }
 
-          val componentManager = storage.storageManager.componentManager!!
-          componentManager.messageBus.syncPublisher(STORAGE_TOPIC).storageFileChanged(event, storage, componentManager)
+          if (isFireStorageFileChangedEvent(event)) {
+            val componentManager = storage.storageManager.componentManager!!
+            if (storageEvents == null) {
+              storageEvents = LinkedHashMap()
+            }
+            storageEvents.getOrPut(componentManager) { LinkedHashSet() }.add(storage)
+          }
+        }
+
+        if (storageEvents != null) {
+          StoreReloadManager.getInstance().storageFilesChanged(storageEvents)
         }
       }
     })

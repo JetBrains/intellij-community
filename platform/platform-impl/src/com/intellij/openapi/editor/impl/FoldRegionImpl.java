@@ -7,18 +7,22 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldRegionImpl> {
+public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldRegion {
+  private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
+  private static final Key<Boolean> SHOW_GUTTER_MARK_FOR_SINGLE_LINE = Key.create("show.gutter.mark.for.single.line");
+
   private boolean myIsExpanded;
   private final EditorImpl myEditor;
   private final String myPlaceholderText;
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
   private boolean myDocumentRegionWasChanged;
+  int mySizeBeforeUpdate; // temporary field used during update on document change
 
   FoldRegionImpl(@NotNull EditorImpl editor,
                  int startOffset,
@@ -64,11 +68,6 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldR
         }
       }
     }
-  }
-
-  @Override
-  public FoldRegionImpl get() {
-    return this;
   }
 
   private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region, boolean notify) {
@@ -132,10 +131,6 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldR
     if (isValid()) {
       alignToSurrogateBoundaries();
     }
-    else {
-      myEditor.getFoldingModel().removeRegionFromGroup(this);
-    }
-    myEditor.getFoldingModel().clearCachedValues();
   }
 
   @Override
@@ -153,6 +148,29 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldR
     if (DocumentUtil.isInsideSurrogatePair(document, end)) {
       setIntervalEnd(end - 1);
     }
+  }
+
+  @Override
+  public void setInnerHighlightersMuted(boolean value) {
+    putUserData(MUTE_INNER_HIGHLIGHTERS, value ? Boolean.TRUE : null);
+  }
+
+  @Override
+  public boolean areInnerHighlightersMuted() {
+    return Boolean.TRUE.equals(getUserData(MUTE_INNER_HIGHLIGHTERS));
+  }
+
+  @Override
+  public void setGutterMarkEnabledForSingleLine(boolean value) {
+    if (value != isGutterMarkEnabledForSingleLine()) {
+      putUserData(SHOW_GUTTER_MARK_FOR_SINGLE_LINE, value ? Boolean.TRUE : null);
+      myEditor.getGutterComponentEx().repaint();
+    }
+  }
+
+  @Override
+  public boolean isGutterMarkEnabledForSingleLine() {
+    return Boolean.TRUE.equals(getUserData(SHOW_GUTTER_MARK_FOR_SINGLE_LINE));
   }
 
   @Override

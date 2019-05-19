@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.actions;
 
@@ -57,7 +43,9 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
-  public JComponent createCustomComponent(final Presentation presentation) {
+  @NotNull
+  @Override
+  public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
     return new ComboBoxButton(presentation) {
       @Override
       protected JBPopup createPopup(Runnable onDispose) {
@@ -73,7 +61,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault() || project.isDisposed()) {
@@ -81,23 +69,26 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       presentation.setText("");
       presentation.setIcon(null);
     }
-    else {
+    else if (e.isFromActionToolbar()) {
       TaskManager taskManager = TaskManager.getManager(project);
       LocalTask activeTask = taskManager.getActiveTask();
-      presentation.setVisible(true);
-      presentation.setEnabled(true);
 
       if (isImplicit(activeTask) &&
           taskManager.getAllRepositories().length == 0 &&
           !TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO) {
-        presentation.setVisible(false);
+        presentation.setEnabledAndVisible(false);
       }
       else {
         String s = getText(activeTask);
-        presentation.setText(s);
+        presentation.setEnabledAndVisible(true);
+        presentation.setText(s, false);
         presentation.setIcon(activeTask.getIcon());
         presentation.setDescription(activeTask.getSummary());
       }
+    }
+    else {
+      presentation.setEnabledAndVisible(true);
+      presentation.copyFrom(getTemplatePresentation());
     }
   }
 
@@ -111,7 +102,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
@@ -159,8 +150,13 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       }
 
       @Override
-      public boolean hasSubstep(List<TaskListItem> selectedValues) {
+      public boolean hasSubstep(List<? extends TaskListItem> selectedValues) {
         return selectedValues.size() > 1 || selectedValues.get(0).getTask() != null;
+      }
+
+      @Override
+      public boolean isSpeedSearchEnabled() {
+        return true;
       }
     };
 
@@ -181,18 +177,21 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     popup.setAdText("Press SHIFT to merge with current context");
 
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(true);
         popup.setCaption("Merge with Current Context");
       }
     });
     popup.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(false);
         popup.setCaption("Switch to Task");
       }
     });
     popup.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         popup.handleSelect(true);
       }
@@ -206,20 +205,21 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     final LocalTask task = tasks.get(0).getTask();
     if (tasks.size() == 1 && task != null) {
       group.add(new DumbAwareAction("&Switch to") {
-        public void actionPerformed(AnActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
           manager.activateTask(task, !shiftPressed.get());
         }
       });
       group.add(new DumbAwareAction("&Edit") {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           EditTaskDialog.editTask((LocalTaskImpl)task, project);
         }
       });
     }
     final AnAction remove = new DumbAwareAction("&Remove") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         for (TaskListItem item : tasks) {
           LocalTask itemTask = item.getTask();
           if (itemTask != null) {
@@ -288,7 +288,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     return group;
   }
 
-  public static void removeTask(final @NotNull Project project, LocalTask task, TaskManager manager) {
+  public static void removeTask(final @NotNull Project project, @NotNull LocalTask task, @NotNull TaskManager manager) {
     if (task.isDefault()) {
       Messages.showInfoMessage(project, "Default task cannot be removed", "Cannot Remove");
     }

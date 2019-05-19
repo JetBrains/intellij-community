@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiMethodReferenceExpression>>
   implements PsiMethodReferenceExpression {
@@ -53,7 +52,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   private static final MethodReferenceResolver RESOLVER = new MethodReferenceResolver();
 
   public PsiMethodReferenceExpressionImpl(@NotNull FunctionalExpressionStub<PsiMethodReferenceExpression> stub) {
-    super(stub, JavaStubElementTypes.METHOD_REFERENCE);
+    super(stub, JavaStubElementTypes.METHOD_REF_EXPRESSION);
   }
 
   public PsiMethodReferenceExpressionImpl(@NotNull ASTNode node) {
@@ -78,7 +77,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   }
 
   @Override
-  public boolean isPotentiallyCompatible(final PsiType functionalInterfaceType) {
+  public boolean isPotentiallyCompatible(@Nullable PsiType functionalInterfaceType) {
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
     if (interfaceMethod == null) return false;
 
@@ -92,17 +91,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       }
     };
 
-    final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
-    final PsiType added = map.put(this, functionalInterfaceType);
-    final ResolveResult[] result;
-    try {
-      result = resolver.resolve(this, getContainingFile(), false);
-    }
-    finally {
-      if (added == null) {
-        map.remove(this);
-      }
-    }
+    ResolveResult[] result = LambdaUtil.performWithTargetType(this, functionalInterfaceType, () ->
+      resolver.resolve(this, getContainingFile(), false));
 
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(this);
     final int interfaceArity = interfaceMethod.getParameterList().getParametersCount();
@@ -163,17 +153,22 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     PsiMethod[] methods = null;
     if (element instanceof PsiIdentifier) {
       final String identifierName = element.getText();
-      final List<PsiMethod> result = new ArrayList<>();
-      for (HierarchicalMethodSignature signature : containingClass.getVisibleSignatures()) {
-        if (identifierName.equals(signature.getName())) {
-          result.add(signature.getMethod());
+      // findMethodsByName is supposed to be faster than getVisibleSignatures
+      methods = containingClass.findMethodsByName(identifierName, true);
+      if (methods.length == 0) return null;
+      if (methods.length > 1) {
+        final List<PsiMethod> result = new ArrayList<>();
+        for (HierarchicalMethodSignature signature : containingClass.getVisibleSignatures()) {
+          if (identifierName.equals(signature.getName())) {
+            result.add(signature.getMethod());
+          }
         }
-      }
 
-      if (result.isEmpty()) {
-        return null;
+        if (result.isEmpty()) {
+          return null;
+        }
+        methods = result.toArray(PsiMethod.EMPTY_ARRAY);
       }
-      methods = result.toArray(PsiMethod.EMPTY_ARRAY);
     }
     else if (isConstructor()) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
@@ -293,7 +288,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   }
 
   @Override
-  public boolean isReferenceTo(final PsiElement element) {
+  public boolean isReferenceTo(@NotNull final PsiElement element) {
     if (!(element instanceof PsiMethod)) return false;
     final PsiMethod method = (PsiMethod)element;
 
@@ -335,7 +330,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     PsiElement oldIdentifier = findChildByType(JavaTokenType.IDENTIFIER);
     if (oldIdentifier == null) {
       oldIdentifier = findChildByType(JavaElementType.REFERENCE_EXPRESSION);
@@ -350,7 +345,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
         Comparing.strEqual(oldRefName, newElementName)) {
       return this;
     }
-    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
+    PsiIdentifier identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }
@@ -367,7 +362,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   }
 
   @Override
-  public boolean isAcceptable(PsiType left) {
+  public boolean isAcceptable(PsiType left, PsiMethod method) {
     if (left instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)left).getConjuncts()) {
         if (isAcceptable(conjunct)) return true;
@@ -377,17 +372,13 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
 
     final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
     final boolean isExact = isExact();
-    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
-      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
-      if (candidateProperties != null) {
-        final PsiMethod method = candidateProperties.getMethod();
-        if (isExact && !InferenceSession.isPertinentToApplicability(this, method)) {
-          return true;
-        }
+    if (method != null && MethodCandidateInfo.isOverloadCheck(argsList)) {
+      if (isExact && !InferenceSession.isPertinentToApplicability(this, method)) {
+        return true;
+      }
 
-        if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
-          return true;
-        }
+      if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
+        return true;
       }
     }
 
@@ -396,7 +387,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       return false;
     }
 
-    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
+    if (MethodCandidateInfo.isOverloadCheck(argsList)) {
       if (!isExact) {
         return true;
       }
@@ -410,17 +401,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
      //        the result of applying capture conversion (5.1.10) to the return type of the invocation type (15.12.2.6) of the chosen declaration is R',
      //        where R is the target type that may be used to infer R'; neither R nor R' is void; and R' is compatible with R in an assignment context.
 
-    Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
-    final JavaResolveResult result;
-    try {
-      if (map.put(this, left) != null) {
-        return false;
-      }
-      result = advancedResolve(false);
-    }
-    finally {
-      map.remove(this);
-    }
+    JavaResolveResult result = LambdaUtil.performWithTargetType(this, left, () -> advancedResolve(false));
 
     if (result instanceof MethodCandidateInfo && !((MethodCandidateInfo)result).isApplicable()) {
       return false;

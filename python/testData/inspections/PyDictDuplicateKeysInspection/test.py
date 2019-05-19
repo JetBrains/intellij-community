@@ -40,3 +40,9 @@ d = {<warning descr="Dictionary contains duplicate keys '0'">0j</warning>: 1, <w
     <warning descr="Dictionary contains duplicate keys 'a'">'a'</warning>: 2,
     <warning descr="Dictionary contains duplicate keys 'a'">'a'</warning>: 3,
 }
+
+# PY-30423
+a = {
+    1: 2,
+    '1': 2,
+}

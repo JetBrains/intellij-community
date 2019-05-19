@@ -28,7 +28,6 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,25 +45,29 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
   public static final String ANT_FILE_TYPE_PREFIX = "ant.file.type.";
   private final DomElement myInvocationContextElement;
   private boolean myShouldBeSkippedByAnnotator = false;
-  
+
   public AntDomPropertyReference(DomElement invocationContextElement, XmlAttributeValue element, TextRange textRange) {
     super(element, textRange, true);
     myInvocationContextElement = invocationContextElement;
   }
 
+  @Override
   public boolean shouldBeSkippedByAnnotator() {
     return myShouldBeSkippedByAnnotator;
   }
 
+  @Override
   public String getUnresolvedMessagePattern() {
     return AntBundle.message("unknown.property", getCanonicalText());
   }
 
 
+  @Override
   public void setShouldBeSkippedByAnnotator(boolean value) {
     myShouldBeSkippedByAnnotator = value;
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final ResolveResult res = doResolve();
@@ -76,8 +79,9 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     final ResolveResult[] resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? (MyResolveResult)resolveResults[0] : null;
   }
-  
-  @NotNull 
+
+  @Override
+  @NotNull
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     PsiElement element = getElement();
     PsiFile file = element.getContainingFile();
@@ -102,7 +106,8 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     return EMPTY_ARRAY;
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  @Override
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final MyResolveResult resolveResult = doResolve();
     if (resolveResult != null) {
       final PsiElement resolve = resolveResult.getElement();
@@ -124,7 +129,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
           String envPrefix = antProperty.getEnvironment().getValue();
           if (envPrefix != null) {
             if (!envPrefix.endsWith(".")) {
-              envPrefix = envPrefix + ".";
+              envPrefix += ".";
             }
             if (refText.startsWith(envPrefix)) {
               final String envVariableName = refText.substring(envPrefix.length());
@@ -145,14 +150,15 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     return super.handleElementRename(newElementName);
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  @Override
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     // optimization to exclude obvious variants
     final DomElement domElement = AntDomReferenceBase.toDomElement(element);
     if (domElement instanceof AntDomProperty) {
       final AntDomProperty prop = (AntDomProperty)domElement;
       final String propName = prop.getName().getRawText();
       if (propName != null && prop.getPrefix().getRawText() == null && prop.getEnvironment().getRawText() == null) {
-        // if only 'name' attrib is specified  
+        // if only 'name' attrib is specified
         if (!propName.equalsIgnoreCase(getCanonicalText())) {
           return false;
         }
@@ -166,11 +172,12 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     private final PsiElement myElement;
     private final PropertiesProvider myProvider;
 
-    public MyResolveResult(final PsiElement element, PropertiesProvider provider) {
+    MyResolveResult(final PsiElement element, PropertiesProvider provider) {
       myElement = element;
       myProvider = provider;
     }
 
+    @Override
     public PsiElement getElement() {
       return myElement;
     }
@@ -188,7 +195,8 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
 
   private static class MyResolver implements ResolveCache.PolyVariantResolver<AntDomPropertyReference> {
     static final MyResolver INSTANCE = new MyResolver();
-    
+
+    @Override
     @NotNull
     public ResolveResult[] resolve(@NotNull AntDomPropertyReference antDomPropertyReference, boolean incompleteCode) {
       final List<ResolveResult> result = new ArrayList<>();
@@ -196,10 +204,10 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
       if (project != null) {
         final AntDomProject contextAntProject = project.getContextAntProject();
         final String propertyName = antDomPropertyReference.getCanonicalText();
-        final Trinity<PsiElement,Collection<String>,PropertiesProvider> resolved = 
+        final Trinity<PsiElement,Collection<String>,PropertiesProvider> resolved =
           PropertyResolver.resolve(contextAntProject, propertyName, antDomPropertyReference.myInvocationContextElement);
         final PsiElement mainDeclaration = resolved.getFirst();
-    
+
         if (mainDeclaration != null) {
           result.add(new MyResolveResult(mainDeclaration, resolved.getThird()));
         }
@@ -209,7 +217,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
           result.add(new MyResolveResult(param, null));
         }
       }
-      return ContainerUtil.toArray(result, new ResolveResult[result.size()]);
+      return result.toArray(ResolveResult.EMPTY_ARRAY);
     }
   }
 }

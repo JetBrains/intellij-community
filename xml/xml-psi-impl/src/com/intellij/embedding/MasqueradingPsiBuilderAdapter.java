@@ -78,6 +78,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     initShrunkSequence();
   }
 
+  @NotNull
   @Override
   public CharSequence getOriginalText() {
     return myShrunkCharSequence;
@@ -320,7 +321,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     public final int shrunkStart;
     public final int shrunkEnd;
 
-    public MyShiftedToken(IElementType elementType, int realStart, int realEnd, int shrunkStart, int shrunkEnd) {
+    MyShiftedToken(IElementType elementType, int realStart, int realEnd, int shrunkStart, int shrunkEnd) {
       this.elementType = elementType;
       this.realStart = realStart;
       this.realEnd = realEnd;
@@ -340,7 +341,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
     private final Marker myOriginalPositionMarker;
 
-    public MyMarker(Marker delegate, Marker originalPositionMarker, int builderPosition) {
+    MyMarker(Marker delegate, Marker originalPositionMarker, int builderPosition) {
       super(delegate);
 
       myBuilderPosition = builderPosition;
@@ -366,7 +367,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     }
 
     @Override
-    public void doneBefore(@NotNull IElementType type, @NotNull Marker before, String errorMessage) {
+    public void doneBefore(@NotNull IElementType type, @NotNull Marker before, @NotNull String errorMessage) {
       if (myOriginalPositionMarker != null) {
         myOriginalPositionMarker.drop();
       }
@@ -398,7 +399,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     }
 
     @Override
-    public void error(String message) {
+    public void error(@NotNull String message) {
       if (myOriginalPositionMarker != null) {
         myOriginalPositionMarker.drop();
       }

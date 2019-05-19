@@ -55,6 +55,9 @@ public abstract class PsiTestCase extends ModuleTestCase {
       myTestDataBefore = null;
       myTestDataAfter = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -103,11 +106,11 @@ public abstract class PsiTestCase extends ModuleTestCase {
     });
   }
 
-  protected void addSourceContentToRoots(final Module module, final VirtualFile vDir) {
+  protected void addSourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir) {
     PsiTestUtil.addSourceContentToRoots(module, vDir);
   }
 
-  protected PsiElement configureByFileWithMarker(String filePath, String marker) throws Exception{
+  protected PsiElement configureByFileWithMarker(@NotNull String filePath, @NotNull String marker) throws Exception{
     final VirtualFile vFile = VfsTestUtil.findFileByCaseSensitivePath(filePath);
 
     String fileText = VfsUtilCore.loadText(vFile);
@@ -134,15 +137,18 @@ public abstract class PsiTestCase extends ModuleTestCase {
     myFile = myPsiManager.findFile(vFile);
   }
 
+  @NotNull
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath();
   }
 
-  protected String loadFile(String name) throws Exception {
+  @NotNull
+  protected String loadFile(@NotNull String name) throws Exception {
     String result = FileUtil.loadFile(new File(getTestDataPath() + File.separatorChar + name));
     return StringUtil.convertLineSeparators(result);
   }
 
+  @NotNull
   private PsiTestData loadData(String dataName) throws Exception {
     PsiTestData data = createData();
     Element documentElement = JdomKt.loadElement(Paths.get(myDataRoot, "data.xml"));
@@ -159,6 +165,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
     throw new IllegalArgumentException("Cannot find data chunk '" + dataName + "'");
   }
 
+  @NotNull
   protected PsiTestData createData() {
     return new PsiTestData();
   }
@@ -182,7 +189,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
 //    assertEquals(myTestDataAfter.getText(), myFile.getText());
   }
 
-  protected static void printText(String text) {
+  protected static void printText(@NotNull String text) {
     final String q = "\"";
     System.out.print(q);
 
@@ -206,11 +213,11 @@ public abstract class PsiTestCase extends ModuleTestCase {
     System.out.println();
   }
 
-  protected void addLibraryToRoots(final VirtualFile jarFile, OrderRootType rootType) {
+  protected void addLibraryToRoots(@NotNull VirtualFile jarFile, @NotNull OrderRootType rootType) {
     addLibraryToRoots(myModule, jarFile, rootType);
   }
 
-  protected static void addLibraryToRoots(final Module module, final VirtualFile root, final OrderRootType rootType) {
+  protected static void addLibraryToRoots(@NotNull Module module, @NotNull VirtualFile root, @NotNull OrderRootType rootType) {
     assertEquals(OrderRootType.CLASSES, rootType);
     ModuleRootModificationUtil.addModuleLibrary(module, root.getUrl());
   }
@@ -220,15 +227,15 @@ public abstract class PsiTestCase extends ModuleTestCase {
     return myFile;
   }
 
-  public Document getDocument(PsiFile file) {
+  public Document getDocument(@NotNull PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
-  public Document getDocument(VirtualFile file) {
+  public Document getDocument(@NotNull VirtualFile file) {
     return FileDocumentManager.getInstance().getDocument(file);
   }
 
-  public void commitDocument(Document document) {
+  public void commitDocument(@NotNull Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
 }

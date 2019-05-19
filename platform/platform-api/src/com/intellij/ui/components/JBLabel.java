@@ -243,7 +243,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
           @Override
           public void paint(Graphics g) {
             Dimension size = getSize();
-            boolean paintEllipsis = getPreferredSize().width > size.width && !myMultiline;
+            boolean paintEllipsis = getPreferredSize().width > size.width && !myMultiline && !myAllowAutoWrapping;
 
             if (!paintEllipsis) {
               super.paint(g);
@@ -253,7 +253,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
               int endOffset = size.width - ellipsisSize.width;
               try {
                 // do not paint half of the letter
-                endOffset = modelToView(viewToModel(new Point(endOffset, 0)) - 1).x;
+                endOffset = modelToView(viewToModel(new Point(endOffset, getHeight() / 2)) - 1).x;
               }
               catch (BadLocationException ignore) {
               }

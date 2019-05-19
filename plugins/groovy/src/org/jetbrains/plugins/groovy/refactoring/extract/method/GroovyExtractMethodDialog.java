@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -157,7 +142,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myNameLabel.setLabelFor(myNameField);
     myNameField.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         fireNameDataChanged();
       }
     });
@@ -209,14 +194,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_METHOD);
-  }
-
-  @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  protected String getHelpId() {
+    return HelpID.EXTRACT_METHOD;
   }
 
   private void createUIComponents() {
@@ -296,7 +275,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   private static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
-    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+    ConflictsDialog conflictsDialog = new ConflictsDialog(project, ArrayUtil.toStringArray(conflicts));
     return conflictsDialog.showAndGet();
   }
 
@@ -350,7 +329,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     ExtractMethodInfoHelper myHelper;
     String myEnteredName;
 
-    public MyExtractMethodSettings(GroovyExtractMethodDialog dialog) {
+    MyExtractMethodSettings(GroovyExtractMethodDialog dialog) {
       myHelper = dialog.getHelper();
       myEnteredName = dialog.getEnteredName();
     }

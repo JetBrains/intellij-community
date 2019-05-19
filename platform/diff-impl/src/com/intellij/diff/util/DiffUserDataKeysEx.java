@@ -43,7 +43,10 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   // DiffContent
   //
 
-  Key<TIntFunction> LINE_NUMBER_CONVERTOR = Key.create("Diff.LineNumberConvertor"); // Document line -> line number in Editor gutter
+  /**
+   * Override line numbers in editor gutter (function "document line -> user-visible line number")
+   */
+  Key<TIntFunction> LINE_NUMBER_CONVERTOR = Key.create("Diff.LineNumberConvertor");
   Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO = Key.create("Diff.RevisionInfo");
   Key<String> FILE_NAME = Key.create("Diff.FileName");
 
@@ -74,29 +77,52 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
                                boolean innerChanges,
                                @NotNull ProgressIndicator indicator);
   }
+
   Key<DiffComputer> CUSTOM_DIFF_COMPUTER = Key.create("Diff.CustomDiffComputer");
 
   //
   // DiffContext
   //
 
-  Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel"); // Could implement Disposable
+  /**
+   * Add panel to the bottom of diff window.
+   * If passed panel implements Disposable, it will be disposed when window is closed.
+   */
+  Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel");
+  /**
+   * Force viewer to a single DiffTool and prohibit switching to another one.
+   */
   Key<DiffTool> FORCE_DIFF_TOOL = Key.create("Diff.ForceDiffTool");
-
+  /**
+   * Show "Disable Editing" action on toolbar, that allows to prevent accidental file modifications.
+   */
   Key<Boolean> SHOW_READ_ONLY_LOCK = Key.create("Diff.ShowReadOnlyLock");
+  /**
+   * Whether "Local Changes" are shown in this view (and {@link com.intellij.openapi.vcs.ex.LineStatusTrackerI} can be used to show diff).
+   */
+  Key<Boolean> LAST_REVISION_WITH_LOCAL = Key.create("Diff.LastWithLocal");
+
+  Key<Float> TWO_SIDE_SPLITTER_PROPORTION = Key.create("Diff.TwoSideSplitterProportion");
 
   //
   // MergeContext / MergeRequest
   //
 
-  // return false if merge window should be prevented from closing and canceling resolve.
+  /**
+   * @return false if merge window should be prevented from closing and canceling resolve.
+   */
   Key<Condition<MergeTool.MergeViewer>> MERGE_CANCEL_HANDLER = Key.create("Diff.MergeCancelHandler");
-  // (title, message)
+  /**
+   * Pair(title, message) for message dialog
+   */
   Key<Couple<String>> MERGE_CANCEL_MESSAGE = Key.create("Diff.MergeCancelMessage");
-  // null -> default
+  /**
+   * Return {@code null} to use defaults.
+   */
   Key<Function<MergeResult, String>> MERGE_ACTION_CAPTIONS = Key.create("Diff.MergeActionCaptions");
 
 
   Key<String> VCS_DIFF_LEFT_CONTENT_TITLE = Key.create("Diff.Left.Panel.Title");
   Key<String> VCS_DIFF_RIGHT_CONTENT_TITLE = Key.create("Diff.Right.Panel.Title");
+  Key<String> VCS_DIFF_CENTER_CONTENT_TITLE = Key.create("Diff.Center.Panel.Title");
 }

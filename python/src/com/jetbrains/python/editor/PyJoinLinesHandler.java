@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.editor;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -32,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import static com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 
 /**
  * Joins lines sanely.
@@ -226,47 +224,49 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   private static class StringLiteralJoiner implements Joiner {
     @Override
     public Result join(@NotNull Request req) {
-      if (req.leftElem != req.rightElem) {
-        final PsiElement parent = req.rightElem.getParent();
-        if ((req.leftElem.getParent() == parent && parent instanceof PyStringLiteralExpression) ||
+      final PyStringElement leftStringElem = PsiTreeUtil.getParentOfType(req.leftElem, PyStringElement.class, false);
+      final PyStringElement rightStringElem = PsiTreeUtil.getParentOfType(req.rightElem, PyStringElement.class, false);
+      if (leftStringElem != null && rightStringElem != null && leftStringElem != rightStringElem) {
+        final PsiElement parent = rightStringElem.getParent();
+        if ((leftStringElem.getParent() == parent && parent instanceof PyStringLiteralExpression) ||
             (req.leftExpr instanceof PyStringLiteralExpression && req.rightExpr instanceof PyStringLiteralExpression)) {
-          final StringNodeInfo leftNodeInfo = new StringNodeInfo(req.leftElem);
-          final StringNodeInfo rightNodeInfo = new StringNodeInfo(req.rightElem);
-
-          if (leftNodeInfo.isTerminated() && rightNodeInfo.isTerminated()) {
-            int quotesMaxLength = Math.max(leftNodeInfo.getQuote().length(), rightNodeInfo.getQuote().length());
+          
+          if (leftStringElem.isTerminated() && rightStringElem.isTerminated() && haveSamePrefixes(leftStringElem, rightStringElem)) {
+            final String leftElemQuotes = leftStringElem.getQuote();
+            final String rightElemQuotes = rightStringElem.getQuote();
+            int quotesMaxLength = Math.max(leftElemQuotes.length(), rightElemQuotes.length());
             int stringToJoinMaxLength = getStringToJoinMaxLength(req, quotesMaxLength);
-            final String replacement = findReplacement(rightNodeInfo.getContent(), stringToJoinMaxLength);
+            final String replacement = findReplacement(rightStringElem.getContent(), stringToJoinMaxLength);
 
-            if (leftNodeInfo.equals(rightNodeInfo)) {
-              return getResultAndSplitStringIfTooLong(req, leftNodeInfo, rightNodeInfo, replacement, leftNodeInfo.getQuote());
+            if (leftElemQuotes.equals(rightElemQuotes)) {
+              return getResultAndSplitStringIfTooLong(req, leftStringElem, rightStringElem, replacement, leftElemQuotes);
             }
 
-            return processStringsWithDifferentQuotes(req, leftNodeInfo, rightNodeInfo, replacement);
+            return processStringsWithDifferentQuotes(req, leftStringElem, rightStringElem, replacement);
           }
         }
       }
       return null;
     }
 
+
     @Nullable
     private static Result processStringsWithDifferentQuotes(@NotNull final Request req,
-                                                            @NotNull final StringNodeInfo leftNodeInfo,
-                                                            @NotNull final StringNodeInfo rightNodeInfo,
+                                                            @NotNull final PyStringElement leftElem,
+                                                            @NotNull final PyStringElement rightElem,
                                                             @NotNull final String replacement) {
-      if (haveSamePrefixes(leftNodeInfo, rightNodeInfo) && !leftNodeInfo.isTripleQuoted() && !rightNodeInfo.isTripleQuoted()) {
-
-        if (!rightNodeInfo.getContent().contains(leftNodeInfo.getQuote())) {
-          final int quotePos = rightNodeInfo.getAbsoluteContentRange().getEndOffset();
-          final String quote = leftNodeInfo.getQuote();
+      if (!leftElem.isTripleQuoted() && !rightElem.isTripleQuoted()) {
+        if (!rightElem.getContent().contains(leftElem.getQuote())) {
+          final int quotePos = rightElem.getTextOffset() + rightElem.getContentRange().getEndOffset();
+          final String quote = leftElem.getQuote();
           req.document.replaceString(quotePos, quotePos + 1, quote);
-          return getResultAndSplitStringIfTooLong(req, leftNodeInfo, rightNodeInfo, replacement, quote);
+          return getResultAndSplitStringIfTooLong(req, leftElem, rightElem, replacement, quote);
         }
-        else if (!leftNodeInfo.getContent().contains(rightNodeInfo.getQuote())) {
-          final int quotePos = leftNodeInfo.getAbsoluteContentRange().getStartOffset() - 1;
-          final String quote = rightNodeInfo.getQuote();
+        else if (!leftElem.getContent().contains(rightElem.getQuote())) {
+          final int quotePos = leftElem.getTextOffset() + leftElem.getContentRange().getStartOffset() - 1;
+          final String quote = rightElem.getQuote();
           req.document.replaceString(quotePos, quotePos + 1, quote);
-          return getResultAndSplitStringIfTooLong(req, leftNodeInfo, rightNodeInfo, replacement, quote);
+          return getResultAndSplitStringIfTooLong(req, leftElem, rightElem, replacement, quote);
         }
       }
       return null;
@@ -274,28 +274,29 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
 
     @NotNull
     private static Result getResultAndSplitStringIfTooLong(@NotNull final Request req,
-                                                           @NotNull final StringNodeInfo leftNodeInfo,
-                                                           @NotNull final StringNodeInfo rightNodeInfo,
+                                                           @NotNull final PyStringElement leftElem,
+                                                           @NotNull final PyStringElement rightElem,
                                                            @NotNull final String replacement,
                                                            @NotNull final String quote) {
-      int cutIntoRight = rightNodeInfo.getContentRange().getStartOffset();
+      int cutIntoRight = rightElem.getContentRange().getStartOffset();
       String lineEnd = "";
       if (!replacement.isEmpty()) {
-        cutIntoRight = replacement.length() + rightNodeInfo.getQuote().length();
-        int contentWithQuoteStartColumn = leftNodeInfo.getAbsoluteContentRange().getStartOffset() - getLeftLineStartOffset(req)
-                                          - leftNodeInfo.getQuote().length();
-        int quotePos = rightNodeInfo.getAbsoluteContentRange().getStartOffset() + replacement.length();
-        req.document.insertString(quotePos, rightNodeInfo.getQuote());
+        cutIntoRight = replacement.length() + rightElem.getQuote().length();
+        int contentWithQuoteStartColumn = leftElem.getTextOffset() + leftElem.getPrefixLength() - getLeftLineStartOffset(req);
+        int quotePos = rightElem.getTextOffset() + rightElem.getContentRange().getStartOffset() + replacement.length();
+        req.document.insertString(quotePos, rightElem.getQuote());
         req.document.insertString(quotePos, StringUtil.repeat(" ", contentWithQuoteStartColumn));
         lineEnd = quote + "\\\n";
       }
-      return new Result(replacement + lineEnd, 0, leftNodeInfo.getQuote().length(), cutIntoRight);
+      return new Result(replacement + lineEnd, 0, leftElem.getQuote().length(), cutIntoRight);
     }
 
-    private static boolean haveSamePrefixes(@NotNull StringNodeInfo leftNodeInfo, @NotNull StringNodeInfo rightNodeInfo) {
+    private static boolean haveSamePrefixes(@NotNull PyStringElement leftNodeInfo, @NotNull PyStringElement rightNodeInfo) {
       return leftNodeInfo.isUnicode() == rightNodeInfo.isUnicode() &&
              leftNodeInfo.isRaw() == rightNodeInfo.isRaw() &&
-             leftNodeInfo.isBytes() == rightNodeInfo.isBytes();
+             leftNodeInfo.isBytes() == rightNodeInfo.isBytes() &&
+             // TODO Merge formatted and plain strings elements (escape curly braces, etc.)
+             leftNodeInfo.isFormatted() == rightNodeInfo.isFormatted();
     }
   }
 
@@ -316,7 +317,7 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
 
   private static int getStringToJoinMaxLength(Request request, int symbolsToSkip) {
     int leftLineStartOffset = getLeftLineStartOffset(request);
-    final int margin = CodeStyleSettingsManager.getInstance().getCurrentSettings().getRightMargin(PythonLanguage.getInstance());
+    final int margin = CodeStyle.getSettings(request.leftElem.getContainingFile()).getRightMargin(PythonLanguage.getInstance());
     int leftLineLength = request.document.getLineEndOffset(request.document.getLineNumber(leftLineStartOffset)) - leftLineStartOffset;
     return margin - leftLineLength - symbolsToSkip;
   }

@@ -9,7 +9,7 @@ import java.util.Map;
 
 @ApiStatus.Experimental
 public class IndexId<K, V> {
-  private static final Map<String, IndexId<?, ?>> ourInstances = new THashMap<String, IndexId<?, ?>>();
+  private static final Map<String, IndexId<?, ?>> ourInstances = new THashMap<>();
 
   @NotNull
   private final String myName;
@@ -21,12 +21,20 @@ public class IndexId<K, V> {
     return myName;
   }
 
+  /**
+   * Consider to use {@link ID#getName()} instead of this method
+   */
+  @Override
+  public String toString() {
+    return getName();
+  }
+
   public static <K, V> IndexId<K, V> create(String name) {
     synchronized (ourInstances) {
       @SuppressWarnings("unchecked")
       IndexId<K, V> id = (IndexId<K, V>)ourInstances.get(name);
       if (id == null) {
-        ourInstances.put(name, id = new IndexId<K, V>(name));
+        ourInstances.put(name, id = new IndexId<>(name));
       }
       return id;
     }

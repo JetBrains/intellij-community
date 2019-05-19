@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,6 +40,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     return ServiceManager.getService(project, JavaCoverageAnnotator.class);
   }
 
+  @Override
   @Nullable
   public String getDirCoverageInformationString(@NotNull final PsiDirectory directory,
                                                 @NotNull final CoverageSuitesBundle currentSuite,
@@ -71,12 +58,14 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
   }
 
+  @Override
   @Nullable
   public String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuitesBundle currentSuite, @NotNull CoverageDataManager manager) {
     // N/A here we work with java classes
     return null;
   }
 
+  @Override
   public void onSuiteChosen(CoverageSuitesBundle newSuite) {
     super.onSuiteChosen(newSuite);
 
@@ -88,6 +77,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     myExtensionCoverageInfos.clear();
   }
 
+  @Override
   protected Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
 
 
@@ -107,10 +97,12 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
     return () -> {
       final PackageAnnotator.Annotator annotator = new PackageAnnotator.Annotator() {
+        @Override
         public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
           myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
         }
 
+        @Override
         public void annotatePackage(String packageQualifiedName,
                                     PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
                                     boolean flatten) {
@@ -122,18 +114,21 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
           }
         }
 
+        @Override
         public void annotateSourceDirectory(VirtualFile dir,
                                             PackageAnnotator.PackageCoverageInfo dirCoverageInfo,
                                             Module module) {
           myDirCoverageInfos.put(dir, dirCoverageInfo);
         }
 
+        @Override
         public void annotateTestDirectory(VirtualFile virtualFile,
                                           PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
                                           Module module) {
           myTestDirCoverageInfos.put(virtualFile, packageCoverageInfo);
         }
 
+        @Override
         public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
           myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
         }
@@ -191,7 +186,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   @Nullable
   public String getPackageCoverageInformationString(final PsiPackage psiPackage,
                                                     @Nullable final Module module,
-                                                    @NotNull final CoverageDataManager coverageDataManager, 
+                                                    @NotNull final CoverageDataManager coverageDataManager,
                                                     boolean flatten) {
     if (psiPackage == null) return null;
     final boolean subCoverageActive = coverageDataManager.isSubCoverageActive();
@@ -284,7 +279,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     if (cachedInfo != null) {
       return cachedInfo;
     }
-    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getIterable(null)) {
       PackageAnnotator.SummaryCoverageInfo info = extension.getSummaryCoverageInfo(this, value);
       if (info != null) {
         myExtensionCoverageInfos.put(value, info);

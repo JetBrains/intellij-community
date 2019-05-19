@@ -59,6 +59,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     myPsiMigration = startMigration(project);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new MigrationUsagesViewDescriptor(myMigrationMap, false);
@@ -87,6 +88,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     myPsiMigration = startMigration(myProject);
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> usagesVector = new ArrayList<>();
@@ -124,6 +126,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (refUsages.get().length == 0) {
       Messages.showInfoMessage(myProject, RefactoringBundle.message("migration.no.usages.found.in.the.project"), REFACTORING_NAME);
@@ -133,6 +136,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     finishFindMigration();
     final PsiMigration psiMigration = PsiMigrationManager.getInstance(myProject).startMigration();
@@ -174,6 +178,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return REFACTORING_NAME;

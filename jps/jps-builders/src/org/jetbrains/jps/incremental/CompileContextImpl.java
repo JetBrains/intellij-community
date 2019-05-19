@@ -75,7 +75,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void setCompilationStartStamp(Collection<BuildTarget<?>> targets, long stamp) {
+  public void setCompilationStartStamp(Collection<? extends BuildTarget<?>> targets, long stamp) {
     synchronized (myCompilationStartStamp) {
       for (BuildTarget<?> target : targets) {
         myCompilationStartStamp.put(target, stamp);

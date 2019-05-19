@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.Command;
-import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.Watch;
 import org.netbeans.lib.cvsclient.command.reservedcheckout.EditCommand;
@@ -52,7 +51,7 @@ public class EditOperation extends CvsOperationOnFiles {
     private final String myHost;
     private final File myEditLocation;
 
-    public EditedFileInfo(String fileName, String user, String host, String editLocation) {
+    EditedFileInfo(String fileName, String user, String host, String editLocation) {
       myFileName = fileName;
       myUser = user;
       myHost = host;
@@ -95,6 +94,7 @@ public class EditOperation extends CvsOperationOnFiles {
     myIsReservedEdit = isReservedEdit;
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final EditCommand result = new EditCommand();
     result.setTemporaryWatch(Watch.TALL);
@@ -107,8 +107,7 @@ public class EditOperation extends CvsOperationOnFiles {
   @Override
   protected void execute(CvsRootProvider root,
                          CvsExecutionEnvironment executionEnvironment,
-                         ReadWriteStatistics statistics, IProgressViewer progressViewer) throws CommandException,
-      CommandAbortedException, VcsException {
+                         ReadWriteStatistics statistics, IProgressViewer progressViewer) throws CommandException, VcsException {
     super.execute(root, executionEnvironment, statistics, progressViewer);
     final VcsException vcsException = new CvsException(FILES_BEING_EDITED_EXCEPTION, root.getCvsRootAsString());
 
@@ -123,6 +122,7 @@ public class EditOperation extends CvsOperationOnFiles {
     if (!myEditFileInfos.isEmpty()) throw vcsException;
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     super.messageSent(message, byteMessage, error, tagged);
     final EditedFileInfo editedFileInfo = EditedFileInfo.createOn(message);
@@ -130,6 +130,7 @@ public class EditOperation extends CvsOperationOnFiles {
       myEditFileInfos.add(editedFileInfo);
   }
 
+  @Override
   protected String getOperationName() {
     return "edit";
   }

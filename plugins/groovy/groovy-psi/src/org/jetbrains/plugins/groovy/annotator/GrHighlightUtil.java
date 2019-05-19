@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,10 +9,8 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -29,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -37,12 +36,12 @@ import java.util.Set;
 public class GrHighlightUtil {
   private static final Logger LOG = Logger.getInstance(GrHighlightUtil.class);
 
-  private static Set<String> getReassignedNames(final PsiElement scope) {
-    return CachedValuesManager.getCachedValue(scope, () -> CachedValueProvider.Result.create(collectReassignedNames(scope), scope));
+  private static Set<GrVariable> getReassignedVariables(final PsiElement scope) {
+    return CachedValuesManager.getCachedValue(scope, () -> CachedValueProvider.Result.create(collectReassignedVariables(scope), scope));
   }
 
-  private static Set<String> collectReassignedNames(PsiElement scope) {
-    final Set<String> result = ContainerUtil.newHashSet();
+  private static Set<GrVariable> collectReassignedVariables(PsiElement scope) {
+    final Set<GrVariable> result = new HashSet<>();
     PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element) {
@@ -52,13 +51,10 @@ public class GrHighlightUtil {
 
         GrReferenceExpression ref = (GrReferenceExpression)element;
         if (isWriteAccess(ref)) {
-          String varName = ref.getReferenceName();
-          if (!result.contains(varName)) {
-            PsiElement target = ref.resolve();
-            if (target instanceof GrVariable && ((GrVariable)target).getInitializerGroovy() != null ||
-                target instanceof GrParameter) {
-              result.add(varName);
-            }
+          PsiElement target = ref.resolve();
+          if (target instanceof GrVariable && ((GrVariable)target).getInitializerGroovy() != null ||
+              target instanceof GrParameter) {
+            result.add((GrVariable)target);
           }
         }
         return true;
@@ -77,7 +73,7 @@ public class GrHighlightUtil {
 
     PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
     PsiNamedElement scope = method == null ? var.getContainingFile() : method;
-    return scope != null && getReassignedNames(scope).contains(var.getName());
+    return scope != null && getReassignedVariables(scope).contains(var);
   }
 
   public static boolean isDeclarationAssignment(GrReferenceExpression refExpr) {
@@ -111,23 +107,11 @@ public class GrHighlightUtil {
     return false;
   }
 
-  public static TextRange getMethodHeaderTextRange(PsiMethod method) {
-    final PsiModifierList modifierList = method.getModifierList();
-    final PsiParameterList parameterList = method.getParameterList();
-
-    final TextRange textRange = modifierList.getTextRange();
-    LOG.assertTrue(textRange != null, method.getClass() + ":" + method.getText());
-    int startOffset = textRange.getStartOffset();
-    int endOffset = parameterList.getTextRange().getEndOffset() + 1;
-
-    return new TextRange(startOffset, endOffset);
-  }
-
-  @Deprecated // to be removed
   @NotNull
-  public static PsiElement getElementToHighlight(@NotNull GrReferenceElement refElement) {
-    final PsiElement refNameElement = refElement.getReferenceNameElement();
-    return refNameElement != null ? refNameElement : refElement;
+  public static TextRange getMethodHeaderTextRange(@NotNull PsiMethod method) {
+    int startOffset = method.getTextRange().getStartOffset();
+    int endOffset = method.getParameterList().getTextRange().getEndOffset();
+    return new TextRange(startOffset, endOffset);
   }
 
   public static TextRange getClassHeaderTextRange(GrTypeDefinition clazz) {

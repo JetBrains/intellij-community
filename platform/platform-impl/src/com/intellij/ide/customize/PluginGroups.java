@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.WelcomeWizardUtil;
@@ -39,7 +25,7 @@ import java.util.concurrent.ExecutionException;
 public class PluginGroups {
   static final String CORE = "Core";
   private static final int MAX_DESCR_LENGTH = 55;
-  
+
   public static final String IDEA_VIM_PLUGIN_ID = "IdeaVIM";
 
   final Map<String, Pair<Icon, List<String>>> myTree = new LinkedHashMap<>();
@@ -55,7 +41,7 @@ public class PluginGroups {
   private Runnable myLoadingCallback = null;
 
   public PluginGroups() {
-    myAllPlugins = PluginManagerCore.loadDescriptors(null, ContainerUtil.newArrayList());
+    myAllPlugins = PluginManagerCore.loadDescriptors(null, new ArrayList<>());
     SwingWorker worker = new SwingWorker<List<IdeaPluginDescriptor>, Object>() {
       @Override
       protected List<IdeaPluginDescriptor> doInBackground() throws Exception {
@@ -134,7 +120,7 @@ public class PluginGroups {
       "com.intellij.vaadin",
       "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
       "JBoss jBPM:JBPM",
-      "Struts:StrutsAssistant,com.intellij.struts2",
+      "Struts:com.intellij.struts2",
       "com.intellij.hibernate",
       "Spring:com.intellij.spring.batch," +
       "com.intellij.spring.data," +
@@ -168,7 +154,7 @@ public class PluginGroups {
       "org.jetbrains.plugins.gradle"
     )));
     tree.put("Web Development", Pair.create(PlatformImplIcons.WebDevelopment, Arrays.asList(
-      "HTML:HtmlTools,QuirksMode,W3Validators",
+      "HTML:HtmlTools,W3Validators",
       "org.jetbrains.plugins.haml",
       "com.jetbrains.plugins.jade",
       "com.intellij.css",
@@ -212,13 +198,13 @@ public class PluginGroups {
     )));
     //myTree.put("Groovy", Arrays.asList("org.intellij.grails"));
     //TODO Scala -> Play 2.x (Play 2.0 Support)
-    tree.put("Swing", Pair.create(PlatformImplIcons.Swing, Arrays.asList(
+    tree.put("Swing", Pair.create(PlatformImplIcons.Swing, Collections.singletonList(
       "com.intellij.uiDesigner"//TODO JavaFX?
     )));
     tree.put("Android", Pair.create(PlatformImplIcons.Android, Arrays.asList(
       "org.jetbrains.android",
       "com.intellij.android-designer")));
-    tree.put("Database Tools", Pair.create(PlatformImplIcons.DatabaseTools, Arrays.asList(
+    tree.put("Database Tools", Pair.create(PlatformImplIcons.DatabaseTools, Collections.singletonList(
       "com.intellij.database"
     )));
     tree.put("Other Tools", Pair.create(PlatformImplIcons.OtherTools, Arrays.asList(
@@ -233,7 +219,7 @@ public class PluginGroups {
       "org.jetbrains.plugins.yaml",
       "XSLT and XPath:XPathView,XSLT-Debugger"
     )));
-    tree.put("Plugin Development", Pair.create(PlatformImplIcons.PluginDevelopment, Arrays.asList("DevKit")));
+    tree.put("Plugin Development", Pair.create(PlatformImplIcons.PluginDevelopment, Collections.singletonList("DevKit")));
 
     initFeaturedPlugins(featuredPlugins);
   }
@@ -243,7 +229,6 @@ public class PluginGroups {
     featuredPlugins.put("Live Edit Tool",
                         "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
     addVimPlugin(featuredPlugins);
-    featuredPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
     featuredPlugins.put("Atlassian Connector",
                         "Tools Integration:Integration for Atlassian JIRA, Bamboo, Crucible, FishEye:atlassian-idea-plugin");
     addTrainingPlugin(featuredPlugins);
@@ -273,8 +258,8 @@ public class PluginGroups {
     featuredPlugins.put("Lua", "Custom Languages:Lua language support:Lua");
   }
 
-  public static void addGoPlugin(Map<String, String> featuredPlugins) {
-    featuredPlugins.put("Go", "Custom Languages:Go language support:org.jetbrains.plugins.go");
+  public static void addRustPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("Rust", "Custom Languages:Rust language support:org.rust.lang");
   }
 
   public static void addMarkdownPlugin(Map<String, String> featuredPlugins) {
@@ -424,7 +409,7 @@ public class PluginGroups {
     }
   }
 
-  private void collectInvolvedIds(final String pluginId, boolean toEnable, Set<String> ids) {
+  private void collectInvolvedIds(final String pluginId, boolean toEnable, Set<? super String> ids) {
     ids.add(pluginId);
     if (toEnable) {
       for (String id : getNonOptionalDependencies(pluginId)) {
@@ -447,7 +432,7 @@ public class PluginGroups {
     IdeaPluginDescriptor descriptor = findPlugin(id);
     if (descriptor != null) {
       for (PluginId pluginId : descriptor.getDependentPluginIds()) {
-        if (pluginId.getIdString().equals("com.intellij")) continue;
+        if (pluginId.getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID)) continue;
         if (!ArrayUtil.contains(pluginId, descriptor.getOptionalDependentPluginIds())) {
           result.add(pluginId.getIdString());
         }

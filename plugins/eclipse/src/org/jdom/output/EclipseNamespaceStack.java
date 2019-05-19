@@ -143,7 +143,7 @@ public class EclipseNamespaceStack {
      * the "oldest," all to <code>System.out</code>.
      */
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         String sep = System.getProperty("line.separator");
         buf.append("Stack: " + prefixes.size() + sep);
         for (int i = 0; i < prefixes.size(); i++) {

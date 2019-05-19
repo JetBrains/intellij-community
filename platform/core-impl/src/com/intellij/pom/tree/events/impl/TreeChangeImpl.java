@@ -17,7 +17,6 @@
 package com.intellij.pom.tree.events.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -39,7 +38,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
 
   public TreeChangeImpl(@NotNull CompositeElement parent) {
     myParent = parent;
-    assert myParent.getPsi() != null;
+    assert myParent.getPsi() != null : myParent.getElementType() + " of " + myParent.getClass();
     mySuperParents = JBIterable.generate(parent.getTreeParent(), TreeElement::getTreeParent).toList();
     for (TreeElement child : getCurrentChildren()) {
       myInitialChildren.add(child);
@@ -171,10 +170,13 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   }
 
   @Override
-  public ChangeInfo getChangeByChild(ASTNode child) {
+  public ChangeInfoImpl getChangeByChild(ASTNode child) {
     return getAllChanges().get((TreeElement)child);
   }
 
+  public List<TreeElement> getInitialChildren() {
+    return new ArrayList<>(myInitialChildren);
+  }
 
   public String toString() {
     return myParent + ": " + getAllChanges().values();

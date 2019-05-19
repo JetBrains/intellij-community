@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.psi.*;
@@ -9,7 +9,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
-import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyNamedImport;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
@@ -29,7 +28,7 @@ public class RenameAliasedUsagesUtil {
   private RenameAliasedUsagesUtil() {
   }
 
-  public static Collection<PsiReference> filterAliasedRefs(Collection<PsiReference> refs, PsiElement element) {
+  public static Collection<PsiReference> filterAliasedRefs(Collection<? extends PsiReference> refs, PsiElement element) {
     Map<GroovyFile, String> aliases = new HashMap<>();
 
     ArrayList<PsiReference> result = new ArrayList<>();
@@ -59,7 +58,7 @@ public class RenameAliasedUsagesUtil {
 
     final PsiManager manager = elementToResolve.getManager();
     final ResolverProcessor processor = getProcessor(elementToResolve, containingFile);
-    final GroovyFileImports fileImports = GroovyImports.getImports(containingFile);
+    final GroovyFileImports fileImports = containingFile.getImports();
     for (GroovyNamedImport anImport : fileImports.getAllNamedImports()) {
       if (!anImport.isAliased()) continue;
       anImport.processDeclarations(processor, ResolveState.initial(), containingFile, containingFile);

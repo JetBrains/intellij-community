@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.ui.treeStructure.Tree;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.io.File;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
 
@@ -78,7 +78,7 @@ public class SelectSdkDialogFixture implements ContainerFixture<JDialog>{
           }
         });
       }
-    }, SHORT_TIMEOUT);
+    }, Timeouts.INSTANCE.getMinutes02());
     return this;
   }
 
@@ -86,12 +86,12 @@ public class SelectSdkDialogFixture implements ContainerFixture<JDialog>{
     pause(new Condition("Waiting when ok button at SDK select dialog will be ready for a click") {
       @Override
       public boolean test() {
-        JButton button = GuiTestUtil.findButton(SelectSdkDialogFixture.this, "OK", myRobot);
+        JButton button = GuiTestUtil.INSTANCE.findButton(SelectSdkDialogFixture.this, "OK", myRobot);
         return button.isEnabled();
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, Timeouts.INSTANCE.getMinutes02());
 
-    GuiTestUtil.findAndClickOkButton(this);
+    GuiTestUtil.INSTANCE.findAndClickOkButton(this);
   }
 
   @Override

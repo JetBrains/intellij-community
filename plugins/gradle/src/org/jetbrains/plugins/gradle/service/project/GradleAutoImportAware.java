@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,8 +7,12 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
@@ -38,10 +28,10 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author Denis Zhdanov
- * @since 6/8/13 3:49 PM
  */
 public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   private static final Logger LOG = Logger.getInstance(GradleAutoImportAware.class);
@@ -49,11 +39,17 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   @Nullable
   @Override
   public String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project) {
-    if (!changedFileOrDirPath.endsWith(GradleConstants.EXTENSION)) {
+    if (!changedFileOrDirPath.endsWith("." + GradleConstants.EXTENSION) &&
+        !changedFileOrDirPath.endsWith("." + GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)) {
       return null;
     }
+
+    if (isInsideCompileOutput(changedFileOrDirPath, project)) {
+      return null;
+    }
+
     File file = new File(changedFileOrDirPath);
-    if(file.isDirectory()) {
+    if (file.isDirectory()) {
       return null;
     }
 
@@ -64,7 +60,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     if (projectsSettings.isEmpty()) {
       return null;
     }
-    Map<String, String> rootPaths = ContainerUtil.newHashMap();
+    Map<String, String> rootPaths = new HashMap<>();
     for (ExternalProjectSettings setting : projectsSettings) {
       if(setting != null) {
         for (String path : setting.getModules()) {
@@ -80,6 +76,28 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
       }
     }
     return null;
+  }
+
+  private static boolean isInsideCompileOutput(@NotNull String path, @NotNull Project project) {
+    final String url = VfsUtilCore.pathToUrl(path);
+
+    boolean isInsideProjectCompile =
+      Optional.ofNullable(CompilerProjectExtension.getInstance(project))
+              .map(CompilerProjectExtension::getCompilerOutputUrl)
+              .filter(outputUrl -> VfsUtilCore.isEqualOrAncestor(outputUrl, url))
+              .isPresent();
+
+    if (isInsideProjectCompile) {
+      return true;
+    }
+
+    return
+      Arrays.stream(ModuleManager.getInstance(project).getModules())
+                                                  .map(CompilerModuleExtension::getInstance)
+                                                  .filter(Objects::nonNull)
+                                                  .flatMap(ex -> Stream.of(ex.getCompilerOutputUrl(), ex.getCompilerOutputUrlForTests()))
+                                                  .filter(Objects::nonNull)
+                                                  .anyMatch(outputUrl -> VfsUtilCore.isEqualOrAncestor(outputUrl, url));
   }
 
   @Override

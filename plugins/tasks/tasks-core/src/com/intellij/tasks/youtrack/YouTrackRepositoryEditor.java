@@ -25,7 +25,7 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
   private EditorTextField myDefaultSearch;
   private JBLabel mySearchLabel;
 
-  public YouTrackRepositoryEditor(final Project project, final YouTrackRepository repository, Consumer<YouTrackRepository> changeListener) {
+  public YouTrackRepositoryEditor(final Project project, final YouTrackRepository repository, Consumer<? super YouTrackRepository> changeListener) {
     super(project, repository, changeListener);
 
     // Setup document for completion and highlighting

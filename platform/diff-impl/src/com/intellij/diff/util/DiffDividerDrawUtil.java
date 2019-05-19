@@ -306,7 +306,7 @@ public class DiffDividerDrawUtil {
     }
 
     public void paint(Graphics2D g, int width) {
-      DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart2, myEnd2, myScheme);
+      DiffLineSeparatorRenderer.drawConnectorLine(g, 0, width, myStart1, myStart2, myEnd1 - myStart1, myScheme);
     }
 
     public String toString() {

@@ -28,6 +28,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
 
+  @Override
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
     final Object o = node.getUserObject();

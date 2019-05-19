@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.errorhandling.CaughtExceptionImmediatelyRethrownInspection;
@@ -33,15 +34,15 @@ public class DeleteTrySectionsFixTest extends IGQuickFixesTestCase {
   }
 
   public void testDeleteTryStatement() {
-    doTest(InspectionGadgetsBundle.message("remove.try.catch.quickfix"));
+    doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
   }
 
   public void testDeleteEmptyTryStatement() {
-    doTest(InspectionGadgetsBundle.message("remove.try.catch.quickfix"));
+    doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
   }
 
   public void testKeepComments() {
-    doTest(InspectionGadgetsBundle.message("remove.try.catch.quickfix"));
+    doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
   }
 
   public void testDeleteEmptyFinally() {
@@ -54,5 +55,9 @@ public class DeleteTrySectionsFixTest extends IGQuickFixesTestCase {
 
   public void testDeleteTryWithResources() {
     doTest(InspectionGadgetsBundle.message("delete.catch.section.quickfix"));
+  }
+
+  public void testDeleteTryWithEmptyFinallyNoOuterBlock() {
+    doTest(InspectionGadgetsBundle.message("remove.try.finally.block.quickfix"));
   }
 }

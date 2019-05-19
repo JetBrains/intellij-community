@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports on uses of <b>instanceof</b> where the type checked for is a concrete class,
+Reports on uses of <b>instanceof</b> or <b>getClass() == SomeClass.class</b> where the type checked for is a concrete class,
 rather than an interface. Such uses often indicate excessive coupling to concrete implementations, rather
 than abstractions. <b>instanceof</b> expressions whose classes come from system or third-party libraries will not be reported by this inspection.
 <!-- tooltip end -->

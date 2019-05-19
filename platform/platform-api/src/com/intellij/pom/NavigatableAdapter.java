@@ -15,7 +15,7 @@
  */
 package com.intellij.pom;
 
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -27,10 +27,12 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author Konstantin Bulenkov
  */
 public abstract class NavigatableAdapter implements Navigatable {
+  @Override
   public boolean canNavigate() {
     return true;
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return true;
   }
@@ -40,6 +42,6 @@ public abstract class NavigatableAdapter implements Navigatable {
   }
 
   public static void navigate(Project project, VirtualFile file, int offset, boolean requestFocus) {
-    new OpenFileDescriptor(project, file, offset).navigate(requestFocus);
+    PsiNavigationSupport.getInstance().createNavigatable(project, file, offset).navigate(requestFocus);
   }
 }

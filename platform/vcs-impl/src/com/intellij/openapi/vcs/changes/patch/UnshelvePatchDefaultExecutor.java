@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,14 +14,16 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   private static final Logger LOG = Logger.getInstance(UnshelvePatchDefaultExecutor.class);
@@ -49,7 +37,7 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   }
 
   @Override
-  public void apply(@NotNull List<FilePatch> remaining,
+  public void apply(@NotNull List<? extends FilePatch> remaining,
                     @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
@@ -63,26 +51,21 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
     }
   }
 
-  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<FilePatch> remaining,
-                                                    @NotNull Collection<PatchApplier> appliers,
+  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<? extends FilePatch> remaining,
+                                                    @NotNull Collection<? extends PatchApplier> appliers,
                                                     @NotNull CommitContext commitContext) {
     ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
     if (!shelveChangesManager.isRemoveFilesFromShelf()) return;
     try {
-      List<FilePatch> patches = ContainerUtil.newArrayList(remaining);
+      List<FilePatch> patches = new ArrayList<>(remaining);
       for (PatchApplier applier : appliers) {
         patches.addAll(applier.getRemainingPatches());
       }
-      if (patches.isEmpty()) {
-        shelveChangesManager.recycleChangeList(myCurrentShelveChangeList);
-      }
-      else {
-        shelveChangesManager.saveRemainingPatches(myCurrentShelveChangeList, patches,
-                                                  ContainerUtil.mapNotNull(patches, patch -> patch instanceof ShelvedBinaryFilePatch
-                                                                                             ? ((ShelvedBinaryFilePatch)patch)
-                                                                                               .getShelvedBinaryFile()
-                                                                                             : null), commitContext);
-      }
+      shelveChangesManager
+        .updateListAfterUnshelve(myCurrentShelveChangeList, patches, mapNotNull(patches, patch -> patch instanceof ShelvedBinaryFilePatch
+                                                                                                  ? ((ShelvedBinaryFilePatch)patch)
+                                                                                                    .getShelvedBinaryFile()
+                                                                                                  : null), commitContext);
     }
     catch (Exception e) {
       LOG.error("Couldn't update and store remaining patches", e);

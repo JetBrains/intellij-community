@@ -36,7 +36,7 @@ final class ConsoleStopProcessAction extends StopProcessAction implements Runnab
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     setProcessHandler(myConsole.getProcessHandler()); // Attach action to process handler (if any) or detach (if no process runs)
   }

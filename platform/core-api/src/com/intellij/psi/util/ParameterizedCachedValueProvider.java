@@ -15,9 +15,10 @@
  */
 package com.intellij.psi.util;
 
-import org.jetbrains.annotations.Nullable;
-
+/**
+ * @see ParameterizedCachedValue
+ */
+@FunctionalInterface
 public interface ParameterizedCachedValueProvider<ResultType, ParameterType> {
-  @Nullable
   CachedValueProvider.Result<ResultType> compute(ParameterType param);
 }

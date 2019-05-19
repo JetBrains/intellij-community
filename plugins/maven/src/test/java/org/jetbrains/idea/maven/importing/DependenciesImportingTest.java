@@ -30,6 +30,7 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.util.Arrays;
@@ -132,7 +133,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "    <scope>system</scope>" +
                      "  </dependency>" +
                      "</dependencies>");
-    importProjectWithErrors(true);
+    importProjectWithErrors();
 
     assertModules("project");
     assertModuleLibDeps("project"); // dependency was not added due to reported pom model problem. 
@@ -188,7 +189,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "  </dependency>" +
                      "</dependencies>");
 
-    importProjectWithErrors(true);
+    importProjectWithErrors();
     assertModuleLibDeps("project", "Maven: group:lib:1");
   }
 
@@ -393,6 +394,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -430,6 +432,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -467,6 +470,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -504,6 +508,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -538,6 +543,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -571,6 +577,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
+    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -1316,7 +1323,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                          "  </dependency>" +
                          "</dependencies>");
 
-    importProjectWithErrors(true);
+    importProjectWithErrors();
 
     assertModules("project", "m");
     assertModuleLibDeps("m");
@@ -1387,7 +1394,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    assertFalse(new File(getRepositoryFile(), "junit").exists());
     assertTrue(myProjectsTree.findProject(myProjectPom).hasUnresolvedArtifacts());
   }
 

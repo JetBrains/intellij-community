@@ -49,6 +49,7 @@ public class ControlFlowCache {
     return flow;
   }
 
+  @NotNull
   public static ControlFlow getControlFlow(@NotNull ScopeOwner element) {
     return getControlFlow(element, new PyControlFlowBuilder());
   }

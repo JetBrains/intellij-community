@@ -5,7 +5,7 @@ public class Inner1 {
 
     private class A extends B{
         {
-            int j = <ref>a();
+            int j = <caret>a();
         }
     }
 }

@@ -73,7 +73,7 @@ public class PyCythonExtensionWarning {
     return new DumbAwareAction("Install") {
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         compileCythonExtension(project);
         notification.expire();
       }
@@ -84,7 +84,7 @@ public class PyCythonExtensionWarning {
     return new DumbAwareAction("How does it work") {
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         HelpManager.getInstance().invokeHelp("Cython_Speedups");
       }
     };
@@ -143,7 +143,7 @@ public class PyCythonExtensionWarning {
       }
       GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withEnvironment(environment);
 
-      final boolean canCreate = FileUtil.ensureCanCreateFile(new File(helpersPath));
+      final boolean canCreate = FileUtil.ensureCanCreateFile(new File(cythonExtensionsDir));
       final boolean useSudo = !canCreate && !SystemInfo.isWindows;
       Process process;
       if (useSudo) {

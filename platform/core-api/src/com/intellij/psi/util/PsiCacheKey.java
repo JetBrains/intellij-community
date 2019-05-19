@@ -30,14 +30,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair<Long, T>>> {
-  private final Function<H, T> myFunction;
+  private final Function<? super H, ? extends T> myFunction;
   /**
    * One of {@link com.intellij.psi.util.PsiModificationTracker} constants that marks when to flush cache
    */
   @NotNull
   private final Key<?> myModifyCause;
 
-  private PsiCacheKey(@NonNls @NotNull String name, @NotNull Function<H, T> function, @NotNull Key<?> modifyCause) {
+  private PsiCacheKey(@NonNls @NotNull String name, @NotNull Function<? super H, ? extends T> function, @NotNull Key<?> modifyCause) {
     super(name);
     myFunction = function;
     myModifyCause = modifyCause;
@@ -70,7 +70,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
   /**
    * Gets modification count from tracker based on {@link #myModifyCause}
    *
-   * @param tracker track to get modification count from
+   * @param element track to get modification count from
    * @return modification count
    * @throws AssertionError if {@link #myModifyCause} is junk
    */
@@ -103,7 +103,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
    * @return instance
    */
   public static <T, H extends PsiElement> PsiCacheKey<T, H> create(@NonNls @NotNull String name,
-                                                                   @NotNull Function<H, T> function,
+                                                                   @NotNull Function<? super H, ? extends T> function,
                                                                    @NotNull Key<?> modifyCause) {
     return new PsiCacheKey<>(name, function, modifyCause);
   }
@@ -118,7 +118,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
    * @param <H>      key type
    * @return instance
    */
-  public static <T, H extends PsiElement> PsiCacheKey<T, H> create(@NonNls @NotNull String name, @NotNull Function<H, T> function) {
+  public static <T, H extends PsiElement> PsiCacheKey<T, H> create(@NonNls @NotNull String name, @NotNull Function<? super H, ? extends T> function) {
     return create(name, function, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
   }
 }

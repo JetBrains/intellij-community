@@ -102,7 +102,7 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
     tree.setAnchorSelectionPath(path);
   }
 
-  private static boolean testDescendants(@NotNull JTree tree, @NotNull TreePath parent, @NotNull Predicate<TreePath> predicate) {
+  private static boolean testDescendants(@NotNull JTree tree, @NotNull TreePath parent, @NotNull Predicate<? super TreePath> predicate) {
     boolean tested = false;
     for (int row = Math.max(0, 1 + tree.getRowForPath(parent)); row < tree.getRowCount(); row++) {
       TreePath path = tree.getPathForRow(row);
@@ -115,7 +115,7 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
 
   private static boolean acceptDescendants(@NotNull JTree tree,
                                            @NotNull TreePath parent,
-                                           @NotNull Predicate<TreePath> predicate,
+                                           @NotNull Predicate<? super TreePath> predicate,
                                            @NotNull Consumer<TreePath[]> consumer) {
     ArrayList<TreePath> list = new ArrayList<>();
     testDescendants(tree, parent, child -> {

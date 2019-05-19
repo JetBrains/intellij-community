@@ -16,16 +16,14 @@
 package git4idea.test;
 
 import com.intellij.openapi.project.Project;
-import git4idea.commands.GitCommand;
+import git4idea.commands.GitAuthenticationGate;
+import git4idea.commands.GitAuthenticationMode;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitHttpAuthTestService extends GitHttpAuthService {
 
   @NotNull private GitHttpAuthenticator myAuthenticator = STUB_AUTHENTICATOR;
@@ -34,7 +32,8 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
   @Override
   public GitHttpAuthenticator createAuthenticator(@NotNull Project project,
                                                   @NotNull Collection<String> urls,
-                                                  boolean ignoreAuthenticationRequest) {
+                                                  @NotNull GitAuthenticationGate authenticationGate,
+                                                  @NotNull GitAuthenticationMode authenticationMode) {
     return myAuthenticator;
   }
 

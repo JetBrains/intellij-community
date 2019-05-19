@@ -30,7 +30,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since 23-May-2007
  */
 public abstract class AbstractTestProxy extends CompositePrintable {
   public static final DataKey<AbstractTestProxy> DATA_KEY = DataKey.create("testProxy");
@@ -170,6 +169,16 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   @Nullable
   public DiffHyperlink getDiffViewerProvider() {
     return null;
+  }
+
+  @Override
+  protected DiffHyperlink createHyperlink(String expected,
+                                          String actual,
+                                          String filePath,
+                                          final String actualFilePath, final boolean printOneLine) {
+    DiffHyperlink hyperlink = super.createHyperlink(expected, actual, filePath, actualFilePath, printOneLine);
+    hyperlink.setTestProxyName(getName());
+    return hyperlink;
   }
 
   @Nullable

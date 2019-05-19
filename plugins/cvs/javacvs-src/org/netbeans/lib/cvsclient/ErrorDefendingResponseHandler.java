@@ -38,21 +38,25 @@ public class ErrorDefendingResponseHandler implements IResponseHandler {
            ((myErrorStreamTimeout > 0) && (ourOkConstant != myErrorStreamStart) && ((System.currentTimeMillis() - myErrorStreamStart) >= myErrorStreamTimeout));
   }
 
+  @Override
   public void processErrorMessageResponse(final byte[] message, final IResponseServices responseServices) {
     myHandler.processErrorMessageResponse(message, responseServices);
     onError();
   }
 
+  @Override
   public void processMessageResponse(final byte[] message, final IResponseServices responseServices) {
     myHandler.processMessageResponse(message, responseServices);
     onOk();
   }
 
+  @Override
   public void processMessageTaggedResponse(final byte[] message, final IResponseServices responseServices) {
     myHandler.processMessageTaggedResponse(message, responseServices);
     onOk();
   }
 
+  @Override
   public void processCheckedInResponse(final String relativeLocalDirectory,
                                        final String repositoryFilePath,
                                        final String entryLine,
@@ -62,6 +66,7 @@ public class ErrorDefendingResponseHandler implements IResponseHandler {
     onOk();
   }
 
+  @Override
   public void processNewEntryResponse(final String relativeLocalDirectory, final String repositoryFilePath, final IResponseServices responseServoces,
                                       final String entryLine,
                                       final IClientEnvironment clientEnvironment) throws IOException {
@@ -69,6 +74,7 @@ public class ErrorDefendingResponseHandler implements IResponseHandler {
     onOk();
   }
 
+  @Override
   public void processSetStaticDirectoryResponse(final String relativeLocalDirectory,
                                                 final String repositoryFilePath,
                                                 final IResponseServices responseServices, final IClientEnvironment clientEnvironment)
@@ -77,6 +83,7 @@ public class ErrorDefendingResponseHandler implements IResponseHandler {
     onOk();
   }
 
+  @Override
   public void processClearStaticDirectoryResponse(final String relativeLocalDirectory,
                                                   final String repositoryDirectoryPath,
                                                   final IResponseServices responseServices, final IClientEnvironment clientEnvironment)
@@ -85,6 +92,7 @@ public class ErrorDefendingResponseHandler implements IResponseHandler {
     onOk();
   }
 
+  @Override
   public void processSetStickyResponse(final String relativeLocalDirectory,
                                        final String repositoryFilePath,
                                        final String tag,
@@ -93,29 +101,34 @@ public class ErrorDefendingResponseHandler implements IResponseHandler {
     onOk();
   }
 
+  @Override
   public void processClearStickyResponse(final String relativeLocalDirectory, final String repositoryFilePath, final IClientEnvironment clientEnvironment)
       throws IOException {
     myHandler.processClearStickyResponse(relativeLocalDirectory, repositoryFilePath, clientEnvironment);
     onOk();
   }
 
+  @Override
   public void processNotifiedResponse(final String relativeLocalDirectory, final String repositoryFilePath, final IClientEnvironment clientEnvironment) {
     myHandler.processNotifiedResponse(relativeLocalDirectory, repositoryFilePath, clientEnvironment);
     onOk();
   }
 
+  @Override
   public void processRemovedResponse(final String relativeLocalDirectory, final String repositoryFilePath, final IResponseServices responseServices,
                                      final IClientEnvironment clientEnvironment) throws IOException {
     myHandler.processRemovedResponse(relativeLocalDirectory, repositoryFilePath, responseServices, clientEnvironment);
     onOk();
   }
 
+  @Override
   public void processRemoveEntryResponse(final String relativeLocalDirectory, final String repositoryFilePath, final IResponseServices responseServices,
                                          final IClientEnvironment clientEnvironment) throws IOException {
     myHandler.processRemoveEntryResponse(relativeLocalDirectory, repositoryFilePath, responseServices, clientEnvironment);
     onOk();
   }
 
+  @Override
   public void processCopyFileResponse(final String relativeLocalDirectory,
                                       final String repositoryFilePath,
                                       final String newName,
@@ -124,16 +137,19 @@ public class ErrorDefendingResponseHandler implements IResponseHandler {
     onOk();
   }
 
+  @Override
   public void processModTimeResponse(final Date modifiedDate, final IResponseServices responseServices) {
     myHandler.processModTimeResponse(modifiedDate, responseServices);
     onOk();
   }
 
+  @Override
   public void processModeResponse(final String mode, final IResponseServices responseServices) {
     myHandler.processModeResponse(mode, responseServices);
     onOk();
   }
 
+  @Override
   public void processTemplateResponse(final String relativeLocalDirectory,
                                       final String repositoryFilePath,
                                       final int length,
@@ -143,21 +159,25 @@ public class ErrorDefendingResponseHandler implements IResponseHandler {
     onOk();
   }
 
+  @Override
   public void processModuleExpansionResponse(final String localPath, final IResponseServices responseServices) {
     myHandler.processModuleExpansionResponse(localPath, responseServices);
     onOk();
   }
 
+  @Override
   public void processOkResponse(final IResponseServices responseServices) {
     myHandler.processOkResponse(responseServices);
     onOk();
   }
 
+  @Override
   public void processErrorResponse(final byte[] message, final IResponseServices responseServices) {
     myHandler.processErrorResponse(message, responseServices);
     onError();
   }
 
+  @Override
   public void processUpdatedResponse(final String relativeLocalDirectory,
                                      final String repositoryFilePath,
                                      final String entryLine,
@@ -170,6 +190,7 @@ public class ErrorDefendingResponseHandler implements IResponseHandler {
     onOk();
   }
 
+  @Override
   public void processMergedResponse(final String relativeLocalDirectory,
                                     final String repositoryFilePath,
                                     final String entryLine,
@@ -182,11 +203,13 @@ public class ErrorDefendingResponseHandler implements IResponseHandler {
     onOk();
   }
 
+  @Override
   public void processValidRequestsResponse(final String validRequests, final IResponseServices responseServices) {
     myHandler.processValidRequestsResponse(validRequests, responseServices);
     onOk();
   }
 
+  @Override
   public void processBinaryMessageResponse(final int fileLength, final byte[] binaryContent, final IResponseServices responseServices) {
     myHandler.processBinaryMessageResponse(fileLength, binaryContent, responseServices);
     onOk();

@@ -6,12 +6,16 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
 public abstract class ServersTreeAction<T extends ServersTreeNode> extends RunDashboardTreeAction<T, ServersToolWindowContent>
   implements DumbAware {
   protected ServersTreeAction(String text, String description, Icon icon) {
@@ -19,7 +23,7 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends RunDa
   }
 
   @Override
-  protected final ServersToolWindowContent getTreeContent(AnActionEvent e) {
+  protected final ServersToolWindowContent getTreeContent(@NotNull AnActionEvent e) {
     return e.getData(ServersToolWindowContent.KEY);
   }
 
@@ -39,12 +43,12 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends RunDa
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e, List<T> nodes) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, @NotNull AnActionEvent e, List<? extends T> nodes) {
     super.doActionPerformed(content, e, nodes);
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e, T node) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, @NotNull AnActionEvent e, T node) {
     super.doActionPerformed(content, e, node);
   }
 

@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.util.ui.OptionsDialog;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,11 +52,13 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     visibility.addCondition(FILES_EXIST_IN_CVS);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.getCheckoutOperationName();
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!e.getPresentation().isVisible()) {
       return;
@@ -65,6 +68,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     adjustName(CvsVcs2.getInstance(project).getCheckoutOptions().getValue(), e);
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     if (myModifiedFiles != null) {
       if (!myModifiedFiles.isEmpty()) {
@@ -91,6 +95,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
                                                        VcsConfiguration.getInstance(project).getCheckoutOption());
   }
 
+  @Override
   protected void beforeActionPerformed(VcsContext context) {
     super.beforeActionPerformed(context);
     myModifiedFiles =

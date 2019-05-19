@@ -41,6 +41,7 @@ public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
     myUpdatedFiles = updatedFiles;
   }
 
+  @Override
   public void addFileMessage(FileMessage message) {
     String path = message.getFileAbsolutePath();
     VirtualFile virtualFile = getVirtualFileFor(path);

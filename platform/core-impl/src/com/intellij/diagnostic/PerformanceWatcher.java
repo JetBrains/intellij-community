@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -47,6 +33,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -54,15 +41,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author yole
  */
-public class PerformanceWatcher implements Disposable, ApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.PerformanceWatcher");
+public class PerformanceWatcher implements Disposable {
+  private static final Logger LOG = Logger.getInstance(PerformanceWatcher.class);
   private static final int TOLERABLE_LATENCY = 100;
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
-  private final ScheduledFuture<?> myThread;
-  private final ThreadMXBean myThreadMXBean;
+  private ScheduledFuture<?> myThread;
+  private final ThreadMXBean myThreadMXBean = ManagementFactory.getThreadMXBean();
   private final File myLogDir = new File(PathManager.getLogPath());
   private List<StackTraceElement> myStacktraceCommonPart;
-  private final IdePerformanceListener myPublisher;
+  private final IdePerformanceListener myPublisher =
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
 
   private volatile ApdexData mySwingApdex = ApdexData.EMPTY;
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
@@ -79,37 +67,32 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
   }
 
   public PerformanceWatcher() {
-    myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
-    myThreadMXBean = ManagementFactory.getThreadMXBean();
-    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> samplePerformance(), getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
-  }
+    if (!shouldWatch()) return;
 
-  @Override
-  public void initComponent() {
-    if (shouldWatch()) {
-      final AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
-      service.setNewThreadListener(new Consumer<Thread>() {
-        private final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
+    AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
+    service.setNewThreadListener(new Consumer<Thread>() {
+      private final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
 
-        @Override
-        public void consume(Thread thread) {
-          if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize
-              && ApplicationInfoImpl.getShadowInstance().isEAP()) {
-            File file = dumpThreads("newPooledThread/", true);
-            LOG.info("Not enough pooled threads" + (file != null ? "; dumped threads into file '" + file.getPath() + "'" : ""));
-          }
-        }
-      });
-
-      ApplicationManager.getApplication().executeOnPooledThread(() -> cleanOldFiles(myLogDir, 0));
-
-      for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-        if ("Code Cache".equals(bean.getName())) {
-          watchCodeCache(bean);
-          break;
+      @Override
+      public void consume(Thread thread) {
+        if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize
+            && ApplicationInfoImpl.getShadowInstance().isEAP()) {
+          File file = dumpThreads("newPooledThread/", true);
+          LOG.info("Not enough pooled threads" + (file != null ? "; dumped threads into file '" + file.getPath() + "'" : ""));
         }
       }
+    });
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> cleanOldFiles(myLogDir, 0));
+
+    for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+      if ("Code Cache".equals(bean.getName())) {
+        watchCodeCache(bean);
+        break;
+      }
     }
+
+    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(this::samplePerformance, getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
   }
 
   private static int getMaxAttempts() {
@@ -199,7 +182,7 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
   @NotNull
   public static String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
     @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
-    String trace = headerMsg + ": "+thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
+    String trace = headerMsg + thread + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n--- its stacktrace:\n";
     for (final StackTraceElement stackTraceElement : stackTrace) {
       trace += " at "+stackTraceElement +"\n";
     }
@@ -223,7 +206,7 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
   }
 
   @NotNull
-  private String getFreezeFolderName(long freezeStartMs) {
+  private static String getFreezeFolderName(long freezeStartMs) {
     return THREAD_DUMPS_PREFIX + "freeze-" + formatTime(freezeStartMs) + "-" + buildName();
   }
 
@@ -231,7 +214,7 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
     return ApplicationInfo.getInstance().getBuild().asString();
   }
 
-  private String formatTime(long timeMs) {
+  private static String formatTime(long timeMs) {
     return new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(timeMs));
   }
 
@@ -241,7 +224,7 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
       File dir = new File(myLogDir, getFreezeFolderName(myFreezeStart));
       if (dir.exists()) {
         //noinspection ResultOfMethodCallIgnored
-        dir.renameTo(new File(myLogDir, dir.getName() + "-" + unresponsiveDuration + "sec" + getFreezePlaceSuffix()));
+        dir.renameTo(new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + unresponsiveDuration + "sec"));
       }
       myPublisher.uiFreezeFinished(unresponsiveDuration);
       myFreezeStart = 0;
@@ -289,7 +272,7 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
           myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
         }
         else {
-          updateStacktraceCommonPart(edtStack);
+          myStacktraceCommonPart = getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
         }
       }
 
@@ -319,15 +302,26 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
     System.err.println(ThreadDumper.dumpThreadsToString());
   }
 
-  private void updateStacktraceCommonPart(final StackTraceElement[] stackTraceElements) {
-    for(int i=0; i < myStacktraceCommonPart.size() && i < stackTraceElements.length; i++) {
-      StackTraceElement el1 = myStacktraceCommonPart.get(myStacktraceCommonPart.size()-i-1);
-      StackTraceElement el2 = stackTraceElements [stackTraceElements.length-i-1];
-      if (!el1.equals(el2)) {
-        myStacktraceCommonPart = myStacktraceCommonPart.subList(myStacktraceCommonPart.size() - i, myStacktraceCommonPart.size());
-        break;
+  static List<StackTraceElement> getStacktraceCommonPart(final List<StackTraceElement> commonPart,
+                                                         final StackTraceElement[] stackTraceElements) {
+    for (int i = 0; i < commonPart.size() && i < stackTraceElements.length; i++) {
+      StackTraceElement el1 = commonPart.get(commonPart.size() - i - 1);
+      StackTraceElement el2 = stackTraceElements[stackTraceElements.length - i - 1];
+      if (!compareStackTraceElements(el1, el2)) {
+        return commonPart.subList(commonPart.size() - i, commonPart.size());
       }
     }
+    return commonPart;
+  }
+
+  // same as java.lang.StackTraceElement.equals, but do not care about the line number
+  static boolean compareStackTraceElements(StackTraceElement el1, StackTraceElement el2) {
+    if (el1 == el2) {
+      return true;
+    }
+    return el1.getClassName().equals(el2.getClassName()) &&
+           Objects.equals(el1.getMethodName(), el2.getMethodName()) &&
+           Objects.equals(el1.getFileName(), el2.getFileName());
   }
 
   private class SwingThreadRunnable implements Runnable {
@@ -341,7 +335,11 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
     public void run() {
       myEdtRequestsQueued.decrementAndGet();
       myLastEdtAlive = System.currentTimeMillis();
-      mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, System.currentTimeMillis() - myCreationMillis);
+      final long latency = System.currentTimeMillis() - myCreationMillis;
+      mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, latency);
+      final Application application = ApplicationManager.getApplication();
+      if (application.isDisposed()) return;
+      application.getMessageBus().syncPublisher(IdePerformanceListener.TOPIC).uiResponded(latency);
     }
   }
 
@@ -357,7 +355,6 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
                "; general responsiveness: " + myGeneralApdex.summarizePerformanceSince(myStartGeneralSnapshot) +
                "; EDT responsiveness: " + mySwingApdex.summarizePerformanceSince(myStartSwingSnapshot));
     }
-
   }
 
   @NotNull

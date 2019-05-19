@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,24 +54,29 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     myProject = project;
   }
 
+  @Override
   public VcsDependentHistoryComponents getUICustomization(VcsHistorySession session,
                                                           JComponent forShortcutRegistration) {
     return VcsDependentHistoryComponents.createOnlyColumns(ColumnInfo.EMPTY_ARRAY);
   }
 
+  @Override
   public AnAction[] getAdditionalActions(Runnable runnable) {
     return new AnAction[]{ShowAllAffectedGenericAction.getInstance(),
       ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER)};
   }
 
+  @Override
   public boolean isDateOmittable() {
     return false;
   }
 
+  @Override
   public String getHelpId() {
     return null;
   }
 
+  @Override
   public VcsHistorySession createSessionFor(FilePath filePath) {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filePath);
     if (vcsRoot == null) {
@@ -82,6 +86,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     return createAppendableSession(vcsRoot, filePath, revisions, null);
   }
 
+  @Override
   public void reportAppendableHistory(FilePath filePath, final VcsAppendableHistorySessionPartner partner) throws VcsException {
     final VirtualFile vcsRoot = HgUtil.getHgRootOrThrow(myProject, filePath);
 
@@ -94,7 +99,6 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     for (HgFileRevision hgFileRevision : history) {
       partner.acceptRevision(hgFileRevision);
     }
-    partner.finished();
   }
 
   @NotNull
@@ -103,11 +107,14 @@ public class HgHistoryProvider implements VcsHistoryProvider {
                                                             @NotNull List<VcsFileRevision> revisions,
                                                             @Nullable VcsRevisionNumber number) {
     return new VcsAbstractHistorySession(revisions, number) {
+      @Override
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
+        if (filePath.isDirectory()) return new HgWorkingCopyRevisionsCommand(myProject).firstParent(vcsRoot);
         return new HgWorkingCopyRevisionsCommand(myProject).parents(vcsRoot, filePath).first;
       }
 
+      @Override
       public HistoryAsTreeProvider getHistoryAsTreeProvider() {
         return null;
       }
@@ -169,7 +176,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     final HgVersion version = logCommand.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(false, version);
     String template = HgChangesetUtil.makeTemplate(templates);
-    List<String> argsForCmd = ContainerUtil.newArrayList();
+    List<String> argsForCmd = new ArrayList<>();
     String relativePath = originalHgFile.getRelativePath();
     argsForCmd.add("--rev");
     argsForCmd
@@ -178,6 +185,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     return HgHistoryUtil.getCommitRecords(project, result, new HgFileRevisionLogParser(project, originalHgFile, version));
   }
 
+  @Override
   public boolean supportsHistoryForDirectories() {
     return true;
   }

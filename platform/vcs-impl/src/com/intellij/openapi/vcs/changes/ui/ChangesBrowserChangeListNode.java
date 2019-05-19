@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -24,6 +10,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -49,7 +36,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   }
 
   @Override
-  public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
+  public void render(@NotNull ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     if (userObject instanceof LocalChangeList) {
       final LocalChangeList list = ((LocalChangeList)userObject);
       renderer.appendTextWithIssueLinks(list.getName(),
@@ -135,7 +122,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     }
   }
 
-  private static void addIfNotNull(final List<VirtualFile> unversionedFiles1, final List<VirtualFile> ignoredFiles) {
+  private static void addIfNotNull(final List<? super VirtualFile> unversionedFiles1, final List<? extends VirtualFile> ignoredFiles) {
     if (ignoredFiles != null) {
       unversionedFiles1.addAll(ignoredFiles);
     }
@@ -149,6 +136,6 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
 
   @Override
   public int compareUserObjects(final ChangeList o2) {
-    return getUserObject().getName().compareToIgnoreCase(o2.getName());
+    return compareFileNames(getUserObject().getName(), o2.getName());
   }
 }

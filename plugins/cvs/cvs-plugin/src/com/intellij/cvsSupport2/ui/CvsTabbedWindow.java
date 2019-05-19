@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.ui;
 
 import com.intellij.CvsBundle;
@@ -55,7 +53,8 @@ public class CvsTabbedWindow implements Disposable {
     final ToolWindow toolWindow = getToolWindow();
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
-      public void contentRemoved(ContentManagerEvent event) {
+      @Override
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         final JComponent component = event.getContent().getComponent();
         final JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
                                             ((CvsTabbedWindowComponent)component).getComponent() : component;
@@ -72,6 +71,7 @@ public class CvsTabbedWindow implements Disposable {
     toolWindow.installWatcher(contentManager);
   }
 
+  @Override
   public void dispose() {
     if (myOutput != null) {
       EditorFactory.getInstance().releaseEditor(myOutput);
@@ -137,6 +137,7 @@ public class CvsTabbedWindow implements Disposable {
       myErrorsView = ErrorViewFactory.SERVICE.getInstance()
         .createErrorTreeView(myProject, null, true, new AnAction[]{ActionManager.getInstance().getAction("CvsActions")},
                              new AnAction[]{new GlobalCvsSettingsAction(), new ReconfigureCvsRootAction()}, new ContentManagerProvider() {
+          @Override
           public ContentManager getParentContent() {
             return getToolWindow().getContentManager();
           }
@@ -168,28 +169,30 @@ public class CvsTabbedWindow implements Disposable {
   }
 
   private static class GlobalCvsSettingsAction extends AnAction {
-    public GlobalCvsSettingsAction() {
+    GlobalCvsSettingsAction() {
       super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, AllIcons.Nodes.Cvs_global);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       new ConfigureCvsGlobalSettingsDialog(e.getProject()).show();
     }
   }
 
   private class ReconfigureCvsRootAction extends AnAction {
-    public ReconfigureCvsRootAction() {
+    ReconfigureCvsRootAction() {
       super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, AllIcons.Nodes.Cvs_roots);
     }
 
-    public void update(AnActionEvent e) {
-      super.update(e);
-      Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Object data = e.getData(ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY);
       e.getPresentation().setEnabled(data instanceof CvsException);
     }
 
-    public void actionPerformed(AnActionEvent e) {
-      Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Object data = e.getData(ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY);
       CvsConfigurationsListEditor.reconfigureCvsRoot(((CvsException)Objects.requireNonNull(data)).getCvsRoot(), myProject);
     }
   }

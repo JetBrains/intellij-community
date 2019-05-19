@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.notification.NotificationType
@@ -6,7 +6,7 @@ import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathMacros
-import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -15,12 +15,12 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectMacrosUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.createDirectories
+import com.intellij.util.io.inputStream
 import com.intellij.util.io.systemIndependentPath
 import gnu.trove.THashSet
 import org.jetbrains.annotations.TestOnly
@@ -28,7 +28,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 
-const val NOTIFICATION_GROUP_ID: String = "Load Error"
+const val NOTIFICATION_GROUP_ID = "Load Error"
 
 @TestOnly
 var DEBUG_LOG: String? = null
@@ -96,7 +96,7 @@ private fun checkUnknownMacros(project: Project,
     }
     else if (Messages.showYesNoDialog(project, "Component could not be reloaded. Reload project?", "Configuration Changed",
                                       Messages.getQuestionIcon()) == Messages.YES) {
-      ProjectManagerEx.getInstanceEx().reloadProject(project)
+      StoreReloadManager.getInstance().reloadProject(project)
     }
   }
 }
@@ -105,8 +105,7 @@ private fun collect(componentManager: ComponentManager,
                     unknownMacros: MutableSet<String>,
                     substitutorToStore: MutableMap<TrackingPathMacroSubstitutor, IComponentStore>) {
   val store = componentManager.stateStore
-  val substitutor = store.storageManager.macroSubstitutor ?: return
-
+  val substitutor = store.storageManager.macroSubstitutor as? TrackingPathMacroSubstitutor ?: return
   val macros = substitutor.getUnknownMacros(null)
   if (macros.isEmpty()) {
     return
@@ -116,23 +115,33 @@ private fun collect(componentManager: ComponentManager,
   substitutorToStore.put(substitutor, store)
 }
 
-fun getOrCreateVirtualFile(requestor: Any?, file: Path): VirtualFile {
+fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
   val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
   if (virtualFile != null) {
     return virtualFile
   }
 
-  val absoluteFile = file.toAbsolutePath()
-
-  val parentFile = absoluteFile.parent
+  val parentFile = file.parent
   parentFile.createDirectories()
 
   // need refresh if the directory has just been created
-  val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath) ?: throw IOException(
-    ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
+  val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath)
+                          ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
 
-  if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-    return parentVirtualFile.createChildData(requestor, file.fileName.toString())
+  return runAsWriteActionIfNeeded {
+    parentVirtualFile.createChildData(requestor, file.fileName.toString())
   }
-  return runUndoTransparentWriteAction { parentVirtualFile.createChildData(requestor, file.fileName.toString()) }
+}
+
+// runWriteAction itself cannot do such check because in general case any write action must be tracked regardless of current action
+inline fun <T> runAsWriteActionIfNeeded(crossinline runnable: () -> T): T {
+  return when {
+    ApplicationManager.getApplication().isWriteAccessAllowed -> runnable()
+    else -> runWriteAction(runnable)
+  }
+}
+
+@Throws(IOException::class)
+fun readProjectNameFile(nameFile: Path): String? {
+  return nameFile.inputStream().reader().useLines { line -> line.firstOrNull { !it.isEmpty() }?.trim() }
 }

@@ -33,10 +33,12 @@ public class CancelPolicy implements ConflictResolutionPolicy {
         return instance;
     }
 
+    @Override
     public void setNewMethodStrategy(InsertNewMethodStrategy strategy) {
         // not used as this is cancel
     }
 
+    @Override
     public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) {
         return null;
     }

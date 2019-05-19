@@ -16,6 +16,7 @@
 
 package com.intellij.psi.util;
 
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -34,7 +35,7 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
 
   public static final char DOT_SEPARATOR = '.';
 
-  private final List<T> myReferences;
+  private final NotNullLazyValue<List<T>> myReferences;
   private final PsiElement myElement;
   private final char mySeparator;
 
@@ -49,7 +50,13 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
   public ReferenceSetBase(final String text, @NotNull PsiElement element, int offset, final char separator) {
     myElement = element;
     mySeparator = separator;
-    myReferences = parse(text, offset);
+    myReferences = new NotNullLazyValue<List<T>>() {
+      @NotNull
+      @Override
+      protected List<T> compute() {
+        return parse(text, offset);
+      }
+    };
   }
 
   public boolean isSoft() {
@@ -66,7 +73,9 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
     do {
       next = findNextSeparator(str, current);
       final TextRange range = new TextRange(offset + current + 1, offset + (next >= 0 ? next : str.length()));
-      references.addAll(createReferences(range, index ++));
+      if (!range.isEmpty() || !Character.isWhitespace(mySeparator)) {
+        references.addAll(createReferences(range, index ++));
+      }
     } while ((current = next) >= 0);
 
     return references;
@@ -94,20 +103,20 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
   }
 
   public List<T> getReferences() {
-    return myReferences;
+    return myReferences.getValue();
   }
 
   @NotNull
   public PsiReference[] getPsiReferences() {
-    return myReferences.toArray(PsiReference.EMPTY_ARRAY);
+    return getReferences().toArray(PsiReference.EMPTY_ARRAY);
   }
 
   public T getReference(int index) {
-    return myReferences.get(index);
+    return getReferences().get(index);
   }
 
   @Nullable
   public T getLastReference() {
-    return myReferences.isEmpty() ? null : getReference(myReferences.size() - 1);
+    return getReferences().isEmpty() ? null : getReference(getReferences().size() - 1);
   }
 }

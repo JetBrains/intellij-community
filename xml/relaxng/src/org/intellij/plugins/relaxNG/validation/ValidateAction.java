@@ -44,6 +44,7 @@ import com.thaiopensource.validate.rng.CompactSchemaReader;
 import com.thaiopensource.validate.rng.RngProperty;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.model.descriptors.RngElementDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -53,7 +54,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Future;
 
-@SuppressWarnings({ "ComponentNotRegistered" })
 public class ValidateAction extends AnAction {
   private static final String CONTENT_NAME = "Validate RELAX NG";
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("VALIDATING");
@@ -68,15 +68,14 @@ public class ValidateAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (!actionPerformedImpl(e)) {
       myOrigAction.actionPerformed(e);
     }
   }
 
   @Override
-  public final void update(AnActionEvent e) {
-    super.update(e);
+  public final void update(@NotNull AnActionEvent e) {
     myOrigAction.update(e);
 
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
@@ -87,7 +86,7 @@ public class ValidateAction extends AnAction {
     }
   }
 
-  private boolean actionPerformedImpl(AnActionEvent e) {
+  private boolean actionPerformedImpl(@NotNull AnActionEvent e) {
     final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file == null) {
       return false;
@@ -160,7 +159,6 @@ public class ValidateAction extends AnAction {
     });
   }
 
-  @SuppressWarnings({ "ThrowableInstanceNeverThrown" })
   private static void doValidation(VirtualFile instanceFile, VirtualFile schemaFile, org.xml.sax.ErrorHandler eh) {
     final SchemaReader sr = schemaFile.getFileType() == RncFileType.getInstance() ?
             CompactSchemaReader.getInstance() :

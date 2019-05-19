@@ -36,7 +36,6 @@ public class UpdatePolicyUtils {
    * @param updateChangesPolicy the policy value to set
    * @param stashRadioButton    the stash radio button
    * @param shelveRadioButton   the shelve radio button
-   * @param keepRadioButton     the keep radio button
    */
   public static void updatePolicyItem(GitVcsSettings.UpdateChangesPolicy updateChangesPolicy,
                                       JRadioButton stashRadioButton,
@@ -58,7 +57,6 @@ public class UpdatePolicyUtils {
    *
    * @param stashRadioButton  the stash radio button
    * @param shelveRadioButton the shelve radio button
-   * @param keepRadioButton   the keep radio button
    * @return the policy value
    */
   public static GitVcsSettings.UpdateChangesPolicy getUpdatePolicy(@NotNull JRadioButton stashRadioButton,

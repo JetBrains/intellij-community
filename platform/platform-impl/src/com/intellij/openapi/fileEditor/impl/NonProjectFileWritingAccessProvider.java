@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -41,27 +26,24 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   private static final Key<Boolean> ENABLE_IN_TESTS = Key.create("NON_PROJECT_FILE_ACCESS_ENABLE_IN_TESTS");
+  private static final Key<Boolean> HONOUR_RECENT_FILES_IN_TESTS = Key.create("NON_PROJECT_FILE_ACCESS_HONOUR_RECENT_FILES_IN_TESTS");
+
   private static final NotNullLazyKey<AtomicInteger, UserDataHolder> ACCESS_ALLOWED
     = NotNullLazyKey.create("NON_PROJECT_FILE_ACCESS", holder -> new AtomicInteger());
 
   private static final AtomicBoolean myInitialized = new AtomicBoolean();
 
   @NotNull private final Project myProject;
-  @Nullable private static NullableFunction<List<VirtualFile>, UnlockOption> ourCustomUnlocker;
+  @Nullable private static NullableFunction<? super List<VirtualFile>, UnlockOption> ourCustomUnlocker;
 
   @TestOnly
-  public static void setCustomUnlocker(@Nullable NullableFunction<List<VirtualFile>, UnlockOption> unlocker) {
+  public static void setCustomUnlocker(@Nullable NullableFunction<? super List<VirtualFile>, UnlockOption> unlocker) {
     ourCustomUnlocker = unlocker;
   }
 
@@ -73,18 +55,20 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     }
   }
 
-  @Override
-  public boolean isPotentiallyWritable(@NotNull VirtualFile file) {
-    return true;
-  }
-
   @NotNull
   @Override
-  public Collection<VirtualFile> requestWriting(VirtualFile... files) {
+  public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
     if (isAllAccessAllowed()) return Collections.emptyList();
 
-    List<VirtualFile> deniedFiles = Stream.of(files).filter(o -> !isWriteAccessAllowed(o, myProject)).collect(Collectors.toList());
-    if (deniedFiles.isEmpty()) return Collections.emptyList();
+    List<VirtualFile> deniedFiles = new ArrayList<>();
+    for (VirtualFile o : files) {
+      if (!isWriteAccessAllowed(o, myProject)) {
+        deniedFiles.add(o);
+      }
+    }
+    if (deniedFiles.isEmpty()) {
+      return Collections.emptyList();
+    }
 
     UnlockOption unlockOption = askToUnlock(deniedFiles);
 
@@ -121,13 +105,18 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     if (!(file.getFileSystem() instanceof LocalFileSystem)) return true; // do not block e.g., HttpFileSystem, LightFileSystem etc.
     if (file.getFileSystem() instanceof TempFileSystem) return true;
 
-    IdeDocumentHistoryImpl documentHistory = (IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(project);
+    Application application = getApp();
+    boolean unitTestMode = application.isUnitTestMode();
 
-    if (documentHistory.isRecentlyChanged(file)) return true;
+    if (!unitTestMode || HONOUR_RECENT_FILES_IN_TESTS.get(application) == Boolean.TRUE) {
+      IdeDocumentHistoryImpl documentHistory = (IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(project);
+      if (documentHistory.isRecentlyChanged(file)) return true;
+    }
 
-    if (!getApp().isUnitTestMode()
-        && FileUtil.isAncestor(new File(FileUtil.getTempDirectory()), VfsUtilCore.virtualToIoFile(file), true)) {
-      return true;
+    if (!unitTestMode) {
+      if (FileUtil.isAncestor(new File(FileUtil.getTempDirectory()), VfsUtilCore.virtualToIoFile(file), true)) {
+        return true;
+      }
     }
 
     VirtualFile each = file;
@@ -140,7 +129,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   }
 
   private static boolean isProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
-    for (NonProjectFileWritingAccessExtension each : Extensions.getExtensions(NonProjectFileWritingAccessExtension.EP_NAME, project)) {
+    for (NonProjectFileWritingAccessExtension each : NonProjectFileWritingAccessExtension.EP_NAME.getExtensions(project)) {
       if(each.isWritable(file)) return true;
       if(each.isNotWritable(file)) return false;
     }
@@ -164,11 +153,12 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     return false;
   }
 
+  @Deprecated
   public static void allowWriting(VirtualFile... allowedFiles) {
     allowWriting(Arrays.asList(allowedFiles));
   }
 
-  public static void allowWriting(Iterable<VirtualFile> allowedFiles) {
+  public static void allowWriting(Iterable<? extends VirtualFile> allowedFiles) {
     for (VirtualFile eachAllowed : allowedFiles) {
       ACCESS_ALLOWED.getValue(eachAllowed).incrementAndGet();
     }
@@ -187,11 +177,18 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
   @TestOnly
   public static void enableChecksInTests(@NotNull Disposable disposable) {
+    enableChecksInTests(false, disposable);
+  }
+
+  @TestOnly
+  public static void enableChecksInTests(@Nullable Boolean honourRecentFiles, @NotNull Disposable disposable) {
     getApp().putUserData(ENABLE_IN_TESTS, Boolean.TRUE);
+    getApp().putUserData(HONOUR_RECENT_FILES_IN_TESTS, honourRecentFiles);
     getApp().putUserData(ACCESS_ALLOWED, null);
 
     Disposer.register(disposable, () -> {
       getApp().putUserData(ENABLE_IN_TESTS, null);
+      getApp().putUserData(HONOUR_RECENT_FILES_IN_TESTS, null);
       getApp().putUserData(ACCESS_ALLOWED, null);
     });
   }
@@ -224,7 +221,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     }
 
     private static void unlock(@NotNull VirtualFileEvent event) {
-      if (!event.isFromRefresh() && !event.getFile().isDirectory()) allowWriting(event.getFile());
+      if (!event.isFromRefresh() && !event.getFile().isDirectory()) allowWriting(Collections.singletonList(event.getFile()));
     }
   }
 }

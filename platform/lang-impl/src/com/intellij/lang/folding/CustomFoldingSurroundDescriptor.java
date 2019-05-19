@@ -251,7 +251,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
     private final CustomFoldingProvider myProvider;
 
-    public CustomFoldingRegionSurrounder(@NotNull CustomFoldingProvider provider) {
+    CustomFoldingRegionSurrounder(@NotNull CustomFoldingProvider provider) {
       myProvider = provider;
     }
 

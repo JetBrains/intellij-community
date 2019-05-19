@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
@@ -19,6 +7,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -29,9 +18,9 @@ import java.util.MissingResourceException;
  * @author Konstantin Bulenkov
  */
 public class RegistryValue {
-
   private final Registry myRegistry;
   private final String myKey;
+  @Nullable private final RegistryKeyDescriptor myKeyDescriptor;
 
   private final List<RegistryValueListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -43,9 +32,10 @@ public class RegistryValue {
   private Boolean myBooleanCachedValue;
   private static final Logger LOG = Logger.getInstance(RegistryValue.class);
 
-  RegistryValue(@NotNull Registry registry, @NotNull String key) {
+  RegistryValue(@NotNull Registry registry, @NotNull String key, @Nullable RegistryKeyDescriptor keyDescriptor) {
     myRegistry = registry;
     myKey = key;
+    myKeyDescriptor = keyDescriptor;
   }
 
   @NotNull
@@ -75,7 +65,7 @@ public class RegistryValue {
         myIntCachedValue = Integer.valueOf(get(myKey, "0", true));
       }
       catch (NumberFormatException e) {
-        String bundleValue = getBundleValue(myKey, true);
+        String bundleValue = Registry.getInstance().getBundleValue(myKey, true);
         assert bundleValue != null;
         myIntCachedValue = Integer.valueOf(bundleValue);
       }
@@ -90,7 +80,7 @@ public class RegistryValue {
         myDoubleCachedValue = Double.valueOf(get(myKey, "0.0", true));
       }
       catch (NumberFormatException e) {
-        String bundleValue = getBundleValue(myKey, true);
+        String bundleValue = Registry.getInstance().getBundleValue(myKey, true);
         assert bundleValue != null;
         myDoubleCachedValue = Double.valueOf(bundleValue);
       }
@@ -111,7 +101,7 @@ public class RegistryValue {
         try {
           return new Color(Integer.parseInt(rgb[0]), Integer.parseInt(rgb[1]), Integer.parseInt(rgb[2]));
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
         }
       }
     }
@@ -120,32 +110,37 @@ public class RegistryValue {
 
   @NotNull
   public String getDescription() {
+    if (myKeyDescriptor != null) {
+      return myKeyDescriptor.getDescription();
+    }
     return get(myKey + ".description", "", false);
   }
 
   boolean isRestartRequired() {
-    return Boolean.valueOf(get(myKey + ".restartRequired", "false", false));
+    if (myKeyDescriptor != null) {
+      return myKeyDescriptor.isRestartRequired();
+    }
+    return Boolean.parseBoolean(get(myKey + ".restartRequired", "false", false));
   }
 
   public boolean isChangedFromDefault() {
     return isChangedFromDefault(asString());
   }
 
-  boolean isChangedFromDefault(@NotNull String newValue) {
-    return !newValue.equals(getBundleValue(myKey, false));
+  public boolean isContributedByThirdPartyPlugin() {
+    return myKeyDescriptor != null && myKeyDescriptor.isContributedByThirdPartyPlugin();
   }
 
-  private String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
+  boolean isChangedFromDefault(@NotNull String newValue) {
+    return !newValue.equals(Registry.getInstance().getBundleValue(myKey, false));
+  }
+
+  protected String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
     if (isValue) {
-      String stringCachedValue = myStringCachedValue;
-      if (stringCachedValue == null) {
-        stringCachedValue = _get(key, defaultValue, true);
-        if (isBoolean(stringCachedValue)) {
-          stringCachedValue = Boolean.valueOf(stringCachedValue).toString();
-        }
-        myStringCachedValue = stringCachedValue;
+      if (myStringCachedValue == null) {
+        myStringCachedValue = _get(key, defaultValue, true);
       }
-      return stringCachedValue;
+      return myStringCachedValue;
     }
     return _get(key, defaultValue, false);
   }
@@ -159,32 +154,19 @@ public class RegistryValue {
     if (systemProperty != null) {
       return systemProperty;
     }
-    final String bundleValue = getBundleValue(key, mustExistInBundle);
+    final String bundleValue = Registry.getInstance().getBundleValue(key, mustExistInBundle);
     if (bundleValue != null) {
       return bundleValue;
     }
     return defaultValue;
   }
 
-  private static String getBundleValue(@NotNull String key, boolean mustExist) throws MissingResourceException {
-    try {
-      return Registry.getBundle().getString(key);
-    }
-    catch (MissingResourceException e) {
-      if (mustExist) {
-        throw e;
-      }
-    }
-
-    return null;
-  }
-
   public void setValue(boolean value) {
-    setValue(Boolean.valueOf(value).toString());
+    setValue(Boolean.toString(value));
   }
 
   public void setValue(int value) {
-    setValue(Integer.valueOf(value).toString());
+    setValue(Integer.toString(value));
   }
 
   public void setValue(String value) {
@@ -205,40 +187,25 @@ public class RegistryValue {
     }
 
     myChangedSinceStart = true;
-    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '"');
+    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
   }
 
-  public void setValue(boolean value, Disposable parentDisposable) {
+  public void setValue(boolean value, @NotNull Disposable parentDisposable) {
     final boolean prev = asBoolean();
     setValue(value);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        setValue(prev);
-      }
-    });
+    Disposer.register(parentDisposable, () -> setValue(prev));
   }
 
-  public void setValue(int value, Disposable parentDisposable) {
+  public void setValue(int value, @NotNull Disposable parentDisposable) {
     final int prev = asInteger();
     setValue(value);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        setValue(prev);
-      }
-    });
+    Disposer.register(parentDisposable, () -> setValue(prev));
   }
 
-  public void setValue(String value, Disposable parentDisposable) {
+  public void setValue(String value, @NotNull Disposable parentDisposable) {
     final String prev = asString();
     setValue(value);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        setValue(prev);
-      }
-    });
+    Disposer.register(parentDisposable, () -> setValue(prev));
   }
 
   boolean isChangedSinceAppStart() {
@@ -246,17 +213,12 @@ public class RegistryValue {
   }
 
   public void resetToDefault() {
-    setValue(getBundleValue(myKey, true));
+    setValue(Registry.getInstance().getBundleValue(myKey, true));
   }
 
   public void addListener(@NotNull final RegistryValueListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        myListeners.remove(listener);
-      }
-    });
+    Disposer.register(parent, () -> myListeners.remove(listener));
   }
 
   @Override
@@ -275,6 +237,6 @@ public class RegistryValue {
     return isBoolean(asString());
   }
   private static boolean isBoolean(String s) {
-    return "true".equals(s) || "false".equals(s);
+    return "true".equalsIgnoreCase(s) || "false".equalsIgnoreCase(s);
   }
 }

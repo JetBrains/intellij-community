@@ -197,9 +197,26 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON34);
   }
 
+  // PY-29763
+  public void testTryExceptEmptyRaiseUnderFinallyPy2() {
+    doTestByText("try:\n" +
+                 "   something_that_raises_error1()\n" +
+                 "except BaseException as e:\n" +
+                 "    raise\n" +
+                 "finally:\n" +
+                 "    try:\n" +
+                 "        something_that_raises_error2()\n" +
+                 "    except BaseException as e:\n" +
+                 "        raise   ");
+  }
+
   // PY-15360
   public void testTrailingCommaAfterStarArgs() {
     doTest(LanguageLevel.PYTHON34);
+  }
+
+  public void testInputFromSixLib() {
+    doTest(LanguageLevel.PYTHON27);
   }
 
   private void doTest(@NotNull LanguageLevel level) {

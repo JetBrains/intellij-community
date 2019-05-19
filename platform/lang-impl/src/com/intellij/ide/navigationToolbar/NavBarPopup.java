@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -25,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
@@ -106,6 +95,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   }
 
   private void show(final NavBarItem item, boolean checkRepaint) {
+    UIEventLogger.logUIEvent(UIEventId.NavBarNavigate);
+
     final RelativePoint point = new RelativePoint(item, new Point(0, item.getHeight()));
     final Point p = point.getPoint(myPanel);
     if (p.x == 0 && p.y == 0 && checkRepaint) { // need repaint of nav bar panel
@@ -157,7 +148,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
 
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         return panel.getDataImpl(dataId, this, () -> JBIterable.from(getSelectedValuesList()));
       }
     }
@@ -172,8 +163,9 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       return navBarItem;
     });
     list.setBorder(JBUI.Borders.empty(5));
-    installMoveAction(list, panel, -1, KeyEvent.VK_LEFT);
-    installMoveAction(list, panel, 1, KeyEvent.VK_RIGHT);
+    ActionMap map = list.getActionMap();
+    map.put(ListActions.Left.ID, createMoveAction(panel, -1));
+    map.put(ListActions.Right.ID, createMoveAction(panel, 1));
     installEnterAction(list, panel, KeyEvent.VK_ENTER);
     installEscapeAction(list, panel, KeyEvent.VK_ESCAPE);
     JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o));
@@ -206,8 +198,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     return ((JBList)getComponent().getClientProperty(JBLIST_KEY));
   }
 
-  private static void installMoveAction(JBList list, NavBarPanel panel, int direction, int keyCode) {
-    AbstractAction action = new AbstractAction() {
+  private static Action createMoveAction(@NotNull NavBarPanel panel, int direction) {
+    return new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         panel.cancelPopup();
@@ -215,6 +207,5 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         panel.restorePopup();
       }
     };
-    list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
   }
 }

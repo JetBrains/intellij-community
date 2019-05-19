@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * @deprecated todo remove in IDEA 16
  * use com.intellij.psi.ResolveScopeProvider
  */
+@Deprecated
 public abstract class SdkResolveScopeProvider {
   public static final ExtensionPointName<SdkResolveScopeProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.sdkResolveScopeProvider");

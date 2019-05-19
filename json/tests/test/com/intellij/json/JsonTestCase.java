@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json;
 
 import com.intellij.json.formatter.JsonCodeStyleSettings;
@@ -41,6 +42,7 @@ public abstract class JsonTestCase extends LightCodeInsightFixtureTestCase {
     return options;
   }
 
+  @Override
   @NotNull
   public String getBasePath() {
     return "/json/tests/testData";

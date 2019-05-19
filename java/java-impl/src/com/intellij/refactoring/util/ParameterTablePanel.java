@@ -23,7 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.util.ui.AbstractTableCellEditor;
@@ -50,7 +50,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
     init(variableData, project, scopeElements);
   }
 
-  public ParameterTablePanel(Predicate<String> parameterNameValidator) {
+  public ParameterTablePanel(Predicate<? super String> parameterNameValidator) {
     super(new PassParameterColumnInfo(),
           new TypeColumnInfo(),
           new NameColumnInfo(parameterNameValidator));
@@ -70,14 +70,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
     myTypeRendererCombo = new ComboBox<>(getVariableData());
     myTypeRendererCombo.setOpaque(true);
     myTypeRendererCombo.setBorder(null);
-    myTypeRendererCombo.setRenderer(new ListCellRendererWrapper<VariableData>() {
-      @Override
-      public void customize(JList list, VariableData value, int index, boolean selected, boolean hasFocus) {
-        if (value != null) {
-          setText(value.type.getPresentableText());
-        }
-      }
-    });
+    myTypeRendererCombo.setRenderer(SimpleListCellRenderer.create("", value -> value.type.getPresentableText()));
 
 
     final TableColumn typeColumn = myTable.getColumnModel().getColumn(1);
@@ -86,6 +79,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
       final JBComboBoxTableCellEditorComponent myEditorComponent = new JBComboBoxTableCellEditorComponent();
       final JLabel myTypeLabel = new JLabel();
 
+      @Override
       @Nullable
       public Object getCellEditorValue() {
         if (myCurrentSelector.getComponent() instanceof JLabel) {
@@ -94,6 +88,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
         return myEditorComponent.getEditorValue();
       }
 
+      @Override
       public Component getTableCellEditorComponent(final JTable table,
                                                    final Object value,
                                                    final boolean isSelected,
@@ -120,6 +115,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
     myTable.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
       private final JBComboBoxLabel myLabel = new JBComboBoxLabel();
 
+      @Override
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,
                                                      boolean isSelected,
@@ -185,7 +181,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
 
   private static class TypeColumnInfo extends ColumnInfo<VariableData, PsiType> {
 
-    public TypeColumnInfo() {
+    TypeColumnInfo() {
       super("Type");
     }
 

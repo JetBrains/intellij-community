@@ -27,6 +27,11 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     modified = value
   }
 
+  override fun resetToBase(toolId: String, scope: NamedScope?, project: Project) {
+    super.resetToBase(toolId, scope, project)
+    setModified(true)
+  }
+
   override fun copyToolsConfigurations(project: Project?) {
     copyToolsConfigurations(source, project)
   }
@@ -88,12 +93,6 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     copyToolsConfigurations(myBaseProfile, project)
     myChangedToolNames = null
     myUninitializedSettings.clear()
-  }
-
-  fun resetToBase(toolId: String, scope: NamedScope, project: Project?) {
-    val baseDefaultWrapper = myBaseProfile.getToolsOrNull(toolId, null)?.defaultState?.tool!!
-    val state = myTools[toolId]?.tools?.first { s -> scope == s.getScope(project) }!!
-    state.tool = copyToolSettings(baseDefaultWrapper)
   }
 
   //invoke when isChanged() == true

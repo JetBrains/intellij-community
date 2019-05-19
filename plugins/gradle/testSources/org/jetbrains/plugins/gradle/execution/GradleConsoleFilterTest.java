@@ -19,7 +19,6 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/29/2015
  */
 public class GradleConsoleFilterTest extends CodeInsightFixtureTestCase {
 
@@ -28,6 +27,8 @@ public class GradleConsoleFilterTest extends CodeInsightFixtureTestCase {
     doTest("Build file '/project/build.gradle' line: 7", "/project/build.gradle", 7);
     doTest("  build file 'C:\\project\\build.gradle': 49: unexpected token: 5 @ line 49, column 28.", "C:\\project\\build.gradle", 49);
     doTest("build file 'C:\\project\\build.gradle': 49: unexpected token: 5 @ line 49, column 28.", "C:\\project\\build.gradle", 49);
+    doTest("Settings file 'C:\\project\\settings.gradle' line: 7", "C:\\project\\settings.gradle", 7);
+    doTest("Settings file '/project/settings.gradle' line: 7", "/project/settings.gradle", 7);
   }
 
   private void doTest(String line, String expectedFileName, int expectedLineNumber) {

@@ -186,6 +186,7 @@ public class OwnBufferLeafPsiElement extends LeafElement implements PsiElement {
     return result;
   }
 
+  @Override
   public String toString() {
     return "PsiElement" + "(" + getElementType().toString() + ")";
   }

@@ -1,40 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ClipboardUtil;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.concurrency.FutureResult;
-import com.sun.jna.IntegerType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.datatransfer.DataTransferer;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.io.IOException;
@@ -43,9 +22,6 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 /**
  * This class is used to workaround the problem with getting clipboard contents (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143).
@@ -59,8 +35,8 @@ import java.util.function.Supplier;
  *
  * @author nik
  */
-public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ClipboardSynchronizer");
+public class ClipboardSynchronizer implements Disposable {
+  private static final Logger LOG = Logger.getInstance(ClipboardSynchronizer.class);
 
   private final ClipboardHandler myClipboardHandler;
 
@@ -81,10 +57,7 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
     else {
       myClipboardHandler = new ClipboardHandler();
     }
-  }
 
-  @Override
-  public void initComponent() {
     myClipboardHandler.init();
   }
 
@@ -93,57 +66,13 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
     myClipboardHandler.dispose();
   }
 
-  public void areDataFlavorsAvailableAsync(@NotNull Consumer<Boolean> callback, @NotNull DataFlavor... flavors) {
-    final Supplier<Boolean> availabilitySupplier =
-      () -> ClipboardUtil.handleClipboardSafely(() -> myClipboardHandler.areDataFlavorsAvailable(flavors),() -> false);
-
-    Boolean available = availabilitySupplier.get();
-    if (available) {
-      callback.consume(available);
-    } else {
-      AtomicInteger counter = new AtomicInteger();
-
-      Timer timer = new Timer(50, event -> {});
-      timer.addActionListener( event -> {
-        Boolean a = availabilitySupplier.get();
-        if (counter.incrementAndGet() > 3 || a) {
-          timer.stop();
-        }
-        callback.consume(a);
-      });
-      timer.start();
-    }
-  }
-
-  public void getContentsAsync(@NotNull Consumer<Transferable> callback) {
-    final Supplier<Transferable> transferableSupplier =
-      () -> ClipboardUtil.handleClipboardSafely(myClipboardHandler::getContents, () -> null);
-
-    Transferable transferable = transferableSupplier.get();
-    if (transferable != null) {
-      callback.consume(transferable);
-    } else {
-      AtomicInteger counter = new AtomicInteger();
-
-      Timer timer = new Timer(50, event -> {});
-      timer.addActionListener( event -> {
-        Transferable t = transferableSupplier.get();
-        if (counter.incrementAndGet() > 3) {
-          timer.stop();
-        }
-        callback.consume(t);
-      });
-      timer.start();
-    }
-  }
-
   public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
-    return ClipboardUtil.handleClipboardSafely(() -> myClipboardHandler.areDataFlavorsAvailable(flavors), () -> false);
+    return ClipboardUtil.handleClipboardSafely(() -> myClipboardHandler.areDataFlavorsAvailable(flavors), false);
   }
 
   @Nullable
   public Transferable getContents() {
-    return ClipboardUtil.handleClipboardSafely(myClipboardHandler::getContents, () -> null);
+    return ClipboardUtil.handleClipboardSafely(myClipboardHandler::getContents, null);
   }
 
   @Nullable
@@ -156,7 +85,7 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
         LOG.debug(e);
         return null;
       }
-    }, () -> null);
+    }, null);
   }
 
   public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
@@ -198,7 +127,6 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
       return false;
     }
 
-
     @Nullable
     public Transferable getContents() {
       Clipboard clipboard = getClipboard();
@@ -222,7 +150,6 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
     }
   }
 
-
   private static class MacClipboardHandler extends ClipboardHandler {
     private Pair<String,Transferable> myFullTransferable;
 
@@ -244,7 +171,7 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
       if (transferable != null && myFullTransferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
         try {
           String stringData = (String) transferable.getTransferData(DataFlavor.stringFlavor);
-          if (stringData != null && stringData.equals(myFullTransferable.getFirst())) {
+          if (stringData.equals(myFullTransferable.getFirst())) {
             return myFullTransferable.getSecond();
           }
         }
@@ -281,65 +208,7 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
         super.setContent(content, owner);
       }
     }
-
-    @Nullable
-    private static Transferable getContentsSafe() {
-      final FutureResult<Transferable> result = new FutureResult<>();
-
-      Foundation.executeOnMainThread(true, false, () -> {
-        Transferable transferable = getClipboardContentNatively();
-        if (transferable != null) {
-          result.set(transferable);
-        }
-      });
-
-      try {
-        return result.get(10, TimeUnit.MILLISECONDS);
-      }
-      catch (Exception ignored) {
-        return null;
-      }
-    }
-
-    @Nullable
-    private static Transferable getClipboardContentNatively() {
-      String plainText = "public.utf8-plain-text";
-
-      ID pasteboard = Foundation.invoke("NSPasteboard", "generalPasteboard");
-      ID types = Foundation.invoke(pasteboard, "types");
-      IntegerType count = Foundation.invoke(types, "count");
-
-      ID plainTextType = null;
-
-      for (int i = 0; i < count.intValue(); i++) {
-        ID each = Foundation.invoke(types, "objectAtIndex:", i);
-        String eachType = Foundation.toStringViaUTF8(each);
-        if (plainText.equals(eachType)) {
-          plainTextType = each;
-          break;
-        }
-      }
-
-      // will put string value even if we doesn't found java object. this is needed because java caches clipboard value internally and
-      // will reset it ONLY IF we'll put jvm-object into clipboard (see our setContent optimizations which avoids putting jvm-objects
-      // into clipboard)
-
-      Transferable result = null;
-      if (plainTextType != null) {
-        ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
-        String value = Foundation.toStringViaUTF8(text);
-        if (value == null) {
-          LOG.info(String.format("[Clipboard] Strange string value (null?) for type: %s", plainTextType));
-        }
-        else {
-          result = new StringSelection(value);
-        }
-      }
-
-      return result;
-    }
   }
-
 
   private static class XWinClipboardHandler extends ClipboardHandler {
     private static final String DATA_TRANSFER_TIMEOUT_PROPERTY = "sun.awt.datatransfer.timeout";
@@ -460,7 +329,6 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
     }
   }
 
-
   private static class HeadlessClipboardHandler extends ClipboardHandler {
     private volatile Transferable myContent = null;
 
@@ -491,7 +359,6 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
       myContent = null;
     }
   }
-
 
   private static boolean areDataFlavorsAvailable(Transferable contents, DataFlavor... flavors) {
     for (DataFlavor flavor : flavors) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
@@ -26,17 +12,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitUtil;
@@ -79,7 +61,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @NotNull private final Project myProject;
 
 
-    public MyCheckinHandler(@NotNull CheckinProjectPanel panel) {
+    MyCheckinHandler(@NotNull CheckinProjectPanel panel) {
       myPanel = panel;
       myProject = myPanel.getProject();
     }
@@ -120,7 +102,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       final Collection<VirtualFile> files = myPanel.getVirtualFiles(); // deleted files aren't included, but for them we don't care about CRLFs.
       final AtomicReference<GitCrlfProblemsDetector> crlfHelper = new AtomicReference<>();
       ProgressManager.getInstance().run(
-        new Task.Modal(myProject, "Checking for Line Separator Issues", true) {
+        new Task.Modal(myProject, "Checking for Line Separator Issues...", true) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             crlfHelper.set(GitCrlfProblemsDetector.detect(GitCheckinHandlerFactory.MyCheckinHandler.this.myProject,
@@ -219,8 +201,8 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     private static Map<VirtualFile, Couple<String>> getDefinedUserNames(@NotNull final Project project,
                                                                         @NotNull final Collection<VirtualFile> roots,
                                                                         final boolean stopWhenFoundFirst) {
-      final Map<VirtualFile, Couple<String>> defined = ContainerUtil.newHashMap();
-      ProgressManager.getInstance().run(new Task.Modal(project, "Checking Git User Name", true) {
+      final Map<VirtualFile, Couple<String>> defined = new HashMap<>();
+      ProgressManager.getInstance().run(new Task.Modal(project, "Checking Git User Name...", true) {
         @Override
         public void run(@NotNull ProgressIndicator pi) {
           for (VirtualFile root : roots) {
@@ -314,7 +296,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                   "<b>" + rootPath + "</b><br>" +
                   "You probably want to <b>continue rebase</b> instead of committing. <br/>" +
                   "Committing during rebase may lead to the commit loss. <br/>" +
-                  readMore("http://www.kernel.org/pub/software/scm/git/docs/git-rebase.html", "Read more about Git rebase");
+                  readMore("https://www.kernel.org/pub/software/scm/git/docs/git-rebase.html", "Read more about Git rebase");
       } else {
         title = "Commit in Detached HEAD";
         message = messageCommonStart + " is in the <b>detached HEAD</b> state: <br/>" +
@@ -378,11 +360,15 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @NotNull
     private Collection<VirtualFile> getSelectedRoots() {
       ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      GitVcs git = GitVcs.getInstance(myProject);
       Collection<VirtualFile> result = new HashSet<>();
       for (FilePath path : ChangesUtil.getPaths(myPanel.getSelectedChanges())) {
-        VirtualFile root = vcsManager.getVcsRootFor(path);
-        if (root != null) {
-          result.add(root);
+        VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
+        if (vcsRoot != null) {
+          VirtualFile root = vcsRoot.getPath();
+          if (git.equals(vcsRoot.getVcs()) && root != null) {
+            result.add(root);
+          }
         }
       }
       return result;
@@ -392,7 +378,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       final VirtualFile myRoot;
       final boolean myRebase; // rebase in progress, or just detached due to a checkout of a commit.
 
-      public DetachedRoot(@NotNull VirtualFile root, boolean rebase) {
+      DetachedRoot(@NotNull VirtualFile root, boolean rebase) {
         myRoot = root;
         myRebase = rebase;
       }

@@ -9,7 +9,7 @@ Groovy script
     PsiWhiteSpace(' ')
     RegexFindExpression
       Literal
-        PsiElement(Gstring)('"\$abc."')
+        PsiElement(double quoted string)('"\$abc."')
       PsiWhiteSpace(' ')
       PsiElement(=~)('=~')
       PsiWhiteSpace(' ')

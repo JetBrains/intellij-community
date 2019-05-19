@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.icons.AllIcons;
@@ -23,13 +9,13 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -42,30 +28,53 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
+public class BranchFilterPopupComponent
+  extends MultipleValueFilterPopupComponent<BranchFilters, VcsLogClassicFilterUi.BranchFilterModel> {
+  public static final String BRANCH_FILTER_NAME = "Branch";
   private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
   public BranchFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {
-    super("Branch", uiProperties, filterModel);
+    super(BRANCH_FILTER_NAME, uiProperties, filterModel);
     myBranchFilterModel = filterModel;
   }
 
   @NotNull
   @Override
-  protected String getText(@NotNull VcsLogBranchFilter filter) {
-    return displayableText(myFilterModel.getFilterValues(filter));
+  protected List<String> getFilterValues(@NotNull BranchFilters filters) {
+    return VcsLogClassicFilterUi.BranchFilterModel.getFilterPresentation(filters);
   }
 
+  @Override
   @Nullable
-  @Override
-  protected String getToolTip(@NotNull VcsLogBranchFilter filter) {
-    return tooltip(myFilterModel.getFilterValues(filter));
+  protected BranchFilters createFilter(@NotNull List<String> values) {
+    return myFilterModel.createFilterFromPresentation(values);
   }
 
   @Override
-  protected boolean supportsNegativeValues() {
-    return true;
+  @NotNull
+  protected MultilinePopupBuilder.CompletionPrefixProvider getCompletionPrefixProvider() {
+    return (text, offset) -> {
+      int index = 0;
+      for (String s : getCompletionSeparators()) {
+        int separatorIndex = text.lastIndexOf(s, offset - s.length());
+        if (separatorIndex > index) {
+          index = separatorIndex + s.length();
+        }
+      }
+      String prefix = text.substring(index, offset);
+      return StringUtil.trimLeading(prefix, '-');
+    };
+  }
+
+  @NotNull
+  private static List<String> getCompletionSeparators() {
+    List<String> separators = new ArrayList<>();
+    for (char c : MultilinePopupBuilder.SEPARATORS) {
+      separators.add(String.valueOf(c));
+    }
+    separators.add("..");
+    return separators;
   }
 
   @NotNull
@@ -88,31 +97,24 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
   @NotNull
   @Override
-  protected List<List<String>> getRecentValuesFromSettings() {
-    return myUiProperties.getRecentlyFilteredBranchGroups();
-  }
-
-  @Override
-  protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<>(values));
-  }
-
-  @NotNull
-  @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.map(myFilterModel.getDataPack().getRefs().getBranches(), VcsRef::getName);
+    Collection<VcsRef> branches = myFilterModel.getDataPack().getRefs().getBranches();
+    if (myBranchFilterModel.getVisibleRoots() != null) {
+      branches = ContainerUtil.filter(branches, branch -> myBranchFilterModel.getVisibleRoots().contains(branch.getRoot()));
+    }
+    return ContainerUtil.map(branches, VcsRef::getName);
   }
 
   private class MyBranchPopupBuilder extends BranchPopupBuilder {
     protected MyBranchPopupBuilder(@NotNull VcsLogDataPack dataPack,
                                    @Nullable Collection<VirtualFile> visibleRoots,
-                                   @Nullable List<List<String>> recentItems) {
+                                   @Nullable List<? extends List<String>> recentItems) {
       super(dataPack, visibleRoots, recentItems);
     }
 
     @NotNull
     @Override
-    public AnAction createAction(@NotNull String name, @NotNull Collection<VcsRef> refs) {
+    public AnAction createAction(@NotNull String name, @NotNull Collection<? extends VcsRef> refs) {
       return new BranchFilterAction(name, refs);
     }
 
@@ -123,26 +125,26 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
     @NotNull
     @Override
-    protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<VcsRef> refs) {
+    protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<? extends VcsRef> refs) {
       return new BranchFilterAction(actionName, refs);
     }
 
     @Override
     protected void createFavoritesAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> favorites) {
-      actionGroup.add(new PredefinedValueAction("Favorites", favorites));
+      actionGroup.add(new PredefinedValueAction("Favorites", favorites, false));
     }
 
     private class BranchFilterAction extends PredefinedValueAction {
       @NotNull private final LayeredIcon myIcon;
       @NotNull private final LayeredIcon myHoveredIcon;
-      @NotNull private final Collection<VcsRef> myReferences;
+      @NotNull private final Collection<? extends VcsRef> myReferences;
       private boolean myIsFavorite;
 
-      public BranchFilterAction(@NotNull String value, @NotNull Collection<VcsRef> references) {
-        super(value, true);
+      BranchFilterAction(@NotNull String value, @NotNull Collection<? extends VcsRef> references) {
+        super(value);
         myReferences = references;
-        myIcon = new LayeredIcon(AllIcons.Vcs.Favorite, EmptyIcon.ICON_16);
-        myHoveredIcon = new LayeredIcon(AllIcons.Vcs.FavoriteOnHover, AllIcons.Vcs.NotFavoriteOnHover);
+        myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);
+        myHoveredIcon = new LayeredIcon(AllIcons.Nodes.Favorite, AllIcons.Nodes.NotFavoriteOnHover);
         getTemplatePresentation().setIcon(myIcon);
         getTemplatePresentation().setSelectedIcon(myHoveredIcon);
 
@@ -184,7 +186,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   private class MyBranchLogSpeedSearchPopup extends BranchLogSpeedSearchPopup {
     private PopupListElementRendererWithIcon myListElementRenderer;
 
-    public MyBranchLogSpeedSearchPopup() {
+    MyBranchLogSpeedSearchPopup() {
       super(BranchFilterPopupComponent.this.createActionGroup(), DataManager.getInstance().getDataContext(BranchFilterPopupComponent.this));
     }
 

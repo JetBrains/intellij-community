@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.application.PathManager;
@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-import static com.intellij.util.containers.ContainerUtil.newTreeMap;
 import static org.jetbrains.idea.svn.branchConfig.UrlDescriptor.DECODED_URL_DESCRIPTOR;
 import static org.jetbrains.idea.svn.branchConfig.UrlDescriptor.ENCODED_URL_DESCRIPTOR;
 
@@ -78,7 +77,7 @@ public class SvnBranchPointsCalculator {
     synchronized (myPersistenceLock) {
       TreeMap<String, BranchCopyData> map = myPersistentMap.get(repoUrl);
       if (map == null) {
-        map = newTreeMap();
+        map = new TreeMap<>();
       }
       map.put(data.getTarget().toString(), data);
       myPersistentMap.put(repoUrl, map);
@@ -93,6 +92,7 @@ public class SvnBranchPointsCalculator {
   }
 
   private static class BranchDataExternalizer implements DataExternalizer<TreeMap<String, BranchCopyData>> {
+    @Override
     public void save(@NotNull DataOutput out, @NotNull TreeMap<String, BranchCopyData> value) throws IOException {
       out.writeInt(value.size());
       for (Map.Entry<String, BranchCopyData> entry : value.entrySet()) {
@@ -108,9 +108,10 @@ public class SvnBranchPointsCalculator {
       out.writeLong(value.getTargetRevision());
     }
 
+    @Override
     @NotNull
     public TreeMap<String, BranchCopyData> read(@NotNull DataInput in) throws IOException {
-      TreeMap<String, BranchCopyData> result = newTreeMap();
+      TreeMap<String, BranchCopyData> result = new TreeMap<>();
       int size = in.readInt();
 
       for (int i = 0; i < size; i++) {

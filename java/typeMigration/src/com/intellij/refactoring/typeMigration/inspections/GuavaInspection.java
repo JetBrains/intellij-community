@@ -8,12 +8,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
@@ -31,7 +31,6 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-@SuppressWarnings("DialogTitleCapitalization")
 public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
   private final static Set<String> FLUENT_ITERABLE_STOP_METHODS = ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index", "toMultiset");
@@ -57,7 +56,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+    if (!JavaFeature.STREAMS.isFeatureSupported(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -265,7 +264,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
     @Override
     public void invoke(@NotNull Project project,
                        @NotNull PsiFile file,
-                       @Nullable("is null when called from inspection") Editor editor,
+                       @Nullable Editor editor,
                        @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {
       performTypeMigration(Collections.singletonList(startElement), Collections.singletonList(myTargetType));
@@ -333,7 +332,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       throw new AssertionError();
     }
 
-    private void performTypeMigration(List<PsiElement> elements, List<PsiType> types) {
+    private void performTypeMigration(List<? extends PsiElement> elements, List<PsiType> types) {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
       final Project project = elements.get(0).getProject();
       final TypeMigrationRules rules = new TypeMigrationRules(project);
@@ -349,7 +348,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
                                                           true);
     }
 
-    private Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<PsiElement> elements,
+    private Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<? extends PsiElement> elements,
                                                                              @NotNull final List<PsiType> types) {
       LOG.assertTrue(elements.size() == types.size());
       final Map<PsiElement, PsiType> mappings = new HashMap<>();

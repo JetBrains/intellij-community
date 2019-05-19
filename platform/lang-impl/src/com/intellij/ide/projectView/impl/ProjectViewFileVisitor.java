@@ -15,7 +15,7 @@ import java.util.function.Predicate;
 import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
 
 class ProjectViewFileVisitor extends AbstractTreeNodeVisitor<VirtualFile> {
-  public ProjectViewFileVisitor(@NotNull VirtualFile file, Predicate<TreePath> predicate) {
+  ProjectViewFileVisitor(@NotNull VirtualFile file, Predicate<? super TreePath> predicate) {
     super(() -> file, predicate);
     LOG.debug("create visitor for file: " + file);
   }

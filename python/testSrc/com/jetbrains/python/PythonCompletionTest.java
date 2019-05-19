@@ -8,6 +8,8 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -309,6 +311,14 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testSuperMethod() {  // PY-170
+    doTest();
+  }
+
+  public void testSuperMethodWithAnnotation() {
+    doTest();
+  }
+
+  public void testSuperMethodWithCommentAnnotation() {
     doTest();
   }
 
@@ -1264,12 +1274,36 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-23632
   public void testMockPatchObject1Py2() {
-    doMultiFileTest();
+    final String testName = getTestName(true);
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        myFixture.configureByFile(testName + "/a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(testName + "/a.after.py");
+      }
+    );
   }
 
   // PY-23632
   public void testMockPatchObject2Py2() {
-    doMultiFileTest();
+    final String testName = getTestName(true);
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        myFixture.configureByFile(testName + "/a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(testName + "/a.after.py");
+      }
+    );
   }
 
   // PY-28577
@@ -1347,6 +1381,11 @@ public class PythonCompletionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::assertSingleVariantInExtendedCompletion);
   }
 
+  // PY-29158
+  public void testModuleStringLiteralCompletion() {
+    doMultiFileTest(CompletionType.BASIC, 2);
+  }
+
   // PY-28341
   public void testCompletionForUsedAttribute() {
     doMultiFileTest();
@@ -1365,6 +1404,126 @@ public class PythonCompletionTest extends PyTestCase {
     assertNotNull(suggested);
     assertSameElements(suggested, "print", "print", "print_function", "property", "repr");
   }
+
+  // PY-27148
+  public void testNamedTupleSpecial() {
+    final List<String> suggested = doTestByText("from collections import namedtuple\n" +
+                                              "class Cat1(namedtuple(\"Cat\", \"name age\")):\n" +
+                                              "    pass\n" +
+                                              "c1 = Cat1(\"name\", 5)\n" +
+                                              "c1.<caret>");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "_make", "_asdict", "_replace", "_fields");
+  }
+
+  // PY-31938
+  public void testReassignedDictKeys() {
+    final List<String> suggested = doTestByText("foo = {'k1': '1', 'k2': '2'}\n" +
+                                                "bar = foo\n" +
+                                                "bar['<caret>']");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "'k1'", "'k2'");
+  }
+
+  // PY-8302
+  public void testUndeclaredFunction() {
+    myFixture.configureByFile("uninitialized/fun.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertDoesntContain(suggested, "foo");
+  }
+
+  // PY-8302
+  public void testUninitializedVarBefore() {
+    myFixture.configureByFile("uninitialized/variable.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertDoesntContain(suggested, "foo");
+  }
+
+  // PY-8302
+  public void testUninitializedVarOnSameLine() {
+    List<String> suggested = doTestByText("foo = f<caret>");
+    assertNotNull(suggested);
+    assertDoesntContain(suggested, "foo");
+  }
+
+  // PY-8302
+  public void testUninitializedVarOnMultiLine() {
+    List<String> suggested = doTestByText("foo = \"this is a string\"\\\n" +
+                                          "      \"on several lines\" + f<caret>");
+    assertNotNull(suggested);
+    assertDoesntContain(suggested, "foo");
+  }
+
+  // PY-8302
+  public void testUndeclaredClass() {
+    myFixture.configureByFiles("uninitialized/MyClass.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertDoesntContain(suggested, "MyClass");
+  }
+
+  // PY-8302
+  public void testDeclaredClass() {
+    List<String> suggested = doTestByText("class AClass:\n" +
+                                          "    pass\n\n" +
+                                          "class BClass(A<caret>)");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "AClass");
+  }
+
+  // PY-8302
+  public void testBeforeImport() {
+    myFixture.configureByFiles("beforeImport/beforeImport.py", "beforeImport/source.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertDoesntContain(suggested, "my_foo", "my_bar");
+  }
+
+  // PY-8302
+  public void testBeforeImportAs() {
+    myFixture.configureByFiles("beforeImport/beforeImportAs.py", "beforeImport/source.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertDoesntContain(suggested, "my_renamed_foo");
+  }
+
+  // PY-8302
+  public void testBeforeStarImport() {
+    myFixture.configureByFiles("beforeImport/beforeStarImport.py", "beforeImport/source.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertDoesntContain(suggested, "my_foo", "my_bar");
+  }
+
+  // PY-8302
+  public void testSecondInvocationForClass() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "class MyClass(A<caret>)");
+    myFixture.complete(CompletionType.BASIC, 2);
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertDoesntContain(suggested, "MyClass");
+  }
+
+  // PY-8302
+  public void testSecondInvocationForFun() {
+    myFixture.configureByFile("uninitialized/fun.py");
+    myFixture.complete(CompletionType.BASIC, 2);
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertDoesntContain(suggested, "foo");
+  }
+
+  // PY-8302
+  public void testSecondInvocationForVar() {
+    myFixture.configureByFile("uninitialized/variable.py");
+    myFixture.complete(CompletionType.BASIC, 2);
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertDoesntContain(suggested, "foo");
+  }
+
 
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");

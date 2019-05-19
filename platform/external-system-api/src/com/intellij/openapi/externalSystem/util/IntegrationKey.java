@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/10/13 11:39 AM
  */
 public class IntegrationKey {
 
@@ -95,6 +95,6 @@ public class IntegrationKey {
 
   @Override
   public String toString() {
-    return String.format("%s project '%s'", myExternalSystemId.toString().toLowerCase(), myIdeProjectName);
+    return String.format("%s project '%s'", StringUtil.toLowerCase(myExternalSystemId.toString()), myIdeProjectName);
   }
 }

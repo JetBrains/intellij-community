@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.commandLine;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -27,6 +25,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.UUID;
 
 public class FileSetFormatter extends FileSetProcessor {
@@ -56,7 +55,7 @@ public class FileSetFormatter extends FileSetProcessor {
   }
 
   private void createProject() throws IOException {
-    ProjectManagerEx projectManager = (ProjectManagerEx)ProjectManager.getInstance();
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     File projectDir = createProjectDir();
     myProject = projectManager.createProject(myProjectUID, projectDir.getPath());
     if (myProject != null) {
@@ -76,7 +75,7 @@ public class FileSetFormatter extends FileSetProcessor {
 
   private void closeProject() {
     if (myProject != null) {
-      ProjectUtil.closeAndDispose(myProject);
+      ProjectManagerEx.getInstanceEx().closeAndDispose(myProject);
     }
   }
 
@@ -99,7 +98,7 @@ public class FileSetFormatter extends FileSetProcessor {
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document != null) {
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        NonProjectFileWritingAccessProvider.allowWriting(virtualFile);
+        NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(virtualFile));
         if (psiFile != null) {
           if (isFormattingSupported(psiFile)) {
             reformatFile(myProject, psiFile, document);

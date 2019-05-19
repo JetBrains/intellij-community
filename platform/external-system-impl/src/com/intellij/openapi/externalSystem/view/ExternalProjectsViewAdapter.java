@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/15/2015
  */
 public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   @NotNull
@@ -88,6 +87,11 @@ public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   }
 
   @Override
+  public boolean getGroupModules() {
+    return delegate.getGroupModules();
+  }
+
+  @Override
   public boolean useTasksNode() {
     return delegate.useTasksNode();
   }
@@ -110,5 +114,10 @@ public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   @Override
   public boolean getShowIgnored() {
     return delegate.getShowIgnored();
+  }
+
+  @Override
+  public String getDisplayName(DataNode node) {
+    return delegate.getDisplayName(node);
   }
 }

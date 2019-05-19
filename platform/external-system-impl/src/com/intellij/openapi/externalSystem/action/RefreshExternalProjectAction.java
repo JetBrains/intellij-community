@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -15,6 +16,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,9 +28,8 @@ import java.util.List;
  * (e.g. imports missing libraries).
  *
  * @author Vladislav.Soroka
- * @since 9/18/13
  */
-public class RefreshExternalProjectAction extends ExternalSystemNodeAction<AbstractExternalEntityData> {
+public class RefreshExternalProjectAction extends ExternalSystemNodeAction<AbstractExternalEntityData> implements DumbAware {
 
   public RefreshExternalProjectAction() {
     super(AbstractExternalEntityData.class);
@@ -49,9 +50,9 @@ public class RefreshExternalProjectAction extends ExternalSystemNodeAction<Abstr
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
-    final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
+    final List<ExternalSystemNode> selectedNodes = e.getData(ExternalSystemDataKeys.SELECTED_NODES);
     if (selectedNodes == null || selectedNodes.size() != 1) return false;
     final Object externalData = selectedNodes.get(0).getData();
     return (externalData instanceof ProjectData || externalData instanceof ModuleData);
@@ -63,7 +64,7 @@ public class RefreshExternalProjectAction extends ExternalSystemNodeAction<Abstr
                       @NotNull AbstractExternalEntityData externalEntityData,
                       @NotNull AnActionEvent e) {
 
-    final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
+    final List<ExternalSystemNode> selectedNodes = e.getData(ExternalSystemDataKeys.SELECTED_NODES);
     final ExternalSystemNode<?> externalSystemNode = ContainerUtil.getFirstItem(selectedNodes);
     assert externalSystemNode != null;
 

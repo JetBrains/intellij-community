@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -10,7 +10,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
@@ -27,6 +29,7 @@ import java.util.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.BUILD_SRC_NAME;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getDefaultModuleTypeId;
 
 /**
@@ -70,8 +73,8 @@ public class GradleBuildSrcProjectsResolver {
     ProjectData mainBuildProjectData = mainBuildProjectDataNode.getData();
     String projectPath = mainBuildProjectData.getLinkedExternalProjectPath();
 
-    Map<String, String> includedBuildsPaths = ContainerUtil.newHashMap();
-    Map<String, String> buildNames = ContainerUtil.newHashMap();
+    Map<String, String> includedBuildsPaths = new HashMap<>();
+    Map<String, String> buildNames = new HashMap<>();
     buildNames.put(projectPath, mainBuildProjectData.getExternalName());
     DataNode<CompositeBuildData> compositeBuildData = find(mainBuildProjectDataNode, CompositeBuildData.KEY);
     if (compositeBuildData != null) {
@@ -85,7 +88,7 @@ public class GradleBuildSrcProjectsResolver {
     }
 
     MultiMap<String, DataNode<BuildScriptClasspathData>> buildClasspathNodesMap = MultiMap.createSmart();
-    Map<String, ModuleData> includedModulesPaths = ContainerUtil.newHashMap();
+    Map<String, ModuleData> includedModulesPaths = new HashMap<>();
     for (DataNode<ModuleData> moduleDataNode : findAll(mainBuildProjectDataNode, ProjectKeys.MODULE)) {
       String path = moduleDataNode.getData().getLinkedExternalProjectPath();
       includedModulesPaths.put(path, moduleDataNode.getData());
@@ -94,6 +97,17 @@ public class GradleBuildSrcProjectsResolver {
         String rootPath = includedBuildsPaths.get(path);
         buildClasspathNodesMap.putValue(rootPath != null ? rootPath : projectPath, scriptClasspathDataNode);
       }
+    }
+
+    List<String> jvmOptions = ContainerUtil.newSmartList();
+    // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
+    // to avoid spawning of the second gradle daemon
+    BuildEnvironment mainBuildEnvironment = myResolverContext.getModels().getBuildEnvironment();
+    if (mainBuildEnvironment != null) {
+      jvmOptions.addAll(mainBuildEnvironment.getJava().getJvmArguments());
+    }
+    if (myMainBuildExecutionSettings != null) {
+      jvmOptions.addAll(myMainBuildExecutionSettings.getJvmArguments());
     }
 
     for (String buildPath : buildClasspathNodesMap.keySet()) {
@@ -114,9 +128,9 @@ public class GradleBuildSrcProjectsResolver {
           buildSrcProjectSettings.setVerboseProcessing(myMainBuildExecutionSettings.isVerboseProcessing());
           buildSrcProjectSettings.setWrapperPropertyFile(myMainBuildExecutionSettings.getWrapperPropertyFile());
           buildSrcProjectSettings.withArguments(myMainBuildExecutionSettings.getArguments())
-                                 .withEnvironmentVariables(myMainBuildExecutionSettings.getEnv())
-                                 .passParentEnvs(myMainBuildExecutionSettings.isPassParentEnvs())
-                                 .withVmOptions(myMainBuildExecutionSettings.getVmOptions());
+            .withEnvironmentVariables(myMainBuildExecutionSettings.getEnv())
+            .passParentEnvs(myMainBuildExecutionSettings.isPassParentEnvs())
+            .withVmOptions(jvmOptions);
         }
         else {
           buildSrcProjectSettings = new GradleExecutionSettings(gradleHome, null, DistributionType.LOCAL, false);
@@ -132,10 +146,9 @@ public class GradleBuildSrcProjectsResolver {
       myResolverContext.copyUserDataTo(buildSrcResolverCtx);
       String buildName = buildNames.get(buildPath);
 
-      ModuleData moduleData = includedModulesPaths.get(buildPath);
-      String buildSrcGroup = getBuildSrcGroup(buildPath, buildName, moduleData);
+      String buildSrcGroup = getBuildSrcGroup(buildPath, buildName);
 
-      buildSrcResolverCtx.setDefaultGroupId(buildSrcGroup);
+      buildSrcResolverCtx.setBuildSrcGroup(buildSrcGroup);
       handleBuildSrcProject(mainBuildProjectDataNode,
                             buildName,
                             buildClasspathNodes,
@@ -163,7 +176,7 @@ public class GradleBuildSrcProjectsResolver {
 
     if (buildSrcResolverCtx.isPreviewMode()) {
       ModuleData buildSrcModuleData =
-        new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(), "buildSrc", projectPath, projectPath);
+        new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(), BUILD_SRC_NAME, projectPath, projectPath);
       buildSrcModuleData.setProperty(BUILD_SRC_MODULE_PROPERTY, "true");
       resultProjectDataNode.createChild(ProjectKeys.MODULE, buildSrcModuleData);
       return;
@@ -174,14 +187,14 @@ public class GradleBuildSrcProjectsResolver {
 
     if (buildSrcProjectDataNode == null) return;
 
-    Map<String, DataNode<? extends ModuleData>> buildSrcModules = ContainerUtil.newHashMap();
+    Map<String, DataNode<? extends ModuleData>> buildSrcModules = new HashMap<>();
 
     boolean modulePerSourceSet = buildSrcResolverCtx.isResolveModulePerSourceSet();
     DataNode<? extends ModuleData> buildSrcModuleNode = null;
     for (DataNode<ModuleData> moduleNode : getChildren(buildSrcProjectDataNode, ProjectKeys.MODULE)) {
       final ModuleData moduleData = moduleNode.getData();
       buildSrcModules.put(moduleData.getId(), moduleNode);
-      boolean isBuildSrcModule = "buildSrc".equals(moduleData.getExternalName());
+      boolean isBuildSrcModule = BUILD_SRC_NAME.equals(moduleData.getExternalName());
 
       if (isBuildSrcModule && !modulePerSourceSet) {
         buildSrcModuleNode = moduleNode;
@@ -218,8 +231,8 @@ public class GradleBuildSrcProjectsResolver {
       }
     }
     if (buildSrcModuleNode != null) {
-      Set<String> buildSrcRuntimeSourcesPaths = ContainerUtil.newHashSet();
-      Set<String> buildSrcRuntimeClassesPaths = ContainerUtil.newHashSet();
+      Set<String> buildSrcRuntimeSourcesPaths = new THashSet<>();
+      Set<String> buildSrcRuntimeClassesPaths = new THashSet<>();
 
       addSourcePaths(buildSrcRuntimeSourcesPaths, buildSrcModuleNode);
 
@@ -246,11 +259,10 @@ public class GradleBuildSrcProjectsResolver {
       if (!buildSrcRuntimeSourcesPaths.isEmpty() || !buildSrcRuntimeClassesPaths.isEmpty()) {
         buildClasspathNodes.forEach(classpathNode -> {
           BuildScriptClasspathData data = classpathNode.getData();
-          List<BuildScriptClasspathData.ClasspathEntry> classpathEntries = ContainerUtil.newArrayList();
-          classpathEntries.addAll(data.getClasspathEntries());
+          List<BuildScriptClasspathData.ClasspathEntry> classpathEntries = new ArrayList<>(data.getClasspathEntries());
           classpathEntries.add(new BuildScriptClasspathData.ClasspathEntry(
-            new HashSet<>(buildSrcRuntimeClassesPaths),
-            new HashSet<>(buildSrcRuntimeSourcesPaths),
+            new THashSet<>(buildSrcRuntimeClassesPaths),
+            new THashSet<>(buildSrcRuntimeSourcesPaths),
             Collections.emptySet()
           ));
           BuildScriptClasspathData buildScriptClasspathData = new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);
@@ -274,17 +286,11 @@ public class GradleBuildSrcProjectsResolver {
   }
 
   @NotNull
-  private static String getBuildSrcGroup(String buildPath, String buildName, ModuleData moduleData) {
-    String buildSrcGroup = null;
-    if (moduleData != null) {
-      buildSrcGroup = moduleData.getGroup();
+  private static String getBuildSrcGroup(String buildPath, String buildName) {
+    if (isEmpty(buildName)) {
+      return new File(buildPath).getName();
+    } else {
+      return buildName;
     }
-    if (isEmpty(buildSrcGroup)) {
-      buildSrcGroup = buildName;
-    }
-    if (isEmpty(buildSrcGroup)) {
-      buildSrcGroup = new File(buildPath).getName();
-    }
-    return buildSrcGroup;
   }
 }

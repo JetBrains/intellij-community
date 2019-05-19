@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
 import com.intellij.execution.filters.FileHyperlinkInfo;
@@ -24,6 +10,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutterAction;
+import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -37,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
@@ -60,8 +47,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class AnnotateStackTraceAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(AnnotateStackTraceAction.class);
@@ -78,13 +65,13 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean isShown = myEditor.getGutter().isAnnotationsShown();
     e.getPresentation().setEnabled(!isShown && !myIsLoading);
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     myIsLoading = true;
 
     ProgressManager.getInstance().run(new Task.Backgroundable(myEditor.getProject(), "Getting File History", true) {
@@ -107,7 +94,7 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         MultiMap<VirtualFile, Integer> files2lines = new MultiMap<>();
-        Map<Integer, LastRevision> revisions = ContainerUtil.newHashMap();
+        Map<Integer, LastRevision> revisions = new HashMap<>();
 
         ApplicationManager.getApplication().runReadAction(() -> {
           for (int line = 0; line < myEditor.getDocument().getLineCount(); line++) {
@@ -156,7 +143,7 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
 
         Map<Integer, LastRevision> revisionsCopy;
         synchronized (LOCK) {
-          revisionsCopy = ContainerUtil.newHashMap(revisions);
+          revisionsCopy = new HashMap<>(revisions);
         }
 
         myGutter.updateData(revisionsCopy);
@@ -214,7 +201,7 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
     @NotNull private final Date myDate;
     @NotNull private final String myMessage;
 
-    public LastRevision(@NotNull VcsRevisionNumber number, @NotNull String author, @NotNull Date date, @NotNull String message) {
+    LastRevision(@NotNull VcsRevisionNumber number, @NotNull String author, @NotNull Date date, @NotNull String message) {
       myNumber = number;
       myAuthor = author;
       myDate = date;
@@ -251,7 +238,7 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
     }
   }
 
-  private static class MyActiveAnnotationGutter implements ActiveAnnotationGutter {
+  private static class MyActiveAnnotationGutter implements TextAnnotationGutterProvider, EditorGutterAction {
     @NotNull private final Project myProject;
     @NotNull private final EditorHyperlinkSupport myHyperlinks;
     @NotNull private final ProgressIndicator myIndicator;
@@ -260,7 +247,7 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
     private Date myNewestDate = null;
     private int myMaxDateLength = 0;
 
-    public MyActiveAnnotationGutter(@NotNull Project project,
+    MyActiveAnnotationGutter(@NotNull Project project,
                                     @NotNull EditorHyperlinkSupport hyperlinks,
                                     @NotNull ProgressIndicator indicator) {
       myProject = project;

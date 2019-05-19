@@ -41,7 +41,7 @@ public class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule
   }
 
   @Override
-  public XBreakpointPackageGroup getGroup(@NotNull B breakpoint, @NotNull Collection<XBreakpointPackageGroup> groups) {
+  public XBreakpointPackageGroup getGroup(@NotNull B breakpoint, @NotNull Collection<? extends XBreakpointPackageGroup> groups) {
     String packageName = null;
     if (breakpoint instanceof XBreakpoint) {
       Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint((XBreakpoint)breakpoint);

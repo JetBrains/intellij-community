@@ -33,7 +33,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
   private final StructureConfigurableContext myContext;
   private final ClasspathPanel myClasspathPanel;
 
-  public AddModuleDependencyAction(final ClasspathPanel classpathPanel,
+  AddModuleDependencyAction(final ClasspathPanel classpathPanel,
                                    int actionIndex,
                                    StructureConfigurableContext context) {
     super(classpathPanel, actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
@@ -75,13 +75,13 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
   }
 
   private static class ModuleChooser implements ClasspathElementChooser<Module> {
-    private final List<Module> myItems;
+    private final List<? extends Module> myItems;
     private final String myTitle;
     private final String myDescription;
     private final ClasspathPanel myClasspathPanel;
 
-    public ModuleChooser(final ClasspathPanel classpathPanel,
-                         final List<Module> items,
+    ModuleChooser(final ClasspathPanel classpathPanel,
+                         final List<? extends Module> items,
                          final String title,
                          String description) {
       myItems = items;

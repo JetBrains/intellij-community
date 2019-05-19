@@ -21,8 +21,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.tasks.MavenBeforeRunTask;
 import org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
@@ -33,7 +35,7 @@ import java.util.List;
 
 public class ToggleBeforeRunTaskAction extends MavenToggleAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && getTaskDesc(e.getDataContext()) != null;
   }
 
@@ -52,7 +54,8 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
   }
 
   @Override
-  public void setSelected(final AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull final AnActionEvent e, boolean state) {
+    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final DataContext context = e.getDataContext();
     final Pair<MavenProject, String> desc = getTaskDesc(context);
     if (desc != null) {

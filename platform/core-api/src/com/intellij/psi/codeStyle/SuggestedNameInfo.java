@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents an array of suggested variable names and allows to keep statistics on
@@ -34,9 +35,10 @@ public abstract class SuggestedNameInfo {
   /**
    * The suggested names.
    */
+  @NotNull
   public final String[] names;
 
-  public SuggestedNameInfo(String[] names) {
+  public SuggestedNameInfo(@NotNull String[] names) {
     this.names = names;
   }
 
@@ -52,7 +54,7 @@ public abstract class SuggestedNameInfo {
   public static class Delegate extends SuggestedNameInfo {
     SuggestedNameInfo myDelegate;
 
-    public Delegate(final String[] names, final SuggestedNameInfo delegate) {
+    public Delegate(@NotNull String[] names, @NotNull SuggestedNameInfo delegate) {
       super(names);
       myDelegate = delegate;
     }

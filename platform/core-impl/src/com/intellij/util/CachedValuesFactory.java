@@ -25,8 +25,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public interface CachedValuesFactory {
-
+  @NotNull
   <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue);
+
+  @NotNull
   <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue);
 
 }

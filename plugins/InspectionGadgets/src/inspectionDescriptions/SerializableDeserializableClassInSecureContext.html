@@ -6,8 +6,14 @@ and its <b>readObject()</b> and <b>writeObject()</b> methods are not defined to 
 throw an exception. Serializable classes may be dangerous in code intended for secure use.
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to ignore classes extending <b>Throwable</b> directly or indirectly.
-However it may be more secure to add <b>readObject()</b> and <b>writeObject()</b> methods which always throw an exception instead.
+  Use the table below to specify what specific classes and their inheritors should be excluded
+  from being checked by this inspection. This is meant for those classes which, although they inherit
+  Serializable from a superclass, are not intended for serialization. Such classes would lead this
+  inspection to report unnecessarily. <br>
+  Note that it may be more secure to add <b>readObject()</b> and <b>writeObject()</b> methods which always throw an exception, instead.
+<p>
+  Use the checkbox below to ignore <b>Serializable</b> anonymous classes.
+<p>
 <p><small>New in 2017.3</small>
 </body>
 </html>

@@ -9,6 +9,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -72,20 +73,12 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testToConstructorInherited() {
     ResolveResult[] targets = multiResolve();
-    assertEquals(2, targets.length); // to class, to init
+    assertEquals(1, targets.length); // to class, to init
     PsiElement elt;
     // class
     elt = targets[0].getElement();
     assertTrue(elt instanceof PyClass);
     assertEquals("Bar", ((PyClass)elt).getName());
-    // init
-    elt = targets[1].getElement();
-    assertTrue(elt instanceof PyFunction);
-    PyFunction fun = (PyFunction)elt;
-    assertEquals(PyNames.INIT, fun.getName());
-    PyClass cls = fun.getContainingClass();
-    assertNotNull(cls);
-    assertEquals("Foo", cls.getName());
   }
 
   // NOTE: maybe this test does not belong exactly here; still it's the best place currently.
@@ -531,6 +524,10 @@ public class PyResolveTest extends PyResolveTestCase {
     runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "module_level_variable1"));
   }
 
+  public void testEpyDocTypeReferenceForInstanceAttributeInClassLevelDocstring() {
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
+  }
+
   // PY-7541
   public void testLoopToUpperReassignment() {
     final PsiReference ref = findReferenceByMarker();
@@ -842,7 +839,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testInstanceDunderClass() {
-    assertResolvesTo(PyClass.class, "A");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testInstanceDunderDoc() {
@@ -860,7 +857,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testInstanceDunderClassNewStyleClass() {
-    assertResolvesTo(PyClass.class, "A");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testInstanceDunderDocNewStyleClass() {
@@ -879,7 +876,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testInstanceDunderClassWithClassAttr() {
-    assertResolvesTo(PyClass.class, "A");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testInstanceDunderDocWithClassAttr() {
@@ -998,7 +995,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClassNewStyleClass() {
-    assertResolvesTo(PyClass.class, "type");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testTypeDunderDocNewStyleClass() {
@@ -1050,7 +1047,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClassWithClassAttrNewStyleClass() {
-    assertResolvesTo(PyClass.class, "type");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testTypeDunderDocWithClassAttrNewStyleClass() {
@@ -1079,7 +1076,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClassWithInheritedClassAttr() {
-    assertResolvesTo(PyClass.class, "type");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testTypeDunderDocWithInheritedClassAttr() {
@@ -1314,8 +1311,32 @@ public class PyResolveTest extends PyResolveTestCase {
     assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
   }
 
+  // PY-19890
+  public void testUnboundVariableOnClassLevelDeclaredBelowAsImport() {
+    final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
+
+    final PyExpression value = foo.findAssignedValue();
+    assertInstanceOf(value, PyStringLiteralExpression.class);
+    assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
+  // PY-19890
+  public void testUnboundVariableOnClassLevelDeclaredBelowAsImportWithAs() {
+    final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
+
+    final PyExpression value = foo.findAssignedValue();
+    assertInstanceOf(value, PyStringLiteralExpression.class);
+    assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
   // PY-29975
   public void testUnboundVariableOnClassLevelNotDeclaredBelow() {
     assertResolvesTo(PyNamedParameter.class, "foo");
+  }
+
+  // PY-30512
+  public void testDunderBuiltins() {
+    final PsiElement element = doResolve();
+    assertEquals(PyBuiltinCache.getInstance(myFixture.getFile()).getBuiltinsFile(), element);
   }
 }

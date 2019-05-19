@@ -26,7 +26,6 @@ import java.util.regex.PatternSyntaxException;
  * A single pattern the occurrences of which in comments are indexed by IDEA.
  *
  * @author yole
- * @since 5.1
  * @see IndexPatternProvider#getIndexPatterns()
  */
 public class IndexPattern {

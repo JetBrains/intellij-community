@@ -1,19 +1,5 @@
 
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
@@ -28,7 +14,9 @@ import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -122,7 +110,7 @@ public class AddImportAction implements QuestionAction {
             });
           }
 
-          return getExcludesStep(selectedValue.getQualifiedName(), myProject);
+          return getExcludesStep(myProject, selectedValue.getQualifiedName());
         }
 
         @Override
@@ -141,20 +129,17 @@ public class AddImportAction implements QuestionAction {
           return aValue.getIcon(0);
         }
       };
-    ListPopupImpl popup = new ListPopupImpl(step) {
+    ListPopupImpl popup = new ListPopupImpl(myProject, step) {
       @Override
       protected ListCellRenderer getListElementRenderer() {
         final PopupListElementRenderer baseRenderer = (PopupListElementRenderer)super.getListElementRenderer();
         final DefaultPsiElementCellRenderer psiRenderer = new DefaultPsiElementCellRenderer();
-        return new ListCellRenderer() {
-          @Override
-          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            JPanel panel = new JPanel(new BorderLayout());
-            baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            panel.add(baseRenderer.getNextStepLabel(), BorderLayout.EAST);
-            panel.add(psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus));
-            return panel;
-          }
+        return (list, value, index, isSelected, cellHasFocus) -> {
+          JPanel panel = new JPanel(new BorderLayout());
+          baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          panel.add(baseRenderer.getNextStepLabel(), BorderLayout.EAST);
+          panel.add(psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus));
+          return panel;
         };
       }
     };
@@ -163,7 +148,7 @@ public class AddImportAction implements QuestionAction {
   }
 
   @Nullable
-  public static PopupStep getExcludesStep(String qname, final Project project) {
+  public static PopupStep getExcludesStep(@NotNull Project project, @Nullable String qname) {
     if (qname == null) return PopupStep.FINAL_CHOICE;
 
     List<String> toExclude = getAllExcludableStrings(qname);
@@ -177,7 +162,7 @@ public class AddImportAction implements QuestionAction {
 
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-        if (finalChoice) {
+        if (finalChoice && selectedValue != null) {
           excludeFromImport(project, selectedValue);
         }
 
@@ -186,7 +171,7 @@ public class AddImportAction implements QuestionAction {
     };
   }
   
-  public static void excludeFromImport(final Project project, final String prefix) {
+  public static void excludeFromImport(@NotNull Project project, @NotNull String prefix) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (project.isDisposed()) return;
 
@@ -198,6 +183,7 @@ public class AddImportAction implements QuestionAction {
     });
   }
 
+  @NotNull
   public static List<String> getAllExcludableStrings(@NotNull String qname) {
     List<String> toExclude = new ArrayList<>();
     while (true) {
@@ -209,7 +195,7 @@ public class AddImportAction implements QuestionAction {
     return toExclude;
   }
 
-  private void addImport(final PsiReference ref, final PsiClass targetClass) {
+  private void addImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
       if (!ref.getElement().isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
         return;
@@ -217,21 +203,12 @@ public class AddImportAction implements QuestionAction {
 
       StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
       WriteCommandAction.runWriteCommandAction(myProject, QuickFixBundle.message("add.import"), null,
-                                               () -> _addImport(ref, targetClass),
+                                               () -> doAddImport(ref, targetClass),
                                                ref.getElement().getContainingFile());
     });
   }
 
-  private void _addImport(PsiReference ref, PsiClass targetClass) {
-    int caretOffset = myEditor.getCaretModel().getOffset();
-    RangeMarker caretMarker = myEditor.getDocument().createRangeMarker(caretOffset, caretOffset);
-    int colByOffset = myEditor.offsetToLogicalPosition(caretOffset).column;
-    int col = myEditor.getCaretModel().getLogicalPosition().column;
-    int virtualSpace = col == colByOffset ? 0 : col - colByOffset;
-    int line = myEditor.getCaretModel().getLogicalPosition().line;
-    LogicalPosition pos = new LogicalPosition(line, 0);
-    myEditor.getCaretModel().moveToLogicalPosition(pos);
-
+  private void doAddImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
     try{
       bindReference(ref, targetClass);
       if (CodeInsightWorkspaceSettings.getInstance(myProject).optimizeImportsOnTheFly) {
@@ -243,19 +220,10 @@ public class AddImportAction implements QuestionAction {
     catch(IncorrectOperationException e){
       LOG.error(e);
     }
-
-    line = myEditor.getCaretModel().getLogicalPosition().line;
-    LogicalPosition pos1 = new LogicalPosition(line, col);
-    myEditor.getCaretModel().moveToLogicalPosition(pos1);
-    if (caretMarker.isValid()){
-      LogicalPosition pos2 = myEditor.offsetToLogicalPosition(caretMarker.getStartOffset());
-      int newCol = pos2.column + virtualSpace;
-      myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(pos2.line, newCol));
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  protected void bindReference(PsiReference ref, PsiClass targetClass) {
+  protected void bindReference(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
     ref.bindToElement(targetClass);
   }
 }

@@ -45,7 +45,7 @@ public class JavaNullMethodArgumentUtil {
     return result[0];
   }
 
-  public static void searchNullArgument(@NotNull PsiMethod method, final int argumentIdx, @NotNull Processor<PsiExpression> nullArgumentProcessor) {
+  public static void searchNullArgument(@NotNull PsiMethod method, final int argumentIdx, @NotNull Processor<? super PsiExpression> nullArgumentProcessor) {
     final PsiParameter parameter = method.getParameterList().getParameters()[argumentIdx];
     if (parameter.getType() instanceof PsiEllipsisType) {
       return;
@@ -64,8 +64,8 @@ public class JavaNullMethodArgumentUtil {
 
   private static void processCallsWithNullArguments(@NotNull PsiMethod method,
                                                     int argumentIdx,
-                                                    @NotNull Processor<PsiExpression> nullArgumentProcessor,
-                                                    Collection<VirtualFile> candidateFiles) {
+                                                    @NotNull Processor<? super PsiExpression> nullArgumentProcessor,
+                                                    Collection<? extends VirtualFile> candidateFiles) {
     if (candidateFiles.isEmpty()) return;
 
     GlobalSearchScope scope = GlobalSearchScope.filesScope(method.getProject(), candidateFiles);

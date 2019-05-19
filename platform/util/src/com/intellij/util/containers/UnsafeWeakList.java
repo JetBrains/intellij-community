@@ -41,7 +41,7 @@ import java.util.*;
  */
 public class UnsafeWeakList<T> extends AbstractCollection<T> {
   protected final List<MyReference<T>> myList;
-  private final ReferenceQueue<T> myQueue = new ReferenceQueue<T>();
+  private final ReferenceQueue<T> myQueue = new ReferenceQueue<>();
   private int myAlive;
   private int modCount;
 
@@ -55,11 +55,11 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   public UnsafeWeakList() {
-    myList = new ArrayList<MyReference<T>>();
+    myList = new ArrayList<>();
   }
 
   public UnsafeWeakList(int capacity) {
-    myList = new ArrayList<MyReference<T>>(capacity);
+    myList = new ArrayList<>(capacity);
   }
 
   boolean processQueue() {
@@ -96,7 +96,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
         continue;
       }
       if (toSaveAlive != i) {
-        myList.set(toSaveAlive, new MyReference<T>(toSaveAlive, t, myQueue));
+        myList.set(toSaveAlive, new MyReference<>(toSaveAlive, t, myQueue));
       }
       toSaveAlive++;
     }
@@ -108,7 +108,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   private void append(@NotNull T element) {
-    myList.add(new MyReference<T>(myList.size(), element, myQueue));
+    myList.add(new MyReference<>(myList.size(), element, myQueue));
     myAlive++;
     modCount++;
   }
@@ -225,19 +225,14 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
     return super.removeAll(c);
   }
 
-  private static final Function<MyReference<Object>, Object> DEREF = new Function<MyReference<Object>, Object>() {
-    @Override
-    public Object fun(MyReference<Object> reference) {
-      return SoftReference.dereference(reference);
-    }
-  };
+  private static final Function<MyReference<Object>, Object> DEREF = SoftReference::dereference;
   private static <X> Function<MyReference<X>, X> deref() {
     //noinspection unchecked
     return (Function)DEREF;
   }
   @NotNull
   public List<T> toStrongList() {
-    return ContainerUtil.mapNotNull(myList, UnsafeWeakList.<T>deref());
+    return ContainerUtil.mapNotNull(myList, UnsafeWeakList.deref());
   }
 
   /**
@@ -267,12 +262,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
     //noinspection unchecked
     return (Condition)NOT_NULL;
   }
-  private static final Condition<MyReference<Object>> NOT_NULL = new Condition<MyReference<Object>>() {
-    @Override
-    public boolean value(MyReference<Object> reference) {
-      return SoftReference.dereference(reference) != null;
-    }
-  };
+  private static final Condition<MyReference<Object>> NOT_NULL = reference -> SoftReference.dereference(reference) != null;
 
   // (*@#ing plugins
   @Deprecated

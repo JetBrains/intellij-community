@@ -23,7 +23,7 @@ import java.util.Iterator;
 class InvertedDiffIterableWrapper implements DiffIterable {
   @NotNull private final DiffIterable myIterable;
 
-  public InvertedDiffIterableWrapper(@NotNull DiffIterable iterable) {
+  InvertedDiffIterableWrapper(@NotNull DiffIterable iterable) {
     myIterable = iterable;
   }
 

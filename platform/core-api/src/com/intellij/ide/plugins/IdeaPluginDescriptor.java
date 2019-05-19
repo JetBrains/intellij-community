@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.components.ComponentConfig;
@@ -13,7 +13,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @author max
+ * Describes a plugin which may be installed into IntelliJ-based IDE. Use {@link com.intellij.ide.plugins.PluginManager#getPlugin(PluginId)}
+ * to get a descriptor by a plugin ID and {@link com.intellij.ide.plugins.PluginManagerCore#getPlugins()} to get all plugins.
  */
 public interface IdeaPluginDescriptor extends PluginDescriptor {
   File getPath();
@@ -48,16 +49,16 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   String getCategory();
 
   @Nullable
-  List<Element> getActionsDescriptionElements();
+  List<Element> getAndClearActionDescriptionElements();
 
   @NotNull
-  ComponentConfig[] getAppComponents();
+  List<ComponentConfig> getAppComponents();
 
   @NotNull
-  ComponentConfig[] getProjectComponents();
+  List<ComponentConfig> getProjectComponents();
 
   @NotNull
-  ComponentConfig[] getModuleComponents();
+  List<ComponentConfig> getModuleComponents();
 
   String getVendorEmail();
 
@@ -73,14 +74,19 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   boolean getUseIdeaClassLoader();
 
   /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
+  @Deprecated
   String getDownloads();
 
   String getSinceBuild();
 
   String getUntilBuild();
 
-  boolean isBundled();
   boolean allowBundledUpdate();
+
+  /**
+   * If true, this plugin is hidden from the list of installed plugins in Settings | Plugins.
+   */
+  boolean isImplementationDetail();
 
   boolean isEnabled();
   void setEnabled(boolean enabled);

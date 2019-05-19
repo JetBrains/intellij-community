@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -37,18 +39,20 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class ActionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.ex.ActionUtil");
   @NonNls private static final String WAS_ENABLED_BEFORE_DUMB = "WAS_ENABLED_BEFORE_DUMB";
   @NonNls public static final String WOULD_BE_ENABLED_IF_NOT_DUMB_MODE = "WOULD_BE_ENABLED_IF_NOT_DUMB_MODE";
   @NonNls private static final String WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE = "WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE";
+  @NonNls private static final String ACTION_UPDATE_DATA = ActionUtil.class.getName() + "ACTION_UPDATE_DATA";
 
   private ActionUtil() {
   }
@@ -82,15 +86,15 @@ public class ActionUtil {
   @NotNull
   private static String getActionUnavailableMessage(@NotNull List<String> actionNames) {
     String message;
-    final String beAvailableUntil = " available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
     if (actionNames.isEmpty()) {
-      message = "This action is not" + beAvailableUntil;
+      message = getUnavailableMessage("This action", false);
     }
     else if (actionNames.size() == 1) {
-      message = "'" + actionNames.get(0) + "' action is not" + beAvailableUntil;
+      message = getUnavailableMessage("'" + actionNames.get(0) + "'", false);
     }
     else {
-      message = "None of the following actions are" + beAvailableUntil + ": " + StringUtil.join(actionNames, ", ");
+      message = getUnavailableMessage("None of the following actions", true) +
+                                       ": " + StringUtil.join(actionNames, ", ");
     }
     return message;
   }
@@ -99,6 +103,40 @@ public class ActionUtil {
   public static String getUnavailableMessage(@NotNull String action, boolean plural) {
     return action + (plural ? " are" : " is")
            + " not available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
+  }
+
+  /**
+   * Calculates time spent for update,
+   * remember average time (with exponential smoothing) and caches update results inside action.getTemplatePresentation().getClientProperty(ACTION_UPDATE_DATA),
+   * if average time is quite big then skip update invocation and use cached presentation.
+   * @param forceUseCached use cached results for slow actions if presented (relax time doesn't take into account)
+   */
+  public static void performFastUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent event, boolean forceUseCached) {
+    final Presentation templatePresentation = action.getTemplatePresentation();
+    ActionUpdateData ud = (ActionUpdateData)templatePresentation.getClientProperty(ACTION_UPDATE_DATA);
+    if (ud == null)
+      templatePresentation.putClientProperty(ACTION_UPDATE_DATA, ud = new ActionUpdateData());
+
+    final boolean isSlow = ud.averageUpdateDurationMs > 10;// empiric val: 10 ms
+    final long startTimeNs = System.nanoTime();
+    final long relaxMs = Math.min(ud.averageUpdateDurationMs*100, 10000); // empiric vals: min 1 sec, max 10 sec
+    if (isSlow && ud.lastUpdateEvent != null && (forceUseCached || (startTimeNs - ud.lastUpdateTimeNs) / 1000000L < relaxMs)) {
+      // System.out.println("use cached presentation for action '" + String.valueOf(action) + "', averageUpdateDuration=" + ud.averageUpdateDurationMs + " ms, " + (startTimeNs - ud.lastUpdateTimeNs)/1000000l + " ms elapsed from last update");
+      event.getPresentation().copyFrom(ud.lastUpdateEvent.getPresentation());
+      return;
+    }
+
+    performDumbAwareUpdate(isInModalContext, action, event, false);
+    final long finishUpdateNs = System.nanoTime();
+
+    ud.lastUpdateTimeNs = finishUpdateNs;
+    ud.lastUpdateEvent = event;
+
+    final float smoothAlpha = isSlow ? 0.8f : 0.3f;
+    final float smoothCoAlpha = 1 - smoothAlpha;
+    final long spentMs = (finishUpdateNs - startTimeNs) / 1000000L;
+
+    ud.averageUpdateDurationMs = Math.round(spentMs*smoothAlpha + ud.averageUpdateDurationMs*smoothCoAlpha);
   }
 
   private static int insidePerformDumbAwareUpdate;
@@ -122,11 +160,13 @@ public class ActionUtil {
     }
     final boolean enabledBeforeUpdate = presentation.isEnabled();
 
-    final boolean notAllowed = dumbMode && !action.isDumbAware() || (Registry.is("actionSystem.honor.modal.context") && isInModalContext && !action.isEnabledInModalContext());
+    boolean allowed = (!dumbMode || action.isDumbAware()) &&
+                      (!Registry.is("actionSystem.honor.modal.context") || !isInModalContext || action.isEnabledInModalContext());
 
-    String description = presentation.getText() + " action update (" + action.getClass() + ")";
-    if (insidePerformDumbAwareUpdate++ == 0) {
-      ActionPauses.STAT.started(description);
+    String presentationText = presentation.getText();
+    boolean edt = ApplicationManager.getApplication().isDispatchThread();
+    if (edt && insidePerformDumbAwareUpdate++ == 0) {
+      ActionPauses.STAT.started();
     }
     try {
       if (beforeActionPerformed) {
@@ -135,20 +175,20 @@ public class ActionUtil {
       else {
         action.update(e);
       }
-      presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, notAllowed && presentation.isEnabled());
-      presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, notAllowed && presentation.isVisible());
+      presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled());
+      presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible());
     }
     catch (IndexNotReadyException e1) {
-      if (notAllowed) {
+      if (!allowed) {
         return true;
       }
       throw e1;
     }
     finally {
-      if (--insidePerformDumbAwareUpdate == 0) {
-        ActionPauses.STAT.finished(description);
+      if (edt && --insidePerformDumbAwareUpdate == 0) {
+        ActionPauses.STAT.finished(presentationText + " action update (" + action.getClass() + ")");
       }
-      if (notAllowed) {
+      if (!allowed) {
         if (wasEnabledBefore == null) {
           presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, enabledBeforeUpdate);
         }
@@ -177,8 +217,8 @@ public class ActionUtil {
     if (project != null) {
       return DumbService.getInstance(project).isDumb();
     }
-    for (Project proj : ProjectManager.getInstance().getOpenProjects()) {
-      if (DumbService.getInstance(proj).isDumb()) {
+    for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
+      if (DumbService.getInstance(openProject).isDumb()) {
         return true;
       }
     }
@@ -205,11 +245,14 @@ public class ActionUtil {
     if (!e.getPresentation().isEnabled()) {
       return false;
     }
-    if (visibilityMatters && !e.getPresentation().isVisible()) {
-      return false;
-    }
+    return !visibilityMatters || e.getPresentation().isVisible();
+  }
 
-    return true;
+  public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e, @NotNull DataContext context) {
+    final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+    manager.fireBeforeActionPerformed(action, context, e);
+    performActionDumbAware(action, e);
+    manager.fireAfterActionPerformed(action, context, e);
   }
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
@@ -235,6 +278,45 @@ public class ActionUtil {
       TransactionGuard.getInstance().submitTransactionAndWait(runnable);
     } else {
       runnable.run();
+    }
+  }
+  @NotNull
+  public static AnActionEvent createEmptyEvent() {
+    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
+  }
+
+  public static void sortAlphabetically(@NotNull List<? extends AnAction> list) {
+    list.sort(new Comparator<AnAction>() {
+      @Override
+      public int compare(AnAction o1, AnAction o2) {
+        return Comparing.compare(o1.getTemplateText(), o2.getTemplateText());
+      }
+    });
+  }
+
+  /**
+   * Tries to find an 'action' and 'target action' by text and put the 'action' just before of after the 'target action'
+   */
+  public static void moveActionTo(@NotNull List<AnAction> list,
+                                  @NotNull String actionText,
+                                  @NotNull String targetActionText,
+                                  boolean before) {
+    if (Comparing.equal(actionText, targetActionText)) {
+      return;
+    }
+
+    int actionIndex = -1;
+    int targetIndex = -1;
+    for (int i = 0; i < list.size(); i++) {
+      AnAction action = list.get(i);
+      if (actionIndex == -1 && Comparing.equal(actionText, action.getTemplateText())) actionIndex = i;
+      if (targetIndex == -1 && Comparing.equal(targetActionText, action.getTemplateText())) targetIndex = i;
+      if (actionIndex != -1 && targetIndex != -1) {
+        if (actionIndex < targetIndex) targetIndex--;
+        AnAction anAction = list.remove(actionIndex);
+        list.add(before ? Math.max(0, targetIndex) : targetIndex + 1, anAction);
+        return;
+      }
     }
   }
 
@@ -273,17 +355,25 @@ public class ActionUtil {
                                                   @Nullable Disposable parentDisposable) {
     for (AnAction action : group.getChildren(null)) {
       if (action instanceof ActionGroup) {
-        recursiveRegisterShortcutSet(((ActionGroup)action), component, parentDisposable);
+        recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
       }
       action.registerCustomShortcutSet(component, parentDisposable);
     }
   }
 
   public static boolean recursiveContainsAction(@NotNull ActionGroup group, @NotNull AnAction action) {
+    return anyActionFromGroupMatches(group, true, Predicate.isEqual(action));
+  }
+
+  public static boolean anyActionFromGroupMatches(@NotNull ActionGroup group, boolean processPopupSubGroups,
+                                                  @NotNull Predicate<? super AnAction> condition) {
     for (AnAction child : group.getChildren(null)) {
-      if (action.equals(child)) return true;
-      if (child instanceof ActionGroup && recursiveContainsAction((ActionGroup)child, action)) {
-        return true;
+      if (condition.test(child)) return true;
+      if (child instanceof ActionGroup) {
+        ActionGroup childGroup = (ActionGroup)child;
+        if ((processPopupSubGroups || !childGroup.isPopup()) && anyActionFromGroupMatches(childGroup, processPopupSubGroups, condition)) {
+          return true;
+        }
       }
     }
     return false;
@@ -316,11 +406,11 @@ public class ActionUtil {
     p1.setSelectedIcon(ObjectUtils.chooseNotNull(p1.getSelectedIcon(), p2.getSelectedIcon()));
     p1.setHoveredIcon(ObjectUtils.chooseNotNull(p1.getHoveredIcon(), p2.getHoveredIcon()));
     if (StringUtil.isEmpty(p1.getText())) {
-      p1.setText(p2.getTextWithMnemonic(), p2.getDisplayedMnemonicIndex() >= 0);
+      p1.setTextWithMnemonic(p2.getTextWithPossibleMnemonic());
     }
     p1.setDescription(ObjectUtils.chooseNotNull(p1.getDescription(), p2.getDescription()));
     ShortcutSet ss1 = a1.getShortcutSet();
-    if (ss1 == null || ss1 == CustomShortcutSet.EMPTY) {
+    if (ss1 == CustomShortcutSet.EMPTY) {
       a1.copyShortcutFrom(a2);
     }
     return a1;
@@ -343,31 +433,37 @@ public class ActionUtil {
     AnActionEvent event = new AnActionEvent(
       inputEvent, dataContext, place, presentation, ActionManager.getInstance(), 0);
     performDumbAwareUpdate(false, action, event, true);
+    final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
-      action.actionPerformed(event);
+      manager.fireBeforeActionPerformed(action, dataContext, event);
+      performActionDumbAware(action, event);
       if (onDone != null) {
         onDone.run();
       }
+      manager.fireAfterActionPerformed(action, dataContext, event);
     }
   }
 
   @NotNull
   public static ActionListener createActionListener(@NotNull String actionId, @NotNull Component component, @NotNull String place) {
-    return new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        AnAction action = ActionManager.getInstance().getAction(actionId);
-        if (action == null) {
-          LOG.warn("Can not find action by id " + actionId);
-          return;
-        }
-        invokeAction(action, component, place, null, null);
+    return e -> {
+      AnAction action = ActionManager.getInstance().getAction(actionId);
+      if (action == null) {
+        LOG.warn("Can not find action by id " + actionId);
+        return;
       }
+      invokeAction(action, component, place, null, null);
     };
   }
 
   @NotNull
   public static ActionListener createActionListener(@NotNull AnAction action, @NotNull Component component, @NotNull String place) {
     return e -> invokeAction(action, component, place, null, null);
+  }
+
+  private static class ActionUpdateData {
+    AnActionEvent lastUpdateEvent;
+    long lastUpdateTimeNs = 0;
+    long averageUpdateDurationMs = 0;
   }
 }

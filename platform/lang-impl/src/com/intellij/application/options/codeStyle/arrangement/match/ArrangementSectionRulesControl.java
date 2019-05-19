@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -29,22 +15,18 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
-import com.intellij.psi.codeStyle.arrangement.std.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.application.options.codeStyle.arrangement.match.ArrangementSectionRuleManager.ArrangementSectionRuleData;
 
 /**
  * @author Denis Zhdanov
- * @since 10/31/12 1:23 PM
  */
 public class ArrangementSectionRulesControl extends ArrangementMatchingRulesControl {
   @NotNull public static final DataKey<ArrangementSectionRulesControl> KEY = DataKey.create("Arrangement.Rule.Match.Control");
@@ -65,8 +47,8 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
     myColorsProvider = colorsProvider;
   }
 
-  private static void appendBufferedSectionRules(@NotNull List<ArrangementSectionRule> result,
-                                                 @NotNull List<StdArrangementMatchRule> buffer,
+  private static void appendBufferedSectionRules(@NotNull List<? super ArrangementSectionRule> result,
+                                                 @NotNull List<? extends StdArrangementMatchRule> buffer,
                                                  @Nullable String currentSectionStart) {
     if (currentSectionStart == null) {
       return;
@@ -105,8 +87,8 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
       return Collections.emptyList();
     }
 
-    final List<ArrangementSectionRule> result = ContainerUtil.newArrayList();
-    final List<StdArrangementMatchRule> buffer = ContainerUtil.newArrayList();
+    final List<ArrangementSectionRule> result = new ArrayList<>();
+    final List<StdArrangementMatchRule> buffer = new ArrayList<>();
     String currentSectionStart = null;
     for (int i = 0; i < getModel().getSize(); i++) {
       final Object element = getModel().getElementAt(i);
@@ -139,7 +121,7 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
     return result;
   }
 
-  public void setSections(@Nullable List<ArrangementSectionRule> sections) {
+  public void setSections(@Nullable List<? extends ArrangementSectionRule> sections) {
     final List<StdArrangementMatchRule> rules = sections == null ? null : ArrangementUtil.collectMatchRules(sections);
     myComponents.clear();
     getModel().clear();
@@ -172,6 +154,7 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
     }
   }
 
+  @Override
   public void showEditor(int rowToEdit) {
     if (mySectionRuleManager != null && mySectionRuleManager.isSectionRule(getModel().getElementAt(rowToEdit))) {
       mySectionRuleManager.showEditor(rowToEdit);

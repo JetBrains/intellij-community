@@ -194,6 +194,15 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
         LOG.info(e);
         myFrameCount = 0;
       }
+      catch (Exception e) {
+        if (!getVirtualMachine().canBeModified()) { // do not care in read only vms
+          LOG.debug(e);
+          myFrameCount = 0;
+        }
+        else {
+          throw e;
+        }
+      }
     }
     return myFrameCount;
   }

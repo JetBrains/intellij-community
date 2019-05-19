@@ -120,13 +120,16 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
       g2.setColor(getBackground());
       g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
 
   protected Color getBackground() {
-    return spinner.isEnabled() && spinner.getEditor() != null ? spinner.getEditor().getComponent(0).getBackground() : UIUtil.getPanelBackground();
+    return spinner.isEnabled() && spinner.getEditor() != null
+           ? spinner.getEditor().getComponent(0).getBackground()
+           : UIUtil.getPanelBackground();
   }
 
   @Override
@@ -152,7 +155,8 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     button.setBorder(JBUI.Borders.empty());
     if (direction == SwingConstants.NORTH) {
       installNextButtonListeners(button);
-    } else {
+    }
+    else {
       installPreviousButtonListeners(button);
     }
     return button;
@@ -186,7 +190,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
     Dimension abSize = nextButton.getPreferredSize();
     nextButton.setBounds(w - abSize.width, JBUI.scale(1), abSize.width, h / 2);
-    prevButton.setBounds(w - abSize.width, h/2, abSize.width, h - h/2);
+    prevButton.setBounds(w - abSize.width, h / 2, abSize.width, h - h / 2);
 
     JComponent editor = spinner.getEditor();
     if (editor != null) {
@@ -240,7 +244,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
           float lw = LW.getFloat();
           float bw = BW.getFloat();
 
-          g2.setColor(getArrowButtonBackgroundColor(isEnabled));
+          g2.setColor(JBUI.CurrentTheme.Arrow.backgroundColor(isEnabled, true));
           g2.fill(getInnerShape(lw, bw));
 
           // Paint side line
@@ -254,10 +258,10 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
           // Paint arrow
           g2.translate(x, y);
-          g2.setColor(getArrowButtonForegroundColor(isEnabled));
+          g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(isEnabled));
           g2.fill(getArrowShape());
-
-        } finally {
+        }
+        finally {
           g2.dispose();
         }
       }
@@ -266,7 +270,8 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
         Path2D shape = new Path2D.Float();
         int w = getWidth() - JBUI.scale(1);
         int h = getHeight() - JBUI.scale(1);
-        float arc = COMPONENT_ARC.getFloat() - bw - lw;
+        float arc = COMPONENT_ARC.getFloat();
+        arc = arc > bw + lw ? arc - bw - lw : 0.0f;
 
         switch (direction) {
           case SOUTH:
@@ -281,12 +286,13 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
           case NORTH:
             shape.moveTo(lw, bw + lw);
             shape.lineTo(w - bw - lw - arc, bw + lw);
-            shape.quadTo(w - bw - lw, bw + lw , w - bw - lw, bw + lw + arc);
+            shape.quadTo(w - bw - lw, bw + lw, w - bw - lw, bw + lw + arc);
             shape.lineTo(w - bw - lw, h);
             shape.lineTo(lw, h);
             shape.closePath();
             break;
-          default: break;
+          default:
+            break;
         }
         return shape;
       }
@@ -310,7 +316,8 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
             arrow.lineTo(aw / 2.0, -ah);
             arrow.closePath();
             break;
-          default: break;
+          default:
+            break;
         }
 
         return arrow;

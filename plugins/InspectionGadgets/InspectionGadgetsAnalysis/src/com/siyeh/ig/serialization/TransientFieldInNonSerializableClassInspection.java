@@ -15,21 +15,18 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class TransientFieldInNonSerializableClassInspection
-  extends BaseInspection {
+public class TransientFieldInNonSerializableClassInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -49,25 +46,7 @@ public class TransientFieldInNonSerializableClassInspection
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new TransientFieldInNonSerializableClassFix();
-  }
-
-
-  private static class TransientFieldInNonSerializableClassFix
-    extends InspectionGadgetsFix {
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "transient.field.in.non.serializable.class.remove.quickfix");
-    }
-
-    @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement transientModifier = descriptor.getPsiElement();
-      deleteElement(transientModifier);
-    }
+    return new RemoveModifierFix(PsiModifier.TRANSIENT);
   }
 
   @Override
@@ -75,8 +54,7 @@ public class TransientFieldInNonSerializableClassInspection
     return new TransientFieldInNonSerializableClassVisitor();
   }
 
-  private static class TransientFieldInNonSerializableClassVisitor
-    extends BaseInspectionVisitor {
+  private static class TransientFieldInNonSerializableClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitField(@NotNull PsiField field) {

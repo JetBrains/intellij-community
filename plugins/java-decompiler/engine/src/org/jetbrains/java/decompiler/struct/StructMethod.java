@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.*;
@@ -63,7 +63,7 @@ public class StructMethod extends StructMember {
 
   @Override
   protected StructGeneralAttribute readAttribute(DataInputFullStream in, ConstantPool pool, String name) throws IOException {
-    if (StructGeneralAttribute.ATTRIBUTE_CODE.equals(name)) {
+    if (StructGeneralAttribute.ATTRIBUTE_CODE.getName().equals(name)) {
       if (!classStruct.isOwn()) {
         // skip code in foreign classes
         in.discard(8);
@@ -380,7 +380,7 @@ public class StructMethod extends StructMember {
   }
 
   public StructLocalVariableTableAttribute getLocalVariableAttr() {
-    return (StructLocalVariableTableAttribute)getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
+    return getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
   }
 
   @Override

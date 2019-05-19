@@ -16,9 +16,11 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionUtil;
@@ -138,16 +140,23 @@ public class DomImplUtil {
     return null;
   }
 
+
   public static List<XmlTag> findSubTags(@NotNull final XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
+    return findSubTags(tag, name, file, true);
+  }
+
+  static List<XmlTag> findSubTags(@NotNull final XmlTag tag, final EvaluatedXmlName name, final XmlFile file, boolean processIncludes) {
+
     if (!tag.isValid()) {
       throw new AssertionError("Invalid tag");
     }
-    final XmlTag[] tags = tag.getSubTags();
+    final XmlTag[] tags = tag instanceof XmlTagImpl ? ((XmlTagImpl)tag).getSubTags(processIncludes) : tag.getSubTags();
     if (tags.length == 0) {
       return Collections.emptyList();
     }
 
     return ContainerUtil.findAll(tags, childTag -> {
+      ProgressManager.checkCanceled();
       try {
         return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
       }

@@ -50,10 +50,12 @@ public class JavaThrownExceptionInfo implements ThrownExceptionInfo {
     return result;
   }
 
+  @Override
   public void setType(PsiClassType type) {
     myType = CanonicalTypes.createTypeWrapper(type);
   }
 
+  @Override
   @Nullable
   public PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
     if (myType != null) {
@@ -64,6 +66,7 @@ public class JavaThrownExceptionInfo implements ThrownExceptionInfo {
     }
   }
 
+  @Override
   public void updateFromMethod(PsiMethod method) {
     if (myType != null) return;
     PsiClassType[] types = method.getThrowsList().getReferencedTypes();
@@ -72,6 +75,7 @@ public class JavaThrownExceptionInfo implements ThrownExceptionInfo {
     }
   }
 
+  @Override
   public int getOldIndex() {
     return oldIndex;
   }

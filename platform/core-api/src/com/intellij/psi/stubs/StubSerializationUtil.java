@@ -20,10 +20,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Author: dmitrylomov
  */
-public abstract class StubSerializationUtil {
+abstract class StubSerializationUtil {
   private StubSerializationUtil() {}
 
-  public static ObjectStubSerializer getSerializer(@NotNull Stub rootStub) {
+  static ObjectStubSerializer<Stub, Stub> getSerializer(@NotNull Stub rootStub) {
     if (rootStub instanceof PsiFileStub) {
       final PsiFileStub fileStub = (PsiFileStub)rootStub;
       return fileStub.getType();

@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.task.ExecuteRunConfigurationTask;
 import com.intellij.task.ProjectTaskRunner;
@@ -31,9 +32,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
  */
 public class ExecutionEnvironmentProviderImpl implements ExecutionEnvironmentProvider {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.task.ExecutionEnvironmentProvider");
 
   @Nullable
   @Override
@@ -48,8 +50,13 @@ public class ExecutionEnvironmentProviderImpl implements ExecutionEnvironmentPro
     ExecuteRunConfigurationTask
       runTask = new ExecuteRunConfigurationTaskImpl(runProfile, target, runnerSettings, configurationSettings, settings);
     for (ProjectTaskRunner projectTaskRunner : ProjectTaskRunner.EP_NAME.getExtensions()) {
-      if (projectTaskRunner.canRun(runTask)) {
-        return projectTaskRunner.createExecutionEnvironment(project, runTask, executor);
+      try {
+        if (projectTaskRunner.canRun(project, runTask)) {
+          return projectTaskRunner.createExecutionEnvironment(project, runTask, executor);
+        }
+      }
+      catch (Exception e) {
+        LOG.error("Broken project task runner: " + projectTaskRunner.getClass().getName(), e);
       }
     }
     return null;

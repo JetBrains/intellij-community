@@ -16,18 +16,25 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class InheritanceToDelegationAction extends BaseRefactoringAction {
+import static com.intellij.refactoring.actions.RefactoringActionContextUtil.isJavaClassHeader;
+
+public class InheritanceToDelegationAction extends BaseJavaRefactoringAction {
+  @Override
   public boolean isAvailableInEditorOnly() {
     return false;
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 &&
            elements[0] instanceof PsiClass &&
@@ -35,6 +42,19 @@ public class InheritanceToDelegationAction extends BaseRefactoringAction {
            elements[0].getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
+                                                        @NotNull Editor editor,
+                                                        @NotNull PsiFile file,
+                                                        @NotNull DataContext context,
+                                                        @NotNull String place) {
+    if (ActionPlaces.isPopupPlace(place) || place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
+      return isJavaClassHeader(element);
+    }
+    return super.isAvailableOnElementInEditorAndFile(element, editor, file, context, place);
+  }
+
+  @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new InheritanceToDelegationHandler();
   }

@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -61,27 +60,29 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
 
   @Override
   @NotNull
-    public UsageGroupingRule[] getActiveRules(Project project) {
+    public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
     }
 
     @Override
     @NotNull
-    public AnAction[] createGroupingActions(UsageView view) {
+    public AnAction[] createGroupingActions(@NotNull UsageView view) {
         return AnAction.EMPTY_ARRAY;
     }
 
     private static class TemplateUsageGroup implements UsageGroup {
         private final XsltTemplate myTemplate;
 
-        public TemplateUsageGroup(@NotNull XsltTemplate template) {
+        TemplateUsageGroup(@NotNull XsltTemplate template) {
             myTemplate = template;
         }
 
+        @Override
         public Icon getIcon(boolean isOpen) {
             return myTemplate.getIcon(0);
         }
 
+        @Override
         @NotNull
         public String getText(UsageView view) {
             final StringBuilder sb = new StringBuilder();
@@ -103,26 +104,32 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return null;
         }
 
+        @Override
         public boolean isValid() {
             return myTemplate.isValid();
         }
 
+        @Override
         public void update() {
         }
 
+        @Override
         public int compareTo(@NotNull UsageGroup usageGroup) {
             final TemplateUsageGroup myUsageGroup = ((TemplateUsageGroup)usageGroup);
             return myTemplate.getTextOffset() - myUsageGroup.myTemplate.getTextOffset();
         }
 
+        @Override
         public void navigate(boolean requestFocus) {
             ((Navigatable)myTemplate.getTag()).navigate(requestFocus);
         }
 
+        @Override
         public boolean canNavigate() {
             return ((Navigatable)myTemplate.getTag()).canNavigate();
         }
 
+        @Override
         public boolean canNavigateToSource() {
             return canNavigate();
         }
@@ -155,11 +162,11 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
                     final MoveRenameUsageInfo info = (MoveRenameUsageInfo)usageInfo;
                     return buildGroup(info.getReferencedElement(), usageInfo, true);
                 } else {
-                    final PsiReference[] references = u.getElement().getReferences();
-                    for (PsiReference reference : references) {
-                        if (reference.getRangeInElement().equals(usageInfo.getRangeInElement())) {
-                            return buildGroup(reference.resolve(), usageInfo, false);
-                        }
+                    for (UsageTarget target : targets) {
+                        UsageGroup group = target instanceof PsiElementUsageTarget ?
+                                           buildGroup(((PsiElementUsageTarget)target).getElement(), usageInfo, false) :
+                                           null;
+                        if (group != null) return group;
                     }
                 }
             }

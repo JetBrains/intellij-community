@@ -3,7 +3,6 @@ package git4idea.merge;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -18,15 +17,11 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.util.StringScanner;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,10 +43,8 @@ public class GitConflictResolver {
   @NotNull private final Params myParams;
 
   @NotNull protected final Project myProject;
-  @NotNull private final Git myGit;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final AbstractVcsHelper myVcsHelper;
-  @NotNull private final GitVcs myVcs;
 
   /**
    * Customizing parameters - mostly String notification texts, etc.
@@ -65,6 +58,7 @@ public class GitConflictResolver {
 
     public Params() {
       myMergeDialogCustomizer = new MergeDialogCustomizer() {
+        @NotNull
         @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
           return myMergeDescription;
         }
@@ -72,9 +66,8 @@ public class GitConflictResolver {
     }
 
     public Params(Project project) {
-      GitMergeProvider provider = (GitMergeProvider)GitVcs.getInstance(project).getMergeProvider();
-
-      myMergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(provider) {
+      myMergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(project) {
+        @NotNull
         @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
           if (!StringUtil.isEmpty(myMergeDescription)) {
             return myMergeDescription;
@@ -111,27 +104,19 @@ public class GitConflictResolver {
       myMergeDialogCustomizer = mergeDialogCustomizer;
       return this;
     }
-
   }
 
-  /**
-   * @deprecated To remove in IDEA 2017. Use {@link #GitConflictResolver(Project, Git, Collection, Params)}.
-   */
-  @SuppressWarnings("UnusedParameters")
   @Deprecated
-  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade facade,
-                             @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
-    this(project, git, roots, params);
+  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
+    this(project, roots, params);
   }
 
-  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
+  public GitConflictResolver(@NotNull Project project, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
     myProject = project;
-    myGit = git;
     myRoots = roots;
     myParams = params;
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myVcsHelper = AbstractVcsHelper.getInstance(project);
-    myVcs = GitVcs.getInstance(myProject);
   }
 
   /**
@@ -198,7 +183,7 @@ public class GitConflictResolver {
     notifyWarning("Unresolved Conflicts Remaining", myParams.myErrorNotificationAdditionalDescription);
   }
 
-  protected void notifyWarning(String title, String content) {
+  protected void notifyWarning(@NotNull String title, @NotNull String content) {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null);
     notification.addAction(NotificationAction.createSimple("Resolve...", () -> {
       notification.expire();
@@ -237,7 +222,7 @@ public class GitConflictResolver {
 
   }
 
-  private void showMergeDialog(@NotNull final Collection<VirtualFile> initiallyUnmergedFiles) {
+  private void showMergeDialog(@NotNull Collection<VirtualFile> initiallyUnmergedFiles) {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(() -> {
       MergeProvider mergeProvider = new GitMergeProvider(myProject, myParams.reverse);
@@ -245,20 +230,19 @@ public class GitConflictResolver {
     });
   }
 
-  private void notifyException(VcsException e) {
+  private void notifyException(@NotNull VcsException e) {
     LOG.info("mergeFiles ", e);
     final String description = "Couldn't check the working tree for unmerged files because of an error.";
     VcsNotifier.getInstance(myProject).notifyError(myParams.myErrorNotificationTitle,
                                                    description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
-                                                   e.getLocalizedMessage(),
-                                                   (NotificationListener)null
-    );
+                                                   e.getLocalizedMessage());
   }
 
   /**
    * @return unmerged files in the given Git roots, all in a single collection.
-   * @see #getUnmergedFiles(com.intellij.openapi.vfs.VirtualFile)
+   * @see #getUnmergedFiles(VirtualFile)
    */
+  @NotNull
   private Collection<VirtualFile> getUnmergedFiles(@NotNull Collection<VirtualFile> roots) throws VcsException {
     final Collection<VirtualFile> unmergedFiles = new HashSet<>();
     for (VirtualFile root : roots) {
@@ -269,51 +253,17 @@ public class GitConflictResolver {
 
   /**
    * @return unmerged files in the given Git root.
-   * @see #getUnmergedFiles(java.util.Collection
+   * @see #getUnmergedFiles(Collection)
    */
+  @NotNull
   private Collection<VirtualFile> getUnmergedFiles(@NotNull VirtualFile root) throws VcsException {
-    return unmergedFiles(root);
-  }
-
-  /**
-   * Parse changes from lines
-   *
-   *
-   * @param root    the git root
-   * @return a set of unmerged files
-   * @throws com.intellij.openapi.vcs.VcsException if the input format does not matches expected format
-   */
-  private List<VirtualFile> unmergedFiles(final VirtualFile root) throws VcsException {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
       return Collections.emptyList();
     }
 
-    GitCommandResult result = myGit.getUnmergedFiles(repository);
-    if (!result.success()) {
-      throw new VcsException(result.getErrorOutputAsJoinedString());
-    }
-
-    String output = StringUtil.join(result.getOutput(), "\n");
-    HashSet<String> unmergedPaths = ContainerUtil.newHashSet();
-    for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
-      if (s.isEol()) {
-        s.nextLine();
-        continue;
-      }
-      s.boundedToken('\t');
-      String relative = s.line();
-      unmergedPaths.add(GitUtil.unescapePath(relative));
-    }
-
-    if (unmergedPaths.size() == 0) {
-      return Collections.emptyList();
-    }
-    else {
-      List<File> files = ContainerUtil.map(unmergedPaths, path -> new File(root.getPath(), path));
-      return sortVirtualFilesByPresentation(findVirtualFilesWithRefresh(files));
-    }
+    List<File> files = GitChangeUtils.getUnmergedFiles(repository);
+    return sortVirtualFilesByPresentation(findVirtualFilesWithRefresh(files));
   }
-
 }

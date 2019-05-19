@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -32,6 +31,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -66,9 +66,9 @@ public class OnePixelDivider extends Divider {
   public void paint(Graphics g) {
     final Rectangle bounds = g.getClipBounds();
     if (mySplitter instanceof OnePixelSplitter) {
-      final Producer<Insets> blindZone = ((OnePixelSplitter)mySplitter).getBlindZone();
+      final Supplier<Insets> blindZone = ((OnePixelSplitter)mySplitter).getBlindZone();
       if (blindZone != null) {
-        final Insets insets = blindZone.produce();
+        final Insets insets = blindZone.get();
         if (insets != null) {
           bounds.x += insets.left;
           bounds.y += insets.top;
@@ -191,6 +191,7 @@ public class OnePixelDivider extends Divider {
     myGlassPane.addMousePreprocessor(myListener, myDisposable);
   }
 
+  @Override
   public void setOrientation(boolean vertical) {
     removeAll();
     myVertical = vertical;
@@ -240,6 +241,7 @@ public class OnePixelDivider extends Divider {
     }
   }
 
+  @Override
   public void setResizeEnabled(boolean resizeEnabled) {
     myResizeEnabled = resizeEnabled;
     if (!myResizeEnabled) {
@@ -252,6 +254,7 @@ public class OnePixelDivider extends Divider {
     }
   }
 
+  @Override
   public void setSwitchOrientationEnabled(boolean switchOrientationEnabled) {
     mySwitchOrientationEnabled = switchOrientationEnabled;
   }

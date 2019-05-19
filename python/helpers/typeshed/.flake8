@@ -1,0 +1,25 @@
+# Some PEP8 deviations are considered irrelevant to stub files:
+# (error counts as of 2017-05-22)
+# 17952 E704 multiple statements on one line (def)
+# 12197 E301 expected 1 blank line
+#  7155 E302 expected 2 blank lines
+#  1463 F401 imported but unused
+#   967 E701 multiple statements on one line (colon)
+#   457 F811 redefinition
+#   390 E305 expected 2 blank lines
+#     4 E741 ambiguous variable name
+
+# Nice-to-haves ignored for now
+#  2307 E501 line too long
+
+# Other ignored warnings
+#       W504 line break after binary operator
+
+[flake8]
+ignore = F401, F403, F405, F811, E301, E302, E305, E501, E701, E704, E741, B303, W504
+# We are checking with Python 3 but many of the stubs are Python 2 stubs.
+# A nice future improvement would be to provide separate .flake8
+# configurations for Python 2 and Python 3 files.
+builtins = StandardError,apply,basestring,buffer,cmp,coerce,execfile,file,intern,long,raw_input,reduce,reload,unichr,unicode,xrange
+exclude = .venv*,@*,.git
+max-line-length = 130

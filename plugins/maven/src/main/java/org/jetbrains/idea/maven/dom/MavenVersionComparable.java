@@ -1,5 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import java.math.BigInteger;
 import java.util.*;
 
@@ -42,18 +44,21 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
       this.value = BigInteger_ZERO;
     }
 
-    public IntegerItem(String str) {
+    IntegerItem(String str) {
       this.value = new BigInteger(str);
     }
 
+    @Override
     public int getType() {
       return INTEGER_ITEM;
     }
 
+    @Override
     public boolean isNull() {
       return BigInteger_ZERO.equals(value);
     }
 
+    @Override
     public int compareTo(Item item) {
       if (item == null) {
         return BigInteger_ZERO.equals(value) ? 0 : 1; // 1.0 == 1, 1.1 > 1
@@ -104,7 +109,7 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
 
     private final String value;
 
-    public StringItem(String value, boolean followedByDigit) {
+    StringItem(String value, boolean followedByDigit) {
       if (followedByDigit && value.length() == 1) {
         // a1 = alpha-1, b1 = beta-1, m1 = milestone-1
         switch (value.charAt(0)) {
@@ -122,10 +127,12 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
       this.value = ALIASES.getProperty(value, value);
     }
 
+    @Override
     public int getType() {
       return STRING_ITEM;
     }
 
+    @Override
     public boolean isNull() {
       return (comparableQualifier(value).compareTo(RELEASE_VERSION_INDEX) == 0);
     }
@@ -149,6 +156,7 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
       return i == -1 ? _QUALIFIERS.size() + "-" + qualifier : String.valueOf(i);
     }
 
+    @Override
     public int compareTo(Item item) {
       if (item == null) {
         // 1-rc < 1, 1-ga > 1
@@ -181,10 +189,12 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
   private static class ListItem
     extends ArrayList<Item>
     implements Item {
+    @Override
     public int getType() {
       return LIST_ITEM;
     }
 
+    @Override
     public boolean isNull() {
       return (size() == 0);
     }
@@ -201,6 +211,7 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
       }
     }
 
+    @Override
     public int compareTo(Item item) {
       if (item == null) {
         if (size() == 0) {
@@ -261,7 +272,7 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
 
     items = new ListItem();
 
-    version = version.toLowerCase(Locale.ENGLISH);
+    version = StringUtil.toLowerCase(version);
 
     ListItem list = items;
 
@@ -339,6 +350,7 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
     return isDigit ? new IntegerItem(buf) : new StringItem(buf, false);
   }
 
+  @Override
   public int compareTo(MavenVersionComparable o) {
     return items.compareTo(o.items);
   }

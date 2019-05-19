@@ -20,10 +20,12 @@ import java.text.ParseException;
 
 public class RegExInputVerifier extends InputVerifier {
 
+  @Override
   public boolean verify(JComponent input) {
     return true;
   }
 
+  @Override
   public boolean shouldYieldFocus(JComponent input) {
     if (input instanceof JFormattedTextField) {
       final JFormattedTextField ftf = (JFormattedTextField) input;

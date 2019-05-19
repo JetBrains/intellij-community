@@ -29,12 +29,6 @@ public class GroovyStaticMethodNamingConventionInspection extends ConventionInsp
   private static final int DEFAULT_MAX_LENGTH = 32;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Static method naming convention";
-  }
-
-  @Override
   protected GroovyFix buildFix(@NotNull PsiElement location) {
     return GroovyQuickFixFactory.getInstance().createRenameFix();
   }

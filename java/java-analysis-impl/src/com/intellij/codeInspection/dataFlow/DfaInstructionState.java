@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class DfaInstructionState implements Comparable<DfaInstructionState> {
   public static final DfaInstructionState[] EMPTY_ARRAY = new DfaInstructionState[0];
@@ -52,14 +39,16 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
 
   @Override
   public int compareTo(@NotNull DfaInstructionState o) {
-    return myInstruction.getIndex() - o.myInstruction.getIndex();
+    return Integer.compare(myInstruction.getIndex(), o.myInstruction.getIndex());
   }
 }
 
 class StateQueue {
+  private static final int FORCE_MERGE_THRESHOLD = 100;
+  private boolean myWasForciblyMerged;
   private final PriorityQueue<DfaInstructionState> myQueue = new PriorityQueue<>();
-  private final Set<Pair<Instruction, DfaMemoryState>> mySet = ContainerUtil.newHashSet();
-  
+  private final Set<Pair<Instruction, DfaMemoryState>> mySet = new HashSet<>();
+
   void offer(DfaInstructionState state) {
     if (mySet.add(Pair.create(state.getInstruction(), state.getMemoryState()))) {
       myQueue.offer(state);
@@ -79,14 +68,14 @@ class StateQueue {
 
   @NotNull
   List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
-    DfaInstructionState state = myQueue.poll();
+    DfaInstructionState state = myQueue.remove();
     final Instruction instruction = state.getInstruction();
     mySet.remove(Pair.create(instruction, state.getMemoryState()));
 
     DfaInstructionState next = myQueue.peek();
     if (next == null || next.compareTo(state) != 0) return Collections.singletonList(state);
 
-    List<DfaMemoryStateImpl> memoryStates = ContainerUtil.newArrayList();
+    List<DfaMemoryStateImpl> memoryStates = new ArrayList<>();
     memoryStates.add((DfaMemoryStateImpl)state.getMemoryState());
     while (!myQueue.isEmpty() && myQueue.peek().compareTo(state) == 0) {
       DfaMemoryState anotherState = myQueue.poll().getMemoryState();
@@ -94,7 +83,7 @@ class StateQueue {
       memoryStates.add((DfaMemoryStateImpl)anotherState);
     }
 
-    if (memoryStates.size() > 1) {
+    if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
       memoryStates = squash(memoryStates);
     }
 
@@ -104,18 +93,30 @@ class StateQueue {
         groups.putValue(memoryState.getSuperficialKey(), memoryState);
       }
 
-      memoryStates = ContainerUtil.newArrayList();
+      memoryStates = new ArrayList<>();
       for (Map.Entry<Object, Collection<DfaMemoryStateImpl>> entry : groups.entrySet()) {
         memoryStates.addAll(mergeGroup((List<DfaMemoryStateImpl>)entry.getValue()));
       }
-      
     }
 
+    memoryStates = forceMerge(memoryStates);
+
     return ContainerUtil.map(memoryStates, state1 -> new DfaInstructionState(instruction, state1));
-  }                                                                      
+  }
 
   private static List<DfaMemoryStateImpl> squash(List<DfaMemoryStateImpl> states) {
-    return states.stream().filter(left -> states.stream().noneMatch(right -> right != left && right.isSuperStateOf(left))).collect(Collectors.toList());
+    List<DfaMemoryStateImpl> result = new ArrayList<>(states);
+    for (Iterator<DfaMemoryStateImpl> iterator = result.iterator(); iterator.hasNext(); ) {
+      DfaMemoryStateImpl left = iterator.next();
+      for (DfaMemoryStateImpl right : result) {
+        ProgressManager.checkCanceled();
+        if (right != left && right.isSuperStateOf(left)) {
+          iterator.remove();
+          break;
+        }
+      }
+    }
+    return result;
   }
 
   static List<DfaMemoryStateImpl> mergeGroup(List<DfaMemoryStateImpl> group) {
@@ -127,11 +128,27 @@ class StateQueue {
     while (group.size() > 1) {
       List<DfaMemoryStateImpl> nextStates = merger.mergeByRanges(group);
       if (nextStates == null) nextStates = merger.mergeByFacts(group);
-      if (nextStates == null) nextStates = merger.mergeByNullability(group);
-      if (nextStates == null) nextStates = merger.mergeByUnknowns(group);
       if (nextStates == null) break;
       group = nextStates;
     }
     return group;
+  }
+
+  private List<DfaMemoryStateImpl> forceMerge(List<DfaMemoryStateImpl> states) {
+    if (states.size() < FORCE_MERGE_THRESHOLD) return states;
+    myWasForciblyMerged = true;
+    Collection<List<DfaMemoryStateImpl>> groups = StreamEx.of(states).groupingBy(DfaMemoryStateImpl::getMergeabilityKey).values();
+    return StreamEx.of(groups)
+      .flatMap(group -> StreamEx.ofSubLists(group, 2)
+      .map(pair -> {
+        if (pair.size() == 2) {
+          pair.get(0).merge(pair.get(1));
+        }
+        return pair.get(0);
+      })).distinct().toListAndThen(StateQueue::squash);
+  }
+
+  boolean wasForciblyMerged() {
+    return myWasForciblyMerged;
   }
 }

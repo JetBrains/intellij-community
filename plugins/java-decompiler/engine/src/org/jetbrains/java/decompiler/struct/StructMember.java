@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -22,12 +22,13 @@ public class StructMember {
     return accessFlags;
   }
 
-  public StructGeneralAttribute getAttribute(String name) {
-    return attributes.get(name);
+  public <T extends StructGeneralAttribute> T getAttribute(StructGeneralAttribute.Key<T> attribute) {
+    //noinspection unchecked
+    return (T)attributes.get(attribute.getName());
   }
 
-  public boolean hasAttribute(String name) {
-    return attributes.containsKey(name);
+  public boolean hasAttribute(StructGeneralAttribute.Key<?> attribute) {
+    return attributes.containsKey(attribute.getName());
   }
 
   public boolean hasModifier(int modifier) {
@@ -49,12 +50,12 @@ public class StructMember {
       StructGeneralAttribute attribute = readAttribute(in, pool, name);
 
       if (attribute != null) {
-        if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name) && attributes.containsKey(name)) {
+        if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE.getName().equals(name) && attributes.containsKey(name)) {
           // merge all variable tables
           StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute)attributes.get(name);
           table.add((StructLocalVariableTableAttribute)attribute);
         }
-        else if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name) && attributes.containsKey(name)) {
+        else if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.getName().equals(name) && attributes.containsKey(name)) {
           // merge all variable tables
           StructLocalVariableTypeTableAttribute table = (StructLocalVariableTypeTableAttribute)attributes.get(name);
           table.add((StructLocalVariableTypeTableAttribute)attribute);

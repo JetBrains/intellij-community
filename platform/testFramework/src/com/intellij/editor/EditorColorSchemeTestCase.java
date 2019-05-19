@@ -76,7 +76,7 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
     return Pair.create(targetScheme, targetAttrs);
   }
 
-  protected static void assertXmlOutputEquals(String expected, Element root) throws IOException {
+  public static void assertXmlOutputEquals(String expected, Element root) throws IOException {
     StringWriter writer = new StringWriter();
     Format format = Format.getPrettyFormat();
     format.setLineSeparator("\n");

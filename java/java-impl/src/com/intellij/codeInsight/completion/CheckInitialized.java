@@ -20,9 +20,12 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,13 +95,14 @@ class CheckInitialized implements ElementFilter {
     final Set<PsiField> fields = new HashSet<>();
     final PsiClass containingClass = method.getContainingClass();
     assert containingClass != null;
-    for (PsiField field : containingClass.getFields()) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() == null && !isInitializedImplicitly(field)) {
-        if (!allowNonFinalFields || field.hasModifierProperty(PsiModifier.FINAL)) {
+    InheritanceUtil.processSupers(containingClass, true, eachClass -> {
+      for (PsiField field : eachClass.getFields()) {
+        if (!seemsInitialized(allowNonFinalFields, containingClass, field)) {
           fields.add(field);
         }
       }
-    }
+      return true;
+    });
 
     method.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -130,6 +134,24 @@ class CheckInitialized implements ElementFilter {
       }
     });
     return fields;
+  }
+
+  private static boolean seemsInitialized(boolean allowNonFinalFields, PsiClass placeClass, PsiField field) {
+    if (field.hasModifierProperty(PsiModifier.STATIC)) return true;
+    if (field.getContainingClass() == placeClass) {
+      if (isInitializedBeforeConstructor(field, placeClass) ||
+          isInitializedImplicitly(field)) {
+        return true;
+      }
+    }
+    return allowNonFinalFields && !field.hasModifierProperty(PsiModifier.FINAL);
+  }
+
+  private static boolean isInitializedBeforeConstructor(PsiField field, PsiClass containingClass) {
+    if (field.getInitializer() != null) return true;
+
+    return ContainerUtil.exists(containingClass.getInitializers(), i -> 
+      !i.hasModifierProperty(PsiModifier.STATIC) && VariableAccessUtils.variableIsAssigned(field, i, false));
   }
 
   @Override

@@ -15,22 +15,20 @@
  */
 package org.jetbrains.jps.javac;
 
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
 import java.io.*;
 import java.net.URI;
 
 /**
  * @author Eugene Zhuravlev
  */
-public final class OutputFileObject extends SimpleJavaFileObject {
+public final class OutputFileObject extends JpsFileObject {
   @Nullable
-  private final JavacFileManager.Context myContext;
+  private final JpsJavacFileManager.Context myContext;
   @Nullable
   private final File myOutputRoot;
   private final String myRelativePath;
@@ -42,7 +40,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   private final File mySourceFile;
   private final String myEncodingName;
 
-  public OutputFileObject(@NotNull JavacFileManager.Context context,
+  public OutputFileObject(@NotNull JpsJavacFileManager.Context context,
                           @Nullable File outputRoot,
                           String relativePath,
                           @NotNull File file,
@@ -53,14 +51,14 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     this(context, outputRoot, relativePath, file, kind, className, sourceUri, encodingName, null);
   }
 
-  public OutputFileObject(@Nullable JavacFileManager.Context context,
+  public OutputFileObject(@Nullable JpsJavacFileManager.Context context,
                           @Nullable File outputRoot,
                           String relativePath,
                           @NotNull File file,
                           @NotNull Kind kind,
                           @Nullable String className,
                           @Nullable final URI srcUri,
-                          @Nullable final String encodingName, 
+                          @Nullable final String encodingName,
                           @Nullable BinaryContent content) {
     super(PathUtils.toURI(file.getPath()), kind);
     myContext = context;
@@ -104,6 +102,12 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   }
 
   @Override
+  @Nullable
+  protected String inferBinaryName(Iterable<? extends File> path, boolean caseSensitiveFS) {
+    return null; // this will cause FileManager to delegate to JVM implementation
+  }
+
+  @Override
   public ByteArrayOutputStream openOutputStream() {
     return new ByteArrayOutputStream() {
       @Override
@@ -135,11 +139,11 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     final BinaryContent content = myContent;
     final String encoding = myEncodingName;
     if (content != null) {
-      return encoding == null? 
-             new String(content.getBuffer(), content.getOffset(), content.getLength()) : 
+      return encoding == null ?
+             new String(content.getBuffer(), content.getOffset(), content.getLength()) :
              new String(content.getBuffer(), content.getOffset(), content.getLength(), encoding);
     }
-    return FileUtilRt.loadFile(myFile, encoding, false);
+    return loadCharContent(myFile, encoding);
   }
 
   @Override
@@ -157,13 +161,4 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     myContent = new BinaryContent(updatedContent, 0, updatedContent.length);
   }
 
-  @Override
-  public int hashCode() {
-    return toUri().hashCode();
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof JavaFileObject && toUri().equals(((JavaFileObject)obj).toUri());
-  }
 }

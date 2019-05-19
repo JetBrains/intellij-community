@@ -1,4 +1,6 @@
 {
-  "cycles": <caret>37,
-  "name": "foo",
+  "x": {
+    "cycles": <caret>37,
+    "name": "foo"
+  }
 }

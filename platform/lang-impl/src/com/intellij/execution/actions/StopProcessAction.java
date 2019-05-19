@@ -44,7 +44,7 @@ public class StopProcessAction extends DumbAwareAction implements AnAction.Trans
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     update(e.getPresentation(), getTemplatePresentation(), myProcessHandler);
   }
 
@@ -71,7 +71,7 @@ public class StopProcessAction extends DumbAwareAction implements AnAction.Trans
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     stopProcess(myProcessHandler);
   }
 

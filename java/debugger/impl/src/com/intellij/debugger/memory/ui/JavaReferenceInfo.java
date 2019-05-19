@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
+import com.intellij.debugger.memory.utils.InstanceValueDescriptor;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.memory.ui.ReferenceInfo;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +13,10 @@ public class JavaReferenceInfo implements ReferenceInfo {
 
   public JavaReferenceInfo(@NotNull ObjectReference objectReference) {
     this.objectReference = objectReference;
+  }
+
+  public ValueDescriptorImpl createDescriptor(@NotNull Project project) {
+    return new InstanceValueDescriptor(project, objectReference);
   }
 
   @NotNull

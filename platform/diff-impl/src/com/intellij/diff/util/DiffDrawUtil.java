@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -29,7 +16,7 @@ import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,12 +25,15 @@ import java.awt.*;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public class DiffDrawUtil {
+  private static final Logger LOG = Logger.getInstance(DiffDrawUtil.class);
+
   public static final int STRIPE_LAYER = HighlighterLayer.ERROR - 1;
   public static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 3;
   public static final int INLINE_LAYER = HighlighterLayer.SELECTION - 2;
@@ -82,14 +72,6 @@ public class DiffDrawUtil {
       gutterBackground = EditorColors.GUTTER_BACKGROUND.getDefaultColor();
     }
     return gutterBackground;
-  }
-
-  public static void drawConnectorLineSeparator(@NotNull Graphics2D g,
-                                                int x1, int x2,
-                                                int start1, int end1,
-                                                int start2, int end2,
-                                                @Nullable EditorColorsScheme scheme) {
-    DiffLineSeparatorRenderer.drawConnectorLine(g, x1, x2, start1, start2, end1 - start1, scheme);
   }
 
   public static void drawChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color,
@@ -140,6 +122,7 @@ public class DiffDrawUtil {
     Shape upperCurve = makeCurve(x1, x2, start1, start2, true);
     Shape lowerCurve = makeCurve(x1, x2, end1 + 1, end2 + 1, false);
     Shape lowerCurveBorder = makeCurve(x1, x2, end1, end2, false);
+    Shape middleCurve = makeCurve(x1, x2, start1 + (end1 - start1) / 2, start2 + (end2 - start2) / 2, true);
 
     if (fillColor != null) {
       Path2D path = new Path2D.Double();
@@ -148,6 +131,11 @@ public class DiffDrawUtil {
 
       g.setColor(fillColor);
       g.fill(path);
+
+      Stroke oldStroke = g.getStroke();
+      g.setStroke(new BasicStroke(JBUI.scale(1f)));
+      g.draw(middleCurve);
+      g.setStroke(oldStroke);
     }
 
     if (borderColor != null) {
@@ -180,10 +168,14 @@ public class DiffDrawUtil {
   public static int lineToY(@NotNull Editor editor, int line) {
     Document document = editor.getDocument();
     if (line >= getLineCount(document)) {
-      int y = lineToY(editor, getLineCount(document) - 1);
+      int y = editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getTextLength())).y;
       return y + editor.getLineHeight() * (line - getLineCount(document) + 1);
     }
     return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
+  }
+
+  public static int yToLine(@NotNull Editor editor, int y) {
+    return editor.xyToLogicalPosition(new Point(0, y)).line;
   }
 
   @NotNull
@@ -248,9 +240,12 @@ public class DiffDrawUtil {
         int x2 = gutter.getWidth();
 
         int y = r.y;
-        if (placement == SeparatorPlacement.BOTTOM) y += editor.getLineHeight();
+        if (placement == SeparatorPlacement.BOTTOM) {
+          LOG.warn("BOTTOM gutter line renderers are not supported");
+          y += editor.getLineHeight() - 1;
+        }
 
-        drawChunkBorderLine(g2, x1, x2, y - 1, type.getColor(editor), doubleLine, resolved);
+        drawChunkBorderLine(g2, x1, x2, y, type.getColor(editor), doubleLine, resolved);
       }
 
       @NotNull
@@ -271,7 +266,7 @@ public class DiffDrawUtil {
   public static List<RangeHighlighter> createUnifiedChunkHighlighters(@NotNull Editor editor,
                                                                       @NotNull LineRange deleted,
                                                                       @NotNull LineRange inserted,
-                                                                      @Nullable List<DiffFragment> innerFragments) {
+                                                                      @Nullable List<? extends DiffFragment> innerFragments) {
     boolean ignored = innerFragments != null;
 
     List<RangeHighlighter> list = new ArrayList<>();
@@ -334,7 +329,7 @@ public class DiffDrawUtil {
   @NotNull
   public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type) {
     if (line == 0) return Collections.emptyList();
-    return new LineMarkerBuilder(editor, line - 1, SeparatorPlacement.BOTTOM)
+    return new LineMarkerBuilder(editor, line, SeparatorPlacement.TOP)
       .withType(type)
       .withDefaultRenderer(false)
       .withDefaultGutterRenderer(false)
@@ -370,10 +365,19 @@ public class DiffDrawUtil {
                                                                       int offset1,
                                                                       int offset2,
                                                                       @NotNull BooleanGetter condition) {
+    return createLineSeparatorHighlighter(editor, offset1, offset2, condition, null);
+  }
+
+  @NotNull
+  public static List<RangeHighlighter> createLineSeparatorHighlighter(@NotNull Editor editor,
+                                                                      int offset1,
+                                                                      int offset2,
+                                                                      @NotNull BooleanGetter condition,
+                                                                      @Nullable String description) {
     RangeHighlighter marker = editor.getMarkupModel()
       .addRangeHighlighter(offset1, offset2, LINE_MARKER_LAYER, null, HighlighterTargetArea.LINES_IN_RANGE);
 
-    DiffLineSeparatorRenderer renderer = new DiffLineSeparatorRenderer(editor, condition);
+    DiffLineSeparatorRenderer renderer = new DiffLineSeparatorRenderer(editor, condition, description);
     marker.setLineSeparatorPlacement(SeparatorPlacement.TOP);
     marker.setLineSeparatorRenderer(renderer);
     marker.setLineMarkerRenderer(renderer);
@@ -596,7 +600,7 @@ public class DiffDrawUtil {
       RangeHighlighter stripeHighlighter = editor.getMarkupModel()
         .addRangeHighlighter(offset, offset, STRIPE_LAYER, stripeAttributes, HighlighterTargetArea.LINES_IN_RANGE);
 
-      return ContainerUtil.list(highlighter, stripeHighlighter);
+      return Arrays.asList(highlighter, stripeHighlighter);
     }
   }
 }

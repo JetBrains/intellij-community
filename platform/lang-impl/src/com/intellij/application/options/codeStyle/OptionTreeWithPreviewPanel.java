@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,8 +26,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -193,7 +179,6 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     new TreeSpeedSearch(optionsTree).setComparator(new SpeedSearchComparator(false));
     TreeUtil.installActions(optionsTree);
     optionsTree.setRootVisible(false);
-    UIUtil.setLineStyleAngled(optionsTree);
     optionsTree.setShowsRootHandles(true);
 
 
@@ -228,7 +213,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     return optionsTree;
   }
 
-  private List<BooleanOptionKey> orderByGroup(final List<BooleanOptionKey> options) {
+  private List<BooleanOptionKey> orderByGroup(final List<? extends BooleanOptionKey> options) {
     final List<String> groupOrder = getGroupOrder(options);
     List<BooleanOptionKey> result = new ArrayList<>(options.size());
     result.addAll(options);
@@ -241,15 +226,15 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       if (group2 == null) {
         return -1;
       }
-      Integer index1 = groupOrder.indexOf(group1);
-      Integer index2 = groupOrder.indexOf(group2);
+      int index1 = groupOrder.indexOf(group1);
+      int index2 = groupOrder.indexOf(group2);
       if (index1 == -1 || index2 == -1) return group1.compareToIgnoreCase(group2);
-      return index1.compareTo(index2);
+      return Integer.compare(index1, index2);
     });
     return result;
   }
 
-  protected List<String> getGroupOrder(List<BooleanOptionKey> options) {
+  protected List<String> getGroupOrder(List<? extends BooleanOptionKey> options) {
     List<String> groupOrder = new ArrayList<>();
     for (BooleanOptionKey each : options) {
       if (each.groupName != null && !groupOrder.contains(each.groupName)) {
@@ -428,11 +413,11 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
         button.setText(treeNode.getText());
         button.setSelected(treeNode.isSelected);
         if (isSelected) {
-          button.setForeground(UIUtil.getTreeSelectionForeground());
-          button.setBackground(UIUtil.getTreeSelectionBackground());
+          button.setForeground(UIUtil.getTreeSelectionForeground(hasFocus));
+          button.setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
         }
         else {
-          button.setForeground(UIUtil.getTreeTextForeground());
+          button.setForeground(UIUtil.getTreeForeground());
           button.setBackground(tree.getBackground());
         }
 
@@ -446,11 +431,11 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
         myLabel.setOpaque(true);
 
         if (isSelected) {
-          myLabel.setForeground(UIUtil.getTreeSelectionForeground());
-          myLabel.setBackground(UIUtil.getTreeSelectionBackground());
+          myLabel.setForeground(UIUtil.getTreeSelectionForeground(hasFocus));
+          myLabel.setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
         }
         else {
-          myLabel.setForeground(UIUtil.getTreeTextForeground());
+          myLabel.setForeground(UIUtil.getTreeForeground());
           myLabel.setBackground(tree.getBackground());
         }
 
@@ -467,11 +452,11 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     final Field field;
     private boolean enabled = true;
 
-    public BooleanOptionKey(String fieldName, String groupName, String title, Field field) {
+    BooleanOptionKey(String fieldName, String groupName, String title, Field field) {
       this(fieldName, groupName, title, null, null, field);
     }
 
-    public BooleanOptionKey(String fieldName,
+    BooleanOptionKey(String fieldName,
                             String groupName,
                             String title,
                             @Nullable OptionAnchor anchor,
@@ -533,7 +518,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   private class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
     private final Class<T> mySettingsClass;
 
-    public CustomBooleanOptionKey(String fieldName,
+    CustomBooleanOptionKey(String fieldName,
                                   String groupName,
                                   String title,
                                   OptionAnchor anchor,
@@ -568,7 +553,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     private boolean isSelected;
     private boolean isEnabled = true;
 
-    public MyToggleTreeNode(Object key, String text) {
+    MyToggleTreeNode(Object key, String text) {
       myKey = key;
       myText = text;
     }
@@ -603,6 +588,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     return myPanel;
   }
 
+  @NotNull
   @Override
   public Set<String> processListOptions() {
     Set<String> result = new HashSet<>();
@@ -625,7 +611,6 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   protected boolean shouldHideOptions() {
     return false;
   }
-
 
   private boolean isOptionVisible(BooleanOptionKey key) {
     if (!shouldHideOptions()) return true;

@@ -91,6 +91,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
         restartInplaceIntroduceTemplate();
       }
 
+      @Override
       protected TIntArrayList getParametersToRemove() {
         TIntArrayList parameters = new TIntArrayList();
         if (myCbReplaceAllOccurences == null || myCbReplaceAllOccurences.isSelected()) {
@@ -175,6 +176,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     myPanel.saveSettings(JavaRefactoringSettings.getInstance());
   }
 
+  @Override
   protected void performIntroduce() {
     boolean isDeleteLocalVariable = false;
 
@@ -298,6 +300,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     });
   }
 
+  @Override
   public void setReplaceAllOccurrences(boolean replaceAll) {
     myPanel.setReplaceAllOccurrences(replaceAll);
   }

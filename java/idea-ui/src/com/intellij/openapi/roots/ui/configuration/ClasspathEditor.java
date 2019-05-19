@@ -30,7 +30,7 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +128,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   @Override
-  public void rootsChanged(ModuleRootEvent event) {
+  public void rootsChanged(@NotNull ModuleRootEvent event) {
     if (myPanel != null) {
       myPanel.rootsChanged();
     }
@@ -165,12 +165,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
         formatIdToDescription.put(provider.getID(), provider.getDescription());
       }
       comboBoxClasspathFormat = new ComboBox<>(ArrayUtil.toStringArray(formatIdToDescription.keySet()));
-      comboBoxClasspathFormat.setRenderer(new ListCellRendererWrapper<String>() {
-        @Override
-        public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-          setText(formatIdToDescription.get(value));
-        }
-      });
+      comboBoxClasspathFormat.setRenderer(SimpleListCellRenderer.create("", formatIdToDescription::get));
       comboBoxClasspathFormat.setSelectedItem(getModuleClasspathFormat());
       add(comboBoxClasspathFormat,
           new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(6, 6, 6, 0), 0, 0));

@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
@@ -5,21 +6,37 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public abstract class JavaRunConfigurationProducerBase<T extends ModuleBasedConfiguration> extends RunConfigurationProducer<T> {
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   protected JavaRunConfigurationProducerBase(ConfigurationFactory configurationFactory) {
     super(configurationFactory);
   }
 
-  protected JavaRunConfigurationProducerBase(ConfigurationType configurationType) {
-    super(configurationType);
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
+  protected JavaRunConfigurationProducerBase(@NotNull ConfigurationType configurationType) {
+    super(configurationType.getConfigurationFactories()[0]);
+  }
+
+  protected JavaRunConfigurationProducerBase() {
+    super(true);
   }
 
   protected boolean setupConfigurationModule(@Nullable ConfigurationContext context, T configuration) {
@@ -60,7 +77,7 @@ public abstract class JavaRunConfigurationProducerBase<T extends ModuleBasedConf
 
   @Nullable
   @Override
-  public ConfigurationFromContext createConfigurationFromContext(ConfigurationContext context) {
+  public ConfigurationFromContext createConfigurationFromContext(@NotNull ConfigurationContext context) {
     ConfigurationFromContext fromContext = super.createConfigurationFromContext(context);
     if (fromContext != null) {
       JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration((RunConfigurationBase)fromContext.getConfiguration(),

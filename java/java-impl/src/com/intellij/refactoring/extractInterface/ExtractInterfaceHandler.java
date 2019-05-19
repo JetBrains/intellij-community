@@ -39,7 +39,6 @@ import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +60,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     return !PsiUtil.isModuleFile(file);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -79,6 +79,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
@@ -97,7 +98,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     if (!ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject)) return;
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       myInterfaceName = dialog.getExtractedSuperName();
-      mySelectedMembers = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
+      mySelectedMembers = dialog.getSelectedMemberInfos().toArray(new MemberInfo[0]);
       myTargetDir = dialog.getTargetDirectory();
       myJavaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
       try {
@@ -150,6 +151,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     return RefactoringBundle.message("extract.interface.command.name", myInterfaceName, DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 
+  @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }

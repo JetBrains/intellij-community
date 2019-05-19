@@ -24,7 +24,7 @@ import org.jetbrains.uast.values.UValue
 // Role: at the current state, evaluate expression(s)
 interface UEvaluator {
 
-  val context: UastContext
+  val context: UastLanguagePlugin
 
   val languageExtensions: List<UEvaluatorExtension>
     get() {
@@ -35,7 +35,7 @@ interface UEvaluator {
 
   fun PsiElement.languageExtension(): UEvaluatorExtension? = languageExtensions.firstOrNull { it.language == language }
 
-  fun UElement.languageExtension(): UEvaluatorExtension? = psi?.languageExtension()
+  fun UElement.languageExtension(): UEvaluatorExtension? = sourcePsi?.languageExtension()
 
   fun analyze(method: UMethod, state: UEvaluationState = method.createEmptyState())
 
@@ -43,8 +43,10 @@ interface UEvaluator {
 
   fun evaluate(expression: UExpression, state: UEvaluationState? = null): UValue
 
+  fun evaluateVariableByReference(variableReference: UReferenceExpression, state: UEvaluationState? = null): UValue
+
   fun getDependents(dependency: UDependency): Set<UValue>
 }
 
-fun createEvaluator(context: UastContext, extensions: List<UEvaluatorExtension>): UEvaluator =
+fun createEvaluator(context: UastLanguagePlugin, extensions: List<UEvaluatorExtension>): UEvaluator =
   TreeBasedEvaluator(context, extensions)

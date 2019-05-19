@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffContentFactory;
@@ -34,13 +20,15 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequest;
@@ -49,17 +37,17 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDiffRequestChain.Producer {
@@ -169,15 +157,15 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
 
   @Nullable
   public static ChangeDiffRequestProducer create(@Nullable Project project, @NotNull Change change) {
-    return create(project, change, Collections.emptyMap());
+    return create(project, change, null);
   }
 
   @Nullable
   public static ChangeDiffRequestProducer create(@Nullable Project project,
                                                  @NotNull Change change,
-                                                 @NotNull Map<Key, Object> changeContext) {
+                                                 @Nullable Map<Key, Object> changeContext) {
     if (!canCreate(project, change)) return null;
-    return new ChangeDiffRequestProducer(project, change, changeContext);
+    return new ChangeDiffRequestProducer(project, change, ContainerUtil.notNullize(changeContext));
   }
 
   public static boolean canCreate(@Nullable Project project, @NotNull Change change) {
@@ -292,8 +280,6 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
   private static DiffRequest createMergeRequest(@Nullable Project project,
                                                 @NotNull Change change,
                                                 @NotNull UserDataHolder context) throws DiffRequestProducerException {
-    // FIXME: This part is ugly as a VCS merge subsystem itself.
-
     FilePath path = ChangesUtil.getFilePath(change);
     VirtualFile file = path.getVirtualFile();
     if (file == null) {
@@ -306,27 +292,10 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
     }
     final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, project);
     if (vcs == null || vcs.getMergeProvider() == null) {
-      throw new DiffRequestProducerException("Can't show merge conflict - operation nos supported");
+      throw new DiffRequestProducerException("Can't show merge conflict - operation not supported");
     }
     try {
-      // FIXME: loadRevisions() can call runProcessWithProgressSynchronously() inside
-      final Ref<Throwable> exceptionRef = new Ref<>();
-      final Ref<MergeData> mergeDataRef = new Ref<>();
-      final VirtualFile finalFile = file;
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        try {
-          mergeDataRef.set(vcs.getMergeProvider().loadRevisions(finalFile));
-        }
-        catch (VcsException e) {
-          exceptionRef.set(e);
-        }
-      });
-      if (!exceptionRef.isNull()) {
-        Throwable e = exceptionRef.get();
-        if (e instanceof VcsException) throw (VcsException)e;
-        ExceptionUtil.rethrow(e);
-      }
-      MergeData mergeData = mergeDataRef.get();
+      MergeData mergeData = vcs.getMergeProvider().loadRevisions(file);
 
       ContentRevision bRev = change.getBeforeRevision();
       ContentRevision aRev = change.getAfterRevision();
@@ -334,14 +303,12 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
       String afterRevisionTitle = getRevisionTitle(aRev, SERVER_VERSION);
 
       String title = DiffRequestFactory.getInstance().getTitle(file);
-      List<String> titles = ContainerUtil.list(beforeRevisionTitle, BASE_VERSION, afterRevisionTitle);
+      List<String> titles = Arrays.asList(beforeRevisionTitle, BASE_VERSION, afterRevisionTitle);
 
       DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-      List<DiffContent> contents = ContainerUtil.list(
-        contentFactory.createFromBytes(project, mergeData.CURRENT, file),
-        contentFactory.createFromBytes(project, mergeData.ORIGINAL, file),
-        contentFactory.createFromBytes(project, mergeData.LAST, file)
-      );
+      List<DiffContent> contents = Arrays.asList(contentFactory.createFromBytes(project, mergeData.CURRENT, file),
+                                                 contentFactory.createFromBytes(project, mergeData.ORIGINAL, file),
+                                                 contentFactory.createFromBytes(project, mergeData.LAST, file));
 
       SimpleDiffRequest request = new SimpleDiffRequest(title, contents, titles);
       MergeUtil.putRevisionInfos(request, mergeData);
@@ -415,11 +382,9 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
 
   @NotNull
   public static String getRequestTitle(@NotNull Change change) {
-    ContentRevision bRev = change.getBeforeRevision();
-    ContentRevision aRev = change.getAfterRevision();
-    FilePath bPath = bRev != null ? bRev.getFile() : null;
-    FilePath aPath = aRev != null ? aRev.getFile() : null;
-    return DiffRequestFactoryImpl.getTitle(bPath, aPath, " -> ");
+    FilePath bPath = ChangesUtil.getBeforePath(change);
+    FilePath aPath = ChangesUtil.getAfterPath(change);
+    return DiffRequestFactoryImpl.getTitle(bPath, aPath, DIFF_TITLE_RENAME_SEPARATOR);
   }
 
   @NotNull

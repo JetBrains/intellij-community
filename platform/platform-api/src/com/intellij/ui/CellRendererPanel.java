@@ -32,6 +32,7 @@ public class CellRendererPanel extends JPanel {
   public CellRendererPanel() {
     super(null); // we do the layout ourselves
     super.setOpaque(false); // to be consistent with #isOpaque
+    super.setFont(null);
   }
 
   public final boolean isSelected() {
@@ -42,14 +43,24 @@ public class CellRendererPanel extends JPanel {
     mySelected = isSelected;
   }
 
+  public void setForcedBackground(Color bg) {
+    super.setBackground(bg);
+    if (bg != null && !mySelected) {
+      setSelected(true);
+    }
+  }
+
   // property change support ----------------
+  @Override
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
   }
 
+  @Override
   public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
   }
 
   // isOpaque() optimization ----------------
+  @Override
   public final boolean isOpaque() {
     return false;
   }
@@ -74,21 +85,17 @@ public class CellRendererPanel extends JPanel {
       if (count == 1) {
         Rectangle bounds = new Rectangle(getWidth(), getHeight());
         JBInsets.removeFrom(bounds, getInsets());
-        Component child = getComponent(0);
-        child.setBounds(bounds);
-        if (child instanceof CellRendererPanel) {
-          ((CellRendererPanel)child).invalidateLayout();
-          child.doLayout();
-        }
+        JComponent child = (JComponent)getComponent(0);
+        reshapeImpl(child, bounds.x, bounds.y, bounds.width, bounds.height);
+        invalidateLayout(child);
+        child.doLayout();
       }
       else {
-        invalidateLayout();
+        invalidateLayout(this);
         super.doLayout();
         for (int i = 0; i < count; i++) {
           Component c = getComponent(i);
-          if (c instanceof CellRendererPanel) {
-            c.doLayout();
-          }
+          c.doLayout();
         }
       }
     }
@@ -108,12 +115,17 @@ public class CellRendererPanel extends JPanel {
 
   @Override
   public void reshape(int x, int y, int w, int h) {
-    // suppress per-cell "moved" and "resized" events on paint
-    // see Component#setBounds, Component#notifyNewBounds
-    AWTAccessor.getComponentAccessor().setLocation(this, x, y);
-    AWTAccessor.getComponentAccessor().setSize(this, w, h);
+    reshapeImpl(this, x, y, w, h);
   }
 
+  static void reshapeImpl(JComponent component, int x, int y, int w, int h) {
+    // suppress per-cell "moved" and "resized" events on paint
+    // see Component#setBounds, Component#notifyNewBounds
+    AWTAccessor.getComponentAccessor().setLocation(component, x, y);
+    AWTAccessor.getComponentAccessor().setSize(component, w, h);
+  }
+
+  @Override
   public void invalidate() {
   }
 
@@ -121,13 +133,14 @@ public class CellRendererPanel extends JPanel {
     super.invalidate();
   }
 
-  private void invalidateLayout() {
-    LayoutManager layout = getLayout();
+  private static void invalidateLayout(JComponent component) {
+    LayoutManager layout = component.getLayout();
     if (layout instanceof LayoutManager2) {
-      ((LayoutManager2)layout).invalidateLayout(this);
+      ((LayoutManager2)layout).invalidateLayout(component);
     }
   }
 
+  @Override
   public void validate() {
     doLayout();
   }
@@ -136,39 +149,21 @@ public class CellRendererPanel extends JPanel {
     super.validate();
   }
 
+  @Override
   public void revalidate() {
   }
 
+  @Override
   public void repaint(long tm, int x, int y, int width, int height) {
   }
 
+  @Override
   public void repaint(Rectangle r) {
   }
 
+  @Override
   public void repaint() {
   }
 
   // END no validation methods --------------
-
-  public static class SuperPreferredSize extends CellRendererPanel {
-    @Override
-    public Dimension getPreferredSize() {
-      return super_getPreferredSize();
-    }
-  }
-
-  public static class SuperPreferredSizeWithBackground extends SuperPreferredSize {
-    @Override
-    protected void paintComponent(Graphics g) {
-      g.setColor(getBackground());
-      g.fillRect(0, 0, getWidth(), getHeight());
-    }
-  }
-
-  public static class SuperValidate extends SuperPreferredSize {
-    @Override
-    public void validate() {
-      super_validate();
-    }
-  }
 }

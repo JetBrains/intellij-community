@@ -15,36 +15,38 @@
  */
 package com.intellij.java.codeInsight;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 
 /**
  * @author mike
  */
 @PlatformTestCase.WrapInCommand
-public class GenerateJavadocTest extends CodeInsightTestCase {
-  public void test1() throws Exception { doTest(); }
-  public void test2() throws Exception { doTest(); }
-  public void test3() throws Exception { doTest(); }
-  public void testIdeadev2328() throws Exception { doTest(); }
-  public void testIdeadev2328_2() throws Exception { doTest(); }
-  public void testBeforeCommentedJavadoc() throws Exception { doTest(); }
-  public void testDoubleSlashInJavadoc() throws Exception { doTest(); }
+public class GenerateJavadocTest extends LightCodeInsightTestCase {
+  public void test1() { doTest(); }
+  public void test2() { doTest(); }
+  public void test3() { doTest(); }
+  public void testIdeadev2328() { doTest(); }
+  public void testIdeadev2328_2() { doTest(); }
+  public void testBeforeCommentedJavadoc() { doTest(); }
+  public void testDoubleSlashInJavadoc() { doTest(); }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     String name = getTestName(false);
     configureByFile("/codeInsight/generateJavadoc/before" + name + ".java");
     performAction();
-    checkResultByFile("/codeInsight/generateJavadoc/after" + name + ".java", false);
+    checkResultByFile("/codeInsight/generateJavadoc/after" + name + ".java");
   }
 
-  private void performAction() {
+  private static void performAction() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
-    actionHandler.execute(myEditor, DataManager.getInstance().getDataContext());
+    DataContext context = DataManager.getInstance().getDataContext(myEditor.getComponent());
+    actionHandler.execute(myEditor, myEditor.getCaretModel().getCurrentCaret(), context);
   }
 }

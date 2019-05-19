@@ -26,12 +26,12 @@ import java.util.Set;
 class Banner extends NonOpaquePanel implements PropertyChangeListener{
   private int myBannerMinHeight;
   private final JComponent myText = new MyText();
-  private final JLabel myProjectIcon = new JLabel(AllIcons.General.ProjectConfigurableBanner, SwingConstants.LEFT);
+  private final JLabel myProjectIcon = new JLabel(AllIcons.General.ProjectConfigurable, SwingConstants.LEFT);
   private final NonOpaquePanel myActionsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT, 2, 2));
 
   private final Map<Action, LinkLabel> myActions = new HashMap<>();
 
-  public Banner() {
+  Banner() {
     setLayout(new BorderLayout());
 
     setBorder(JBUI.Borders.empty(2, 12, 2, 4));

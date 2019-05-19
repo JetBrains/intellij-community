@@ -28,7 +28,6 @@ import java.util.Collection;
  * Manages asynchronous file status updating for files under VCS.
  *
  * @author max
- * @since 6.0
  */
 public abstract class VcsDirtyScopeManager {
   @NotNull
@@ -59,33 +58,26 @@ public abstract class VcsDirtyScopeManager {
    * Requests an asynchronous file status update for all files under the specified directory.
    *
    * @param dir the directory for which the file status update is requested.
-   * @deprecated Use {@link #dirDirtyRecursively(VirtualFile)} instead.
    */
-  public abstract void dirDirtyRecursively(VirtualFile dir, final boolean scheduleUpdate);
+  public abstract void dirDirtyRecursively(@NotNull VirtualFile dir);
 
-  /**
-   * Requests an asynchronous file status update for all files under the specified directory.
-   *
-   * @param dir the directory for which the file status update is requested.
-   */
-  public abstract void dirDirtyRecursively(VirtualFile dir);
+  public abstract void dirDirtyRecursively(@NotNull FilePath path);
 
-  public abstract void dirDirtyRecursively(FilePath path);
-
+  @Nullable
   public abstract VcsInvalidated retrieveScopes();
 
   public abstract void changesProcessed();
 
   @NotNull
-  public abstract Collection<FilePath> whatFilesDirty(@NotNull Collection<FilePath> files);
+  public abstract Collection<FilePath> whatFilesDirty(@NotNull Collection<? extends FilePath> files);
 
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories
    */
-  public abstract void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty);
+  public abstract void filePathsDirty(@Nullable final Collection<? extends FilePath> filesDirty, @Nullable final Collection<? extends FilePath> dirsRecursivelyDirty);
 
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories
    */
-  public abstract void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty);
+  public abstract void filesDirty(@Nullable final Collection<? extends VirtualFile> filesDirty, @Nullable final Collection<? extends VirtualFile> dirsRecursivelyDirty);
 }

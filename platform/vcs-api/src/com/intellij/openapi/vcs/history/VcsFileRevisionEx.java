@@ -40,4 +40,6 @@ public abstract class VcsFileRevisionEx implements VcsFileRevision {
 
   @Nullable
   public abstract Date getAuthorDate();
+
+  public abstract boolean isDeleted();
 }

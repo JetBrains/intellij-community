@@ -203,7 +203,6 @@ public class HgCommandExecutor {
   }
 
   // logging to the Version Control console (without extensions and configs)
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   protected void logCommand(@NotNull String operation, @Nullable List<String> arguments) {
     if (myProject.isDisposed()) {
       return;

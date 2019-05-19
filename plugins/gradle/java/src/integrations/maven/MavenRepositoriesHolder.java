@@ -7,7 +7,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.indices.MavenSearchIndex;
 import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
@@ -25,25 +26,22 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.jetbrains.idea.maven.indices.MavenIndicesManager.IndexUpdatingState.IDLE;
 
-/**
- * @author Vladislav.Soroka
- * @since 10/28/13
- */
-public class MavenRepositoriesHolder extends AbstractProjectComponent {
+public class MavenRepositoriesHolder {
   private static final String UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP = "Unindexed maven repositories gradle detection";
   private static final Key<String> NOTIFICATION_KEY = Key.create(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP);
+  private final Project myProject;
 
   private volatile Set<MavenRemoteRepository> myRemoteRepositories;
   private volatile Set<String> myNotIndexedUrls;
 
   public MavenRepositoriesHolder(Project project) {
-    super(project);
+    myProject = project;
     myRemoteRepositories = Collections.emptySet();
     myNotIndexedUrls = Collections.emptySet();
   }
@@ -57,7 +55,7 @@ public class MavenRepositoriesHolder extends AbstractProjectComponent {
         UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP, NotificationSource.PROJECT_SYNC, GradleConstants.SYSTEM_ID);
     }
     else {
-      myNotIndexedUrls = ContainerUtil.newHashSet(repositories);
+      myNotIndexedUrls = new HashSet<>(repositories);
     }
   }
 
@@ -72,7 +70,7 @@ public class MavenRepositoriesHolder extends AbstractProjectComponent {
     if (notificationManager.isNotificationActive(NOTIFICATION_KEY)) return;
 
     final MavenIndicesManager indicesManager = MavenIndicesManager.getInstance();
-    for (MavenIndex index : indicesManager.getIndices()) {
+    for (MavenSearchIndex index : indicesManager.getIndices()) {
       if (indicesManager.getUpdatingState(index) != IDLE) return;
     }
 
@@ -86,12 +84,11 @@ public class MavenRepositoriesHolder extends AbstractProjectComponent {
     notificationData.setListener("#update", new NotificationListener.Adapter() {
       @Override
       protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-        List<MavenIndex> notIndexed = indicesManager.getIndices().stream()
-          .filter(index -> isNotIndexed(index.getRepositoryPathOrUrl()))
-          .collect(Collectors.toList());
+        List<MavenIndex> notIndexed =
+          ContainerUtil.filter(indicesManager.getIndices(), index -> isNotIndexed(index.getRepositoryPathOrUrl()));
         indicesManager.scheduleUpdate(myProject, notIndexed).onSuccess(aVoid -> {
           if (myNotIndexedUrls.isEmpty()) return;
-          for (MavenIndex index : notIndexed) {
+          for (MavenSearchIndex index : notIndexed) {
             if (index.getUpdateTimestamp() != -1 || index.getFailureMessage() != null) {
               myNotIndexedUrls.remove(index.getRepositoryPathOrUrl());
             }
@@ -125,12 +122,12 @@ public class MavenRepositoriesHolder extends AbstractProjectComponent {
     notificationManager.showNotification(GradleConstants.SYSTEM_ID, notificationData, NOTIFICATION_KEY);
   }
 
-  public static MavenRepositoriesHolder getInstance(Project p) {
-    return p.getComponent(MavenRepositoriesHolder.class);
+  public static MavenRepositoriesHolder getInstance(@NotNull Project p) {
+    return ServiceManager.getService(p, MavenRepositoriesHolder.class);
   }
 
   public void update(Set<MavenRemoteRepository> remoteRepositories) {
-    myRemoteRepositories = ContainerUtil.newHashSet(remoteRepositories);
+    myRemoteRepositories = new HashSet<>(remoteRepositories);
   }
 
   public Set<MavenRemoteRepository> getRemoteRepositories() {

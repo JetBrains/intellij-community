@@ -1,11 +1,12 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.netbeans.lib.cvsclient.command.impord;
 
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.DirectoryObject;
@@ -35,7 +36,8 @@ public final class CreateModuleCommand extends Command {
 
 	// Implemented ============================================================
 
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+	@Override
+        public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                                   AuthenticationException {
 		// check necessary fields
 		BugLog.getInstance().assertNotNull(module);
@@ -65,12 +67,14 @@ public final class CreateModuleCommand extends Command {
 		return true;
 	}
 
-	public void resetCvsCommand() {
+	@Override
+        public void resetCvsCommand() {
 		super.resetCvsCommand();
 		setModule(null);
 	}
 
-	public String getCvsCommandLine() {
+	@Override
+        public String getCvsCommandLine() {
 		return "import " + module;
 	}
 

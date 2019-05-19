@@ -31,6 +31,7 @@ public class ReplaceStaticVariableAssignment extends FixableUsageInfo {
         this.reference = reference;
     }
 
+    @Override
     public void fixUsage() throws IncorrectOperationException {
       MutationUtils.replaceExpression(originalClassName + '.' + reference.getText(), reference);
     }

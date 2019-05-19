@@ -18,6 +18,7 @@ package org.jetbrains.io;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public final class LocalFileFinder {
   public static boolean windowsDriveExists(@NotNull String path) {
     if (!SystemInfo.isWindows) return true;
     
-    if (path.length() > 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':') {
+    if (FileUtil.isWindowsAbsolutePath(path)) {
       final char driveLetter = Character.toUpperCase(path.charAt(0));
       final Boolean driveExists = myWindowsDrivesMap.getIfPresent(driveLetter);
       if (driveExists != null) {

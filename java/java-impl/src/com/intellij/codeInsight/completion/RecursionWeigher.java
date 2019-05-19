@@ -30,7 +30,6 @@ import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.impl.search.MethodDeepestSuperSearcher;
 import com.intellij.psi.scope.ElementClassFilter;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CommonProcessors;
@@ -52,7 +51,7 @@ class RecursionWeigher extends LookupElementWeigher {
   private final boolean myDelegate;
   private final CompletionType myCompletionType;
 
-  public RecursionWeigher(PsiElement position,
+  RecursionWeigher(PsiElement position,
                           CompletionType completionType,
                           @NotNull PsiReferenceExpression reference,
                           @Nullable PsiMethodCallExpression expression,
@@ -172,7 +171,6 @@ class RecursionWeigher extends LookupElementWeigher {
   @Nullable
   private String getSetterPropertyName(@Nullable PsiMethod calledMethod) {
     if (PropertyUtilBase.isSimplePropertySetter(calledMethod)) {
-      assert calledMethod != null;
       return PropertyUtilBase.getPropertyName(calledMethod);
     }
     PsiReferenceExpression reference = ExcludeSillyAssignment.getAssignedReference(myPosition);

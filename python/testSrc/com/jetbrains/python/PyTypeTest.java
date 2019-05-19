@@ -1342,6 +1342,32 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-29577
+  public void testRangeTypeByModifications() {
+    doTest("List[int]",
+           "expr = range(10)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr.append('a')");
+
+    doTest("List[Union[int, Any]]",
+           "expr = range(10)\n" +
+           "expr.append(var)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr[0] = 'a'\n");
+
+    doTest("List[Union[int, str, None]]",
+           "expr = range(10)\n" +
+           "expr.extend(['a', None])");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr.index('a')");
+  }
+
   // PY-1182
   public void testDictTypeByModifications() {
     doTest("Dict[str, Union[int, str]]",
@@ -2562,6 +2588,17 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-32240
+  public void testTypingNTFunctionInheritorField() {
+    doTest("str",
+           "from typing import NamedTuple\n" +
+           "\n" +
+           "class A(NamedTuple(\"NT\", [(\"user\", str)])):\n" +
+           "    pass\n" +
+           "    \n" +
+           "expr = A(undefined).user");
+  }
+
   // PY-4351
   public void testCollectionsNTInheritorField() {
     // Seems that this case won't be supported because
@@ -3044,6 +3081,12 @@ public class PyTypeTest extends PyTestCase {
            "from collections import namedtuple\n" +
            "Cat = namedtuple(\"Cat\", \"name age\")\n" +
            "expr = Cat(\"name\", 5)._replace(age=\"five\").age");
+
+    doTest("Cat",
+           "from collections import namedtuple\n" +
+           "class Cat(namedtuple(\"Cat\", \"name age\")):\n" +
+           "    pass\n" +
+           "expr = Cat._replace(Cat(\"name\", 5), name=\"newname\")");
   }
 
   // PY-27148
@@ -3072,6 +3115,16 @@ public class PyTypeTest extends PyTestCase {
                    "from typing import NamedTuple\n" +
                    "Cat = NamedTuple(\"Cat\", name=str, age=int)\n" +
                    "expr = Cat(\"name\", 5)._replace(age=\"give\").age")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Cat",
+                   "from typing import NamedTuple\n" +
+                   "class Cat(NamedTuple):\n" +
+                   "    name: str\n" +
+                   "    age: int\n" +
+                   "expr = Cat._replace(Cat(\"name\", 5), name=\"newname\")")
     );
   }
 
@@ -3242,6 +3295,81 @@ public class PyTypeTest extends PyTestCase {
     doMultiFileTest("T",
                     "from a import T\n" +
                     "expr = T");
+  }
+
+  // PY-29748
+  public void testAfterIdentityComparison() {
+    doTest("int",
+           "a = 1\n" +
+           "if a is a:\n" +
+           "   expr = a");
+  }
+
+  // PY-31956
+  public void testInAndNotBoolContains() {
+    doTest("bool",
+                   "class MyClass:\n" +
+                   "    def __contains__(self):\n" +
+                   "        return 42\n" +
+                   "\n" +
+                   "expr = 1 in MyClass()");
+  }
+
+  // PY-32533
+  public void testSuperWithAnotherType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> doTest("A",
+                   "class A:\n" +
+                   "    def f(self):\n" +
+                   "        return 'A'\n" +
+                   "\n" +
+                   "class B:\n" +
+                   "    def f(self):\n" +
+                   "        return 'B'\n" +
+                   "\n" +
+                   "class C(B):\n" +
+                   "    def f(self):\n" +
+                   "        return 'C'\n" +
+                   "\n" +
+                   "class D(C, A):\n" +
+                   "    def f(self):\n" +
+                   "        expr = super(B, self)\n" +
+                   "        return expr.f()")
+    );
+  }
+
+  // PY-32113
+  public void testAssertionOnVariableFromOuterScope() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("D",
+                   "class B: pass\n" +
+                   "\n" +
+                   "class D(B): pass\n" +
+                   "\n" +
+                   "g_b: B = undefined\n" +
+                   "\n" +
+                   "def main() -> None:\n" +
+                   "    assert isinstance(g_b, D)\n" +
+                   "    expr = g_b")
+    );
+  }
+
+  // PY-32113
+  public void testAssertionFunctionFromOuterScope() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("B",
+                   "class B: pass\n" +
+                   "\n" +
+                   "def g_b():\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "def main() -> None:\n" +
+                   "    assert isinstance(g_b, B)\n" +
+                   "    expr = g_b")
+    );
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

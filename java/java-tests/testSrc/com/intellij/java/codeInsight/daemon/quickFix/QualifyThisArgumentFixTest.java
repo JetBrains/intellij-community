@@ -19,8 +19,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 
 public class QualifyThisArgumentFixTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/qualifyThis";

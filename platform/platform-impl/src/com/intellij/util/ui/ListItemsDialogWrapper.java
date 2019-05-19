@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -23,14 +9,15 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
@@ -80,7 +67,7 @@ public abstract class ListItemsDialogWrapper extends DialogWrapper {
   protected abstract String createAddItemDialog();
 
   public void setData(List<String> data) {
-    myData = newArrayList(data);
+    myData = new ArrayList<>(data);
     updateData();
     if (!myData.isEmpty()) {
       myList.setSelectedIndex(0);
@@ -124,13 +111,13 @@ public abstract class ListItemsDialogWrapper extends DialogWrapper {
   }
 
   public static void installListItemsDialogForTextField(@NotNull TextFieldWithBrowseButton uiField,
-                                                        @NotNull Producer<ListItemsDialogWrapper> createDialog) {
+                                                        @NotNull Supplier<? extends ListItemsDialogWrapper> createDialog) {
     uiField.getTextField().setEditable(false);
     uiField.setButtonIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
     uiField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final ListItemsDialogWrapper tagListDialog = createDialog.produce();
+        final ListItemsDialogWrapper tagListDialog = createDialog.get();
         tagListDialog.setData(createListPresentation(uiField.getText()));
         if (tagListDialog.showAndGet()) {
           uiField.setText(createStringPresentation(tagListDialog.getData()));

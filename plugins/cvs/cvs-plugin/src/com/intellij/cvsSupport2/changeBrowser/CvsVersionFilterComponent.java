@@ -42,23 +42,27 @@ public class CvsVersionFilterComponent extends StandardVersionFilterComponent<Ch
     return myPanel;
   }
 
+  @Override
   protected void installCheckBoxListener(final ActionListener filterListener) {
     super.installCheckBoxListener(filterListener);
     myUseUserFilter.addActionListener(filterListener);
   }
 
+  @Override
   protected void initValues(ChangeBrowserSettings settings) {
     super.initValues(settings);
     myUseUserFilter.setSelected(settings.USE_USER_FILTER);
     myUserField.setText(settings.USER);
   }
 
+  @Override
   public void saveValues(ChangeBrowserSettings settings) {
     super.saveValues(settings);
     settings.USE_USER_FILTER = myUseUserFilter.isSelected();
     settings.USER = myUserField.getText();
   }
 
+  @Override
   protected void updateAllEnabled(ActionEvent e) {
     super.updateAllEnabled(e);
     updatePair(myUseUserFilter, myUserField, e);
@@ -68,6 +72,7 @@ public class CvsVersionFilterComponent extends StandardVersionFilterComponent<Ch
     return myUseUserFilter.isSelected() ? myUserField.getText() : null;
   }
 
+  @Override
   public JComponent getComponent() {
     return getPanel();
   }

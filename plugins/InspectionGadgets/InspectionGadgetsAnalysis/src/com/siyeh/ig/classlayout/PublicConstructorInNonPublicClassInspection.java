@@ -53,14 +53,14 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
   @Override
   @NotNull
   public InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList();
+    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiMethod constructor = (PsiMethod)infos[0];
     final PsiClass aClass = constructor.getContainingClass();
     if (aClass != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       fixes.add(new SetConstructorModifierFix(PsiModifier.PRIVATE));
     }
     fixes.add(new RemoveModifierFix(PsiModifier.PUBLIC));
-    return fixes.toArray(new InspectionGadgetsFix[0]);
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   private static class SetConstructorModifierFix extends InspectionGadgetsFix {

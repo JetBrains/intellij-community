@@ -7,6 +7,6 @@ Groovy script
     Arguments
       PsiElement([)('[')
       Literal
-        PsiElement(string)(''name'')
+        PsiElement(single quoted string)(''name'')
       PsiErrorElement:',' or ']' expected
         <empty list>

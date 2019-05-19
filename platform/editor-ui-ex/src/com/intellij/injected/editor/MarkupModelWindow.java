@@ -69,7 +69,7 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
                                                                    TextAttributes textAttributes,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
-                                                                   Consumer<RangeHighlighterEx> changeAttributesAction) {
+                                                                   Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myHostModel.addRangeHighlighterAndChangeAttributes(hostRange.getStartOffset(), hostRange.getEndOffset(), layer, textAttributes,
                                                               targetArea, isPersistent, changeAttributesAction);
@@ -77,7 +77,7 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
 
   @Override
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
-                                      @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
+                                      @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     myHostModel.changeAttributesInBatch(highlighter, changeAttributesAction);
   }
 

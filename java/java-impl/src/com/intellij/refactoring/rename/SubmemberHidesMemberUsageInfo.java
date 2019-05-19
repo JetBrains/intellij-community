@@ -19,8 +19,8 @@ package com.intellij.refactoring.rename;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageViewUtil;
 
 public class SubmemberHidesMemberUsageInfo extends UnresolvableCollisionUsageInfo {
@@ -28,6 +28,7 @@ public class SubmemberHidesMemberUsageInfo extends UnresolvableCollisionUsageInf
     super(element, referencedElement);
   }
 
+  @Override
   public String getDescription() {
     String descr;
     if (!(getElement() instanceof PsiMethod)) {

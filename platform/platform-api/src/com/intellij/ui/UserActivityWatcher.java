@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -36,14 +23,14 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
 
   private final DocumentListener myDocumentListener = new DocumentAdapter() {
     @Override
-    public void textChanged(DocumentEvent event) {
+    public void textChanged(@NotNull DocumentEvent event) {
       fireUIChanged();
     }
   };
 
   private final com.intellij.openapi.editor.event.DocumentListener myIdeaDocumentListener = new com.intellij.openapi.editor.event.DocumentListener() {
     @Override
-    public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
+    public void documentChanged(@NotNull final com.intellij.openapi.editor.event.DocumentEvent e) {
       fireUIChanged();
     }
   };
@@ -179,16 +166,18 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     if (parentComponent instanceof JTextComponent) {
       ((JTextComponent)parentComponent).getDocument().addDocumentListener(myDocumentListener);
     }
+    else if (parentComponent instanceof EditorTextComponent) {
+      ((EditorTextComponent)parentComponent).addDocumentListener(myIdeaDocumentListener);
+    }
     else if (parentComponent instanceof ItemSelectable) {
       ((ItemSelectable)parentComponent).addItemListener(myItemListener);
     }
     else if (parentComponent instanceof JList) {
       ((JList)parentComponent).getModel().addListDataListener(myListDataListener);
       ((JList)parentComponent).addListSelectionListener(myListSelectionListener);
-    } else if (parentComponent instanceof JTree) {
+    }
+    else if (parentComponent instanceof JTree) {
       ((JTree)parentComponent).getModel().addTreeModelListener(myTreeModelListener);
-    } else if (parentComponent instanceof DocumentBasedComponent) {
-      ((DocumentBasedComponent)parentComponent).getDocument().addDocumentListener(myIdeaDocumentListener);
     }
 
     if (parentComponent instanceof JComboBox) {
@@ -222,12 +211,14 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     if (component instanceof JTextComponent) {
       ((JTextComponent)component).getDocument().removeDocumentListener(myDocumentListener);
     }
+    else if (component instanceof EditorTextComponent) {
+      ((EditorTextComponent)component).removeDocumentListener(myIdeaDocumentListener);
+    }
     else if (component instanceof ItemSelectable) {
       ((ItemSelectable)component).removeItemListener(myItemListener);
-    } else if (component instanceof JTree) {
+    }
+    else if (component instanceof JTree) {
       ((JTree)component).getModel().removeTreeModelListener(myTreeModelListener);
-    } else if (component instanceof DocumentBasedComponent) {
-      ((DocumentBasedComponent)component).getDocument().removeDocumentListener(myIdeaDocumentListener);
     }
 
     if (component instanceof JTable) {

@@ -28,7 +28,7 @@ import java.util.List;
 public abstract class ProjectViewNodeWithChildrenList<T> extends ProjectViewNode<T> {
   protected final List<AbstractTreeNode> myChildren;
 
-  protected ProjectViewNodeWithChildrenList(Project project, T t, ViewSettings viewSettings) {
+  protected ProjectViewNodeWithChildrenList(Project project, @NotNull T t, ViewSettings viewSettings) {
     super(project, t, viewSettings);
     myChildren = new ArrayList<>();
   }

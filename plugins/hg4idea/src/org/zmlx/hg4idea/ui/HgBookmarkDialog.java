@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -65,7 +66,7 @@ public class HgBookmarkDialog extends DialogWrapper {
     myBookmarkName = new JBTextField(13);
     myBookmarkName.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent e) {
+      public void textChanged(@NotNull DocumentEvent e) {
         validateFields();
       }
     });

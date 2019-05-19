@@ -1,41 +1,53 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.PathUtilRt
+import gnu.trove.THashMap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.DefaultFileRegion
 import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslHandler
-import io.netty.handler.stream.ChunkedFile
-import java.io.FileNotFoundException
-import java.io.RandomAccessFile
+import io.netty.handler.stream.ChunkedNioFile
+import java.nio.channels.FileChannel
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.*
-import javax.activation.MimetypesFileTypeMap
+import java.util.regex.Pattern
 
-private val FILE_MIMETYPE_MAP = MimetypesFileTypeMap()
+fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
+  val future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
+  if (!isKeepAlive) {
+    future.addListener(ChannelFutureListener.CLOSE)
+  }
+}
+
+private val fileExtToMimeType by lazy {
+  val map = THashMap<String, String>(1100)
+  FileResponses.javaClass.getResourceAsStream("/mime-types.csv").bufferedReader().useLines {
+    for (line in it) {
+      if (line.isBlank()) {
+        continue
+      }
+
+      val commaIndex = line.indexOf(',')
+      // don't check negative commaIndex - resource expected to contain only valid data as it is not user supplied
+      map.put(line.substring(0, commaIndex), line.substring(commaIndex + 1))
+    }
+  }
+  map
+}
 
 object FileResponses {
   fun getContentType(path: String): String {
-    return FILE_MIMETYPE_MAP.getContentType(path)
+    return PathUtilRt.getFileExtension(path)?.let { fileExtToMimeType.get(it) } ?: "application/octet-stream"
   }
 
-  private fun checkCache(request: HttpRequest, channel: Channel, lastModified: Long, extraHeaders: HttpHeaders): Boolean {
+  @JvmOverloads
+  fun checkCache(request: HttpRequest, channel: Channel, lastModified: Long, extraHeaders: HttpHeaders? = null): Boolean {
     val ifModified = request.headers().getTimeMillis(HttpHeaderNames.IF_MODIFIED_SINCE)
     if (ifModified != null && ifModified >= lastModified) {
       HttpResponseStatus.NOT_MODIFIED.send(channel, request, extraHeaders = extraHeaders)
@@ -44,61 +56,123 @@ object FileResponses {
     return false
   }
 
-  fun prepareSend(request: HttpRequest, channel: Channel, lastModified: Long, filename: String, extraHeaders: HttpHeaders): HttpResponse? {
-    if (checkCache(request, channel, lastModified, extraHeaders)) {
+  @JvmOverloads
+  fun prepareSend(request: HttpRequest, channel: Channel, lastModified: Long, filename: String, extraHeaders: HttpHeaders? = null): HttpResponse? {
+    if (request.headers().get(HttpHeaderNames.RANGE) == null && checkCache(request, channel, lastModified, extraHeaders)) {
       return null
     }
+    return doPrepareResponse(DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK), filename, lastModified, extraHeaders)
+  }
 
-    val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
+  private fun doPrepareResponse(response: DefaultHttpResponse, filename: String, lastModified: Long, extraHeaders: HttpHeaders?): DefaultHttpResponse {
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, getContentType(filename))
     response.addCommonHeaders()
+    @Suppress("SpellCheckingInspection")
     response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")
-    response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(lastModified))
-    response.headers().add(extraHeaders)
+    if (response.status() != HttpResponseStatus.PARTIAL_CONTENT) {
+      response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(lastModified))
+    }
+    if (extraHeaders != null) {
+      response.headers().add(extraHeaders)
+    }
     return response
   }
 
-  fun sendFile(request: HttpRequest, channel: Channel, file: Path, extraHeaders: HttpHeaders = EmptyHttpHeaders.INSTANCE) {
-    val response = prepareSend(request, channel, Files.getLastModifiedTime(file).toMillis(), file.fileName.toString(), extraHeaders) ?: return
-
-    val keepAlive = response.addKeepAliveIfNeed(request)
-
-    var fileWillBeClosed = false
-    val raf: RandomAccessFile
+  fun sendFile(request: HttpRequest, channel: Channel, file: Path, extraHeaders: HttpHeaders? = null) {
+    val fileChannel: FileChannel
+    val rangeHeader = request.headers().get(HttpHeaderNames.RANGE)
+    val lastModified: Long
     try {
-      raf = RandomAccessFile(file.toFile(), "r")
+      lastModified = Files.getLastModifiedTime(file).toMillis()
+      if (rangeHeader == null && checkCache(request, channel, lastModified, extraHeaders)) {
+        return
+      }
+
+      fileChannel = FileChannel.open(file, StandardOpenOption.READ)
     }
-    catch (ignored: FileNotFoundException) {
+    catch (ignored: NoSuchFileException) {
       HttpResponseStatus.NOT_FOUND.send(channel, request)
       return
     }
 
+    val isKeepAlive: Boolean
+    var fileWillBeClosed = false
     try {
-      val fileLength = raf.length()
-      HttpUtil.setContentLength(response, fileLength)
+      val fileLength = fileChannel.size()
+      val range = parseRange(rangeHeader, fileLength) ?: ByteRange(0, fileLength)
 
+      val isPartialContent = !(range.start == 0L && range.end == fileLength)
+      val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, if (isPartialContent) HttpResponseStatus.PARTIAL_CONTENT else HttpResponseStatus.OK)
+      isKeepAlive = response.addKeepAliveIfNeed(request)
+      doPrepareResponse(response, file.fileName.toString(), lastModified, extraHeaders)
+
+      if (isPartialContent) {
+        response.headers().set(HttpHeaderNames.CONTENT_RANGE, "bytes ${range.start}-${range.end - 1}/${fileLength}")
+      }
+
+      val contentLength = range.end - range.start
+      HttpUtil.setContentLength(response, contentLength)
       channel.write(response)
       if (request.method() !== HttpMethod.HEAD) {
         if (channel.pipeline().get(SslHandler::class.java) == null) {
           // no encryption - use zero-copy
-          channel.write(DefaultFileRegion(raf.channel, 0, fileLength))
+          channel.write(DefaultFileRegion(fileChannel, range.start, contentLength))
         }
         else {
           // cannot use zero-copy with HTTPS
-          channel.write(ChunkedFile(raf))
+          channel.write(ChunkedNioFile(fileChannel, range.start, contentLength, 8192))
         }
       }
       fileWillBeClosed = true
     }
     finally {
       if (!fileWillBeClosed) {
-        raf.close()
+        fileChannel.close()
       }
     }
 
-    val future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
-    if (!keepAlive) {
-      future.addListener(ChannelFutureListener.CLOSE)
+    flushChunkedResponse(channel, isKeepAlive)
+  }
+}
+
+private val RANGE_HEADER = Pattern.compile("bytes=(\\d+)?-(\\d+)?")
+
+// http range end is inclusive, but we use more convenient agreement - end here is exclusive
+private data class ByteRange(val start: Long, val end: Long)
+
+private fun parseRange(header: String?, size: Long): ByteRange? {
+  if (header.isNullOrEmpty()) {
+    return null
+  }
+
+  val m = RANGE_HEADER.matcher(header)
+  if (!m.matches()) {
+    logger<FileResponses>().error("Range header is invalid: ${header}")
+    return null
+  }
+
+  if (m.group(1).isNullOrEmpty()) {
+    return ByteRange(size - m.group(2).toLong(), size)
+  }
+
+  val start = m.group(1).toLong()
+  val end: Long
+  if (m.group(2).isNullOrEmpty()) {
+    end = size - 1
+  }
+  else {
+    end = m.group(2).toLong()
+  }
+
+  return when {
+    end < start -> {
+      logger<FileResponses>().error("start ($start) must be greater than end ($end)")
+      null
     }
+    end >= size -> {
+      logger<FileResponses>().error("end ($end) must be lesser than size ($size)")
+      null
+    }
+    else -> ByteRange(start, end + 1)
   }
 }

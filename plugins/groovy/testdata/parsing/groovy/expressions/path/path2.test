@@ -8,4 +8,4 @@ Groovy script
       PsiElement(.)('.')
       PsiElement(identifier)('toString')
     PsiElement(*.)('*.')
-    PsiElement(string)(''preved'')
+    PsiElement(single quoted string)(''preved'')

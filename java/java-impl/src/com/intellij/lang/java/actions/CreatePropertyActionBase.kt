@@ -45,6 +45,8 @@ internal abstract class CreatePropertyActionBase(
 
   protected val propertyInfo: Pair<String, PropertyKind> get() = requireNotNull(doGetPropertyInfo()).toNotNull()
 
+  internal fun getPropertyName() : String? = doGetPropertyInfo()?.first
+
   override fun getRenderData() = JvmActionGroup.RenderData { propertyInfo.first }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {

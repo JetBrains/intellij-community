@@ -15,24 +15,25 @@
  */
 package com.intellij.ide.util.gotoByName
 
-import com.intellij.navigation.ChooseByNameContributor
+import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.NavigationItem
-import com.intellij.openapi.project.Project
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex
-import com.intellij.psi.search.ProjectScope
-import com.intellij.util.ArrayUtil
+import com.intellij.psi.PsiJavaModule
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.util.Processor
+import com.intellij.util.indexing.FindSymbolParameters
+import com.intellij.util.indexing.IdFilter
 
-class JavaModuleNavigationContributor : ChooseByNameContributor {
-  private val index = JavaModuleNameIndex.getInstance()
+class JavaModuleNavigationContributor : ChooseByNameContributorEx {
 
-  override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<out String> {
-    val result = index.getAllKeys(project)
-    return if (result.isEmpty()) ArrayUtil.EMPTY_STRING_ARRAY else result.toTypedArray()
+  override fun processNames(processor: Processor<String>, scope: GlobalSearchScope, filter: IdFilter?) {
+    StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.MODULE_NAMES, processor, scope, filter)
   }
 
-  override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array<out NavigationItem> {
-    val scope = if (includeNonProjectItems) ProjectScope.getAllScope(project) else ProjectScope.getProjectScope(project)
-    val result = index.get(name, project, scope)
-    return if (result.isEmpty()) NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY else result.toTypedArray()
+  override fun processElementsWithName(name: String, processor: Processor<NavigationItem>, parameters: FindSymbolParameters) {
+    StubIndex.getInstance().processElements(JavaStubIndexKeys.MODULE_NAMES, name,
+                                            parameters.project, parameters.searchScope, parameters.idFilter,
+                                            PsiJavaModule::class.java, processor)
   }
 }

@@ -64,7 +64,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
         if (containingClass != null && 
             containingClass.isInterface() &&
             !(myAccessClass instanceof PsiTypeParameter) &&
-            !containingClass.equals(myAccessClass)) {
+            !containingClass.getManager().areElementsEquivalent(myAccessClass, containingClass)) {
           staticProblem = true;
         }
       }
@@ -162,7 +162,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     public PsiType[] getArgumentTypes() {
       if (myExpressionTypes == null && myArgumentList != null) {
         final PsiType[] expressionTypes = getExpressionTypes(myArgumentList);
-        if (isOverloadCheck() || LambdaUtil.isLambdaParameterCheck()) {
+        if (isOverloadCheck()) {
           return expressionTypes;
         }
         myExpressionTypes = expressionTypes;

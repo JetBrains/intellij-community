@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.ProjectTopics;
@@ -8,7 +6,6 @@ import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -45,12 +42,10 @@ import org.jetbrains.plugins.groovy.mvc.projectView.MvcToolWindowDescriptor;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
-/**
- * @author peter
- */
-public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
+public class MvcModuleStructureSynchronizer {
   private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("MvcModuleStructureSynchronizer Pool");
   private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<>();
+  private final Project myProject;
 
   private Set<VirtualFile> myPluginRoots = Collections.emptySet();
 
@@ -61,19 +56,27 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   public MvcModuleStructureSynchronizer(Project project) {
-    super(project);
+    myProject = project;
+
+    initComponent();
   }
 
   public SimpleModificationTracker getFileAndRootsModificationTracker() {
     return myModificationTracker;
   }
 
-  @Override
-  public void initComponent() {
+  private void initComponent() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      queue(SyncAction.UpdateProjectStructure, myProject);
+      queue(SyncAction.EnsureRunConfigurationExists, myProject);
+      queue(SyncAction.UpgradeFramework, myProject);
+      queue(SyncAction.CreateAppStructureIfNeeded, myProject);
+    });
+
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         myModificationTracker.incModificationCount();
         queue(SyncAction.SyncLibrariesInPluginsModule, myProject);
         queue(SyncAction.UpgradeFramework, myProject);
@@ -93,7 +96,6 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     });
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
-
       final ProjectFileIndex myFileIndex = ProjectFileIndex.getInstance(myProject);
 
       @Override
@@ -223,14 +225,6 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     return file != null && "lib".equals(file.getName());
   }
 
-  @Override
-  public void projectOpened() {
-    queue(SyncAction.UpdateProjectStructure, myProject);
-    queue(SyncAction.EnsureRunConfigurationExists, myProject);
-    queue(SyncAction.UpgradeFramework, myProject);
-    queue(SyncAction.CreateAppStructureIfNeeded, myProject);
-  }
-
   public void queue(SyncAction action, Object on) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
@@ -259,7 +253,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     final Set<Pair<Object, SyncAction>> orderSnapshot = takeOrderSnapshot();
     ReadTask task = new ReadTask() {
 
-      @Nullable
+      @NotNull
       @Override
       public Continuation performInReadAction(@NotNull final ProgressIndicator indicator) throws ProcessCanceledException {
         final Set<Trinity<Module, SyncAction, MvcFramework>> actions = isUpToDate() ? computeRawActions(orderSnapshot)

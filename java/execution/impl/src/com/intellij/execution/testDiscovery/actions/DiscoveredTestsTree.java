@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -34,15 +37,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class DiscoveredTestsTree extends Tree implements DataProvider {
+class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
   private final DiscoveredTestsTreeModel myModel;
 
-  public DiscoveredTestsTree(String title) {
+  DiscoveredTestsTree(String title) {
     myModel = new DiscoveredTestsTreeModel();
-    setModel(new AsyncTreeModel(myModel));
+    setModel(new AsyncTreeModel(myModel, this));
     HintUpdateSupply.installHintUpdateSupply(this, DiscoveredTestsTree::obj2psi);
     TreeUIHelper.getInstance().installTreeSpeedSearch(this, o -> {
-      Object component = o.getLastPathComponent();
+      Object component = obj2psi(o.getLastPathComponent());
       return component instanceof PsiMember ? ((PsiMember)component).getName() : null;
     }, true);
     getSelectionModel().setSelectionMode(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
@@ -86,17 +89,27 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
       //TODO
       boolean myAlreadyDone;
       @Override
-      protected void process(TreeModelEvent event, EventType type) {
-        if (!myAlreadyDone && myModel.getTestCount() != 0) {
+      protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
+        if (!myAlreadyDone && getTestCount() != 0) {
           myAlreadyDone = true;
-          EdtInvocationManager.getInstance().invokeLater(() -> TreeUtil.selectFirstNode(DiscoveredTestsTree.this));
+          EdtInvocationManager.getInstance().invokeLater(() -> {
+            TreeUtil.collapseAll(DiscoveredTestsTree.this, 0);
+            TreeUtil.selectFirstNode(DiscoveredTestsTree.this);
+          });
         }
       }
     });
+    DefaultTreeExpander treeExpander = new DefaultTreeExpander(this);
+    CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, this);
+    CommonActionsManager.getInstance().createExpandAllAction(treeExpander, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   public void addTest(@NotNull PsiClass testClass,
-                      @NotNull PsiMethod testMethod,
+                      @Nullable PsiMethod testMethod,
                       @Nullable String parameter) {
     myModel.addTest(testClass, testMethod, parameter);
   }
@@ -135,9 +148,13 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
     return myModel.getTestCount();
   }
 
+  public int getTestClassesCount() {
+    return myModel.getTestClassesCount();
+  }
+
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionModel().getSelectionPaths();
       List<PsiElement> result = ContainerUtil.newSmartList();

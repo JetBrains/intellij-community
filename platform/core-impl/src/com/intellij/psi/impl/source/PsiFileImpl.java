@@ -37,20 +37,14 @@ import com.intellij.psi.tree.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.ReadOnlyLightVirtualFile;
-import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PatchedWeakReference;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.reflect.Array;
 import java.util.*;
-
-import static com.intellij.util.AstLoadingFilter.assertTreeLoadingEnabled;
 
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
@@ -69,7 +63,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected final PsiManagerEx myManager;
   public static final Key<Boolean> BUILDING_STUB = new Key<>("Don't use stubs mark!");
   private final PsiLock myPsiLock;
-  private final ThreadLocal<Boolean> myLoadingAst = new ThreadLocal<>();
+  private volatile boolean myLoadingAst;
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
     this(provider);
@@ -120,7 +114,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return null;
   }
 
-  protected FileElement derefTreeElement() {
+  FileElement derefTreeElement() {
     return myTrees.derefTreeElement();
   }
 
@@ -130,7 +124,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean processChildren(@NotNull final PsiElementProcessor<PsiFileSystemItem> processor) {
     return true;
   }
 
@@ -191,10 +185,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @NotNull
   private FileElement loadTreeElement() {
     assertReadAccessAllowed();
+
+    if (myPossiblyInvalidated) {
+      PsiUtilCore.ensureValid(this); // for invalidation trace diagnostics
+    }
+
     final FileViewProvider viewProvider = getViewProvider();
     if (viewProvider.isPhysical()) {
       final VirtualFile vFile = viewProvider.getVirtualFile();
-      assertTreeLoadingEnabled(vFile);
+      AstLoadingFilter.assertTreeLoadingAllowed(vFile);
       if (myManager.isAssertOnFileLoading(vFile)) {
         LOG.error("Access to tree elements not allowed. path='" + vFile.getPresentableUrl() + "'");
       }
@@ -209,12 +208,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       treeElement = createFileElement(viewProvider.getContents());
       treeElement.setPsi(this);
 
-      myLoadingAst.set(true);
+      myLoadingAst = true;
       try {
         updateTrees(myTrees.withAst(createTreeElementPointer(treeElement)));
       }
       finally {
-        myLoadingAst.remove();
+        myLoadingAst = false;
       }
 
       if (LOG.isDebugEnabled() && viewProvider.isPhysical()) {
@@ -325,24 +324,23 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public void subtreeChanged() {
-    doClearCaches("subtreeChanged");
-    getViewProvider().rootChanged(this);
-  }
-
-  private void doClearCaches(String reason) {
-    final FileElement tree = getTreeElement();
+    FileElement tree = getTreeElement();
     if (tree != null) {
       tree.clearCaches();
     }
 
     synchronized (myPsiLock) {
-      updateTrees(myTrees.clearStub(reason));
+      if (myTrees.useSpineRefs()) {
+        LOG.error("Somebody has requested stubbed spine during PSI operations; not only is this expensive, but will also cause stub PSI invalidation");
+      }
+      updateTrees(myTrees.clearStub("subtreeChanged"));
     }
     clearCaches();
+    getViewProvider().rootChanged(this);
   }
 
   @Override
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "CloneDoesntCallSuperClone"})
+  @SuppressWarnings("CloneDoesntCallSuperClone")
   protected PsiFileImpl clone() {
     FileViewProvider viewProvider = getViewProvider();
     FileViewProvider providerCopy = viewProvider.clone();
@@ -481,6 +479,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return myElementType.getLanguage();
   }
 
+  @Nullable
+  @Override
+  public IFileElementType getFileElementType() {
+    return myElementType instanceof IFileElementType ? (IFileElementType)myElementType
+                                                     : ObjectUtils.tryCast(myContentElementType, IFileElementType.class);
+  }
+
   @Override
   @NotNull
   public FileViewProvider getViewProvider() {
@@ -514,7 +519,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     for (PsiElement child : getChildren()) {
       if (aClass.isInstance(child)) result.add((T)child);
     }
-    return result.toArray((T[]) Array.newInstance(aClass, result.size()));
+    return result.toArray(ArrayUtil.newArray(aClass, result.size()));
   }
 
   @SuppressWarnings("unchecked")
@@ -593,9 +598,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final StubTree derefd = derefStub();
     if (derefd != null) return derefd;
 
-    if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || 
-        Boolean.TRUE.equals(myLoadingAst.get()) ||
-        getElementTypeForStubBuilder() == null) {
+    if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || myLoadingAst || getElementTypeForStubBuilder() == null) {
       return null;
     }
 
@@ -620,7 +623,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
       final PsiFileStub[] stubRoots = baseRoot.getStubRoots();
       if (stubRoots.length != roots.size()) {
-        final Function<PsiFileStub, String> stubToString = stub -> stub.getClass().getSimpleName();
+        final Function<PsiFileStub, String> stubToString = stub -> "{" + stub.getClass().getSimpleName() + " " + stub.getType().getLanguage() + "}";
         LOG.error("readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
                   StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
         rebuildStub();
@@ -990,7 +993,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     putInfo(this, info);
   }
 
-  public static void putInfo(PsiFile psiFile, Map<String, String> info) {
+  public static void putInfo(@NotNull PsiFile psiFile, @NotNull Map<String, String> info) {
     info.put("fileName", psiFile.getName());
     info.put("fileType", psiFile.getFileType().toString());
   }

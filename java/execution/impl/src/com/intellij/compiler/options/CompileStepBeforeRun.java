@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.execution.BeforeRunTask;
@@ -35,7 +21,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.task.*;
+import com.intellij.task.ProjectTask;
+import com.intellij.task.ProjectTaskContext;
+import com.intellij.task.ProjectTaskManager;
+import com.intellij.task.impl.EmptyCompileScopeBuildTaskImpl;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,11 +41,11 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   /**
    * @deprecated to be removed in IDEA 2017
    */
-  public static final Key<RunConfiguration> RUN_CONFIGURATION = CompilerManager.RUN_CONFIGURATION_KEY;
+  @Deprecated public static final Key<RunConfiguration> RUN_CONFIGURATION = CompilerManager.RUN_CONFIGURATION_KEY;
   /**
    * @deprecated to be removed in IDEA 2017
    */
-  public static final Key<String> RUN_CONFIGURATION_TYPE_ID = CompilerManager.RUN_CONFIGURATION_TYPE_ID_KEY;
+  @Deprecated public static final Key<String> RUN_CONFIGURATION_TYPE_ID = CompilerManager.RUN_CONFIGURATION_TYPE_ID_KEY;
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
@@ -66,6 +55,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     myProject = project;
   }
 
+  @Override
   public Key<MakeBeforeRunTask> getId() {
     return ID;
   }
@@ -90,6 +80,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return AllIcons.Actions.Compile;
   }
 
+  @Override
   @Nullable
   public MakeBeforeRunTask createTask(@NotNull RunConfiguration configuration) {
     MakeBeforeRunTask task = null;
@@ -101,19 +92,20 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   }
 
   private static boolean isEnabledByDefault(@NotNull RunConfiguration configuration) {
-    return (configuration instanceof RunProfileWithCompileBeforeLaunchOption &&
-            ((RunProfileWithCompileBeforeLaunchOption)configuration).isBuildBeforeLaunchAddedByDefault()
-           ) &&
-           (configuration instanceof RunConfigurationBase &&
-            ((RunConfigurationBase)configuration).isCompileBeforeLaunchAddedByDefault()
-           );
+    if (configuration instanceof RunProfileWithCompileBeforeLaunchOption) {
+      return ((RunProfileWithCompileBeforeLaunchOption)configuration).isBuildBeforeLaunchAddedByDefault();
+    }
+    else {
+      return false;
+    }
   }
 
   static boolean shouldCreateTask(RunConfiguration configuration) {
     return !(configuration instanceof RemoteConfiguration) && configuration instanceof RunProfileWithCompileBeforeLaunchOption;
   }
 
-  public boolean executeTask(DataContext context, @NotNull final RunConfiguration configuration, @NotNull final ExecutionEnvironment env, @NotNull MakeBeforeRunTask task) {
+  @Override
+  public boolean executeTask(@NotNull DataContext context, @NotNull final RunConfiguration configuration, @NotNull final ExecutionEnvironment env, @NotNull MakeBeforeRunTask task) {
     return doMake(myProject, configuration, env, false);
   }
 
@@ -125,28 +117,20 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     if (!(configuration instanceof RunProfileWithCompileBeforeLaunchOption)) {
       return true;
     }
-
-    if (configuration instanceof RunConfigurationBase && ((RunConfigurationBase)configuration).excludeCompileBeforeLaunchOption()) {
+    
+    final RunProfileWithCompileBeforeLaunchOption runConfiguration = (RunProfileWithCompileBeforeLaunchOption)configuration;
+    //noinspection deprecation
+    if (runConfiguration.isExcludeCompileBeforeLaunchOption() ||
+        (configuration instanceof RunConfigurationBase && ((RunConfigurationBase)configuration).excludeCompileBeforeLaunchOption())) {
       return true;
     }
 
-    final RunProfileWithCompileBeforeLaunchOption runConfiguration = (RunProfileWithCompileBeforeLaunchOption)configuration;
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     try {
-
       final Semaphore done = new Semaphore();
       done.down();
-      final ProjectTaskNotification callback = new ProjectTaskNotification() {
-        public void finished(@NotNull ProjectTaskResult executionResult) {
-          if ((executionResult.getErrors() == 0 || ignoreErrors) && !executionResult.isAborted()) {
-            result.set(Boolean.TRUE);
-          }
-          done.up();
-        }
-      };
-
       TransactionGuard.submitTransaction(myProject, () -> {
-        ProjectTask projectTask;
+        final ProjectTask projectTask;
         Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
         final ProjectTaskManager projectTaskManager = ProjectTaskManager.getInstance(myProject);
         if (forceMakeProject) {
@@ -164,13 +148,21 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
             }
             projectTask = projectTaskManager.createModulesBuildTask(modules, true, true, true);
           }
-          else {
+          else if (runConfiguration.isBuildProjectOnEmptyModuleList()){
             projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);
+          }
+          else {
+            projectTask = new EmptyCompileScopeBuildTaskImpl(true);
           }
         }
 
         if (!myProject.isDisposed()) {
-          projectTaskManager.run(new ProjectTaskContext(sessionId, configuration), projectTask, callback);
+          projectTaskManager.run(new ProjectTaskContext(sessionId, configuration), projectTask, executionResult -> {
+            if ((executionResult.getErrors() == 0 || ignoreErrors) && !executionResult.isAborted()) {
+              result.set(Boolean.TRUE);
+            }
+            done.up();
+          });
         }
         else {
           done.up();

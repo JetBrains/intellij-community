@@ -148,9 +148,9 @@ public class ChangeListsIndexes {
    * (for RemoteRevisionsCache and annotation listener)
    */
   public void getDelta(ChangeListsIndexes newIndexes,
-                       Set<BaseRevision> toRemove,
-                       Set<BaseRevision> toAdd,
-                       Set<BeforeAfter<BaseRevision>> toModify) {
+                       Set<? super BaseRevision> toRemove,
+                       Set<? super BaseRevision> toAdd,
+                       Set<? super BeforeAfter<BaseRevision>> toModify) {
     Map<FilePath, Data> oldMap = myMap;
     Map<FilePath, Data> newMap = newIndexes.myMap;
 
@@ -206,7 +206,7 @@ public class ChangeListsIndexes {
     public final AbstractVcs vcs;
     @NotNull public final VcsRevisionNumber revision;
 
-    public Data(@NotNull FileStatus status, AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {
+    Data(@NotNull FileStatus status, AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {
       this.status = status;
       this.vcs = vcs;
       this.revision = revision;

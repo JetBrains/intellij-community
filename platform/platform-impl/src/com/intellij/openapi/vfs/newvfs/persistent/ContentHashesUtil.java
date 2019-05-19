@@ -1,25 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.ThreadLocalCachedValue;
-import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PagedFileStorage;
-import com.intellij.util.io.PersistentBTreeEnumerator;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -27,31 +10,25 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 public class ContentHashesUtil {
   public static final ThreadLocalCachedValue<MessageDigest> HASHER_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
+    @NotNull
     @Override
     public MessageDigest create() {
       return createHashDigest();
     }
 
     @Override
-    protected void init(MessageDigest value) {
+    protected void init(@NotNull MessageDigest value) {
       value.reset();
     }
   };
 
   @NotNull
   static MessageDigest createHashDigest() {
-    try {
-      return MessageDigest.getInstance("SHA1");
-    }
-    catch (NoSuchAlgorithmException ex) {
-      assert false:"Every Java implementation should have SHA1 support"; // http://docs.oracle.com/javase/7/docs/api/java/security/MessageDigest.html
-      return null;
-    }
+    return DigestUtil.sha1();
   }
 
   private static final int SIGNATURE_LENGTH = 20;

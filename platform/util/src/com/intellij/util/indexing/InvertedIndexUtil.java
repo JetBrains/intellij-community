@@ -28,10 +28,10 @@ import java.util.Collection;
 @ApiStatus.Experimental
 public class InvertedIndexUtil {
   @NotNull
-  public static <K, V, I> TIntHashSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<K, V, I> index,
-                                                                       @NotNull Collection<K> dataKeys,
-                                                                       @Nullable Condition<K> keyChecker,
-                                                                       @Nullable Condition<V> valueChecker,
+  public static <K, V, I> TIntHashSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<? super K, V, I> index,
+                                                                       @NotNull Collection<? extends K> dataKeys,
+                                                                       @Nullable Condition<? super K> keyChecker,
+                                                                       @Nullable Condition<? super V> valueChecker,
                                                                        @Nullable ValueContainer.IntPredicate idChecker)
     throws StorageException {
     TIntHashSet mainIntersection = null;
@@ -62,12 +62,9 @@ public class InvertedIndexUtil {
           }
         }
         else {
-          mainIntersection.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int id) {
-              if (predicate.contains(id)) copy.add(id);
-              return true;
-            }
+          mainIntersection.forEach(id -> {
+            if (predicate.contains(id)) copy.add(id);
+            return true;
           });
         }
       }

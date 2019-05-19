@@ -29,7 +29,7 @@ import java.util.Map;
 public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Logger LOG = Logger.getInstance("TestNG QuickFix");
-  private static final String DISPLAY_NAME = "Convert JUnit Tests to TestNG";
+  private static final String DISPLAY_NAME = "JUnit Test can be converted to TestNG";
   private static final Map<String, String> ANNOTATIONS_MAP;
 
   public static final String QUICKFIX_NAME = "Convert TestCase to TestNG";
@@ -76,6 +76,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
   public static class JUnitConverterQuickFix implements LocalQuickFix {
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return QUICKFIX_NAME;
@@ -86,6 +87,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       return false;
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       if (psiClass == null || !TestNGUtil.checkTestNGInClasspath(psiClass)) return;
@@ -238,7 +240,8 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
     private static PsiMethodCallExpression[] getTestCaseCalls(PsiMethod method) {
       PsiElement[] methodCalls = PsiTreeUtil.collectElements(method, new PsiElementFilter() {
-        public boolean isAccepted(PsiElement element) {
+        @Override
+        public boolean isAccepted(@NotNull PsiElement element) {
           if (!(element instanceof PsiMethodCallExpression)) return false;
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
           final PsiMethod method = methodCall.resolveMethod();
@@ -279,7 +282,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       PsiElement comment = method.getFirstChild();
       if (comment instanceof PsiComment) {
         String[] commentLines = comment.getText().split("\n");
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (int i = 0; i < commentLines.length; i++) {
           String commentLine = commentLines[i];
           // last line, append our new comment entry
@@ -296,19 +299,9 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
         newComment = factory.createCommentFromText(commentString, null);
         comment.replace(newComment);
-
       }
       else {
-        String commentString;
-
-        StringBuffer commentBuffer = new StringBuffer();
-        commentBuffer.append("/**\n");
-        commentBuffer.append(javaDocLine);
-        commentBuffer.append('\n');
-        commentBuffer.append(" */");
-
-        commentString = commentBuffer.toString();
-        newComment = factory.createCommentFromText(commentString, null);
+        newComment = factory.createCommentFromText("/**\n" + javaDocLine + "\n */", null);
 
         method.addBefore(newComment, comment);
       }

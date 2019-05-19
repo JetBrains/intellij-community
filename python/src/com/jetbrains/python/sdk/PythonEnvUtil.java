@@ -60,18 +60,29 @@ public class PythonEnvUtil {
   }
 
   /**
-   * Appends a value to the end os a path-like environment variable, using system-dependent path separator.
+   * Adds a value to the end os a path-like environment variable, using system-dependent path separator.
    *
    * @param source path-like string to append to
    * @param value  what to append
+   * @param asPrefix if true, adds a value as a prefix, otherwise as a suffix
    * @return modified path-like string
    */
 
   @NotNull
-  public static String appendToPathEnvVar(@Nullable String source, @NotNull String value) {
+  public static String addToPathEnvVar(@Nullable String source, @NotNull String value, boolean asPrefix) {
     if (StringUtil.isEmpty(source)) return value;
     Set<String> paths = Sets.newHashSet(source.split(File.pathSeparator));
-    return !paths.contains(value) ? source + File.pathSeparator + value : source;
+    if (!paths.contains(value)) {
+      if (asPrefix) {
+        return value + File.pathSeparator + source;
+      }
+      else {
+        return source + File.pathSeparator + value;
+      }
+    }
+    else {
+      return source;
+    }
   }
 
   public static void addPathsToEnv(@NotNull Map<String, String> env, String key, @NotNull Collection<String> values) {
@@ -83,7 +94,7 @@ public class PythonEnvUtil {
   public static void addPathToEnv(@NotNull Map<String, String> env, String key, String value) {
     if (!StringUtil.isEmpty(value)) {
       if (env.containsKey(key)) {
-        env.put(key, appendToPathEnvVar(env.get(key), value));
+        env.put(key, addToPathEnvVar(env.get(key), value, false));
       }
       else {
         env.put(key, value);

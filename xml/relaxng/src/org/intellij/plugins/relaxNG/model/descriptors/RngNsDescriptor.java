@@ -35,7 +35,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptorEx;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -55,7 +54,7 @@ import java.util.*;
 
 public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   private final Map<QName, CachedValue<XmlElementDescriptor>> myDescriptorsMap =
-    Collections.synchronizedMap(new HashMap<QName, CachedValue<XmlElementDescriptor>>());
+    Collections.synchronizedMap(new HashMap<>());
 
   private XmlFile myFile;
   private PsiElement myElement;
@@ -108,13 +107,13 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     return descriptor != null ? descriptor : findDescriptor(qName, ChildElementFinder.find(myPattern));
   }
 
-  public XmlElementDescriptor findDescriptor(XmlTag tag, List<DElementPattern> list) {
+  public XmlElementDescriptor findDescriptor(XmlTag tag, List<? extends DElementPattern> list) {
     final QName qName = new QName(tag.getNamespace(), tag.getLocalName());
 
     return findDescriptor(qName, list);
   }
 
-  private XmlElementDescriptor findDescriptor(final QName qName, List<DElementPattern> list) {
+  private XmlElementDescriptor findDescriptor(final QName qName, List<? extends DElementPattern> list) {
     int max = -1;
     DElementPattern maxPattern = null;
     for (DElementPattern pattern : list) {
@@ -154,7 +153,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     return convertElementDescriptors(list);
   }
 
-  XmlElementDescriptor[] convertElementDescriptors(List<DElementPattern> patterns) {
+  XmlElementDescriptor[] convertElementDescriptors(List<? extends DElementPattern> patterns) {
     patterns = ContainerUtil.findAll(patterns, NamedPatternFilter.INSTANCE);
 
     final Map<QName, List<DElementPattern>> name2patterns = new LinkedHashMap<>();
@@ -222,7 +221,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
 
   @NotNull
   @Override
-  public Object[] getDependences() {
+  public Object[] getDependencies() {
     if (myPattern != null) {
       if (DumbService.isDumb(myElement.getProject())) {
         return new Object[] { ModificationTracker.EVER_CHANGED, ExternalResourceManager.getInstance()};
@@ -279,8 +278,8 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
         CachedValuesManager.getManager(myElement.getProject()).createCachedValue(() -> {
           final XmlElementDescriptor descriptor = findRootDescriptorInner(qName);
           return descriptor != null
-                 ? new CachedValueProvider.Result<>(descriptor, descriptor.getDependences())
-                 : new CachedValueProvider.Result<>(null, getDependences());
+                 ? new CachedValueProvider.Result<>(descriptor, descriptor.getDependencies())
+                 : new CachedValueProvider.Result<>(null, getDependencies());
         }, false);
       myDescriptorsMap.put(qName, cachedValue);
     }

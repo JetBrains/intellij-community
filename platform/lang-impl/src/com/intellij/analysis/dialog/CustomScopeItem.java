@@ -23,7 +23,7 @@ public class CustomScopeItem implements ModelScopeItem {
   private final Project myProject;
   private boolean mySearchInLib;
   private String myPreselect;
-  private Supplier<SearchScope> mySupplierScope;
+  private Supplier<? extends SearchScope> mySupplierScope;
 
   public CustomScopeItem(Project project, @Nullable PsiElement context) {
     myProject = project;
@@ -31,7 +31,7 @@ public class CustomScopeItem implements ModelScopeItem {
     AnalysisUIOptions options = AnalysisUIOptions.getInstance(project);
     VirtualFile file = PsiUtilCore.getVirtualFile(context);
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    mySearchInLib = file != null && (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file));
+    mySearchInLib = file != null && fileIndex.isInLibrary(file);
 
     myPreselect = StringUtil.isEmptyOrSpaces(options.CUSTOM_SCOPE_NAME)
                        ? FindSettings.getInstance().getDefaultScopeName()
@@ -62,7 +62,7 @@ public class CustomScopeItem implements ModelScopeItem {
     return null;
   }
 
-  public void setSearchScopeSupplier(Supplier<SearchScope> supplier) {
+  public void setSearchScopeSupplier(Supplier<? extends SearchScope> supplier) {
     mySupplierScope = supplier;
   }
 }

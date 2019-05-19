@@ -191,7 +191,7 @@ public class CommandCvsHandler extends CvsHandler {
                                                Project project,
                                                final boolean tagFilesAfterCommit,
                                                final String tagName,
-                                               @NotNull final List<File> dirsToPrune) {
+                                               @NotNull final List<? extends File> dirsToPrune) {
     final CommitFilesOperation operation = new CommitFilesOperation(commitMessage, makeNewFilesReadOnly);
     if (selectedFiles != null) {
       for (FilePath selectedFile : selectedFiles) {
@@ -218,7 +218,7 @@ public class CommandCvsHandler extends CvsHandler {
     return result;
   }
 
-  public static CvsHandler createAddFilesHandler(final Project project, Collection<AddedFileInfo> addedRoots) {
+  public static CvsHandler createAddFilesHandler(final Project project, Collection<? extends AddedFileInfo> addedRoots) {
     final AddFilesOperation operation = new AddFilesOperation();
     final ArrayList<AddedFileInfo> addedFileInfo = new ArrayList<>();
     for (final AddedFileInfo info : addedRoots) {

@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.SchemesModel;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +16,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static com.intellij.openapi.keymap.KeyMapBundle.message;
-import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
-import static java.util.stream.Collectors.toList;
 
 /**
  * This class operates with the KeymapManager.
@@ -40,8 +25,8 @@ import static java.util.stream.Collectors.toList;
  * @author Sergey.Malenkov
  */
 final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> implements SchemesModel<KeymapScheme> {
-  private static final Condition<Keymap> FILTER = keymap -> !isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
-  private final ArrayList<KeymapScheme> list = new ArrayList<>();
+  private static final Predicate<Keymap> FILTER = keymap -> !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
+  private final List<KeymapScheme> list = new ArrayList<>();
   private final KeymapSelector selector;
 
   KeymapSchemeManager(KeymapSelector selector) {
@@ -59,14 +44,14 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     if (scheme == null) return null;
     if (scheme.isMutable()) return scheme.getMutable();
 
-    String name = message("new.keymap.name", keymap.getPresentableName());
+    String name = KeyMapBundle.message("new.keymap.name", keymap.getPresentableName());
     for (int i = 1; containsScheme(name, false); i++) {
-      name = message("new.indexed.keymap.name", keymap.getPresentableName(), i);
+      name = KeyMapBundle.message("new.indexed.keymap.name", keymap.getPresentableName(), i);
     }
     return copyScheme(scheme, name).getMutable();
   }
 
-  void visitMutableKeymaps(Consumer<Keymap> consumer) {
+  void visitMutableKeymaps(Consumer<? super Keymap> consumer) {
     for (KeymapScheme scheme : list) {
       if (scheme.isMutable()) {
         consumer.accept(scheme.getMutable());
@@ -74,6 +59,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     }
   }
 
+  @NotNull
   @Override
   protected Class<KeymapScheme> getSchemeType() {
     return KeymapScheme.class;
@@ -170,7 +156,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
    * @param predicate a predicate to test a scheme
    * @return a first scheme that belongs to the specified predicate, or {@code null}
    */
-  private KeymapScheme find(@NotNull Predicate<KeymapScheme> predicate) {
+  private KeymapScheme find(@NotNull Predicate<? super KeymapScheme> predicate) {
     for (KeymapScheme scheme : list) {
       if (predicate.test(scheme)) return scheme;
     }
@@ -199,15 +185,15 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     for (KeymapScheme scheme : list) {
       String name = scheme.getName();
       if (isEmptyOrSpaces(name)) {
-        return message("configuration.all.keymaps.should.have.non.empty.names.error.message");
+        return KeyMapBundle.message("configuration.all.keymaps.should.have.non.empty.names.error.message");
       }
       if (!set.add(name)) {
-        return message("configuration.all.keymaps.should.have.unique.names.error.message");
+        return KeyMapBundle.message("configuration.all.keymaps.should.have.unique.names.error.message");
       }
     }
     KeymapScheme selected = selector.getSelectedScheme();
     Keymap active = selected == null ? null : selected.getOriginal();
-    List<Keymap> keymaps = list.stream().map(scheme -> scheme.apply()).collect(toList());
+    List<Keymap> keymaps = ContainerUtil.map(list, scheme -> scheme.apply());
     KeymapManagerImpl manager = (KeymapManagerImpl)KeymapManager.getInstance();
     manager.setKeymaps(keymaps, active, FILTER);
     selector.notifyConsumer(selected);
@@ -252,7 +238,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     if (!Objects.equals(active, KeymapManager.getInstance().getActiveKeymap())) return true;
 
     Iterator<Keymap> keymaps = getKeymaps().stream().sorted(KEYMAP_COMPARATOR).iterator();
-    Iterator<KeymapScheme> schemes = this.list.iterator();
+    Iterator<KeymapScheme> schemes = list.iterator();
     while (keymaps.hasNext() && schemes.hasNext()) {
       if (!Objects.equals(keymaps.next(), schemes.next().getCurrent())) return true;
     }

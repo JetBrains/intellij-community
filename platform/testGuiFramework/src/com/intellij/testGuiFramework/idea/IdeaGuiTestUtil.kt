@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.idea
 
 import com.intellij.openapi.application.ApplicationManager
@@ -11,7 +11,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.util.io.FileUtil.pathsEqual
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testGuiFramework.framework.GuiTestUtil.*
+import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.GuiTestUtil.JDK_HOME_FOR_TESTS
+import com.intellij.testGuiFramework.framework.GuiTestUtil.getSystemPropertyOrEnvironmentVariable
 import org.fest.swing.edt.GuiActionRunner.execute
 import org.fest.swing.edt.GuiTask
 import org.junit.Assert.fail
@@ -29,7 +31,7 @@ object IdeaGuiTestUtil{
     var jdkHome: String? = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS)
     if (StringUtil.isEmpty(jdkHome) || !JdkUtil.checkForJdk(jdkHome!!)) {
       //than use bundled JDK
-      jdkHome = getBundledJdkLocation()
+      jdkHome = GuiTestUtil.bundledJdkLocation
     }
     val jdkPath = File(jdkHome)
 
@@ -63,17 +65,10 @@ object IdeaGuiTestUtil{
 
           //in case of running different from IntelliJ or Android Studio IDE (PyCharm for example)
 
-          val jdk_name = "JDK"
-          val newJdk = javaSdk.createJdk(jdk_name, path.toString(), false)
+          val newJdk = javaSdk.createJdk("JDK", path.toString(), false)
           val foundJdk = ProjectJdkTable.getInstance().findJdk(newJdk.name, newJdk.sdkType.name)
           if (foundJdk == null) {
             ApplicationManager.getApplication().runWriteAction { ProjectJdkTable.getInstance().addJdk(newJdk) }
-          }
-
-          ApplicationManager.getApplication().runWriteAction {
-            val modificator = newJdk.sdkModificator
-            JavaSdkImpl.attachJdkAnnotations(modificator)
-            modificator.commitChanges()
           }
         }
         else {
@@ -87,12 +82,12 @@ object IdeaGuiTestUtil{
     var jdkHome: String? = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS)
     if (StringUtil.isEmpty(jdkHome) || !checkForJdk(jdkHome!!)) {
       //than use bundled JDK
-      jdkHome = getBundledJdkLocation()
+      jdkHome = GuiTestUtil.bundledJdkLocation
     }
-    if (StringUtil.isEmpty(jdkHome) || !checkForJdk(jdkHome!!)) {
+    if (StringUtil.isEmpty(jdkHome) || !checkForJdk(jdkHome)) {
       fail("Please specify the path to a valid JDK using system property " + JDK_HOME_FOR_TESTS)
     }
-    return jdkHome!!
+    return jdkHome
   }
 
 }

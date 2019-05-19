@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -697,7 +698,17 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-23632
   public void testMockPatchObject() {
-    doMultiFileTest();
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/"+ getTestDirectoryPath() + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        final PsiFile file = myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
+        configureInspection();
+        assertSdkRootsNotParsed(file);
+      }
+    );
   }
 
   // PY-20197
@@ -713,6 +724,67 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTestByText("def f(p=(x for x in [])):\n" +
                  "    x = 1\n" +
                  "    return x");
+  }
+
+  // PY-20530
+  public void testSelfInAnnotationAndTypeComment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("class A:\n" +
+                         "    def f1(self) -> <error descr=\"Unresolved reference 'self'\">self</error>.B:\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "    def f2(self):\n" +
+                         "        # type: () -> <warning descr=\"Unresolved reference 'self'\">self</warning>.B\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "    def f3(self):\n" +
+                         "        v3: self.B\n" +
+                         "        v4 = None  # type: self.B\n" +
+                         "\n" +
+                         "    v1: <error descr=\"Unresolved reference 'self'\">self</error>.B\n" +
+                         "    v2 = None  # type: <warning descr=\"Unresolved reference 'self'\">self</warning>.B\n" +
+                         "\n" +
+                         "    class B:\n" +
+                         "        pass")
+    );
+  }
+
+  // PY-30383
+  public void testLambdaMember() {
+    doTestByText("class SomeClass:\n" +
+                 "    def __init__(self):\n" +
+                 "        self.one = lambda x: True\n" +
+                 "        \n" +
+                 "    def some_method(self):\n" +
+                 "        self.one.<warning descr=\"Cannot find reference 'abc' in 'function'\">abc</warning>");
+  }
+
+  public void testNamedTupleFunction() {
+    doTest();
+  }
+
+  // PY-22508
+  public void testFakesFromTypeshed() {
+    doTestByText("print(<error descr=\"Unresolved reference 'function'\">function</error>)\n" +
+                 "print(<error descr=\"Unresolved reference 'module'\">module</error>)");
+  }
+
+  // PY-29929
+  public void testAttrsSpecialAttribute() {
+    doTestByText("import attr\n" +
+                 "\n" +
+                 "@attr.s\n" +
+                 "class C:\n" +
+                 "    a = attr.ib()\n" +
+                 "\n" +
+                 "print(C.__attrs_attrs__)\n" +
+                 "print(C(1).__attrs_attrs__)");
+  }
+
+  // PY-32927
+  public void testPrefixExpressionOnClassHavingSkeletons() {
+    doMultiFileTest();
   }
 
   @NotNull

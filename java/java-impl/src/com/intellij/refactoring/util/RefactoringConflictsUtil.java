@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * @author anna
@@ -35,19 +36,19 @@ import java.util.Set;
 public class RefactoringConflictsUtil {
   private RefactoringConflictsUtil() { }
 
-  public static void analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
+  public static void analyzeAccessibilityConflicts(@NotNull Set<? extends PsiMember> membersToMove,
                                                    @NotNull PsiClass targetClass,
                                                    @NotNull MultiMap<PsiElement, String> conflicts,
                                                    @Nullable String newVisibility) {
     analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility, targetClass, null);
   }
 
-  public static void analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
+  public static void analyzeAccessibilityConflicts(@NotNull Set<? extends PsiMember> membersToMove,
                                                    @Nullable PsiClass targetClass,
                                                    @NotNull MultiMap<PsiElement, String> conflicts,
                                                    @Nullable String newVisibility,
                                                    @NotNull PsiElement context,
-                                                   @Nullable Set<PsiMethod> abstractMethods) {
+                                                   @Nullable Set<? extends PsiMethod> abstractMethods) {
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
@@ -123,8 +124,8 @@ public class RefactoringConflictsUtil {
 
   public static void checkUsedElements(PsiMember member,
                                      PsiElement scope,
-                                     @NotNull Set<PsiMember> membersToMove,
-                                     @Nullable Set<PsiMethod> abstractMethods,
+                                     @NotNull Set<? extends PsiMember> membersToMove,
+                                     @Nullable Set<? extends PsiMethod> abstractMethods,
                                      @Nullable PsiClass targetClass,
                                      @NotNull PsiElement context,
                                      MultiMap<PsiElement, String> conflicts) {
@@ -133,8 +134,8 @@ public class RefactoringConflictsUtil {
 
   public static void checkUsedElements(PsiMember member,
                                        PsiElement scope,
-                                       @NotNull Set<PsiMember> membersToMove,
-                                       @Nullable Set<PsiMethod> abstractMethods,
+                                       @NotNull Set<? extends PsiMember> membersToMove,
+                                       @Nullable Set<? extends PsiMethod> abstractMethods,
                                        @Nullable PsiClass targetClass,
                                        PsiClass accessClass,
                                        @NotNull PsiElement context,
@@ -242,64 +243,85 @@ public class RefactoringConflictsUtil {
     if (targetModule == null) return;
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
     final HashSet<PsiElement> reported = new HashSet<>();
-    for (final PsiElement scope : scopes) {
-      scope.accept(new JavaRecursiveElementVisitor() {
-        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-          super.visitReferenceElement(reference);
-          final PsiElement resolved = reference.resolve();
-          if (resolved != null &&
-              !reported.contains(resolved) &&
-              !CommonRefactoringUtil.isAncestor(resolved, scopes) &&
-              !(resolved instanceof LightElement) &&
-              !haveElementInScope(resolved)) {
-            if (resolved instanceof PsiMethod) {
-              for (PsiMethod superMethod : ((PsiMethod)resolved).findDeepestSuperMethods()) {
-                if (haveElementInScope(superMethod)) return;
-              }
+    Consumer<PsiJavaCodeReferenceElement> processor = new Consumer<PsiJavaCodeReferenceElement>() {
+      @Override
+      public void accept(PsiJavaCodeReferenceElement reference) {
+        final PsiElement resolved = reference.resolve();
+        if (resolved != null &&
+            !reported.contains(resolved) &&
+            !CommonRefactoringUtil.isAncestor(resolved, scopes) &&
+            !(resolved instanceof LightElement) &&
+            resolved.isPhysical() &&
+            !haveElementInScope(resolved)) {
+          if (resolved instanceof PsiMethod) {
+            for (PsiMethod superMethod : ((PsiMethod)resolved).findDeepestSuperMethods()) {
+              if (haveElementInScope(superMethod)) return;
             }
-            final String scopeDescription = RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(reference), true);
-            final String message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.in.module.2",
-                                                             RefactoringUIUtil.getDescription(resolved, true),
-                                                             scopeDescription,
-                                                             CommonRefactoringUtil.htmlEmphasize(targetModule.getName()));
-            conflicts.putValue(reference, CommonRefactoringUtil.capitalize(message));
-            reported.add(resolved);
           }
+          final String scopeDescription = RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(reference), true);
+          final String message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.in.module.2",
+                                                           RefactoringUIUtil.getDescription(resolved, true),
+                                                           scopeDescription,
+                                                           CommonRefactoringUtil.htmlEmphasize(targetModule.getName()));
+          conflicts.putValue(reference, CommonRefactoringUtil.capitalize(message));
+          reported.add(resolved);
         }
+      }
 
-        private boolean haveElementInScope(PsiElement resolved) {
-          if (PsiSearchScopeUtil.isInScope(resolveScope, resolved)){
-            return true;
-          }
-          if (!resolved.getManager().isInProject(resolved)) {
-            if (resolved instanceof PsiMember) {
-              final PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
-              if (containingClass != null) {
-                final String fqn = containingClass.getQualifiedName();
-                if (fqn != null) {
-                  final PsiClass classFromTarget = JavaPsiFacade.getInstance(project).findClass(fqn, resolveScope);
-                  if (classFromTarget != null) {
-                    if (resolved instanceof PsiMethod) {
-                      return classFromTarget.findMethodsBySignature((PsiMethod)resolved, true).length > 0;
-                    }
-                    if (resolved instanceof PsiField ) {
-                      return classFromTarget.findFieldByName(((PsiField)resolved).getName(), false) != null;
-                    }
-                    if (resolved instanceof PsiClass) {
-                      return classFromTarget.findInnerClassByName(((PsiClass)resolved).getName(), false) != null;
-                    }
+      private boolean haveElementInScope(PsiElement resolved) {
+        if (PsiSearchScopeUtil.isInScope(resolveScope, resolved)){
+          return true;
+        }
+        if (!resolved.getManager().isInProject(resolved)) {
+          if (resolved instanceof PsiMember) {
+            final PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
+            if (containingClass != null) {
+              final String fqn = containingClass.getQualifiedName();
+              if (fqn != null) {
+                final PsiClass classFromTarget = JavaPsiFacade.getInstance(project).findClass(fqn, resolveScope);
+                if (classFromTarget != null) {
+                  if (resolved instanceof PsiMethod) {
+                    return classFromTarget.findMethodsBySignature((PsiMethod)resolved, true).length > 0;
+                  }
+                  if (resolved instanceof PsiField ) {
+                    return classFromTarget.findFieldByName(((PsiField)resolved).getName(), false) != null;
+                  }
+                  if (resolved instanceof PsiClass) {
+                    return classFromTarget.findInnerClassByName(((PsiClass)resolved).getName(), false) != null;
                   }
                 }
               }
             }
-            if (resolved instanceof PsiClass) {
-              final String fqn = ((PsiClass)resolved).getQualifiedName();
-              return fqn != null && JavaPsiFacade.getInstance(project).findClass(fqn, resolveScope) != null;
-            }
           }
-          return false;
+          if (resolved instanceof PsiClass) {
+            final String fqn = ((PsiClass)resolved).getQualifiedName();
+            return fqn != null && JavaPsiFacade.getInstance(project).findClass(fqn, resolveScope) != null;
+          }
         }
-      });
+        return false;
+      }
+    };
+    for (final PsiElement scope : scopes) {
+      JavaElementVisitor visitor;
+      if (scope instanceof PsiCompiledElement) {
+        // For compiled element walking visitor should not be used: see PsiWalkingState#elementStarted
+        visitor = new JavaRecursiveElementVisitor() {
+          @Override
+          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+            super.visitReferenceElement(reference);
+            processor.accept(reference);
+          }
+        };
+      } else {
+        visitor = new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+            super.visitReferenceElement(reference);
+            processor.accept(reference);
+          }
+        };
+      }
+      scope.accept(visitor);
     }
 
     boolean isInTestSources = ModuleRootManager.getInstance(targetModule).getFileIndex().isInTestSourceContent(vFile);

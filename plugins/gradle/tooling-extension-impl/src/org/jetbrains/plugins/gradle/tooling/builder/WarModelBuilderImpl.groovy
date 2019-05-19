@@ -33,7 +33,6 @@ import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
 
 /**
  * @author Vladislav.Soroka
- * @since 6/25/2014
  */
 class WarModelBuilderImpl implements ModelBuilderService {
 
@@ -90,7 +89,7 @@ class WarModelBuilderImpl implements ModelBuilderService {
               }
             }
           })
-          warModel.classpath = warTask.classpath.files
+          warModel.classpath = new LinkedHashSet<>(warTask.classpath.files)
         }
         catch (Exception ignore) {
           ErrorMessageBuilder builderError = getErrorMessageBuilder(project, ignore)

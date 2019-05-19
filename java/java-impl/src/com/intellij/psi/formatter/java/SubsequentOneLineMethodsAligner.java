@@ -45,7 +45,7 @@ public class SubsequentOneLineMethodsAligner extends ChildAlignmentStrategyProvi
   }
   
   private static AlignmentStrategy newAlignmentStrategy() {
-    List<IElementType> types = ContainerUtil.newSmartList(((IElementType)JavaElementType.CODE_BLOCK));
+    List<IElementType> types = ContainerUtil.newSmartList(JavaElementType.CODE_BLOCK);
     return AlignmentStrategy.createAlignmentPerTypeStrategy(types, JavaElementType.METHOD, true);
   }
   

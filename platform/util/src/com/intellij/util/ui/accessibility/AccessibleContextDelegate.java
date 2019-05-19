@@ -17,7 +17,9 @@ package com.intellij.util.ui.accessibility;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
+import java.awt.*;
 
 /**
  * AccessibleContext implementation that delegates all calls to another context.
@@ -26,11 +28,30 @@ import javax.accessibility.AccessibleContext;
  * of the implementation comes from another context while at the same a specific subset
  * of the behavior can be overridden.
  */
-public class AccessibleContextDelegate extends AbstractAccessibleContextDelegate {
+public abstract class AccessibleContextDelegate extends AbstractAccessibleContextDelegate {
   private final AccessibleContext myContext;
 
   public AccessibleContextDelegate(@NotNull AccessibleContext context) {
     myContext = context;
+  }
+
+  /**
+   * The parent should be the Swing parent of the delegate, not the parent of the wrapped context,
+   * because the parent of the wrapped context is ourselves, i.e. this would result in
+   * an infinite accessible parent chain.
+   */
+  @Override
+  public Accessible getAccessibleParent() {
+    if (accessibleParent != null) {
+      return accessibleParent;
+    }
+    else {
+      Container parent = getDelegateParent();
+      if (parent instanceof Accessible) {
+        return (Accessible)parent;
+      }
+    }
+    return super.getAccessibleParent();
   }
 
   @NotNull
@@ -38,4 +59,9 @@ public class AccessibleContextDelegate extends AbstractAccessibleContextDelegate
   protected AccessibleContext getDelegate() {
     return myContext;
   }
+
+  /**
+   * Returns the parent of the delegate's accessible component
+   */
+  protected abstract Container getDelegateParent();
 }

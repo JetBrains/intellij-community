@@ -11,6 +11,6 @@ class T {
         else if (s.startsWith("#")) {
             s = "#"; /* inline */
         }
-        ret<caret>urn s; // return comment
+        ret<caret>urn (s); // return comment
     }
 }

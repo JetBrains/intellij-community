@@ -34,8 +34,6 @@ public class SimplifyForEachInspectionTest extends LightQuickFixParameterizedTes
     return LanguageLevel.JDK_1_8;
   }
 
-  public void test() { doAllTests(); }
-
 
 
   @Override

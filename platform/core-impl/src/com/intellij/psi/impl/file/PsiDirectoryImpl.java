@@ -172,7 +172,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean processChildren(@NotNull PsiElementProcessor<PsiFileSystemItem> processor) {
     checkValid();
 
     for (VirtualFile vFile : myFile.getChildren()) {
@@ -503,6 +503,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     visitor.visitDirectory(this);
   }
 
+  @Override
   public String toString() {
     return "PsiDirectory:" + myFile.getPresentableUrl();
   }

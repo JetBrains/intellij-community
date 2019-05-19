@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.cherrypick
 
 import com.intellij.openapi.vcs.changes.LocalChangeList
@@ -22,7 +8,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
   override fun setUp() {
     super.setUp()
-    settings.isAutoCommitOnCherryPick = false
+    appSettings.isAutoCommitOnCherryPick = false
   }
 
   fun `test commit dialog shown on cherry pick`() {
@@ -47,7 +33,26 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit)
 
-    assertLastMessage("fix #1\n\n(cherry picked from commit ${shortHash(commit)})")
+    assertLastMessage("fix #1")
+    assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
+    changeListManager.assertNoChanges()
+    changeListManager.waitScheduledChangelistDeletions()
+    changeListManager.assertOnlyDefaultChangelist()
+  }
+
+  fun `test cherry-pick from protected branch should add suffix by default`() {
+    branch("feature")
+    val commit = file("f.txt").create().addCommit("fix #1").hash()
+    git("update-ref refs/remotes/origin/master HEAD")
+    checkout("feature")
+    vcsHelper.onCommit { msg ->
+      git("commit -am '$msg'")
+      true
+    }
+
+    cherryPick(commit)
+
+    assertLastMessage("fix #1\n\n(cherry picked from commit $commit)")
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
     changeListManager.assertNoChanges()
     changeListManager.waitScheduledChangelistDeletions()
@@ -62,7 +67,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit)
 
-    val list = changeListManager.assertChangeListExists("fix #1\n\n(cherry picked from commit ${shortHash(commit)})")
+    val list = changeListManager.assertChangeListExists("fix #1")
     assertNoNotification()
     updateChangeListManager()
     assertChanges(list, "f.txt")
@@ -81,13 +86,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commits)
 
-    assertLogMessages("""
-      fix #2
-
-      (cherry picked from commit ${shortHash(commits[1])})""","""
-      fix #1
-
-      (cherry picked from commit ${shortHash(commits[0])})""")
+    assertLogMessages("fix #2", "fix #1")
     changeListManager.assertNoChanges()
     changeListManager.waitScheduledChangelistDeletions()
     changeListManager.assertOnlyDefaultChangelist()
@@ -109,12 +108,12 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit1, commit2)
 
-    assertLastMessage("fix #1\n\n(cherry picked from commit ${shortHash(commit1)})")
+    assertLastMessage("fix #1")
     assertWarningNotification("Cherry-pick cancelled", """
       ${shortHash(commit2)} fix #2
       However cherry-pick succeeded for the following commit:
       ${shortHash(commit1)} fix #1""".trimIndent())
-    val list = changeListManager.assertChangeListExists("fix #2\n\n(cherry picked from commit ${shortHash(commit2)})")
+    val list = changeListManager.assertChangeListExists("fix #2")
     assertChanges(list, "2.txt")
   }
 
@@ -153,7 +152,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit)
 
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} Modify the file")
-    assertLastMessage("Modify the file\n\n(cherry picked from commit ${shortHash(commit)})")
+    assertLastMessage("Modify the file")
     repo.assertCommitted {
       modified(initialName)
     }

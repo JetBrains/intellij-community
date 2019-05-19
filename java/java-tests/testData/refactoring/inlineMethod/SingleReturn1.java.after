@@ -1,0 +1,10 @@
+class Tester {
+
+    void caller(String v) {
+        String g = null;
+        if (v != null) {
+            g = v;
+        }
+        System.out.println(g);
+    }
+}

@@ -66,10 +66,12 @@ public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
     }
   }
 
+  @Override
   public String getDescription(Locale locale) {
     return "Apache Commons Imaging adapter reader";
   }
 
+  @Override
   public boolean canDecodeInput(Object input) throws IOException {
     if (!(input instanceof ImageInputStream)) {
       return false;
@@ -88,6 +90,7 @@ public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
     }
   }
 
+  @Override
   public ImageReader createReaderInstance(Object extension) {
     return new MyImageReader(this, myFormat.get());
   }
@@ -95,7 +98,7 @@ public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
   private static class MyByteSource extends ByteSource {
     private final ImageInputStream myStream;
 
-    public MyByteSource(final ImageInputStream stream) {
+    MyByteSource(final ImageInputStream stream) {
       super(stream.toString());
       myStream = stream;
     }

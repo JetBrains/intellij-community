@@ -38,7 +38,7 @@ public class HgTagDialog extends DialogWrapper {
     hgRepositorySelectorComponent.setTitle("Select repository to tag");
     DocumentListener documentListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         validateFields();
       }
     };
@@ -64,6 +64,7 @@ public class HgTagDialog extends DialogWrapper {
     hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return contentPanel;
   }

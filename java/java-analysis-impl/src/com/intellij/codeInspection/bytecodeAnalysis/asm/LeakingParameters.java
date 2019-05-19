@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +15,11 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
  * @author lambdamix
  */
 public class LeakingParameters {
-  public final Frame<Value>[] frames;
+  public final Frame<? extends Value>[] frames;
   public final boolean[] parameters;
   public final boolean[] nullableParameters;
 
-  public LeakingParameters(Frame<Value>[] frames, boolean[] parameters, boolean[] nullableParameters) {
+  public LeakingParameters(Frame<? extends Value>[] frames, boolean[] parameters, boolean[] nullableParameters) {
     this.frames = frames;
     this.parameters = parameters;
     this.nullableParameters = nullableParameters;
@@ -41,9 +27,8 @@ public class LeakingParameters {
 
   @NotNull
   public static LeakingParameters build(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
-    Frame<ParamsValue>[] frames = jsr ?
-                                  new Analyzer<>(new ParametersUsage(methodNode)).analyze(className, methodNode) :
-                                  new LiteAnalyzer<>(new ParametersUsage(methodNode)).analyze(className, methodNode);
+    Frame<ParamsValue>[] frames = jsr ? new Analyzer<>(new ParametersUsage(methodNode)).analyze(className, methodNode)
+                                      : new LiteAnalyzer<>(new ParametersUsage(methodNode)).analyze(className, methodNode);
     InsnList insns = methodNode.instructions;
     LeakingParametersCollector collector = new LeakingParametersCollector(methodNode);
     for (int i = 0; i < frames.length; i++) {
@@ -65,15 +50,14 @@ public class LeakingParameters {
     for (int i = 0; i < nullableParameters.length; i++) {
       nullableParameters[i] |= notNullParameters[i];
     }
-    return new LeakingParameters((Frame<Value>[])(Frame<?>[])frames, notNullParameters, nullableParameters);
+    return new LeakingParameters(frames, notNullParameters, nullableParameters);
   }
 
   @NotNull
   public static LeakingParameters buildFast(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     IParametersUsage parametersUsage = new IParametersUsage(methodNode);
-    Frame<?>[] frames = jsr ?
-                        new Analyzer<>(parametersUsage).analyze(className, methodNode) :
-                        new LiteAnalyzer<>(parametersUsage).analyze(className, methodNode);
+    Frame<?>[] frames = jsr ? new Analyzer<>(parametersUsage).analyze(className, methodNode)
+                            : new LiteAnalyzer<>(parametersUsage).analyze(className, methodNode);
     int leakingMask = parametersUsage.leaking;
     int nullableLeakingMask = parametersUsage.nullableLeaking;
     boolean[] notNullParameters = new boolean[parametersUsage.arity];
@@ -82,12 +66,12 @@ public class LeakingParameters {
       notNullParameters[i] = (leakingMask & (1 << i)) != 0;
       nullableParameters[i] = ((leakingMask | nullableLeakingMask) & (1 << i)) != 0;
     }
-    return new LeakingParameters((Frame<Value>[])frames, notNullParameters, nullableParameters);
+    return new LeakingParameters(frames, notNullParameters, nullableParameters);
   }
 }
 
 final class ParamsValue implements Value {
-  @NotNull final boolean[] params;
+  final boolean[] params;
   final int size;
 
   ParamsValue(@NotNull boolean[] params, int size) {
@@ -126,7 +110,8 @@ final class IParamsValue implements Value {
 
   @Override
   public int getSize() {
-    return size;
+    // size == -1 means bottom (uninitialized) value
+    return size == -1 ? 1 : size;
   }
 
   @Override
@@ -144,13 +129,10 @@ final class IParamsValue implements Value {
 }
 
 class ParametersUsage extends Interpreter<ParamsValue> {
+  private int param = -1;
+  final int arity;
   final ParamsValue val1;
   final ParamsValue val2;
-  int called = -1;
-  final int rangeStart;
-  final int rangeEnd;
-  final int arity;
-  final int shift;
 
   ParametersUsage(MethodNode methodNode) {
     super(API_VERSION);
@@ -158,25 +140,25 @@ class ParametersUsage extends Interpreter<ParamsValue> {
     boolean[] emptyParams = new boolean[arity];
     val1 = new ParamsValue(emptyParams, 1);
     val2 = new ParamsValue(emptyParams, 2);
+  }
 
-    shift = (methodNode.access & ACC_STATIC) == 0 ? 2 : 1;
-    rangeStart = shift;
-    rangeEnd = arity + shift;
+  @Override
+  public ParamsValue newParameterValue(boolean isInstanceMethod, int local, Type type) {
+    param++;
+    int n = isInstanceMethod ? param - 1 : param;
+    if (n >= 0 && (ASMUtils.isReferenceType(type) || ASMUtils.isBooleanType(type))) {
+      boolean[] params = new boolean[arity];
+      params[n] = true;
+      return new ParamsValue(params, type.getSize());
+    }
+    return newValue(type);
   }
 
   @Override
   public ParamsValue newValue(Type type) {
     if (type == null) return val1;
-    called++;
     if (type == Type.VOID_TYPE) return null;
-    if (called < rangeEnd && rangeStart <= called && (ASMUtils.isReferenceType(type) || ASMUtils.isBooleanType(type))) {
-      boolean[] params = new boolean[arity];
-      params[called - shift] = true;
-      return type.getSize() == 1 ? new ParamsValue(params, 1) : new ParamsValue(params, 2);
-    }
-    else {
-      return type.getSize() == 1 ? val1 : val2;
-    }
+    return type.getSize() == 1 ? val1 : val2;
   }
 
   @Override
@@ -273,7 +255,8 @@ class ParametersUsage extends Interpreter<ParamsValue> {
     int opcode = insn.getOpcode();
     if (opcode == MULTIANEWARRAY) {
       size = 1;
-    } else {
+    }
+    else {
       String desc = (opcode == INVOKEDYNAMIC) ? ((InvokeDynamicInsnNode) insn).desc : ((MethodInsnNode) insn).desc;
       size = Type.getReturnType(desc).getSize();
     }
@@ -299,34 +282,33 @@ class ParametersUsage extends Interpreter<ParamsValue> {
 class IParametersUsage extends Interpreter<IParamsValue> {
   static final IParamsValue val1 = new IParamsValue(0, 1);
   static final IParamsValue val2 = new IParamsValue(0, 2);
+  static final IParamsValue none = new IParamsValue(0, -1);
+
+  private int param = -1;
+  final int arity;
   int leaking;
   int nullableLeaking;
-  int called = -1;
-  final int rangeStart;
-  final int rangeEnd;
-  final int arity;
-  final int shift;
 
   IParametersUsage(MethodNode methodNode) {
     super(API_VERSION);
     arity = Type.getArgumentTypes(methodNode.desc).length;
-    shift = (methodNode.access & ACC_STATIC) == 0 ? 2 : 1;
-    rangeStart = shift;
-    rangeEnd = arity + shift;
+  }
+
+  @Override
+  public IParamsValue newParameterValue(boolean isInstanceMethod, int local, Type type) {
+    param++;
+    int n = isInstanceMethod ? param - 1 : param;
+    if (n >= 0 && (ASMUtils.isReferenceType(type) || ASMUtils.isBooleanType(type))) {
+      return new IParamsValue(1 << n, type.getSize());
+    }
+    return newValue(type);
   }
 
   @Override
   public IParamsValue newValue(Type type) {
-    if (type == null) return val1;
-    called++;
+    if (type == null) return none;
     if (type == Type.VOID_TYPE) return null;
-    if (called < rangeEnd && rangeStart <= called && (ASMUtils.isReferenceType(type) || ASMUtils.isBooleanType(type))) {
-      int n = called - shift;
-      return type.getSize() == 1 ? new IParamsValue(1 << n, 1) : new IParamsValue(1 << n, 2);
-    }
-    else {
-      return type.getSize() == 1 ? val1 : val2;
-    }
+    return type.getSize() == 1 ? val1 : val2;
   }
 
   @Override
@@ -481,7 +463,8 @@ class IParametersUsage extends Interpreter<IParamsValue> {
     int size;
     if (opcode == MULTIANEWARRAY) {
       size = 1;
-    } else {
+    }
+    else {
       String desc = (opcode == INVOKEDYNAMIC) ? ((InvokeDynamicInsnNode) insn).desc : ((MethodInsnNode) insn).desc;
       size = ASMUtils.getReturnSizeFast(desc);
     }
@@ -613,4 +596,3 @@ class LeakingParametersCollector extends ParametersUsage {
     return super.naryOperation(insn, values);
   }
 }
-

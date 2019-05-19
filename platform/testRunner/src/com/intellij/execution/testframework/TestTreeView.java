@@ -17,21 +17,20 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.ui.BaseTestProxyNodeDescriptor;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
+import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +40,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
   public static final DataKey<TestFrameworkRunningModel> MODEL_DATA_KEY = DataKey.create("testFrameworkModel.dataId");
@@ -73,6 +71,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     myModel = model;
     Disposer.register(myModel, myModel.getRoot());
     Disposer.register(myModel, new Disposable() {
+      @Override
       public void dispose() {
         setModel(null);
         myModel = null;
@@ -80,17 +79,17 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     });
     installHandlers();
     setCellRenderer(getRenderer(myModel.getProperties()));
+    putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true);
   }
 
+  @Override
   public void setUI(final TreeUI ui) {
-    super.setUI(ui);
-    final int fontHeight = getFontMetrics(getFont()).getHeight();
-    final int iconHeight = PoolOfTestIcons.PASSED_ICON.getIconHeight();
-    setRowHeight(Math.max(fontHeight, iconHeight) + 2);
+    super.setUI(ui instanceof DefaultTreeUI ? ui : DefaultTreeUI.createUI(this));
     setLargeModel(true);
   }
 
-  public Object getData(final String dataId) {
+  @Override
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }
@@ -166,8 +165,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     }
     else {
       AbstractTestProxy selectedTest = getSelectedTest();
-      fqn = selectedTest instanceof TestProxyRoot ? ((TestProxyRoot)selectedTest).getRootLocation() 
-                                                  : selectedTest != null ? selectedTest.getLocationUrl() : null;
+      fqn = selectedTest != null ? selectedTest.getLocationUrl() : null;
     }
     CopyPasteManager.getInstance().setContents(new StringSelection(fqn));
   }
@@ -175,9 +173,6 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     AbstractTestProxy test = getSelectedTest();
-    if (test instanceof TestProxyRoot) {
-      return ((TestProxyRoot)test).getRootLocation() != null;
-    }
     return test != null && test.getLocationUrl() != null;
   }
 
@@ -191,80 +186,25 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     new TreeSpeedSearch(this, path -> {
       final AbstractTestProxy testProxy = getSelectedTest(path);
       if (testProxy == null) return null;
-      return testProxy.getName();
+      return getPresentableName(testProxy);
     });
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
-  }
-
-  public boolean isExpandableHandlerVisibleForCurrentRow(int row) {
-    final ExpandableItemsHandler<Integer> handler = getExpandableItemsHandler();
-    final Collection<Integer> items = handler.getExpandedItems();
-    return items.size() == 1 && row == items.iterator().next();
-  }
-  
-  @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-    final TestFrameworkRunningModel model = myModel;
-    if (model == null) return;
-    final TestConsoleProperties properties = model.getProperties();
-    if (TestConsoleProperties.SHOW_INLINE_STATISTICS.value(properties)) {
-      Rectangle visibleRect = getVisibleRect();
-      Rectangle clip = g.getClipBounds();
-      final int visibleRowCount = TreeUtil.getVisibleRowCountForFixedRowHeight(this);
-      final int firstRow = getClosestRowForLocation(0, visibleRect.y);
-      for (int row = firstRow; row < Math.min(firstRow + visibleRowCount + 1, getRowCount()); row++) {
-        if (isExpandableHandlerVisibleForCurrentRow(row)) {
-          continue;
-        }
-        Object node = getPathForRow(row).getLastPathComponent();
-        if (node instanceof DefaultMutableTreeNode) {
-          Object data = ((DefaultMutableTreeNode)node).getUserObject();
-          if (data instanceof BaseTestProxyNodeDescriptor) {
-            final AbstractTestProxy testProxy = ((BaseTestProxyNodeDescriptor)data).getElement();
-            final String durationString = testProxy.getDurationString(properties);
-            if (durationString != null) {
-              Rectangle rowBounds = getRowBounds(row);
-              rowBounds.x = 0;
-              rowBounds.width = Integer.MAX_VALUE;
-
-              if (rowBounds.intersects(clip)) {
-                final Rectangle fullRowRect = new Rectangle(visibleRect.x, rowBounds.y, visibleRect.width, rowBounds.height);
-                final boolean rowSelected = isRowSelected(row);
-                final boolean hasTreeFocus = hasFocus();
-                paintRowData(this, durationString, fullRowRect, (Graphics2D)g, rowSelected, hasTreeFocus);
-              }
-            }
+    HintUpdateSupply.installHintUpdateSupply(this, obj -> {
+      if (obj instanceof DefaultMutableTreeNode) {
+        Object userObject = ((DefaultMutableTreeNode)obj).getUserObject();
+        if (userObject instanceof NodeDescriptor) {
+          Object element = ((NodeDescriptor)userObject).getElement();
+          if (element instanceof AbstractTestProxy) {
+            return (PsiElement)TestsUIUtil.getData((AbstractTestProxy)element, CommonDataKeys.PSI_ELEMENT.getName(), myModel);
           }
         }
       }
-    }
+      return null;
+    });
   }
 
-  private static void paintRowData(Tree tree, String duration, Rectangle bounds, Graphics2D g, boolean isSelected, boolean hasFocus) {
-    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    g.setFont(tree.getFont().deriveFont(Font.PLAIN, UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
-    final FontMetrics metrics = tree.getFontMetrics(g.getFont());
-    int totalWidth = metrics.stringWidth(duration) + 2;
-    int x = bounds.x + bounds.width - totalWidth;
-    g.setColor(isSelected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeBackground());
-    final int leftOffset = 5;
-    g.fillRect(x - leftOffset, bounds.y, totalWidth + leftOffset, bounds.height);
-    g.translate(0, bounds.y - 1);
-    if (isSelected) {
-      if (!hasFocus && UIUtil.isUnderAquaBasedLookAndFeel()) {
-        g.setColor(UIUtil.getTreeForeground());
-      }
-      else {
-        g.setColor(UIUtil.getTreeSelectionForeground());
-      }
-    }
-    else {
-      g.setColor(new JBColor(0x808080, 0x808080));
-    }
-    g.drawString(duration, x, SimpleColoredComponent.getTextBaseLine(tree.getFontMetrics(tree.getFont()), bounds.height) + 1);
-    g.translate(0, -bounds.y + 1);
-    config.restore();
+  protected String getPresentableName(AbstractTestProxy testProxy) {
+    return testProxy.getName();
   }
 }

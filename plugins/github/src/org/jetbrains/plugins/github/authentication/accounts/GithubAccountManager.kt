@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.accounts
 
 import com.intellij.credentialStore.*
@@ -16,7 +16,10 @@ import kotlin.properties.Delegates.observable
 /**
  * Handles application-level Github accounts
  */
-@State(name = "GithubAccounts", storages = [(Storage("github_settings.xml"))])
+@State(name = "GithubAccounts", storages = [
+  Storage(value = "github.xml"),
+  Storage(value = "github_settings.xml", deprecated = true)
+])
 internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : PersistentStateComponent<Array<GithubAccount>> {
   var accounts: Set<GithubAccount> by observable(setOf()) { _, oldValue, newValue ->
     oldValue.filter { it !in newValue }.forEach(this::accountRemoved)

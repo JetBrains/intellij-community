@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 // 2. permitted: true/false. statistics could be stopped remotely. if false UsageCollectors won't be started
 public class StatisticsConnectionService extends SettingsConnectionService {
   private static final String PERMISSION_ATTR_NAME = "permitted";
-  private static final String DISABLED = "disabled";
 
   public StatisticsConnectionService() {
     this("localhost", null);

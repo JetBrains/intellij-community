@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -38,13 +37,6 @@ import javax.swing.*;
 public class GroovyEmptyCatchBlockInspection extends BaseInspection {
   public boolean myIgnore = true;
   public boolean myCountCommentsAsContent = true;
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Empty 'catch' block";
-  }
 
   @Override
   @NotNull

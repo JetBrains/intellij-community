@@ -198,6 +198,14 @@
   <action id="NextDiff">
     <keyboard-shortcut first-keystroke="control F7"/>
   </action>
+  <action id="Diff.PrevChange">
+    <keyboard-shortcut first-keystroke="shift meta F6"/>
+    <keyboard-shortcut first-keystroke="meta alt LEFT"/>
+  </action>
+  <action id="Diff.NextChange">
+    <keyboard-shortcut first-keystroke="meta F6"/>
+    <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
+  </action>
   <action id="NextOccurence"/>
   <action id="NextTab">
     <keyboard-shortcut first-keystroke="meta F6"/>
@@ -337,5 +345,14 @@
   </action>
   <action id="RunDashboard.ShowConfigurations">
     <keyboard-shortcut first-keystroke="alt meta H"/>
+  </action>
+
+  <action id="SearchEverywhere.NavigateToNextGroup">
+    <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="meta DOWN"/>
+  </action>
+  <action id="SearchEverywhere.NavigateToPrevGroup">
+    <keyboard-shortcut first-keystroke="PAGE_UP"/>
+    <keyboard-shortcut first-keystroke="meta UP"/>
   </action>
 </keymap>

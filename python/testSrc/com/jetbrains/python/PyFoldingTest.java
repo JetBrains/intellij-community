@@ -21,7 +21,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
  * @author yole
  */
 public class PyFoldingTest extends PyTestCase {
-  private void doTest() {
+  protected void doTest() {
     myFixture.testFolding(getTestDataPath() + "/folding/" + getTestName(true) + ".py");
   }
 
@@ -68,6 +68,11 @@ public class PyFoldingTest extends PyTestCase {
 
   // PY-17017
   public void testCustomFoldingAtBlockEnd() {
+    doTest();
+  }
+
+  // PY-31154
+  public void testEmptyStatementListHasNoFolding() {
     doTest();
   }
 }

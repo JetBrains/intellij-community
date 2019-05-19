@@ -15,13 +15,54 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
+import org.jetbrains.annotations.NotNull;
 
-public class LimitedScopeInnerClassInspection extends LimitedScopeInnerClassInspectionBase {
+public class LimitedScopeInnerClassInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new MoveClassFix();
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "limited.scope.inner.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "limited.scope.inner.class.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new LimitedScopeInnerClassVisitor();
+  }
+
+  private static class LimitedScopeInnerClassVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (aClass.getParent() instanceof PsiDeclarationStatement) {
+        registerClassError(aClass);
+      }
+    }
   }
 }

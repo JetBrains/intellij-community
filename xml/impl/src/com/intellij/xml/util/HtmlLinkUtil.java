@@ -1,6 +1,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.html.HtmlTag;
@@ -14,7 +15,7 @@ public class HtmlLinkUtil {
   @NonNls public static final String LINK = "link";
 
   public static void processLinks(@NotNull final XmlFile xhtmlFile,
-                                  @NotNull Processor<XmlTag> tagProcessor) {
+                                  @NotNull Processor<? super XmlTag> tagProcessor) {
     final XmlDocument doc = HtmlUtil.getRealXmlDocument(xhtmlFile.getDocument());
     if (doc == null) return;
 
@@ -30,7 +31,7 @@ public class HtmlLinkUtil {
   }
 
   public static void findLinkStylesheets(@NotNull final XmlTag tag,
-                                         @NotNull Processor<XmlTag> tagProcessor) {
+                                         @NotNull Processor<? super XmlTag> tagProcessor) {
     processInjectedContent(tag, tagProcessor);
 
     for (XmlTag subTag : tag.getSubTags()) {
@@ -43,7 +44,7 @@ public class HtmlLinkUtil {
   }
 
   public static void processInjectedContent(final XmlTag element,
-                                            @NotNull final Processor<XmlTag> tagProcessor) {
+                                            @NotNull final Processor<? super XmlTag> tagProcessor) {
     final PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = (injectedPsi, places) -> {
       if (injectedPsi instanceof XmlFile) {
         final XmlDocument injectedDocument = ((XmlFile)injectedPsi).getDocument();
@@ -54,7 +55,7 @@ public class HtmlLinkUtil {
               if (element1 instanceof XmlTag) {
                 final XmlTag tag = (XmlTag)element1;
                 String tagName = tag.getLocalName();
-                if (element1 instanceof HtmlTag || tag.getNamespacePrefix().length() > 0) tagName = tagName.toLowerCase();
+                if (element1 instanceof HtmlTag || tag.getNamespacePrefix().length() > 0) tagName = StringUtil.toLowerCase(tagName);
                 if (LINK.equalsIgnoreCase(tagName)) {
                   tagProcessor.process((XmlTag)element1);
                 }

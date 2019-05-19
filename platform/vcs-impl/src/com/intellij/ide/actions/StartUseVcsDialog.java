@@ -34,6 +34,7 @@ class StartUseVcsDialog extends DialogWrapper {
     return myVcsCombo;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JLabel selectText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.select.vcs.label.text"));
     selectText.setUI(new MultiLineLabelUI());
@@ -50,6 +51,7 @@ class StartUseVcsDialog extends DialogWrapper {
     mainPanel.add(myVcsCombo, gb);
 
     myVcsCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         validateVcs();
       }
@@ -85,7 +87,7 @@ class StartUseVcsDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     mySelected = myVcsCombo.getSelectedItem();
-    super.doOKAction();    
+    super.doOKAction();
   }
 
   private Object[] prepareComboData() {

@@ -27,9 +27,6 @@ import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @since 13.0
- */
 public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
 
   public static final StubIndexKey<String, PsiFile> KEY = StubIndexKey.createIndexKey("dom.namespaceKey");

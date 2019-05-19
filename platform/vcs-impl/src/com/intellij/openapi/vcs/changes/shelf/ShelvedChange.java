@@ -33,8 +33,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,43 +77,16 @@ public class ShelvedChange {
     return myBeforePath;
   }
 
-  @Nullable
-  public VirtualFile getBeforeVFUnderProject(final Project project) {
-    if (myBeforePath == null || project.getBaseDir() == null) return null;
-    final File baseDir = new File(project.getBaseDir().getPath());
-    final File file = new File(baseDir, myBeforePath);
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-  }
-
   public String getAfterPath() {
     return myAfterPath;
-  }
-
-  @Nullable
-  public String getAfterFileName() {
-    if (myAfterPath == null) return null;
-    int pos = myAfterPath.lastIndexOf('/');
-    if (pos >= 0) return myAfterPath.substring(pos+1);
-    return myAfterPath;
-  }
-
-  public String getBeforeFileName() {
-    int pos = myBeforePath.lastIndexOf('/');
-    if (pos >= 0) return myBeforePath.substring(pos+1);
-    return myBeforePath;
-  }
-
-  public String getBeforeDirectory() {
-    int pos = myBeforePath.lastIndexOf('/');
-    if (pos >= 0) return myBeforePath.substring(0, pos).replace('/', File.separatorChar);
-    return File.separator;
   }
 
   public FileStatus getFileStatus() {
     return myFileStatus;
   }
 
-  public Change getChange(Project project) {
+  @NotNull
+  public Change getChange(@NotNull Project project) {
     // todo unify with
     if (myChange == null) {
       File baseDir = new File(project.getBaseDir().getPath());
@@ -172,10 +143,10 @@ public class ShelvedChange {
 
     final ShelvedChange that = (ShelvedChange)o;
 
-    if (myAfterPath != null ? !myAfterPath.equals(that.myAfterPath) : that.myAfterPath != null) return false;
-    if (myBeforePath != null ? !myBeforePath.equals(that.myBeforePath) : that.myBeforePath != null) return false;
-    if (myFileStatus != null ? !myFileStatus.equals(that.myFileStatus) : that.myFileStatus != null) return false;
-    if (myPatchPath != null ? !myPatchPath.equals(that.myPatchPath) : that.myPatchPath != null) return false;
+    if (!Objects.equals(myAfterPath, that.myAfterPath)) return false;
+    if (!Objects.equals(myBeforePath, that.myBeforePath)) return false;
+    if (!Objects.equals(myFileStatus, that.myFileStatus)) return false;
+    if (!Objects.equals(myPatchPath, that.myPatchPath)) return false;
 
     return true;
   }
@@ -190,7 +161,7 @@ public class ShelvedChange {
     private final FilePath myBeforeFilePath;
     private final FilePath myAfterFilePath;
 
-    public PatchedContentRevision(Project project, final FilePath beforeFilePath, final FilePath afterFilePath) {
+    PatchedContentRevision(Project project, final FilePath beforeFilePath, final FilePath afterFilePath) {
       myProject = project;
       myBeforeFilePath = beforeFilePath;
       myAfterFilePath = afterFilePath;

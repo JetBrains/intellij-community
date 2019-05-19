@@ -32,7 +32,7 @@ public final class CompoundProjectViewNodeDecorator implements ProjectViewNodeDe
    */
   @NotNull
   public static ProjectViewNodeDecorator get(@Nullable Project project) {
-    if (project == null || project.isDisposed()) return EMPTY;
+    if (project == null || project.isDisposed() || project.isDefault()) return EMPTY;
     ProjectViewNodeDecorator provider = project.getUserData(KEY);
     if (provider != null) return provider;
     provider = new CompoundProjectViewNodeDecorator(EP_NAME.getExtensions(project));
@@ -54,7 +54,7 @@ public final class CompoundProjectViewNodeDecorator implements ProjectViewNodeDe
     forEach(decorator -> decorator.decorate(node, cellRenderer));
   }
 
-  private void forEach(@NotNull Consumer<ProjectViewNodeDecorator> consumer) {
+  private void forEach(@NotNull Consumer<? super ProjectViewNodeDecorator> consumer) {
     for (ProjectViewNodeDecorator decorator : decorators) {
       try {
         consumer.accept(decorator);

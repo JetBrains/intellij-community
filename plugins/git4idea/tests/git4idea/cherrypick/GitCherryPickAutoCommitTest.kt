@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.cherrypick
 
 import git4idea.test.*
@@ -21,7 +7,21 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
   override fun setUp() {
     super.setUp()
-    settings.isAutoCommitOnCherryPick = true
+    appSettings.isAutoCommitOnCherryPick = true
+  }
+
+  fun `test cherry-pick from protected branch should add suffix by default`() {
+    branch("feature")
+    val commit = file("c.txt").create().addCommit("fix #1").hash()
+    git("update-ref refs/remotes/origin/master HEAD")
+    checkout("feature")
+
+    cherryPick(commit)
+
+    assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
+    assertLastMessage("fix #1\n\n(cherry picked from commit ${commit})")
+    changeListManager.waitScheduledChangelistDeletions()
+    changeListManager.assertOnlyDefaultChangelist()
   }
 
   fun `test simple cherry-pick`() {
@@ -32,7 +32,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit)
 
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
-    assertLastMessage("fix #1\n\n(cherry picked from commit ${commit})")
+    assertLastMessage("fix #1")
     changeListManager.waitScheduledChangelistDeletions()
     changeListManager.assertOnlyDefaultChangelist()
   }
@@ -56,7 +56,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit)
 
     `assert merge dialog was shown`()
-    changeListManager.assertChangeListExists("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
+    changeListManager.assertChangeListExists("on_master")
     assertWarningNotification("Cherry-picked with conflicts", """
       ${shortHash(commit)} on_master
       Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>
@@ -76,7 +76,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     `assert merge dialog was shown`()
     `assert commit dialog was shown`()
-    changeListManager.assertChangeListExists("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
+    changeListManager.assertChangeListExists("on_master")
     assertNoNotification()
   }
 
@@ -88,13 +88,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit1, commit2)
 
-    assertLogMessages("""
-      fix #2
-
-      (cherry picked from commit $commit2)""", """
-      fix #1
-
-      (cherry picked from commit $commit1)""")
+    assertLogMessages("fix #2", "fix #1")
     assertSuccessfulNotification("Cherry-pick successful","""
       ${shortHash(commit1)} fix #1
       ${shortHash(commit2)} fix #2
@@ -136,7 +130,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit1, commit2, commit3)
 
     `assert merge dialog was shown`()
-    assertLastMessage("fix #1\n\n(cherry picked from commit $commit1)")
+    assertLastMessage("fix #1")
   }
 
   // IDEA-73548
@@ -162,15 +156,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit1, emptyCommit, commit3)
 
-    assertLogMessages(
-      """
-      fix #2
-
-      (cherry picked from commit $commit3)""",
-      """
-      fix #1
-
-      (cherry picked from commit $commit1)""")
+    assertLogMessages("fix #2", "fix #1")
     assertSuccessfulNotification("Cherry-picked 2 commits from 3","""
       ${shortHash(commit1)} fix #1
       ${shortHash(commit3)} fix #2

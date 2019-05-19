@@ -116,7 +116,7 @@ public class RegexpFilterTest {
     public int myLine;
     public int myColumn;
 
-    public HLInfo(String fileName, int line, int column) {
+    HLInfo(String fileName, int line, int column) {
       myColumn = column;
       myFileName = fileName;
       myLine = line;

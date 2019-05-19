@@ -19,8 +19,7 @@ import org.jetbrains.plugins.groovy.lang.documentation.TypePresentation;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrRecursiveSignatureVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -33,10 +32,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
@@ -69,25 +68,13 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       List<GroovyResolveResult> methods = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiMethod) {
-          methods.add(new GroovyResolveResultImpl(element, true));
+          methods.add(new ElementResolveResult<>(element));
         }
       }
       return ArrayUtil.toObjectArray(methods);
     }
 
     return null;
-  }
-
-  @Override
-  public Object[] getParametersForDocumentation(Object resolveResult, ParameterInfoContext context) {
-    if (resolveResult instanceof GroovyResolveResult) {
-      final PsiElement element = ((GroovyResolveResult)resolveResult).getElement();
-      if (element instanceof PsiMethod) {
-        return ((PsiMethod)element).getParameterList().getParameters();
-      }
-    }
-
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
@@ -169,12 +156,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static void addSignatureVariant(@NotNull final List<Object> elementToShow, @NotNull GrClosureType type) {
-    type.getSignature().accept(new GrRecursiveSignatureVisitor() {
-      @Override
-      public void visitClosureSignature(GrClosureSignature signature) {
-        elementToShow.add(signature);
-      }
-    });
+    elementToShow.addAll(type.getSignatures());
   }
 
   private static void filterOutReflectedMethods(List toShow) {
@@ -243,8 +225,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         }
         if (argTypes == null) continue;
       }
-      else if (objects[i] instanceof GrClosureSignature) {
-        final GrClosureSignature signature = (GrClosureSignature)objects[i];
+      else if (objects[i] instanceof GrSignature) {
+        final GrSignature signature = (GrSignature)objects[i];
         argTypes = PsiUtil.getArgumentTypes(place, false);
         parameterTypes = PsiType.createArray(signature.getParameterCount());
         int j = 0;
@@ -303,16 +285,6 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   @Override
-  public String getParameterCloseChars() {
-    return ",){}";
-  }
-
-  @Override
-  public boolean tracksParameterIndex() {
-    return true;
-  }
-
-  @Override
   public void updateUI(Object o, @NotNull ParameterInfoUIContext context) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
@@ -326,8 +298,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         return;
       }
     }
-    else if (o instanceof GrClosureSignature) {
-      if (!((GrClosureSignature)o).isValid()) {
+    else if (o instanceof GrSignature) {
+      if (!((GrSignature)o).isValid()) {
         context.setUIComponentEnabled(false);
         return;
       }
@@ -399,8 +371,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     } else if (element instanceof PsiClass) {
       buffer.append("no parameters");
     }
-    else if (element instanceof GrClosureSignature) {
-      GrClosureParameter[] parameters = ((GrClosureSignature)element).getParameters();
+    else if (element instanceof GrSignature) {
+      GrClosureParameter[] parameters = ((GrSignature)element).getParameters();
       if (parameters.length > 0) {
         for (int i = 0; i < parameters.length; i++) {
           if (i > 0) buffer.append(", ");
@@ -418,7 +390,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           int endOffset = buffer.length();
 
           if (context.isUIComponentEnabled() &&
-              (i == currentParameter || (i == parameters.length - 1 && ((GrClosureSignature)element).isVarargs() && currentParameter >= parameters.length))) {
+              (i == currentParameter || (i == parameters.length - 1 && ((GrSignature)element).isVarargs() && currentParameter >= parameters.length))) {
             highlightStartOffset = startOffset;
             highlightEndOffset = endOffset;
           }

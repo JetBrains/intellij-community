@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -24,10 +24,8 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
@@ -93,33 +91,48 @@ public abstract class StructuralSearchProfile {
   }
 
   @NotNull
-  public Editor createEditor(@NotNull SearchContext searchContext,
-                             @NotNull FileType fileType,
-                             Language dialect,
-                             String text,
-                             boolean useLastConfiguration) {
-    PsiFile codeFragment = createCodeFragment(searchContext.getProject(), text, null);
+  public Document createDocument(@NotNull Project project, @NotNull FileType fileType, Language dialect, String text) {
+    PsiFile codeFragment = createCodeFragment(project, text, null);
     if (codeFragment == null) {
-      codeFragment = createFileFragment(searchContext, fileType, dialect, text);
+      codeFragment = createFileFragment(project, fileType, dialect, text);
     }
 
     if (codeFragment != null) {
-      final Document doc = PsiDocumentManager.getInstance(searchContext.getProject()).getDocument(codeFragment);
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
       assert doc != null : "code fragment element should be physical";
-      DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(codeFragment, false);
-      return UIUtil.createEditor(doc, searchContext.getProject(), true, true, getTemplateContextType());
+      return doc;
+    }
+
+    return EditorFactory.getInstance().createDocument(text);
+  }
+
+  @NotNull
+  public Editor createEditor(@NotNull Project project,
+                             @NotNull FileType fileType,
+                             Language dialect,
+                             String text) {
+    PsiFile codeFragment = createCodeFragment(project, text, null);
+    if (codeFragment == null) {
+      codeFragment = createFileFragment(project, fileType, dialect, text);
+    }
+
+    if (codeFragment != null) {
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+      assert doc != null : "code fragment element should be physical";
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
+      return UIUtil.createEditor(doc, project, true, true, getTemplateContextType());
     }
 
     final EditorFactory factory = EditorFactory.getInstance();
     final Document document = factory.createDocument(text);
-    final EditorEx editor = (EditorEx)factory.createEditor(document, searchContext.getProject());
+    final EditorEx editor = (EditorEx)factory.createEditor(document, project);
     editor.getSettings().setFoldingOutlineShown(false);
     return editor;
   }
 
-  private static PsiFile createFileFragment(SearchContext searchContext, FileType fileType, Language dialect, String text) {
+  private static PsiFile createFileFragment(Project project, FileType fileType, Language dialect, String text) {
     final String name = "__dummy." + fileType.getDefaultExtension();
-    final PsiFileFactory factory = PsiFileFactory.getInstance(searchContext.getProject());
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
 
     return dialect == null ?
            factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), true, true) :
@@ -129,6 +142,13 @@ public abstract class StructuralSearchProfile {
   @Nullable
   public PsiCodeFragment createCodeFragment(Project project, String text, @Nullable PsiElement context) {
     return null;
+  }
+
+  /**
+   * This method is called while holding a read action.
+   */
+  public String getCodeFragmentText(PsiFile fragment) {
+    return fragment.getText();
   }
 
   @NotNull
@@ -145,7 +165,7 @@ public abstract class StructuralSearchProfile {
   }
 
   @Nullable
-  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
+  public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
     return null;
   }
 
@@ -153,7 +173,7 @@ public abstract class StructuralSearchProfile {
   }
 
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
-    String fileType = options.getMatchOptions().getFileType().getName().toLowerCase();
+    String fileType = StringUtil.toLowerCase(options.getMatchOptions().getFileType().getName());
     throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
   }
 
@@ -181,6 +201,10 @@ public abstract class StructuralSearchProfile {
   
   public String getMeaningfulText(PsiElement element) {
     return getTypedVarString(element);
+  }
+
+  public String getAlternativeText(PsiElement element, String previousText) {
+    return null;
   }
 
   public PsiElement updateCurrentNode(PsiElement node) {
@@ -303,7 +327,7 @@ public abstract class StructuralSearchProfile {
     return false;
   }
 
-  public final boolean isApplicableConstraint(String constraintName, List<PsiElement> nodes, boolean completePattern, boolean target) {
+  public final boolean isApplicableConstraint(String constraintName, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     if (nodes.isEmpty()) {
       return isApplicableConstraint(constraintName, (PsiElement)null, completePattern, target);
     }

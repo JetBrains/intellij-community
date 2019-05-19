@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.testFramework.fixtures
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -20,24 +18,29 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.jps.model.java.JavaSourceRootType
 
 /**
- * Dependencies: 'main' -> 'm2', 'main' -> 'm4', 'main' -> 'm5', 'main' -> 'm6' => 'm7', 'm6' -> 'm8'
+ * Compile Dependencies: 'main' -> 'm2', 'main' -> 'm4', 'main' -> 'm5', 'main' -> 'm6' => 'm7', 'm6' -> 'm8'
+ * Test dependencies: 'm.test' -> 'm2'
  */
 object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
-  enum class ModuleDescriptor(internal val moduleName: String, internal val rootName: String) {
-    MAIN(TEST_MODULE_NAME, "/not_used/"),
-    M2("${TEST_MODULE_NAME}_m2", "src_m2"),
-    M3("${TEST_MODULE_NAME}_m3", "src_m3"),
-    M4("${TEST_MODULE_NAME}_m4", "src_m4"),
-    M5("${TEST_MODULE_NAME}_m5", "src_m5"),
-    M6("${TEST_MODULE_NAME}_m6", "src_m6"),
-    M7("${TEST_MODULE_NAME}_m7", "src_m7"),
-    M8("${TEST_MODULE_NAME}_m8", "src_m8");
+  enum class ModuleDescriptor(internal val moduleName: String, internal val rootName: String?, internal val testRootName: String?) {
+    MAIN(TEST_MODULE_NAME, null, "test_src"),
+    M2("${TEST_MODULE_NAME}_m2", "src_m2", null),
+    M3("${TEST_MODULE_NAME}_m3", "src_m3", null),
+    M4("${TEST_MODULE_NAME}_m4", "src_m4", null),
+    M5("${TEST_MODULE_NAME}_m5", "src_m5", null),
+    M6("${TEST_MODULE_NAME}_m6", "src_m6", null),
+    M7("${TEST_MODULE_NAME}_m7", "src_m7", null),
+    M8("${TEST_MODULE_NAME}_m8", "src_m8", null),
+    M_TEST("${TEST_MODULE_NAME}_m_test", null, "m_test_src");
 
-    fun root(): VirtualFile =
-      if (this == MAIN) LightPlatformTestCase.getSourceRoot() else TempFileSystem.getInstance().findFileByPath("/$rootName")!!
+    fun root(): VirtualFile? = when {
+      this === MAIN -> LightPlatformTestCase.getSourceRoot()
+      rootName != null -> TempFileSystem.getInstance().findFileByPath("/$rootName")!!
+      else -> null
+    }
 
     fun testRoot(): VirtualFile? =
-      if (this == MAIN) TempFileSystem.getInstance().findFileByPath("/test_src")!! else null
+      if (testRootName != null) TempFileSystem.getInstance().findFileByPath("/$testRootName")!! else null
   }
 
   override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk9()
@@ -66,7 +69,10 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       ModuleRootModificationUtil.addDependency(m6, m7, DependencyScope.COMPILE, true)
 
       val m8 = makeModule(project, ModuleDescriptor.M8)
-      ModuleRootModificationUtil.addDependency(m6, m8, DependencyScope.COMPILE, false)
+      ModuleRootModificationUtil.addDependency(m6, m8)
+
+      val m_test = makeModule(project, ModuleDescriptor.M_TEST)
+      ModuleRootModificationUtil.addDependency(m_test, m2, DependencyScope.TEST, false)
 
       val libDir = "jar://${PathManagerEx.getTestDataPath()}/codeInsight/jigsaw"
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-1.0.jar!/")
@@ -75,21 +81,40 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-2.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-multi-release.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib_invalid_1_2.jar!/")
+      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-xml-bind.jar!/")
+
+      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-xml-ws.jar!/")
+      ModuleRootModificationUtil.updateModel(main) {
+        val entries = it.orderEntries.toMutableList()
+        entries.add(0, entries.last())  // places an upgrade module before the JDK
+        entries.removeAt(entries.size - 1)
+        it.rearrangeOrderEntries(entries.toTypedArray())
+      }
     }
   }
 
   private fun makeModule(project: Project, descriptor: ModuleDescriptor): Module {
     val path = FileUtil.join(FileUtil.getTempDirectory(), "${descriptor.moduleName}.iml")
     val module = createModule(project, path)
-    val sourceRoot = createSourceRoot(module, descriptor.rootName)
-    createContentEntry(module, sourceRoot)
+    ModuleRootModificationUtil.updateModel(module) { configureModule(module, it, descriptor) }
     return module
   }
 
-  override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+  override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) =
+    configureModule(module, model, ModuleDescriptor.MAIN)
+
+  private fun configureModule(module: Module, model: ModifiableRootModel, descriptor: ModuleDescriptor) {
     model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_9
-    if (module.name == TEST_MODULE_NAME) {
-      val testRoot = createSourceRoot(module, "test_src")
+    if (descriptor !== ModuleDescriptor.MAIN) {
+      model.sdk = sdk
+    }
+    if (descriptor.rootName != null) {
+      val sourceRoot = createSourceRoot(module, descriptor.rootName)
+      registerSourceRoot(module.project, sourceRoot)
+      model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
+    }
+    if (descriptor.testRootName != null) {
+      val testRoot = createSourceRoot(module, descriptor.testRootName)
       registerSourceRoot(module.project, testRoot)
       model.addContentEntry(testRoot).addSourceFolder(testRoot, JavaSourceRootType.TEST_SOURCE)
     }
@@ -97,9 +122,9 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
   fun cleanupSourceRoots() = runWriteAction {
     ModuleDescriptor.values().asSequence()
-      .filter { it != ModuleDescriptor.MAIN }
-      .flatMap { it.root().children.asSequence() }
-      .plus(ModuleDescriptor.MAIN.testRoot()!!.children.asSequence())
+      .flatMap { if (it === ModuleDescriptor.MAIN) sequenceOf(it.testRoot()) else sequenceOf(it.root(), it.testRoot()) }
+      .filterNotNull()
+      .flatMap { it.children.asSequence() }
       .forEach { it.delete(this) }
   }
 }

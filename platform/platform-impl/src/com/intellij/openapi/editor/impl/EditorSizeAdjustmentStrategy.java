@@ -39,7 +39,6 @@ import java.awt.*;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 6/17/11 2:45 PM
  */
 class EditorSizeAdjustmentStrategy {
   /**

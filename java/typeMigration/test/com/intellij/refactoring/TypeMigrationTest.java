@@ -1,5 +1,6 @@
 package com.intellij.refactoring;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -7,26 +8,31 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author db
- * @since 22.07.2003
  */
 public class TypeMigrationTest extends TypeMigrationTestBase {
   private PsiElementFactory myFactory;
 
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/refactoring/typeMigration/";
+  }
+
   @NotNull
   @Override
-  public String getTestRoot() {
-    return "/refactoring/typeMigration/";
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_LATEST;
   }
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
-    myFactory = myJavaFacade.getElementFactory();
+    myFactory = getElementFactory();
   }
 
   @Override
@@ -675,7 +681,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   // Checking preserving method parameters alignment
   public void testT127() {
-    CommonCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings javaSettings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.ALIGN_MULTILINE_PARAMETERS = true;
     javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTestMethodType("test234",
@@ -745,9 +751,9 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT136() {
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
     doTestFirstParamType("foo", "Test",
-                         PsiType.getJavaLangString(myPsiManager, scope));
+                         PsiType.getJavaLangString(getPsiManager(), scope));
   }
 
   public void testT137() {
@@ -831,11 +837,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testMigrationToSuper() {
-    doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("Test.A<java.lang.String>", null));
+    doTestFieldType("b", myFactory.createTypeFromText("Test.A<java.lang.String>", null));
   }
 
   public void testMigrationToSuper2() {
-    doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("Test.Base<java.lang.String>", null));
+    doTestFieldType("b", myFactory.createTypeFromText("Test.Base<java.lang.String>", null));
   }
 
   public void testMultiVarDeclaration1() {
@@ -863,15 +869,15 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testGenericEllipsis() {
-    doTestFieldType("migrationField", myJavaFacade.getElementFactory().createTypeFromText("Test<Short>", null));
+    doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
   }
 
   public void testGenericEllipsis2() {
-    doTestFieldType("migrationField", myJavaFacade.getElementFactory().createTypeFromText("Test<Short>", null));
+    doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
   }
 
   public void testTypeParameterMigrationInInvalidCode() {
-    doTestFieldType("migrationField", myJavaFacade.getElementFactory().createTypeFromText("Test<Short>", null));
+    doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
   }
 
   private void doTestReturnType(final String methodName, final String migrationType) {

@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 */
 public interface FileDownloadingListener {
 
-  void fileDownloaded(final VirtualFile localFile);
+  void fileDownloaded(@NotNull VirtualFile localFile);
 
   void errorOccurred(@NotNull String errorMessage);
 

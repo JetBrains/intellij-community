@@ -21,7 +21,10 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.IntentionFilterOwner;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
@@ -50,10 +53,12 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     super(domWrapper, commitOnEveryChange);
   }
 
+  @Override
   protected EditorTextField getEditorTextField(@NotNull final PsiClassPanel component) {
     return ((ReferenceEditorWithBrowseButton)component.getComponent(0)).getEditorTextField();
   }
 
+  @Override
   protected PsiClassPanel createMainComponent(PsiClassPanel boundedComponent, final Project project) {
     if (boundedComponent == null) {
       boundedComponent = new PsiClassPanel();
@@ -74,6 +79,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     boundedComponent.add(editor);
     final GlobalSearchScope resolveScope = control.getDomWrapper().getResolveScope();
     editor.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
 
         final DomElement domElement = control.getDomElement();

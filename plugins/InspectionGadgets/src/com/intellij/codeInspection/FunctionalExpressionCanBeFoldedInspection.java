@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -37,14 +38,15 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
       }
 
       private void doCheckCall(PsiFunctionalExpression expression,
-                               Supplier<PsiElement> resolver,
+                               Supplier<? extends PsiElement> resolver,
                                PsiExpression qualifierExpression,
                                PsiElement referenceNameElement,
                                final String errorMessage) {
         if (qualifierExpression != null && referenceNameElement != null && !(qualifierExpression instanceof PsiSuperExpression)) {
           final PsiType qualifierType = qualifierExpression.getType();
           if (qualifierType != null) {
-            final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+            //don't get ground type as check is required over expected type instead
+            final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(expression, true);
             final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
             if (interfaceMethod != null) {
               final PsiElement resolve = resolver.get();
@@ -71,14 +73,17 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element != null ? element.getParent() : null;
+      PsiElement parent = element != null ? element.getParent() : null;
       if (parent instanceof PsiMethodReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)parent).getQualifierExpression();
         if (qualifierExpression != null) {
           parent.replace(qualifierExpression);
         }
       }
-      else if (parent instanceof PsiLambdaExpression) {
+      if (parent instanceof PsiReturnStatement || parent instanceof PsiExpressionStatement) {
+        parent = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
+      }
+      if (parent instanceof PsiLambdaExpression) {
         PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(((PsiLambdaExpression)parent).getBody());
         if (expression instanceof PsiMethodCallExpression) {
           PsiExpression qualifierExpression = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();

@@ -1,23 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamToLoop;
 
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -121,7 +118,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
         if (!isValidElementType(elementType, call, false)) return null;
         Operation op = Operation.createIntermediate(name, args, outVar, elementType, supportUnknownSources);
         if (op != null) return op;
-        op = TerminalOperation.createTerminal(name, args, elementType, callType, isVoidContext(call.getParent()));
+        op = TerminalOperation.createTerminal(name, args, elementType, callType, ExpressionUtils.isVoidContext(call));
         if (op != null) return op;
       }
       return null;
@@ -143,16 +140,10 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     return true;
   }
 
-  private static boolean isVoidContext(PsiElement element) {
-    return element instanceof PsiExpressionStatement ||
-           (element instanceof PsiLambdaExpression &&
-            PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)element)));
-  }
-
   @Nullable
   static List<OperationRecord> extractIterableForEach(PsiMethodCallExpression terminalCall) {
-    if (!ITERABLE_FOREACH.test(terminalCall) || !isVoidContext(terminalCall.getParent())) return null;
-    PsiExpression qualifier = terminalCall.getMethodExpression().getQualifierExpression();
+    if (!ITERABLE_FOREACH.test(terminalCall) || !ExpressionUtils.isVoidContext(terminalCall)) return null;
+    PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(terminalCall.getMethodExpression());
     if (qualifier == null) return null;
     // Do not visit this path if some class implements both Iterable and Stream
     PsiType type = qualifier.getType();
@@ -176,8 +167,8 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
 
   @Nullable
   static List<OperationRecord> extractMapForEach(PsiMethodCallExpression terminalCall) {
-    if (!MAP_FOREACH.test(terminalCall) || !isVoidContext(terminalCall.getParent())) return null;
-    PsiExpression qualifier = terminalCall.getMethodExpression().getQualifierExpression();
+    if (!MAP_FOREACH.test(terminalCall) || !ExpressionUtils.isVoidContext(terminalCall)) return null;
+    PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(terminalCall.getMethodExpression());
     if (qualifier == null) return null;
     // Do not visit this path if some class implements both Map and Stream
     PsiType type = qualifier.getType();
@@ -247,7 +238,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
 
   @Contract("null -> null")
   @Nullable
-  static TerminalOperation getTerminal(List<OperationRecord> operations) {
+  static TerminalOperation getTerminal(List<? extends OperationRecord> operations) {
     if (operations == null || operations.isEmpty()) return null;
     OperationRecord record = operations.get(operations.size()-1);
     if(record.myOperation instanceof TerminalOperation) {
@@ -259,7 +250,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   static class ReplaceStreamWithLoopFix implements LocalQuickFix {
     private final String myMessage;
 
-    public ReplaceStreamWithLoopFix(String message) {
+    ReplaceStreamWithLoopFix(String message) {
       myMessage = message;
     }
 
@@ -339,8 +330,8 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
 
     private static PsiElement normalize(@NotNull Project project, PsiElement element) {
       element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
-      PsiDiamondTypeUtil.removeRedundantTypeArguments(element);
-      RedundantCastUtil.getRedundantCastsInside(element).forEach(RedundantCastUtil::removeCast);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(element);
+      RedundantCastUtil.getRedundantCastsInside(element).forEach(RemoveRedundantCastUtil::removeCast);
       return element;
     }
 
@@ -426,7 +417,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     private String allocateLabel() {
       if(!myHasNestedLoops) return null;
       if(myLabel == null) {
-        String base = mySuffix.toUpperCase(Locale.ENGLISH);
+        String base = StringUtil.toUpperCase(mySuffix);
         myLabel = IntStreamEx.ints().mapToObj(i -> i == 0 ? base : base + i)
           .remove(myUsedLabels::contains).findFirst().orElseThrow(IllegalArgumentException::new);
         myUsedLabels.add(myLabel);
@@ -504,7 +495,8 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       if (kind != ResultKind.UNKNOWN && myStreamExpression.getParent() instanceof PsiVariable) {
         PsiVariable var = (PsiVariable)myStreamExpression.getParent();
         if (isCompatibleType(var, type, mostAbstractAllowedType) &&
-            var.getParent() instanceof PsiDeclarationStatement && (kind == ResultKind.FINAL || canUseAsNonFinal(var))) {
+            var.getParent() instanceof PsiDeclarationStatement && 
+            (kind == ResultKind.FINAL || VariableAccessUtils.canUseAsNonFinal(ObjectUtils.tryCast(var, PsiLocalVariable.class)))) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)var.getParent();
           if(declaration.getDeclaredElements().length == 1) {
             myStreamExpression = declaration;
@@ -556,20 +548,17 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
                                                              isCompatibleType(var, superType, mostAbstractAllowedType));
     }
 
-    @Contract("null -> false")
-    private static boolean canUseAsNonFinal(PsiVariable var) {
-      if (!(var instanceof PsiLocalVariable)) return false;
-      PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-      return block != null && ReferencesSearch.search(var).forEach(ref -> {
-        PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
-        return context == null || PsiTreeUtil.isAncestor(context, block, false);
-      });
-    }
-
     public PsiElement makeFinalReplacement() {
       LOG.assertTrue(myStreamExpression != null);
       if (myFinisher == null || myStreamExpression instanceof PsiStatement) {
-        myCommentTracker.delete(myStreamExpression);
+        PsiElement toDelete = myStreamExpression;
+        if (toDelete instanceof PsiExpression && toDelete.getParent() instanceof PsiExpressionStatement) {
+          toDelete = toDelete.getParent();
+          while (toDelete instanceof PsiExpressionStatement && toDelete.getParent() instanceof PsiLabeledStatement) {
+            toDelete = toDelete.getParent();
+          }
+        }
+        myCommentTracker.delete(toDelete);
         return null;
       }
       else {
@@ -610,7 +599,14 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
         PsiElement placeHolderCopy = PsiTreeUtil.releaseMark(returnCopy, mark);
         LOG.assertTrue(placeHolderCopy != null);
         PsiElement replacement = placeHolderCopy.replace(createExpression(conditionalExpression.getTrueBranch()));
-        return (placeHolderCopy == returnCopy ? replacement : returnCopy).getText();
+        if (returnCopy == placeHolderCopy) {
+          returnCopy = replacement;
+        }
+        String text = returnCopy.getText();
+        if (returnCopy.getLastChild() instanceof PsiComment) {
+          text += "\n";
+        }
+        return text;
       }
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(myStreamExpression.getParent());
       if(parent instanceof PsiIfStatement && conditionalExpression instanceof ConditionalExpression.Boolean &&

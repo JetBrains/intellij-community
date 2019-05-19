@@ -17,13 +17,28 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiBreakStatement
+import com.intellij.psi.PsiExpression
 import org.jetbrains.uast.UBreakExpression
+import org.jetbrains.uast.UBreakWithValueExpression
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 
 class JavaUBreakExpression(
-  override val psi: PsiBreakStatement,
+  override val sourcePsi: PsiBreakStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBreakExpression {
   override val label: String?
-    get() = psi.labelIdentifier?.text
+    get() = sourcePsi.labelIdentifier?.text
+}
+
+class JavaUBreakWithValueExpression(
+  override val sourcePsi: PsiBreakStatement,
+  val psiExpression: PsiExpression,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UBreakWithValueExpression {
+  override val valueExpression: UExpression? by lazy {
+    JavaConverter.convertExpression(psiExpression, this)
+  }
+  override val label: String?
+    get() = sourcePsi.labelIdentifier?.text
 }

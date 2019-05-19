@@ -26,6 +26,7 @@ import java.lang.annotation.Target;
  *
  * @deprecated use extension point com.intellij.util.xml.impl.DomImplementationClassEP#EP_NAME
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface Implementation {

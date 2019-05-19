@@ -1,46 +1,33 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsightTestCase {
-
   protected abstract String getBasePath();
 
   protected void doTestEscape() {
     doTestEscape(null);
   }
 
-  protected void doTestEscape(Pass<AbstractInplaceIntroducer> pass) {
+  protected void doTestEscape(@Nullable Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
-      final AbstractInplaceIntroducer introducer = invokeRefactoring();
+      AbstractInplaceIntroducer introducer = invokeRefactoring();
       if (pass != null) {
-        pass.pass(introducer);
+        pass.accept(introducer);
       }
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
@@ -54,16 +41,18 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
 
   protected abstract String getExtension();
 
-  protected void doTest(final Pass<AbstractInplaceIntroducer> pass)  {
+  protected void doTest(@Nullable Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
-    final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
+    boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
-      final AbstractInplaceIntroducer introducer = invokeRefactoring();
-      pass.pass(introducer);
+      AbstractInplaceIntroducer introducer = invokeRefactoring();
+      if (pass != null) {
+        pass.accept(introducer);
+      }
       TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(getEditor()));
       assert state != null;
       state.gotoEnd(false);

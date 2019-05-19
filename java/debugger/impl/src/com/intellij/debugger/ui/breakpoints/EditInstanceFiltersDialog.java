@@ -23,12 +23,14 @@ public class EditInstanceFiltersDialog extends DialogWrapper{
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myInstanceFilterEditor = new InstanceFilterEditor(myProject);
     myInstanceFilterEditor.setPreferredSize(JBUI.size(400, 200));
     return myInstanceFilterEditor;
   }
 
+  @Override
   public void dispose(){
     myInstanceFilterEditor.stopEditing();
     super.dispose();
@@ -39,6 +41,7 @@ public class EditInstanceFiltersDialog extends DialogWrapper{
     myInstanceFilterEditor.setFilters(cFilters);
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.debugger.ui.breakpoints.EditInstanceFiltersDialog";
   }

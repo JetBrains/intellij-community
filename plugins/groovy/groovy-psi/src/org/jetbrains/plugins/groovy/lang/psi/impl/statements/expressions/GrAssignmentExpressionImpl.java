@@ -1,16 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -18,10 +14,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
+import org.jetbrains.plugins.groovy.util.SafePublicationClearableLazyValue;
 
 import java.util.Objects;
+import java.util.function.Function;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENT_OPERATORS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENTS;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.getLeastUpperBoundNullable;
 
 /**
@@ -29,10 +29,27 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
  */
 public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl implements GrAssignmentExpression {
 
+  private final SafePublicationClearableLazyValue<GroovyCallReference> myReference = new SafePublicationClearableLazyValue<>(
+    () -> isOperatorAssignment() ? new GrOperatorReference(this) : null
+  );
+
   public GrAssignmentExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Nullable
+  @Override
+  public GroovyCallReference getReference() {
+    return myReference.getValue();
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myReference.clear();
+  }
+
+  @Override
   public String toString() {
     return "Assignment expression";
   }
@@ -56,7 +73,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @NotNull
   @Override
   public PsiElement getOperationToken() {
-    return findNotNullChildByType(ASSIGNMENT_OPERATORS);
+    return findNotNullChildByType(ASSIGNMENTS);
   }
 
   @Nullable
@@ -67,17 +84,12 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
 
   @Override
   public boolean isOperatorAssignment() {
-    return getOperationTokenType() != GroovyTokenTypes.mASSIGN;
+    return TokenSets.ASSIGNMENTS_TO_OPERATORS.containsKey(getOperationTokenType());
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitAssignmentExpression(this);
-  }
-
-  @Override
-  public PsiReference getReference() {
-    return isOperatorAssignment() ? this : null;
   }
 
   @Nullable

@@ -74,8 +74,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 
 public class IntroduceParameterHandler extends IntroduceHandlerBase {
@@ -84,6 +84,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   private JBPopup myEnclosingMethodsPopup;
   private InplaceIntroduceParameterPopup myInplaceIntroduceParameterPopup;
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -115,10 +116,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     });
   }
 
+  @Override
   protected boolean invokeImpl(Project project, PsiExpression tempExpr, Editor editor) {
     return invoke(editor, project, tempExpr, null, false);
   }
 
+  @Override
   protected boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
     return invoke(editor, project, null, localVariable, true);
   }
@@ -195,8 +198,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   private void chooseMethodToIntroduceParameter(final Editor editor,
-                                                final List<PsiMethod> validEnclosingMethods,
-                                                final PairConsumer<PsiMethod, PsiMethod> consumer) {
+                                                final List<? extends PsiMethod> validEnclosingMethods,
+                                                final PairConsumer<? super PsiMethod, ? super PsiMethod> consumer) {
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (validEnclosingMethods.size() == 1 || unitTestMode) {
       final PsiMethod methodToIntroduceParameterTo = validEnclosingMethods.get(0);
@@ -219,6 +222,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     final TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     list.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         final PsiMethod selectedMethod = list.getSelectedValue();
         if (selectedMethod == null) return;
@@ -252,7 +256,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       .setRequestFocus(true)
       .setKeyboardActions(keyboardActions).addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           dropHighlighters(highlighters);
         }
       }).createPopup();
@@ -262,7 +266,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   private static void updateView(PsiMethod selectedMethod,
                                  Editor editor,
                                  TextAttributes attributes,
-                                 List<RangeHighlighter> highlighters,
+                                 List<? super RangeHighlighter> highlighters,
                                  JCheckBox superMethod) {
     final MarkupModel markupModel = editor.getMarkupModel();
     final PsiIdentifier nameIdentifier = selectedMethod.getNameIdentifier();
@@ -277,7 +281,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     superMethod.setEnabled(selectedMethod.findDeepestSuperMethod() != null);
   }
 
-  private static void dropHighlighters(List<RangeHighlighter> highlighters) {
+  private static void dropHighlighters(List<? extends RangeHighlighter> highlighters) {
     for (RangeHighlighter highlighter : highlighters) {
       highlighter.dispose();
     }
@@ -289,6 +293,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                                                           final Project project,
                                                                           final String enteredName) {
     return new NameSuggestionsGenerator() {
+      @Override
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
         final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
         SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propName, expr != null && expr.isValid() ? expr : null, type);
@@ -308,6 +313,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     // Never called
     /* do nothing */
@@ -370,7 +376,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     private PsiLocalVariable myLocalVar;
     private final Editor myEditor;
 
-    public Introducer(Project project,
+    Introducer(Project project,
                       PsiExpression expr,
                       PsiLocalVariable localVar,
                       Editor editor) {
@@ -469,7 +475,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                             boolean delegate,
                             PsiType initializerType,
                             boolean mustBeFinal,
-                            List<UsageInfo> classMemberRefs, NameSuggestionsGenerator nameSuggestionGenerator) {
+                            List<? extends UsageInfo> classMemberRefs, NameSuggestionsGenerator nameSuggestionGenerator) {
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         final IntroduceParameterDialog dialog =
           new IntroduceParameterDialog(myProject, classMemberRefs, occurrences, myLocalVar, myExpr,
@@ -538,7 +544,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       final PsiMethod containingMethodCopy = Util.getContainingMethod(elementsCopy[0]);
       LOG.assertTrue(containingMethodCopy != null);
       final List<PsiMethod> enclosingMethodsInCopy = getEnclosingMethods(containingMethodCopy);
-      final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elementsCopy, 
+      final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elementsCopy,
                                                                               enclosingMethodsInCopy.get(enclosingMethodsInCopy.size() - 1));
       try {
         if (!processor.prepare()) return false;
@@ -612,10 +618,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   private void functionalInterfaceSelected(final PsiType selectedType,
-                                           final List<PsiMethod> enclosingMethods,
+                                           final List<? extends PsiMethod> enclosingMethods,
                                            final Project project,
                                            final Editor editor,
-                                           final MyExtractMethodProcessor processor, 
+                                           final MyExtractMethodProcessor processor,
                                            final PsiElement[] elements) {
     final PairConsumer<PsiMethod, PsiMethod> consumer =
       (methodToIntroduceParameter, methodToSearchFor) -> introduceWrappedCodeBlockParameter(methodToIntroduceParameter, methodToSearchFor, editor, project, selectedType, processor, elements);
@@ -626,7 +632,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                                   PsiMethod methodToSearchFor, Editor editor,
                                                   final Project project,
                                                   final PsiType selectedType,
-                                                  final ExtractMethodProcessor processor, 
+                                                  final ExtractMethodProcessor processor,
                                                   final PsiElement[] elements) {
     if (!elements[0].isValid()) {
       return;
@@ -711,7 +717,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   private static class MyExtractMethodProcessor extends ExtractMethodProcessor {
     private final PsiMethod myTopEnclosingMethod;
 
-    public MyExtractMethodProcessor(Project project, Editor editor, PsiElement[] elements, @NotNull PsiMethod topEnclosing) {
+    MyExtractMethodProcessor(Project project, Editor editor, PsiElement[] elements, @NotNull PsiMethod topEnclosing) {
       super(project, editor, elements, null, REFACTORING_NAME, null, null);
       myTopEnclosingMethod = topEnclosing;
     }
@@ -758,6 +764,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     private class MyAbstractExtractDialog implements AbstractExtractDialog {
+      @NotNull
       @Override
       public String getChosenMethodName() {
         return "name";

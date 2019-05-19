@@ -29,12 +29,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 	## XML features that can't be serialized as HTML
 	nonHTMLizable = empty
 
-## cases that are not allowed by the W3C HTML spec
-	nonW3C = empty
-
-## cases that are only allowed by the W3C HTML spec
-	W3Conly = notAllowed
-
 # #####################################################################
 ##  Wildcards                                                         #
 # #####################################################################
@@ -408,6 +402,10 @@ common.attrs.other =
 ## Content Security Policy
 	common.data.content-security-policy =
 		w:content-security-policy
+
+## Feature Policy
+	common.data.feature-policy =
+		string
 
 ## List of sandbox keywords
 	common.data.sandbox-allow-list =

@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.CollectUsagesException
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -18,7 +19,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
   override fun getUsages(): Set<UsageDescriptor> {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val ui = UISettings.shadowInstance
-    var usages = setOf(
+    val usages = mutableSetOf(
       UsageDescriptor("UI.font.size[${ui.fontSize}]"),
       UsageDescriptor(ensureProperKey("UI.font.name[${ui.fontFace}]")),
       UsageDescriptor("Presentation.mode.font.size[${ui.presentationModeFontSize}]")
@@ -45,13 +46,17 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val quickDocFontSize = PropertiesComponent.getInstance().getValue("quick.doc.font.size")
     if (quickDocFontSize != null) {
       usages += setOf(
-        UsageDescriptor("QuickDoc.font.size[" + quickDocFontSize +"]")
+        UsageDescriptor("QuickDoc.font.size[$quickDocFontSize]")
       )
     }
     return usages
   }
 
   override fun getGroupId(): String {
-    return "statistics.ui.fonts"
+    return "ui.fonts"
+  }
+
+  override fun getData(): FeatureUsageData? {
+    return FeatureUsageData().addOS()
   }
 }

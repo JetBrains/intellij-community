@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -249,7 +249,7 @@ public final class IdeMouseEventDispatcher {
       for (AnAction action : actions) {
         DataContext dataContext = DataManager.getInstance().getDataContext(c);
         Presentation presentation = myPresentationFactory.getPresentation(action);
-        AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MAIN_MENU, presentation,
+        AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MOUSE_SHORTCUT, presentation,
                                                       ActionManager.getInstance(),
                                                       modifiers);
         if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) {
@@ -418,5 +418,38 @@ public final class IdeMouseEventDispatcher {
       currentEventId = id;
       blockMode = mode;
     }
+  }
+
+  public static void requestFocusInNonFocusedWindow(@NotNull MouseEvent event) {
+    if (event.getID() == MOUSE_PRESSED) {
+      // request focus by mouse pressed before focus settles down
+      requestFocusInNonFocusedWindow(event.getComponent());
+    }
+  }
+
+  private static void requestFocusInNonFocusedWindow(@Nullable Component component) {
+    Window window = UIUtil.getWindow(component);
+    if (window != null && !UIUtil.isFocusAncestor(window)) {
+      Component focusable = UIUtil.isFocusable(component) ? component : findDefaultFocusableComponent(component);
+      if (focusable != null) focusable.requestFocus();
+    }
+  }
+
+  @Nullable
+  private static Component findDefaultFocusableComponent(@Nullable Component component) {
+    Container provider = findFocusTraversalPolicyProvider(component);
+    return provider == null ? null : provider.getFocusTraversalPolicy().getDefaultComponent(provider);
+  }
+
+  @Nullable
+  private static Container findFocusTraversalPolicyProvider(@Nullable Component component) {
+    Container container = component == null || component instanceof Container ? (Container)component : component.getParent();
+    while (container != null) {
+      // ensure that container is focus cycle root and provides focus traversal policy
+      // it means that Container.getFocusTraversalPolicy() returns non-null object
+      if (container.isFocusCycleRoot() && container.isFocusTraversalPolicyProvider()) return container;
+      container = container.getParent();
+    }
+    return null;
   }
 }

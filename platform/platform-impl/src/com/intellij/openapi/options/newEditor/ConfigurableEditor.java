@@ -1,16 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
-import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -21,7 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.JBIterable;
@@ -30,6 +29,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +49,6 @@ import static javax.swing.SwingUtilities.isDescendingFrom;
  * @author Sergey.Malenkov
  */
 class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
-  private static final JBColor ERROR_BACKGROUND = new JBColor(0xffbfbf, 0x591f1f);
   private static final String RESET_NAME = "Reset";
   private static final String RESET_DESCRIPTION = "Rollback changes for this configuration element";
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this);
@@ -72,7 +72,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       if (myConfigurable != null) {
         ConfigurableCardPanel.reset(myConfigurable);
         updateCurrent(myConfigurable, true);
-        FeatureUsageUiEvents.INSTANCE.logResetConfigurable(getConfigurableEventId(myConfigurable));
+        FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(getConfigurableEventId(myConfigurable), myConfigurable.getClass());
       }
     }
   };
@@ -96,11 +96,11 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     myErrorLabel.setVisible(false);
     myErrorLabel.setVerticalTextPosition(SwingConstants.TOP);
     myErrorLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
-    myErrorLabel.setBackground(ERROR_BACKGROUND);
+    myErrorLabel.setBackground(LightColors.RED);
     add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
     add(BorderLayout.CENTER, myCardPanel);
     Disposer.register(this, myCardPanel);
-    ActionManager.getInstance().addAnActionListener(this, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, this);
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     if (configurable != null) {
       myConfigurable = configurable;
@@ -142,20 +142,21 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   @Override
-  public final void beforeEditorTyping(char ch, DataContext context) {
+  public final void beforeEditorTyping(char ch, @NotNull DataContext context) {
   }
 
   @Override
-  public final void beforeActionPerformed(AnAction action, DataContext context, AnActionEvent event) {
+  public final void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event) {
   }
 
   @Override
-  public final void afterActionPerformed(AnAction action, DataContext context, AnActionEvent event) {
+  public final void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event) {
     requestUpdate();
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
+    if (myConfigurable == null) return null; // settings editor is not configured yet
     JComponent preferred = myConfigurable.getPreferredFocusedComponent();
     return preferred == null ? UIUtil.getPreferredFocusedComponent(getContent(myConfigurable)) : preferred;
   }
@@ -236,18 +237,20 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     return true;
   }
 
-  final ActionCallback select(final Configurable configurable) {
+  @NotNull
+  final Promise<? super Object> select(final Configurable configurable) {
     assert !myDisposed : "Already disposed";
     ActionCallback callback = myCardPanel.select(configurable, false);
-    callback.doWhenDone(() -> {
-      myConfigurable = configurable;
-      updateCurrent(configurable, false);
-      postUpdateCurrent(configurable);
-      if (configurable != null) {
-        FeatureUsageUiEvents.INSTANCE.logSelectConfigurable(getConfigurableEventId(configurable));
-      }
-    });
-    return callback;
+    callback
+      .doWhenDone(() -> {
+        myConfigurable = configurable;
+        updateCurrent(configurable, false);
+        postUpdateCurrent(configurable);
+        if (configurable != null) {
+          FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(getConfigurableEventId(configurable), configurable.getClass());
+        }
+      });
+    return Promises.toPromise(callback);
   }
 
   final boolean setError(ConfigurationException exception) {
@@ -316,8 +319,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       try {
         configurable.apply();
         final String key = getConfigurableEventId(configurable);
-        FeatureUsageUiEvents.INSTANCE.logApplyConfigurable(key);
-        UsageTrigger.trigger(key);
+        FeatureUsageUiEventsKt.getUiEventLogger().logApplyConfigurable(key, configurable.getClass());
       }
       catch (ConfigurationException exception) {
         return exception;

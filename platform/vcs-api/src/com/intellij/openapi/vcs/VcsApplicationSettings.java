@@ -22,6 +22,9 @@ public class VcsApplicationSettings implements PersistentStateComponent<VcsAppli
   public boolean SHOW_LST_WORD_DIFFERENCES = true;
   public boolean DETECT_PATCH_ON_THE_FLY = false;
   public boolean ENABLE_PARTIAL_CHANGELISTS = true;
+  public boolean MANAGE_IGNORE_FILES = false;
+  public boolean DISABLE_MANAGE_IGNORE_FILES = false;
+  public boolean MARK_EXCLUDED_AS_IGNORED = true;
 
   public static VcsApplicationSettings getInstance() {
     return ServiceManager.getService(VcsApplicationSettings.class);

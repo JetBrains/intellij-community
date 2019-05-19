@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -80,6 +79,7 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
     return IdeBundle.message("project.import.wizard.title", getName());
   }
 
+  @Override
   public boolean isUpdate() {
     return myUpdate;
   }

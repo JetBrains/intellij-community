@@ -16,7 +16,10 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.util.Map;
 import java.util.Set;
 
-@State(name = "GradleLocalSettings", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "GradleLocalSettings", storages = {
+  @Storage(StoragePathMacros.CACHE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public class GradleLocalSettings extends AbstractExternalSystemLocalSettings<GradleLocalSettings.MyState>
   implements PersistentStateComponent<GradleLocalSettings.MyState> {
 

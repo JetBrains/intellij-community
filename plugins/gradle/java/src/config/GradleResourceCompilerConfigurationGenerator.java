@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.ProjectTopics;
@@ -62,7 +48,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class GradleResourceCompilerConfigurationGenerator {
 
@@ -174,11 +159,10 @@ public class GradleResourceCompilerConfigurationGenerator {
 
   @NotNull
   private Map<String, GradleModuleResourceConfiguration> generateAffectedGradleModulesConfiguration(@NotNull CompileContext context) {
-    final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = ContainerUtil.newTroveMap();
+    final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = new THashMap<>();
 
-    //noinspection MismatchedQueryAndUpdateOfCollection
     final Map<String, ExternalProject> lazyExternalProjectMap = FactoryMap.create(
-      gradleProjectPath1 -> externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath1)));
+      gradleProjectPath1 -> externalProjectDataCache.getRootExternalProject(gradleProjectPath1));
 
     for (Module module : context.getCompileScope().getAffectedModules()) {
       if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;

@@ -21,72 +21,74 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryInfo;
+import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
+import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author max
  */
-class ModuleWithDependentsScope extends GlobalSearchScope {
-  private final Module myModule;
-
-  private final ProjectFileIndex myProjectFileIndex;
-  private final Set<Module> myModules;
-  private final GlobalSearchScope myProjectScope;
+public class ModuleWithDependentsScope extends GlobalSearchScope {
+  private final Set<Module> myRootModules;
+  private final ProjectFileIndexImpl myProjectFileIndex;
+  private final Set<Module> myModules = new THashSet<>();
+  private final Set<Module> myProductionOnTestModules = new THashSet<>();
 
   ModuleWithDependentsScope(@NotNull Module module) {
-    super(module.getProject());
-    myModule = module;
-
-    myProjectFileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
-    myProjectScope = ProjectScope.getProjectScope(module.getProject());
-
-    myModules = buildDependents(myModule);
+    this(module.getProject(), Collections.singleton(module));
   }
 
-  private static Set<Module> buildDependents(Module module) {
-    Set<Module> result = new THashSet<>();
-    result.add(module);
-    
-    Set<Module> processedExporting = new THashSet<>();
+  public ModuleWithDependentsScope(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
+    super(project);
+    myRootModules = new LinkedHashSet<>(modules);
 
-    ModuleIndex index = getModuleIndex(module.getProject());
+    myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(project).getFileIndex();
 
-    Queue<Module> walkingQueue = new Queue<>(10);
-    walkingQueue.addLast(module);
+    myModules.addAll(myRootModules);
 
-    while (!walkingQueue.isEmpty()) {
-      Module current = walkingQueue.pullFirst();
-      processedExporting.add(current);
-      result.addAll(index.plainUsages.get(current));
-      for (Module dependent : index.exportingUsages.get(current)) {
-        result.add(dependent);
-        if (processedExporting.add(dependent)) {
-          walkingQueue.addLast(dependent);
-        }
+    ModuleIndex index = getModuleIndex(project);
+
+    HashSetQueue<Module> walkingQueue = new HashSetQueue<>();
+    walkingQueue.addAll(myRootModules);
+    for (Module current : walkingQueue) {
+      Collection<Module> usages = index.allUsages.get(current);
+      myModules.addAll(usages);
+      walkingQueue.addAll(index.exportingUsages.get(current));
+
+      if (myProductionOnTestModules.contains(current)) {
+        myProductionOnTestModules.addAll(usages);
       }
+      myProductionOnTestModules.addAll(index.productionOnTestUsages.get(current));
     }
-    return result;
+  }
+
+  @NotNull
+  @Override
+  public Project getProject() {
+    return Objects.requireNonNull(super.getProject());
   }
 
   private static class ModuleIndex {
-    final MultiMap<Module, Module> plainUsages = MultiMap.create();
+    final MultiMap<Module, Module> allUsages = MultiMap.create();
     final MultiMap<Module, Module> exportingUsages = MultiMap.create();
+    final MultiMap<Module, Module> productionOnTestUsages = MultiMap.create();
   }
 
-  private static ModuleIndex getModuleIndex(final Project project) {
+  @NotNull
+  private static ModuleIndex getModuleIndex(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       ModuleIndex index = new ModuleIndex();
       for (Module module : ModuleManager.getInstance(project).getModules()) {
@@ -94,8 +96,13 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
           if (orderEntry instanceof ModuleOrderEntry) {
             Module referenced = ((ModuleOrderEntry)orderEntry).getModule();
             if (referenced != null) {
-              MultiMap<Module, Module> map = ((ModuleOrderEntry)orderEntry).isExported() ? index.exportingUsages : index.plainUsages;
-              map.putValue(referenced, module);
+              index.allUsages.putValue(referenced, module);
+              if (((ModuleOrderEntry)orderEntry).isExported()) {
+                index.exportingUsages.putValue(referenced, module);
+              }
+              if (orderEntry instanceof ModuleOrderEntryImpl && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency()) {
+                index.productionOnTestUsages.putValue(referenced, module);
+              }
             }
           }
         }
@@ -109,21 +116,22 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
     return contains(file, false);
   }
 
-  boolean contains(@NotNull VirtualFile file, boolean myOnlyTests) {
-    Module moduleOfFile = myProjectFileIndex.getModuleForFile(file);
+  boolean contains(@NotNull VirtualFile file, boolean fromTests) {
+    // optimization: fewer calls to getInfoForFileOrDirectory()
+    DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
+    Module moduleOfFile = info.getModule();
     if (moduleOfFile == null || !myModules.contains(moduleOfFile)) return false;
-    if (myOnlyTests && !TestSourcesFilter.isTestSources(file, moduleOfFile.getProject())) return false;
-    return myProjectScope.contains(file);
+    if (fromTests &&
+        !myProductionOnTestModules.contains(moduleOfFile) &&
+        !TestSourcesFilter.isTestSources(file, moduleOfFile.getProject())) {
+      return false;
+    }
+    return ProjectFileIndexImpl.isFileInContent(file, info);
   }
 
   @Override
-  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return 0;
-  }
-
-  @Override
-  public boolean isSearchInModuleContent(@NotNull Module aModule) {
-    return myModules.contains(aModule);
+  public boolean isSearchInModuleContent(@NotNull Module module) {
+    return myModules.contains(module);
   }
 
   @Override
@@ -131,28 +139,33 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
     return false;
   }
 
+  @NotNull
   @Override
   public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
-    ModuleManager moduleManager = ModuleManager.getInstance(myModule.getProject());
-    return ContainerUtil.mapNotNull(DirectoryIndex.getInstance(myModule.getProject()).getDependentUnloadedModules(myModule),
-                                    moduleManager::getUnloadedModuleDescription);
+    Project project = getProject();
+    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    return myRootModules
+      .stream()
+      .flatMap(module -> DirectoryIndex.getInstance(project).getDependentUnloadedModules(module).stream())
+      .map(moduleManager::getUnloadedModuleDescription)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
   }
 
+  @Override
   @NonNls
   public String toString() {
-    return "Module with dependents:" + myModule.getName();
+    return "Modules with dependents:" + StringUtil.join(myRootModules, Module::getName, ",");
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ModuleWithDependentsScope)) return false;
-
-    final ModuleWithDependentsScope moduleWithDependentsScope = (ModuleWithDependentsScope)o;
-
-    return myModule.equals(moduleWithDependentsScope.myModule);
+    return o instanceof ModuleWithDependentsScope && myModules.equals(((ModuleWithDependentsScope)o).myModules);
   }
 
-  public int hashCode() {
-    return myModule.hashCode();
+  @Override
+  public int calcHashCode() {
+    return myModules.hashCode();
   }
 }

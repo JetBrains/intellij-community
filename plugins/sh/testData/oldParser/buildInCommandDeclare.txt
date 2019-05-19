@@ -1,0 +1,57 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('declare')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            ASSIGNMENT_COMMAND
+              VARIABLE
+                PsiElement(var)('$abc')
+              PsiElement(=)('=')
+              ASSIGNMENT_LIST
+                PsiElement(()('(')
+                PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('declare')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            ASSIGNMENT_COMMAND
+              VARIABLE
+                PsiElement(var)('$abc')
+              PsiElement(=)('=')
+              ASSIGNMENT_LIST
+                PsiElement(()('(')
+                ARRAY_ASSIGNMENT
+                  LITERAL_EXPRESSION
+                    PsiElement(word)('a')
+                PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('declare')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            ASSIGNMENT_COMMAND
+              VARIABLE
+                PsiElement(var)('$abc')
+              PsiElement(=)('=')
+              ASSIGNMENT_LIST
+                PsiElement(()('(')
+                ARRAY_ASSIGNMENT
+                  LITERAL_EXPRESSION
+                    PsiElement(word)('a,b')
+                PsiElement())(')')

@@ -42,4 +42,24 @@ public abstract class ParameterTypeInferencePolicy {
   public boolean isVarargsIgnored() {
     return false;
   }
+
+  /**
+   * For infinite type declarations, like {@code Foo<T extends Foo<T>>}, inference introduces fake fresh "fixed" type parameters.
+   * These fresh parameters respect constraints, created during inference session. For completion, it makes sense to define lower bounds
+   * even if no appropriate constraints were detected, as probably the corresponding argument is currently completed. 
+   */
+  public boolean inferLowerBoundForFreshVariables() {
+    return false;
+  }
+
+  /**
+   * Workaround for inference < 1.8. 
+   * 
+   * Boxed type is used for inference as it may be specified as type argument explicitly later for completion 
+   * {@link com.intellij.codeInsight.completion.JavaMethodCallElement#setInferenceSubstitutorFromExpectedType(com.intellij.psi.PsiElement, com.intellij.psi.PsiType)},
+   * but should not be used for normal inference due to javac bug
+   */
+  public boolean requestForBoxingExplicitly() {
+    return false;
+  }
 }

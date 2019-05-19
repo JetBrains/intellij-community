@@ -102,7 +102,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         for (BookmarkItem item : list.getSelectedValuesList()) {
           if (item != null) {
             itemChosen(item, project, popup, true);
@@ -192,9 +192,21 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       return null;
     }
 
-    JLabel mnemonicLabel = new JLabel();
+    JLabel mnemonicLabel = new JLabel() {
+      @Override
+      public void setFont(Font font) {
+        super.setFont(font);
+        String oldText = getText();
+        try {
+          setPreferredSize(null);
+          setText("W.");
+          setPreferredSize(getPreferredSize());
+        } finally {
+          setText(oldText);
+        }
+      }
+    };
     mnemonicLabel.setFont(Bookmark.getBookmarkFont());
-    mnemonicLabel.setPreferredSize(new JLabel("W.").getPreferredSize());
     mnemonicLabel.setOpaque(false);
     return mnemonicLabel;
   }
@@ -278,7 +290,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     }
   }
 
-  static List<Bookmark> getSelectedBookmarks(JList<BookmarkItem> list) {
+  static List<Bookmark> getSelectedBookmarks(JList<? extends BookmarkItem> list) {
     List<Bookmark> answer = new ArrayList<>();
 
     for (BookmarkItem value : list.getSelectedValuesList()) {
@@ -300,7 +312,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   }
 
   private static class MyDetailView extends DetailViewImpl {
-    public MyDetailView(Project project) {
+    MyDetailView(Project project) {
       super(project);
     }
 

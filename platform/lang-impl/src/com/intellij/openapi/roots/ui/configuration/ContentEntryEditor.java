@@ -38,12 +38,12 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.EventListener;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- * @since Oct 8, 2003
  */
 @SuppressWarnings("UnusedDeclaration")
 public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallback {
@@ -304,16 +304,16 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   public static boolean isExcludedOrUnderExcludedDirectory(@Nullable Project project,
                                                            @NotNull ContentEntry entry,
                                                            @NotNull VirtualFile file) {
-    Set<VirtualFile> excludedFiles = ContainerUtil.newHashSet(entry.getExcludeFolderFiles());
+    Set<String> excludedUrls = new HashSet<>(entry.getExcludeFolderUrls());
     if (project != null) {
       for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
-        ContainerUtil.addAllNotNull(excludedFiles, policy.getExcludeRootsForProject());
+        ContainerUtil.addAll(excludedUrls, policy.getExcludeUrlsForProject());
       }
     }
     Set<VirtualFile> sourceRoots = ContainerUtil.set(entry.getSourceFolderFiles());
     VirtualFile parent = file;
     while (parent != null) {
-      if (excludedFiles.contains(parent)) return true;
+      if (excludedUrls.contains(parent.getUrl())) return true;
       if (sourceRoots.contains(parent)) return false;
       parent = parent.getParent();
     }

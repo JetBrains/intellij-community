@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -157,6 +158,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return ((PsiPackage)element).getParentPackage();
   }
 
+  @NotNull
   @Override
   public AbstractTreeNode createRootNode() {
     return new CoverageListRootNode(myProject, JavaPsiFacade.getInstance(myProject).findPackage(""), mySuitesBundle, myStateBean);
@@ -265,7 +267,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return children;
   }
 
-  protected void collectFileChildren(final PsiFile file, AbstractTreeNode node, List<AbstractTreeNode> children) {
+  protected void collectFileChildren(final PsiFile file, AbstractTreeNode node, List<? super AbstractTreeNode> children) {
     if (file instanceof PsiClassOwner) {
       PsiClass[] classes = ReadAction.compute(() -> file.isValid() ? ((PsiClassOwner)file).getClasses() : PsiClass.EMPTY_ARRAY);
       for (PsiClass aClass : classes) {

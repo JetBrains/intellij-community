@@ -46,9 +46,7 @@ public class ChooseTemplateStep extends ModuleWizardStep {
       public void actionPerformed(ActionEvent e) {
         myTemplateList.setEnabled(myCreateFromTemplateCheckBox.isSelected());
         if (myCreateFromTemplateCheckBox.isSelected()) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myTemplateList.getList(), true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTemplateList.getList(), true));
         }
       }
     });

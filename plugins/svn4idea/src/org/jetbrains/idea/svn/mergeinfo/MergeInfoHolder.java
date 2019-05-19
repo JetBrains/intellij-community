@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Url;
@@ -18,6 +17,7 @@ import org.jetbrains.idea.svn.history.RootsAndBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnMergeInfoRootPanelManual;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class MergeInfoHolder {
@@ -38,7 +38,7 @@ public class MergeInfoHolder {
     myMainPanel = mainPanel;
     myPanel = panel;
     myMergeInfoCache = SvnMergeInfoCache.getInstance(project);
-    myCachedMap = ContainerUtil.newHashMap();
+    myCachedMap = new HashMap<>();
   }
 
   @NotNull
@@ -100,12 +100,14 @@ public class MergeInfoHolder {
       myBranchPath = myPanel.getLocalBranch();
     }
 
+    @Override
     public void onBeforeStartReport() {
     }
 
+    @Override
     public boolean report(final CommittedChangeList list) {
       if (list instanceof SvnChangeList) {
-        final SvnMergeInfoCache.MergeCheckResult checkState =
+        final MergeCheckResult checkState =
           myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList)list, myRefreshedBranch, myBranchPath);
         // todo make batches - by 10
         final long number = list.getNumber();
@@ -120,6 +122,7 @@ public class MergeInfoHolder {
       return true;
     }
 
+    @Override
     public void onAfterEndReport() {
       ApplicationManager.getApplication().invokeLater(() -> {
         myCachedMap.remove(getCacheKey());
@@ -153,7 +156,7 @@ public class MergeInfoHolder {
 
   @NotNull
   public ListMergeStatus check(@NotNull CommittedChangeList list, @NotNull MergeInfoCached state, boolean isCached) {
-    SvnMergeInfoCache.MergeCheckResult mergeCheckResult = state.getMap().get(list.getNumber());
+    MergeCheckResult mergeCheckResult = state.getMap().get(list.getNumber());
     ListMergeStatus result = state.copiedAfter(list) ? ListMergeStatus.COMMON : ListMergeStatus.from(mergeCheckResult);
 
     return ObjectUtils.notNull(result, isCached ? ListMergeStatus.REFRESHING : ListMergeStatus.ALIEN);

@@ -1,0 +1,2 @@
+[foo]
+dotnet_naming_rule.<error>my_rule</error>.severity = warning

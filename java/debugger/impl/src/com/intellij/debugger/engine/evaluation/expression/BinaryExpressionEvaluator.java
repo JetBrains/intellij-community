@@ -26,7 +26,7 @@ class BinaryExpressionEvaluator implements Evaluator {
   private final IElementType myOpType;
   private final String myExpectedType; // a result of PsiType.getCanonicalText()
 
-  public BinaryExpressionEvaluator(@NotNull Evaluator leftOperand,
+  BinaryExpressionEvaluator(@NotNull Evaluator leftOperand,
                                    @NotNull Evaluator rightOperand,
                                    @NotNull IElementType opType,
                                    String expectedType) {
@@ -43,6 +43,7 @@ class BinaryExpressionEvaluator implements Evaluator {
 
   }
 
+  @SuppressWarnings("IntegerMultiplicationImplicitCastToLong")
   static Object evaluateOperation(final Value leftResult,
                                   final IElementType opType,
                                   final Evaluator rightOperand,

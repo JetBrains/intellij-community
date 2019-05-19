@@ -36,7 +36,7 @@ public class ApplyIntentionAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
     ShowIntentionActionsHandler.chooseActionAndInvoke(myFile, myEditor, myAction, myAction.getText());
   }
@@ -47,7 +47,7 @@ public class ApplyIntentionAction extends AnAction {
 
   @Nullable
   public static ApplyIntentionAction[] getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
-    ShowIntentionsPass.IntentionsInfo info = ShowIntentionsPass.getActionsToShow(editor, file);
+    ShowIntentionsPass.IntentionsInfo info = ShowIntentionsPass.getActionsToShow(editor, file, false);
     if (info.isEmpty()) return null;
 
     final List<HighlightInfo.IntentionActionDescriptor> actions = new ArrayList<>();

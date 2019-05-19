@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.notification.NotificationGroup;
@@ -34,21 +20,17 @@ import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.*;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
 import java.io.DataOutputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipFile;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
@@ -119,7 +101,7 @@ public class JarHandler extends ZipHandler {
       return originalFile;
     }
 
-    if (FSRecords.weHaveContentHashes) {
+    if (FSRecords.WE_HAVE_CONTENT_HASHES) {
       return getMirrorWithContentHash(originalFile, originalAttributes);
     }
 
@@ -154,7 +136,7 @@ public class JarHandler extends ZipHandler {
 
         try (DataOutputStream os = new DataOutputStream(new FileOutputStream(tempJarFile));
              FileInputStream is = new FileInputStream(originalFile)) {
-          sha1 = MessageDigest.getInstance("SHA1");
+          sha1 = DigestUtil.sha1();
           sha1.update(String.valueOf(originalAttributes.length).getBytes(Charset.defaultCharset()));
           sha1.update((byte)0);
 
@@ -174,10 +156,6 @@ public class JarHandler extends ZipHandler {
         File target = mirrorFile != null ? mirrorFile : tempJarFile != null ? tempJarFile : new File(jarDir);
         reportIOErrorWithJars(originalFile, target, ex);
         return originalFile;
-      }
-      catch (NoSuchAlgorithmException ex) {
-        LOG.error(ex);
-        return originalFile; // should never happen for sha1
       }
 
       String mirrorName = getSnapshotName(originalFile.getName(), sha1.digest());
@@ -373,10 +351,10 @@ public class JarHandler extends ZipHandler {
         }
       })));
 
-      final List<String> invalidLibraryFilePaths = ContainerUtil.newArrayList();
-      final List<String> allLibraryFilePaths = ContainerUtil.newArrayList();
+      final List<String> invalidLibraryFilePaths = new ArrayList<>();
+      final List<String> allLibraryFilePaths = new ArrayList<>();
       MultiMap<String, String> jarSnapshotFileToLibraryFilePaths = new MultiMap<>();
-      Set<String> validLibraryFilePathToJarSnapshotFilePaths = newTroveSet();
+      Set<String> validLibraryFilePathToJarSnapshotFilePaths = new THashSet<>();
 
       info.processKeys(new CommonProcessors.CollectProcessor<>(allLibraryFilePaths));
       for (String filePath:allLibraryFilePaths) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.tree;
 
 import com.intellij.icons.AllIcons;
@@ -32,9 +18,9 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
-import com.intellij.util.Range;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -61,13 +47,12 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   private TreePath myPendingChildPath;
   private FilteringTreeBuilder myBuilder;
 
-  public TreePopupImpl(JBPopup parent, @NotNull TreePopupStep aStep, Object parentValue) {
-    super(parent, aStep);
+  public TreePopupImpl(@Nullable Project project,
+                       @Nullable JBPopup parent,
+                       @NotNull TreePopupStep<Object> aStep,
+                       @Nullable Object parentValue) {
+    super(project, parent, aStep);
     setParentValue(parentValue);
-  }
-
-  public TreePopupImpl(@NotNull TreePopupStep aStep) {
-    this(null, aStep, null);
   }
 
   @Override
@@ -310,7 +295,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         handleSelect(true, e);
       }
       else {
-        if (!isLocationInExpandControl(myWizardTree, path, e.getPoint().x, e.getPoint().y)) {
+        if (!TreeUtil.isLocationInExpandControl(myWizardTree, path, e.getX(), e.getY())) {
           toggleExpansion(path);
         }
       }
@@ -383,6 +368,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     }
   }
 
+  @Override
   public void handleNextStep(PopupStep nextStep, Object parentValue) {
     final Rectangle pathBounds = myWizardTree.getPathBounds(myWizardTree.getSelectionPath());
     final Point point = new RelativePoint(myWizardTree, new Point(getContent().getWidth() + 2, (int) pathBounds.getY())).getScreenPoint();
@@ -393,18 +379,13 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   private class MyRenderer extends NodeRenderer {
 
     @Override
-    public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       final boolean shouldPaintSelected = (getTreeStep().isSelectable(value, extractUserObject(value)) && selected) || (getTreeStep().isSelectable(value, extractUserObject(value)) && hasFocus);
       final boolean shouldPaintFocus =
         !getTreeStep().isSelectable(value, extractUserObject(value)) && selected || shouldPaintSelected || hasFocus;
 
       super.customizeCellRenderer(tree, value, shouldPaintSelected, expanded, leaf, row, shouldPaintFocus);
     }
-  }
-
-  private static boolean isLocationInExpandControl(JTree aTree, TreePath path, int mouseX, int mouseY) {
-    Range<Integer> box = TreeUtil.getExpandControlRange(aTree, path);
-    return box != null && box.isWithin(mouseX);
   }
 
   @Override
@@ -458,10 +439,6 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     }
   }
 
-  private Project getProject() {
-    return getTreeStep().getProject();
-  }
-
   @Override
   protected void onAutoSelectionTimer() {
     handleSelect(false, null);
@@ -474,7 +451,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
 
   @Override
   protected void onSpeedSearchPatternChanged() {
-    myBuilder.refilter();
+    myBuilder.refilterAsync();
   }
 
   @Override

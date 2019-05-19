@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffManagerEx;
@@ -16,14 +16,25 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -33,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 // TODO: support merge request chains
@@ -53,17 +65,17 @@ public abstract class MergeRequestProcessor implements Disposable {
   @NotNull private final Wrapper myContentPanel;
   @NotNull private final Wrapper myToolbarPanel;
   @NotNull private final Wrapper myToolbarStatusPanel;
+  @NotNull private final Wrapper myNotificationPanel;
+  @NotNull private final Wrapper myButtonsPanel;
 
-  @NotNull private final MergeRequest myRequest;
+  @Nullable private MergeRequest myRequest;
 
   @NotNull private MergeTool.MergeViewer myViewer;
   @Nullable private BooleanGetter myCloseHandler;
-  @Nullable private BottomActions myBottomActions;
   private boolean myConflictResolved = false;
 
-  public MergeRequestProcessor(@Nullable Project project, @NotNull MergeRequest request) {
+  public MergeRequestProcessor(@Nullable Project project) {
     myProject = project;
-    myRequest = request;
 
     myContext = new MyDiffContext();
     myContext.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.MERGE);
@@ -75,28 +87,23 @@ public abstract class MergeRequestProcessor implements Disposable {
     myToolbarPanel = new Wrapper();
     myToolbarPanel.setFocusable(true);
     myToolbarStatusPanel = new Wrapper();
+    myNotificationPanel = new Wrapper();
+    myButtonsPanel = new Wrapper();
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
-    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarPanel).addToRight(myToolbarStatusPanel);
+    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarPanel)
+      .addToRight(myToolbarStatusPanel)
+      .addToBottom(myNotificationPanel);
 
     myMainPanel.add(topPanel, BorderLayout.NORTH);
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
+    myMainPanel.add(myButtonsPanel, BorderLayout.SOUTH);
 
     myMainPanel.setFocusTraversalPolicyProvider(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 
-    MergeTool.MergeViewer viewer;
-    try {
-      viewer = getFittedTool().createComponent(myContext, myRequest);
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-      viewer = ErrorMergeTool.INSTANCE.createComponent(myContext, myRequest);
-    }
-
-    myViewer = viewer;
-    updateBottomActions();
+    myViewer = new MessageMergeViewer(myContext, "Loading...");
   }
 
   //
@@ -104,9 +111,50 @@ public abstract class MergeRequestProcessor implements Disposable {
   //
 
   @CalledInAwt
-  public void init() {
-    setTitle(myRequest.getTitle());
+  public void init(@NotNull MergeRequest request) {
+    setTitle(request.getTitle());
+
+    myRequest = request;
+    myViewer = createViewerFor(request);
     initViewer();
+    installCallbackListener(myRequest);
+  }
+
+  @CalledInAwt
+  public void init(@NotNull MergeRequestProducer request) {
+    setTitle(request.getName());
+    initViewer();
+
+    ModalityState modality = ModalityState.stateForComponent(myPanel);
+    BackgroundTaskUtil.executeOnPooledThread(this, () -> {
+      try {
+        MergeRequest mergeRequest = request.process(myContext, ProgressManager.getInstance().getProgressIndicator());
+        ApplicationManager.getApplication().invokeLater(
+          () -> {
+            myRequest = mergeRequest;
+            swapViewer(createViewerFor(mergeRequest));
+            installCallbackListener(myRequest);
+          },
+          modality);
+      }
+      catch (Throwable e) {
+        LOG.warn(e);
+        ApplicationManager.getApplication().invokeLater(
+          () -> swapViewer(new MessageMergeViewer(myContext, "Can't show merge: " + e.getMessage())),
+          modality);
+      }
+    });
+  }
+
+  @NotNull
+  private MergeTool.MergeViewer createViewerFor(@NotNull MergeRequest request) {
+    try {
+      return getFittedTool(request).createComponent(myContext, request);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return ErrorMergeTool.INSTANCE.createComponent(myContext, request);
+    }
   }
 
   @CalledInAwt
@@ -118,6 +166,8 @@ public abstract class MergeRequestProcessor implements Disposable {
     buildToolbar(toolbarComponents.toolbarActions);
     myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
     myCloseHandler = toolbarComponents.closeHandler;
+
+    updateBottomActions();
   }
 
   @CalledInAwt
@@ -129,38 +179,72 @@ public abstract class MergeRequestProcessor implements Disposable {
     myContentPanel.setContent(null);
     myToolbarPanel.setContent(null);
     myToolbarStatusPanel.setContent(null);
+    myButtonsPanel.setContent(null);
     myCloseHandler = null;
-    myBottomActions = null;
   }
 
   private void updateBottomActions() {
-    myBottomActions = new BottomActions();
-    myBottomActions.applyLeft = myViewer.getResolveAction(MergeResult.LEFT);
-    myBottomActions.applyRight = myViewer.getResolveAction(MergeResult.RIGHT);
-    myBottomActions.resolveAction = myViewer.getResolveAction(MergeResult.RESOLVED);
-    myBottomActions.cancelAction = myViewer.getResolveAction(MergeResult.CANCEL);
+    Action applyLeft = myViewer.getResolveAction(MergeResult.LEFT);
+    Action applyRight = myViewer.getResolveAction(MergeResult.RIGHT);
+    Action resolveAction = myViewer.getResolveAction(MergeResult.RESOLVED);
+    Action cancelAction = myViewer.getResolveAction(MergeResult.CANCEL);
+
+    if (resolveAction != null) {
+      resolveAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
+
+      new DumbAwareAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          resolveAction.actionPerformed(null);
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, getRootPane(), this);
+    }
+
+    List<Action> leftActions = ContainerUtil.packNullables(applyLeft, applyRight);
+    List<Action> rightActions = SystemInfo.isMac ? ContainerUtil.packNullables(cancelAction, resolveAction)
+                                                 : ContainerUtil.packNullables(resolveAction, cancelAction);
+
+    JRootPane rootPane = getRootPane();
+    JPanel buttonsPanel = new NonOpaquePanel(new BorderLayout());
+    buttonsPanel.setBorder(new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
+
+    if (leftActions.size() > 0) {
+      buttonsPanel.add(createButtonsPanel(leftActions, rootPane), BorderLayout.WEST);
+    }
+    if (rightActions.size() > 0) {
+      buttonsPanel.add(createButtonsPanel(rightActions, rootPane), BorderLayout.EAST);
+    }
+
+    myButtonsPanel.setContent(buttonsPanel);
   }
 
   @NotNull
-  protected DefaultActionGroup collectToolbarActions(@Nullable List<AnAction> viewerActions) {
+  private static JPanel createButtonsPanel(@NotNull List<? extends Action> actions, @Nullable JRootPane rootPane) {
+    List<JButton> buttons = ContainerUtil.map(actions, action -> DialogWrapper.createJButtonForAction(action, rootPane));
+    return DialogWrapper.layoutButtonsPanel(buttons);
+  }
+
+  @NotNull
+  protected DefaultActionGroup collectToolbarActions(@Nullable List<? extends AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    List<AnAction> navigationActions = ContainerUtil.list(new MyPrevDifferenceAction(),
-                                                          new MyNextDifferenceAction());
+    List<AnAction> navigationActions = Arrays.asList(new MyPrevDifferenceAction(), new MyNextDifferenceAction());
     DiffUtil.addActionBlock(group, navigationActions);
 
     DiffUtil.addActionBlock(group, viewerActions);
 
-    List<AnAction> requestContextActions = myRequest.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
+    List<AnAction> requestContextActions = myRequest != null ? myRequest.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS) : null;
     DiffUtil.addActionBlock(group, requestContextActions);
 
     List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(group, contextActions);
 
+    DiffUtil.addActionBlock(group, ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
+
     return group;
   }
 
-  protected void buildToolbar(@Nullable List<AnAction> viewerActions) {
+  protected void buildToolbar(@Nullable List<? extends AnAction> viewerActions) {
     ActionGroup group = collectToolbarActions(viewerActions);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, group, true);
     toolbar.setShowSeparatorTitles(true);
@@ -173,10 +257,10 @@ public abstract class MergeRequestProcessor implements Disposable {
   }
 
   @NotNull
-  private MergeTool getFittedTool() {
+  private MergeTool getFittedTool(@NotNull MergeRequest request) {
     for (MergeTool tool : myAvailableTools) {
       try {
-        if (tool.canShow(myContext, myRequest)) return tool;
+        if (tool.canShow(myContext, request)) return tool;
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -189,6 +273,37 @@ public abstract class MergeRequestProcessor implements Disposable {
   private void setTitle(@Nullable String title) {
     if (title == null) title = "Merge";
     setWindowTitle(title);
+  }
+
+  private void installCallbackListener(@NotNull MergeRequest request) {
+    MergeCallback callback = MergeCallback.getCallback(request);
+    callback.addListener(new MergeCallback.Listener() {
+      @Override
+      public void fireConflictInvalid() {
+        showInvalidRequestNotification();
+      }
+    }, this);
+
+    if (!callback.checkIsValid()) {
+      showInvalidRequestNotification();
+    }
+  }
+
+  private void showInvalidRequestNotification() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myDisposed) return;
+      if (!myNotificationPanel.isNull()) return;
+
+      EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED);
+      notification.setText("Conflict is not valid and no longer can be resolved.");
+      notification.createActionLabel("Abort Resolve", () -> {
+        applyRequestResult(MergeResult.CANCEL);
+        closeDialog();
+      });
+      myNotificationPanel.setContent(notification);
+      myMainPanel.validate();
+      myMainPanel.repaint();
+    }, ModalityState.stateForComponent(myPanel));
   }
 
   @Override
@@ -207,7 +322,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   @CalledInAwt
   private void applyRequestResult(@NotNull MergeResult result) {
-    if (myConflictResolved) return;
+    if (myConflictResolved || myRequest == null) return;
     myConflictResolved = true;
     try {
       myRequest.applyResult(result);
@@ -220,6 +335,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   @CalledInAwt
   private void reopenWithTool(@NotNull MergeTool tool) {
+    if (myRequest == null) return;
     if (myConflictResolved) {
       LOG.warn("Can't reopen with " + tool + " - conflict already resolved");
       return;
@@ -239,11 +355,13 @@ public abstract class MergeRequestProcessor implements Disposable {
       return;
     }
 
+    swapViewer(newViewer);
+  }
+
+  private void swapViewer(@NotNull MergeTool.MergeViewer newViewer) {
     DiffUtil.runPreservingFocus(myContext, () -> {
       destroyViewer();
       myViewer = newViewer;
-      updateBottomActions();
-      rebuildSouthPanel();
       initViewer();
     });
   }
@@ -259,9 +377,10 @@ public abstract class MergeRequestProcessor implements Disposable {
   protected void setWindowTitle(@NotNull String title) {
   }
 
-  protected abstract void rebuildSouthPanel();
-
   public abstract void closeDialog();
+
+  @Nullable
+  protected abstract JRootPane getRootPane();
 
   @Nullable
   public <T> T getContextUserData(@NotNull Key<T> key) {
@@ -302,16 +421,6 @@ public abstract class MergeRequestProcessor implements Disposable {
     return myConflictResolved || myCloseHandler == null || myCloseHandler.get();
   }
 
-  @NotNull
-  public BottomActions getBottomActions() {
-    return myBottomActions != null ? myBottomActions : new BottomActions();
-  }
-
-  @Nullable
-  public String getHelpId() {
-    return PlatformDataKeys.HELP_ID.getData(myMainPanel);
-  }
-
   //
   // Misc
   //
@@ -336,7 +445,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         return;
       }
 
-      PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
+      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
       if (iterable != null && iterable.canGoNext()) {
         e.getPresentation().setEnabled(true);
         return;
@@ -347,7 +456,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
+      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
       if (iterable != null && iterable.canGoNext()) {
         iterable.goNext();
       }
@@ -362,7 +471,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         return;
       }
 
-      PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
+      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
       if (iterable != null && iterable.canGoPrev()) {
         e.getPresentation().setEnabled(true);
         return;
@@ -373,7 +482,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
+      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
       if (iterable != null && iterable.canGoPrev()) {
         iterable.goPrev();
       }
@@ -385,13 +494,13 @@ public abstract class MergeRequestProcessor implements Disposable {
   //
 
   private class MyPanel extends JPanel implements DataProvider {
-    public MyPanel() {
+    MyPanel() {
       super(new BorderLayout());
     }
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       Object data;
 
       DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getTargetComponent());
@@ -404,7 +513,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         return myProject;
       }
       else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-        if (myRequest.getUserData(DiffUserDataKeys.HELP_ID) != null) {
+        if (myRequest != null && myRequest.getUserData(DiffUserDataKeys.HELP_ID) != null) {
           return myRequest.getUserData(DiffUserDataKeys.HELP_ID);
         }
         else {
@@ -415,7 +524,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         return myViewer;
       }
 
-      DataProvider requestProvider = myRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER);
+      DataProvider requestProvider = myRequest != null ? myRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER) : null;
       if (requestProvider != null) {
         data = requestProvider.getData(dataId);
         if (data != null) return data;
@@ -467,12 +576,5 @@ public abstract class MergeRequestProcessor implements Disposable {
     public void reopenWithTool(@NotNull MergeTool tool) {
       MergeRequestProcessor.this.reopenWithTool(tool);
     }
-  }
-
-  public static class BottomActions {
-    @Nullable public Action applyLeft;
-    @Nullable public Action applyRight;
-    @Nullable public Action resolveAction;
-    @Nullable public Action cancelAction;
   }
 }

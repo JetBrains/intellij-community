@@ -101,26 +101,26 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
     myToggleChangeDiffAction.getTemplatePresentation().setText(title);
   }
 
-  public void setChangeLists(@Nullable List<LocalChangeList> changeLists) {
+  public void setChangeLists(@Nullable List<? extends LocalChangeList> changeLists) {
     myChangeListNames = changeLists != null ? ContainerUtil.map2Set(changeLists, LocalChangeList::getName) : null;
     myViewer.rebuildTree();
   }
 
 
   private class ToggleChangeDiffAction extends CheckboxAction implements DumbAware {
-    public ToggleChangeDiffAction() {
+    ToggleChangeDiffAction() {
       super("&Include");
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return false;
       return myViewer.isIncluded(change);
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return;
 

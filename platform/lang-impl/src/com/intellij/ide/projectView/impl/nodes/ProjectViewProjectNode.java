@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ import java.util.*;
 
 public class ProjectViewProjectNode extends AbstractProjectNode {
 
-  public ProjectViewProjectNode(Project project, ViewSettings viewSettings) {
+  public ProjectViewProjectNode(@NotNull Project project, ViewSettings viewSettings) {
     super(project, project, viewSettings);
   }
 
@@ -61,7 +62,10 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     for (VirtualFile file : files) {
       if (!file.isDirectory()) {
         if (ProjectFileIndex.SERVICE.getInstance(getProject()).getModuleForFile(file, false) == null) {
-          nodes.add(new PsiFileNode(getProject(), psiManager.findFile(file), getSettings()));
+          PsiFile psiFile = psiManager.findFile(file);
+          if (psiFile != null) {
+            nodes.add(new PsiFileNode(getProject(), psiFile, getSettings()));
+          }
         }
       }
     }
@@ -72,8 +76,9 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     return nodes;
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroup(final Module module) {
+  protected AbstractTreeNode createModuleGroup(@NotNull final Module module) {
     List<VirtualFile> roots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelModuleRoots(module, getSettings());
     if (roots.size() == 1) {
       final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots.get(0));
@@ -86,7 +91,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
   }
 
   @Override
-  protected AbstractTreeNode createUnloadedModuleNode(UnloadedModuleDescription moduleDescription) {
+  protected AbstractTreeNode createUnloadedModuleNode(@NotNull UnloadedModuleDescription moduleDescription) {
     List<VirtualFile> roots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelUnloadedModuleRoots(moduleDescription, getSettings());
     if (roots.size() == 1) {
       final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots.get(0));
@@ -98,8 +103,9 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     return new ProjectViewUnloadedModuleNode(getProject(), moduleDescription, getSettings());
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup) {
+  protected AbstractTreeNode createModuleGroupNode(@NotNull final ModuleGroup moduleGroup) {
     return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());
   }
 }

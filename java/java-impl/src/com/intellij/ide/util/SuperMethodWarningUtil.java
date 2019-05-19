@@ -58,19 +58,25 @@ public class SuperMethodWarningUtil {
   }
 
   @NotNull
-  public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString, @NotNull Collection<PsiElement> ignore) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public static PsiMethod[] getTargetMethodCandidates(@NotNull PsiMethod method, @NotNull Collection<? extends PsiElement> ignore) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return new PsiMethod[]{method};
 
     final Collection<PsiMethod> superMethods = getSuperMethods(method, aClass, ignore);
     if (superMethods.isEmpty()) return new PsiMethod[]{method};
-
+    return superMethods.toArray(PsiMethod.EMPTY_ARRAY);
+  }
+  
+  @NotNull
+  public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString, @NotNull Collection<? extends PsiElement> ignore) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    PsiMethod[] methodTargetCandidates = getTargetMethodCandidates(method, ignore);
+    if (methodTargetCandidates.length == 1 && methodTargetCandidates[0] == method) return methodTargetCandidates;
 
     Set<String> superClasses = new HashSet<>();
     boolean superAbstract = false;
     boolean parentInterface = false;
-    for (final PsiMethod superMethod : superMethods) {
+    for (final PsiMethod superMethod : methodTargetCandidates) {
       final PsiClass containingClass = superMethod.getContainingClass();
       superClasses.add(containingClass.getQualifiedName());
       final boolean isInterface = containingClass.isInterface();
@@ -80,11 +86,11 @@ public class SuperMethodWarningUtil {
 
     SuperMethodWarningDialog dialog =
         new SuperMethodWarningDialog(method.getProject(), DescriptiveNameUtil.getDescriptiveName(method), actionString, superAbstract,
-                                     parentInterface, aClass.isInterface(), ArrayUtil.toStringArray(superClasses));
+                                     parentInterface, method.getContainingClass().isInterface(), ArrayUtil.toStringArray(superClasses));
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      return superMethods.toArray(PsiMethod.EMPTY_ARRAY);
+      return methodTargetCandidates;
     }
     if (dialog.getExitCode() == SuperMethodWarningDialog.NO_EXIT_CODE) {
       return new PsiMethod[]{method};
@@ -94,7 +100,7 @@ public class SuperMethodWarningUtil {
   }
 
   @NotNull
-  static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<PsiElement> ignore) {
+  static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<? extends PsiElement> ignore) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     final Collection<PsiMethod> superMethods = DeepestSuperMethodsSearch.search(method).findAll();
@@ -106,11 +112,12 @@ public class SuperMethodWarningUtil {
         PsiMethod[] siblingSuperMethod = new PsiMethod[1];
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(()->{
           siblingSuperMethod[0] = ReadAction.compute(()->FindSuperElementsHelper.getSiblingInheritedViaSubClass(method));
-        }, "Searching for sub-classes", true, aClass.getProject())) {
+        }, "Searching for Sub-Classes", true, aClass.getProject())) {
           throw new ProcessCanceledException();
         }
         if (siblingSuperMethod[0] != null) {
           superMethods.add(siblingSuperMethod[0]);
+          superMethods.add(method); // add original method too because sometimes FindUsages can't find usages of this method by sibling super method
         }
       }
     }
@@ -146,7 +153,7 @@ public class SuperMethodWarningUtil {
 
   public static void checkSuperMethod(@NotNull PsiMethod method,
                                       @NotNull String actionString,
-                                      @NotNull final PsiElementProcessor<PsiMethod> processor,
+                                      @NotNull final PsiElementProcessor<? super PsiMethod> processor,
                                       @NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiClass aClass = method.getContainingClass();
@@ -185,7 +192,7 @@ public class SuperMethodWarningUtil {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChosenCallback((value) -> {
+      .setItemChosenCallback(value -> {
         if (value.equals(renameBase)) {
           try {
             methods[0].putUserData(SIBLINGS, superMethods);

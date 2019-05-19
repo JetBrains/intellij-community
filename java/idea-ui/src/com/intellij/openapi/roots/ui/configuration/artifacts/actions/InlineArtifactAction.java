@@ -30,6 +30,7 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -45,7 +46,7 @@ public class InlineArtifactAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final LayoutTreeSelection selection = myEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     PackagingElement<?> element = selection.getElementIfSingle();
@@ -53,7 +54,7 @@ public class InlineArtifactAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final LayoutTreeComponent treeComponent = myEditor.getLayoutTreeComponent();
     final LayoutTreeSelection selection = treeComponent.getSelection();
     final PackagingElement<?> element = selection.getElementIfSingle();

@@ -1,16 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -22,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import static com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getOpenFunctionCallType;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -30,12 +28,11 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @NotNull
-  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("io.open", "pathlib.Path.open", "_io.open",
-                                                                    "os.fdopen", "posix.fdopen", "nt.fdopen");
+  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("os.fdopen", "posix.fdopen", "nt.fdopen");
 
   @Nullable
   public static PyStdlibTypeProvider getInstance() {
-    for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+    for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
       if (typeProvider instanceof PyStdlibTypeProvider) {
         return (PyStdlibTypeProvider)typeProvider;
       }
@@ -134,13 +131,13 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final String qname = function.getQualifiedName();
     if (qname != null) {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
-        return getOpenFunctionCallType(function, qname, (PyCallExpression)callSite, context);
+        return getOpenFunctionCallType(function, (PyCallExpression)callSite, LanguageLevel.forElement(callSite), context);
       }
-      else if ("tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
+      else if ("tuple.__new__".equals(qname) && callSite instanceof PyCallExpression) {
         return getTupleInitializationType((PyCallExpression)callSite, context);
       }
       else if ("tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {
@@ -254,18 +251,5 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       return context.getType(withExpression);
     }
     return null;
-  }
-
-  @NotNull
-  private static Ref<PyType> getOpenFunctionCallType(@NotNull PyFunction function,
-                                                     @NotNull String functionQName,
-                                                     @NotNull PyCallExpression call,
-                                                     @NotNull TypeEvalContext context) {
-    final LanguageLevel typeLevel =
-      ArrayUtil.contains(functionQName, "io.open", "pathlib.Path.open", "_io.open")
-      ? LanguageLevel.PYTHON34
-      : LanguageLevel.forElement(call);
-
-    return PyTypingTypeProvider.getOpenFunctionCallType(function, call, typeLevel, context);
   }
 }

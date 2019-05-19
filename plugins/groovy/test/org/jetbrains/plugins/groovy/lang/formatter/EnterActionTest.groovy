@@ -202,6 +202,63 @@ def c = { a ->
 """
   }
 
+  //TODO: IDEA-207401
+  void _testAfterLambdaArrow() throws Throwable {
+    doTest """
+def c = a -><caret>
+""", """
+def c = a ->
+    <caret>
+"""
+  }
+
+  void testAfterLambdaArrowWithExpressionBody() throws Throwable {
+    doTest """
+def c = a -><caret> zzz
+""", """
+def c = a ->
+<caret>    zzz
+"""
+  }
+
+  void testAfterLambdaArrowWithExpressionBody2() throws Throwable {
+    doTest """
+def c = a -> <caret>zzz
+""", """
+def c = a ->
+    <caret>zzz
+"""
+  }
+  void testAfterLambdaArrowWithBlockBody() throws Throwable {
+    doTest """
+def c = a -> {<caret> zzz}
+""", """
+def c = a -> {
+  <caret>zzz}
+"""
+  }
+
+  void testAfterLambdaArrowWithBlockBody2() throws Throwable {
+    doTest """
+def c = a -> {<caret>}
+""", """
+def c = a -> {
+  <caret>
+}
+"""
+  }
+
+  void testBeforeClosingLambdaBrace() throws Throwable {
+    doTest """
+def c = a -> {
+  zzz <caret>}
+""", """
+def c = a -> { 
+  zzz 
+<caret>}
+"""
+  }
+
   void testAfterCase() {
     doTest """
 switch(x) {

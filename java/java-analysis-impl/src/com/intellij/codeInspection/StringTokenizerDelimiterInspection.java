@@ -64,7 +64,7 @@ public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalIns
   }
 
   private final static class ReplaceDelimitersWithUnique extends LocalQuickFixOnPsiElement {
-    public ReplaceDelimitersWithUnique(@NotNull PsiElement element) {
+    ReplaceDelimitersWithUnique(@NotNull PsiElement element) {
       super(element);
     }
 
@@ -77,7 +77,6 @@ public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      //noinspection DialogTitleCapitalization
       return "Replace StringTokenizer delimiters parameter with unique symbols";
     }
 

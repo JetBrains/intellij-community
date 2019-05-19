@@ -42,14 +42,14 @@ public abstract class BooleanPropertyToggleAction extends ToggleAction implement
   protected abstract VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty();
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties == null || !properties.exists(getProperty())) return false;
     return properties.get(getProperty());
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties != null && properties.exists(getProperty())) {
       properties.set(getProperty(), state);

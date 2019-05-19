@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class UnifiedFragmentBuilder {
-  @NotNull private final List<LineFragment> myFragments;
+  @NotNull private final List<? extends LineFragment> myFragments;
   @NotNull private final Document myDocument1;
   @NotNull private final Document myDocument2;
   @NotNull private final Side myMasterSide;
@@ -38,7 +38,7 @@ class UnifiedFragmentBuilder {
   @NotNull private final LineNumberConvertor.Builder myConvertor2 = new LineNumberConvertor.Builder();
   @NotNull private final List<LineRange> myChangedLines = new ArrayList<>();
 
-  public UnifiedFragmentBuilder(@NotNull List<LineFragment> fragments,
+  UnifiedFragmentBuilder(@NotNull List<? extends LineFragment> fragments,
                                 @NotNull Document document1,
                                 @NotNull Document document2,
                                 @NotNull Side masterSide) {
@@ -53,6 +53,11 @@ class UnifiedFragmentBuilder {
   private int lastProcessedLine1 = -1;
   private int lastProcessedLine2 = -1;
   private int totalLines = 0;
+
+  @NotNull
+  public Side getMasterSide() {
+    return myMasterSide;
+  }
 
   public void exec() {
     if (myFragments.isEmpty()) {

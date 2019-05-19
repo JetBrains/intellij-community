@@ -114,6 +114,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
     }
   }
 
+  @Override
   public String toString() {
     return "PsiModifierList";
   }

@@ -13,7 +13,7 @@ import javax.swing.table.TableCellEditor;
 class JsonMappingsTableView extends TableView<UserDefinedJsonSchemaConfiguration.Item> {
   private final StatusText myEmptyText;
 
-  public JsonMappingsTableView(JsonSchemaMappingsView.MyAddActionButtonRunnable runnable) {
+  JsonMappingsTableView(JsonSchemaMappingsView.MyAddActionButtonRunnable runnable) {
     myEmptyText = new StatusText() {
       @Override
       protected boolean isStatusVisible() {

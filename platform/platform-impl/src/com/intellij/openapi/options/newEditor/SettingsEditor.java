@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -26,11 +12,10 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.VerticalLayout;
@@ -39,14 +24,18 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.util.List;
+import java.util.*;
 
 /**
  * @author Sergey.Malenkov
@@ -59,7 +48,6 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final PropertiesComponent myProperties;
   private final Settings mySettings;
   private final SettingsSearch mySearch;
-  private final JPanel mySearchPanel;
   private final SettingsFilter myFilter;
   private final SettingsTreeView myTreeView;
   private final ConfigurableEditor myEditor;
@@ -71,13 +59,19 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final Map<Configurable, ConfigurableController> myControllers = new HashMap<>();
   private ConfigurableController myLastController;
 
-  SettingsEditor(Disposable parent, Project project, ConfigurableGroup[] groups, Configurable configurable, final String filter, final ISettingsTreeViewFactory factory) {
+  SettingsEditor(@NotNull Disposable parent,
+                 @NotNull Project project,
+                 @NotNull List<ConfigurableGroup> groups,
+                 @Nullable Configurable configurable,
+                 final String filter,
+                 final ISettingsTreeViewFactory factory) {
     super(parent);
 
     myProperties = PropertiesComponent.getInstance(project);
     mySettings = new Settings(groups) {
+      @NotNull
       @Override
-      protected ActionCallback selectImpl(Configurable configurable) {
+      protected Promise<? super Object> selectImpl(Configurable configurable) {
         myFilter.update(null, false, true);
         return myTreeView.select(configurable);
       }
@@ -93,8 +87,8 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         myTreeView.myTree.processKeyEvent(event);
       }
     };
-    mySearchPanel = new JPanel(new VerticalLayout(0));
-    mySearchPanel.add(VerticalLayout.CENTER, mySearch);
+    JPanel searchPanel = new JPanel(new VerticalLayout(0));
+    searchPanel.add(VerticalLayout.CENTER, mySearch);
     myFilter = new SettingsFilter(project, groups, mySearch) {
       @Override
       Configurable getConfigurable(SimpleNode node) {
@@ -119,15 +113,16 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       }
     };
     myFilter.myContext.addColleague(new OptionsEditorColleague() {
+      @NotNull
       @Override
-      public ActionCallback onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
+      public Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
         if (configurable != null) {
           myProperties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.ByID.getID(configurable));
           myLoadingDecorator.startLoading(false);
         }
         checkModified(oldConfigurable);
-        ActionCallback result = myEditor.select(configurable);
-        result.doWhenDone(() -> {
+        Promise<? super Object> result = myEditor.select(configurable);
+        result.onSuccess(it -> {
           updateController(configurable);
           //requestFocusToEditor(); // TODO
           myLoadingDecorator.stopLoading();
@@ -135,28 +130,31 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         return result;
       }
 
+      @NotNull
       @Override
-      public ActionCallback onModifiedAdded(Configurable configurable) {
+      public Promise<? super Object> onModifiedAdded(Configurable configurable) {
         return updateIfCurrent(configurable);
       }
 
+      @NotNull
       @Override
-      public ActionCallback onModifiedRemoved(Configurable configurable) {
+      public Promise<? super Object> onModifiedRemoved(Configurable configurable) {
         return updateIfCurrent(configurable);
       }
 
+      @NotNull
       @Override
-      public ActionCallback onErrorsChanged() {
+      public Promise<? super Object> onErrorsChanged() {
         return updateIfCurrent(myFilter.myContext.getCurrentConfigurable());
       }
 
-      private ActionCallback updateIfCurrent(Configurable configurable) {
+      private Promise<? super Object> updateIfCurrent(Configurable configurable) {
         if (configurable != null && configurable == myFilter.myContext.getCurrentConfigurable()) {
           updateStatus(configurable);
-          return ActionCallback.DONE;
+          return Promises.resolvedPromise();
         }
         else {
-          return ActionCallback.REJECTED;
+          return Promises.rejectedPromise("rejected");
         }
       }
     });
@@ -211,25 +209,12 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     myEditor.setPreferredSize(JBUI.size(800, 600));
     myLoadingDecorator = new LoadingDecorator(myEditor, this, 10, true);
     myBanner = new Banner(myEditor.getResetAction());
-    mySearchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    searchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     myBanner.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 10));
     mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    mySearchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    if (!Registry.is("show.new.plugin.page")) {
-      mySearchPanel.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent event) {
-          Dimension size = myBanner.getPreferredSize();
-          size.height = mySearchPanel.getHeight() - 5;
-          myBanner.setPreferredSize(size);
-          myBanner.setSize(size);
-          myBanner.revalidate();
-          myBanner.repaint();
-        }
-      });
-    }
+    searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     JComponent left = new JPanel(new BorderLayout());
-    left.add(BorderLayout.NORTH, mySearchPanel);
+    left.add(BorderLayout.NORTH, searchPanel);
     left.add(BorderLayout.CENTER, myTreeView);
     JComponent right = new JPanel(new BorderLayout());
     right.add(BorderLayout.NORTH, myBanner);
@@ -238,6 +223,11 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(left);
     mySplitter.setSecondComponent(right);
+
+    if (IdeFrameDecorator.isCustomDecoration()) {
+      mySplitter.getDivider().setOpaque(false);
+    }
+
     mySpotlightPainter = new SpotlightPainter(myEditor, this) {
       @Override
       void updateNow() {
@@ -256,11 +246,17 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         configurable = ConfigurableVisitor.ALL.find(groups);
       }
     }
-    myTreeView.select(configurable).doWhenDone(() -> myFilter.update(filter, false, true));
+
+    myTreeView.select(configurable)
+      .onSuccess(it -> myFilter.update(filter, false, true));
+
     Disposer.register(this, myTreeView);
     installSpotlightRemover();
-    mySearch.getTextEditor().addActionListener(
-      event -> myTreeView.select(myFilter.myContext.getCurrentConfigurable()).doWhenDone(this::requestFocusToEditor));
+    //noinspection CodeBlock2Expr
+    mySearch.getTextEditor().addActionListener(event -> {
+      myTreeView.select(myFilter.myContext.getCurrentConfigurable())
+        .onSuccess(o -> requestFocusToEditor());
+    });
   }
 
   private void requestFocusToEditor() {
@@ -293,7 +289,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return Settings.KEY.is(dataId) ? mySettings : SearchTextField.KEY.is(dataId) ? mySearch : null;
   }
 
@@ -342,6 +338,11 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   @Override
   JComponent getPreferredFocusedComponent() {
     return myTreeView != null ? myTreeView.myTree : myEditor;
+  }
+
+  @Nullable
+  Collection<String> getPathNames() {
+    return myTreeView == null ? null : myTreeView.getPathNames(myFilter.myContext.getCurrentConfigurable());
   }
 
   public void addOptionsListener(OptionsEditorColleague colleague) {

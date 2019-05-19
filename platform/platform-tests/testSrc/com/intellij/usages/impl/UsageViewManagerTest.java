@@ -20,12 +20,11 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
 
-public class UsageViewManagerTest extends PlatformTestCase {
-
+public class UsageViewManagerTest extends LightPlatformTestCase {
   public void testScopeCreatedForFindInDirectory() {
     VirtualFile dir = getProject().getBaseDir();
     FindModel findModel = new FindModel();

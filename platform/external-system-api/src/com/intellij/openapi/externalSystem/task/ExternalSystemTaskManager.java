@@ -29,13 +29,13 @@ import java.util.List;
  * Abstraction layer for executing external system tasks.
  * 
  * @author Denis Zhdanov
- * @since 3/14/13 5:04 PM
  */
 public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> {
 
   /**
    * @deprecated use {@link ExternalSystemTaskManager#executeTasks(ExternalSystemTaskId, List, String, ExternalSystemExecutionSettings, String, ExternalSystemTaskNotificationListener)}
    */
+  @Deprecated
   default void executeTasks(@NotNull ExternalSystemTaskId id,
                             @NotNull List<String> taskNames,
                             @NotNull String projectPath,
@@ -52,8 +52,8 @@ public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSett
                             @Nullable S settings,
                             @Nullable String jvmAgentSetup,
                             @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
-    List<String> vmOptions = settings == null ? ContainerUtil.emptyList() : ContainerUtil.newArrayList(settings.getVmOptions());
-    List<String> arguments = settings == null ? ContainerUtil.emptyList() : ContainerUtil.newArrayList(settings.getArguments());
+    List<String> vmOptions = settings == null ? ContainerUtil.emptyList() : settings.getJvmArguments();
+    List<String> arguments = settings == null ? ContainerUtil.emptyList() : settings.getArguments();
     executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, jvmAgentSetup, listener);
   }
 

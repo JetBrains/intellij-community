@@ -55,15 +55,13 @@ object PyPackageVersionComparator : Comparator<PyPackageVersion> {
   /**
    * @see PyPackageVersionNormalizer.normalizeEpoch
    */
-  private fun compareEpochs(o1: PyPackageVersion, o2: PyPackageVersion) = compareAsInts(
-    o1.epoch ?: "0", o2.epoch ?: "0")
+  private fun compareEpochs(o1: PyPackageVersion, o2: PyPackageVersion) = compareAsInts(o1.epoch ?: "0", o2.epoch ?: "0")
 
   /**
    * @see PyPackageVersionNormalizer.normalizeRelease
    */
   private fun compareReleases(o1: PyPackageVersion, o2: PyPackageVersion): PyRequirementRelation {
-    for ((releasePart1, releasePart2) in zipLongest(o1.release.split('.'),
-                                                    o2.release.split('.'), "0")) {
+    for ((releasePart1, releasePart2) in zipLongest(o1.release.split('.'), o2.release.split('.'), "0")) {
       if (releasePart1 == "*" || releasePart2 == "*") return PyRequirementRelation.COMPATIBLE
 
       val releaseParts = compareAsInts(releasePart1, releasePart2)
@@ -90,8 +88,7 @@ object PyPackageVersionComparator : Comparator<PyPackageVersion> {
    * @see PyPackageVersionNormalizer.normalizePost
    */
   private fun comparePosts(o1: PyPackageVersion, o2: PyPackageVersion): Int {
-    return compareAsInts(o1.post?.substring(4) ?: "-1",
-                         o2.post?.substring(4) ?: "-1")
+    return compareAsInts(o1.post?.substring(4) ?: "-1", o2.post?.substring(4) ?: "-1")
   }
 
   /**
@@ -111,7 +108,7 @@ object PyPackageVersionComparator : Comparator<PyPackageVersion> {
     val preTypes = preType1.compareTo(preType2)
     if (preTypes != 0) return preTypes
 
-    return pre1.substring(preType1.length).compareTo(pre2.substring(preType2.length))
+    return compareAsInts(pre1.substring(preType1.length), pre2.substring(preType2.length))
   }
 
   /**

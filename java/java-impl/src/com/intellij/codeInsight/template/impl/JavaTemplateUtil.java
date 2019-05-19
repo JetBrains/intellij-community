@@ -135,7 +135,7 @@ public class JavaTemplateUtil {
     }
   }
 
-  public static LookupElement addElementLookupItem(Set<LookupElement> items, PsiElement element) {
+  public static LookupElement addElementLookupItem(Set<? super LookupElement> items, PsiElement element) {
     final LookupElement item = LookupItemUtil.objectToLookupItem(element);
     items.add(item);
     item.putUserData(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM, new JavaTemplateLookupSelectionHandler());

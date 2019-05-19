@@ -36,6 +36,7 @@ public class RenameUIRelatedTest extends MultiFileTestCase {
     return "/renameUIRelated/";
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ui-designer") + "/testData";

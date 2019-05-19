@@ -23,14 +23,17 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
+@CompileStatic
 class NonSourceInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   void "test inspection outside source root"() {
-    PsiTestUtil.removeAllRoots(myModule, ModuleRootManager.getInstance(myModule).sdk)
-    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("src"))
+    PsiTestUtil.removeAllRoots(module, ModuleRootManager.getInstance(module).sdk)
+    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("src"))
     
     myFixture.addFileToProject("src/foo/GenericQuery.java", """
 package foo;
@@ -53,13 +56,13 @@ class SomeClass {
 """)
 
     def wrapper = new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection())
-    def context = InspectionManager.getInstance(project).createNewGlobalContext(false)
+    def context = InspectionManager.getInstance(project).createNewGlobalContext()
     assertEmpty InspectionEngine.runInspectionOnFile(file, wrapper, context)
   }
 
   void "test resolve super constructor reference"() {
-    PsiTestUtil.removeAllRoots(myModule, ModuleRootManager.getInstance(myModule).sdk)
-    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("src"))
+    PsiTestUtil.removeAllRoots(module, ModuleRootManager.getInstance(module).sdk)
+    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("src"))
 
     myFixture.addFileToProject("src/Foo.java", """
 class Foo<T> {

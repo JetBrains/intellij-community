@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.reporting.FreezeLogger;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +27,15 @@ public class TypedAction {
   private void ensureHandlersLoaded() {
     if (!myHandlersLoaded) {
       myHandlersLoaded = true;
-      for(EditorTypedHandlerBean handlerBean: Extensions.getExtensions(EditorTypedHandlerBean.EP_NAME)) {
+      for(EditorTypedHandlerBean handlerBean: EditorTypedHandlerBean.EP_NAME.getExtensionList()) {
         myHandler = handlerBean.getHandler(myHandler);
       }
+    }
+  }
+
+  private void loadRawHandlers() {
+    for (EditorTypedHandlerBean handlerBean: EditorTypedHandlerBean.RAW_EP_NAME.getExtensionList()) {
+      myRawHandler = handlerBean.getHandler(myRawHandler);
     }
   }
 
@@ -107,6 +112,9 @@ public class TypedAction {
   public TypedActionHandler setupRawHandler(@NotNull TypedActionHandler handler) {
     TypedActionHandler tmp = myRawHandler;
     myRawHandler = handler;
+    if (tmp == null) {
+      loadRawHandlers();
+    }
     return tmp;
   }
 

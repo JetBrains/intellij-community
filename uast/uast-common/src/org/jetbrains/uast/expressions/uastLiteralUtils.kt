@@ -20,6 +20,8 @@ package org.jetbrains.uast
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.expressions.UInjectionHost
 
 /**
  * Checks if the [UElement] is a null literal.
@@ -54,13 +56,23 @@ fun UElement.isFalseLiteral(): Boolean = this is ULiteralExpression && this.isBo
  *
  * @return true if the receiver is a [String] literal, false otherwise.
  */
+@Deprecated("doesn't support UInjectionHost, most likely it is not what you want", ReplaceWith("isInjectionHost()"))
 fun UElement.isStringLiteral(): Boolean = this is ULiteralExpression && this.isString
+
+/**
+ * Checks if the [UElement] is a [PsiLanguageInjectionHost] holder.
+ *
+ * NOTE: It is a transitional function until everything will migrate to [UInjectionHost]
+ */
+fun UElement?.isInjectionHost(): Boolean = this is UInjectionHost || (this is UExpression && this.sourceInjectionHost != null)
 
 /**
  * Returns the [String] literal value.
  *
  * @return literal text if the receiver is a valid [String] literal, null otherwise.
  */
+@Deprecated("doesn't support UInjectionHost, most likely it is not what you want", ReplaceWith("UExpression.evaluateString()"))
+@Suppress("Deprecation")
 fun UElement.getValueIfStringLiteral(): String? =
   if (isStringLiteral()) (this as ULiteralExpression).value as String else null
 
@@ -103,10 +115,44 @@ fun ULiteralExpression.getLongValue(): Long = value.let {
 }
 
 /**
- * @return corresponding [PsiLanguageInjectionHost] for this literal expression if it exists.
+ * @return corresponding [PsiLanguageInjectionHost] for this [UExpression] if it exists.
+ * Tries to not return same [PsiLanguageInjectionHost] for different UElement-s, thus returns `null` if host could be obtained from
+ * another [UExpression].
+ */
+val UExpression.sourceInjectionHost: PsiLanguageInjectionHost?
+  get() {
+    (this.sourcePsi as? PsiLanguageInjectionHost)?.let { return it }
+    // following is a handling of KT-27283
+    if (this !is ULiteralExpression) return null
+    val parent = this.uastParent
+    if (parent is UPolyadicExpression && parent.sourcePsi is PsiLanguageInjectionHost) return null
+    (this.sourcePsi?.parent as? PsiLanguageInjectionHost)?.let { return it }
+    return null
+  }
+
+/**
+ * @return a non-strict parent [PsiLanguageInjectionHost] for [sourcePsi] of given literal expression if it exists.
+ *
+ * NOTE: consider using [sourceInjectionHost] as more performant. Probably will be deprecated in future.
  */
 val ULiteralExpression.psiLanguageInjectionHost: PsiLanguageInjectionHost?
-  get() = this.psi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
+  get() = this.sourcePsi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
+
+/**
+ * @return if given [uElement] is an [ULiteralExpression] but not a [UInjectionHost]
+ * (which could happen because of "KotlinULiteralExpression and PsiLanguageInjectionHost mismatch", see KT-27283 )
+ * then tries to convert it to [UInjectionHost] and return it,
+ * otherwise return [uElement] itself
+ *
+ * NOTE: when `kotlin.uast.force.uinjectionhost` flag is `true` this method is useless because there is no mismatch anymore
+ */
+@ApiStatus.Experimental
+fun wrapULiteral(uElement: UExpression): UExpression {
+  if (uElement is ULiteralExpression && uElement !is UInjectionHost) {
+    uElement.sourceInjectionHost.toUElementOfType<UInjectionHost>()?.let { return it }
+  }
+  return uElement
+}
 
 /**
  * @return all references injected into this [ULiteralExpression]

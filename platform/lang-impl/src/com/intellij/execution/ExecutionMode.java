@@ -15,15 +15,18 @@
  */
 package com.intellij.execution;
 
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.util.Function;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 /**
 * @author Roman.Chernyatchik
@@ -37,7 +40,7 @@ public class ExecutionMode {
   private final boolean myRunWithModal;
   private final boolean myRunInBG;
   private final JComponent myProgressParentComponent;
-  private Function<Object, Boolean> myShouldCancelFun;
+  private BooleanSupplier myShouldCancelFun;
   private final Object CANCEL_FUN_LOCK = new Object();
   private final List<ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -60,6 +63,22 @@ public class ExecutionMode {
     return -1;
   }
 
+  /**
+   * Invoked on the {@code processHandler} waiting timeout by the execution helper.
+   *
+   * @param outputCollected output collected to the moment of timeout (if any)
+   * @see ExecutionHelper#createTimeLimitedExecutionProcess(com.intellij.execution.process.ProcessHandler, com.intellij.execution.ExecutionMode, java.lang.String)
+   */
+  public void onTimeout(@NotNull ProcessHandler processHandler,
+                        @NotNull String commandLineString,
+                        @NotNull ProcessOutput outputCollected) {
+  }
+
+  /**
+   * @deprecated override {@link #onTimeout(ProcessHandler, String, ProcessOutput)}  instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
+  @Deprecated
   @NotNull
   public PairConsumer<ExecutionMode, String> getTimeoutCallback() {
     return NOOP_CONSUMER;
@@ -95,13 +114,13 @@ public class ExecutionMode {
    * Runner checks this fun during process running, if returns true, process will be canceled.
    */
   @Nullable
-  public Function<Object, Boolean> shouldCancelFun() {
+  public BooleanSupplier shouldCancelFun() {
     synchronized (CANCEL_FUN_LOCK) {
       return myShouldCancelFun;
     }
   }
 
-  public void setShouldCancelFun(final Function<Object, Boolean> shouldCancelFun) {
+  public void setShouldCancelFun(final BooleanSupplier shouldCancelFun) {
     synchronized (CANCEL_FUN_LOCK) {
       myShouldCancelFun = shouldCancelFun;
     }

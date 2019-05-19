@@ -28,10 +28,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class CodeInspectionOnEditorAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null){
@@ -47,14 +48,14 @@ public class CodeInspectionOnEditorAction extends AnAction {
     FileDocumentManager.getInstance().saveAllDocuments();
     final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final AnalysisScope scope = new AnalysisScope(psiFile);
-    final GlobalInspectionContextImpl inspectionContext = inspectionManagerEx.createNewGlobalContext(false);
+    final GlobalInspectionContextImpl inspectionContext = inspectionManagerEx.createNewGlobalContext();
     inspectionContext.setCurrentScope(scope);
     inspectionContext.setExternalProfile(InspectionProjectProfileManager.getInstance(project).getCurrentProfile());
     inspectionContext.doInspections(scope);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);

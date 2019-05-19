@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -7,7 +7,10 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -31,6 +34,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,32 +45,19 @@ import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @State(
   name = "WindowManager",
   defaultStateAsResource = true,
   storages = @Storage(value = "window.manager.xml", roamingType = RoamingType.DISABLED)
 )
-public final class WindowManagerImpl extends WindowManagerEx implements NamedComponent, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
+public final class WindowManagerImpl extends WindowManagerEx implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(WindowManagerImpl.class);
 
   @NonNls public static final String FULL_SCREEN = "ide.frame.full.screen";
 
   @NonNls private static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
   @NonNls private static final String FRAME_ELEMENT = "frame";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
-
-  static {
-    try {
-      System.loadLibrary("jawt");
-    }
-    catch (Throwable t) {
-      LOG.info("jawt failed to load", t);
-    }
-  }
 
   private Boolean myAlphaModeSupported;
 
@@ -176,11 +167,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   @Override
   public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
     return ScreenUtil.getAllScreensShape().contains(x, y, width, 1);
-  }
-
-  @Override
-  public final boolean isInsideScreenBounds(final int x, final int y) {
-    return ScreenUtil.getAllScreensShape().contains(x, y);
   }
 
   @Override
@@ -354,11 +340,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   @Override
-  public StatusBar getStatusBar(@NotNull Component c) {
-    return getStatusBar(c, null);
-  }
-
-  @Override
   public StatusBar getStatusBar(@NotNull Component c, @Nullable Project project) {
     Component parent = UIUtil.findUltimateParent(c);
     if (parent instanceof IdeFrame) {
@@ -446,25 +427,31 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
   // this method is called when there is some opened project (IDE will not open Welcome Frame, but project)
   public void showFrame() {
-    final IdeFrameImpl frame = new IdeFrameImpl(myActionManager, myDataManager, ApplicationManager.getApplication());
+    final IdeFrameImpl frame = new IdeFrameImpl(myActionManager, myDataManager);
     myProjectToFrame.put(null, frame);
 
-    Rectangle frameBounds = myDefaultFrameInfo.getBounds();
+    Rectangle frameBounds = validateFrameBounds(myDefaultFrameInfo.getBounds());
+    myDefaultFrameInfo.setBounds(frameBounds);
     // set bounds even if maximized because on unmaximize we must restore previous frame bounds
-    // avoid situations when IdeFrame is out of all screens
-    if (frameBounds == null || !ScreenUtil.isVisible(frameBounds)) {
-      frameBounds = ScreenUtil.getMainScreenBounds();
-      int xOff = frameBounds.width / 8;
-      int yOff = frameBounds.height / 8;
-      //noinspection UseDPIAwareInsets
-      JBInsets.removeFrom(frameBounds, new Insets(yOff, xOff, yOff, xOff));
-      myDefaultFrameInfo.setBounds(frameBounds);
-    }
     frame.setBounds(frameBounds);
 
-    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     frame.setVisible(true);
+    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     addFrameStateListener(frame);
+    IdeMenuBar.installAppMenuIfNeeded(frame);
+  }
+
+  @NotNull
+  private static Rectangle validateFrameBounds(@Nullable Rectangle frameBounds) {
+    Rectangle bounds = frameBounds != null ? frameBounds.getBounds() : null;
+    if (bounds == null || !ScreenUtil.isVisible(bounds)) {
+      bounds = ScreenUtil.getMainScreenBounds();
+      int xOff = bounds.width / 8;
+      int yOff = bounds.height / 8;
+      //noinspection UseDPIAwareInsets
+      JBInsets.removeFrom(bounds, new Insets(yOff, xOff, yOff, xOff));
+    }
+    return bounds;
   }
 
   @Override
@@ -473,7 +460,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
     IdeFrameImpl frame = myProjectToFrame.remove(null);
     if (frame == null) {
-      frame = new IdeFrameImpl(myActionManager, myDataManager, ApplicationManager.getApplication());
+      frame = new IdeFrameImpl(myActionManager, myDataManager);
     }
 
     final FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getRawFrameInfo();
@@ -481,8 +468,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     if (frameInfo != null && frameInfo.getBounds() != null) {
       // update default frame info - newly created project frame should be the same as last opened
       myDefaultFrameInfo.copyFrom(frameInfo);
-      Rectangle rawBounds = frameInfo.getBounds();
-      myDefaultFrameInfo.setBounds(FrameBoundsConverter.convertFromDeviceSpace(rawBounds));
+      Rectangle frameBounds = FrameBoundsConverter.convertFromDeviceSpace(frameInfo.getBounds());
+      myDefaultFrameInfo.setBounds(validateFrameBounds(frameBounds));
     }
 
     if (!(FrameState.isMaximized(frame.getExtendedState()) || FrameState.isFullScreen(frame)) ||
@@ -493,11 +480,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
         frame.setBounds(bounds);
       }
     }
-    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
 
     frame.setProject(project);
     myProjectToFrame.put(project, frame);
     frame.setVisible(true);
+    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
 
     frame.addWindowListener(myActivationListener);
     if (addComponentListener) {
@@ -507,6 +494,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       addFrameStateListener(frame);
     }
     myEventDispatcher.getMulticaster().frameCreated(frame);
+    IdeMenuBar.installAppMenuIfNeeded(frame);
 
     return frame;
   }
@@ -535,7 +523,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   @Override
-  public final void releaseFrame(final IdeFrameImpl frame) {
+  public final void releaseFrame(@NotNull final IdeFrameImpl frame) {
     myEventDispatcher.getMulticaster().beforeFrameReleased(frame);
 
     final Project project = frame.getProject();
@@ -645,7 +633,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     }
 
     Project project = projects[0];
-    FrameInfo frameInfo = ProjectFrameBoundsKt.getFrameInfoInDeviceSpace(this, project);
+    FrameInfo frameInfo = ProjectFrameBoundsKt.getFrameInfoInDeviceSpace(this, project, null);
     if (frameInfo == null) {
       return null;
     }
@@ -665,7 +653,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   int updateFrameBounds(@NotNull IdeFrameImpl frame) {
     int extendedState = frame.getExtendedState();
     if (SystemInfo.isMacOSLion) {
-      ComponentPeer peer = frame.getPeer();
+      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
       if (peer instanceof FramePeer) {
         // frame.state is not updated by jdk so get it directly from peer
         extendedState = ((FramePeer)peer).getState();
@@ -692,12 +680,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   @Override
   public final void setLayout(final DesktopLayout layout) {
     myLayout.copyFrom(layout);
-  }
-
-  @Override
-  @NotNull
-  public final String getComponentName() {
-    return "WindowManager";
   }
 
   public WindowWatcher getWindowWatcher() {

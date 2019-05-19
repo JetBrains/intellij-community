@@ -1,8 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
+import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -11,12 +11,11 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
+import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -31,23 +30,21 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.net.NetUtils;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
-import com.sun.jdi.InternalException;
-import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.VMDisconnectedException;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.ListeningConnector;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public static final Key<PsiType> PSI_TYPE_KEY = Key.create("PSI_TYPE_KEY");
@@ -57,16 +54,6 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context)
     throws EvaluateException {
     return DebuggerTreeNodeExpression.substituteThis(expressionWithThis, howToEvaluateThis, howToEvaluateThisValue);
-  }
-
-  @Override
-  public EvaluatorBuilder getEvaluatorBuilder() {
-    return EvaluatorBuilderImpl.getInstance();
-  }
-
-  @Override
-  public DebuggerTreeNode getSelectedNode(DataContext context) {
-    return DebuggerAction.getSelectedNode(context);
   }
 
   @Override
@@ -106,7 +93,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       Element element = JDOMExternalizerUtil.writeOption(root, name);
       XExpression expression = TextWithImportsImpl.toXExpression(value);
       if (expression != null) {
-        XmlSerializer.serializeInto(new XExpressionState(expression), element, new SkipDefaultValuesSerializationFilters());
+        XmlSerializer.serializeObjectInto(new XExpressionState(expression), element);
       }
     }
   }
@@ -121,7 +108,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       Element option = JDOMExternalizerUtil.readOption(root, name);
       if (option != null) {
         XExpressionState state = new XExpressionState();
-        XmlSerializer.deserializeInto(state, option);
+        XmlSerializer.deserializeInto(option, state);
         return TextWithImportsImpl.fromXExpression(state.toXExpression());
       }
     }
@@ -218,11 +205,11 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return Boolean.TRUE.equals(debugProcess.getUserData(BatchEvaluator.REMOTE_SESSION_KEY));
   }
 
-  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<T, E> supplier, T defaultValue) throws E {
+  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier, T defaultValue) throws E {
     return suppressExceptions(supplier, defaultValue, true, null);
   }
 
-  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<T, E> supplier,
+  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier,
                                                               T defaultValue,
                                                               boolean ignorePCE,
                                                               Class<E> rethrow) throws E {
@@ -258,5 +245,52 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       }
       ProgressIndicatorUtils.yieldToPendingWriteActions();
     }
+  }
+
+  public static String getConnectionDisplayName(RemoteConnection connection) {
+    if (connection instanceof PidRemoteConnection) {
+      return "pid " + ((PidRemoteConnection)connection).getPid();
+    }
+    String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
+    String transportName = DebuggerBundle.getTransportName(connection);
+    return DebuggerBundle.message("string.connection", addressDisplayName, transportName);
+  }
+
+  public static boolean instanceOf(@Nullable ReferenceType type, @NotNull ReferenceType superType) {
+    if (type == null) {
+      return false;
+    }
+    if (superType.equals(type)) {
+      return true;
+    }
+    return supertypes(type).anyMatch(t -> instanceOf(t, superType));
+  }
+
+  public static Stream<? extends ReferenceType> supertypes(ReferenceType type) {
+    if (type instanceof InterfaceType) {
+      return ((InterfaceType)type).superinterfaces().stream();
+    } else if (type instanceof ClassType) {
+      return StreamEx.<ReferenceType>ofNullable(((ClassType)type).superclass()).prepend(((ClassType)type).interfaces());
+    }
+    return StreamEx.empty();
+  }
+
+  @Nullable
+  public static byte[] readBytesArray(Value bytesArray) {
+    if (bytesArray instanceof ArrayReference) {
+      List<Value> values = ((ArrayReference)bytesArray).getValues();
+      byte[] res = new byte[values.size()];
+      int idx = 0;
+      for (Value value : values) {
+        if (value instanceof ByteValue) {
+          res[idx++] = ((ByteValue)value).value();
+        }
+        else {
+          return null;
+        }
+      }
+      return res;
+    }
+    return null;
   }
 }

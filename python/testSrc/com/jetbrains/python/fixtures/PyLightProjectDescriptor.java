@@ -47,7 +47,7 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
 
   @Override
   public Sdk getSdk() {
-    return PythonMockSdk.findOrCreate(myPythonVersion, getAdditionalRoots());
+    return PythonMockSdk.create(myPythonVersion, getAdditionalRoots());
   }
 
   /**

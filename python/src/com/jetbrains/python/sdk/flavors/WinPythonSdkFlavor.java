@@ -16,6 +16,8 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -48,10 +51,22 @@ public final class WinPythonSdkFlavor extends CPythonSdkFlavor {
   }
 
   @Override
-  public Collection<String> suggestHomePaths() {
+  public Collection<String> suggestHomePaths(@Nullable Module module) {
     Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
+
+    if (SystemInfo.isWin10OrNewer) {
+      // For pythons installed from WindowsStore
+      final VirtualFile installLocation = WindowsStoreServiceKt.findInstallLocationForPackage("Python");
+      if (installLocation != null) {
+        final VirtualFile pythonFromStore = installLocation.findChild("python.exe");
+        if (pythonFromStore != null) {
+          candidates.add(pythonFromStore.getPath());
+        }
+      }
+    }
+
     return candidates;
   }
 
@@ -76,7 +91,7 @@ public final class WinPythonSdkFlavor extends CPythonSdkFlavor {
     }
   }
 
-  public static void findInPath(Collection<String> candidates, String exeName) {
+  public static void findInPath(Collection<? super String> candidates, String exeName) {
     final String path = System.getenv("PATH");
     if (path == null) return;
     for (String pathEntry : StringUtil.split(path, ";")) {
@@ -136,7 +151,7 @@ public final class WinPythonSdkFlavor extends CPythonSdkFlavor {
       }
       rootVDir.refresh(true, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
-        if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(dir_prefix)) {
+        if (dir.isDirectory() && StringUtil.toLowerCase(dir.getName()).startsWith(dir_prefix)) {
           VirtualFile python_exe = dir.findChild(exe_name);
           if (python_exe != null) candidates.add(FileUtil.toSystemDependentName(python_exe.getPath()));
         }

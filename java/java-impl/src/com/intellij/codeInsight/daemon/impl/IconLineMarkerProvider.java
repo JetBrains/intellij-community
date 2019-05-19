@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -33,7 +19,6 @@ import org.jetbrains.uast.evaluation.UEvaluationContextKt;
 import org.jetbrains.uast.values.*;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,11 +32,6 @@ import java.util.stream.Collectors;
  * @author Konstantin Bulenkov
  */
 public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
-
-  @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
-  }
-
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     UCallExpression expression = UastContextKt.toUElement(element, UCallExpression.class);
@@ -97,16 +77,11 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
     final Icon icon = ProjectIconsAccessor.getInstance(project).getIcon(file);
     if (icon == null) return null;
 
-    final GutterIconNavigationHandler<PsiElement> navHandler = new GutterIconNavigationHandler<PsiElement>() {
-      @Override
-      public void navigate(MouseEvent e, PsiElement elt) {
-        FileEditorManager.getInstance(project).openFile(file, true);
-      }
-    };
+    final GutterIconNavigationHandler<PsiElement> navHandler = (e, elt) -> FileEditorManager.getInstance(project).openFile(file, true);
 
-    return new LineMarkerInfo<PsiElement>(bindingElement, bindingElement.getTextRange(), icon,
-                                          Pass.LINE_MARKERS, null, navHandler,
-                                          GutterIconRenderer.Alignment.LEFT);
+    return new LineMarkerInfo<>(bindingElement, bindingElement.getTextRange(), icon,
+                                Pass.LINE_MARKERS, null, navHandler,
+                                GutterIconRenderer.Alignment.LEFT);
   }
 
   @NotNull
@@ -117,6 +92,6 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public boolean isEnabledByDefault() {
-    return DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER;
+    return DaemonCodeAnalyzerSettings.getInstance().isShowSmallIconsInGutter();
   }
 }

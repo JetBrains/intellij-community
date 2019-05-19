@@ -14,5 +14,12 @@
     <myEp id="id4" order="before id2, after id1"/>
     <myEp id="id5" order="before id2, after <error descr="Cannot resolve 'wrongId' myEp extension">wrongId</error>"/>
     <myEp id="id6" order="before id6, before id5, after id1, before <error descr="Cannot resolve 'wrongId' myEp extension">wrongId</error>"/>
+
+    <myEp id="id7" order="first, after:<error descr="Cannot resolve 'wrongId' myEp extension">wrongId</error>"/>
+    <myEp id="id8" order="first, before:<error descr="Cannot resolve 'wrongId' myEp extension">wrongId</error>"/>
+    <myEp id="id9" order="after:<error descr="Cannot resolve 'wrongId' myEp extension">wrongId</error>"/>
+    <myEp id="id10" order="before:<error descr="Cannot resolve 'wrongId' myEp extension">wrongId</error>"/>
+
+    <myEp id="id11" order="<error descr="Invalid 'order' attribute value">wrongKeyword id6</error>"/>
   </extensions>
 </idea-plugin>

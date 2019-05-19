@@ -41,7 +41,6 @@ public class BasicSelectioner extends ExtendWordSelectionHandlerBase {
       !(e instanceof PsiJavaCodeReferenceElement) &&
       !(e instanceof PsiJavaToken &&
       !(e instanceof PsiKeyword)) &&
-      !(e instanceof XmlToken) &&
       !(e instanceof XmlElement) &&
       !(e instanceof PsiDocTag);
   }

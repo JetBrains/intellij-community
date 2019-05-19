@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * Defines common contract for building {@link EditorTextField} with necessary combinations of features.
  *
  * @author Denis Zhdanov
- * @since Aug 18, 2010 1:37:55 PM
  */
 public interface EditorTextFieldProvider {
   static EditorTextFieldProvider getInstance() {
@@ -36,9 +35,10 @@ public interface EditorTextFieldProvider {
    *
    * @param language   target language used by document that will be displayed by returned editor
    * @param project    target project
+   * @param features
    * @return {@link EditorTextField} with specified customizations applied to its editor.
    */
   @NotNull
-  EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project, @NotNull Iterable<EditorCustomization> features);
+  EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project, @NotNull Iterable<? extends EditorCustomization> features);
 
 }

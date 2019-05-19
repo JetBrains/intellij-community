@@ -25,7 +25,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
   private List<AbstractBlockWrapper> myChildren;
   private ProbablyIncreasingLowerboundAlgorithm<AbstractBlockWrapper> myPrevBlockCalculator = null;
 
-  public CompositeBlockWrapper(final Block block, final WhiteSpace whiteSpaceBefore, @Nullable final CompositeBlockWrapper parent) {
+  public CompositeBlockWrapper(final Block block, @NotNull final WhiteSpace whiteSpaceBefore, @Nullable final CompositeBlockWrapper parent) {
     super(block, whiteSpaceBefore, parent, block.getTextRange());
   }
   

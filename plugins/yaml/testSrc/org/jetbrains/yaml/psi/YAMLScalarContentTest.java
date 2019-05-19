@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -31,6 +32,14 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
   }
 
   public void testPlainScalar3Tag() {
+    doTest();
+  }
+
+  public void testPlainScalarBigFirstLineIndent1() {
+    doTest();
+  }
+
+  public void testPlainScalarBigFirstLineIndent2() {
     doTest();
   }
 

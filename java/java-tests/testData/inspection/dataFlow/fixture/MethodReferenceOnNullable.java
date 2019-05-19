@@ -3,7 +3,7 @@ import org.jetbrains.annotations.Nullable;
 class BrokenAlignment {
 
   {
-    Runnable t = <warning descr="Dereference of 'getString()' may produce 'java.lang.NullPointerException'">getString()</warning>::length;
+    Runnable t = <warning descr="Dereference of 'getString()' may produce 'NullPointerException'">getString()</warning>::length;
     Runnable t2 = BrokenAlignment::getStringStatic;
   }
 

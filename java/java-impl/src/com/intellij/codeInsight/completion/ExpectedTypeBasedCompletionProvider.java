@@ -30,12 +30,12 @@ import java.util.Collection;
 public abstract class ExpectedTypeBasedCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   @Override
-  public void addCompletions(@NotNull final CompletionParameters params, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
+  public void addCompletions(@NotNull final CompletionParameters params, @NotNull final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
     final PsiElement position = params.getPosition();
     if (position.getParent() instanceof PsiLiteralExpression) return;
 
     addCompletions(params, result, ContainerUtil.newHashSet(JavaSmartCompletionContributor.getExpectedTypes(params)));
   }
 
-  protected abstract void addCompletions(CompletionParameters params, CompletionResultSet result, Collection<ExpectedTypeInfo> infos);
+  protected abstract void addCompletions(CompletionParameters params, CompletionResultSet result, Collection<? extends ExpectedTypeInfo> infos);
 }

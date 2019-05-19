@@ -23,15 +23,18 @@ import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 public class CvsCommandStopper implements ICvsCommandStopper{
   private volatile boolean myPing;
 
+  @Override
   public boolean isAborted() {
     myPing = true;
     return false;
   }
 
+  @Override
   public boolean isAlive() {
     return myPing;
   }
 
+  @Override
   public void resetAlive() {
     myPing = false;
   }

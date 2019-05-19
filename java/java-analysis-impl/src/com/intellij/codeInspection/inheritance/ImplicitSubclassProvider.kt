@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nls.Capitalization.Sentence
  * e.g. by some framework (CGLIB Proxy in Spring).
  *
  * @author Nicolay Mitropolsky
- *
- * @since 2017.2
  */
 abstract class ImplicitSubclassProvider {
 
@@ -80,9 +78,6 @@ abstract class ImplicitSubclassProvider {
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<ImplicitSubclassProvider> = ExtensionPointName.create<ImplicitSubclassProvider>("com.intellij.codeInsight.implicitSubclassProvider")
-
-    @Deprecated("To be removed in 2018.2", ReplaceWith("ImplicitSubclassProvider.EP_NAME"))
-    fun getEP_NAME(): ExtensionPointName<ImplicitSubclassProvider> = EP_NAME
   }
 
 }

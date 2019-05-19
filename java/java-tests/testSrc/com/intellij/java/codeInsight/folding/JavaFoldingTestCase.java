@@ -39,6 +39,9 @@ public abstract class JavaFoldingTestCase extends LightCodeInsightFixtureTestCas
     try {
       ((JavaCodeFoldingSettingsImpl)myFoldingSettings).loadState(((JavaCodeFoldingSettingsImpl)myFoldingSettingsBackup));
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

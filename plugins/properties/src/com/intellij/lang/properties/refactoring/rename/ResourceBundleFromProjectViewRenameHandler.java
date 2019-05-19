@@ -43,7 +43,7 @@ public class ResourceBundleFromProjectViewRenameHandler implements RenameHandler
     if (bundle == null || bundle.getPropertiesFiles().size() < 2) {
       return false;
     }
-    return PlatformDataKeys.FILE_EDITOR.getData(dataContext) == null && CommonDataKeys.VIRTUAL_FILE.getData(dataContext) == null;
+    return PlatformDataKeys.FILE_EDITOR.getData(dataContext) == null;
   }
 
   @Override

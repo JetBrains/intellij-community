@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
 import com.google.common.collect.Lists;
@@ -38,6 +24,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   private static final String INITIALIZED = "INITIALIZED";
   private static final String VALID = "VALID";
   private static final String PATH_MAPPINGS = "PATH_MAPPINGS";
+  private static final String RUN_AS_ROOT_VIA_SUDO = "RUN_AS_ROOT_VIA_SUDO";
 
   private String mySdkId;
 
@@ -53,6 +40,8 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   private boolean myInitialized = false;
 
   private boolean myValid = true;
+
+  private boolean myRunAsRootViaSudo = false;
 
   @NotNull
   private PathMappingSettings myPathMappings = new PathMappingSettings();
@@ -81,6 +70,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     myHelpersPath = helpersPath;
   }
 
+  @Override
   public String getDefaultHelpersName() {
     return myHelpersDefaultDirName;
   }
@@ -129,10 +119,12 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     myHelpersVersionChecked = helpersVersionChecked;
   }
 
+  @Override
   public void setSdkId(String sdkId) {
     mySdkId = sdkId;
   }
 
+  @Override
   public String getSdkId() {
     return mySdkId;
   }
@@ -157,6 +149,16 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     myValid = valid;
   }
 
+  @Override
+  public boolean isRunAsRootViaSudo() {
+    return myRunAsRootViaSudo;
+  }
+
+  @Override
+  public void setRunAsRootViaSudo(boolean runAsRootViaSudo) {
+    myRunAsRootViaSudo = runAsRootViaSudo;
+  }
+
   public void copyTo(RemoteSdkProperties copy) {
     copy.setInterpreterPath(getInterpreterPath());
     copy.setHelpersPath(getHelpersPath());
@@ -167,6 +169,8 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     copy.setInitialized(isInitialized());
 
     copy.setValid(isValid());
+
+    copy.setRunAsRootViaSudo(isRunAsRootViaSudo());
   }
 
   public void save(Element rootElement) {
@@ -175,6 +179,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
 
     rootElement.setAttribute(INITIALIZED, Boolean.toString(isInitialized()));
     rootElement.setAttribute(VALID, Boolean.toString(isValid()));
+    rootElement.setAttribute(RUN_AS_ROOT_VIA_SUDO, Boolean.toString(isRunAsRootViaSudo()));
 
     PathMappingSettings.writeExternal(rootElement, myPathMappings);
 
@@ -191,11 +196,13 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
 
     setRemoteRoots(JDOMExternalizer.loadStringsList(element, REMOTE_ROOTS, REMOTE_PATH));
 
-    setInitialized(StringUtil.parseBoolean(element.getAttributeValue(INITIALIZED), true));
+    setInitialized(Boolean.parseBoolean(element.getAttributeValue(INITIALIZED)));
 
-    setValid(StringUtil.parseBoolean(element.getAttributeValue(VALID), true));
+    setValid(Boolean.parseBoolean(element.getAttributeValue(VALID)));
 
     setPathMappings(PathMappingSettings.readExternal(element));
+
+    setRunAsRootViaSudo(Boolean.parseBoolean(element.getAttributeValue(RUN_AS_ROOT_VIA_SUDO)));
   }
 
   @Override
@@ -215,6 +222,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     }
     if (myHelpersPath != null ? !myHelpersPath.equals(holder.myHelpersPath) : holder.myHelpersPath != null) return false;
     if (myInterpreterPath != null ? !myInterpreterPath.equals(holder.myInterpreterPath) : holder.myInterpreterPath != null) return false;
+    if (myRunAsRootViaSudo != holder.myRunAsRootViaSudo) return false;
     if (!myPathMappings.equals(holder.myPathMappings)) return false;
     if (myRemoteRoots != null ? !myRemoteRoots.equals(holder.myRemoteRoots) : holder.myRemoteRoots != null) return false;
     if (mySdkId != null ? !mySdkId.equals(holder.mySdkId) : holder.mySdkId != null) return false;
@@ -226,6 +234,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   public int hashCode() {
     int result = mySdkId != null ? mySdkId.hashCode() : 0;
     result = 31 * result + (myInterpreterPath != null ? myInterpreterPath.hashCode() : 0);
+    result = 31 * result + (myRunAsRootViaSudo ? 1 : 0);
     result = 31 * result + (myHelpersPath != null ? myHelpersPath.hashCode() : 0);
     result = 31 * result + (myHelpersDefaultDirName != null ? myHelpersDefaultDirName.hashCode() : 0);
     result = 31 * result + (myHelpersVersionChecked ? 1 : 0);

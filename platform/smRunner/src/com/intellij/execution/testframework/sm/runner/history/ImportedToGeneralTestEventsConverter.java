@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.history;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -21,16 +7,15 @@ import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
 public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEventsConverter {
@@ -41,7 +26,7 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
 
   public ImportedToGeneralTestEventsConverter(@NotNull String testFrameworkName,
                                               @NotNull TestConsoleProperties consoleProperties,
-                                              @NotNull File file, 
+                                              @NotNull File file,
                                               @NotNull ProcessHandler handler) {
     super(testFrameworkName, consoleProperties);
     myConsoleProperties = consoleProperties;
@@ -61,7 +46,7 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
     try {
       parseTestResults(() -> {
         try {
-          return new InputStreamReader(new FileInputStream(myFile), CharsetToolkit.UTF8_CHARSET);
+          return new InputStreamReader(new FileInputStream(myFile), StandardCharsets.UTF_8);
         }
         catch (FileNotFoundException e) {
           return null;
@@ -75,20 +60,13 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
     }
   }
 
-  public static void parseTestResults(Supplier<Reader> readerSupplier, GeneralTestEventsProcessor processor) throws IOException {
-    parseTestResults(readerSupplier.get(), ImportTestOutputExtension.findHandler(readerSupplier, processor));
-  }
-
-  public static void parseTestResults(Reader reader, final DefaultHandler contentHandler) throws IOException {
-    try {
+  public static void parseTestResults(Supplier<? extends Reader> readerSupplier, GeneralTestEventsProcessor processor) throws IOException {
+    try (Reader reader = readerSupplier.get()) {
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse(new InputSource(reader), contentHandler);
+      parser.parse(new InputSource(reader), ImportTestOutputExtension.findHandler(readerSupplier, processor));
     }
     catch (ParserConfigurationException | SAXException e) {
       throw new IOException(e);
-    }
-    finally {
-      reader.close();
     }
   }
 }

@@ -107,7 +107,7 @@ public class OutputFileUtil {
 
   private static class ShowOutputFileFilter implements Filter {
     @Override
-    public Result applyFilter(String line, int entireLength) {
+    public Result applyFilter(@NotNull String line, int entireLength) {
       if (line.startsWith(CONSOLE_OUTPUT_FILE_MESSAGE)) {
         final String filePath = StringUtil.trimEnd(line.substring(CONSOLE_OUTPUT_FILE_MESSAGE.length()), "\n");
 

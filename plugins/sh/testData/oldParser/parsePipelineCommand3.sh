@@ -1,0 +1,1 @@
+! time echo a

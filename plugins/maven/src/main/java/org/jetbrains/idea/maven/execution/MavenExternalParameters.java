@@ -47,7 +47,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.util.io.Compressor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,14 +59,15 @@ import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.zip.ZipOutputStream;
 
 import static org.jetbrains.idea.maven.server.MavenServerManager.verifyMavenSdkRequirements;
 
@@ -126,10 +127,13 @@ public class MavenExternalParameters {
 
     final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
     final String mavenVersion = MavenUtil.getMavenVersion(mavenHome);
+    if(mavenVersion == null) {
+      throw new ExecutionException("Cannot run maven: Maven home " + mavenHome + " looks incorrect");
+    }
     String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Runner | JRE";
     verifyMavenSdkRequirements(jdk, mavenVersion, sdkConfigLocation);
 
-    params.getProgramParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
+    params.getProgramParametersList().addProperty("idea.version" + MavenUtil.getIdeaVersionToPassToMavenProcess());
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {
       params.getVMParametersList().addProperty("maven.multiModuleProjectDirectory",
                                                MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath());
@@ -172,6 +176,7 @@ public class MavenExternalParameters {
     params.setCharset(encodingManager.getDefaultCharset());
 
     addMavenParameters(params.getProgramParametersList(), mavenHome, coreSettings, runnerSettings, parameters);
+    MavenUtil.addEventListener(mavenVersion, params);
 
     return params;
   }
@@ -188,7 +193,7 @@ public class MavenExternalParameters {
     Scanner sc = new Scanner(originalConf);
 
     try {
-      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest)));
+      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest), StandardCharsets.UTF_8));
 
       try {
         boolean patched = false;
@@ -242,20 +247,14 @@ public class MavenExternalParameters {
     }
 
     // it's a classes directory, we are in development mode.
-    File tempFile = FileUtil.createTempFile("idea-", "-artifactResolver.jar");
-    tempFile.deleteOnExit();
+    File tempFile = FileUtil.createTempFile("idea-", "-artifactResolver.jar", true);
 
-    ZipOutputStream zipOutput = new ZipOutputStream(new FileOutputStream(tempFile));
-    try {
-      ZipUtil.addDirToZipRecursively(zipOutput, null, classDirOrJar, "", null, null);
+    try (Compressor zip = new Compressor.Zip(tempFile)) {
+      zip.addDirectory(classDirOrJar);
 
-      File m2Module = new File(PathUtil.getJarPathForClass(MavenModuleMap.class));
-
+      String m2Module = PathUtil.getJarPathForClass(MavenModuleMap.class);
       String commonClassesPath = MavenModuleMap.class.getPackage().getName().replace('.', '/');
-      ZipUtil.addDirToZipRecursively(zipOutput, null, new File(m2Module, commonClassesPath), commonClassesPath, null, null);
-    }
-    finally {
-      zipOutput.close();
+      zip.addDirectory(commonClassesPath, new File(m2Module, commonClassesPath));
     }
 
     return tempFile.getAbsolutePath();
@@ -583,7 +582,7 @@ public class MavenExternalParameters {
 
     private final Project myProject;
 
-    public ProjectSettingsOpenerExecutionException(final String s, Project project) {
+    ProjectSettingsOpenerExecutionException(final String s, Project project) {
       super(s);
       myProject = project;
     }
@@ -598,7 +597,7 @@ public class MavenExternalParameters {
 
     private final Project myProject;
 
-    public ProjectJdkSettingsOpenerExecutionException(final String s, Project project) {
+    ProjectJdkSettingsOpenerExecutionException(final String s, Project project) {
       super(s);
       myProject = project;
     }
@@ -613,7 +612,7 @@ public class MavenExternalParameters {
 
     private final MavenRunConfiguration myRunConfiguration;
 
-    public RunConfigurationOpenerExecutionException(final String s, MavenRunConfiguration runConfiguration) {
+    RunConfigurationOpenerExecutionException(final String s, MavenRunConfiguration runConfiguration) {
       super(s);
       myRunConfiguration = runConfiguration;
     }
@@ -629,7 +628,7 @@ public class MavenExternalParameters {
   private static abstract class WithHyperlinkExecutionException extends ExecutionException
     implements HyperlinkListener, NotificationListener {
 
-    public WithHyperlinkExecutionException(String s) {
+    WithHyperlinkExecutionException(String s) {
       super(s);
     }
 

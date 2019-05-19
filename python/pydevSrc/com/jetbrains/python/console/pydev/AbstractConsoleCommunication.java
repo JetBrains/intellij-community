@@ -1,7 +1,9 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console.pydev;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -30,9 +32,9 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
   }
 
   public static Pair<String, Boolean> parseExecResponseString(String str) {
-    Boolean more;
+    boolean more;
     String errorContents = null;
-    String lower = str.toLowerCase();
+    String lower = StringUtil.toLowerCase(str);
     if (lower.equals("true") || lower.equals("1")) {
       more = true;
     }
@@ -79,6 +81,7 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
     myConsoleFile = consoleFile;
   }
 
+  @Override
   public void notifyInputReceived() {
     if (waitingForInput) {
       waitingForInput = false;

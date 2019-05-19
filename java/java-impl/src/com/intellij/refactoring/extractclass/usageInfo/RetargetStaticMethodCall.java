@@ -30,6 +30,7 @@ public class RetargetStaticMethodCall extends FixableUsageInfo {
         this.delegateClassName = delegateClassName;
     }
 
+    @Override
     public void fixUsage() throws IncorrectOperationException {
         final PsiReferenceExpression methodExpression = call.getMethodExpression();
         final PsiExpression qualifier = (PsiExpression) methodExpression.getQualifier();

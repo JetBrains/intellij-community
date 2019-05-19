@@ -36,6 +36,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsGroupNode;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +44,8 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class BreakpointsDialog extends DialogWrapper {
   @NotNull private final Project myProject;
@@ -176,7 +177,7 @@ public class BreakpointsDialog extends DialogWrapper {
   private class ToggleBreakpointGroupingRuleEnabledAction extends ToggleActionButton {
     private final XBreakpointGroupingRule myRule;
 
-    public ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule rule) {
+    ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule rule) {
       super(rule.getPresentableName(), rule.getIcon());
       myRule = rule;
       getTemplatePresentation().setText(rule.getPresentableName());
@@ -224,7 +225,7 @@ public class BreakpointsDialog extends DialogWrapper {
         myDetailController.updateDetailView();
       }
     };
-    final JTree tree = new BreakpointsCheckboxTree(myProject, myTreeController) {
+    BreakpointsCheckboxTree tree = new BreakpointsCheckboxTree(myProject, myTreeController) {
       @Override
       protected void onDoubleClick(CheckedTreeNode node) {
         if (node instanceof BreakpointsGroupNode) {
@@ -242,6 +243,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     };
 
+    tree.setHorizontalAutoScrollingEnabled(false);
     PopupHandler.installPopupHandler(tree, new ActionGroup() {
       @NotNull
       @Override
@@ -278,7 +280,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
     new AnAction("BreakpointDialog.GoToSource") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);
         close(OK_EXIT_CODE);
       }
@@ -286,7 +288,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
     new AnAction("BreakpointDialog.ShowSource") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);
         close(OK_EXIT_CODE);
       }
@@ -298,31 +300,18 @@ public class BreakpointsDialog extends DialogWrapper {
       .toListAndThen(DefaultActionGroup::new);
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree).
-      setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          JBPopupFactory.getInstance()
-            .createActionGroupPopup(null, breakpointTypes, DataManager.getInstance().getDataContext(button.getContextComponent()),
-                                    JBPopupFactory.ActionSelectionAid.NUMBERING, false)
-            .show(button.getPreferredPopupPoint());
-        }
-      }).
-      setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          myTreeController.removeSelectedBreakpoints(myProject);
-        }
-      }).
-      setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
-            if (item.allowedToRemove()) {
-              return true;
-            }
+      setAddAction(button -> JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, breakpointTypes, DataManager.getInstance().getDataContext(button.getContextComponent()),
+                                JBPopupFactory.ActionSelectionAid.NUMBERING, false)
+        .show(button.getPreferredPopupPoint())).
+      setRemoveAction(button -> myTreeController.removeSelectedBreakpoints(myProject)).
+      setRemoveActionUpdater(e -> {
+        for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
+          if (item.allowedToRemove()) {
+            return true;
           }
-          return false;
         }
+        return false;
       }).
       setToolbarPosition(ActionToolbarPosition.TOP).
       setToolbarBorder(JBUI.Borders.empty());
@@ -383,7 +372,7 @@ public class BreakpointsDialog extends DialogWrapper {
     saveTreeState(dialogState);
     final List<XBreakpointGroupingRule> rulesEnabled = ContainerUtil.filter(myRulesEnabled, rule -> !rule.isAlwaysEnabled());
 
-    dialogState.setSelectedGroupingRules(new HashSet<>(ContainerUtil.map(rulesEnabled, rule -> rule.getId())));
+    dialogState.setSelectedGroupingRules(new THashSet<>(ContainerUtil.map(rulesEnabled, XBreakpointGroupingRule::getId)));
     getBreakpointManager().setBreakpointsDialogSettings(dialogState);
   }
 
@@ -421,14 +410,14 @@ public class BreakpointsDialog extends DialogWrapper {
   private class AddXBreakpointAction extends AnAction implements DumbAware {
     private final XBreakpointType<?, ?> myType;
 
-    public AddXBreakpointAction(XBreakpointType<?, ?> type) {
+    AddXBreakpointAction(XBreakpointType<?, ?> type) {
       myType = type;
       getTemplatePresentation().setIcon(type.getEnabledIcon());
       getTemplatePresentation().setText(type.getTitle());
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       saveCurrentItem();
       XBreakpoint<?> breakpoint = myType.addBreakpoint(myProject, null);
       if (breakpoint != null) {
@@ -472,10 +461,10 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       String groupName = myGroup;
       if (myNewGroup) {
-        groupName = Messages.showInputDialog("New group name", "New Group", AllIcons.Nodes.NewFolder);
+        groupName = Messages.showInputDialog("New group name", "New Group", AllIcons.Nodes.Folder);
         if (groupName == null) {
           return;
         }
@@ -499,7 +488,7 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       getBreakpointManager().setDefaultGroup(myName);
       myTreeController.rebuildTree(myBreakpointItems);
     }
@@ -514,7 +503,7 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       String description = Messages.showInputDialog("", "Edit Description", null, myBreakpoint.getUserDescription(), null);
       if (description == null) {
         return;

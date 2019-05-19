@@ -122,6 +122,9 @@ class MethodRef {
         void foo(MethodRef m, T a);
     }
 
+    void boo(String s, int unrelated) {
+    }
+
     void boo(String s) {
     }
 
@@ -245,7 +248,7 @@ class Test88 {
 
   void testAllCollectors() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems 0, 'collect', 'collect', 'collect(Collectors.toCollection())', 'collect(Collectors.toList())', 'collect(Collectors.toSet())'
+    assert myFixture.lookupElementStrings == ['collect', 'collect', 'collect(Collectors.toCollection())', 'collect(Collectors.toList())', 'collect(Collectors.toSet())']
     selectItem(myItems.find { it.lookupString.contains('toCollection') })
     checkResultByFileName()
   }
@@ -281,6 +284,12 @@ class Test88 {
   void testLambdaInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
+  }
+
+  void testLambdaInAmbiguousConstructorCall() {
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('Empty') })
+    checkResultByFileName()
   }
 
   void testLambdaWithSuperWildcardInAmbiguousCall() {
@@ -334,6 +343,13 @@ class Test88 {
     checkResultByFileName()
   }
 
+  void testChainedMethodReferenceWithNoPrefix() {
+    myFixture.addClass("package bar; public class Strings {}")
+    myFixture.addClass("package foo; public class Strings { public static void goo() {} }")
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'Strings::goo'
+  }
+
   void testPreferVariableToLambda() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'output', 'out -> '
@@ -369,4 +385,19 @@ class Test88 {
     assert !('finalize' in myFixture.lookupElementStrings)
   }
 
+  void "test do not suggest inaccessible methods"() {
+    myFixture.configureByText 'a.java',
+                              'import java.util.*; class F { { new ArrayList<String>().forEach(O<caret>) }}'
+    myFixture.completeBasic()
+    assert !('finalize' in myFixture.lookupElementStrings)
+  }
+
+  void "test only importable suggestions in import"() {
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    myFixture.addClass("package com.foo; public class Comments { public static final int B = 2; }")
+    myFixture.configureByText("a.java", "import com.<caret>x.y;\n" +
+                                        "import static java.util.stream.Collectors.joining;")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['foo']
+  }
 }

@@ -38,7 +38,7 @@ import java.util.Map;
 class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<PsiElement> {
   private final ContentHandler myHandler;
 
-  public Psi2SaxAdapter(ContentHandler handler) {
+  Psi2SaxAdapter(ContentHandler handler) {
     myHandler = handler;
   }
 

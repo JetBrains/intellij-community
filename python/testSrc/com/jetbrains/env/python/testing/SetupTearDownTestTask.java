@@ -36,7 +36,7 @@ abstract class SetupTearDownTestTask<T extends PyScriptTestProcessRunner<?>> ext
   protected final void checkTestResults(@NotNull final T runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
 
     if (runner.getCurrentRerunStep() == 0) {
       Assert.assertEquals(runner.getFormattedTestTree(), 1, runner.getFailedTestsCount());

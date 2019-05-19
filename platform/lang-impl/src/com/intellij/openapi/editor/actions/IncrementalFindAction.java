@@ -28,9 +28,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 public class IncrementalFindAction extends EditorAction {
+  public static final Key<Boolean> SEARCH_DISABLED = Key.create("EDITOR_SEARCH_DISABLED");
+
   public static class Handler extends EditorActionHandler {
 
     private final boolean myReplace;
@@ -73,6 +76,9 @@ public class IncrementalFindAction extends EditorAction {
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       if (myReplace && ConsoleViewUtil.isConsoleViewEditor(editor) &&
           !ConsoleViewUtil.isReplaceActionEnabledForConsoleViewEditor(editor)) {
+        return false;
+      }
+      if (SEARCH_DISABLED.get(editor, false)) {
         return false;
       }
       Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));

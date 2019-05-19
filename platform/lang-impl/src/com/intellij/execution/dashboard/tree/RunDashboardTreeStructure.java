@@ -34,13 +34,13 @@ import java.util.stream.Collectors;
  */
 public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
   private final Project myProject;
-  private final List<RunDashboardGrouper> myGroupers;
-  private final List<RunDashboardFilter> myFilters;
+  private final List<? extends RunDashboardGrouper> myGroupers;
+  private final List<? extends RunDashboardFilter> myFilters;
   private final RunConfigurationsTreeRootNode myRootElement;
 
   public RunDashboardTreeStructure(@NotNull Project project,
-                                   @NotNull List<RunDashboardGrouper> groupers,
-                                   @NotNull List<RunDashboardFilter> filters) {
+                                   @NotNull List<? extends RunDashboardGrouper> groupers,
+                                   @NotNull List<? extends RunDashboardFilter> filters) {
     super(project);
     myProject = project;
     myGroupers = groupers;
@@ -54,6 +54,7 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRootElement;
@@ -78,7 +79,8 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
     public Collection<? extends AbstractTreeNode> getChildren() {
       RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(myProject);
       List<RunConfigurationNode> nodes = runDashboardManager.getRunConfigurations().stream()
-        .map(value -> new RunConfigurationNode(myProject, value, runDashboardManager.getContributor(value.first.getType())))
+        .map(value -> new RunConfigurationNode(myProject, value,
+                                               runDashboardManager.getCustomizers(value.getSettings(), value.getDescriptor())))
         .filter(node -> myFilters.stream().allMatch(filter -> filter.isVisible(node)))
         .collect(Collectors.toList());
 
@@ -91,7 +93,7 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
     }
   }
 

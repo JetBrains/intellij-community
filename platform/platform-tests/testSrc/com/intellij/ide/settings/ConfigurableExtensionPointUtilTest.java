@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -10,9 +8,9 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableFilter;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -20,10 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Nikolay Matveev
@@ -168,7 +163,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
   @NotNull
   private static ConfigurableEP<Configurable> deserializeConfigurable(@NotNull String text) throws IOException, JDOMException {
-    Element element = JdomKt.loadElement(text);
+    Element element = JDOMUtil.load(text);
     ConfigurableEP<Configurable> bean = new ConfigurableEP<>();
     XmlSerializer.deserializeInto(element, bean);
     return bean;
@@ -177,9 +172,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   private static void matchStructures(@NotNull List<ConfigurableEP<Configurable>> configurableEPs,
                                       @Nullable ConfigurableFilter filter,
                                       @NotNull List<Node> expectedTopLevelNodes) {
-    //noinspection unchecked
-    ConfigurableEP<Configurable>[] extensions = configurableEPs.toArray(new ConfigurableEP[0]);
-    List<Configurable> list = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, filter);
+    List<Configurable> list = ConfigurableExtensionPointUtil.buildConfigurablesList(configurableEPs, filter);
     assertEquals(expectedTopLevelNodes.size(), list.size());
     for (int i = 0; i < list.size(); i++) {
       matchNodesDeeply(list.get(i), expectedTopLevelNodes.get(i));
@@ -483,8 +476,8 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
   private static List<Node> build(Configurable... configurables) {
     Map<String, List<Configurable>> map = ConfigurableExtensionPointUtil.groupConfigurables(Arrays.asList(configurables));
-    List<Node> children = ContainerUtil.newArrayList();
-    for (Map.Entry<String, List<Configurable>> entry : ContainerUtil.newTreeMap(map).entrySet()) {
+    List<Node> children = new ArrayList<>();
+    for (Map.Entry<String, List<Configurable>> entry : new TreeMap<>(map).entrySet()) {
       children.add(node(entry.getKey(), entry.getValue()));
     }
     return children;
@@ -496,7 +489,6 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   private static Node node(Configurable configurable) {
-    @SuppressWarnings("unchecked")
     SearchableConfigurable sc = (SearchableConfigurable)configurable;
     if (configurable instanceof Configurable.Composite) {
       Configurable.Composite composite = (Configurable.Composite)configurable;
@@ -511,7 +503,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   private static Node node(String id, List<Configurable> configurables) {
-    List<Node> children = ContainerUtil.newArrayList();
+    List<Node> children = new ArrayList<>();
     for (Configurable configurable : configurables) {
       children.add(node(configurable));
     }

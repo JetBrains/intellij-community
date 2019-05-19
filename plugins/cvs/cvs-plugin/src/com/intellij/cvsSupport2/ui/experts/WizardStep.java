@@ -67,13 +67,12 @@ public abstract class WizardStep extends StepAdapter{
 
   public void saveState(){}
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myComponent;
   }
 
   public void focus() {
-    SwingUtilities.invokeLater(() -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(), true);
-    }));
+    SwingUtilities.invokeLater(() -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(), true)));
   }
 }

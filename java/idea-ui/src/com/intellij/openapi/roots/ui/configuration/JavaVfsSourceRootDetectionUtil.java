@@ -69,7 +69,7 @@ public class JavaVfsSourceRootDetectionUtil {
             }
           }
           else {
-            FileType type = typeManager.getFileTypeByFileName(file.getName());
+            FileType type = typeManager.getFileTypeByFileName(file.getNameSequence());
             if (StdFileTypes.JAVA == type) {
               VirtualFile root = suggestRootForJavaFile(file);
               if (root != null) {

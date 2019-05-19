@@ -12,8 +12,9 @@
  */
 package org.netbeans.lib.cvsclient.file;
 
-import org.netbeans.lib.cvsclient.util.BugLog;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.File;
 
@@ -41,23 +42,27 @@ public final class FileSystem
 
 	// Implemented ============================================================
 
-	public File getRootDirectory() {
+	@Override
+        public File getRootDirectory() {
 		return rootDirectory;
 	}
 
-	public File getFile(String relativeFileName) {
+	@Override
+        public File getFile(String relativeFileName) {
 		BugLog.getInstance().assertNotNull(relativeFileName);
 
 		return new File(rootDirectory, relativeFileName);
 	}
 
-	public File getFile(AbstractFileObject fileObject) {
+	@Override
+        public File getFile(AbstractFileObject fileObject) {
 		BugLog.getInstance().assertNotNull(fileObject);
 
 		return new File(rootDirectory, fileObject.getPath().substring(1));
 	}
 
-	public FileObject getFileObject(File file) throws OutOfFileSystemException {
+	@Override
+        public FileObject getFileObject(File file) throws OutOfFileSystemException {
 		BugLog.getInstance().assertNotNull(file);
 
 		if (file.isDirectory()) {
@@ -67,7 +72,8 @@ public final class FileSystem
 		return FileObject.createInstance(getPath(file));
 	}
 
-	public DirectoryObject getDirectoryObject(File directory) throws OutOfFileSystemException {
+	@Override
+        public DirectoryObject getDirectoryObject(File directory) throws OutOfFileSystemException {
 		BugLog.getInstance().assertNotNull(directory);
 
 		if (directory.isFile()) {
@@ -99,7 +105,7 @@ public final class FileSystem
 			canonicalFileName = canonicalFileName.substring(0, canonicalFileName.length() - 1);
 		}
 		if (System.getProperty(OS_NAME_PARAMETER).startsWith(WINDOWS)) {
-			return canonicalFileName.toLowerCase();
+			return StringUtil.toLowerCase(canonicalFileName);
 		}
 		return canonicalFileName;
 	}

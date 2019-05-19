@@ -34,7 +34,7 @@ except ImportError:
 from IPython.core import release
 
 from _pydev_bundle.pydev_imports import xmlrpclib
-from _pydevd_bundle.pydevd_constants import dict_keys
+from _pydevd_bundle.pydevd_constants import dict_keys, dict_iter_items
 
 default_pydev_banner_parts = default_banner_parts
 
@@ -50,7 +50,7 @@ def show_in_pager(self, strng, *args, **kwargs):
         strng = strng['text/plain']
     print(strng)
 
-def create_editor_hook(pydev_host, pydev_client_port):
+def create_editor_hook(rpc_client):
 
     def call_editor(filename, line=0, wait=True):
         """ Open an editor in PyDev """
@@ -65,8 +65,7 @@ def create_editor_hook(pydev_host, pydev_client_port):
         # sys.__stderr__.write('Calling editor at: %s:%s\n' % (pydev_host, pydev_client_port))
 
         # Tell PyDev to open the editor
-        server = xmlrpclib.Server('http://%s:%s' % (pydev_host, pydev_client_port))
-        server.IPythonEditor(filename, str(line))
+        rpc_client.IPythonEditor(filename, str(line))
 
         if wait:
             try:
@@ -455,20 +454,20 @@ class _PyDevFrontEnd:
 
 class _PyDevFrontEndContainer:
     _instance = None
-    _last_host_port = None
+    _last_rpc_client = None
 
 
-def get_pydev_frontend(pydev_host, pydev_client_port):
+def get_pydev_frontend(rpc_client):
     if _PyDevFrontEndContainer._instance is None:
         _PyDevFrontEndContainer._instance = _PyDevFrontEnd()
 
-    if _PyDevFrontEndContainer._last_host_port != (pydev_host, pydev_client_port):
-        _PyDevFrontEndContainer._last_host_port = pydev_host, pydev_client_port
+    if _PyDevFrontEndContainer._last_rpc_client != rpc_client:
+        _PyDevFrontEndContainer._last_rpc_client = rpc_client
 
         # Back channel to PyDev to open editors (in the future other
         # info may go back this way. This is the same channel that is
         # used to get stdin, see StdIn in pydev_console_utils)
-        _PyDevFrontEndContainer._instance.ipython.hooks['editor'] = create_editor_hook(pydev_host, pydev_client_port)
+        _PyDevFrontEndContainer._instance.ipython.hooks['editor'] = create_editor_hook(rpc_client)
 
         # Note: setting the callback directly because setting it with set_hook would actually create a chain instead
         # of ovewriting at each new call).
@@ -476,4 +475,25 @@ def get_pydev_frontend(pydev_host, pydev_client_port):
 
     return _PyDevFrontEndContainer._instance
 
-    
+
+def get_ipython_hidden_vars(ipython_shell):
+    try:
+        if hasattr(ipython_shell, 'user_ns_hidden'):
+            user_ns_hidden = ipython_shell.user_ns_hidden
+            if isinstance(user_ns_hidden, dict):
+                # Since IPython 2 dict `user_ns_hidden` contains hidden variables and values
+                user_hidden_dict = user_ns_hidden.copy()
+            else:
+                # In IPython 1.x `user_ns_hidden` used to be a set with names of hidden variables
+                user_hidden_dict = dict([(key, val) for key, val in dict_iter_items(ipython_shell.user_ns)
+                                         if key in user_ns_hidden])
+
+            # while `_`, `__` and `___` were not initialized, they are not presented in `user_ns_hidden`
+            user_hidden_dict.setdefault('_', '')
+            user_hidden_dict.setdefault('__', '')
+            user_hidden_dict.setdefault('___', '')
+
+            return user_hidden_dict
+    except:
+        # Getting IPython variables shouldn't break loading frame variables
+        traceback.print_exc()

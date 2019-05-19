@@ -43,7 +43,7 @@ public interface FragmentList {
     }
 
     @Override
-    public Fragment getFragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {
+    public Fragment getFragmentAt(int offset, FragmentSide side, Condition<? super Fragment> condition) {
       return null;
     }
   };
@@ -52,5 +52,5 @@ public interface FragmentList {
 
   Iterator<Fragment> iterator();
 
-  Fragment getFragmentAt(int offset, FragmentSide side, Condition<Fragment> condition);
+  Fragment getFragmentAt(int offset, FragmentSide side, Condition<? super Fragment> condition);
 }

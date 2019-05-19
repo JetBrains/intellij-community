@@ -1,44 +1,32 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.projectWizard.NewProjectWizard;
+import com.intellij.lang.IdeLanguageCustomization;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import org.jetbrains.annotations.NotNull;
 
-public class NewProjectAction extends AnAction implements DumbAware {
+public class NewProjectAction extends AnAction implements DumbAware, NewProjectOrModuleAction {
   @Override
   public boolean startInTransaction() {
     return true;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     NewProjectWizard wizard = new NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null);
     Project eventProject = getEventProject(e);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      NewProjectUtil.createNewProject(eventProject, wizard);
-    });
+    NewProjectUtil.createNewProject(eventProject, wizard);
   }
 
   @Override
@@ -46,5 +34,30 @@ public class NewProjectAction extends AnAction implements DumbAware {
     if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
       e.getPresentation().setIcon(AllIcons.Welcome.CreateNewProject);
     }
+    updateActionText(this, e);
+  }
+
+  @NotNull
+  @Override
+  public String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
+    return ProjectBundle.message("new.project.action.text", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 : 0);
+  }
+
+  public static <T extends AnAction & NewProjectOrModuleAction> void updateActionText(@NotNull T action, @NotNull AnActionEvent e) {
+    String actionText;
+    if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
+      actionText = action.getTemplateText();
+    }
+    else {
+      boolean inJavaIde = IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages().contains(JavaLanguage.INSTANCE);
+      boolean fromNewSubMenu = isInvokedFromNewSubMenu(action, e);
+      actionText = action.getActionText(fromNewSubMenu, inJavaIde);
+    }
+    e.getPresentation().setText(actionText);
+  }
+
+  private static boolean isInvokedFromNewSubMenu(@NotNull AnAction action, @NotNull AnActionEvent e) {
+    return NewActionGroup.isActionInNewPopupMenu(action) &&
+           (ActionPlaces.MAIN_MENU.equals(e.getPlace()) || ActionPlaces.isPopupPlace(e.getPlace()));
   }
 }

@@ -16,18 +16,35 @@
 package com.jetbrains.python.findUsages;
 
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
+import com.intellij.lang.cacheBuilder.VersionedWordsScanner;
+import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.Processor;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonLexer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class PyWordsScanner extends DefaultWordsScanner {
-    public PyWordsScanner() {
-        super(new PythonLexer(),
-                TokenSet.create(PyTokenTypes.IDENTIFIER),
-                TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT),
-                PyTokenTypes.STRING_NODES);
+class PyWordsScanner extends VersionedWordsScanner {
+  private volatile DefaultWordsScanner myDelegate;
+
+  @Override
+  public void processWords(@NotNull CharSequence fileText, @NotNull Processor<WordOccurrence> processor) {
+    DefaultWordsScanner delegate = myDelegate;
+    if (delegate == null) {
+      myDelegate = delegate = new DefaultWordsScanner(new PythonLexer(),
+                                         TokenSet.create(PyTokenTypes.IDENTIFIER),
+                                         TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT),
+                                         PyTokenTypes.STRING_NODES);
     }
+    delegate.processWords(fileText, processor);
+  }
+
+  @Override
+  public int getVersion() {
+    return super.getVersion() + 1;
+  }
+
 }

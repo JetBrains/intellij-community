@@ -39,6 +39,8 @@ public interface Block {
    * Returns the list of child blocks for the specified block. <b>Important</b>: The same list
    * of blocks must be returned when {@code getSubBlocks()} is repeatedly called on a particular
    * {@code Block} instance.
+   * <b>Even more Important</b>:
+   * If immutable list is returned (e.g. {@code Collections.singletonList(xxx)}, you must mark this {@link Block} class with {@link com.intellij.formatting.ReadOnlyBlockContainer} marker interface.
    *
    * @return the child block list.
    * @see #isLeaf()
@@ -124,4 +126,16 @@ public interface Block {
    * @return true if the block is a leaf block and may not contain child blocks, false otherwise.
    */
   boolean isLeaf();
+
+  /**
+   * Returns an internal debug name, used in the Block Structure of PSI Viewer.
+   *
+   * By default it returns null, in this case the PSI Viewer uses the simple class name.
+   *
+   * @return debug name, or null for default one.
+   */
+  @Nullable
+  default String getDebugName() {
+    return null;
+  }
 }

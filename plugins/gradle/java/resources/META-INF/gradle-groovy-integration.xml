@@ -10,13 +10,11 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleBuildScriptContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDistributionsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor"/>
-    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleMavenArtifactRepositoryContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleRepositoriesContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDependenciesContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleJavaContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleMiscContributor"/>
-    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor"/>
-    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleIdeaSettingsContributor"/>
     <pluginDescriptions implementation="org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptions"/>
 
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
@@ -34,16 +32,18 @@
                                 implementationClass="org.jetbrains.plugins.gradle.documentation.GradleDocumentationProvider" order="first"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.resolve.dsl.GradleDslAnnotator"/>
     <weigher key="completion" implementationClass="org.jetbrains.plugins.gradle.service.resolve.dsl.GradleCompletionWeigher"
-             id="myWeigher" order="first"/>
-    <completion.contributor language="Groovy" order="first"
-                            implementationClass="org.jetbrains.plugins.gradle.codeInsight.ConfigurationsCompletionContributor"/>
-    <completion.contributor language="Groovy" order="first"
-                            implementationClass="org.jetbrains.plugins.gradle.codeInsight.PropertiesTasksCompletionContributor"/>
-
+             id="gradleWeigher" order="first"/>
     <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
-                     bundle="org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle"
+                     bundle="i18n.GradleInspectionBundle"
                      key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.MultipleRepositoryUrlsInspection"/>
+
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
+                              order="last"/>
+    <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"
+                              implementationClass="org.jetbrains.plugins.gradle.execution.GradleGroovyRunLineMarkerProvider"/>
+
+    <fileTypeUsageSchemaDescriptor schema="Gradle" implementationClass="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -52,11 +52,25 @@
     <importContributor implementation="org.jetbrains.plugins.gradle.config.GradleDefaultImportContributor"/>
     <variableEnhancer order="first" implementation="org.jetbrains.plugins.gradle.service.resolve.GradleClosureAsAnonymousParameterEnhancer"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSettingsScriptContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleNonCodeMembersContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptMembersContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectExtensionContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectMembersContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSetterAsMethodContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactHandlerContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskContainerContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleNamedDomainCollectionContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor"/>
+    <callTypeCalculator implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectCallTypeCalculator"/>
+    <callTypeCalculator implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactCallTypeCalculator"/>
+    <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationClosureDelegateProvider"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDelegatesToProvider"/>
-    <referenceTypeEnhancer implementation="org.jetbrains.plugins.gradle.service.resolve.NamedDomainObjectCollectionTypeEnhancer"/>
+    <expressionFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationExpressionFilter"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression"
+                    implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationTypeCalculator"/>
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleUnresolvedReferenceFilter"/>
+    <inlayHintFilter implementation="org.jetbrains.plugins.gradle.dsl.GradleInlayHintFilter"/>
   </extensions>
 
   <actions>

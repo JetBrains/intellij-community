@@ -18,30 +18,30 @@ package com.intellij.vcsUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,16 +49,17 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.stream.Collectors.groupingBy;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class VcsUtil {
-  protected static final char[] ourCharsToBeChopped = new char[]{'/', '\\'};
+  protected static final char[] ourCharsToBeChopped = {'/', '\\'};
   private static final Logger LOG = Logger.getInstance("#com.intellij.vcsUtil.VcsUtil");
 
-  public final static String MAX_VCS_LOADED_SIZE_KB = "idea.max.vcs.loaded.size.kb";
+  public static final String MAX_VCS_LOADED_SIZE_KB = "idea.max.vcs.loaded.size.kb";
   private static final int ourMaxLoadedFileSize = computeLoadedFileSize();
 
   @NotNull private static final VcsRoot FICTIVE_ROOT = new VcsRoot(null, null);
@@ -103,7 +104,7 @@ public class VcsUtil {
    * @deprecated use the {@link VcsDirtyScopeManager} directly.
    */
   @Deprecated
-  public static void refreshFiles(Project project, HashSet<FilePath> paths) {
+  public static void refreshFiles(Project project, HashSet<? extends FilePath> paths) {
     for (FilePath path : paths) {
       VirtualFile vFile = path.getVirtualFile();
       if (vFile != null) {
@@ -183,7 +184,7 @@ public class VcsUtil {
   }
 
   @Nullable
-  private static <T> T computeValue(@NotNull Project project, @NotNull Function<ProjectLevelVcsManager, T> provider) {
+  private static <T> T computeValue(@NotNull Project project, @NotNull Function<? super ProjectLevelVcsManager, ? extends T> provider) {
     return ReadAction.compute(() -> {
       //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
       //  a future task after the component has been disposed.
@@ -294,7 +295,7 @@ public class VcsUtil {
    * @param change "Change" description.
    * @return Return true if the "Change" object is created for "Rename" operation:
    *         in this case name of files for "before" and "after" revisions must not
-   *         coniside.
+   *         coincide.
    */
   public static boolean isRenameChange(Change change) {
     boolean isRenamed = false;
@@ -314,7 +315,7 @@ public class VcsUtil {
    *         "before" revision is obviously NULL, while "after" revision is not.
    */
   public static boolean isChangeForNew(Change change) {
-    return (change.getBeforeRevision() == null) && (change.getAfterRevision() != null);
+    return change.getBeforeRevision() == null && change.getAfterRevision() != null;
   }
 
   /**
@@ -323,18 +324,18 @@ public class VcsUtil {
    *         "before" revision is NOT NULL, while "after" revision is NULL.
    */
   public static boolean isChangeForDeleted(Change change) {
-    return (change.getBeforeRevision() != null) && (change.getAfterRevision() == null);
+    return change.getBeforeRevision() != null && change.getAfterRevision() == null;
   }
 
   public static boolean isChangeForFolder(Change change) {
     ContentRevision revB = change.getBeforeRevision();
     ContentRevision revA = change.getAfterRevision();
-    return (revA != null && revA.getFile().isDirectory()) || (revB != null && revB.getFile().isDirectory());
+    return revA != null && revA.getFile().isDirectory() || revB != null && revB.getFile().isDirectory();
   }
 
   /**
    * Sort file paths so that paths under the same root are placed from the
-   * outermost to the innermost (farest from the root).
+   * outermost to the innermost (farthest from the root).
    *
    * @param files An array of file paths to be sorted. Sorting is done over the parameter.
    * @return Sorted array of the file paths.
@@ -351,12 +352,12 @@ public class VcsUtil {
   /**
    * @param e ActionEvent object
    * @return {@code VirtualFile} available in the current context.
-   *         Returns not {@code null} if and only if exectly one file is available.
+   *         Returns not {@code null} if and only if exactly one file is available.
    */
   @Nullable
-  public static VirtualFile getOneVirtualFile(AnActionEvent e) {
+  public static VirtualFile getOneVirtualFile(@NotNull AnActionEvent e) {
     VirtualFile[] files = getVirtualFiles(e);
-    return (files.length != 1) ? null : files[0];
+    return files.length != 1 ? null : files[0];
   }
 
   /**
@@ -364,9 +365,10 @@ public class VcsUtil {
    * @return {@code VirtualFile}s available in the current context.
    *         Returns empty array if there are no available files.
    */
-  public static VirtualFile[] getVirtualFiles(AnActionEvent e) {
+  @NotNull
+  public static VirtualFile[] getVirtualFiles(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    return (files == null) ? VirtualFile.EMPTY_ARRAY : files;
+    return files == null ? VirtualFile.EMPTY_ARRAY : files;
   }
 
   /**
@@ -375,7 +377,7 @@ public class VcsUtil {
    * @throws IllegalArgumentException if {@code dir} isn't a directory.
    */
   public static void collectFiles(final VirtualFile dir,
-                                  final List<VirtualFile> files,
+                                  final List<? super VirtualFile> files,
                                   final boolean recursive,
                                   final boolean addDirectories) {
     if (!dir.isDirectory()) {
@@ -402,21 +404,47 @@ public class VcsUtil {
     });
   }
 
-  public static boolean runVcsProcessWithProgress(final VcsRunnable runnable, String progressTitle, boolean canBeCanceled, Project project)
-    throws VcsException {
-    final Ref<VcsException> ex = new Ref<>();
-    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      try {
-        runnable.run();
+  /**
+   * @deprecated Use {@link ProgressManager#runProcessWithProgressSynchronously(ThrowableComputable, String, boolean, Project)}
+   * and other run methods from the ProgressManager.
+   */
+  @Deprecated
+  public static boolean runVcsProcessWithProgress(@NotNull VcsRunnable runnable,
+                                                  @NotNull String progressTitle,
+                                                  boolean canBeCanceled,
+                                                  @Nullable Project project) throws VcsException {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      final Ref<VcsException> ex = new Ref<>();
+      boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        try {
+          runnable.run();
+        }
+        catch (VcsException e) {
+          ex.set(e);
+        }
+      }, progressTitle, canBeCanceled, project);
+      if (!ex.isNull()) {
+        throw ex.get();
       }
-      catch (VcsException e) {
-        ex.set(e);
-      }
-    }, progressTitle, canBeCanceled, project);
-    if (!ex.isNull()) {
-      throw ex.get();
+      return result;
     }
-    return result;
+    else {
+      runnable.run();
+      return true;
+    }
+  }
+
+  public static <T> T computeWithModalProgress(@Nullable Project project,
+                                               @NotNull String title,
+                                               boolean canBeCancelled,
+                                               @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends VcsException> computable)
+    throws VcsException {
+    return ProgressManager.getInstance().run(new Task.WithResult<T, VcsException>(project, title, canBeCancelled) {
+      @Override
+      protected T compute(@NotNull ProgressIndicator indicator) throws VcsException {
+        return computable.convert(indicator);
+      }
+    });
   }
 
   @Deprecated
@@ -522,36 +550,15 @@ public class VcsUtil {
 
   @NotNull
   public static <T> Map<VcsRoot, List<T>> groupByRoots(@NotNull Project project,
-                                                       @NotNull Collection<T> items,
-                                                       @NotNull Function<T, FilePath> filePathMapper) {
+                                                       @NotNull Collection<? extends T> items,
+                                                       @NotNull Function<? super T, ? extends FilePath> filePathMapper) {
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
 
     return items.stream().collect(groupingBy(item -> notNull(manager.getVcsRootObjectFor(filePathMapper.fun(item)), FICTIVE_ROOT)));
   }
 
   @NotNull
-  public static Collection<VcsDirectoryMapping> findRoots(@NotNull VirtualFile rootDir, @NotNull Project project)
-    throws IllegalArgumentException {
-    if (!rootDir.isDirectory()) {
-      throw new IllegalArgumentException(
-        "Can't find VCS at the target file system path. Reason: expected to find a directory there but it's not. The path: "
-        + rootDir.getParent()
-      );
-    }
-    Collection<VcsRoot> roots = ServiceManager.getService(project, VcsRootDetector.class).detect(rootDir);
-    Collection<VcsDirectoryMapping> result = ContainerUtilRt.newArrayList();
-    for (VcsRoot vcsRoot : roots) {
-      VirtualFile vFile = vcsRoot.getPath();
-      AbstractVcs rootVcs = vcsRoot.getVcs();
-      if (rootVcs != null && vFile != null) {
-        result.add(new VcsDirectoryMapping(vFile.getPath(), rootVcs.getName()));
-      }
-    }
-    return result;
-  }
-
-  @NotNull
-  public static List<VcsDirectoryMapping> addMapping(@NotNull List<VcsDirectoryMapping> existingMappings,
+  public static List<VcsDirectoryMapping> addMapping(@NotNull List<? extends VcsDirectoryMapping> existingMappings,
                                                      @NotNull String path,
                                                      @NotNull String vcs) {
     List<VcsDirectoryMapping> mappings = new ArrayList<>(existingMappings);
@@ -574,4 +581,26 @@ public class VcsUtil {
     mappings.add(new VcsDirectoryMapping(path, vcs));
     return mappings;
   }
+
+  @NotNull
+  public static FilePath getLastCommitPath(@NotNull Project project, @NotNull FilePath path) {
+    if (project.isDefault()) return path;
+
+    Change change = ChangeListManager.getInstance(project).getChange(path);
+    if (change == null || change.getType() != Change.Type.MOVED || change.getBeforeRevision() == null) {
+      return path;
+    }
+
+    return change.getBeforeRevision().getFile();
+  }
+
+  @NotNull
+  public static Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
+    return IgnoredFileContentProvider
+      .IGNORE_FILE_CONTENT_PROVIDER
+      .extensions(project)
+      .map(IgnoredFileContentProvider::getFileName)
+      .collect(Collectors.toSet());
+  }
+
 }

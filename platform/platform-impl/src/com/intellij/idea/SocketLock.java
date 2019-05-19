@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.IdeBundle;
@@ -13,12 +13,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.NotNullProducer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,23 +33,14 @@ import java.net.Socket;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-/**
- * @author mike
- */
 public final class SocketLock {
   public enum ActivateStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
 
@@ -143,9 +131,12 @@ public final class SocketLock {
       }
 
       myToken = UUID.randomUUID().toString();
+      // should be not inlined because handler created for each connected channel
       String[] lockedPaths = {myConfigPath, mySystemPath};
-      NotNullProducer<ChannelHandler> handler = () -> new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken);
-      myServer = BuiltInServer.startNioOrOio(2, 6942, 50, false, handler);
+      myServer = BuiltInServer.startNioOrOio(BuiltInServer.getRecommendedWorkerCount(), 6942, 50, false, () -> {
+        //noinspection CodeBlock2Expr
+        return new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken);
+      });
 
       byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(StandardCharsets.UTF_8);
       FileUtil.writeToFile(portMarkerC, portBytes);
@@ -157,7 +148,7 @@ public final class SocketLock {
       PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
       if (view != null) {
         try {
-          view.setPermissions(ContainerUtil.newHashSet(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+          view.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
         }
         catch (IOException e) {
           log(e);
@@ -170,12 +161,11 @@ public final class SocketLock {
   }
 
   private <V> V underLocks(@NotNull Callable<V> action) throws Exception {
+    OpenOption[] options = {StandardOpenOption.CREATE, StandardOpenOption.APPEND};
     FileUtilRt.createDirectory(new File(myConfigPath));
-    Path path1 = Paths.get(myConfigPath, PORT_LOCK_FILE);
-    try (FileChannel ch1 = FileChannel.open(path1, StandardOpenOption.CREATE, StandardOpenOption.APPEND); @SuppressWarnings("unused") FileLock lock1 = ch1.lock()) {
+    try (FileChannel cc = FileChannel.open(Paths.get(myConfigPath, PORT_LOCK_FILE), options); @SuppressWarnings("unused") FileLock cl = cc.lock()) {
       FileUtilRt.createDirectory(new File(mySystemPath));
-      Path path2 = Paths.get(mySystemPath, PORT_LOCK_FILE);
-      try (FileChannel ch2 = FileChannel.open(path2, StandardOpenOption.CREATE, StandardOpenOption.APPEND); @SuppressWarnings("unused") FileLock lock2 = ch2.lock()) {
+      try (FileChannel sc = FileChannel.open(Paths.get(mySystemPath, PORT_LOCK_FILE), options); @SuppressWarnings("unused") FileLock sl = sc.lock()) {
         return action.call();
       }
     }
@@ -290,17 +280,17 @@ public final class SocketLock {
     return args;
   }
 
-  private static class MyChannelInboundHandler extends MessageDecoder {
+  private static final class MyChannelInboundHandler extends MessageDecoder {
     private enum State {HEADER, CONTENT}
 
     private final String[] myLockedPaths;
-    private final AtomicReference<Consumer<List<String>>> myActivateListener;
+    private final AtomicReference<? extends Consumer<List<String>>> myActivateListener;
     private final String myToken;
     private State myState = State.HEADER;
 
-    public MyChannelInboundHandler(@NotNull String[] lockedPaths,
-                                   @NotNull AtomicReference<Consumer<List<String>>> activateListener,
-                                   @NotNull String token) {
+    MyChannelInboundHandler(@NotNull String[] lockedPaths,
+                            @NotNull AtomicReference<? extends Consumer<List<String>>> activateListener,
+                            @NotNull String token) {
       myLockedPaths = lockedPaths;
       myActivateListener = activateListener;
       myToken = token;
@@ -310,11 +300,9 @@ public final class SocketLock {
     public void channelActive(ChannelHandlerContext context) throws Exception {
       ByteBuf buffer = context.alloc().ioBuffer(1024);
       boolean success = false;
-      try {
-        ByteBufOutputStream out = new ByteBufOutputStream(buffer);
+      try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
         for (String path : myLockedPaths) out.writeUTF(path);
         out.writeUTF(PATHS_EOT_RESPONSE);
-        out.close();
         success = true;
       }
       finally {
@@ -352,10 +340,10 @@ public final class SocketLock {
 
             if (StringUtil.startsWith(command, PID_COMMAND)) {
               ByteBuf buffer = context.alloc().ioBuffer();
-              ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-              String name = ManagementFactory.getRuntimeMXBean().getName();
-              out.writeUTF(name);
-              out.close();
+              try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
+                String name = ManagementFactory.getRuntimeMXBean().getName();
+                out.writeUTF(name);
+              }
               context.writeAndFlush(buffer);
             }
 
@@ -380,9 +368,9 @@ public final class SocketLock {
               }
 
               ByteBuf buffer = context.alloc().ioBuffer(4);
-              ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-              out.writeUTF(OK_RESPONSE);
-              out.close();
+              try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
+                out.writeUTF(OK_RESPONSE);
+              }
               context.writeAndFlush(buffer);
             }
             context.close();

@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.migLayout.*
 import java.awt.Container
 import javax.swing.ButtonGroup
+import javax.swing.JComponent
 import javax.swing.JLabel
 
 @PublishedApi
@@ -13,13 +15,23 @@ internal fun createLayoutBuilder(isUseMagic: Boolean = true): LayoutBuilder {
 }
 
 interface LayoutBuilderImpl {
-  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false): Row
+  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, isSeparated: Boolean = false): Row
+
+  fun newTitledRow(title: String): Row
 
   // backward compatibility
   @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
-  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, indented: Boolean = false): Row = newRow(label, buttonGroup, separated)
+  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, indented: Boolean = false) = newRow(label, buttonGroup, separated)
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 
   fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null)
+
+  fun commentRow(text: String)
+
+  val preferredFocusedComponent: JComponent?
+  val validateCallbacks: List<() -> ValidationInfo?>
+  val applyCallbacks: List<() -> Unit>
+  val resetCallbacks: List<() -> Unit>
+  val isModifiedCallbacks: List<() -> Boolean>
 }

@@ -18,29 +18,12 @@ package com.intellij.openapi.file.exclude;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Rustam Vishnyakov
  */
 @State(name = "ProjectPlainTextFileTypeManager")
 public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
-  private final ProjectFileIndex myIndex;
-
-  public ProjectPlainTextFileTypeManager(ProjectFileIndex projectFileIndex) {
-    myIndex = projectFileIndex;
-  }
-
-  boolean isInContent(@NotNull VirtualFile file) {
-    return myIndex.isInContent(file);
-  }
-
-  boolean isInLibrarySource(@NotNull final VirtualFile file) {
-    return myIndex.isInLibrarySource(file);
-  }
-
   public static ProjectPlainTextFileTypeManager getInstance(Project project) {
     return ServiceManager.getService(project, ProjectPlainTextFileTypeManager.class);
   }

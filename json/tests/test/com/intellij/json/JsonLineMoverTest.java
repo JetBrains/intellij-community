@@ -40,6 +40,42 @@ public class JsonLineMoverTest extends JsonTestCase {
     doTest(true);
   }
 
+  public void testOutOfScopeHasProp() {
+    doTest(true);
+  }
+
+  public void testOutOfScopeNoFollowing() {
+    doTest(true);
+  }
+
+  public void testStatementSetMovedSameLevelDown() {
+    doTest(true);
+  }
+
+  public void testStatementSetMovedSameLevelUp() {
+    doTest(false);
+  }
+
+  public void testIntoScope() {
+    doTest(false);
+  }
+
+  public void testFromUpperIntoScope() {
+    doTest(true);
+  }
+
+  public void testOutsideArray() {
+    doTest(true);
+  }
+
+  public void testInsideArray() {
+    doTest(false);
+  }
+
+  public void testUpToUpper() {
+    doTest(false);
+  }
+
   public void testObjectSelectionMovedDown() {
     doTest(true);
   }

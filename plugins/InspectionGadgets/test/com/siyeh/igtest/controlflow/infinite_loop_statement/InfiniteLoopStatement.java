@@ -25,4 +25,36 @@ public class InfiniteLoopStatement {
             }
         }
     }
+
+    void lambdaThreadRun() {
+        new Thread((() -> {
+            while (true) {}
+        })).start();
+    }
+
+    void anonymClass() {
+        new Thread((new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                }
+            }
+        })).start();
+    }
+
+    void anotherPrivateMethod() {
+        new Thread((() -> usedInThreadConstructor())).start();
+    }
+
+    private void usedInThreadConstructor() {
+        while (true) {}
+    }
+
+    void privateMethodAsReference() {
+        new Thread((this::alsoUsedInThreadConstructor)).start();
+    }
+
+    private void alsoUsedInThreadConstructor() {
+        while (true) {}
+    }
 }

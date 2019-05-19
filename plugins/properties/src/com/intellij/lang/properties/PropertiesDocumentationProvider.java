@@ -54,7 +54,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
     if (raw == null) {
       return "<i>empty</i>";
     }
-    return StringUtil.escapeXml(raw);
+    return StringUtil.escapeXmlEntities(raw);
   }
 
   @Override

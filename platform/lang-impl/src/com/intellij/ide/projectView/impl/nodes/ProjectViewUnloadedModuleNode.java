@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 public class ProjectViewUnloadedModuleNode extends ProjectViewNode<UnloadedModuleDescription> {
 
-  public ProjectViewUnloadedModuleNode(Project project, UnloadedModuleDescription value, ViewSettings viewSettings) {
+  public ProjectViewUnloadedModuleNode(Project project, @NotNull UnloadedModuleDescription value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
@@ -48,7 +48,7 @@ public class ProjectViewUnloadedModuleNode extends ProjectViewNode<UnloadedModul
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     UnloadedModuleDescription module = getValue();
     if (module == null) {
       setValue(null);

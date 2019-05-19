@@ -37,7 +37,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import java.util.HashMap;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
@@ -47,10 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
@@ -72,7 +69,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
     if (!(descriptor instanceof ValueDescriptorImpl)) {
       return;
     }
-    
+
     final DebuggerTree tree = node.getTree();
     tree.saveState(node);
 
@@ -82,6 +79,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
     final ValueMarkup markup = valueDescriptor.getMarkup(debugProcess);
     debugProcess.getManagerThread().invoke(new DebuggerContextCommandImpl(debuggerContext) {
+      @Override
       public Priority getPriority() {
         return Priority.HIGH;
       }
@@ -139,6 +137,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
         finally {
           final boolean _sessionRefreshNeeded = sessionRefreshNeeded;
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               tree.restoreState(node);
               final TreeBuilder model = tree.getMutableModel();

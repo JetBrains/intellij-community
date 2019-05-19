@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xml.index;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -21,13 +23,12 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
  */
-public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implements Comparable<XsdNamespaceBuilder> {
-
+public class XsdNamespaceBuilder implements Comparable<XsdNamespaceBuilder>, NanoXmlBuilder {
   public static String computeNamespace(final InputStream is) {
-    return computeNamespace(new InputStreamReader(is)).getNamespace();
+    return computeNamespace(new InputStreamReader(is, StandardCharsets.UTF_8)).getNamespace();
   }
 
-  public static XsdNamespaceBuilder computeNamespace(final Reader reader) {
+  public static XsdNamespaceBuilder computeNamespace(@NotNull Reader reader) {
     try {
       final XsdNamespaceBuilder builder = new XsdNamespaceBuilder();
       NanoXmlUtil.parse(reader, builder);

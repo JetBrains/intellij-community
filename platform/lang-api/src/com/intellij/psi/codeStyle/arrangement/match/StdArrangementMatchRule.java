@@ -31,7 +31,6 @@ import java.util.Set;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 8/28/12 2:59 PM
  */
 public class StdArrangementMatchRule extends ArrangementMatchRule implements Cloneable, Comparable<StdArrangementMatchRule> {
 

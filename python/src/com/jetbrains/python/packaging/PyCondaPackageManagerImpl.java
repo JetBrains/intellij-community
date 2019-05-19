@@ -18,17 +18,14 @@ package com.jetbrains.python.packaging;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunCanceledByUserException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,8 +54,9 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   @Override
-  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
+  public void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
     if (useConda) {
+      if (requirements == null) return;
       final ArrayList<String> arguments = new ArrayList<>();
       for (PyRequirement requirement : requirements) {
         arguments.add(requirement.getPresentableText());
@@ -77,33 +75,27 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   private ProcessOutput getCondaOutput(@NotNull final String command, List<String> arguments) throws ExecutionException {
     final Sdk sdk = getSdk();
 
-    final String condaExecutable = PyCondaPackageService.getCondaExecutable(sdk.getHomeDirectory());
-    if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.emptyList(), new ProcessOutput());
-
     final String path = getCondaDirectory();
     if (path == null) throw new PyExecutionException("Empty conda name for " + sdk.getHomePath(), command, arguments);
 
-    final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, command, "-p", path);
+    final ArrayList<String> parameters = Lists.newArrayList(command, "-p", path);
     parameters.addAll(arguments);
 
-    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
-    final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-    final ProcessOutput result = handler.runProcess();
-    final int exitCode = result.getExitCode();
-    if (exitCode != 0) {
-      final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
-                             "Permission denied" : "Non-zero exit code";
-      throw new PyExecutionException(message, "Conda", parameters, result);
-    }
-    return result;
+    return PyCondaRunKt.runConda(sdk, parameters);
   }
 
   @Nullable
   private String getCondaDirectory() {
-    final VirtualFile homeDirectory = getSdk().getHomeDirectory();
+    final VirtualFile condaDirectory = getCondaDirectory(getSdk());
+    return condaDirectory == null ? null : condaDirectory.getPath();
+  }
+
+  @Nullable
+  public static VirtualFile getCondaDirectory(@NotNull Sdk sdk) {
+    final VirtualFile homeDirectory = sdk.getHomeDirectory();
     if (homeDirectory == null) return null;
-    if (SystemInfo.isWindows) return homeDirectory.getParent().getPath();
-    return homeDirectory.getParent().getParent().getPath();
+    if (SystemInfo.isWindows) return homeDirectory.getParent();
+    return homeDirectory.getParent().getParent();
   }
 
   @Override
@@ -153,6 +145,11 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     }
   }
 
+  @Override
+  public boolean hasManagement() throws ExecutionException {
+    return useConda || super.hasManagement();
+  }
+
   @NotNull
   private List<PyPackage> parseCondaToolOutput(@NotNull String s) throws ExecutionException {
     final String[] lines = StringUtil.splitByLines(s);
@@ -178,26 +175,40 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     return packages;
   }
 
-  public static boolean isCondaVEnv(@NotNull final Sdk sdk) {
-    final String condaName = "conda-meta";
-    final VirtualFile homeDirectory = sdk.getHomeDirectory();
-    if (homeDirectory == null) return false;
-    final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
-                                                         : homeDirectory.getParent().getParent();
-    final VirtualFile condaMeta = condaParent.findChild(condaName);
-    final VirtualFile envs = condaParent.findChild("envs");
-    return condaMeta != null && envs == null;
+  public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
+    return isCondaVirtualEnv(sdk.getHomePath());
+  }
+
+  public static boolean isCondaVirtualEnv(@Nullable String sdkPath) {
+    final VirtualFile condaMeta = findCondaMeta(sdkPath);
+    if (condaMeta == null) {
+      return false;
+    }
+    final VirtualFile envs = condaMeta.getParent().findChild("envs");
+    return envs == null;
   }
 
   // Conda virtual environment and system conda
-  public static boolean isConda(@NotNull final Sdk sdk) {
-    final String condaName = "conda-meta";
-    final VirtualFile homeDirectory = sdk.getHomeDirectory();
-    if (homeDirectory == null) return false;
+  public static boolean isConda(@NotNull Sdk sdk) {
+    return isConda(sdk.getHomePath());
+  }
+
+  public static boolean isConda(@Nullable String sdkPath) {
+    return findCondaMeta(sdkPath) != null;
+  }
+
+  @Nullable
+  private static VirtualFile findCondaMeta(@Nullable String sdkPath) {
+    if (sdkPath == null) {
+      return null;
+    }
+    final VirtualFile homeDirectory = StandardFileSystems.local().findFileByPath(sdkPath);
+    if (homeDirectory == null) {
+      return null;
+    }
     final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
                                                          : homeDirectory.getParent().getParent();
-    final VirtualFile condaMeta = condaParent.findChild(condaName);
-    return condaMeta != null;
+    return condaParent.findChild("conda-meta");
   }
 
   @NotNull
@@ -205,22 +216,9 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
                                         @NotNull String version) throws ExecutionException {
     if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.emptyList(), new ProcessOutput());
 
-    final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, "create", "-p", destinationDir, "-y",
-                                                            "python=" + version);
+    final ArrayList<String> parameters = Lists.newArrayList("create", "-p", destinationDir, "-y", "python=" + version);
 
-    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
-    final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final ProcessOutput result = handler.runProcessWithProgressIndicator(indicator);
-    if (result.isCancelled()) {
-      throw new RunCanceledByUserException();
-    }
-    final int exitCode = result.getExitCode();
-    if (exitCode != 0) {
-      final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
-                             "Permission denied" : "Non-zero exit code";
-      throw new PyExecutionException(message, "Conda", parameters, result);
-    }
+    PyCondaRunKt.runConda(condaExecutable, parameters);
     final String binary = PythonSdkType.getPythonExecutable(destinationDir);
     final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
     return (binary != null) ? binary : binaryFallback;

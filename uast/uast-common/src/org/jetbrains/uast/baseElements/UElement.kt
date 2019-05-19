@@ -16,10 +16,11 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
+@JvmField
+val EMPTY_ARRAY: Array<UElement> = emptyArray()
 /**
  * The common interface for all Uast elements.
  */
@@ -45,6 +46,7 @@ interface UElement {
    * **Note**: that some UElements are synthetic and do not have an underlying PSI element;
    * this doesn't mean that they are invalid.
    */
+  @Suppress("DEPRECATION")
   val sourcePsi: PsiElement?
     get() = psi
 
@@ -52,6 +54,7 @@ interface UElement {
    * Returns the element which try to mimic Java-api psi element: [com.intellij.psi.PsiClass], [com.intellij.psi.PsiMethod] or [com.intellij.psi.PsiAnnotation] etc.
    * Will return null if this UElement doesn't have Java representation or it is not implemented.
    */
+  @Suppress("DEPRECATION")
   val javaPsi: PsiElement?
     get() = psi
 
@@ -59,7 +62,7 @@ interface UElement {
    * Returns true if this element is valid, false otherwise.
    */
   val isPsiValid: Boolean
-    get() = psi?.isValid ?: true
+    get() = sourcePsi?.isValid ?: true
 
   /**
    * Returns the list of comments for this element.
@@ -122,16 +125,11 @@ interface UElement {
   fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitElement(this, data)
 }
 
-@Deprecated("No use anymore, all declarations were moved to UElement. To be removed in 2018.2")
-interface JvmDeclarationUElement : UElement
-
-@get:ApiStatus.Experimental
 val UElement?.sourcePsiElement: PsiElement?
   get() = this?.sourcePsi
 
 
-@ApiStatus.Experimental
-@SuppressWarnings("unchecked")
+@Suppress("UNCHECKED_CAST")
 fun <T : PsiElement> UElement?.getAsJavaPsiElement(clazz: Class<T>): T? =
   this?.javaPsi?.takeIf { clazz.isAssignableFrom(it.javaClass) } as? T
 

@@ -2,31 +2,21 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
 
 class CreateJavaProjectWithKotlinGuiTest : KotlinGuiTestCase() {
+  private val testedJdk = "1.8"
   @Test
   @JvmName("java_with_jvm")
   fun createJavaWithKotlinJvmProject() {
-    createJavaProject(projectFolder, kotlinLibs[KotlinKind.JVM]!!.javaProject.frameworkName)
-    ideFrame {
-      checkKotlinLibsInStructureFromPlugin(
-        kotlinKind = KotlinKind.JVM,
-        kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-      )
-    }
+    createJavaProject(projectFolder,
+                      testedJdk,
+                      setOf(NewProjectDialogModel.LibraryOrFramework(kotlinProjects.getValue(Projects.JavaProject).frameworkName)))
+    projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
+      project = kotlinProjects.getValue(Projects.JavaProject),
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version
+    )
   }
-
-  @Test
-  @JvmName("java_with_js")
-  fun createJavaWithKotlinJSProject() {
-    createJavaProject(projectFolder, kotlinLibs[KotlinKind.JS]!!.javaProject.frameworkName)
-    ideFrame {
-      checkKotlinLibsInStructureFromPlugin(
-        kotlinKind = KotlinKind.JS,
-        kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-      )
-    }
-  }
-
 }

@@ -40,7 +40,6 @@ import java.util.List;
 
 /**
  * @author MYakovlev
- * @since Aug 15, 2002
  */
 public class SdkEditor implements Configurable, Place.Navigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.SdkEditor");
@@ -381,13 +380,14 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   private class EditedSdkModificator implements SdkModificator {
+    @NotNull
     @Override
     public String getName() {
       return mySdk.getName();
     }
 
     @Override
-    public void setName(String name) {
+    public void setName(@NotNull String name) {
       ((ProjectJdkImpl)mySdk).setName(name);
     }
 

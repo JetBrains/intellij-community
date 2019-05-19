@@ -49,11 +49,13 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
     return myOperation.isDeleted();
   }
 
+  @Override
   public byte[] getContent() {
     LOG.assertTrue(myOperation.isLoaded());
     return myOperation.getFileBytes();
   }
 
+  @Override
   public byte[] loadContent() throws IOException, VcsException {
     if (!myOperation.isLoaded()) {
       CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
@@ -82,23 +84,28 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
     return myOperation.isLoaded();
   }
 
+  @Override
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return getRevision();
   }
 
+  @Override
   public Date getRevisionDate() {
     return null;
   }
 
+  @Override
   public String getAuthor() {
     return null;
   }
 
+  @Override
   public String getCommitMessage() {
     return null;
   }
 
+  @Override
   public String getBranchName() {
     return null;
   }

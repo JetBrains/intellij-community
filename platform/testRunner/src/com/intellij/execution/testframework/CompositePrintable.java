@@ -77,6 +77,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
     }
   }
 
+  @Override
   public void printOn(final Printer printer) {
     final ArrayList<Printable> printables;
     synchronized (myNestedPrintables) {
@@ -208,7 +209,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       return myFile != null;
     }
 
-    public void flush(final List<Printable> printables) {
+    public void flush(final List<? extends Printable> printables) {
       if (printables.isEmpty()) return;
       final ArrayList<Printable> currentPrintables = new ArrayList<>(printables);
       //move out from AWT thread
@@ -224,11 +225,11 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       invokeInAlarm(request, ApplicationManager.getApplication().isUnitTestMode());
     }
 
-    public void printOn(final Printer console, final List<Printable> printables) {
+    public void printOn(final Printer console, final List<? extends Printable> printables) {
       printOn(console, printables, false);
     }
 
-    public void printOn(final Printer console, final List<Printable> printables, final boolean skipFileContent) {
+    public void printOn(final Printer console, final List<? extends Printable> printables, final boolean skipFileContent) {
       final Runnable request = () -> {
         if (skipFileContent) {
           readFileContentAndPrint(console, null, printables);
@@ -331,35 +332,28 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       }
     }
 
-    private void readFileContentAndPrint(Printer printer, @Nullable File file, List<Printable> nestedPrintables) {
+    private void readFileContentAndPrint(Printer printer, @Nullable File file, List<? extends Printable> nestedPrintables) {
       if (file != null) {
-        try {
-          int lineNum = 0;
-          Map<String, ConsoleViewContentType> contentTypeByNameMap = ContainerUtil.newMapFromValues(
-            ConsoleViewContentType.getRegisteredTypes().iterator(), contentType -> contentType.toString()
-          );
-          DataInputStream reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-          try {
-            while (reader.available() > 0 && !wasPrintableChanged(printer)) {
-              if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
-              final String firstToken = IOUtil.readString(reader);
-              if (firstToken == null) break;
-              if (firstToken.equals(HYPERLINK)) {
-                new DiffHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), false)
-                  .printOn(printer);
-              }
-              else {
-                ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);
-                String text = IOUtil.readString(reader);
-                if (text != null) {
-                  printText(printer, text, contentType);
-                }
-              }
-              lineNum++;
+        int lineNum = 0;
+        Map<String, ConsoleViewContentType> contentTypeByNameMap = ContainerUtil.newMapFromValues(
+          ConsoleViewContentType.getRegisteredTypes().iterator(), contentType -> contentType.toString()
+        );
+        try (DataInputStream reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
+          while (reader.available() > 0 && !wasPrintableChanged(printer)) {
+            if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
+            final String firstToken = IOUtil.readString(reader);
+            if (firstToken == null) break;
+            if (firstToken.equals(HYPERLINK)) {
+              createHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), null, false).printOn(printer);
             }
-          }
-          finally {
-            reader.close();
+            else {
+              ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);
+              String text = IOUtil.readString(reader);
+              if (text != null) {
+                printText(printer, text, contentType);
+              }
+            }
+            lineNum++;
           }
         }
         catch (FileNotFoundException e) {
@@ -392,34 +386,36 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
     }
   }
 
-  private void printOutputFile(List<Printable> currentPrintables) {
-    if (myOutputFile != null && new File(myOutputFile).exists()) {
-      try {
-        final PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true));
-        try {
-          for (Printable currentPrintable : currentPrintables) {
-            currentPrintable.printOn(new Printer() {
-              @Override
-              public void print(String text, ConsoleViewContentType contentType) {
-                if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
-                  printStream.print(text);
-                }
-              }
+  protected DiffHyperlink createHyperlink(final String expected,
+                                          final String actual,
+                                          final String filePath,
+                                          final String actualFilePath, final boolean printOneLine) {
+    return new DiffHyperlink(expected, actual, filePath, actualFilePath, printOneLine);
+  }
 
-              @Override
-              public void printHyperlink(String text, HyperlinkInfo info) {
+  private void printOutputFile(List<? extends Printable> currentPrintables) {
+    if (myOutputFile != null && new File(myOutputFile).isFile()) {
+      try (PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true))) {
+        for (Printable currentPrintable : currentPrintables) {
+          currentPrintable.printOn(new Printer() {
+            @Override
+            public void print(String text, ConsoleViewContentType contentType) {
+              if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
                 printStream.print(text);
               }
+            }
 
-              @Override
-              public void onNewAvailable(@NotNull Printable printable) {}
-              @Override
-              public void mark() {}
-            });
-          }
-        }
-        finally {
-          printStream.close();
+            @Override
+            public void printHyperlink(String text, HyperlinkInfo info) {
+              printStream.print(text);
+            }
+
+            @Override
+            public void onNewAvailable(@NotNull Printable printable) {}
+
+            @Override
+            public void mark() {}
+          });
         }
       }
       catch (IOException e) {

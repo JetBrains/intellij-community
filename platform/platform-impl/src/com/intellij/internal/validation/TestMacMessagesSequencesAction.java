@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Fokin
@@ -26,7 +27,7 @@ import com.intellij.openapi.ui.Messages;
 public class TestMacMessagesSequencesAction extends AnAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     for (int i=0;i<10;i++){
       final int k = i;
       ApplicationManager.getApplication().invokeLater(

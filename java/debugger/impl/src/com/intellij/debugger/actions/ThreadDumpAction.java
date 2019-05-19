@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
@@ -22,15 +23,17 @@ import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ThreadDumpAction extends AnAction implements AnAction.TransparentUpdate {
+public class ThreadDumpAction extends DumbAwareAction implements AnAction.TransparentUpdate {
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -41,6 +44,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     if(session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
       process.getManagerThread().invoke(new DebuggerCommandImpl() {
+        @Override
         protected void action() {
           final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
           vm.suspend();
@@ -49,7 +53,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
             ApplicationManager.getApplication().invokeLater(() -> {
               XDebugSession xSession = session.getXDebugSession();
               if (xSession != null) {
-                DebuggerUtilsEx.addThreadDump(project, threads, xSession.getUI(), session);
+                DebuggerUtilsEx.addThreadDump(project, threads, xSession.getUI(), session.getSearchScope());
               }
             }, ModalityState.NON_MODAL);
           }
@@ -120,7 +124,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
       }
 
       buffer.append("\n  java.lang.Thread.State: ").append(threadState.getJavaThreadState());
-      
+
       try {
         if (vmProxy.canGetOwnedMonitorInfo() && vmProxy.canGetMonitorInfo()) {
           List<ObjectReference> list = threadReference.ownedMonitors();
@@ -155,13 +159,16 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
 
         final TIntObjectHashMap<List<ObjectReference>> lockedAt = new TIntObjectHashMap<>();
         if (vmProxy.canGetMonitorFrameInfo()) {
-          for (MonitorInfo info : threadReference.ownedMonitorsAndFrames()) {
-            final int stackDepth = info.stackDepth();
-            List<ObjectReference> monitors;
-            if ((monitors = lockedAt.get(stackDepth)) == null) {
-              lockedAt.put(stackDepth, monitors = new SmartList<>());
+          for (Object m : threadReference.ownedMonitorsAndFrames()) {
+            if (m instanceof MonitorInfo) { // see JRE-937
+              MonitorInfo info = (MonitorInfo)m;
+              final int stackDepth = info.stackDepth();
+              List<ObjectReference> monitors;
+              if ((monitors = lockedAt.get(stackDepth)) == null) {
+                lockedAt.put(stackDepth, monitors = new SmartList<>());
+              }
+              monitors.add(info.monitor());
             }
-            monitors.add(info.monitor());
           }
         }
 
@@ -281,7 +288,8 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
   }
 
 
-  public void update(AnActionEvent e){
+  @Override
+  public void update(@NotNull AnActionEvent e){
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {

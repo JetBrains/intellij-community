@@ -1,17 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.util.treeView.FileNameComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListOwner;
-import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -47,9 +45,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
   protected static final int CHANGE_LIST_SORT_WEIGHT = 2;
   protected static final int REPOSITORY_SORT_WEIGHT = 3;
-  protected static final int DIRECTORY_PATH_SORT_WEIGHT = 4;
-  protected static final int FILE_PATH_SORT_WEIGHT = 5;
-  protected static final int GENERIC_FILE_PATH_SORT_WEIGHT = 6;
+  protected static final int MODULE_SORT_WEIGHT = 4;
+  protected static final int DIRECTORY_PATH_SORT_WEIGHT = 5;
+  protected static final int FILE_PATH_SORT_WEIGHT = 6;
   protected static final int CHANGE_SORT_WEIGHT = 7;
   protected static final int VIRTUAL_FILE_SORT_WEIGHT = 8;
   protected static final int UNVERSIONED_SORT_WEIGHT = 9;
@@ -66,32 +64,58 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   private boolean myHelper;
   @NotNull private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
-  protected ChangesBrowserNode(Object userObject) {
+  protected ChangesBrowserNode(T userObject) {
     super(userObject);
     myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
   @NotNull
-  public static ChangesBrowserNode createRoot(@NotNull Project project) {
-    ChangesBrowserNode root = create(project, ROOT_NODE_VALUE);
+  public static ChangesBrowserNode createRoot() {
+    ChangesBrowserNode root = createObject(ROOT_NODE_VALUE);
     root.markAsHelperNode();
     return root;
   }
 
   @NotNull
-  public static ChangesBrowserNode create(@NotNull LocallyDeletedChange change) {
+  public static ChangesBrowserNode createChange(@Nullable Project project, @NotNull Change userObject) {
+    return new ChangesBrowserChangeNode(project, userObject, null);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createFile(@Nullable Project project, @NotNull VirtualFile userObject) {
+    return new ChangesBrowserFileNode(project, userObject);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createFilePath(@NotNull FilePath userObject) {
+    return new ChangesBrowserFilePathNode(userObject);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createLogicallyLocked(@Nullable Project project, @NotNull VirtualFile file, @NotNull LogicalLock lock) {
+    return new ChangesBrowserLogicallyLockedFile(project, file, lock);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createLockedFolders(@NotNull Project project) {
+    return new ChangesBrowserLockedFoldersNode(project, LOCKED_FOLDERS_TAG);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createLocallyDeleted(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
   }
 
   @NotNull
-  public static ChangesBrowserNode createGeneric(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, @NotNull Object userObject) {
-    return new ChangesBrowserGenericNode(filePath, fileStatus, userObject);
+  public static ChangesBrowserNode createObject(@NotNull Object userObject) {
+    return new ChangesBrowserNode<>(userObject);
   }
 
+  @Deprecated
   @NotNull
   public static ChangesBrowserNode create(@NotNull Project project, @NotNull Object userObject) {
     if (userObject instanceof Change) {
-      return new ChangesBrowserChangeNode(project, (Change) userObject, null);
+      return new ChangesBrowserChangeNode(project, (Change)userObject, null);
     }
     if (userObject instanceof VirtualFile) {
       return new ChangesBrowserFileNode(project, (VirtualFile) userObject);
@@ -105,7 +129,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     if (userObject instanceof ChangesBrowserLogicallyLockedFile) {
       return (ChangesBrowserNode) userObject;
     }
-    return new ChangesBrowserNode(userObject);
+    return new ChangesBrowserNode<>(userObject);
   }
 
   @Override
@@ -183,7 +207,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @NotNull
-  public Stream<ChangesBrowserNode> getNodesUnderStream() {
+  public Stream<ChangesBrowserNode<?>> getNodesUnderStream() {
     return toStream(preorderEnumeration());
   }
 
@@ -231,7 +255,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @NotNull
-  private static StreamEx<ChangesBrowserNode> toStream(@NotNull Enumeration enumeration) {
+  private static StreamEx<ChangesBrowserNode<?>> toStream(@NotNull Enumeration enumeration) {
     //noinspection unchecked
     return StreamEx.<ChangesBrowserNode>of(enumeration);
   }
@@ -295,6 +319,14 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return 0;
   }
 
+  protected static int compareFileNames(@NotNull String name1, @NotNull String name2) {
+    return FileNameComparator.INSTANCE.compare(name1, name2);
+  }
+
+  protected static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {
+    return HierarchicalFilePathComparator.NATURAL.compare(path1, path2);
+  }
+
   public void setAttributes(@NotNull SimpleTextAttributes attributes) {
     myAttributes = attributes;
   }
@@ -329,7 +361,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   private static class Tag {
     @NotNull private final String myKey;
 
-    public Tag(@NotNull String key) {
+    Tag(@NotNull String key) {
       myKey = key;
     }
 

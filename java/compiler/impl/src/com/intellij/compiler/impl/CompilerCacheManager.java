@@ -15,15 +15,14 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.compiler.impl.generic.GenericCompilerCache;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
-import com.intellij.openapi.compiler.generic.GenericCompiler;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -39,13 +38,10 @@ import java.util.Map;
 public class CompilerCacheManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerCacheManager");
   private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<>();
-  private final Map<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>> myGenericCachesMap = new HashMap<>();
   private final List<Disposable> myCacheDisposables = new ArrayList<>();
   private final File myCachesRoot;
-  private final Project myProject;
 
   public CompilerCacheManager(Project project) {
-    myProject = project;
     myCachesRoot = CompilerPaths.getCacheStoreDirectory(project);
   }
 
@@ -62,25 +58,6 @@ public class CompilerCacheManager implements Disposable {
     final File dir = new File(myCachesRoot, getCompilerIdString(compiler));
     dir.mkdirs();
     return dir;
-  }
-
-  synchronized <Key, SourceState, OutputState> GenericCompilerCache<Key, SourceState, OutputState>
-                                 getGenericCompilerCache(final GenericCompiler<Key, SourceState, OutputState> compiler) throws IOException {
-    GenericCompilerCache<?,?,?> cache = myGenericCachesMap.get(compiler);
-    if (cache == null) {
-      final GenericCompilerCache<?,?,?> genericCache = new GenericCompilerCache<>(compiler, GenericCompilerRunner
-        .getGenericCompilerCacheDir(myProject, compiler));
-      myGenericCachesMap.put(compiler, genericCache);
-      myCacheDisposables.add(() -> {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Closing cache for feneric compiler " + compiler.getId());
-        }
-        genericCache.close();
-      });
-      cache = genericCache;
-    }
-    //noinspection unchecked
-    return (GenericCompilerCache<Key, SourceState, OutputState>)cache;
   }
 
   synchronized FileProcessingCompilerStateCache getFileProcessingCompilerCache(final FileProcessingCompiler compiler) throws IOException {
@@ -105,7 +82,7 @@ public class CompilerCacheManager implements Disposable {
 
   public static String getCompilerIdString(Compiler compiler) {
     @NonNls String description = compiler.getDescription();
-    return description.replaceAll("\\s+", "_").replaceAll("[\\.\\?]", "_").toLowerCase();
+    return StringUtil.toLowerCase(description.replaceAll("\\s+", "_").replaceAll("[\\.\\?]", "_"));
   }
   
   synchronized void flushCaches() {
@@ -118,7 +95,6 @@ public class CompilerCacheManager implements Disposable {
       }
     }
     myCacheDisposables.clear();
-    myGenericCachesMap.clear();
     myCompilerToCacheMap.clear();
   }
 

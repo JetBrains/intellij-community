@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.*;
@@ -25,7 +23,6 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -47,15 +44,18 @@ import java.util.List;
  * Registers "Coverage" tab in Java run configurations
  */
 public class CoverageJavaRunConfigurationExtension extends RunConfigurationExtension {
+  @Override
   public void attachToProcess(@NotNull final RunConfigurationBase configuration, @NotNull ProcessHandler handler, RunnerSettings runnerSettings) {
     CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration, runnerSettings);
   }
 
+  @Override
   @Nullable
   public SettingsEditor createEditor(@NotNull RunConfigurationBase configuration) {
     return new CoverageConfigurable(configuration);
   }
 
+  @Override
   public String getEditorTitle() {
     return CoverageEngine.getEditorTitle();
   }
@@ -66,6 +66,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     return "coverage";
   }
 
+  @Override
   public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
     if (!isApplicableFor(configuration)) {
       return;
@@ -101,7 +102,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void writeExternal(@NotNull RunConfigurationBase runConfiguration, @NotNull Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull RunConfigurationBase runConfiguration, @NotNull Element element) {
     if (!isApplicableFor(runConfiguration)) {
       return;
     }
@@ -215,13 +216,14 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     if (listener instanceof CoverageListener) {
       if (!(runnerSettings instanceof CoverageRunnerData)) return true;
       final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
-      return !(coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner) || 
+      return !(coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner) ||
              !(coverageEnabledConfiguration.isTrackPerTestCoverage() && !coverageEnabledConfiguration.isSampling());
     }
     return false;
   }
 
-  protected boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
+  @Override
+  public boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
     return CoverageEnabledConfiguration.isApplicableTo(configuration);
   }
 
@@ -232,15 +234,18 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       super(project, patterns, idx, filters);
     }
 
+    @Override
     public void setName(String qualifiedName) {
       super.setName(qualifiedName + ".*");
     }
 
+    @Override
     public PsiPackage getPsiElement() {
       final String name = getName();
       return JavaPsiFacade.getInstance(getProject()).findPackage(name.substring(0, name.length() - ".*".length()));
     }
 
+    @Override
     public void setPsiElement(PsiPackage psiElement) {
       setName(psiElement.getQualifiedName());
     }
@@ -252,10 +257,12 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       super(project, patterns, idx, filters);
     }
 
+    @Override
     public PsiClass getPsiElement() {
       return JavaPsiFacade.getInstance(getProject()).findClass(getName(), GlobalSearchScope.allScope(getProject()));
     }
 
+    @Override
     public void setPsiElement(PsiClass psiElement) {
       setName(psiElement.getQualifiedName());
     }

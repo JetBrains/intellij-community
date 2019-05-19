@@ -62,7 +62,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
   private static class AttributesCompletionProvider extends CompletionProvider<CompletionParameters> {
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
-                                  ProcessingContext context,
+                                  @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
 
       final PsiElement position = parameters.getPosition();

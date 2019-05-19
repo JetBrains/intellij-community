@@ -47,12 +47,14 @@ public class MyFileProfileActivator extends DetectedProfileActivator
       this.baseDir = baseDir;
     }
 
-  protected boolean canDetectActivation( Profile profile )
+  @Override
+  protected boolean canDetectActivation(Profile profile )
     {
         return profile.getActivation() != null && profile.getActivation().getFile() != null;
     }
 
-    public boolean isActive( Profile profile )
+    @Override
+    public boolean isActive(Profile profile )
     {
         Activation activation = profile.getActivation();
 
@@ -111,7 +113,8 @@ public class MyFileProfileActivator extends DetectedProfileActivator
       return new File(path).exists() || new File(baseDir, path).exists();
     }
 
-    public void enableLogging( Logger logger )
+    @Override
+    public void enableLogging(Logger logger )
     {
         this.logger = logger;
     }

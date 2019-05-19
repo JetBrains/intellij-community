@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
@@ -249,7 +249,12 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @NotNull
-  public GrLightMethodBuilder addParameter(@NotNull String name, @NotNull String type, boolean isOptional) {
+  public GrLightMethodBuilder addOptionalParameter(@NotNull String name, @NotNull String type) {
+    return addParameter(name, type, true);
+  }
+
+  @NotNull
+  private GrLightMethodBuilder addParameter(@NotNull String name, @NotNull String type, boolean isOptional) {
     return addParameter(name, JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(type, this), isOptional);
   }
 
@@ -270,7 +275,17 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @NotNull
-  public GrLightParameter addAndGetParameter(@NotNull String name, @NotNull String type, boolean isOptional) {
+  public GrLightParameter addAndGetParameter(@NotNull String name, @NotNull PsiType type) {
+    return addAndGetParameter(name, type, false);
+  }
+
+  @NotNull
+  public GrLightParameter addAndGetOptionalParameter(@NotNull String name, @NotNull String type) {
+    return addAndGetParameter(name, type, true);
+  }
+
+  @NotNull
+  private GrLightParameter addAndGetParameter(@NotNull String name, @NotNull String type, boolean isOptional) {
     return addAndGetParameter(name, JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(type, this), isOptional);
   }
 
@@ -388,11 +403,11 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
   }
 
   @Override
-  public void acceptChildren(GroovyElementVisitor visitor) {
+  public void acceptChildren(@NotNull GroovyElementVisitor visitor) {
   }
 
   public static Object getMethodKind(@Nullable PsiElement method) {

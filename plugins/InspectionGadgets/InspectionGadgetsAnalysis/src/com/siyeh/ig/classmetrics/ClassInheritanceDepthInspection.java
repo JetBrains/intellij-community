@@ -85,7 +85,7 @@ public class ClassInheritanceDepthInspection
       registerClassError(aClass, Integer.valueOf(inheritanceDepth));
     }
 
-    private int getInheritanceDepth(PsiClass aClass, Set<PsiClass> visited) {
+    private int getInheritanceDepth(PsiClass aClass, Set<? super PsiClass> visited) {
       if (visited.contains(aClass)) {
         return 0;
       }

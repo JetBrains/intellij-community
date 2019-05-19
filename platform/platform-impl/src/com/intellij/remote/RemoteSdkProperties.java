@@ -99,4 +99,17 @@ public interface RemoteSdkProperties {
   boolean isValid();
 
   void setValid(boolean valid);
+
+  /**
+   * <b>Note:</b> This method will be abstract.
+   */
+  default boolean isRunAsRootViaSudo() {
+    return false;
+  }
+
+  /**
+   * <b>Note:</b> This method will be abstract.
+   */
+  default void setRunAsRootViaSudo(boolean runAsRootViaSudo) {
+  }
 }

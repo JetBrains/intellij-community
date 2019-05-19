@@ -20,20 +20,23 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.plaf.UIResource;
 import javax.swing.tree.DefaultTreeSelectionModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * This example shows how to create a simple JTreeTable component,
@@ -58,9 +61,50 @@ public class TreeTable extends JBTable {
   public TreeTable(TreeTableModel treeTableModel) {
     super();
     setModel(treeTableModel);
+    new TreeAction("selectPreviousColumn", "selectParent");
+    new TreeAction("selectPreviousColumnExtendSelection", "selectParentExtendSelection");
+    new TreeAction("selectNextColumn", "selectChild");
+    new TreeAction("selectNextColumnExtendSelection", "selectChildExtendSelection");
   }
 
-  @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
+  private final class TreeAction extends AbstractAction implements UIResource {
+    private final String actionId;
+    private final Action action;
+
+    private TreeAction(@NotNull String tableActionId, @NotNull String treeActionId) {
+      super(tableActionId + " -> " + treeActionId);
+      actionId = treeActionId;
+      ActionMap map = getActionMap();
+      action = map.get(tableActionId);
+      if (!(action instanceof TreeAction)) {
+        map.put(tableActionId, this);
+      }
+    }
+
+    private JTree getTreeToPerformAction() {
+      JTree tree = !myProcessCursorKeys ? null : getTree();
+      if (tree == null || 1 != getSelectedRowCount()) return null;
+      if (!getColumnModel().getColumnSelectionAllowed()) return tree;
+      int column = getColumnModel().getSelectionModel().getAnchorSelectionIndex();
+      return 0 <= column && column < getColumnCount() && !isTreeColumn(column) ? null : tree;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      JTree tree = getTreeToPerformAction();
+      Action action = tree == null ? null : tree.getActionMap().get(actionId);
+      if (action == null) {
+        this.action.actionPerformed(event);
+      }
+      else {
+        action.actionPerformed(new ActionEvent(tree, ActionEvent.ACTION_PERFORMED, actionId));
+        int row = tree.getLeadSelectionRow();
+        getSelectionModel().setSelectionInterval(row, row);
+        TableUtil.scrollSelectionToVisible(TreeTable.this);
+      }
+    }
+  }
+
   public void setModel(TreeTableModel treeTableModel) {// Create the tree. It will be used as a renderer and editor.
     if (myTree != null) {
       myTree.removePropertyChangeListener(JTree.ROW_HEIGHT_PROPERTY, myTreeRowHeightPropertyListener);
@@ -68,6 +112,7 @@ public class TreeTable extends JBTable {
     myTree = new TreeTableTree(treeTableModel, this);
     setRowHeight(myTree.getRowHeight());
     myTreeRowHeightPropertyListener = new PropertyChangeListener() {
+      @Override
       public void propertyChange(PropertyChangeEvent evt) {
         int treeRowHeight = myTree.getRowHeight();
         if (treeRowHeight == getRowHeight()) return;
@@ -133,6 +178,7 @@ public class TreeTable extends JBTable {
    * Since the tree is not actually in the component hierarchy it will
    * never receive this unless we forward it in this manner.
    */
+  @Override
   public void updateUI() {
     super.updateUI();
     if (myTree!= null) {
@@ -140,7 +186,6 @@ public class TreeTable extends JBTable {
     }
     // Use the tree's default foreground and background colors in the
     // table.
-    //noinspection HardCodedStringLiteral
     LookAndFeel.installColorsAndFont(this, "Tree.background", "Tree.foreground", "Tree.font");
   }
 
@@ -150,6 +195,7 @@ public class TreeTable extends JBTable {
    * is not the right thing to do for an editor. Returning -1 for the
    * editing row in this case, ensures the editor is never painted.
    */
+  @Override
   public int getEditingRow() {
     return editingColumn == -1 || isTreeColumn(editingColumn) ? -1 : editingRow;
   }
@@ -157,6 +203,7 @@ public class TreeTable extends JBTable {
   /**
    * Overridden to pass the new rowHeight to the tree.
    */
+  @Override
   public void setRowHeight(int rowHeight) {
     super.setRowHeight(rowHeight);
     if (myTree != null && myTree.getRowHeight() < rowHeight) {
@@ -169,40 +216,6 @@ public class TreeTable extends JBTable {
    */
   public TreeTableTree getTree() {
     return myTree;
-  }
-
-  protected void processKeyEvent(KeyEvent e){
-    if (!myProcessCursorKeys) {
-      super.processKeyEvent(e);
-      return;
-    }
-
-    int keyCode = e.getKeyCode();
-    final int selColumn = columnModel.getSelectionModel().getAnchorSelectionIndex();
-    boolean treeHasFocus = selColumn == -1 || selColumn >= 0 && isTreeColumn(selColumn);
-    boolean oneRowSelected = getSelectedRowCount() == 1;
-    if(treeHasFocus && oneRowSelected && ((keyCode == KeyEvent.VK_LEFT) || (keyCode == KeyEvent.VK_RIGHT))){
-      try {
-        myTree._processKeyEvent(e);
-        int rowToSelect = ObjectUtils.notNull(myTree.getSelectionRows())[0];
-        getSelectionModel().setSelectionInterval(rowToSelect, rowToSelect);
-        TableUtil.scrollSelectionToVisible(this);
-      }
-      catch (ArrayIndexOutOfBoundsException ex) {
-        // diagnostic for EA-106780
-        List<Container> hierarchy = new ArrayList<>();
-        Container current = this;
-        while (current != null) {
-          hierarchy.add(current);
-          current = current.getParent();
-        }
-        LOG.error(StringUtil.join(hierarchy, " -> "), ex);
-        throw ex;
-      }
-    }
-    else{
-      super.processKeyEvent(e);
-    }
   }
 
   /**
@@ -225,7 +238,7 @@ public class TreeTable extends JBTable {
     /** Set to true when we are updating the ListSelectionModel. */
     protected boolean updatingListSelectionModel;
 
-    public ListToTreeSelectionModelWrapper() {
+    ListToTreeSelectionModelWrapper() {
       super();
       getListSelectionModel().addListSelectionListener(createListSelectionListener());
     }
@@ -244,6 +257,7 @@ public class TreeTable extends JBTable {
      * and message super. This is the only place DefaultTreeSelectionModel
      * alters the ListSelectionModel.
      */
+    @Override
     public void resetRowSelection() {
       if (!updatingListSelectionModel) {
         updatingListSelectionModel = true;
@@ -328,12 +342,14 @@ public class TreeTable extends JBTable {
      * when the selection of the list changse.
      */
     class ListSelectionHandler implements ListSelectionListener {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         updateSelectedPathsFromSelectedRows();
       }
     }
   }
 
+  @Override
   public boolean editCellAt(int row, int column, EventObject e) {
     boolean editResult = super.editCellAt(row, column, e);
     if (e instanceof MouseEvent && isTreeColumn(column)){
@@ -370,7 +386,7 @@ public class TreeTable extends JBTable {
         );
         myTree.dispatchEvent(newME2);
       }
-    }    
+    }
     return editResult;
   }
 

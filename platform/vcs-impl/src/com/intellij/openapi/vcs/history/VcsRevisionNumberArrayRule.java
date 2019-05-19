@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListByDateComparator;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +37,10 @@ public class VcsRevisionNumberArrayRule implements GetDataRule {
 
   @Nullable
   @Override
-  public Object getData(DataProvider dataProvider) {
+  public Object getData(@NotNull DataProvider dataProvider) {
     List<VcsRevisionNumber> revisionNumbers = getRevisionNumbers(dataProvider);
 
-    return !ContainerUtil.isEmpty(revisionNumbers) ? ArrayUtil.toObjectArray(revisionNumbers, VcsRevisionNumber.class) : null;
+    return !ContainerUtil.isEmpty(revisionNumbers) ? revisionNumbers.toArray(new VcsRevisionNumber[0]) : null;
   }
 
   @Nullable
@@ -63,8 +62,11 @@ public class VcsRevisionNumberArrayRule implements GetDataRule {
     }
 
     VcsFileRevision[] fileRevisions = VcsDataKeys.VCS_FILE_REVISIONS.getData(dataProvider);
-    if (fileRevisions != null && fileRevisions.length > 0) {
-      return ContainerUtil.mapNotNull(fileRevisions, FileRevisionToRevisionNumberFunction.INSTANCE);
+    if (fileRevisions != null) {
+      List<VcsFileRevision> revisions = ContainerUtil.filter(fileRevisions, r -> r != VcsFileRevision.NULL);
+      if (!revisions.isEmpty()) {
+        return ContainerUtil.mapNotNull(fileRevisions, FileRevisionToRevisionNumberFunction.INSTANCE);
+      }
     }
 
     return null;

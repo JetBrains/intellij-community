@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
-import com.intellij.execution.CommonJavaRunConfigurationParameters;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.*;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -27,6 +11,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,18 +28,29 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   protected void setupJavaParameters(JavaParameters params) throws ExecutionException {
     JavaParametersUtil.configureConfiguration(params, myConfiguration);
 
-    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensions()) {
-      ext.updateJavaParameters(getConfiguration(), params, getRunnerSettings());
+    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
+      ext.updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor());
     }
   }
 
   @NotNull
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
-    OSProcessHandler handler = new KillableColoredProcessHandler(createCommandLine());
+    OSProcessHandler handler = new KillableColoredProcessHandler(createCommandLine()) {
+      @NotNull
+      @Override
+      protected BaseOutputReader.Options readerOptions() {
+        return BaseOutputReader.Options.forMostlySilentProcess();
+      }
+    };
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
+  }
+
+  @Override
+  protected GeneralCommandLine createCommandLine() throws ExecutionException {
+    return super.createCommandLine().withInput(InputRedirectAware.getInputFile(myConfiguration));
   }
 
   protected T getConfiguration() {

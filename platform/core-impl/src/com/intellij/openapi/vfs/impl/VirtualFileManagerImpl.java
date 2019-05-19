@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -21,41 +7,59 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.CachingVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class VirtualFileManagerImpl extends VirtualFileManagerEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
+public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
-  private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector =
-    new KeyedExtensionCollector<VirtualFileSystem, String>("com.intellij.virtualFileSystem") {
-      @NotNull
-      @Override
-      protected String keyToString(@NotNull String key) {
-        return key;
-      }
-    };
+  private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
+    @Attribute
+    public boolean physical;
+  }
 
+  private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector = new KeyedExtensionCollector<>("com.intellij.virtualFileSystem", this);
   private final VirtualFileSystem[] myPhysicalFileSystems;
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
 
-  public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems, @NotNull MessageBus bus) {
-    myPhysicalFileSystems = fileSystems;
+  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems) {
+    this(fileSystems, ApplicationManager.getApplication().getMessageBus());
+  }
+
+  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems, @NotNull MessageBus bus) {
+    List<VirtualFileSystem> physicalFileSystems = new ArrayList<>(fileSystems);
+
+    ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> point = myCollector.getPoint();
+    if (point != null) {
+      for (KeyedLazyInstance<VirtualFileSystem> bean : point.getExtensionList()) {
+        if (((VirtualFileSystemBean)bean).physical) {
+          physicalFileSystems.add(bean.getInstance());
+        }
+      }
+    }
+
+    myPhysicalFileSystems = physicalFileSystems.toArray(new VirtualFileSystem[0]);
 
     for (VirtualFileSystem fileSystem : fileSystems) {
       myCollector.addExplicitExtension(fileSystem.getProtocol(), fileSystem);
@@ -72,6 +76,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   }
 
   @Override
+  public void dispose() {
+  }
+
+  @Override
   public long getStructureModificationCount() {
     return 0;
   }
@@ -79,10 +87,16 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   @Override
   @Nullable
   public VirtualFileSystem getFileSystem(@Nullable String protocol) {
-    if (protocol == null) return null;
+    if (protocol == null) {
+      return null;
+    }
+
     List<VirtualFileSystem> systems = myCollector.forKey(protocol);
     int size = systems.size();
-    if (size == 0) return null;
+    if (size == 0) {
+      return null;
+    }
+
     if (size > 1) {
       LOG.error(protocol + ": " + systems);
     }
@@ -171,7 +185,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   }
 
   @Override
-  public void addVirtualFileManagerListener(@NotNull final VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
+  public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
     addVirtualFileManagerListener(listener);
     Disposer.register(parentDisposable, () -> removeVirtualFileManagerListener(listener));
   }
@@ -182,26 +196,18 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   }
 
   @Override
-  public void notifyPropertyChanged(@NotNull final VirtualFile virtualFile, @NotNull final String property, final Object oldValue, final Object newValue) {
-    final Application application = ApplicationManager.getApplication();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (virtualFile.isValid() && !application.isDisposed()) {
-          application.runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              List<VFilePropertyChangeEvent> events = Collections
-                .singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
-              BulkFileListener listener = application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
-              listener.before(events);
-              listener.after(events);
-            }
-          });
-        }
+  public void notifyPropertyChanged(@NotNull VirtualFile virtualFile, @VirtualFile.PropName @NotNull String property, Object oldValue, Object newValue) {
+    Application app = ApplicationManager.getApplication();
+    app.invokeLater(() -> {
+      if (virtualFile.isValid() && !app.isDisposed()) {
+        app.runWriteAction(() -> {
+          List<VFileEvent> events = Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
+          BulkFileListener listener = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+          listener.before(events);
+          listener.after(events);
+        });
       }
-    };
-    application.invokeLater(runnable, ModalityState.NON_MODAL);
+    }, ModalityState.NON_MODAL);
   }
 
   @Override

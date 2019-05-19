@@ -32,7 +32,6 @@ public class DependencyConflictId {
     String artifactId = dep.getArtifactId().getStringValue();
     if (StringUtil.isEmpty(artifactId)) return null;
 
-    //noinspection ConstantConditions
     return new DependencyConflictId(groupId, artifactId, dep.getType().getStringValue(), dep.getClassifier().getStringValue());
   }
 

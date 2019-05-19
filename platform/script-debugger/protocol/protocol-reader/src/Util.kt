@@ -1,15 +1,16 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolReader
 
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.WildcardType
 
-val TYPE_FACTORY_NAME_PREFIX: Char = 'F'
+const val TYPE_FACTORY_NAME_PREFIX: Char = 'F'
 
-val READER_NAME: String = "reader"
-val PENDING_INPUT_READER_NAME: String = "inputReader"
+const val READER_NAME: String = "reader"
+const val PENDING_INPUT_READER_NAME: String = "inputReader"
 
-val JSON_READER_CLASS_NAME: String = "JsonReaderEx"
+const val JSON_READER_CLASS_NAME: String = "JsonReaderEx"
 val JSON_READER_PARAMETER_DEF: String = "$READER_NAME: $JSON_READER_CLASS_NAME"
 
 /**

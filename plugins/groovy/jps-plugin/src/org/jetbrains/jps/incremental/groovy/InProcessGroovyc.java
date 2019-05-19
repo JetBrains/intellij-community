@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -34,16 +20,16 @@ import org.jetbrains.groovy.compiler.rt.ClassDependencyLoader;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.incremental.CompileContext;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -59,6 +45,7 @@ class InProcessGroovyc implements GroovycFlavor {
   private static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(.*))?\\.jar");
   private static final Pattern GROOVY_ECLIPSE_BATCH_PATTERN = Pattern.compile("groovy-eclipse-batch-(.*)\\.jar");
   private static final ThreadPoolExecutor ourExecutor = ConcurrencyUtil.newSingleThreadExecutor("Groovyc");
+  private static final String GROOVYC_FINISHED = "Groovyc finished";
   private static SoftReference<Pair<String, ClassLoader>> ourParentLoaderCache;
   private static final UrlClassLoader.CachePool ourLoaderCachePool = UrlClassLoader.createCachePool();
   private final Collection<String> myOutputs;
@@ -76,8 +63,8 @@ class InProcessGroovyc implements GroovycFlavor {
                                         File tempFile,
                                         GroovycOutputParser parser, String byteCodeTargetLevel) throws Exception {
     boolean jointPossible = forStubs && !myHasStubExcludes;
-    final LinkedBlockingQueue<String> mailbox = jointPossible && SystemProperties.getBooleanProperty("groovyc.joint.compilation", true)
-                                                ? new LinkedBlockingQueue<>() : null;
+    LinkedBlockingQueue<Object> mailbox = jointPossible && SystemProperties.getBooleanProperty("groovyc.joint.compilation", true)
+                                          ? new LinkedBlockingQueue<>() : null;
 
     final JointCompilationClassLoader loader = createCompilationClassLoader(compilationClassPath);
     if (loader == null) {
@@ -86,7 +73,14 @@ class InProcessGroovyc implements GroovycFlavor {
     }
 
     final Future<Void> future = ourExecutor.submit(() -> {
-      runGroovycInThisProcess(loader, forStubs, context, tempFile, parser, byteCodeTargetLevel, mailbox);
+      try {
+        runGroovycInThisProcess(loader, forStubs, context, tempFile, parser, byteCodeTargetLevel, mailbox);
+      }
+      finally {
+        if (mailbox != null) {
+          mailbox.offer(GROOVYC_FINISHED);
+        }
+      }
       return null;
     });
     if (mailbox == null) {
@@ -98,30 +92,34 @@ class InProcessGroovyc implements GroovycFlavor {
   }
 
   @Nullable
-  private static GroovycContinuation waitForStubGeneration(final Future<Void> future,
-                                                           final LinkedBlockingQueue<String> mailbox,
-                                                           final GroovycOutputParser parser,
+  private static GroovycContinuation waitForStubGeneration(Future<Void> future,
+                                                           LinkedBlockingQueue<Object> mailbox,
+                                                           GroovycOutputParser parser,
                                                            JointCompilationClassLoader loader) throws InterruptedException {
     while (true) {
-      if (future.isDone()) {
+      Object msg = mailbox.poll(1, TimeUnit.MINUTES);
+      if (GROOVYC_FINISHED.equals(msg)) {
         return null;
       }
+      else if (msg instanceof Queue) {
+        // a signal that stubs are generated, so we can continue to other builders
+        // and use the passed queue to notify the suspended thread to continue compiling groovy
 
-      Object msg = mailbox.poll(10, TimeUnit.MILLISECONDS);
-      if (GroovyRtConstants.STUBS_GENERATED.equals(msg)) {
+        //noinspection unchecked
+        Queue<String> toGroovyc = (Queue<String>)msg;
         loader.resetCache();
-        return createContinuation(future, mailbox, parser);
+        return createContinuation(future, toGroovyc, parser);
       }
-      if (msg != null) {
+      else if (msg != null) {
         throw new AssertionError("Unknown message: " + msg);
       }
     }
   }
 
   @NotNull
-  private static GroovycContinuation createContinuation(final Future<Void> future,
-                                                        final LinkedBlockingQueue<String> mailbox,
-                                                        final GroovycOutputParser parser) {
+  private static GroovycContinuation createContinuation(Future<Void> future,
+                                                        @NotNull Queue<String> mailbox,
+                                                        GroovycOutputParser parser) {
     return new GroovycContinuation() {
       @NotNull
       @Override
@@ -313,7 +311,7 @@ class InProcessGroovyc implements GroovycFlavor {
 
   @NotNull
   private static List<URL> toUrls(Collection<String> paths) throws MalformedURLException {
-    List<URL> urls = ContainerUtil.newArrayList();
+    List<URL> urls = new ArrayList<>();
     for (String s : paths) {
       urls.add(new File(s).toURI().toURL());
     }

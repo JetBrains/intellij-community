@@ -34,7 +34,7 @@ public class JavaWithDoWhileSurrounder extends JavaStatementsSurrounder{
   @Override
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, false);
@@ -46,7 +46,7 @@ public class JavaWithDoWhileSurrounder extends JavaStatementsSurrounder{
     PsiDoWhileStatement doWhileStatement = (PsiDoWhileStatement)factory.createStatementFromText(text, null);
     doWhileStatement = (PsiDoWhileStatement)codeStyleManager.reformat(doWhileStatement);
 
-    doWhileStatement = (PsiDoWhileStatement)container.addAfter(doWhileStatement, statements[statements.length - 1]);
+    doWhileStatement = (PsiDoWhileStatement)addAfter(doWhileStatement, container, statements);
 
     PsiStatement body = doWhileStatement.getBody();
     if (!(body instanceof PsiBlockStatement)) {
@@ -54,7 +54,7 @@ public class JavaWithDoWhileSurrounder extends JavaStatementsSurrounder{
     }
     PsiCodeBlock bodyBlock = ((PsiBlockStatement)body).getCodeBlock();
     SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements);
-    bodyBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(bodyBlock, container, statements, false);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     PsiExpression condition = doWhileStatement.getCondition();

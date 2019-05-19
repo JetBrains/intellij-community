@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author: Eugene Zhuravlev
@@ -39,6 +39,7 @@ public class RequestHint {
 
   @Nullable
   private final MethodFilter myMethodFilter;
+  private int myFilterMatchedCount = 0;
   private boolean myTargetMethodMatched = false;
 
   private boolean myIgnoreFilters = false;
@@ -55,7 +56,7 @@ public class RequestHint {
     this(stepThread, suspendContext, StepRequest.STEP_LINE, depth, null);
   }
 
-  protected RequestHint(final ThreadReferenceProxyImpl stepThread,
+  public RequestHint(final ThreadReferenceProxyImpl stepThread,
                       final SuspendContextImpl suspendContext,
                       @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
                       @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
@@ -70,6 +71,7 @@ public class RequestHint {
       frameCount = stepThread.frameCount();
 
       position = ContextUtil.getSourcePosition(new StackFrameContext() {
+        @Override
         public StackFrameProxy getFrameProxy() {
           try {
             return stepThread.frame(0);
@@ -80,6 +82,7 @@ public class RequestHint {
           }
         }
 
+        @Override
         @NotNull
         public DebugProcess getDebugProcess() {
           return suspendContext.getDebugProcess();
@@ -182,6 +185,10 @@ public class RequestHint {
     return null;
   }
 
+  static boolean isProxyMethod(Method method) {
+    return method.isBridge() || DebuggerUtilsEx.isProxyClass(method.declaringType());
+  }
+
   public int getNextStepDepth(final SuspendContextImpl context) {
     try {
       final StackFrameProxyImpl frameProxy = context.getFrameProxy();
@@ -190,11 +197,16 @@ public class RequestHint {
       if (myMethodFilter != null &&
           frameProxy != null &&
           !(myMethodFilter instanceof BreakpointStepMethodFilter) &&
-          myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location(), frameProxy::thisObject) &&
-          !isTheSameFrame(context)
-        ) {
-        myTargetMethodMatched = true;
-        return myMethodFilter.onReached(context, this);
+          !isTheSameFrame(context)) {
+        if (isProxyMethod(frameProxy.location().method())) { // step into bridge and proxy methods
+          return StepRequest.STEP_INTO;
+        }
+        if (myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy)) {
+          if (myMethodFilter.getSkipCount() <= myFilterMatchedCount++) {
+            myTargetMethodMatched = true;
+            return myMethodFilter.onReached(context, this);
+          }
+        }
       }
 
       Integer resultDepth = checkCurrentPosition(context);
@@ -246,7 +258,7 @@ public class RequestHint {
           }
         }
 
-        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensions()) {
+        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensionList()) {
           try {
             if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
           }
@@ -254,8 +266,11 @@ public class RequestHint {
         }
       }
       // smart step feature
-      if (myMethodFilter != null && !mySteppedOut) {
-        return StepRequest.STEP_OUT;
+      if (myMethodFilter != null) {
+        isTheSameFrame(context); // to set mySteppedOut if needed
+        if (!mySteppedOut) {
+          return StepRequest.STEP_OUT;
+        }
       }
     }
     catch (VMDisconnectedException ignored) {

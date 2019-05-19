@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -25,6 +26,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   private final MinusculeMatcher myCaseInsensitiveMatcher;
   private final boolean myCaseSensitive;
   private static boolean ourForceStartMatching;
+  private final boolean myTypoTolerant;
 
 
   public CamelHumpMatcher(@NotNull final String prefix) {
@@ -32,8 +34,13 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   public CamelHumpMatcher(String prefix, boolean caseSensitive) {
+    this(prefix, caseSensitive, false);
+  }
+
+  CamelHumpMatcher(String prefix, boolean caseSensitive, boolean typoTolerant) {
     super(prefix);
     myCaseSensitive = caseSensitive;
+    myTypoTolerant = typoTolerant;
     myMatcher = createMatcher(myCaseSensitive);
     myCaseInsensitiveMatcher = createMatcher(false);
   }
@@ -54,6 +61,10 @@ public class CamelHumpMatcher extends PrefixMatcher {
     }
 
     return false;
+  }
+
+  boolean isTypoTolerant() {
+    return myTypoTolerant;
   }
 
   private static int skipUnderscores(@NotNull String name) {
@@ -109,24 +120,26 @@ public class CamelHumpMatcher extends PrefixMatcher {
       return this;
     }
     
-    return new CamelHumpMatcher(prefix, myCaseSensitive);
+    return new CamelHumpMatcher(prefix, myCaseSensitive, myTypoTolerant);
   }
 
   private MinusculeMatcher createMatcher(final boolean caseSensitive) {
     String prefix = applyMiddleMatching(myPrefix);
 
-    if (!caseSensitive) {
-      return NameUtil.buildMatcher(prefix, NameUtil.MatchingCaseSensitivity.NONE);
+    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(prefix);
+    if (caseSensitive) {
+      int setting = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
+      if (setting == CodeInsightSettings.FIRST_LETTER) {
+        builder = builder.withCaseSensitivity(NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+      }
+      else if (setting == CodeInsightSettings.ALL) {
+        builder = builder.withCaseSensitivity(NameUtil.MatchingCaseSensitivity.ALL);
+      }
     }
-
-    switch (CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE) {
-      case CodeInsightSettings.NONE:
-        return NameUtil.buildMatcher(prefix, NameUtil.MatchingCaseSensitivity.NONE);
-      case CodeInsightSettings.FIRST_LETTER:
-        return NameUtil.buildMatcher(prefix, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
-      default:
-        return NameUtil.buildMatcher(prefix, NameUtil.MatchingCaseSensitivity.ALL);
+    if (myTypoTolerant) {
+      builder = builder.typoTolerant();
     }
+    return builder.build();
   }
 
   public static String applyMiddleMatching(String prefix) {
@@ -164,11 +177,12 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return matchingDegree(string, matchingFragments(string));
   }
 
+  @Nullable
   public FList<TextRange> matchingFragments(String string) {
     return myMatcher.matchingFragments(string);
   }
 
-  public int matchingDegree(String string, @Nullable FList<TextRange> fragments) {
+  public int matchingDegree(String string, @Nullable FList<? extends TextRange> fragments) {
     int underscoreEnd = skipUnderscores(string);
     if (underscoreEnd > 0) {
       FList<TextRange> ciRanges = myCaseInsensitiveMatcher.matchingFragments(string);

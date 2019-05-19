@@ -28,16 +28,6 @@ public class JBTerminalStarter extends TerminalStarter {
 
   @Override
   protected JediEmulator createEmulator(TerminalDataStream dataStream, Terminal terminal) {
-    return new JediEmulator(dataStream, terminal) {
-      @Override
-      protected void unsupported(char... sequenceChars) {
-        if (sequenceChars[0] == 7) { //ESC BEL
-          JBTerminalPanel.refreshAfterExecution();
-        }
-        else {
-          super.unsupported();
-        }
-      }
-    };
+    return new JediEmulator(dataStream, terminal);
   }
 }

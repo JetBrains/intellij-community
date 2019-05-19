@@ -4,6 +4,7 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.siyeh.ig.LightInspectionTestCase;
 import com.siyeh.ig.bugs.ResultOfObjectAllocationIgnoredInspection;
 import com.siyeh.ig.imports.StaticImportInspection;
 import com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection;
@@ -26,10 +27,6 @@ public class IgnoreClassFixTest extends LightQuickFixParameterizedTestCase {
     };
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/com/siyeh/igfixes/fixes/ignore_class_fix";
@@ -38,6 +35,6 @@ public class IgnoreClassFixTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/InspectionGadgets/test";
+    return PathManagerEx.getCommunityHomePath() + LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH;
   }
 }

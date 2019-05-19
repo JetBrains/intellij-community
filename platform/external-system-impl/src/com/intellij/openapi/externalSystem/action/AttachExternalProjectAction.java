@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
@@ -25,15 +11,15 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.projectImport.ProjectImportProvider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 6/14/13 1:28 PM
  */
 public class AttachExternalProjectAction extends AnAction {
 
@@ -43,16 +29,15 @@ public class AttachExternalProjectAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     // todo [Vlad, IDEA-187835]: provide java subsystem independent implementation
     if (!ExternalSystemApiUtil.isJavaCompatibleIde()) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
-    ProjectSystemId externalSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
+    ProjectSystemId externalSystemId = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID);
     if (externalSystemId != null) {
       String name = externalSystemId.getReadableName();
       presentation.setText(ExternalSystemBundle.message("action.attach.external.project.text", name));
@@ -63,8 +48,8 @@ public class AttachExternalProjectAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    ProjectSystemId externalSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ProjectSystemId externalSystemId = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID);
     if (externalSystemId == null) {
       return;
     }
@@ -78,6 +63,7 @@ public class AttachExternalProjectAction extends AnAction {
     if (project == null) {
       return;
     }
+    ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
     
     ProjectImportProvider[] projectImportProviders = new ProjectImportProvider[1];
     for (ProjectImportProvider provider : ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions()) {
@@ -98,6 +84,7 @@ public class AttachExternalProjectAction extends AnAction {
                                                                           projectImportProviders);
     if (wizard != null && (wizard.getStepCount() <= 0 || wizard.showAndGet())) {
       ImportModuleAction.createFromWizard(project, wizard);
+      wizard.disposeIfNeeded();
     }
   }
 }

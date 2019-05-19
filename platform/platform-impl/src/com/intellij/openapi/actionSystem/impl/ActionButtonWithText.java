@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
@@ -9,12 +10,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BitUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
-import sun.swing.SwingUtilities2;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentInputMapUIResource;
@@ -41,8 +39,8 @@ public class ActionButtonWithText extends ActionButton {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals(Presentation.PROP_MNEMONIC_KEY)) {
-          Integer oldValue = evt.getOldValue() instanceof Integer? (Integer)evt.getOldValue() : 0;
-          Integer newValue = evt.getNewValue() instanceof Integer? (Integer)evt.getNewValue() : 0;
+          int oldValue = evt.getOldValue() instanceof Integer ? (Integer)evt.getOldValue() : 0;
+          int newValue = evt.getNewValue() instanceof Integer ? (Integer)evt.getNewValue() : 0;
           updateMnemonic(oldValue, newValue);
         }
       }
@@ -54,6 +52,11 @@ public class ActionButtonWithText extends ActionButton {
       }
     });
     updateMnemonic(0, myPresentation.getMnemonic());
+  }
+
+  @Override
+  protected Icon getFallbackIcon(boolean enabled) {
+    return EmptyIcon.ICON_0;
   }
 
   private void updateMnemonic(int lastMnemonic, int mnemonic) {
@@ -77,10 +80,13 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
+  @Override
   public Dimension getPreferredSize() {
     Dimension basicSize = super.getPreferredSize();
 
     Icon icon = getIcon();
+    int position = horizontalTextPosition();
+
     FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = new Rectangle(0, 0, Short.MAX_VALUE, Short.MAX_VALUE);
     Insets insets = getInsets();
@@ -91,7 +97,7 @@ public class ActionButtonWithText extends ActionButton {
     Rectangle textR = new Rectangle();
     SwingUtilities.layoutCompoundLabel(this, fm, getText(), icon,
                                        SwingConstants.CENTER, horizontalTextAlignment(),
-                                       SwingConstants.CENTER, horizontalTextPosition(),
+                                       SwingConstants.CENTER, position,
                                        viewRect, iconR, textR, iconTextSpace());
     int x1 = Math.min(iconR.x, textR.x);
     int x2 = Math.max(iconR.x + iconR.width, textR.x + textR.width);
@@ -100,6 +106,9 @@ public class ActionButtonWithText extends ActionButton {
     Dimension rv = new Dimension(x2 - x1 + dx, y2 - y1 + dy);
 
     rv.width += Math.max(basicSize.height - rv.height, 0);
+    if (shallPaintDownArrow()) {
+      rv.width += AllIcons.General.LinkDropTriangle.getIconWidth();
+    }
 
     rv.width = Math.max(rv.width, basicSize.width);
     rv.height = Math.max(rv.height, basicSize.height);
@@ -119,8 +128,11 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
+  @Override
   public void paintComponent(Graphics g) {
     Icon icon = getIcon();
+    Icon arrowIcon = shallPaintDownArrow() ? AllIcons.General.LinkDropTriangle : null;
+
     FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = getButtonRect();
     JBInsets.removeFrom(viewRect, getInsets());
@@ -131,6 +143,14 @@ public class ActionButtonWithText extends ActionButton {
                                                      SwingConstants.CENTER, horizontalTextAlignment(),
                                                      SwingConstants.CENTER, horizontalTextPosition(),
                                                      viewRect, iconRect, textRect, iconTextSpace());
+    if (arrowIcon != null) {
+      int alignment = horizontalTextAlignment();
+      int dx = alignment == SwingConstants.CENTER ? arrowIcon.getIconWidth() / 2 - 2:
+               alignment == SwingConstants.RIGHT ? arrowIcon.getIconWidth() :
+               0;
+      iconRect.x -= dx;
+      textRect.x -= dx;
+    }
     ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
     look.paintBackground(g, this);
     look.paintIconAt(g, icon, iconRect.x, iconRect.y);
@@ -138,10 +158,13 @@ public class ActionButtonWithText extends ActionButton {
 
     UISettings.setupAntialiasing(g);
     g.setColor(isButtonEnabled() ? getForeground() : getInactiveTextColor());
-    SwingUtilities2.drawStringUnderlineCharAt(this, g, text,
-                                              getMnemonicCharIndex(text),
-                                              textRect.x,
-                                              textRect.y + fm.getAscent());
+    UIUtilities.drawStringUnderlineCharAt(this, g, text, getMnemonicCharIndex(text),
+                                          textRect.x, textRect.y + fm.getAscent());
+    if (arrowIcon != null) {
+      int x = Math.max(iconRect.x + iconRect.width, textRect.x + textRect.width);
+      int y = textRect.y + (textRect.height - arrowIcon.getIconHeight()) / 2 + 1;
+      arrowIcon.paintIcon(this, g, x, y);
+    }
   }
 
   protected Rectangle getButtonRect() {
@@ -149,8 +172,8 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   @Override
-  protected void presentationPropertyChanded(PropertyChangeEvent e) {
-    super.presentationPropertyChanded(e);
+  protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
+    super.presentationPropertyChanged(e);
     if (Presentation.PROP_TEXT.equals(e.getPropertyName())) {
       revalidate(); // recalc preferred size & repaint instantly
     }
@@ -160,12 +183,10 @@ public class ActionButtonWithText extends ActionButton {
     return UIUtil.getInactiveTextColor();
   }
 
-  @SuppressWarnings("unused")
   public void setHorizontalTextPosition(@MagicConstant(valuesFromClass = SwingConstants.class) int position) {
     myHorizontalTextPosition = position;
   }
 
-  @SuppressWarnings("unused")
   public void setHorizontalTextAlignment(@MagicConstant(flagsFromClass = SwingConstants.class) int alignment) {
     myHorizontalTextAlignment = alignment;
   }
@@ -206,6 +227,7 @@ public class ActionButtonWithText extends ActionButton {
     return -1;
   }
 
+  @NotNull
   private String getText() {
     final String text = myPresentation.getText();
     return text != null ? text : "";

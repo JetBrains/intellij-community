@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -15,6 +15,11 @@ public interface EditorTabTitleProvider {
 
   @Nullable
   String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file);
+
+  @Nullable
+  default String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file, @Nullable EditorWindow editorWindow) {
+    return getEditorTabTitle(project, file);
+  }
 
   @Nullable
   default String getEditorTabTooltipText(@NotNull Project project, @NotNull VirtualFile virtualFile) {

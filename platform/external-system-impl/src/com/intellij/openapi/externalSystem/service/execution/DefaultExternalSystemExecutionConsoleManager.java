@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/18/14
  */
 public class DefaultExternalSystemExecutionConsoleManager
   implements ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler> {

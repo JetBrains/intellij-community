@@ -50,6 +50,7 @@ public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
     }
   }
 
+  @Override
   protected void execute(@NotNull final Project project,
                          @NotNull Collection<HgRepository> repositories,
                          @Nullable HgRepository selectedRepo) {

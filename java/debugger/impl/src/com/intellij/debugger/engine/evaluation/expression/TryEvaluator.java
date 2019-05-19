@@ -15,11 +15,11 @@ import java.util.List;
  */
 public class TryEvaluator implements Evaluator {
   @NotNull private final Evaluator myBodyEvaluator;
-  private final List<CatchEvaluator> myCatchBlockEvaluators;
+  private final List<? extends CatchEvaluator> myCatchBlockEvaluators;
   @Nullable private final Evaluator myFinallyEvaluator;
 
   public TryEvaluator(@NotNull Evaluator bodyEvaluator,
-                      List<CatchEvaluator> catchBlockEvaluators,
+                      List<? extends CatchEvaluator> catchBlockEvaluators,
                       @Nullable Evaluator finallyEvaluator) {
     myBodyEvaluator = bodyEvaluator;
     myCatchBlockEvaluators = catchBlockEvaluators;

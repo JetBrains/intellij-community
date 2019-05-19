@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.CommonBundle;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
@@ -30,6 +15,8 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -57,8 +44,8 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -117,6 +104,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }, this);
 
     myFrameworksTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         onSelectionChanged();
       }
@@ -184,7 +172,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     if (!myFrameworksTree.isProcessingMouseEventOnCheckbox()) {
       updateOptionsPanel();
     }
-    
+
     final FrameworkSupportNodeBase selectedNode = getSelectedNode();
     if (!Comparing.equal(selectedNode, myLastSelectedNode)) {
       applyLibraryOptionsForSelected();
@@ -296,9 +284,9 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return optionsComponent != null ? optionsComponent.getLibraryCompositionSettings() : null;
   }
 
-  private Collection<FrameworkSupportNodeBase> createNodes(List<FrameworkSupportInModuleProvider> providers,
+  private Collection<FrameworkSupportNodeBase> createNodes(List<? extends FrameworkSupportInModuleProvider> providers,
                                                            Set<String> associated,
-                                                           final Set<String> preselected) {
+                                                           final Collection<String> preselected) {
     Map<String, FrameworkSupportNode> nodes = new HashMap<>();
     Map<FrameworkGroup<?>, FrameworkGroupNode> groups = new HashMap<>();
     List<FrameworkSupportNodeBase> roots = new ArrayList<>();
@@ -317,8 +305,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private FrameworkSupportNode createNode(final FrameworkSupportInModuleProvider provider,
                                           final Map<String, FrameworkSupportNode> nodes,
                                           final Map<FrameworkGroup<?>, FrameworkGroupNode> groupNodes,
-                                          List<FrameworkSupportNodeBase> roots,
-                                          List<FrameworkSupportInModuleProvider> providers,
+                                          List<? super FrameworkSupportNodeBase> roots,
+                                          List<? extends FrameworkSupportInModuleProvider> providers,
                                           Set<String> associated,
                                           Map<String, FrameworkSupportNodeBase> associatedNodes) {
     String id = provider.getFrameworkType().getId();
@@ -385,7 +373,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return list;
   }
 
-  private static void addChildFrameworks(final List<FrameworkSupportNodeBase> list, final List<FrameworkSupportNode> result) {
+  private static void addChildFrameworks(final List<? extends FrameworkSupportNodeBase> list, final List<? super FrameworkSupportNode> result) {
     for (FrameworkSupportNodeBase node : list) {
       if (node.isChecked() || node instanceof FrameworkGroupNode) {
         if (node instanceof FrameworkSupportNode) {
@@ -403,7 +391,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       if (!compositionSettings.downloadFiles(parentComponent)) {
         int answer = Messages.showYesNoDialog(parentComponent,
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+                                              "Libraries Are Required", Messages.getWarningIcon());
         return answer == Messages.YES;
       }
     }
@@ -467,8 +455,18 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
   }
 
-  private void sortFrameworks(final List<FrameworkSupportNode> nodes) {
+  private void sortFrameworks(final List<? extends FrameworkSupportNode> nodes) {
     final Comparator<FrameworkSupportInModuleProvider> comparator = FrameworkSupportUtil.getFrameworkSupportProvidersComparator(myProviders);
     Collections.sort(nodes, (o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
+  }
+
+  public void reportFeatureUsageData(FeatureUsageData data) {
+    List<FrameworkSupportNode> nodes = getSelectedNodes();
+    for (int i = 0; i < nodes.size(); i++) {
+      FrameworkSupportNode node = nodes.get(i);
+      FrameworkSupportInModuleProvider provider = node.getUserObject();
+      String id = PluginInfoDetectorKt.getPluginInfo(provider.getClass()).isSafeToReport() ? provider.getId() : "third-party";
+      data.addData("framework" + i, id);
+    }
   }
 }

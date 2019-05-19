@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -127,15 +114,29 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
 
   @Override
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
+    for (GrAnnotation annotation : myAnnotations) {
+      if (annotation.hasQualifiedName(qualifiedName)) {
+        return annotation;
+      }
+    }
     return null;
   }
 
   @Override
   @NotNull
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public GrLightAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     final GrLightAnnotation annotation = new GrLightAnnotation(getManager(), getLanguage(), qualifiedName, this);
     myAnnotations.add(annotation);
     return annotation;
+  }
+
+  public void addAnnotation(@NotNull GrAnnotation annotation) {
+    myAnnotations.add(annotation);
+  }
+
+  public void copyAnnotations(@Nullable GrModifierList other) {
+    if (other == null) return;
+    ContainerUtil.addAll(myAnnotations, other.getAnnotations());
   }
 
   @Override
@@ -148,6 +149,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     }
   }
 
+  @Override
   public String toString() {
     return "GrModifierList";
   }
@@ -191,12 +193,12 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitModifierList(this);
   }
 
   @Override
-  public void acceptChildren(GroovyElementVisitor visitor) {
+  public void acceptChildren(@NotNull GroovyElementVisitor visitor) {
 
   }
 

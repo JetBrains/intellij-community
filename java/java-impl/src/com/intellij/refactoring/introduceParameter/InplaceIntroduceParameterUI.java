@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -25,7 +26,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.ui.TypeSelectorManager;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -36,7 +37,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSettingsUI {
-  private JComboBox myReplaceFieldsCb;
+  private JComboBox<Integer> myReplaceFieldsCb;
   private boolean myHasWriteAccess;
   private final Project myProject;
   private final TypeSelectorManager myTypeSelectorManager;
@@ -69,24 +70,21 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
   @Override
   protected JPanel createReplaceFieldsWithGettersPanel() {
     final LabeledComponent<JComboBox> component = new LabeledComponent<>();
-    myReplaceFieldsCb = new JComboBox(new Integer[]{IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL,
+    myReplaceFieldsCb = new ComboBox<>(new Integer[]{IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE});
-    myReplaceFieldsCb.setRenderer(new ListCellRendererWrapper<Integer>() {
-      @Override
-      public void customize(JList list, Integer value, int index, boolean selected, boolean hasFocus) {
-        switch (value) {
-          case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE:
-            setText(UIUtil.removeMnemonic(RefactoringBundle.message("do.not.replace")));
-            break;
-          case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE:
-            setText(UIUtil.removeMnemonic(RefactoringBundle.message("replace.fields.inaccessible.in.usage.context")));
-            break;
-          default:
-            setText(UIUtil.removeMnemonic(RefactoringBundle.message("replace.all.fields")));
-        }
+    myReplaceFieldsCb.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      switch (value) {
+        case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE:
+          label.setText(UIUtil.removeMnemonic(RefactoringBundle.message("do.not.replace")));
+          break;
+        case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE:
+          label.setText(UIUtil.removeMnemonic(RefactoringBundle.message("replace.fields.inaccessible.in.usage.context")));
+          break;
+        default:
+          label.setText(UIUtil.removeMnemonic(RefactoringBundle.message("replace.all.fields")));
       }
-    });
+    }));
     myReplaceFieldsCb.setSelectedItem(JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS);
     KeyboardComboSwitcher.setupActions(myReplaceFieldsCb, myProject);
     component.setComponent(myReplaceFieldsCb);
@@ -121,6 +119,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
       createOccurrencesCb(gc, myWholePanel, myOccurrences.length);
       myCbReplaceAllOccurences.addItemListener(
         new ItemListener() {
+          @Override
           public void itemStateChanged(ItemEvent e) {
             updateControls(new JCheckBox[0]);
           }

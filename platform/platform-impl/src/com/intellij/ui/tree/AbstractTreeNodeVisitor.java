@@ -4,35 +4,43 @@ package com.intellij.ui.tree;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
   protected static final Logger LOG = Logger.getInstance(AbstractTreeNodeVisitor.class);
-  private final Supplier<T> supplier;
-  private final Predicate<TreePath> predicate;
+  private final Supplier<? extends T> supplier;
+  private final Predicate<? super TreePath> predicate;
 
-  public AbstractTreeNodeVisitor(Supplier<T> supplier, Predicate<TreePath> predicate) {
+  /**
+   * @param supplier  that provides an element to search in a tree
+   * @param predicate that controls visiting children of found node:
+   *                  {@code null} to interrupt visiting,
+   *                  {@code true} to continue visiting with children,
+   *                  {@code false} to continue visiting without children
+   */
+  public AbstractTreeNodeVisitor(@NotNull Supplier<? extends T> supplier, @Nullable Predicate<? super TreePath> predicate) {
     this.supplier = supplier;
     this.predicate = predicate;
   }
 
-  public AbstractTreeNodeVisitor(Supplier<T> supplier, Consumer<TreePath> consumer) {
-    this(supplier, consumer == null ? null : path -> {
-      consumer.accept(path);
-      return false;
-    });
+  /**
+   * @return an element to search in a tree or {@code null} if it is obsolete
+   */
+  @Nullable
+  public final T getElement() {
+    return supplier.get();
   }
 
   @NotNull
   @Override
   public Action visit(@NotNull TreePath path) {
     if (LOG.isTraceEnabled()) LOG.debug("process ", path);
-    T element = supplier == null ? null : supplier.get();
+    T element = getElement();
     if (element == null) return Action.SKIP_SIBLINGS;
     Object component = path.getLastPathComponent();
     if (component instanceof AbstractTreeNode) {

@@ -39,8 +39,6 @@ public abstract class DomExtender<T extends DomElement> {
   /**
    * Makes stub building for extensions available.
    * To be compatible with general stubs contract, extension should NOT depend on anything beyond current file's content.
-   *
-   * @since 13.1
    */
   public boolean supportsStubs() {
     return true;

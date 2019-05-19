@@ -17,19 +17,23 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiThisExpression
+import com.intellij.psi.ResolveResult
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMultiResolvable
 import org.jetbrains.uast.UThisExpression
 
 class JavaUThisExpression(
-  override val psi: PsiThisExpression,
+  override val sourcePsi: PsiThisExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UThisExpression {
+) : JavaAbstractUExpression(givenParent), UThisExpression, UMultiResolvable {
   override val label: String?
-    get() = psi.qualifier?.qualifiedName
+    get() = sourcePsi.qualifier?.qualifiedName
 
   override val labelIdentifier: UIdentifier?
-    get() = psi.qualifier?.let { UIdentifier(it, this) }
+    get() = sourcePsi.qualifier?.let { UIdentifier(it, this) }
 
-  override fun resolve(): PsiElement? = psi.qualifier?.resolve()
+  override fun resolve(): PsiElement? = sourcePsi.qualifier?.resolve()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    sourcePsi.qualifier?.multiResolve(false)?.asIterable() ?: emptyList()
 }

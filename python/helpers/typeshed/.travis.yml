@@ -1,0 +1,30 @@
+dist: xenial
+language: python
+python: 3.7
+
+matrix:
+  include:
+    - name: "pytype"
+      python: 3.6
+      env:
+        - TEST_CMD="./tests/pytype_test.py --num-parallel=4"
+        - INSTALL="test"
+    - name: "mypy"
+      env:
+        - TEST_CMD="./tests/mypy_test.py"
+        - INSTALL="mypy"
+    - name: "mypy self test"
+      env: TEST_CMD="./tests/mypy_selftest.py"
+    - name: "check file consistency"
+      env: TEST_CMD="./tests/check_consistent.py"
+    - name: "flake8"
+      env:
+        - TEST_CMD="flake8"
+        - INSTALL="test"
+
+install:
+  - if [[ $INSTALL == 'test' ]]; then pip install -r requirements-tests-py3.txt; fi
+  - if [[ $INSTALL == 'mypy' ]]; then pip install -U git+git://github.com/python/mypy git+git://github.com/python/typed_ast; fi
+
+script:
+  - $TEST_CMD

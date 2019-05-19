@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.dom.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -31,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Producer;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
@@ -41,29 +39,36 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 
-public class ChooseFileIntentionAction implements IntentionAction {
-  private Producer<VirtualFile[]> myFileChooser = null;
+import java.util.function.Supplier;
 
+public class ChooseFileIntentionAction implements IntentionAction {
+  private Supplier<VirtualFile[]> myFileChooser = null;
+
+  @Override
   @NotNull
   public String getFamilyName() {
     return MavenDomBundle.message("inspection.group");
   }
 
+  @Override
   @NotNull
   public String getText() {
     return MavenDomBundle.message("intention.choose.file");
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!MavenDomUtil.isMavenFile(file)) return false;
     MavenDomDependency dep = getDependency(file, editor);
     return dep != null && "system".equals(dep.getScope().getStringValue());
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final MavenDomDependency dep = getDependency(file, editor);
 
@@ -75,7 +80,7 @@ public class ChooseFileIntentionAction implements IntentionAction {
       files = FileChooser.chooseFiles(descriptor, project, toSelect);
     }
     else {
-      files = myFileChooser.produce();
+      files = myFileChooser.get();
     }
     if (files == null || files.length == 0) return;
 
@@ -84,14 +89,12 @@ public class ChooseFileIntentionAction implements IntentionAction {
 
     if (dep != null) {
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-      WriteCommandAction.writeCommandAction(project).run(() -> {
-        dep.getSystemPath().setValue(selectedFile);
-      });
+      WriteCommandAction.writeCommandAction(project).run(() -> dep.getSystemPath().setValue(selectedFile));
     }
   }
 
   @TestOnly
-  public void setFileChooser(@Nullable final Producer<VirtualFile[]> fileChooser) {
+  public void setFileChooser(@Nullable final Supplier<VirtualFile[]> fileChooser) {
     myFileChooser = fileChooser;
   }
 

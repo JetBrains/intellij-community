@@ -417,7 +417,9 @@ public class PyDocstringGenerator {
       }
     }
     else if (myDocStringFormat == DocStringFormat.GOOGLE || myDocStringFormat == DocStringFormat.NUMPY) {
-      builder = myDocStringFormat == DocStringFormat.GOOGLE ? GoogleCodeStyleDocStringBuilder.forProject(mySettingsAnchor.getProject()) : new NumpyDocStringBuilder();
+      builder = myDocStringFormat == DocStringFormat.GOOGLE
+                ? GoogleCodeStyleDocStringBuilder.forSettings(mySettingsAnchor.getContainingFile())
+                : new NumpyDocStringBuilder();
       final SectionBasedDocStringBuilder sectionBuilder = (SectionBasedDocStringBuilder)builder;
       if (myAddFirstEmptyLine) {
         sectionBuilder.addEmptyLine();
@@ -457,14 +459,14 @@ public class PyDocstringGenerator {
     DocStringUpdater updater = null;
     if (myDocStringFormat == DocStringFormat.EPYTEXT || myDocStringFormat == DocStringFormat.REST) {
       final String prefix = myDocStringFormat == DocStringFormat.EPYTEXT ? "@" : ":";
-      //noinspection unchecked,ConstantConditions
+      // noinspection ConstantConditions
       updater = new TagBasedDocStringUpdater((TagBasedDocString)getStructuredDocString(), prefix, myDocStringIndent);
     }
     else if (myDocStringFormat == DocStringFormat.GOOGLE) {
       //noinspection ConstantConditions
-      updater = GoogleCodeStyleDocStringUpdater.forProject((GoogleCodeStyleDocString)getStructuredDocString(), 
-                                                           myDocStringIndent, 
-                                                           mySettingsAnchor.getProject());
+      updater = GoogleCodeStyleDocStringUpdater.forSettings((GoogleCodeStyleDocString)getStructuredDocString(),
+                                                            myDocStringIndent,
+                                                            mySettingsAnchor.getContainingFile());
     }
     else if (myDocStringFormat == DocStringFormat.NUMPY) {
       //noinspection ConstantConditions

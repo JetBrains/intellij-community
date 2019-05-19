@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.errorTreeView.*;
+import com.intellij.ide.errorTreeView.EditableMessageElement;
+import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
+import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,11 +26,11 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.tree.TreeCellEditor;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/24/2014
  */
 public class EditableNotificationMessageElement extends NotificationMessageElement implements EditableMessageElement {
 
@@ -59,7 +46,7 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
                                             String exportText, String rendererTextPrefix) {
     super(kind, parent, message, navigatable, exportText, rendererTextPrefix);
     myNotification = notification;
-    disabledLinks = ContainerUtil.newHashMap();
+    disabledLinks = new HashMap<>();
     myRightTreeCellEditor = new MyCellEditor();
   }
 
@@ -93,6 +80,7 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
     }
   }
 
+  @Override
   protected void updateStyle(@NotNull JEditorPane editorPane, @Nullable JTree tree, Object value, boolean selected, boolean hasFocus) {
     super.updateStyle(editorPane, tree, value, selected, hasFocus);
 
@@ -130,7 +118,7 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
     @NotNull
     private final EditableNotificationMessageElement myElement;
 
-    public MyJEditorPane(@NotNull EditableNotificationMessageElement element) {
+    MyJEditorPane(@NotNull EditableNotificationMessageElement element) {
       myElement = element;
     }
   }

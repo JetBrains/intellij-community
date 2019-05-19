@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -29,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.util.CommonProcessors;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.timing.Condition;
@@ -40,7 +27,6 @@ import java.io.File;
 import java.util.Collection;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static junit.framework.Assert.assertNotNull;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.method;
@@ -73,7 +59,7 @@ public class FileFixture {
           }
         });
       }
-    }, SHORT_TIMEOUT);
+    }, Timeouts.INSTANCE.getMinutes02());
     return this;
   }
 
@@ -111,7 +97,7 @@ public class FileFixture {
           }
         });
       }
-    }, SHORT_TIMEOUT);
+    }, Timeouts.INSTANCE.getMinutes05());
     return this;
   }
 
@@ -130,7 +116,7 @@ public class FileFixture {
     Collection<HighlightInfo> highlightInfos = execute(new GuiQuery<Collection<HighlightInfo>>() {
       @Override
       protected Collection<HighlightInfo> executeInEDT() throws Throwable {
-        CommonProcessors.CollectProcessor<HighlightInfo> processor = new CommonProcessors.CollectProcessor<HighlightInfo>();
+        CommonProcessors.CollectProcessor<HighlightInfo> processor = new CommonProcessors.CollectProcessor<>();
         DaemonCodeAnalyzerEx.processHighlights(document, myProject, severity, 0, document.getTextLength(), processor);
         return processor.getResults();
       }
@@ -160,7 +146,7 @@ public class FileFixture {
         Collection<HighlightInfo> highlightInfos = execute(new GuiQuery<Collection<HighlightInfo>>() {
           @Override
           protected Collection<HighlightInfo> executeInEDT() throws Throwable {
-            CommonProcessors.CollectProcessor<HighlightInfo> processor = new CommonProcessors.CollectProcessor<HighlightInfo>();
+            CommonProcessors.CollectProcessor<HighlightInfo> processor = new CommonProcessors.CollectProcessor<>();
             DaemonCodeAnalyzerEx.processHighlights(document, myProject, severity, 0, document.getTextLength(), processor);
             return processor.getResults();
           }
@@ -168,7 +154,7 @@ public class FileFixture {
         assertNotNull(highlightInfos);
         return highlightInfos.size() == expected;
       }
-    }, SHORT_TIMEOUT);
+    }, Timeouts.INSTANCE.getMinutes02());
 
     return this;
   }

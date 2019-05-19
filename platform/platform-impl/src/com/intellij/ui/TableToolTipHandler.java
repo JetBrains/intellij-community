@@ -20,6 +20,7 @@ import javax.swing.*;
 /**
  * @deprecated use JBTable instead
  */
+@Deprecated
 public class TableToolTipHandler {
   public static void install(JTable Table) {
   }

@@ -42,7 +42,6 @@ public class YamlNumberType extends YamlScalarType {
       if (textValue.startsWith(" ") || textValue.endsWith(" ")) {
         throw new NumberFormatException("contains spaces");
       }
-      //noinspection ResultOfMethodCallIgnored
       Float.parseFloat(textValue);
     }
     catch (NumberFormatException e) {

@@ -21,4 +21,10 @@ public interface ExpectedParameter {
   default Collection<String> getSemanticNames() {
     return Collections.emptyList();
   }
+
+  @NotNull
+  default Collection<AnnotationRequest> getExpectedAnnotations() {
+    return Collections.emptyList();
+  }
+
 }

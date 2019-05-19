@@ -46,11 +46,12 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
   private static class MyFilter implements Filter, FilterMixin {
     private final ExceptionInfoCache myCache;
 
-    public MyFilter(@NotNull final GlobalSearchScope scope) {
+    MyFilter(@NotNull final GlobalSearchScope scope) {
       myCache = new ExceptionInfoCache(scope);
     }
 
-    public Result applyFilter(final String line, final int textEndOffset) {
+    @Override
+    public Result applyFilter(@NotNull final String line, final int textEndOffset) {
       return null;
     }
 
@@ -96,7 +97,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
       }
     }
 
-    private static ExceptionWorker.ParsedLine doParse(ExceptionWorker worker, int lineEndOffset, String lineText) {
+    private static ExceptionWorker.ParsedLine doParse(@NotNull ExceptionWorker worker, int lineEndOffset, @NotNull String lineText) {
       Result result = worker.execute(lineText, lineEndOffset);
       if (result == null) return null;
       HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();

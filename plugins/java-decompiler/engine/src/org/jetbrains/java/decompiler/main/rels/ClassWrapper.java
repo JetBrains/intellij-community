@@ -65,7 +65,7 @@ public class ClassWrapper {
             MethodProcessorRunnable mtProc = new MethodProcessorRunnable(mt, md, varProc, DecompilerContext.getCurrentContext());
 
             Thread mtThread = new Thread(mtProc, "Java decompiler");
-            long stopAt = System.currentTimeMillis() + maxSec * 1000;
+            long stopAt = System.currentTimeMillis() + maxSec * 1000L;
 
             mtThread.start();
 

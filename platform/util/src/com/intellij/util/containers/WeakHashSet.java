@@ -14,30 +14,29 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.AbstractSet;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 /**
- * Weak hash map.
+ * Weak hash set.
  * Null keys are NOT allowed
- *
  */
 final class WeakHashSet<T> extends AbstractSet<T> {
-  private final Set<MyRef<T>> set = new THashSet<MyRef<T>>();
-  private final ReferenceQueue<T> queue = new ReferenceQueue<T>();
+  private final Set<MyRef<T>> set = new THashSet<>();
+  private final ReferenceQueue<T> queue = new ReferenceQueue<>();
 
   private static class MyRef<T> extends WeakReference<T> {
     private final int myHashCode;
 
-    public MyRef(@NotNull T referent, ReferenceQueue<? super T> q) {
+    MyRef(@NotNull T referent, ReferenceQueue<? super T> q) {
       super(referent, q);
       myHashCode = referent.hashCode();
     }
@@ -68,18 +67,7 @@ final class WeakHashSet<T> extends AbstractSet<T> {
 
   @Override
   public Iterator<T> iterator() {
-    return ContainerUtil.filterIterator(ContainerUtil.mapIterator(set.iterator(), new Function<MyRef<T>, T>() {
-                                                                    @Override
-                                                                    public T fun(MyRef<T> ref) {
-                                                                      return ref.get();
-                                                                    }
-                                                                  }
-    ), new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return t != null;
-      }
-    });
+    return ContainerUtil.filterIterator(ContainerUtil.mapIterator(set.iterator(), Reference::get), Objects::nonNull);
   }
 
   @Override
@@ -90,20 +78,22 @@ final class WeakHashSet<T> extends AbstractSet<T> {
   @Override
   public boolean add(@NotNull T t) {
     processQueue();
-    MyRef<T> ref = new MyRef<T>(t, queue);
+    MyRef<T> ref = new MyRef<>(t, queue);
     return set.add(ref);
   }
 
   @Override
   public boolean remove(@NotNull Object o) {
     processQueue();
-    return set.remove(new HardRef<T>((T)o));
+    //noinspection unchecked
+    return set.remove(new HardRef<>((T)o));
   }
 
   @Override
   public boolean contains(@NotNull Object o) {
     processQueue();
-    return set.contains(new HardRef<T>((T)o));
+    //noinspection unchecked
+    return set.contains(new HardRef<>((T)o));
   }
 
   @Override
@@ -113,6 +103,7 @@ final class WeakHashSet<T> extends AbstractSet<T> {
 
   private void processQueue() {
     MyRef<T> ref;
+    //noinspection unchecked
     while ((ref = (MyRef<T>)queue.poll()) != null) {
       set.remove(ref);
     }

@@ -20,7 +20,7 @@ public class DataFlowInspectionCancellingTest extends DataFlowInspectionTestCase
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return DataFlowInspection8Test.PROJECT_DESCRIPTOR;
+    return JAVA_8_ANNOTATED;
   }
 
   public void testCancelledStreamInlining() {
@@ -28,7 +28,7 @@ public class DataFlowInspectionCancellingTest extends DataFlowInspectionTestCase
                                        "import java.util.function.*;\n" +
                                        "import java.util.stream.*;\n" +
                                        "\n" +
-                                       "class X {\n" +
+                                       "/** @noinspection ConstantConditions*/ class X {\n" +
                                        "  List<Integer> testTryCatchInStream(List<String> input) {\n" +
                                        "    return input.stream().map(a -> {\n" +
                                        "      try {\n" +

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -55,7 +54,7 @@ public class BraceMatchingUtil {
     EditorHighlighter editorHighlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(file.getProject(), editor, file);
     HighlighterIterator iterator = editorHighlighter.createIterator(offset);
     boolean matched = matchBrace(document.getCharsSequence(), file.getFileType(), iterator, forward);
-    assert matched;
+    if (!matched) throw new AssertionError();
     return iterator.getStart();
   }
 
@@ -343,6 +342,7 @@ public class BraceMatchingUtil {
 
   private static class BraceMatcherHolder {
     private static final BraceMatcher ourDefaultBraceMatcher = new DefaultBraceMatcher();
+    private static final BraceMatcher nullBraceMatcher = new DefaultBraceMatcher();
   }
 
   @NotNull
@@ -398,15 +398,17 @@ public class BraceMatchingUtil {
   @Nullable
   private static BraceMatcher getBraceMatcherByFileType(@NotNull FileType fileType) {
     BraceMatcher braceMatcher = BRACE_MATCHERS.get(fileType);
+    if (braceMatcher == BraceMatcherHolder.nullBraceMatcher) return null;
     if (braceMatcher != null) return braceMatcher;
 
-    for (FileTypeExtensionPoint<BraceMatcher> ext : Extensions.getExtensions(BraceMatcher.EP_NAME)) {
+    for (FileTypeExtensionPoint<BraceMatcher> ext : BraceMatcher.EP_NAME.getExtensionList()) {
       if (fileType.getName().equals(ext.filetype)) {
         braceMatcher = ext.getInstance();
         BRACE_MATCHERS.put(fileType, braceMatcher);
         return braceMatcher;
       }
     }
+    BRACE_MATCHERS.put(fileType, BraceMatcherHolder.nullBraceMatcher);
     return null;
   }
 

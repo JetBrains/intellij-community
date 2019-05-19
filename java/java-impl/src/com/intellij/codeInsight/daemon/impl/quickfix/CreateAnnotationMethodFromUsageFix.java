@@ -64,7 +64,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     PsiNameValuePair nameValuePair = getNameValuePair();
     if (nameValuePair == null || isValidElement(nameValuePair)) return;
 
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(nameValuePair.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(nameValuePair.getProject());
 
     final String methodName = nameValuePair.getName();
     LOG.assertTrue(methodName != null);

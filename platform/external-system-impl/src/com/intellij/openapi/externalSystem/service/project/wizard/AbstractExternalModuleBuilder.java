@@ -15,7 +15,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 6/26/13 10:39 AM
  */
 public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSettings> extends ModuleBuilder {
   @NotNull private final Icon myIcon;
@@ -26,6 +25,7 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
                                           @NotNull final S externalProjectSettings) {
     myExternalSystemId = externalSystemId;
     myExternalProjectSettings = externalProjectSettings;
+    externalProjectSettings.setupNewProjectDefault();
     Icon icon = ExternalSystemUiUtil.getUiAware(externalSystemId).getProjectIcon();
     myIcon = icon == null ? super.getNodeIcon() : icon;
   }

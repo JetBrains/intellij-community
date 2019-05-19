@@ -32,14 +32,11 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
-import java.util.HashMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.util.*;
 
@@ -74,7 +71,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private final ProjectFileIndex myFileIndex;
   private final ModuleGrouper myModuleGrouper;
 
-  public DirectoryChooserModuleTreeView(@NotNull Project project) {
+  DirectoryChooserModuleTreeView(@NotNull Project project) {
     myRootNode = new DefaultMutableTreeNode();
     myTree = new Tree(myRootNode);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -113,12 +110,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
 
   @Override
   public void onSelectionChange(final Runnable runnable) {
-    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        runnable.run();
-      }
-    });
+    myTree.getSelectionModel().addTreeSelectionListener(e -> runnable.run());
   }
 
   @Override

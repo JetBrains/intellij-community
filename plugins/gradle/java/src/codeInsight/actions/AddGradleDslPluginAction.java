@@ -24,7 +24,6 @@ import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/22/13
  */
 public class AddGradleDslPluginAction extends CodeInsightAction {
   public static final String ID = "AddGradleDslPluginAction";

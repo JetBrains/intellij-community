@@ -147,6 +147,13 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals("\\U12345678", createLiteralFromText("u'\\U12345678'").getStringValue());
   }
 
+  public void testFStringEscapes() {
+    assertEquals("{", createLiteralFromText("f'{{'").getStringValue());
+    assertEquals("}", createLiteralFromText("f'}}'").getStringValue());
+    assertEquals("{{foo}}", createLiteralFromText("f'{{{foo}}}'").getStringValue());
+    assertEquals("\n{foo}\r\"", createLiteralFromText("f'\\n{foo}\\r\"'").getStringValue());
+  }
+
   private static String decodeRange(PyStringLiteralExpression expr, TextRange range) {
     final StringBuilder builder = new StringBuilder();
     expr.createLiteralTextEscaper().decode(range, builder);
@@ -154,8 +161,8 @@ public class PyStringLiteralTest extends PyTestCase {
   }
 
   private PyStringLiteralExpression createLiteralFromText(final String text) {
-    final PsiFile file = PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("test.py", "a = " + text);
-    final PyStringLiteralExpression expr = PsiTreeUtil.getParentOfType(file.findElementAt(5), PyStringLiteralExpression.class);
+    final PsiFile file = PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("test.py", PythonFileType.INSTANCE, "a = (" + text + ")");
+    final PyStringLiteralExpression expr = PsiTreeUtil.getParentOfType(file.findElementAt(6), PyStringLiteralExpression.class);
     assert expr != null;
     return expr;
   }
@@ -168,5 +175,10 @@ public class PyStringLiteralTest extends PyTestCase {
       characters.add(fragment.getSecond());
     }
     return characters;
+  }
+
+  public void testRichStringNodes() {
+    final PyStringLiteralExpression string = createLiteralFromText("'foo' 'bar' 'baz'");
+    assertSize(3, string.getStringElements());
   }
 }

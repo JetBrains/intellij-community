@@ -11,7 +11,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -28,7 +27,6 @@ import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import com.theoryinpractice.testng.model.TestType;
-import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -85,9 +83,7 @@ public class ConfigurationsTest {
     final RenameRefactoring renameClass = RefactoringFactory.getInstance(project).createRename(psiClass, newName);
     renameClass.setSearchInComments(false);
     renameClass.setSearchInNonJavaFiles(false);
-    WriteCommandAction.runWriteCommandAction(project, () -> {
-      renameClass.run();
-    });
+    WriteCommandAction.runWriteCommandAction(project, () -> renameClass.run());
     Assert.assertEquals(newName, configuration.getPersistantData().getMainClassName());
 
     final PsiMethod notATestMethod = findNotATestMethod(psiClass);
@@ -95,9 +91,7 @@ public class ConfigurationsTest {
     final RenameRefactoring renameNotATestMethod = RefactoringFactory.getInstance(project).createRename(notATestMethod, "aaaa");
     renameNotATestMethod.setSearchInComments(false);
     renameNotATestMethod.setSearchInNonJavaFiles(false);
-    WriteCommandAction.runWriteCommandAction(project, () -> {
-      renameNotATestMethod.run();
-    });
+    WriteCommandAction.runWriteCommandAction(project, () -> renameNotATestMethod.run());
     Assert.assertEquals(configuration.getPersistantData().getMainClassName(), newName);
     Assert.assertEquals(configuration.getPersistantData().getMethodName(), "");
     Assert.assertEquals(configuration.getPersistantData().TEST_OBJECT, TestType.CLASS.getType());
@@ -117,9 +111,7 @@ public class ConfigurationsTest {
     final RenameRefactoring renameMethod = RefactoringFactory.getInstance(project).createRename(method, newMethodName);
     renameMethod.setSearchInComments(false);
     renameMethod.setSearchInNonJavaFiles(false);
-    WriteCommandAction.runWriteCommandAction(project, () -> {
-      renameMethod.run();
-    });
+    WriteCommandAction.runWriteCommandAction(project, () -> renameMethod.run());
 
     Assert.assertEquals(className, configuration.getPersistantData().getMainClassName());
     Assert.assertEquals(newMethodName, configuration.getPersistantData().getMethodName());
@@ -128,9 +120,7 @@ public class ConfigurationsTest {
     final RenameRefactoring renameNotATestMethod1 = RefactoringFactory.getInstance(project).createRename(notATestMethod, "bbbbb");
     renameNotATestMethod1.setSearchInComments(false);
     renameNotATestMethod1.setSearchInNonJavaFiles(false);
-    WriteCommandAction.runWriteCommandAction(project, () -> {
-      renameNotATestMethod1.run();
-    });
+    WriteCommandAction.runWriteCommandAction(project, () -> renameNotATestMethod1.run());
     Assert.assertEquals(className, configuration.getPersistantData().getMainClassName());
     Assert.assertEquals(newMethodName, configuration.getPersistantData().getMethodName());
   }
@@ -146,7 +136,7 @@ public class ConfigurationsTest {
     final Project project = myProjectFixture.getProject();
     final PsiClass psiClass = findTestClass(project);
     final TestNGConfiguration configuration = createConfiguration(project);
-    final TestNGConfigurationType type = (TestNGConfigurationType)configuration.getFactory().getType();
+    final TestNGConfigurationType type = TestNGConfigurationType.getInstance();
 
     //class config
     configuration.beClassConfiguration(psiClass);
@@ -196,7 +186,7 @@ public class ConfigurationsTest {
 
   private static TestNGConfiguration createConfiguration(final Project project) {
     final RunManager manager = RunManager.getInstance(project);
-    RunnerAndConfigurationSettings settings = manager.createRunConfiguration("testt", TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
+    RunnerAndConfigurationSettings settings = manager.createConfiguration("testt", TestNGConfigurationType.class);
     manager.addConfiguration(settings);
     return (TestNGConfiguration)settings.getConfiguration();
   }

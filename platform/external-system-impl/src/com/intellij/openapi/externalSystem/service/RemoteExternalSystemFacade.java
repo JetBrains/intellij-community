@@ -22,7 +22,6 @@ import java.util.Set;
  * memory leaks etc). So, we use it at external process and current class works as a facade to it from ide process.
  * 
  * @author Denis Zhdanov
- * @since 8/8/11 10:52 AM
  */
 public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSettings> extends Remote, ExternalSystemTaskAware {
 

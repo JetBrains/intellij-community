@@ -33,7 +33,7 @@ import java.util.*;
  * @author Rustam Vishnyakov
  */
 public class CustomFoldingRegionsPopup {
-  public static void show(@NotNull final Collection<FoldingDescriptor> descriptors,
+  public static void show(@NotNull final Collection<? extends FoldingDescriptor> descriptors,
                           @NotNull final Editor editor,
                           @NotNull final Project project) {
     List<MyFoldingDescriptorWrapper> model = orderByPosition(descriptors);
@@ -74,7 +74,7 @@ public class CustomFoldingRegionsPopup {
     }
   }
 
-  private static List<MyFoldingDescriptorWrapper> orderByPosition(Collection<FoldingDescriptor> descriptors) {
+  private static List<MyFoldingDescriptorWrapper> orderByPosition(Collection<? extends FoldingDescriptor> descriptors) {
     List<FoldingDescriptor> sorted = new ArrayList<>(descriptors.size());
     sorted.addAll(descriptors);
     Collections.sort(sorted, (descriptor1, descriptor2) -> {

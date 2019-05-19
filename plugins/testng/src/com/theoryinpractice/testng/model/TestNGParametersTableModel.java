@@ -24,7 +24,6 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String, String>>
@@ -36,10 +35,12 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
         super(
                 new ColumnInfo<Map.Entry<String, String>, String>("Name")
                 {
+                    @Override
                     public String valueOf(Map.Entry<String, String> object) {
                         return object.getKey();
                     }
 
+                    @Override
                     public TableCellEditor getEditor(final Map.Entry<String, String>  item) {
                         final JTextField textField = new JTextField();
                         textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
@@ -48,10 +49,12 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
                 },
                 new ColumnInfo<Map.Entry<String, String>, String>("Value")
                 {
+                    @Override
                     public String valueOf(Map.Entry<String, String> object) {
                         return object.getValue();
                     }
 
+                    @Override
                     public TableCellEditor getEditor(final Map.Entry<String, String>  item) {
                         final JTextField textField = new JTextField();
                         textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
@@ -61,6 +64,7 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
         );
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
@@ -77,6 +81,7 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
         setParameterList(parameterList);
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         Map.Entry<String, String> entry = parameterList.get(rowIndex);
         String key = entry.getKey();

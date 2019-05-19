@@ -99,7 +99,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (ignoreObjectConstruction) {
         return;
       }
-      if (ignoreUncompilable && (expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0)) {
+      if (ignoreUncompilable && expression.isArrayCreation()) {
         //array creation can (almost) never be generic
         return;
       }

@@ -50,9 +50,6 @@ public abstract class InspectionValidator {
   @Nullable
   private final InspectionToolProvider myInspectionToolProvider;
 
-  /**
-   * @since 15
-   */
   protected InspectionValidator(@NotNull final String description, @NotNull final String progressIndicatorText) {
     myDescription = description;
     myProgressIndicatorText = progressIndicatorText;
@@ -63,6 +60,7 @@ public abstract class InspectionValidator {
   /**
    * @deprecated Provide inspection classes via {@link #getInspectionToolClasses(CompileContext)} instead.
    */
+  @Deprecated
   @SafeVarargs
   protected InspectionValidator(@NotNull final String description,
                                 @NotNull final String progressIndicatorText,

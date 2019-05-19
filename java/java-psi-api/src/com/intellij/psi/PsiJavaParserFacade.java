@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -15,34 +15,33 @@ public interface PsiJavaParserFacade {
   /**
    * Creates a JavaDoc tag from the specified text.
    *
-   * @param docTagText the text of the JavaDoc tag.
+   * @param text the text of the JavaDoc tag.
    * @return the created tag.
    * @throws IncorrectOperationException if the text of the tag is not valid.
    */
   @NotNull
-  PsiDocTag createDocTagFromText(@NotNull String docTagText) throws IncorrectOperationException;
+  PsiDocTag createDocTagFromText(@NotNull String text) throws IncorrectOperationException;
 
   /**
    * Creates a JavaDoc comment from the specified text.
    *
-   * @param docCommentText the text of the JavaDoc comment.
+   * @param text the text of the JavaDoc comment.
    * @return the created comment.
    * @throws IncorrectOperationException if the text of the comment is not valid.
    */
   @NotNull
-  PsiDocComment createDocCommentFromText(@NotNull String docCommentText) throws IncorrectOperationException;
+  PsiDocComment createDocCommentFromText(@NotNull String text) throws IncorrectOperationException;
 
   /**
    * Creates a JavaDoc comment from the specified text.
    *
-   * @param docCommentText the text of the JavaDoc comment.
-   * @param docCommentText the text of the JavaDoc comment.
+   * @param text the text of the JavaDoc comment.
    * @param context the PSI element used as context for resolving references inside this javadoc
    * @return the created comment.
    * @throws IncorrectOperationException if the text of the comment is not valid.
    */
   @NotNull
-  PsiDocComment createDocCommentFromText(@NotNull String docCommentText, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiDocComment createDocCommentFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java class with a dummy name from the specified body text (the text between the braces).
@@ -227,23 +226,27 @@ public interface PsiJavaParserFacade {
   @NotNull
   PsiType createPrimitiveTypeFromText(@NotNull String text) throws IncorrectOperationException;
 
+  /** @deprecated use {@link #createModuleFromText(String, PsiElement)} */
+  @Deprecated
+  default PsiJavaModule createModuleFromText(@NotNull String text) throws IncorrectOperationException {
+    return createModuleFromText(text, null);
+  }
+
   /**
    * Creates a Java module declaration from the specified text.
    */
   @NotNull
-  PsiJavaModule createModuleFromText(@NotNull String text) throws IncorrectOperationException;
+  PsiJavaModule createModuleFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java module statement from the specified text.
    */
   @NotNull
-  PsiStatement createModuleStatementFromText(@NotNull String text) throws IncorrectOperationException;
+  PsiStatement createModuleStatementFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
-   * Creates a Java module reference from the specified text.
+   * Creates a Java module reference element from the specified text.
    */
   @NotNull
-  default PsiJavaModuleReferenceElement createModuleReferenceFromText(@NotNull String text) throws IncorrectOperationException {
-    return createModuleFromText("module " + text + " {}").getNameIdentifier();
-  }
+  PsiJavaModuleReferenceElement createModuleReferenceFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 }

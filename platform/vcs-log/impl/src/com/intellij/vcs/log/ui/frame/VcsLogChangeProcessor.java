@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
@@ -23,11 +24,15 @@ import java.util.List;
 class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull private final VcsLogChangesBrowser myBrowser;
 
-  public VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, @NotNull Disposable disposable) {
-    super(project, DiffPlaces.VCS_LOG_VIEW);
+  VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, boolean isInEditor,
+                        @NotNull Disposable disposable) {
+    super(project, isInEditor ? DiffPlaces.DEFAULT : DiffPlaces.VCS_LOG_VIEW);
     myBrowser = browser;
     myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     Disposer.register(disposable, this);
+
+    myBrowser.addListener(() -> updatePreviewLater(), this);
+    myBrowser.getViewer().addSelectionListener(this::updatePreviewLater, this);
   }
 
   @NotNull
@@ -38,8 +43,8 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull
   @Override
   protected List<Wrapper> getSelectedChanges() {
-    List<Change> changes = myBrowser.getSelectedChanges();
-    if (changes.isEmpty()) changes = myBrowser.getAllChanges();
+    boolean hasSelection = myBrowser.getViewer().getSelectionModel().getSelectionCount() != 0;
+    List<Change> changes = hasSelection ? myBrowser.getSelectedChanges() : myBrowser.getAllChanges();
     return ContainerUtil.map(changes, MyChangeWrapper::new);
   }
 
@@ -60,20 +65,19 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     }
   }
 
+  private void updatePreviewLater() {
+    ApplicationManager.getApplication().invokeLater(() -> updatePreview(getComponent().isShowing()));
+  }
+
   public void updatePreview(boolean state) {
     // We do not have local changes here, so it's OK to always use `fromModelRefresh == false`
-    if (state) {
-      refresh(false);
-    }
-    else {
-      clear();
-    }
+    updatePreview(state, false);
   }
 
   private class MyChangeWrapper extends Wrapper {
     @NotNull private final Change myChange;
 
-    public MyChangeWrapper(@NotNull Change change) {
+    MyChangeWrapper(@NotNull Change change) {
       myChange = change;
     }
 
@@ -86,7 +90,7 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     @Nullable
     @Override
     public DiffRequestProducer createProducer(@Nullable Project project) {
-      return myBrowser.getDiffRequestProducer(myChange);
+      return myBrowser.getDiffRequestProducer(myChange, true);
     }
   }
 }

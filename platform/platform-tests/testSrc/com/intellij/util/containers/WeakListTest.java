@@ -225,6 +225,6 @@ public class WeakListTest {
   }
 
   private static void gc() {
-    GCUtil.tryForceGC();
+    GCUtil.tryGcSoftlyReachableObjects();
   }
 }

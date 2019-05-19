@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 class Test1 {
     void foo(){}
     {
@@ -5,7 +7,7 @@ class Test1 {
         String str1 = "effectively final string";
         Comparable<String> a = new Comparable<String>() {
             @Override
-            public int compareTo(String o) {
+            public int compareTo(@NotNull String o) {
                 System.out.println(str1);
                 new Runnable() {
                     @Override

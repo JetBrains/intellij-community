@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -73,6 +74,7 @@ public abstract class ServerType<C extends ServerConfiguration> {
   /**
    * @deprecated override {@link #createServerConfigurable(com.intellij.remoteServer.configuration.ServerConfiguration)} instead
    */
+  @Deprecated
   @NotNull
   public UnnamedConfigurable createConfigurable(@NotNull C configuration) {
     return createServerConfigurable(configuration);
@@ -115,7 +117,7 @@ public abstract class ServerType<C extends ServerConfiguration> {
 
   @NotNull
   public Comparator<Deployment> getDeploymentComparator() {
-    return (o1, o2) -> o1.getName().compareTo(o2.getName());
+    return Comparator.comparing(Deployment::getName);
   }
 
   @Nullable

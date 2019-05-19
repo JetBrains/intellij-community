@@ -27,7 +27,7 @@ public interface CommonElement<E extends PsiElement> {
   @Nullable
   E getPsiElement();
 
-  static abstract class Visitor {
+  abstract class Visitor {
     public void visitElement(CommonElement pattern) {
     }
 

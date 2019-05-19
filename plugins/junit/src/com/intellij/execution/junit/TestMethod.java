@@ -14,7 +14,7 @@ import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import org.jetbrains.annotations.NotNull;
 
 class TestMethod extends TestObject {
-  public TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+  TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
 

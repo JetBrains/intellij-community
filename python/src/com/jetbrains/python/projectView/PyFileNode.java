@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,7 +33,7 @@ import java.util.List;
  * @author yole
  */
 public class PyFileNode extends PsiFileNode {
-  public PyFileNode(Project project, PsiFile value, ViewSettings viewSettings) {
+  public PyFileNode(Project project, @NotNull PsiFile value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 

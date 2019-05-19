@@ -61,7 +61,7 @@ public class SegmentedOutputStream extends OutputStream implements PacketProcess
       sendStart();
     writeNext(SegmentedStream.MARKER_PREFIX);
     String encodedPacket = Packet.encode(packet);
-    writeNext(String.valueOf(encodedPacket.length())+SegmentedStream.LENGTH_DELIMITER+encodedPacket);
+    writeNext(encodedPacket.length() + SegmentedStream.LENGTH_DELIMITER + encodedPacket);
   }
 
   private void writeNext(String string) {

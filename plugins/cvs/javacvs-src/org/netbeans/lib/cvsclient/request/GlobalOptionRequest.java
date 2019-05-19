@@ -12,8 +12,8 @@
  */
 package org.netbeans.lib.cvsclient.request;
 
-import org.netbeans.lib.cvsclient.util.BugLog;
 import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.util.BugLog;
 
 /**
  * The global options request.
@@ -45,6 +45,7 @@ public final class GlobalOptionRequest extends AbstractRequest {
          * Get the request String that will be passed to the server.
          * @return the request String
          */
+        @Override
         public String getRequestString() {
                 return REQUEST + ' ' + option + '\n';
         }

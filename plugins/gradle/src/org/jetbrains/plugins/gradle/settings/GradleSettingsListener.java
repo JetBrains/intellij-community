@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
  * Implementations of this interface are not obliged to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 1/17/12 1:02 PM
  */
 public interface GradleSettingsListener extends ExternalSystemSettingsListener<GradleProjectSettings> {
 
@@ -57,4 +56,20 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param newOptions  new option (if any)
    */
   void onGradleVmOptionsChange(@Nullable String oldOptions, @Nullable String newOptions);
+
+  /**
+   * Is expected to be called when build delegation setting is changed by end-user.
+   *
+   * @param delegatedBuild    current value
+   * @param linkedProjectPath target linked gradle project path
+   */
+  void onBuildDelegationChange(boolean delegatedBuild, @NotNull String linkedProjectPath);
+
+  /**
+   * Is expected to be called when test runner setting is changed by end-user.
+   *
+   * @param currentTestRunner current value
+   * @param linkedProjectPath target linked gradle project path
+   */
+  void onTestRunnerChange(@NotNull TestRunner currentTestRunner, @NotNull String linkedProjectPath);
 }

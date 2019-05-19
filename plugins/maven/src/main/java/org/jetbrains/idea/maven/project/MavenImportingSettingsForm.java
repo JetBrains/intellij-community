@@ -2,16 +2,20 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.updateSettings.impl.LabelTextReplacingUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.EnumComboBoxModel;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,17 +37,22 @@ public class MavenImportingSettingsForm {
   private JCheckBox myImportAutomaticallyBox;
   private JCheckBox myCreateModulesForAggregators;
   private JCheckBox myCreateGroupsCheckBox;
-  private JComboBox myUpdateFoldersOnImportPhaseComboBox;
+  private JComboBox<String> myUpdateFoldersOnImportPhaseComboBox;
   private JCheckBox myKeepSourceFoldersCheckBox;
   private JCheckBox myUseMavenOutputCheckBox;
   private JCheckBox myDownloadSourcesCheckBox;
   private JCheckBox myDownloadDocsCheckBox;
+  private JCheckBox myDownloadAnnotationsCheckBox;
 
   private JPanel myAdditionalSettingsPanel;
-  private JComboBox myGeneratedSourcesComboBox;
+  private JComboBox<MavenImportingSettings.GeneratedSourcesFolder> myGeneratedSourcesComboBox;
   private JCheckBox myExcludeTargetFolderCheckBox;
   private JTextField myDependencyTypes;
   private JCheckBox myStoreProjectFilesExternally;
+  private JBTextField myVMOptionsForImporter;
+  private ExternalSystemJdkComboBox myJdkForImporterComboBox;
+  private JCheckBox myAutoDetectCompilerCheckBox;
+  private JBCheckBox myJBCheckBox1;
 
   public MavenImportingSettingsForm(boolean isImportStep, boolean isCreatingNewProject) {
     mySearchRecursivelyCheckBox.setVisible(isImportStep);
@@ -51,6 +60,7 @@ public class MavenImportingSettingsForm {
     myProjectFormatComboBox.setVisible(isImportStep && isCreatingNewProject);
 
     ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateControls();
       }
@@ -60,19 +70,14 @@ public class MavenImportingSettingsForm {
     mySeparateModulesDirChooser.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
-    myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
+    myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel<>(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
 
     myGeneratedSourcesComboBox.setModel(new EnumComboBoxModel<>(MavenImportingSettings.GeneratedSourcesFolder.class));
-    myGeneratedSourcesComboBox.setRenderer(new ListCellRendererWrapper() {
-      @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof MavenImportingSettings.GeneratedSourcesFolder) {
-          setText(((MavenImportingSettings.GeneratedSourcesFolder)value).title);
-        }
-      }
-    });
+    myGeneratedSourcesComboBox.setRenderer(SimpleListCellRenderer.create("", value -> value.title));
 
     LabelTextReplacingUtil.replaceText(myPanel);
+    myDownloadAnnotationsCheckBox.setVisible(Registry.is("external.system.import.resolve.annotations"));
+    myAutoDetectCompilerCheckBox.setVisible(Registry.is("maven.import.compiler.arguments", true));
   }
 
   private void createUIComponents() {
@@ -113,6 +118,11 @@ public class MavenImportingSettingsForm {
 
     data.setDownloadSourcesAutomatically(myDownloadSourcesCheckBox.isSelected());
     data.setDownloadDocsAutomatically(myDownloadDocsCheckBox.isSelected());
+    data.setDownloadAnnotationsAutomatically(myDownloadAnnotationsCheckBox.isSelected());
+    data.setAutoDetectCompiler(myAutoDetectCompilerCheckBox.isSelected());
+
+    data.setVmOptionsForImporter(myVMOptionsForImporter.getText());
+    data.setJdkForImporter(myJdkForImporterComboBox.getSelectedValue());
 
     data.setDependencyTypes(myDependencyTypes.getText());
   }
@@ -144,8 +154,13 @@ public class MavenImportingSettingsForm {
 
     myDownloadSourcesCheckBox.setSelected(data.isDownloadSourcesAutomatically());
     myDownloadDocsCheckBox.setSelected(data.isDownloadDocsAutomatically());
+    myDownloadAnnotationsCheckBox.setSelected(data.isDownloadAnnotationsAutomatically());
+    myAutoDetectCompilerCheckBox.setSelected(data.isAutoDetectCompiler());
 
     myDependencyTypes.setText(data.getDependencyTypes());
+
+    myVMOptionsForImporter.setText(data.getVmOptionsForImporter());
+    myJdkForImporterComboBox.refreshData(data.getJdkForImporter());
 
     updateControls();
   }

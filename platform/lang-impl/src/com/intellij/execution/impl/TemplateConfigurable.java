@@ -10,7 +10,7 @@ import org.jdom.Element;
 class TemplateConfigurable extends BaseRCSettingsConfigurable {
   private final RunnerAndConfigurationSettings myTemplate;
 
-  public TemplateConfigurable(RunnerAndConfigurationSettings template) {
+  TemplateConfigurable(RunnerAndConfigurationSettings template) {
     super(new ConfigurationSettingsEditorWrapper(template), template);
     myTemplate = template;
   }

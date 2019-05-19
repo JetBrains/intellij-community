@@ -1,7 +1,11 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
@@ -12,11 +16,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,7 +38,7 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     final Editor editor = getEditor(e);
     final PsiFile file = getPsiFile(e);
     if (editor == null || file == null) return;
@@ -91,14 +95,14 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
   protected List<T> getElement(@NotNull Editor editor, @NotNull PsiFile file) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
-      return ContainerUtil.list(getElementFromSelection(file, selectionModel));
+      return Collections.singletonList(getElementFromSelection(file, selectionModel));
     }
     return getElementAtOffset(editor, file);
   }
 
   @NotNull
   protected List<T> getElementAtOffset(@NotNull Editor editor, @NotNull PsiFile file) {
-    return ContainerUtil.list(PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), myClass, false));
+    return Collections.singletonList(PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), myClass, false));
   }
 
   @Nullable
@@ -109,20 +113,19 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
   }
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     boolean enabled = ApplicationManagerEx.getApplicationEx().isInternal() && getEditor(e) != null && myFileClass.isInstance(getPsiFile(e));
-    presentation.setVisible(enabled);
-    presentation.setEnabled(enabled);
+    presentation.setEnabledAndVisible(enabled);
   }
 
   @Nullable
   private static Editor getEditor(@NotNull AnActionEvent e) {
-    return CommonDataKeys.EDITOR.getData(e.getDataContext());
+    return e.getData(CommonDataKeys.EDITOR);
   }
 
   @Nullable
   private static PsiFile getPsiFile(@NotNull AnActionEvent e) {
-    return CommonDataKeys.PSI_FILE.getData(e.getDataContext());
+    return e.getData(CommonDataKeys.PSI_FILE);
   }
 }

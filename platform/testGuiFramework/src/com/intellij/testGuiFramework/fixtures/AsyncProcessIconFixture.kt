@@ -4,13 +4,14 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.util.ui.AsyncProcessIcon
 import org.fest.swing.core.Robot
+import org.fest.swing.timing.Timeout
 
 class AsyncProcessIconFixture(robot: Robot,
                               target: AsyncProcessIcon)
   : JComponentFixture<AsyncProcessIconFixture, AsyncProcessIcon>(AsyncProcessIconFixture::class.java, robot, target) {
 
-  fun waitUntilStop(timeoutInSeconds: Int) {
-    GuiTestUtilKt.waitUntil("async process icon will stop", timeoutInSeconds) { !target().isRunning }
+  fun waitUntilStop(timeout: Timeout) {
+    GuiTestUtilKt.waitUntil("async process icon will stop", timeout) { !target().isRunning }
   }
 
 }

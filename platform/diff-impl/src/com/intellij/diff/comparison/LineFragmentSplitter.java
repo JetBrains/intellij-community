@@ -33,17 +33,17 @@ class LineFragmentSplitter {
   @NotNull private final CharSequence myText1;
   @NotNull private final CharSequence myText2;
 
-  @NotNull private final List<InlineChunk> myWords1;
-  @NotNull private final List<InlineChunk> myWords2;
+  @NotNull private final List<? extends InlineChunk> myWords1;
+  @NotNull private final List<? extends InlineChunk> myWords2;
   @NotNull private final FairDiffIterable myIterable;
   @NotNull private final ProgressIndicator myIndicator;
 
   @NotNull private final List<WordBlock> myResult = new ArrayList<>();
 
-  public LineFragmentSplitter(@NotNull CharSequence text1,
+  LineFragmentSplitter(@NotNull CharSequence text1,
                               @NotNull CharSequence text2,
-                              @NotNull List<InlineChunk> words1,
-                              @NotNull List<InlineChunk> words2,
+                              @NotNull List<? extends InlineChunk> words1,
+                              @NotNull List<? extends InlineChunk> words2,
                               @NotNull FairDiffIterable iterable,
                               @NotNull ProgressIndicator indicator) {
     myText1 = text1;
@@ -161,7 +161,7 @@ class LineFragmentSplitter {
     return false;
   }
 
-  private static int getOffset(@NotNull List<InlineChunk> words, @NotNull CharSequence text, int index) {
+  private static int getOffset(@NotNull List<? extends InlineChunk> words, @NotNull CharSequence text, int index) {
     if (index == -1) return 0;
     if (index == words.size()) return text.length();
     InlineChunk chunk = words.get(index);
@@ -169,11 +169,11 @@ class LineFragmentSplitter {
     return chunk.getOffset2();
   }
 
-  private static boolean isNewline(@NotNull List<InlineChunk> words1, int index) {
+  private static boolean isNewline(@NotNull List<? extends InlineChunk> words1, int index) {
     return words1.get(index) instanceof NewlineChunk;
   }
 
-  private static boolean isFirstInLine(@NotNull List<InlineChunk> words1, int index) {
+  private static boolean isFirstInLine(@NotNull List<? extends InlineChunk> words1, int index) {
     if (index == 0) return true;
     return words1.get(index - 1) instanceof NewlineChunk;
   }
@@ -198,7 +198,7 @@ class LineFragmentSplitter {
     public final boolean hasWordsInside;
     public final boolean isEqualIgnoreWhitespaces;
 
-    public PendingChunk(@NotNull WordBlock block, boolean hasEqualWords, boolean hasWordsInside, boolean isEqualIgnoreWhitespaces) {
+    PendingChunk(@NotNull WordBlock block, boolean hasEqualWords, boolean hasWordsInside, boolean isEqualIgnoreWhitespaces) {
       this.block = block;
       this.hasEqualWords = hasEqualWords;
       this.hasWordsInside = hasWordsInside;

@@ -1,34 +1,21 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.execution.ParametersListUtil;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class RepositoryHelperTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -87,47 +74,33 @@ public class RepositoryHelperTest {
   }
 
   @Test
-  public void testBrokenNotInList() throws Exception {
-    Method versionsGetter = ReflectionUtil.getDeclaredMethod(PluginManagerCore.class, "getBrokenPluginVersions");
-    versionsGetter.setAccessible(true);
-    MultiMap<String, String> versions = (MultiMap<String, String>)versionsGetter.invoke(null);
-    try {
-      versions.putValue("a.broken.plugin", "1.0.5");
-      List<IdeaPluginDescriptor> list = loadPlugins(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-        "<plugin-repository>\n" +
-        "  <ff>\"J2EE\"</ff>\n" +
-        "  <category name=\"J2EE\">\n" +
-        "    <idea-plugin downloads=\"1\" size=\"1024\" date=\"1119060380000\" url=\"\">\n" +
-        "      <name>AWS Manager</name>\n" +
-        "      <id>a.broken.plugin</id>\n" +
-        "      <description>...</description>\n" +
-        "      <version>1.0.5</version>\n" +
-        "      <vendor email=\"michael.golubev@jetbrains.com\" url=\"http://www.jetbrains.com\">JetBrains</vendor>\n" +
-        "      <idea-version min=\"n/a\" max=\"n/a\" since-build=\"133.193\"/>\n" +
-        "      <change-notes>...</change-notes>\n" +
-        "      <depends>com.intellij.javaee</depends>\n" +
-        "      <rating>3.5</rating>\n" +
-        "      <download-url>plugin.zip</download-url>\n" +
-        "    </idea-plugin>\n" +
-        "    <idea-plugin downloads=\"6182\" size=\"131276\" date=\"1386612959000\" url=\"\">\n" +
-        "      <name>tc Server Support</name>\n" +
-        "      <id>com.intellij.tc.server</id>\n" +
-        "      <description>...</description>\n" +
-        "      <version>1.2</version>\n" +
-        "      <vendor email=\"\" url=\"http://www.jetbrains.com\">JetBrains</vendor>\n" +
-        "      <idea-version min=\"n/a\" max=\"n/a\" since-build=\"133.193\"/>\n" +
-        "      <change-notes>...</change-notes>\n" +
-        "      <depends>com.intellij.javaee</depends>\n" +
-        "      <rating>00</rating>\n" +
-        "      <downloadUrl>plugin.zip</downloadUrl>\n" +
-        "    </idea-plugin>" +
-        "  </category>\n" +
-        "</plugin-repository>");
-      assertEquals(1, list.size());
-    } finally {
-      versions.remove("a.broken.plugin", "1.0.5");
+  public void testBrokenNotInList() throws IOException {
+    String id, version;
+    try (InputStream resource = PluginManagerCore.class.getResourceAsStream("/brokenPlugins.txt");
+         BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
+      List<String> lines = reader.lines().filter(l -> !l.startsWith("//")).collect(Collectors.toList());
+      List<String> tokens = ParametersListUtil.parse(lines.get(new Random().nextInt(lines.size())));
+      id = tokens.get(0);
+      version = tokens.get(1);
     }
+
+    List<IdeaPluginDescriptor> list = loadPlugins(
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<plugin-repository>\n" +
+      "  <category name=\"Whatever\">\n" +
+      "    <idea-plugin>\n" +
+      "      <id>" + id + "</id>\n" +
+      "      <version>" + version + "</version>\n" +
+      "      <download-url>plugin.zip</download-url>\n" +
+      "    </idea-plugin>\n" +
+      "    <idea-plugin>\n" +
+      "      <id>good.plugin</id>\n" +
+      "      <version>1.0</version>\n" +
+      "      <download-url>plugin.zip</download-url>\n" +
+      "    </idea-plugin>" +
+      "  </category>\n" +
+      "</plugin-repository>");
+    assertEquals("Failed on '" + id + ':' + version + "'", 1, list.size());
   }
 
   @Test
@@ -154,10 +127,20 @@ public class RepositoryHelperTest {
     assertEquals(1, list.size());
   }
 
+  @Test
+  public void testEqualityById() throws IOException {
+    IdeaPluginDescriptor node1 = loadPlugins("<plugins>\n<plugin id=\"ID\" url=\"plugin.zip\"><name>A</name></plugin>\n</plugins>").get(0);
+    FileUtil.delete(new File(tempDir.getRoot(), "repo.xml"));
+    IdeaPluginDescriptor node2 = loadPlugins("<plugins>\n<plugin id=\"ID\" url=\"plugin.zip\"><name>B</name></plugin>\n</plugins>").get(0);
+    assertEquals(node1, node2);
+    assertEquals(node1.hashCode(), node2.hashCode());
+    assertNotEquals(node1.getName(), node2.getName());
+  }
+
   private List<IdeaPluginDescriptor> loadPlugins(String data) throws IOException {
     File tempFile = tempDir.newFile("repo.xml");
     FileUtil.writeToFile(tempFile, data);
     String url = tempFile.toURI().toURL().toString();
-    return RepositoryHelper.loadPlugins(url, null);
+    return RepositoryHelper.loadPlugins(url, null, null);
   }
 }

@@ -1,9 +1,14 @@
-// "Convert to local" "true"
+// "Convert field to local variable in method 'getFoo1'" "true"
 class Test {
   private int my<caret>Foo;
 
-  int getFoo1() {
-    while (true) myFoo = 1;
+  int getFoo1(boolean f) {
+    if (f) {
+      myFoo = 1;
+    }
+    else {
+      myFoo = 2;
+    }
     return myFoo;
   }
 }

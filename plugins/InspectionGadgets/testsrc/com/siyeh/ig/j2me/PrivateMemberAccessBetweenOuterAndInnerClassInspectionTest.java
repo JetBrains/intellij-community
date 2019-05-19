@@ -16,7 +16,9 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -29,5 +31,11 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspectionTest extends 
   @Override
   protected InspectionProfileEntry getInspection() {
     return new PrivateMemberAccessBetweenOuterAndInnerClassInspection();
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_10;
   }
 }

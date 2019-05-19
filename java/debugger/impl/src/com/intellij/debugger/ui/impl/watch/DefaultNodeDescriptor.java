@@ -34,13 +34,16 @@ public final class DefaultNodeDescriptor extends NodeDescriptorImpl{
     return 0;
   }
 
+  @Override
   public boolean isExpandable() {
     return true;
   }
 
+  @Override
   public void setContext(EvaluationContextImpl context) {
   }
 
+  @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
     LOG.assertTrue(false);
     return null;

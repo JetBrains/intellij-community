@@ -15,13 +15,13 @@
  */
 package org.intellij.lang.regexp;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 import java.util.function.Consumer;
 
 /**
@@ -29,7 +29,7 @@ import java.util.function.Consumer;
  */
 public class UnicodeCharacterNames {
 
-  public static void iterate(Consumer<String> consumer) {
+  public static void iterate(Consumer<? super String> consumer) {
     try {
       final Class<?> aClass = Class.forName("java.lang.CharacterName");
       final Method initNamePool = ReflectionUtil.getDeclaredMethod(aClass, "initNamePool");
@@ -96,7 +96,7 @@ public class UnicodeCharacterNames {
         return -1; // give up
       }
       byte[] namePool = (byte[])initNamePool.invoke(null);
-      name = name.trim().toUpperCase(Locale.ROOT);
+      name = StringUtil.toUpperCase(name.trim());
       byte[] key = name.getBytes(StandardCharsets.ISO_8859_1);
       final int[][] lookup = ReflectionUtil.getField(aClass, null, int[][].class, "lookup");
       if (lookup == null) throw new RuntimeException();

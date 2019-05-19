@@ -42,9 +42,10 @@ public class GitPushRepoResult {
     UP_TO_DATE,
     FORCED,
     REJECTED_NO_FF,
+    REJECTED_STALE_INFO,
     REJECTED_OTHER,
     ERROR,
-    NOT_PUSHED;
+    NOT_PUSHED
   }
 
   static Comparator<Type> TYPE_COMPARATOR = (o1, o2) -> o1.ordinal() - o2.ordinal();
@@ -60,7 +61,7 @@ public class GitPushRepoResult {
 
   @NotNull
   public static GitPushRepoResult convertFromNative(@NotNull GitPushNativeResult result,
-                                             @NotNull List<GitPushNativeResult> tagResults,
+                                             @NotNull List<? extends GitPushNativeResult> tagResults,
                                              int commits,
                                              @NotNull GitLocalBranch source,
                                              @NotNull GitRemoteBranch target) {
@@ -157,7 +158,9 @@ public class GitPushRepoResult {
       case NEW_REF:
         return Type.NEW_BRANCH;
       case REJECTED:
-        return nativeResult.isNonFFUpdate() ? Type.REJECTED_NO_FF : Type.REJECTED_OTHER;
+        if (nativeResult.isNonFFUpdate()) return Type.REJECTED_NO_FF;
+        if (nativeResult.isStaleInfo()) return Type.REJECTED_STALE_INFO;
+        return Type.REJECTED_OTHER;
       case UP_TO_DATE:
         return Type.UP_TO_DATE;
       case ERROR:

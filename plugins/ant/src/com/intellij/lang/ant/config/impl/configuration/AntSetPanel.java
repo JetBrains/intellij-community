@@ -71,12 +71,12 @@ public class AntSetPanel {
     for (AntInstallation ant : myForm.getRemovedAnts()) {
       myAntConfiguration.removeConfiguration(ant);
     }
-    
+
     final Map<AntReference, AntInstallation> currentAnts = myAntConfiguration.getConfiguredAnts();
     for (AntInstallation installation : currentAnts.values()) {
       installation.updateClasspath();
     }
-    
+
     for (AntInstallation ant : myForm.getAddedAnts()) {
       myAntConfiguration.addConfiguration(ant);
     }
@@ -101,13 +101,14 @@ public class AntSetPanel {
 
     private AntInstallation myCurrent;
     private final PropertyChangeListener myImmediateUpdater = new PropertyChangeListener() {
+      @Override
       public void propertyChange(PropertyChangeEvent evt) {
         myBinding.apply(getProperties(myCurrent));
         myAnts.updateItem(myCurrent);
       }
     };
 
-    public Form(final GlobalAntConfiguration antInstallation) {
+    Form(final GlobalAntConfiguration antInstallation) {
       mySplitter.setShowDividerControls(true);
       mySplitter.setFirstComponent(myAnts);
       myGlobalWorkingProperties = new EditPropertyContainer(antInstallation.getProperties());
@@ -119,6 +120,7 @@ public class AntSetPanel {
       JList list = myAnts.getList();
       list.setCellRenderer(new AntUIUtil.AntInstallationRenderer(this));
       list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
         public void valueChanged(ListSelectionEvent e) {
           if (myCurrent != null) myBinding.apply(getProperties(myCurrent));
           myCurrent = myAnts.getSelectedItem();
@@ -178,6 +180,7 @@ public class AntSetPanel {
       return myAnts.getRemoved();
     }
 
+    @Override
     public EditPropertyContainer getProperties(AntInstallation ant) {
       EditPropertyContainer properties = myWorkingProperties.get(ant);
       if (properties != null) return properties;
@@ -194,7 +197,7 @@ public class AntSetPanel {
       private AntClasspathEditorPanel myClasspath;
       private JPanel myWholePanel;
 
-      public RightPanel(UIPropertyBinding.Composite binding, PropertyChangeListener immediateUpdater) {
+      RightPanel(UIPropertyBinding.Composite binding, PropertyChangeListener immediateUpdater) {
         myNameLabel.setLabelFor(myName);
         binding.addBinding(myClasspath.setClasspathProperty(AntInstallation.CLASS_PATH));
         binding.bindString(myHome, AntInstallation.HOME_DIR);
@@ -206,10 +209,11 @@ public class AntSetPanel {
   private static class NewAntFactory implements Factory<AntInstallation> {
     private final AnActionListEditor<AntInstallation> myParent;
 
-    public NewAntFactory(AnActionListEditor<AntInstallation> parent) {
+    NewAntFactory(AnActionListEditor<AntInstallation> parent) {
       myParent = parent;
     }
 
+    @Override
     public AntInstallation create() {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
       VirtualFile file = FileChooser.chooseFile(descriptor, myParent, null, null);
@@ -229,7 +233,7 @@ public class AntSetPanel {
       int nameIndex = 0;
       String adjustedName = justCreated.getName();
       final ListModel model = myParent.getList().getModel();
-      
+
       int idx = 0;
       while (idx < model.getSize()) {
         final AntInstallation inst = (AntInstallation)model.getElementAt(idx++);
@@ -238,7 +242,7 @@ public class AntSetPanel {
           idx = 0; // search from beginning
         }
       }
-      
+
       if (!adjustedName.equals(justCreated.getName())) {
         justCreated.setName(adjustedName);
       }
@@ -246,26 +250,30 @@ public class AntSetPanel {
   }
 
   private class MyDialog extends DialogWrapper {
-    public MyDialog(final JComponent parent) {
+    MyDialog(final JComponent parent) {
       super(parent, true);
       setTitle(AntBundle.message("configure.ant.dialog.title"));
       init();
     }
 
+    @Override
     @Nullable
       protected JComponent createCenterPanel() {
       return myForm.getComponent();
     }
 
+    @Override
     @NonNls
       protected String getDimensionServiceKey() {
       return "antSetDialogDimensionKey";
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myForm.getAntsList();
     }
 
+    @Override
     protected void doOKAction() {
       final Set<String> names = new HashSet<>();
       final ListModel model = myForm.getAntsList().getModel();
@@ -278,7 +286,7 @@ public class AntSetPanel {
         }
         names.add(name);
       }
-      
+
       super.doOKAction();
     }
   }

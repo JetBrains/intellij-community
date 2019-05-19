@@ -167,8 +167,8 @@ public class GitUntrackedFilesHelper {
 
   private static class UntrackedFilesDialog extends SelectFilesDialog {
 
-    public UntrackedFilesDialog(Project project, Collection<VirtualFile> untrackedFiles, String dialogDesc) {
-      super(project, new ArrayList<>(untrackedFiles), StringUtil.stripHtml(dialogDesc, true), null, false, false, true);
+    UntrackedFilesDialog(Project project, @NotNull Collection<VirtualFile> untrackedFiles, @NotNull String dialogDesc) {
+      super(project, new ArrayList<>(untrackedFiles), StringUtil.stripHtml(dialogDesc, true), null, false, true);
       init();
     }
 
@@ -186,7 +186,7 @@ public class GitUntrackedFilesHelper {
     @NotNull private final String myPrompt;
     @NotNull private final String myRollbackProposal;
 
-    public UntrackedFilesRollBackDialog(@NotNull Project project, @NotNull JComponent filesBrowser, @NotNull String prompt,
+    UntrackedFilesRollBackDialog(@NotNull Project project, @NotNull JComponent filesBrowser, @NotNull String prompt,
                                         @NotNull String rollbackProposal) {
       super(project);
       myFilesBrowser = filesBrowser;

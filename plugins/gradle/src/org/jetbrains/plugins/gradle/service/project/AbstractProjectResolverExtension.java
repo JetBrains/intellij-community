@@ -26,10 +26,14 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.ClassSetProjectImportExtraModelProvider;
+import org.jetbrains.plugins.gradle.model.ProjectImportExtraModelProvider;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -40,7 +44,6 @@ import java.util.Set;
  * {@link AbstractProjectResolverExtension} provides dummy implementation of Gradle project resolver.
  *
  * @author Vladislav.Soroka
- * @since 10/14/13
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public abstract class AbstractProjectResolverExtension implements GradleProjectResolverExtension {
@@ -126,6 +129,12 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
 
   @NotNull
   @Override
+  public ProjectImportExtraModelProvider getExtraModelProvider() {
+    return new ClassSetProjectImportExtraModelProvider(getExtraProjectModelClasses());
+  }
+
+  @NotNull
+  @Override
   public Set<Class> getToolingExtensionsClasses() {
     return Collections.emptySet();
   }
@@ -144,10 +153,11 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
 
   @NotNull
   @Override
-  public ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
+  public ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                                      @NotNull Throwable error,
                                                       @NotNull String projectPath,
                                                       @Nullable String buildFilePath) {
-    return nextResolver.getUserFriendlyError(error, projectPath, buildFilePath);
+    return nextResolver.getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath);
   }
 
   @Override
@@ -163,4 +173,7 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
                                     @Nullable String jvmAgentSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
   }
+
+  @ApiStatus.Experimental
+  public void onResolveEnd(@NotNull DataNode<ProjectData> projectDataNode) {}
 }

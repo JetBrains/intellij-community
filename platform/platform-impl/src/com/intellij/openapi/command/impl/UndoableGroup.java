@@ -40,7 +40,7 @@ class UndoableGroup implements Dumpable {
 
   private boolean myValid;
 
-  public UndoableGroup(String commandName,
+  UndoableGroup(String commandName,
                        boolean isGlobal,
                        UndoManagerImpl manager,
                        EditorAndState stateBefore,
@@ -158,7 +158,7 @@ class UndoableGroup implements Dumpable {
     if (exception[0] != null) reportUndoProblem(exception[0], isUndo);
   }
 
-  private static void performActions(@NotNull Collection<UndoableAction> actions, boolean isUndo, boolean useBulkMode)
+  private static void performActions(@NotNull Collection<? extends UndoableAction> actions, boolean isUndo, boolean useBulkMode)
     throws UnexpectedUndoException {
     Set<DocumentEx> bulkDocuments = new THashSet<>();
     try {
@@ -361,7 +361,7 @@ class UndoableGroup implements Dumpable {
     }
     return null;
   }
-  
+
   @Nullable
   public FinishMarkAction getFinishMark() {
     for (UndoableAction action : myActions) {
@@ -386,6 +386,7 @@ class UndoableGroup implements Dumpable {
     return myValid;
   }
 
+  @Override
   public String toString() {
     StringBuilder result = new StringBuilder("UndoableGroup[");
     final boolean multiline = myActions.size() > 1;

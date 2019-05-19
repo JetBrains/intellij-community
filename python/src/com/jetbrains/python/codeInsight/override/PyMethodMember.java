@@ -20,24 +20,18 @@ import com.intellij.codeInsight.generation.MemberChooserObject;
 import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.SimpleColoredComponent;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
-import javax.swing.*;
 import java.util.List;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author Alexey.Ivanov
  */
 public class PyMethodMember extends PsiElementMemberChooserObject implements ClassMember {
-  private final String myFullName;
   private static String buildNameFor(final PyElement element) {
     if (element instanceof PyFunction) {
       final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
@@ -51,20 +45,11 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
 
       return result.toString();
     }
-    final PyClass cls = as(element, PyClass.class);
-    if (cls != null && PyNames.TYPES_INSTANCE_TYPE.equals(cls.getQualifiedName())) {
-      return "<old-style class>";
-    }
     return element.getName();
   }
 
   public PyMethodMember(final PyElement element) {
-    super(element, trimUnderscores(buildNameFor(element)), element.getIcon(0));
-    myFullName = buildNameFor(element);
-  }
-
-  public static String trimUnderscores(String s) {
-    return StringUtil.trimStart(StringUtil.trimStart(s, "_"), "_");
+    super(element, buildNameFor(element), element.getIcon(0));
   }
 
   @Override
@@ -73,11 +58,5 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
     final PyClass parent = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     assert (parent != null);
     return new PyMethodMember(parent);
-  }
-
-  @Override
-  public void renderTreeNode(SimpleColoredComponent component, JTree tree) {
-    component.append(myFullName, getTextAttributes(tree));
-    component.setIcon(getPsiElement().getIcon(0));
   }
 }

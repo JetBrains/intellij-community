@@ -51,7 +51,7 @@ class GrMethodOverrideCompletionProvider extends CompletionProvider<CompletionPa
     }).andNot(psiComment());
 
   @Override
-  protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
+  protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
     final GrTypeDefinition currentClass = PsiTreeUtil.getParentOfType(position, GrTypeDefinition.class);
 

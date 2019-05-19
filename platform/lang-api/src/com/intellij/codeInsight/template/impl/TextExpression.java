@@ -38,6 +38,11 @@ public class TextExpression extends Expression {
   }
 
   @Override
+  public boolean requiresCommittedPSI() {
+    return false;
+  }
+
+  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext expressionContext) {
     return LookupElement.EMPTY_ARRAY;
   }

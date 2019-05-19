@@ -18,8 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -94,28 +92,13 @@ public abstract class ChooseByNameFilter<T> {
     panel.add(myChooser);
     JPanel buttons = new JPanel();
     JButton all = new JButton("All");
-    all.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        myChooser.setAllElementsMarked(true);
-      }
-    });
+    all.addActionListener(__ -> myChooser.setAllElementsMarked(true));
     buttons.add(all);
     JButton none = new JButton("None");
-    none.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        myChooser.setAllElementsMarked(false);
-      }
-    });
+    none.addActionListener(__ -> myChooser.setAllElementsMarked(false));
     buttons.add(none);
     JButton invert = new JButton("Invert");
-    invert.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        myChooser.invertSelection();
-      }
-    });
+    invert.addActionListener(__ -> myChooser.invertSelection());
     buttons.add(invert);
     panel.add(buttons);
     return panel;
@@ -126,12 +109,11 @@ public abstract class ChooseByNameFilter<T> {
    *
    *
    * @param model a model to update
-   * @param filterConfiguration
    * @return a created file chooser
    */
   @NotNull
   protected ElementsChooser<T> createChooser(@NotNull final FilteringGotoByModel<T> model,
-                                             @NotNull final ChooseByNameFilterConfiguration<T> filterConfiguration) {
+                                             @NotNull final ChooseByNameFilterConfiguration<? super T> filterConfiguration) {
     List<T> elements = new ArrayList<>(getAllFilterValues());
     final ElementsChooser<T> chooser = new ElementsChooser<T>(elements, true) {
       @Override
@@ -153,12 +135,9 @@ public abstract class ChooseByNameFilter<T> {
       }
     }
     updateModel(model, chooser, true);
-    chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<T>() {
-      @Override
-      public void elementMarkChanged(final T element, final boolean isMarked) {
-        filterConfiguration.setVisible(element, isMarked);
-        updateModel(model, chooser, false);
-      }
+    chooser.addElementsMarkListener((ElementsChooser.ElementsMarkListener<T>)(element, isMarked) -> {
+      filterConfiguration.setVisible(element, isMarked);
+      updateModel(model, chooser, false);
     });
     return chooser;
   }
@@ -195,7 +174,7 @@ public abstract class ChooseByNameFilter<T> {
         .setDimensionServiceKey(myProject, "GotoFile_FileTypePopup", false).createPopup();
     myPopup.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         myPopup = null;
       }
     });
@@ -212,17 +191,17 @@ public abstract class ChooseByNameFilter<T> {
   }
 
   private class FilterAction extends ToggleAction implements DumbAware {
-    public FilterAction() {
+    FilterAction() {
       super("Filter", "Filter files by type", AllIcons.General.Filter);
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return myPopup != null;
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (state) {
         createPopup();
       }

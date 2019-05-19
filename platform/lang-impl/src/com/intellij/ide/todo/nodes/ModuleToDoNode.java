@@ -18,36 +18,30 @@ package com.intellij.ide.todo.nodes;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.todo.HighlightedRegionProvider;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.HighlightedRegion;
-import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
+import com.intellij.psi.search.TodoItem;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedRegionProvider {
-  private final ArrayList<HighlightedRegion> myHighlightedRegions;
+public class ModuleToDoNode extends BaseToDoNode<Module> {
 
-  public ModuleToDoNode(Project project, Module value, TodoTreeBuilder builder) {
+  public ModuleToDoNode(Project project, @NotNull Module value, TodoTreeBuilder builder) {
     super(project, value, builder);
-    myHighlightedRegions = new ArrayList<>(2);
   }
 
   @Override
@@ -76,30 +70,30 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
 
   }
 
+  @Override
+  public boolean contains(Object element) {
+    if (element instanceof TodoItem) {
+      Module module = ModuleUtilCore.findModuleForFile(((TodoItem)element).getFile());
+      return super.canRepresent(module);
+    }
+
+    if (element instanceof PsiElement) {
+      Module module = ModuleUtilCore.findModuleForPsiElement((PsiElement)element);
+      return super.canRepresent(module);
+    }
+    return super.canRepresent(element);
+  }
+
   private TodoTreeStructure getStructure() {
     return myBuilder.getTodoTreeStructure();
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     if (DumbService.getInstance(getProject()).isDumb()) return;
     String newName = getValue().getName();
-    int nameEndOffset = newName.length();
     int todoItemCount = getTodoItemCount(getValue());
-    int fileCount = getFileCount(getValue());
-    newName = IdeBundle.message("node.todo.group", newName, todoItemCount, fileCount);
-    myHighlightedRegions.clear();
-
-    TextAttributes textAttributes = new TextAttributes();
-
-    if (CopyPasteManager.getInstance().isCutElement(getValue())) {
-      textAttributes.setForegroundColor(CopyPasteManager.CUT_COLOR);
-    }
-    myHighlightedRegions.add(new HighlightedRegion(0, nameEndOffset, textAttributes));
-
-    EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-    myHighlightedRegions.add(
-      new HighlightedRegion(nameEndOffset, newName.length(), colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES)));
+    presentation.setLocationString(IdeBundle.message("node.todo.group", todoItemCount));
     presentation.setIcon(ModuleType.get(getValue()).getIcon());
     presentation.setPresentableText(newName);
   }
@@ -107,11 +101,6 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
   @Override
   public String getTestPresentation() {
     return "Module";
-  }
-
-  @Override
-  public ArrayList<HighlightedRegion> getHighlightedRegions() {
-    return myHighlightedRegions;
   }
 
   @Override

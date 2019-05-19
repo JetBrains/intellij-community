@@ -16,6 +16,8 @@
 package com.siyeh.ipp.asserttoif;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -52,8 +54,9 @@ public class ObjectsRequireNonNullIntention extends Intention {
       return;
     }
     final PsiVariable variable = (PsiVariable)target;
-    final List<String> notNulls = NullableNotNullManager.getInstance(element.getProject()).getNotNulls();
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(variable, notNulls);
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(element.getProject());
+    final NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(variable);
+    final PsiAnnotation annotation = info == null ? null : info.getAnnotation();
     final CommentTracker commentTracker = new CommentTracker();
     if (annotation == null) {
       final PsiStatement referenceStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiStatement.class);
@@ -109,8 +112,9 @@ public class ObjectsRequireNonNullIntention extends Intention {
       if (ClassUtils.findClass("java.util.Objects", element) == null) {
         return false;
       }
-      final PsiAnnotation annotation = NullableNotNullManager.getInstance(variable.getProject()).getNotNullAnnotation(variable, true);
-      if (annotation != null && !AnnotationUtil.isExternalAnnotation(annotation) && !AnnotationUtil.isInferredAnnotation(annotation)) {
+      final NullabilityAnnotationInfo info =
+        NullableNotNullManager.getInstance(variable.getProject()).findEffectiveNullabilityInfo(variable);
+      if (info != null && info.getNullability() == Nullability.NOT_NULL && !info.isExternal() && !info.isInferred()) {
         return true;
       }
       final PsiStatement referenceStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiStatement.class);

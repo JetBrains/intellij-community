@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -19,12 +18,10 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +42,6 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   private void copyStack() {
     List items = getModel().getItems();
-    //noinspection unchecked
     if (!items.isEmpty()) {
       StringBuilder plainBuf = new StringBuilder();
       TextTransferable.ColoredStringBuilder coloredTextContainer = new TextTransferable.ColoredStringBuilder();
@@ -85,26 +81,22 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     myProject = project;
 
     doInit();
-    setDataProvider(new DataProvider() {
-      @Nullable
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (mySelectedFrame != null) {
-          if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-            return getFile(mySelectedFrame);
-          }
-          else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-            VirtualFile file = getFile(mySelectedFrame);
-            if (file != null && file.isValid()) {
-              return PsiManager.getInstance(myProject).findFile(file);
-            }
+    setDataProvider(dataId -> {
+      if (mySelectedFrame != null) {
+        if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+          return getFile(mySelectedFrame);
+        }
+        else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+          VirtualFile file = getFile(mySelectedFrame);
+          if (file != null && file.isValid()) {
+            return PsiManager.getInstance(myProject).findFile(file);
           }
         }
-        if (FRAMES_LIST.is(dataId)) {
-          return XDebuggerFramesList.this;
-        }
-        return null;
       }
+      if (FRAMES_LIST.is(dataId)) {
+        return XDebuggerFramesList.this;
+      }
+      return null;
     });
 
     // This is a workaround for the performance issue IDEA-187063
@@ -135,7 +127,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   @Override
   protected void onFrameChanged(final Object selectedValue) {
     if (mySelectedFrame != selectedValue) {
-      SwingUtilities.invokeLater(() -> repaint());
+      SwingUtilities.invokeLater(this::repaint);
       if (selectedValue instanceof XStackFrame) {
         mySelectedFrame = (XStackFrame)selectedValue;
       }
@@ -148,7 +140,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {
     private final XDebuggerFrameListRenderer myOriginalRenderer = new XDebuggerFrameListRenderer(myProject);
 
-    public XDebuggerGroupedFrameListRenderer() {
+    XDebuggerGroupedFrameListRenderer() {
       super(new ListItemDescriptorAdapter() {
         @Nullable
         @Override
@@ -192,7 +184,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   private class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
     private final FileColorManager myColorsManager;
 
-    public XDebuggerFrameListRenderer(@NotNull Project project) {
+    XDebuggerFrameListRenderer(@NotNull Project project) {
       myColorsManager = FileColorManager.getInstance(project);
     }
 
@@ -202,11 +194,6 @@ public class XDebuggerFramesList extends DebuggerFramesList {
                                          final int index,
                                          final boolean selected,
                                          final boolean hasFocus) {
-      // Fix GTK background
-      if (UIUtil.isUnderGTKLookAndFeel()){
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-        UIUtil.changeBackGround(this, background);
-      }
       if (value == null) {
         append(XDebuggerBundle.message("stack.frame.loading.text"), SimpleTextAttributes.GRAY_ATTRIBUTES);
         return;
@@ -261,14 +248,14 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   public static class CopyStackAction extends DumbAwareAction {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
       //noinspection unchecked
       e.getPresentation().setEnabledAndVisible(framesList != null && ContainerUtil.getLastItem(framesList.getModel().getItems()) != null);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
       if (framesList != null) {
         framesList.copyStack();

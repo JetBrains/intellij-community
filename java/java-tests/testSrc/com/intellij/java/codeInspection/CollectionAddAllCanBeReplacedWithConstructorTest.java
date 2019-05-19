@@ -33,8 +33,6 @@ public class CollectionAddAllCanBeReplacedWithConstructorTest extends LightQuick
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/inspection/collectionAddAllCanBeReplacedWithConstructor";

@@ -1,14 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -16,9 +13,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
@@ -35,18 +34,16 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 /**
  * @author max
  */
 public class RefreshWorker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
-  private static final Logger LOG_ATTRIBUTES = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker_Attributes");
-
   private final boolean myIsRecursive;
   private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<>(100);
-  private final List<VFileEvent> myEvents = new ArrayList<>();
+  private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
   private volatile boolean myCancelled;
   private final LocalFileSystemRefreshWorker myLocalFileSystemRefreshWorker;
 
@@ -61,7 +58,7 @@ public class RefreshWorker {
   @NotNull
   public List<VFileEvent> getEvents() {
     if (myLocalFileSystemRefreshWorker != null) return myLocalFileSystemRefreshWorker.getEvents();
-    return myEvents;
+    return myHelper.getEvents();
   }
 
   public void cancel() {
@@ -74,6 +71,7 @@ public class RefreshWorker {
       myLocalFileSystemRefreshWorker.scan();
       return;
     }
+
     NewVirtualFile root = myRefreshQueue.peekFirst().first;
     NewVirtualFileSystem fs = root.getFileSystem();
     if (root.isDirectory()) {
@@ -87,78 +85,53 @@ public class RefreshWorker {
     }
   }
 
-  private void processQueue(NewVirtualFileSystem fs, PersistentFS persistence) throws RefreshCancelledException {
+  private void processQueue(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) throws RefreshCancelledException {
     TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
 
     while (!myRefreshQueue.isEmpty()) {
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
-      boolean fileDirty = file.isDirty();
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("file=" + file + " dirty=" + fileDirty);
-      }
-      if (!fileDirty) continue;
+      if (!VfsEventGenerationHelper.checkDirty(file)) continue;
 
       checkCancelled(file);
 
       FileAttributes attributes = pair.second != null ? pair.second : fs.getAttributes(file);
       if (attributes == null) {
-        scheduleDeletion(file);
+        myHelper.scheduleDeletion(file);
         file.markClean();
         continue;
       }
 
       NewVirtualFile parent = file.getParent();
-      if (parent != null && checkAndScheduleFileTypeChange(parent, file, attributes)) {
+      if (parent != null && checkAndScheduleFileTypeChange(fs, parent, file, attributes)) {
         // ignore everything else
         file.markClean();
-        continue ;
+        continue;
       }
 
       if (file.isDirectory()) {
-        boolean fullSync = ((VirtualDirectoryImpl)file).allChildrenLoaded();
+        VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file;
+        boolean fullSync = directory.allChildrenLoaded();
         if (fullSync) {
-          fullDirRefresh(fs, persistence, strategy, (VirtualDirectoryImpl)file);
+          fullDirRefresh(fs, persistence, strategy, directory);
         }
         else {
-          partialDirRefresh(fs, strategy, (VirtualDirectoryImpl)file);
+          partialDirRefresh(fs, strategy, directory);
         }
       }
       else {
-        long currentTimestamp = persistence.getTimeStamp(file);
-        long upToDateTimestamp = attributes.lastModified;
-        long currentLength = persistence.getLastRecordedLength(file);
-        long upToDateLength = attributes.length;
-
-        if (currentTimestamp != upToDateTimestamp || currentLength != upToDateLength) {
-          scheduleUpdateContent(file);
-        }
+        myHelper.checkContentChanged(file, persistence.getTimeStamp(file), attributes.lastModified,
+                                     persistence.getLastRecordedLength(file), attributes.length);
       }
 
-      boolean currentWritable = persistence.isWritable(file);
-      boolean upToDateWritable = attributes.isWritable();
-      if (LOG_ATTRIBUTES.isTraceEnabled()) {
-        LOG_ATTRIBUTES.trace("file=" + file + " writable vfs=" + file.isWritable() + " persistence=" + currentWritable + " real=" + upToDateWritable);
-      }
-      if (currentWritable != upToDateWritable) {
-        scheduleAttributeChange(file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable);
-      }
+      myHelper.checkWritableAttributeChange(file, persistence.isWritable(file), attributes.isWritable());
 
       if (SystemInfo.isWindows) {
-        boolean currentHidden = file.is(VFileProperty.HIDDEN);
-        boolean upToDateHidden = attributes.isHidden();
-        if (currentHidden != upToDateHidden) {
-          scheduleAttributeChange(file, VirtualFile.PROP_HIDDEN, currentHidden, upToDateHidden);
-        }
+        myHelper.checkHiddenAttributeChange(file, file.is(VFileProperty.HIDDEN), attributes.isHidden());
       }
 
       if (attributes.isSymLink()) {
-        String currentTarget = file.getCanonicalPath();
-        String upToDateTarget = fs.resolveSymLink(file);
-        String upToDateVfsTarget = upToDateTarget != null ? FileUtil.toSystemIndependentName(upToDateTarget) : null;
-        if (!Comparing.equal(currentTarget, upToDateVfsTarget)) {
-          scheduleAttributeChange(file, VirtualFile.PROP_SYMLINK_TARGET, currentTarget, upToDateVfsTarget);
-        }
+        myHelper.checkSymbolicLinkChange(file, file.getCanonicalPath(), fs.resolveSymLink(file));
       }
 
       if (myIsRecursive || !file.isDirectory()) {
@@ -167,88 +140,130 @@ public class RefreshWorker {
     }
   }
 
-  private void fullDirRefresh(NewVirtualFileSystem fs, PersistentFS persistence, TObjectHashingStrategy<String> strategy, VirtualDirectoryImpl dir) {
-    while (true) {
-      // obtaining directory snapshot
-      Pair<String[], VirtualFile[]> result = LocalFileSystemRefreshWorker.getDirectorySnapshot(persistence, dir);
-      if (result == null) return;
-      String[] currentNames = result.getFirst();
-      VirtualFile[] children = result.getSecond();
-
-      // reading children attributes
-      String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
-      Set<String> newNames = newTroveSet(strategy, upToDateNames);
-      ContainerUtil.removeAll(newNames, currentNames);
-      Set<String> deletedNames = newTroveSet(strategy, currentNames);
-      ContainerUtil.removeAll(deletedNames, upToDateNames);
-
-      OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, upToDateNames);
-      if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(currentNames) + " +" + newNames + " -" + deletedNames);
-
-      List<Pair<String, FileAttributes>> addedMap = ContainerUtil.newArrayListWithCapacity(newNames.size());
-      for (String name : newNames) {
-        checkCancelled(dir);
-        addedMap.add(pair(name, fs.getAttributes(new FakeVirtualFile(dir, name))));
-      }
-
-      List<Pair<VirtualFile, FileAttributes>> updatedMap = ContainerUtil.newArrayListWithCapacity(children.length);
-      for (VirtualFile child : children) {
-        if (deletedNames.contains(child.getName())) continue;
-        checkCancelled(dir);
-        updatedMap.add(pair(child, fs.getAttributes(child)));
-      }
-
-      // generating events unless a directory was changed in between
-      boolean hasEvents = ReadAction.compute(() -> {
-        if (!Arrays.equals(currentNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("retry: " + dir);
-          }
-          return false;
-        }
-
-        for (String name : deletedNames) {
-          scheduleDeletion(dir.findChild(name));
-        }
-
-        for (Pair<String, FileAttributes> pair : addedMap) {
-          String name = pair.first;
-          FileAttributes childAttributes = pair.second;
-          if (childAttributes != null) {
-            scheduleCreation(dir, name, childAttributes.isDirectory());
-          }
-          else {
-            LOG.warn("[+] fs=" + fs + " dir=" + dir + " name=" + name);
-          }
-        }
-
-        for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
-          VirtualFile child = pair.first;
-          FileAttributes childAttributes = pair.second;
-          if (childAttributes != null) {
-            checkAndScheduleChildRefresh(dir, child, childAttributes);
-            checkAndScheduleFileNameChange(actualNames, child);
-          }
-          else {
-            LOG.warn("[x] fs=" + fs + " dir=" + dir + " name=" + child.getName());
-            scheduleDeletion(child);
-          }
-        }
-
-        return true;
-      });
-      if (hasEvents) {
-        break;
-      }
+  private void fullDirRefresh(@NotNull NewVirtualFileSystem fs,
+                              @NotNull PersistentFS persistence,
+                              @NotNull TObjectHashingStrategy<String> strategy,
+                              @NotNull VirtualDirectoryImpl dir) {
+    checkCancelled(dir);
+    while (!refreshDir(fs, persistence, strategy, dir)) {
+      checkCancelled(dir);
     }
   }
 
-  private void partialDirRefresh(NewVirtualFileSystem fs, TObjectHashingStrategy<String> strategy, VirtualDirectoryImpl dir) {
+  // true if refreshed successfully, false if interrupted or disposed
+  private boolean refreshDir(@NotNull NewVirtualFileSystem fs,
+                             @NotNull PersistentFS persistence,
+                             @NotNull TObjectHashingStrategy<String> strategy,
+                             @NotNull VirtualDirectoryImpl dir) {
+    // obtaining directory snapshot
+    Pair<String[], VirtualFile[]> result = LocalFileSystemRefreshWorker.getDirectorySnapshot(persistence, dir);
+    if (result == null) return false;
+    String[] persistedNames = result.getFirst();
+    VirtualFile[] children = result.getSecond();
+
+    // reading children attributes
+    String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
+    Set<String> newNames = newTroveSet(strategy, upToDateNames);
+    if (dir.allChildrenLoaded() && children.length < upToDateNames.length) {
+      for (VirtualFile child : children) {
+        newNames.remove(child.getName());
+      }
+    }
+    else {
+      ContainerUtil.removeAll(newNames, persistedNames);
+    }
+
+    Set<String> deletedNames = newTroveSet(strategy, persistedNames);
+    ContainerUtil.removeAll(deletedNames, upToDateNames);
+
+    OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, upToDateNames);
+    if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(persistedNames) + " +" + newNames + " -" + deletedNames);
+
+    List<ChildInfo> newKids = new ArrayList<>(newNames.size());
+    for (String newName : newNames) {
+      checkCancelled(dir);
+      ChildInfo record = childRecord(fs, dir, newName);
+      if (record != null) {
+        newKids.add(record);
+      }
+      else {
+        if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + newName);
+      }
+    }
+
+    List<Pair<VirtualFile, FileAttributes>> updatedMap = new ArrayList<>(children.length);
+    for (VirtualFile child : children) {
+      checkCancelled(dir);
+      if (!deletedNames.contains(child.getName())) {
+        updatedMap.add(pair(child, fs.getAttributes(child)));
+      }
+    }
+
+    // generating events unless a directory was changed in between
+    myHelper.beginTransaction();
+    boolean transactionSucceeded = false;
+    try {
+      checkCancelled(dir);
+      if (isDirectoryChanged(persistence, dir, persistedNames, children)) {
+        return false;
+      }
+
+      for (String name : deletedNames) {
+        VirtualFileSystemEntry child = dir.findChild(name);
+        if (child != null) {
+          myHelper.scheduleDeletion(child);
+        }
+      }
+
+      for (ChildInfo record : newKids) {
+        myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, () -> checkCancelled(dir));
+      }
+
+      for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
+        checkCancelled(dir);
+        VirtualFile child = pair.first;
+        FileAttributes childAttributes = pair.second;
+        if (childAttributes != null) {
+          checkAndScheduleChildRefresh(fs, dir, (NewVirtualFile)child, childAttributes);
+          checkAndScheduleFileNameChange(actualNames, child);
+        }
+        else {
+          if (LOG.isTraceEnabled()) LOG.warn("[x] fs=" + fs + " dir=" + dir + " name=" + child.getName());
+          myHelper.scheduleDeletion(child);
+        }
+      }
+      transactionSucceeded = !isDirectoryChanged(persistence, dir, persistedNames, children);
+    }
+    finally {
+      myHelper.endTransaction(transactionSucceeded);
+    }
+
+    return transactionSucceeded;
+  }
+
+  private static boolean isDirectoryChanged(@NotNull PersistentFS persistence,
+                                            @NotNull VirtualDirectoryImpl dir,
+                                            @NotNull String[] persistedNames,
+                                            @NotNull VirtualFile[] children) {
+    return ReadAction.compute(() -> {
+      if (!Arrays.equals(persistedNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
+        if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
+        // directory was changed in between, must retry
+        return true;
+      }
+      return false;
+    });
+  }
+
+  private void partialDirRefresh(@NotNull NewVirtualFileSystem fs,
+                                 @NotNull TObjectHashingStrategy<String> strategy,
+                                 @NotNull VirtualDirectoryImpl dir) {
     while (true) {
+      checkCancelled(dir);
+
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
         ReadAction.compute(() -> pair(dir.getCachedChildren(), dir.getSuspiciousNames()));
-
       List<VirtualFile> cached = result.getFirst();
       List<String> wanted = result.getSecond();
 
@@ -256,30 +271,31 @@ public class RefreshWorker {
         fs.isCaseSensitive() || cached.isEmpty() ? null : new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
 
       if (LOG.isTraceEnabled()) {
-        LOG.trace("cached=" + cached + " actual=" + actualNames);
-        LOG.trace("suspicious=" + wanted);
+        LOG.trace("cached=" + cached + " actual=" + actualNames + " suspicious=" + wanted);
       }
 
       // reading children attributes
-      List<Pair<VirtualFile, FileAttributes>> existingMap = ContainerUtil.newArrayListWithCapacity(cached.size());
+      List<Pair<VirtualFile, FileAttributes>> existingMap = new ArrayList<>(cached.size());
       for (VirtualFile child : cached) {
         checkCancelled(dir);
         existingMap.add(pair(child, fs.getAttributes(child)));
       }
 
-      List<Pair<String, FileAttributes>> wantedMap = ContainerUtil.newArrayListWithCapacity(wanted.size());
+      List<ChildInfo> newKids = new ArrayList<>(wanted.size());
       for (String name : wanted) {
         if (name.isEmpty()) continue;
         checkCancelled(dir);
-        wantedMap.add(pair(name, fs.getAttributes(new FakeVirtualFile(dir, name))));
+        ChildInfo record = childRecord(fs, dir, name);
+        if (record != null) {
+          newKids.add(record);
+        }
       }
 
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
+        checkCancelled(dir);
         if (!cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames())) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("retry: " + dir);
-          }
+          if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           return false;
         }
 
@@ -287,44 +303,40 @@ public class RefreshWorker {
           VirtualFile child = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            checkAndScheduleChildRefresh(dir, child, childAttributes);
+            checkAndScheduleChildRefresh(fs, dir, (NewVirtualFile)child, childAttributes);
             checkAndScheduleFileNameChange(actualNames, child);
           }
           else {
-            scheduleDeletion(child);
+            myHelper.scheduleDeletion(child);
           }
         }
 
-        for (Pair<String, FileAttributes> pair : wantedMap) {
-          String name = pair.first;
-          FileAttributes childAttributes = pair.second;
-          if (childAttributes != null) {
-            scheduleCreation(dir, name, childAttributes.isDirectory());
-          }
+        for (ChildInfo record : newKids) {
+          myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, () -> checkCancelled(dir));
         }
 
         return true;
       });
-      if (hasEvents) {
-        break;
-      }
+
+      if (hasEvents) break;
     }
   }
 
-  private void checkAndScheduleFileNameChange(@Nullable OpenTHashSet<String> actualNames, VirtualFile child) {
-    if (actualNames != null) {
-      String currentName = child.getName();
-      String actualName = actualNames.get(currentName);
-      if (actualName != null && !currentName.equals(actualName)) {
-        scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, actualName);
-      }
-    }
+  @Nullable
+  private static ChildInfo childRecord(@NotNull NewVirtualFileSystem fs, @NotNull VirtualFile dir, @NotNull String name) {
+    FakeVirtualFile file = new FakeVirtualFile(dir, name);
+    FileAttributes attributes = fs.getAttributes(file);
+    if (attributes == null) return null;
+    boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
+    String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
+    return new ChildInfo(ChildInfo.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
-  private static class RefreshCancelledException extends RuntimeException { }
+  static class RefreshCancelledException extends RuntimeException { }
 
-  private void checkCancelled(@NotNull NewVirtualFile stopAt) {
-    if (myCancelled || ourCancellingCondition != null && ourCancellingCondition.fun(stopAt)) {
+  private void checkCancelled(@NotNull NewVirtualFile stopAt) throws RefreshCancelledException {
+    Function<? super VirtualFile, Boolean> cancellingCondition;
+    if (myCancelled || (cancellingCondition = ourCancellingCondition) != null && cancellingCondition.fun(stopAt)) {
       if (LOG.isTraceEnabled()) LOG.trace("cancelled at: " + stopAt);
       forceMarkDirty(stopAt);
       while (!myRefreshQueue.isEmpty()) {
@@ -335,24 +347,26 @@ public class RefreshWorker {
     }
   }
 
-  private static void forceMarkDirty(NewVirtualFile file) {
+  private static void forceMarkDirty(@NotNull NewVirtualFile file) {
     file.markClean();  // otherwise consequent markDirty() won't have any effect
     file.markDirty();
   }
 
-  private void checkAndScheduleChildRefresh(@NotNull VirtualFile parent,
-                                            @NotNull VirtualFile child,
+  private void checkAndScheduleChildRefresh(@NotNull NewVirtualFileSystem fs,
+                                            @NotNull NewVirtualFile parent,
+                                            @NotNull NewVirtualFile child,
                                             @NotNull FileAttributes childAttributes) {
-    if (!checkAndScheduleFileTypeChange(parent, child, childAttributes)) {
+    if (!checkAndScheduleFileTypeChange(fs, parent, child, childAttributes)) {
       boolean upToDateIsDirectory = childAttributes.isDirectory();
       if (myIsRecursive || !upToDateIsDirectory) {
-        myRefreshQueue.addLast(pair((NewVirtualFile)child, childAttributes));
+        myRefreshQueue.addLast(pair(child, childAttributes));
       }
     }
   }
 
-  private boolean checkAndScheduleFileTypeChange(@NotNull VirtualFile parent,
-                                                 @NotNull VirtualFile child,
+  private boolean checkAndScheduleFileTypeChange(@NotNull NewVirtualFileSystem fs,
+                                                 @NotNull NewVirtualFile parent,
+                                                 @NotNull NewVirtualFile child,
                                                  @NotNull FileAttributes childAttributes) {
     boolean currentIsDirectory = child.isDirectory();
     boolean currentIsSymlink = child.is(VFileProperty.SYMLINK);
@@ -362,40 +376,29 @@ public class RefreshWorker {
     boolean upToDateIsSpecial = childAttributes.isSpecial();
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
-      scheduleDeletion(child);
-      scheduleCreation(parent, child.getName(), upToDateIsDirectory);
+      myHelper.scheduleDeletion(child);
+      String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
+      myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, () -> checkCancelled(parent));
       return true;
     }
 
     return false;
   }
 
-  private void scheduleAttributeChange(@NotNull VirtualFile file, @VirtualFile.PropName @NotNull String property, Object current, Object upToDate) {
-    if (LOG.isTraceEnabled()) LOG.trace("update '" + property + "' file=" + file);
-    myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
-  }
-
-  private void scheduleUpdateContent(@NotNull VirtualFile file) {
-    if (LOG.isTraceEnabled()) LOG.trace("update file=" + file);
-    myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
-  }
-
-  private void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory) {
-    if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " dir=" + isDirectory);
-    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true));
-  }
-
-  private void scheduleDeletion(@Nullable VirtualFile file) {
-    if (file != null) {
-      if (LOG.isTraceEnabled()) LOG.trace("delete file=" + file);
-      myEvents.add(new VFileDeleteEvent(null, file, true));
+  private void checkAndScheduleFileNameChange(@Nullable OpenTHashSet<String> actualNames, @NotNull VirtualFile child) {
+    if (actualNames != null) {
+      String currentName = child.getName();
+      String actualName = actualNames.get(currentName);
+      if (actualName != null && !currentName.equals(actualName)) {
+        myHelper.scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, actualName);
+      }
     }
   }
 
-  private static Function<VirtualFile, Boolean> ourCancellingCondition;
+  private static Function<? super VirtualFile, Boolean> ourCancellingCondition;
 
   @TestOnly
-  public static void setCancellingCondition(@Nullable Function<VirtualFile, Boolean> condition) {
+  public static void setCancellingCondition(@Nullable Function<? super VirtualFile, Boolean> condition) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     LocalFileSystemRefreshWorker.setCancellingCondition(condition);
     ourCancellingCondition = condition;

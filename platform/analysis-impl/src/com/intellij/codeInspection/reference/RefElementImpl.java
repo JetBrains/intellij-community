@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class RefElementImpl extends RefEntityImpl implements RefElement {
+public abstract class RefElementImpl extends RefEntityImpl implements RefElement, WritableRefElement {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefElement");
 
   private static final int IS_ENTRY_MASK = 0x80;
@@ -86,7 +86,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
         return file != null && file.isPhysical();
       }
 
-      final PsiElement element = getElement();
+      final PsiElement element = getPsiElement();
       return element != null && element.isPhysical();
     });
   }
@@ -94,7 +94,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @Override
   @Nullable
   public Icon getIcon(final boolean expanded) {
-    final PsiElement element = getElement();
+    final PsiElement element = getPsiElement();
     if (element != null && element.isValid()) {
       return element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
@@ -114,7 +114,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   @Override
   @Nullable
-  public PsiElement getElement() {
+  public PsiElement getPsiElement() {
     return myID.getElement();
   }
 
@@ -138,6 +138,10 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @Override
   public boolean isReachable() {
     return checkFlag(IS_REACHABLE_MASK);
+  }
+
+  public void setReachable(boolean reachable) {
+    setFlag(reachable, IS_REACHABLE_MASK);
   }
 
   @Override
@@ -165,7 +169,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return ObjectUtils.notNull(myInReferences, ContainerUtil.emptyList());
   }
 
-  synchronized void addInReference(RefElement refElement) {
+  @Override
+  public synchronized void addInReference(RefElement refElement) {
     List<RefElement> inReferences = myInReferences;
     if (inReferences == null){
       myInReferences = inReferences = new ArrayList<>(1);
@@ -175,7 +180,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     }
   }
 
-  synchronized void addOutReference(RefElement refElement) {
+  @Override
+  public synchronized void addOutReference(RefElement refElement) {
     List<RefElement> outReferences = myOutReferences;
     if (outReferences == null){
       myOutReferences = outReferences = new ArrayList<>(1);
@@ -217,7 +223,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public void referenceRemoved() {
     myIsDeleted = true;
     if (getOwner() != null) {
-      ((RefEntityImpl)getOwner()).removeChild(this);
+      getOwner().removeChild(this);
     }
 
     for (RefElement refCallee : getOutReferences()) {
@@ -231,7 +237,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   @Nullable
   public String getURL() {
-    final PsiElement element = getElement();
+    final PsiElement element = getPsiElement();
     if (element == null || !element.isPhysical()) return null;
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
@@ -242,7 +248,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   protected abstract void initialize();
 
-  void addSuppression(final String text) {
+  @Override
+  public void addSuppression(final String text) {
     mySuppressions = text.split("[, ]");
   }
 

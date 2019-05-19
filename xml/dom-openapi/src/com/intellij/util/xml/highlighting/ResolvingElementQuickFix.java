@@ -22,17 +22,17 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,11 +47,11 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   private final Class<? extends DomElement> myClazz;
   private final String myNewName;
-  private final List<DomElement> myParents;
+  private final List<? extends DomElement> myParents;
   private final DomCollectionChildDescription myChildDescription;
   private String myTypeName;
 
-  public ResolvingElementQuickFix(final Class<? extends DomElement> clazz, final String newName, final List<DomElement> parents,
+  public ResolvingElementQuickFix(final Class<? extends DomElement> clazz, final String newName, final List<? extends DomElement> parents,
                                   final DomCollectionChildDescription childDescription) {
     myClazz = clazz;
     myNewName = newName;
@@ -105,9 +105,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   private void applyFix() {
     chooseParent(myParents,
-                 parent -> WriteCommandAction.writeCommandAction(parent.getManager().getProject(), DomUtil.getFile(parent)).run(() -> {
-                   doFix(parent, myChildDescription, myNewName);
-                 }));
+                 parent -> WriteCommandAction.writeCommandAction(parent.getManager().getProject(), DomUtil.getFile(parent)).run(() -> doFix(parent, myChildDescription, myNewName)));
   }
 
   protected DomElement doFix(DomElement parent, final DomCollectionChildDescription childDescription, String newName) {
@@ -118,7 +116,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
     return domElement;
   }
 
-  protected static void chooseParent(final List<DomElement> files, final Consumer<DomElement> onChoose) {
+  protected static void chooseParent(final List<? extends DomElement> files, final Consumer<? super DomElement> onChoose) {
     switch (files.size()) {
       case 0:
         return;
@@ -150,7 +148,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   }
 
   @Nullable
-  public static <T extends DomElement> DomCollectionChildDescription getChildDescription(final List<DomElement> contexts, Class<T> clazz) {
+  public static <T extends DomElement> DomCollectionChildDescription getChildDescription(final List<? extends DomElement> contexts, Class<T> clazz) {
 
     if (contexts.size() == 0) {
         return null;
@@ -174,7 +172,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   }
 
   @Nullable
-  public static ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final List<DomElement> parents) {
+  public static ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final List<? extends DomElement> parents) {
     final DomCollectionChildDescription childDescription = getChildDescription(parents, clazz);
     if (newName.length() > 0 && childDescription != null) {
       return new ResolvingElementQuickFix(clazz, newName, parents, childDescription);

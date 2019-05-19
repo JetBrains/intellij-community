@@ -1,47 +1,19 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author Maxim.Medvedev
  */
 class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
-  final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
-    @Override
-    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/")
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
-      modifiableModel.commit()
-    }
-  }
+
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_1_7
 
   final String basePath = TestUtils.testDataPath + "groovy/completion/"
 
@@ -61,31 +33,6 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
 
   void testArrayLikeAccessForMap() throws Throwable { doBasicTest() }
 
-  void testEachMethodForList() throws Throwable { doBasicTest() }
-
-  void testEachMethodForMapWithKeyValue() throws Throwable { doBasicTest() }
-
-  void testEachMethodForMapWithEntry() throws Throwable { doBasicTest() }
-
-  void testWithMethod() throws Throwable { doBasicTest() }
-
-  void testInjectMethodForCollection() throws Throwable { doBasicTest() }
-
-  void testInjectMethodForArray() throws Throwable { doBasicTest() }
-
-  void testInjectMethodForMap() throws Throwable { doBasicTest() }
-
-  void testClosureDefaultParameterInEachMethod() throws Throwable { doBasicTest() }
-
-  void testEachMethodForRanges() throws Throwable { doBasicTest() }
-
-  void testEachMethodForEnumRanges() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".groovy")
-    myFixture.completeBasic()
-    myFixture.type('\n')
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
-  }
-
   void testPrintlnSpace() { checkCompletion 'print<caret>', 'l ', "println <caret>" }
 
   void testHashCodeSpace() { checkCompletion 'if ("".h<caret>', ' ', 'if ("".hashCode() <caret>' }
@@ -100,10 +47,6 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
 
   void testGstringExtendsString() {
     doBasicTest()
-  }
-
-  void testCompletionInEachClosure() {
-    doHasVariantsTest('intValue', 'intdiv')
   }
 
   void testEllipsisTypeCompletion() {
@@ -214,6 +157,8 @@ findIndexValues
 findIndexValues
 findLastIndexOf
 findLastIndexOf
+findResult
+findResult
 getAt
 getMetaPropertyValues
 getProperties

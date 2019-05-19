@@ -27,6 +27,7 @@ public class ToggleTemporaryLineBreakpointAction extends XDebuggerActionBase imp
     super(true);
   }
 
+  @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return debuggerSupport.getToggleTemporaryLineBreakpointHandler();

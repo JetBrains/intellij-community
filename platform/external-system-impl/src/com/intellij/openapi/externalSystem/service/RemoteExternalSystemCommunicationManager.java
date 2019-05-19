@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.intellij.CommonBundle;
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.core.JavaCoreBundle;
@@ -43,6 +42,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiBundle;
+import com.intellij.serialization.ObjectSerializer;
 import com.intellij.ui.PlaceHolder;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
@@ -53,19 +53,17 @@ import kotlin.Unit;
 import kotlin.reflect.full.NoSuchPropertyException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.nustaq.serialization.FSTConfiguration;
-import org.objenesis.Objenesis;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Denis Zhdanov
- * @since 8/9/13 3:37 PM
  */
 public class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager, Disposable {
 
@@ -115,10 +113,9 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
         File myWorkingDirectory = new File(configuration);
         params.setWorkingDirectory(myWorkingDirectory.isDirectory() ? myWorkingDirectory.getPath() : PathManager.getBinPath());
-        final List<String> classPath = ContainerUtilRt.newArrayList();
 
         // IDE jars.
-        classPath.addAll(PathManager.getUtilClassPath());
+        List<String> classPath = new ArrayList<>(PathManager.getUtilClassPath());
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ProjectBundle.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(PlaceHolder.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(DebuggerView.class));
@@ -146,9 +143,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemException.class));
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.CommonBundle", CommonBundle.class);
         // com.intellij.openapi.externalSystem.model.FSTSerializer dependencies
-        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(FSTConfiguration.class));
-        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(JsonFactory.class));
-        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(Objenesis.class));
+        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(ObjectSerializer.class));
 
         params.getClassPath().addAll(classPath);
 
@@ -159,7 +154,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         // is 15 seconds (http://download.oracle.com/javase/6/docs/technotes/guides/rmi/sunrmiproperties.html#connectionTimeout),
         // we don't want to get EOFException because of that.
         params.getVMParametersList().addParametersString(
-          "-Dsun.rmi.transport.connectionTimeout=" + String.valueOf(TimeUnit.HOURS.toMillis(1))
+          "-Dsun.rmi.transport.connectionTimeout=" + TimeUnit.HOURS.toMillis(1)
         );
         final String debugPort = System.getProperty(ExternalSystemConstants.EXTERNAL_SYSTEM_REMOTE_COMMUNICATION_MANAGER_DEBUG_PORT);
         if (debugPort != null) {
@@ -261,7 +256,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
   @Override
   public void clear() {
-    mySupport.stopAll(true); 
+    mySupport.stopAll(true);
   }
 
   @Override

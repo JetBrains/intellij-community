@@ -69,8 +69,8 @@ public class CompositeFoldingBuilderTest extends AbstractEditorTest {
         boolean quick)
       {
         final int index = root.getText().indexOf(textToFold);
-        descriptors.add(new NamedFoldingDescriptor(root.getNode(), new TextRange(index, index + textToFold.length()), null, placeholderText, true, Collections
-          .emptySet()));
+        descriptors.add(new FoldingDescriptor(root.getNode(), new TextRange(index, index + textToFold.length()), null, placeholderText,
+                                              true, Collections.emptySet()));
       }
 
       @Override

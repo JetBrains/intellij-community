@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/27/2014
  */
 public class ExternalSystemShortcutsManager implements Disposable {
 
@@ -103,7 +102,7 @@ public class ExternalSystemShortcutsManager implements Disposable {
     void shortcutsUpdated();
   }
 
-  public void scheduleKeymapUpdate(Collection<DataNode<TaskData>> taskData) {
+  public void scheduleKeymapUpdate(Collection<? extends DataNode<TaskData>> taskData) {
     ExternalSystemKeymapExtension.updateActions(myProject, taskData);
   }
 

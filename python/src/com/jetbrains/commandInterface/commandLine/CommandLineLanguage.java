@@ -16,6 +16,8 @@
 package com.jetbrains.commandInterface.commandLine;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Command line language itself
@@ -27,5 +29,11 @@ public final class CommandLineLanguage extends Language {
 
   private CommandLineLanguage() {
     super("CommandLine");
+  }
+
+  @NotNull
+  @Override
+  public LanguageFileType getAssociatedFileType() {
+    return CommandLineFileType.INSTANCE;
   }
 }

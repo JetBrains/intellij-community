@@ -161,7 +161,7 @@ public class MagicCompletionContributor extends CompletionContributor {
         final PsiType interfaceType = ((PsiLambdaExpression)element).getFunctionalInterfaceType();
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
         if (interfaceMethod != null) {
-          result.add(Pair.create((PsiModifierListOwner)interfaceMethod, LambdaUtil.getFunctionalInterfaceReturnType(interfaceType)));
+          result.add(Pair.create(interfaceMethod, LambdaUtil.getFunctionalInterfaceReturnType(interfaceType)));
         }
       }
     }
@@ -235,7 +235,7 @@ public class MagicCompletionContributor extends CompletionContributor {
     });
   }
 
-  private static LookupElement decorate(CompletionParameters parameters, List<ExpectedTypeInfo> types, LookupElement element) {
+  private static LookupElement decorate(CompletionParameters parameters, List<? extends ExpectedTypeInfo> types, LookupElement element) {
     if (!types.isEmpty() && parameters.getCompletionType() == CompletionType.SMART) {
       element = JavaSmartCompletionContributor.decorate(element, types);
     }

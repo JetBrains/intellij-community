@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -31,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.jetbrains.python.PyNames;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -39,7 +26,7 @@ public class CreatePackageAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.actions.CreatePackageAction");
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     if (view == null) {
       return;
@@ -98,13 +85,12 @@ public class CreatePackageAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enabled = isEnabled(e);
-    e.getPresentation().setVisible(enabled);
-    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 
-  private static boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final IdeView ideView = e.getData(LangDataKeys.IDE_VIEW);
     if (project == null || ideView == null) {

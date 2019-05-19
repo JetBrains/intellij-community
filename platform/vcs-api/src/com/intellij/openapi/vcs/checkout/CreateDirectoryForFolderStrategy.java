@@ -25,15 +25,18 @@ public class CreateDirectoryForFolderStrategy extends CheckoutStrategy{
     super(selectedLocation, cvsPath, isForFile);
   }
 
+  @Override
   public File getResult() {
     if (isForFile() && (getSelectedLocation().getParentFile() == null)) return null;
     return new File(getSelectedLocation(), getCvsPath().getName());
   }
 
+  @Override
   public boolean useAlternativeCheckoutLocation() {
     return true;
   }
 
+  @Override
   public File getCheckoutDirectory() {
     if (isForFile()){
       return getSelectedLocation();

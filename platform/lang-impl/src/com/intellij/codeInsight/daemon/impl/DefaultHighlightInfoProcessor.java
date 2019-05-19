@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -42,7 +28,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   @Override
   public void highlightsInsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
                                                      @Nullable Editor editor,
-                                                     @NotNull final List<HighlightInfo> infos,
+                                                     @NotNull final List<? extends HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
                                                      @NotNull TextRange restrictRange,
                                                      final int groupId) {
@@ -53,7 +39,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     final long modificationStamp = document.getModificationStamp();
     final TextRange priorityIntersection = priorityRange.intersection(restrictRange);
 
-    ShowAutoImportPassFactory autoImportPassFactory = project.getComponent(ShowAutoImportPassFactory.class);
+    ShowAutoImportPassFactory autoImportPassFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
     ((HighlightingSessionImpl)session).applyInEDT(() -> {
       if (modificationStamp != document.getModificationStamp()) return;
       if (priorityIntersection != null) {
@@ -71,15 +57,21 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
             highlightingPass.doApplyInformationToEditor();
         }
 
-        ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
+        repaintErrorStripeAndIcon(editor, project);
       }
     });
+  }
+
+  static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project) {
+    EditorMarkupModelImpl markup = (EditorMarkupModelImpl)editor.getMarkupModel();
+    markup.repaintTrafficLightIcon();
+    ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
   }
 
   @Override
   public void highlightsOutsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
                                                       @Nullable Editor editor,
-                                                      @NotNull final List<HighlightInfo> infos,
+                                                      @NotNull final List<? extends HighlightInfo> infos,
                                                       @NotNull final TextRange priorityRange,
                                                       @NotNull final TextRange restrictedRange, final int groupId) {
     final PsiFile psiFile = session.getPsiFile();
@@ -97,23 +89,22 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                          ProperTextRange.create(priorityRange),
                                                          groupId);
       if (editor != null) {
-        ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
+        repaintErrorStripeAndIcon(editor, project);
       }
     });
-
   }
 
   @Override
   public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession session,
                                                @NotNull TextRange elementRange,
-                                               @Nullable List<HighlightInfo> infos) {
+                                               @Nullable List<? extends HighlightInfo> infos) {
     PsiFile psiFile = session.getPsiFile();
     killAbandonedHighlightsUnder(psiFile, elementRange, infos, session);
   }
 
   private static void killAbandonedHighlightsUnder(@NotNull PsiFile psiFile,
                                                    @NotNull final TextRange range,
-                                                   @Nullable final List<HighlightInfo> infos,
+                                                   @Nullable final List<? extends HighlightInfo> infos,
                                                    @NotNull final HighlightingSession highlightingSession) {
     final Project project = psiFile.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
@@ -164,10 +155,9 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         if (myeditor == null) {
           myeditor = PsiUtilBase.findEditor(file);
         }
-        if (myeditor == null || myeditor.isDisposed()) return;
-        EditorMarkupModelImpl markup = (EditorMarkupModelImpl)myeditor.getMarkupModel();
-        markup.repaintTrafficLightIcon();
-        ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(myeditor);
+        if (myeditor != null && !myeditor.isDisposed()) {
+          repaintErrorStripeAndIcon(myeditor, myProject);
+        }
       }, 50, null);
     }
   }

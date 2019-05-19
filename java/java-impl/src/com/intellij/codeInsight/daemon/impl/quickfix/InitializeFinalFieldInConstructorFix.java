@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,7 +58,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     }
 
     final PsiManager manager = myField.getManager();
-    return manager != null && manager.isInProject(myField);
+    return manager != null && BaseIntentionAction.canModify(myField);
   }
 
   @Override
@@ -77,7 +78,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     ApplicationManager.getApplication().runWriteAction(() -> addFieldInitialization(constructors, myField, project, editor));
   }
 
-  private static void addFieldInitialization(@NotNull List<PsiMethod> constructors,
+  private static void addFieldInitialization(@NotNull List<? extends PsiMethod> constructors,
                                              @NotNull PsiField field,
                                              @NotNull Project project,
                                              @Nullable Editor editor) {
@@ -114,7 +115,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     }
 
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     final PsiExpressionStatement addedStatement = (PsiExpressionStatement)methodBody.add(codeStyleManager
@@ -138,7 +139,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     }
 
     if (ctors.length == 1) {
-      return Arrays.asList(ctors[0]);
+      return Collections.singletonList(ctors[0]);
     }
 
     if (ctors.length > 1) {
@@ -165,7 +166,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
   }
 
   @NotNull
-  private static PsiMethod[] toPsiMethodArray(@NotNull List<PsiMethodMember> methodMembers) {
+  private static PsiMethod[] toPsiMethodArray(@NotNull List<? extends PsiMethodMember> methodMembers) {
     final PsiMethod[] result = new PsiMethod[methodMembers.size()];
     int i = 0;
     for (PsiMethodMember methodMember : methodMembers) {

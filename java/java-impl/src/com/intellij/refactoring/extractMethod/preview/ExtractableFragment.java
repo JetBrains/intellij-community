@@ -16,13 +16,13 @@ class ExtractableFragment {
   private final SmartPsiElementPointer<PsiElement> myStart;
   private final SmartPsiElementPointer<PsiElement> myEnd;
 
-  public ExtractableFragment(@NotNull PsiElement start, @NotNull PsiElement end) {
+  ExtractableFragment(@NotNull PsiElement start, @NotNull PsiElement end) {
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(start.getProject());
     myStart = smartPointerManager.createSmartPsiElementPointer(start);
     myEnd = start != end ? smartPointerManager.createSmartPsiElementPointer(end) : myStart;
   }
 
-  public ExtractableFragment(@NotNull PsiElement[] elements) {
+  ExtractableFragment(@NotNull PsiElement[] elements) {
     if (elements.length == 0) {
       myStart = null;
       myEnd = null;
@@ -42,29 +42,24 @@ class ExtractableFragment {
   }
 
   @Nullable
-  public TextRange getTextRange() {
+  public ElementsRange getElementsRange() {
     if (myStart == null || myEnd == null) {
       return null;
     }
     PsiElement start = myStart.getElement();
     if (myStart == myEnd) {
-      return start != null ? start.getTextRange() : null;
+      return start != null ? new ElementsRange(start, start) : null;
     }
     PsiElement end = myEnd.getElement();
     if (start == null || end == null) {
       return null;
     }
-    return new TextRange(start.getTextRange().getStartOffset(), end.getTextRange().getEndOffset());
+    return new ElementsRange(start, end);
   }
 
   @Nullable
-  public static TextRange getTextRange(@NotNull PsiElement[] elements) {
-    if (elements.length == 0) {
-      return null;
-    }
-    if (elements.length == 1) {
-      return elements[0].getTextRange();
-    }
-    return new TextRange(elements[0].getTextRange().getStartOffset(), elements[elements.length - 1].getTextRange().getEndOffset());
+  public TextRange getTextRange() {
+    ElementsRange elementsRange = getElementsRange();
+    return elementsRange != null ? elementsRange.getTextRange() : null;
   }
 }

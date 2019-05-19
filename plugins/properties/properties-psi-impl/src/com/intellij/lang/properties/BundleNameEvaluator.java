@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface BundleNameEvaluator {
   BundleNameEvaluator DEFAULT = new BundleNameEvaluator() {
+    @Override
     @Nullable
     public String evaluateBundleName(final PsiFile psiFile) {
       PsiDirectory directory = ReadAction.compute(() -> psiFile.getParent());
@@ -38,6 +39,7 @@ public interface BundleNameEvaluator {
   };
 
   BundleNameEvaluator BASE_NAME = new BundleNameEvaluator() {
+    @Override
     @Nullable
     public String evaluateBundleName(final PsiFile psiFile) {
       return ResourceBundleManager.getInstance(psiFile.getProject()).getBaseName(psiFile);

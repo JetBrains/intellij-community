@@ -19,7 +19,6 @@ package com.intellij.execution.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
 public class DisposedPsiManagerCheck {
@@ -33,8 +32,7 @@ public class DisposedPsiManagerCheck {
   }
 
   public void performCheck() {
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    if (psiManager.isDisposed()) {
+    if (myProject.isDisposed()) {
       LOG.error("Disposed" + "\n" + StringUtil.getThrowableText(myAllocationPlace));
     }
   }

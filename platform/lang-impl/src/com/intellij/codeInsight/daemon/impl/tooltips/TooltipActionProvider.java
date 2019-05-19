@@ -6,6 +6,10 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,15 +26,21 @@ public interface TooltipActionProvider {
   boolean SHOW_FIXES_DEFAULT_VALUE = true;
 
   @Nullable
-  TooltipAction getTooltipAction(@NotNull final HighlightInfo info, @NotNull Editor editor);
+  TooltipAction getTooltipAction(@NotNull final HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile psiFile);
 
 
   @Nullable
   static TooltipAction calcTooltipAction(@NotNull final HighlightInfo info, @NotNull Editor editor) {
-    if (!isShowActions()) return null;
+    if (!Registry.is("ide.tooltip.show.with.actions")) return null;
+
+    Project project = editor.getProject();
+    if (project == null) return null;
+    
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) return null;
     
     for (TooltipActionProvider extension : EXTENSION_POINT_NAME.getExtensions()) {
-      TooltipAction action = extension.getTooltipAction(info, editor);
+      TooltipAction action = extension.getTooltipAction(info, editor, file);
       if (action != null) return action;
     }
 

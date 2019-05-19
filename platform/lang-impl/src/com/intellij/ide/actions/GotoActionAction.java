@@ -3,6 +3,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
@@ -33,7 +35,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.HeldDownKeyListener;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,16 @@ import java.util.Set;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    if (Registry.is("new.search.everywhere") && e.getProject() != null) {
+      showInSearchEverywherePopup(ActionSearchEverywhereContributor.class.getSimpleName(), e, false, true);
+    } else {
+      super.actionPerformed(e);
+    }
+  }
+
   @Override
   public void gotoActionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -91,8 +102,6 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     KeymapManager km = KeymapManager.getInstance();
     Keymap activeKeymap = km != null ? km.getActiveKeymap() : null;
     ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
-      private boolean myPaintInternalInfo;
-
       @Override
       protected void initUI(Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
         super.initUI(callback, modalityState, allowMultipleSelection);
@@ -114,7 +123,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             if (o instanceof GotoActionModel.MatchedValue) {
               GotoActionModel.MatchedValue mv = (GotoActionModel.MatchedValue)o;
 
-              if (myPaintInternalInfo) {
+              if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
                 if (mv.value instanceof GotoActionModel.ActionWrapper) {
                   AnAction action = ((GotoActionModel.ActionWrapper)mv.value).getAction();
                   String actionId = ActionManager.getInstance().getId(action);
@@ -152,20 +161,6 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             ActionMenu.showDescriptionInStatusBar(true, myList, description);
           }
         });
-
-        if (Registry.is("show.configurables.ids.in.settings")) {
-          new HeldDownKeyListener() {
-            @Override
-            protected void heldKeyTriggered(JComponent component, boolean pressed) {
-              myPaintInternalInfo = pressed;
-              // an easy way to repaint the AdText
-              ListSelectionEvent event = new ListSelectionEvent(this, -1, -1, false);
-              for (ListSelectionListener listener : myList.getListSelectionListeners()) {
-                listener.valueChanged(event);
-              }
-            }
-          }.installOn(myTextField);
-        }
       }
 
       @Nullable
@@ -236,7 +231,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     DumbAwareAction.create(e -> {
       Object o = popup.getChosenElement();
       if (o instanceof GotoActionModel.MatchedValue && activeKeymap != null) {
-        Comparable value = ((GotoActionModel.MatchedValue)o).value;
+        Object value = ((GotoActionModel.MatchedValue)o).value;
         if (value instanceof GotoActionModel.ActionWrapper) {
           GotoActionModel.ActionWrapper aw = (GotoActionModel.ActionWrapper)value;
           if (aw.isAvailable()) {
@@ -323,7 +318,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         }
 
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-          if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
+          if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(context)) {
             ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
               event.getPresentation().getText(), (ActionGroup)action, context, false, callback, -1);
             Window window = SwingUtilities.getWindowAncestor(component);

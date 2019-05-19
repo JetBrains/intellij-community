@@ -38,6 +38,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -57,11 +58,11 @@ public class CloudAccountSelectionEditor {
   private ComboBox myAccountComboBox;
   private JPanel myMainPanel;
 
-  private final List<ServerType<?>> myCloudTypes;
+  private final List<? extends ServerType<?>> myCloudTypes;
 
   private Runnable myServerSelectionListener;
 
-  public CloudAccountSelectionEditor(List<ServerType<?>> cloudTypes) {
+  public CloudAccountSelectionEditor(List<? extends ServerType<?>> cloudTypes) {
     myCloudTypes = cloudTypes;
 
     for (ServerType<?> cloudType : cloudTypes) {
@@ -104,7 +105,7 @@ public class CloudAccountSelectionEditor {
       group.add(new AnAction(cloudType.getPresentableName(), cloudType.getPresentableName(), cloudType.getIcon()) {
 
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           createAccount(cloudType);
         }
       });
@@ -216,7 +217,7 @@ public class CloudAccountSelectionEditor {
 
     private final RemoteServer<?> myAccount;
 
-    public AccountItem(RemoteServer<?> account) {
+    AccountItem(RemoteServer<?> account) {
       myAccount = account;
     }
 

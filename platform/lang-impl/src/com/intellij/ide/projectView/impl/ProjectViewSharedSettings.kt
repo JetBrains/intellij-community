@@ -17,8 +17,10 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
   var sortByType: Boolean = false
   var showModules: Boolean = true
   var flattenModules: Boolean = false
+  var showExcludedFiles: Boolean = true
   var showLibraryContents: Boolean = true
   var hideEmptyPackages: Boolean = true
+  var compactDirectories: Boolean = false
   var abbreviatePackages: Boolean = false
   var autoscrollFromSource: Boolean = false
   var autoscrollToSource: Boolean = false

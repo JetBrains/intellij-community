@@ -32,7 +32,7 @@ public class JavaWithBlockSurrounder extends JavaStatementsSurrounder{
   @Override
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, false);
@@ -44,11 +44,11 @@ public class JavaWithBlockSurrounder extends JavaStatementsSurrounder{
     PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText(text, null);
     blockStatement = (PsiBlockStatement)codeStyleManager.reformat(blockStatement);
 
-    blockStatement = (PsiBlockStatement)container.addBefore(blockStatement, statements[0]);
+    blockStatement = (PsiBlockStatement)addAfter(blockStatement, container, statements);
 
     PsiCodeBlock body = blockStatement.getCodeBlock();
     SurroundWithUtil.indentCommentIfNecessary(body, statements);
-    body.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(body, container, statements, true);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     PsiElement firstChild = blockStatement.getFirstChild();

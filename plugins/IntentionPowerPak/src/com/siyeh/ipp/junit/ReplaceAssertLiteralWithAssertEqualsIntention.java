@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.junit;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -48,7 +49,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
         return IntentionPowerPackBundle.message("replace.assert.literal.with.assert.equals.intention.name2", methodName);
       }
     }
-    final String literal = postfix.toLowerCase();
+    final String literal = StringUtil.toLowerCase(postfix);
     if (arguments.length == 1) {
       return IntentionPowerPackBundle.message("replace.assert.literal.with.assert.equals.intention.name", methodName, literal);
     }
@@ -86,7 +87,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
     }
     newExpression.append("assertEquals(");
     final String postfix = methodName.substring("assert".length());
-    final String literal = postfix.toLowerCase();
+    final String literal = StringUtil.toLowerCase(postfix);
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     CommentTracker commentTracker = new CommentTracker();

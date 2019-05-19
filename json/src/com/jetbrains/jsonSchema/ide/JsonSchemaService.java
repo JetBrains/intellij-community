@@ -1,12 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.ide;
 
-
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
@@ -25,11 +24,16 @@ public interface JsonSchemaService {
   }
 
   static boolean isSchemaFile(@NotNull PsiFile psiFile) {
+    if (JsonLikePsiWalker.getWalker(psiFile, JsonSchemaObject.NULL_OBJ) == null) return false;
     final VirtualFile file = psiFile.getViewProvider().getVirtualFile();
-    return Impl.get(psiFile.getProject()).isSchemaFile(file);
+    JsonSchemaService service = Impl.get(psiFile.getProject());
+    return service.isSchemaFile(file) && service.isApplicableToFile(file);
   }
 
   boolean isSchemaFile(@NotNull VirtualFile file);
+  boolean isSchemaFile(@NotNull JsonSchemaObject schemaObject);
+
+  @NotNull Project getProject();
 
   @Nullable
   JsonSchemaVersion getSchemaVersion(@NotNull VirtualFile file);
@@ -42,10 +46,16 @@ public interface JsonSchemaService {
   void registerResetAction(Runnable action);
   void unregisterResetAction(Runnable action);
 
+  void registerReference(String ref);
+  boolean possiblyHasReference(String ref);
+
   void triggerUpdateRemote();
 
   @Nullable
   JsonSchemaObject getSchemaObject(@NotNull VirtualFile file);
+
+  @Nullable
+  JsonSchemaObject getSchemaObject(@NotNull PsiFile file);
 
   @Nullable
   JsonSchemaObject getSchemaObjectForSchemaFile(@NotNull VirtualFile schemaFile);
@@ -56,15 +66,15 @@ public interface JsonSchemaService {
   @Nullable
   JsonSchemaFileProvider getSchemaProvider(@NotNull final VirtualFile schemaFile);
 
-  void reset();
+  @Nullable
+  JsonSchemaFileProvider getSchemaProvider(@NotNull final JsonSchemaObject schemaObject);
 
-  ModificationTracker getAnySchemaChangeTracker();
+  @Nullable
+  VirtualFile resolveSchemaFile(@NotNull final JsonSchemaObject schemaObject);
+
+  void reset();
 
   List<JsonSchemaInfo> getAllUserVisibleSchemas();
 
-  @NotNull
-  static String normalizeId(@NotNull String id) {
-    id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
-    return id.startsWith("#") ? id.substring(1) : id;
-  }
+  boolean isApplicableToFile(@Nullable VirtualFile file);
 }

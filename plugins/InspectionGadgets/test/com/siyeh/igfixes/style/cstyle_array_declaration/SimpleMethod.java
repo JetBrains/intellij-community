@@ -1,6 +1,6 @@
 public class SimpleMethod {
 
-  public String ohGo<caret>d(String[] a)[] {
+  public String/*2*/ ohGo<caret>d(String[] a)/*1*/[] {
     return a;
   }
 }

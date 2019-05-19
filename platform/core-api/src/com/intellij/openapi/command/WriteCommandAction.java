@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -259,13 +260,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     // this is needed to prevent memory leak, since the command is put into undo queue
     final RunResult[] results = {result};
 
-    doExecuteCommand(() -> {
-      //noinspection deprecation
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        results[0].run();
-        results[0] = null;
-      });
-    });
+    doExecuteCommand(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      results[0].run();
+      results[0] = null;
+    }));
   }
 
   /**
@@ -352,6 +350,13 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     protected abstract void run() throws Throwable;
   }
 
+  /**
+   * If run a write command using this method then "Undo" action always shows "Undefined" text - {@link #DEFAULT_COMMAND_NAME}.
+   *
+   * Please use {@link #runWriteCommandAction(Project, String, String, Runnable, PsiFile...)} instead.
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
+  @Deprecated
   public static void runWriteCommandAction(Project project, @NotNull Runnable runnable) {
     runWriteCommandAction(project, DEFAULT_COMMAND_NAME, DEFAULT_GROUP_ID, runnable);
   }
@@ -375,13 +380,11 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return writeCommandAction(project).compute(computable);
   }
 
-  //<editor-fold desc="Deprecated stuff.">
   /**
    * @deprecated use {@link FileModificationService#preparePsiElementsForWrite(Collection)} (to be removed in IDEA 2018)
    */
-  @SuppressWarnings("unused")
-  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<PsiFile> psiFiles) {
+  @Deprecated
+  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<? extends PsiFile> psiFiles) {
     return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
   }
-  //</editor-fold>}
 }

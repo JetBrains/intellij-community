@@ -31,7 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 
 class TestCategory extends TestPackage {
-  public TestCategory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+  TestCategory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
 

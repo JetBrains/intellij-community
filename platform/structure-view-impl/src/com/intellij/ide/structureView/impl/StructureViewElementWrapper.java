@@ -37,11 +37,12 @@ public class StructureViewElementWrapper<V extends PsiElement> implements Struct
   private final StructureViewTreeElement myTreeElement;
   private final PsiFile myMainFile;
 
-  public StructureViewElementWrapper(@NotNull StructureViewTreeElement treeElement, @NotNull PsiFile mainFile) {
+  StructureViewElementWrapper(@NotNull StructureViewTreeElement treeElement, @NotNull PsiFile mainFile) {
     myTreeElement = treeElement;
     myMainFile = mainFile;
   }
 
+  @NotNull
   public StructureViewTreeElement getWrappedElement() {
     return myTreeElement;
   }

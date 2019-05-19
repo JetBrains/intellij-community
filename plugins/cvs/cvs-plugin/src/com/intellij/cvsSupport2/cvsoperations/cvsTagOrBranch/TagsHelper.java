@@ -83,7 +83,7 @@ public class TagsHelper {
     return branches;
   }
 
-  public static void collectBranches(LogInformation logInformation, Set<String> branches) {
+  public static void collectBranches(LogInformation logInformation, Set<? super String> branches) {
     final List<SymbolicName> allSymbolicNames = logInformation.getAllSymbolicNames();
     for (final SymbolicName symbolicName : allSymbolicNames) {
       branches.add(symbolicName.getName());

@@ -100,7 +100,7 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
     @NotNull private final BackgroundTaskQueue myQueue;
     @NotNull private final TreeConflictRefreshablePanel myDelegate;
 
-    public SvnTreeConflictDiffViewer(@NotNull DiffContext context, @NotNull SvnTreeConflictDiffRequest request) {
+    SvnTreeConflictDiffViewer(@NotNull DiffContext context, @NotNull SvnTreeConflictDiffRequest request) {
       myContext = context;
       myRequest = request;
 

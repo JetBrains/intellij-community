@@ -1,35 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData.SourceRoot;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -39,17 +28,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -59,23 +48,18 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
 
 /**
  * @author Denis Zhdanov
- * @since 2/7/12 3:20 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ContentRootDataService extends AbstractProjectDataService<ContentRootData, ContentEntry> {
   public static final com.intellij.openapi.util.Key<Boolean> CREATE_EMPTY_DIRECTORIES =
     com.intellij.openapi.util.Key.create("createEmptyDirectories");
-  private static final com.intellij.openapi.util.Key<Set<AddSourceFolderListener>> LISTENERS_KEY =
-    com.intellij.openapi.util.Key.create("postponedSourceFolderCreationListeners");
 
   private static final Logger LOG = Logger.getInstance(ContentRootDataService.class);
 
@@ -90,9 +74,12 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
+    logUnitTest("Importing data. Data size is [" + toImport.size() + "]");
     if (toImport.isEmpty()) {
       return;
     }
+
+    final SourceFolderManager sourceFolderManager = SourceFolderManager.getInstance(project);
 
     boolean isNewlyImportedProject = project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE;
     boolean forceDirectoriesCreation = false;
@@ -101,8 +88,11 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       forceDirectoriesCreation = projectDataNode.getUserData(CREATE_EMPTY_DIRECTORIES) == Boolean.TRUE;
     }
 
-    Set<Module> modulesToExpand = ContainerUtil.newTroveSet();
+    Set<Module> modulesToExpand = new THashSet<>();
     MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ModuleData.class);
+
+    filterAndReportDuplicatingContentRoots(byModule, project);
+
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
       Module module = entry.getKey().getUserData(AbstractModuleDataService.MODULE_KEY);
       module = module != null ? module : modelsProvider.findIdeModule(entry.getKey().getData());
@@ -113,7 +103,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         ));
         continue;
       }
-      importData(modelsProvider, entry.getValue(), module, forceDirectoriesCreation);
+      importData(modelsProvider, sourceFolderManager, entry.getValue(), module, forceDirectoriesCreation);
       if (forceDirectoriesCreation ||
           (isNewlyImportedProject &&
            projectData != null &&
@@ -128,10 +118,10 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
           VirtualFile[] roots = modelsProvider.getModifiableRootModel(module).getContentRoots();
           if (roots.length > 0) {
             VirtualFile virtualFile = roots[0];
-            ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
+            ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, () -> StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
               final ProjectView projectView = ProjectView.getInstance(project);
               projectView.changeViewCB(ProjectViewPane.ID, null).doWhenProcessed(() -> projectView.selectCB(null, virtualFile, false));
-            });
+            }));
           }
         }
       }
@@ -139,38 +129,26 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   private static void importData(@NotNull IdeModifiableModelsProvider modelsProvider,
-                                 @NotNull final Collection<DataNode<ContentRootData>> data,
+                                 @NotNull SourceFolderManager sourceFolderManager,
+                                 @NotNull final Collection<? extends DataNode<ContentRootData>> data,
                                  @NotNull final Module module, boolean forceDirectoriesCreation) {
+    logUnitTest("Import data for module [" + module.getName() + "], data size [" + data.size() + "]");
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     final ContentEntry[] contentEntries = modifiableRootModel.getContentEntries();
-    final Map<String, ContentEntry> contentEntriesMap = ContainerUtilRt.newHashMap();
+    final Map<String, ContentEntry> contentEntriesMap = new HashMap<>();
     for (ContentEntry contentEntry : contentEntries) {
       contentEntriesMap.put(contentEntry.getUrl(), contentEntry);
     }
 
-    boolean createEmptyContentRootDirectories = forceDirectoriesCreation;
-    if (!forceDirectoriesCreation && !data.isEmpty()) {
-      ProjectSystemId projectSystemId = data.iterator().next().getData().getOwner();
-      AbstractExternalSystemSettings externalSystemSettings =
-        ExternalSystemApiUtil.getSettings(module.getProject(), projectSystemId);
-
-      String path = ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath();
-      if (path != null) {
-        ExternalProjectSettings projectSettings = externalSystemSettings.getLinkedProjectSettings(path);
-        createEmptyContentRootDirectories = projectSettings != null && projectSettings.isCreateEmptyContentRootDirectories();
-      }
-    }
-
-    cleanPostponedSourceFolderCreationListeners(module);
+    sourceFolderManager.removeSourceFolders(module);
 
     final Set<ContentEntry> importedContentEntries = ContainerUtil.newIdentityTroveSet();
     for (final DataNode<ContentRootData> node : data) {
       final ContentRootData contentRoot = node.getData();
 
       final ContentEntry contentEntry = findOrCreateContentRoot(modifiableRootModel, contentRoot.getRootPath());
-      if(!importedContentEntries.contains(contentEntry)) {
-        // clear source folders but do not remove existing excluded folders
-        contentEntry.clearSourceFolders();
+      if (!importedContentEntries.contains(contentEntry)) {
+        removeSourceFoldersIfAbsent(contentEntry, contentRoot);
         importedContentEntries.add(contentEntry);
       }
       if (LOG.isDebugEnabled()) {
@@ -182,7 +160,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         if (type != null) {
           for (SourceRoot path : contentRoot.getPaths(externalSrcType)) {
             createSourceRootIfAbsent(
-              contentEntry, path, module, type, externalSrcType.isGenerated(), createEmptyContentRootDirectories);
+              sourceFolderManager, contentEntry, path, module, type, externalSrcType.isGenerated(), forceDirectoriesCreation);
           }
         }
       }
@@ -195,26 +173,6 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     for (ContentEntry contentEntry : contentEntriesMap.values()) {
       modifiableRootModel.removeContentEntry(contentEntry);
     }
-  }
-
-  private static void cleanPostponedSourceFolderCreationListeners(@NotNull Module module) {
-    final Set<AddSourceFolderListener> listeners = module.getUserData(LISTENERS_KEY);
-    final VirtualFileManager vfManager = VirtualFileManager.getInstance();
-    if (listeners != null) {
-      for (AddSourceFolderListener listener : listeners) {
-        vfManager.removeVirtualFileListener(listener);
-      }
-      listeners.clear();
-    }
-  }
-
-  private static void saveSourceFolderCreationListener(@NotNull Module module, @NotNull AddSourceFolderListener listener) {
-    Set<AddSourceFolderListener> listeners = module.getUserData(LISTENERS_KEY);
-    if (listeners == null) {
-      listeners = new HashSet<>();
-      module.putUserData(LISTENERS_KEY, listeners);
-    }
-    listeners.add(listener);
   }
 
   @Nullable
@@ -254,9 +212,38 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     return model.addContentEntry(pathToUrl(path));
   }
 
+  private static Set<String> getSourceRoots(@NotNull ContentRootData contentRoot) {
+    Set<String> sourceRoots = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    for (ExternalSystemSourceType externalSrcType : ExternalSystemSourceType.values()) {
+      final JpsModuleSourceRootType<?> type = getJavaSourceRootType(externalSrcType);
+      if (type == null) continue;
+      for (SourceRoot path : contentRoot.getPaths(externalSrcType)) {
+        if (path == null) continue;
+        sourceRoots.add(path.getPath());
+      }
+    }
+    return sourceRoots;
+  }
+
+  private static void removeSourceFoldersIfAbsent(@NotNull ContentEntry contentEntry, @NotNull ContentRootData contentRoot) {
+    Set<String> sourceRoots = getSourceRoots(contentRoot);
+    SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+    for (SourceFolder sourceFolder : sourceFolders) {
+      String url = sourceFolder.getUrl();
+      String path = VfsUtilCore.urlToPath(url);
+      if (!sourceRoots.contains(path)) {
+        contentEntry.removeSourceFolder(sourceFolder);
+      }
+    }
+  }
+
   private static void createSourceRootIfAbsent(
+    @NotNull SourceFolderManager sourceFolderManager,
     @NotNull ContentEntry entry, @NotNull final SourceRoot root, @NotNull Module module,
     @NotNull JpsModuleSourceRootType<?> sourceRootType, boolean generated, boolean createEmptyContentRootDirectories) {
+    logUnitTest("create source root if absent entry.url=[" + entry.getUrl() + "] root.path=[" + root.getPath() + "]" +
+                " generated=[" + generated + "] createEmptyContentRootDirectories=[" + createEmptyContentRootDirectories + "]");
+
     SourceFolder[] folders = entry.getSourceFolders();
     for (SourceFolder folder : folders) {
       VirtualFile file = folder.getFile();
@@ -278,17 +265,15 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       LOG.debug(String.format("Importing %s for content root '%s' of module '%s'", root, entry.getUrl(), module.getName()));
     }
 
-    if (!createEmptyContentRootDirectories && !generated) {
-      final Ref<VirtualFile> ref = Ref.create();
-      ExternalSystemApiUtil.doWriteAction(() -> ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getPath())));
-      final VirtualFile sourceFolderFile = ref.get();
-      if (sourceFolderFile == null || !sourceFolderFile.isValid()) {
+    if (!createEmptyContentRootDirectories) {
+      if (!FileUtil.exists(root.getPath())) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Source folder [" + root.getPath() + "] does not exist and will not be created, will add when dir is created");
         }
-        final AddSourceFolderListener listener = new AddSourceFolderListener(root, module, sourceRootType);
-        saveSourceFolderCreationListener(module, listener);
-        VirtualFileManager.getInstance().addVirtualFileListener(listener, module);
+        logUnitTest("Adding source folder listener to watch [" + root.getPath() + "] for creation in project [hashCode=" + module.getProject().hashCode() + "]");
+        String url = pathToUrl(root.getPath());
+        String packagePrefix = StringUtil.notNullize(root.getPackagePrefix());
+        sourceFolderManager.addSourceFolder(module, url, sourceRootType, packagePrefix, generated);
         return;
       }
     }
@@ -303,7 +288,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         properties.setForGeneratedSources(true);
       }
     }
-    if(createEmptyContentRootDirectories) {
+    if(createEmptyContentRootDirectories && !FileUtil.exists(root.getPath())) {
       ExternalSystemApiUtil.doWriteAction(() -> {
         try {
           VfsUtil.createDirectoryIfMissing(root.getPath());
@@ -312,6 +297,12 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
           LOG.warn(String.format("Unable to create directory for the path: %s", root.getPath()), e);
         }
       });
+    }
+  }
+
+  private static void logUnitTest(String message) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.info(message);
     }
   }
 
@@ -328,6 +319,102 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     entry.addExcludeFolder(pathToUrl(rootPath));
     if (!Registry.is("ide.hide.excluded.files")) {
       ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(rootPath);
+    }
+  }
+
+
+  private static void filterAndReportDuplicatingContentRoots(@NotNull MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> moduleNodeToRootNodes,
+                                                             @NotNull Project project) {
+    Map<String, DuplicateModuleReport> filter = new LinkedHashMap<>();
+
+    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : moduleNodeToRootNodes.entrySet()) {
+      ModuleData moduleData = entry.getKey().getData();
+      Collection<DataNode<ContentRootData>> crDataNodes = entry.getValue();
+      for (Iterator<DataNode<ContentRootData>> iterator = crDataNodes.iterator(); iterator.hasNext(); ) {
+        DataNode<ContentRootData> crDataNode = iterator.next();
+        String rootPath = crDataNode.getData().getRootPath();
+        DuplicateModuleReport report = filter.putIfAbsent(rootPath, new DuplicateModuleReport(moduleData));
+        if (report != null) {
+          report.addDuplicate(moduleData);
+          iterator.remove();
+          crDataNode.clear(true);
+        }
+      }
+    }
+
+    Map<String, DuplicateModuleReport> toReport = filter.entrySet().stream()
+      .filter(e -> e.getValue().hasDuplicates())
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (r1, r2) -> {
+        LOG.warn("Unexpected duplicates in keys while collecting filtered reports");
+        return r2;
+      }, LinkedHashMap::new));
+
+    if (!toReport.isEmpty()) {
+      String notificationMessage = prepareMessageAndLogWarnings(toReport);
+      if (notificationMessage != null) {
+        showNotificationsPopup(project, toReport.size(), notificationMessage);
+      }
+    }
+  }
+
+  @Nullable
+  private static String prepareMessageAndLogWarnings(@NotNull Map<String, DuplicateModuleReport> toReport) {
+    String firstMessage = null;
+    LOG.warn("Duplicating content roots detected.");
+    for (Map.Entry<String, DuplicateModuleReport> entry : toReport.entrySet()) {
+      String path = entry.getKey();
+      DuplicateModuleReport report = entry.getValue();
+      String message = String.format("Path [%s] of module [%s] was removed from modules [%s]", path, report.getOriginalName(),
+                                     StringUtil.join(report.getDuplicatesNames(), ", "));
+      if (firstMessage == null) {
+        firstMessage = message;
+      }
+      LOG.warn(message);
+    }
+    return firstMessage;
+  }
+
+  private static void showNotificationsPopup(@NotNull Project project,
+                                             int reportsCount,
+                                             @NotNull String notificationMessage) {
+    int extraReportsCount = reportsCount - 1;
+    if (extraReportsCount > 0) {
+      notificationMessage += "<br>Also " + extraReportsCount + " more "
+                             + StringUtil.pluralize("path", extraReportsCount)
+                             + " " + (extraReportsCount == 1 ? "was" : "were") +
+                             " deduplicated. See idea log for details";
+    }
+
+    Notification notification = new Notification("Content root duplicates",
+                                                 "Duplicate content roots detected",
+                                                 notificationMessage,
+                                                 NotificationType.WARNING);
+    Notifications.Bus.notify(notification, project);
+  }
+
+
+  private static class DuplicateModuleReport {
+    private final ModuleData myOriginal;
+    private final List<ModuleData> myDuplicates = new ArrayList<>();
+
+    public DuplicateModuleReport(@NotNull ModuleData original) {
+      myOriginal = original;
+    }
+
+    public void addDuplicate(@NotNull ModuleData duplicate) {
+      myDuplicates.add(duplicate);
+    }
+
+    public boolean hasDuplicates() {
+      return !myDuplicates.isEmpty();
+    }
+
+    public String getOriginalName() {
+      return myOriginal.getInternalName();
+    }
+
+    public Collection<String> getDuplicatesNames() {
+      return ContainerUtil.map(myDuplicates, ModuleData::getInternalName);
     }
   }
 }

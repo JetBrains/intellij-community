@@ -24,7 +24,6 @@ import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -38,9 +37,12 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/4/2015
  */
 public class GradleRunnerUtil {
+
+  public static boolean isGradleModule(@NotNull Module module) {
+    return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
+  }
 
   @Nullable
   public static Location<PsiMethod> getMethodLocation(@NotNull Location contextLocation) {
@@ -60,7 +62,7 @@ public class GradleRunnerUtil {
   public static Location<PsiMethod> getTestMethod(final Location<?> location) {
     for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
       final Location<PsiMethod> methodLocation = iterator.next();
-      if (TestFrameworks.getInstance().isTestMethod(methodLocation.getPsiElement())) return methodLocation;
+      if (TestFrameworks.getInstance().isTestMethod(methodLocation.getPsiElement(), false)) return methodLocation;
     }
     return null;
   }
@@ -94,11 +96,11 @@ public class GradleRunnerUtil {
   }
 
   public static boolean isFromGroovyGradleScript(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    if (!(file instanceof GroovyFile)) {
-      return false;
-    }
-    return GradleConstants.EXTENSION.equals(file.getVirtualFile().getExtension());
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return false;
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return false;
+    return GradleConstants.EXTENSION.equals(virtualFile.getExtension());
   }
 
   @NotNull
@@ -149,10 +151,9 @@ public class GradleRunnerUtil {
       }
       GradleExtensionsSettings.GradleExtensionsData extensionsData = GradleExtensionsSettings.getInstance(project).getExtensionsFor(module);
       if (extensionsData != null) {
-        for (GradleExtensionsSettings.GradleTask task : extensionsData.tasks) {
-          if (taskNameCandidate.equals(task.name)) {
-            return Collections.singletonList(taskNameCandidate);
-          }
+        GradleExtensionsSettings.GradleTask gradleTask = extensionsData.tasksMap.get(taskNameCandidate);
+        if (gradleTask != null) {
+          return Collections.singletonList(taskNameCandidate);
         }
       }
     }

@@ -6,7 +6,7 @@ public class MyClass {
     s.concat("1");
     s.chars();
 
-    java.util.List list = new java.util.ArrayList();
+    java.util.ArrayList list = new java.util.ArrayList();
     list.addAll(new java.util.ArrayList());
   }
 }

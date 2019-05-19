@@ -7,12 +7,12 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -48,7 +49,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   private static final Object IN_SELECTION2 = ObjectUtils.sentinel("LivePreview.IN_SELECTION2");
   private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
 
-  private boolean myListeningSelection = false;
+  private Disposable mySelectionListening;
   private boolean mySuppressedUpdate = false;
   private boolean myInSmartUpdate = false;
 
@@ -62,13 +63,13 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
   private final Set<RangeHighlighter> myHighlighters = new HashSet<>();
   private RangeHighlighter myCursorHighlighter;
-  private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = new ArrayList<>();
+  private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = ContainerUtil.createLockFreeCopyOnWriteList();
   private Delegate myDelegate;
   private final SearchResults mySearchResults;
   private Balloon myReplacementBalloon;
 
   @Override
-  public void selectionChanged(SelectionEvent e) {
+  public void selectionChanged(@NotNull SelectionEvent e) {
     updateInSelectionHighlighters();
   }
 
@@ -85,13 +86,13 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult) throws FindManager.MalformedReplacementStringException;
   }
 
-  private static TextAttributes strikeout() {
-    Color color = EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
+  private TextAttributes strikeout() {
+    Color color = mySearchResults.getEditor().getColorsScheme().getDefaultForeground();
     return new TextAttributes(null, null, color, EffectType.STRIKEOUT, Font.PLAIN);
   }
 
   @Override
-  public void searchResultsUpdated(SearchResults sr) {
+  public void searchResultsUpdated(@NotNull SearchResults sr) {
     final Project project = mySearchResults.getProject();
     if (project == null || project.isDisposed()) return;
     if (mySuppressedUpdate) {
@@ -229,12 +230,25 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     }
   }
 
-  public LivePreview(SearchResults searchResults) {
+  public LivePreview(@NotNull SearchResults searchResults) {
     mySearchResults = searchResults;
     searchResultsUpdated(searchResults);
     searchResults.addListener(this);
-    myListeningSelection = true;
-    mySearchResults.getEditor().getSelectionModel().addSelectionListener(this);
+    startListeningToSelection();
+  }
+
+  private void startListeningToSelection() {
+    if (mySelectionListening == null) {
+      mySelectionListening = Disposer.newDisposable();
+      EditorUtil.addBulkSelectionListener(mySearchResults.getEditor(), this, mySelectionListening);
+    }
+  }
+
+  private void stopListeningToSelection() {
+    if (mySelectionListening != null) {
+      Disposer.dispose(mySelectionListening);
+      mySelectionListening = null;
+    }
   }
 
   public Delegate getDelegate() {
@@ -261,37 +275,30 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       myReplacementBalloon.hide();
     }
 
-    if (editor != null) {
-
-      for (VisibleAreaListener visibleAreaListener : myVisibleAreaListenersToRemove) {
-        editor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
+    for (VisibleAreaListener visibleAreaListener : myVisibleAreaListenersToRemove) {
+      editor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
+    }
+    myVisibleAreaListenersToRemove.clear();
+    Project project = mySearchResults.getProject();
+    if (project != null && !project.isDisposed()) {
+      for (RangeHighlighter h : myHighlighters) {
+        HighlightManager.getInstance(project).removeSegmentHighlighter(editor, h);
       }
-      myVisibleAreaListenersToRemove.clear();
-      Project project = mySearchResults.getProject();
-      if (project != null && !project.isDisposed()) {
-        for (RangeHighlighter h : myHighlighters) {
-          HighlightManager.getInstance(project).removeSegmentHighlighter(editor, h);
-        }
-        if (myCursorHighlighter != null) {
-          HighlightManager.getInstance(project).removeSegmentHighlighter(editor, myCursorHighlighter);
-          myCursorHighlighter = null;
-        }
-      }
-      myHighlighters.clear();
-      if (myListeningSelection) {
-        editor.getSelectionModel().removeSelectionListener(this);
-        myListeningSelection = false;
+      if (myCursorHighlighter != null) {
+        HighlightManager.getInstance(project).removeSegmentHighlighter(editor, myCursorHighlighter);
+        myCursorHighlighter = null;
       }
     }
+    myHighlighters.clear();
+    stopListeningToSelection();
   }
 
   private void highlightUsages() {
-    if (mySearchResults.getEditor() == null) return;
     if (mySearchResults.getMatchesCount() >= mySearchResults.getMatchesLimit())
       return;
     for (FindResult range : mySearchResults.getOccurrences()) {
       if (range.getEndOffset() > mySearchResults.getEditor().getDocument().getTextLength()) continue;
-      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+      TextAttributes attributes = mySearchResults.getEditor().getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
       if (range.getLength() == 0) {
         attributes = attributes.clone();
         attributes.setEffectType(EffectType.BOXED);
@@ -304,15 +311,10 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       }
     }
     updateInSelectionHighlighters();
-    if (!myListeningSelection) {
-      mySearchResults.getEditor().getSelectionModel().addSelectionListener(this);
-      myListeningSelection = true;
-    }
-
+    startListeningToSelection();
   }
 
   private void updateInSelectionHighlighters() {
-    if (mySearchResults.getEditor() == null) return;
     final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
     int[] starts = selectionModel.getBlockSelectionStarts();
     int[] ends = selectionModel.getBlockSelectionEnds();
@@ -414,7 +416,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   }
 
   @NotNull
-  private RangeHighlighter highlightRange(TextRange textRange, TextAttributes attributes, Set<RangeHighlighter> highlighters) {
+  private RangeHighlighter highlightRange(TextRange textRange, TextAttributes attributes, Set<? super RangeHighlighter> highlighters) {
     if (myInSmartUpdate) {
       for (RangeHighlighter highlighter : myHighlighters) {
         if (highlighter.isValid() && highlighter.getStartOffset() == textRange.getStartOffset() && highlighter.getEndOffset() == textRange.getEndOffset()) {
@@ -435,7 +437,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     return highlighter;
   }
 
-  private RangeHighlighter doHightlightRange(final TextRange textRange, final TextAttributes attributes, Set<RangeHighlighter> highlighters) {
+  private RangeHighlighter doHightlightRange(final TextRange textRange, final TextAttributes attributes, Set<? super RangeHighlighter> highlighters) {
     HighlightManager highlightManager = HighlightManager.getInstance(mySearchResults.getProject());
 
     MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
@@ -479,7 +481,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   private class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
     private final Editor myEditor;
 
-    public ReplacementBalloonPositionTracker(Editor editor) {
+    ReplacementBalloonPositionTracker(Editor editor) {
       super(editor.getContentComponent());
       myEditor = editor;
 
@@ -504,7 +506,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
         VisibleAreaListener visibleAreaListener = new VisibleAreaListener() {
           @Override
-          public void visibleAreaChanged(VisibleAreaEvent e) {
+          public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
             if (SearchResults.insideVisibleArea(myEditor, cur)) {
               showReplacementPreview();
               final VisibleAreaListener visibleAreaListener = this;

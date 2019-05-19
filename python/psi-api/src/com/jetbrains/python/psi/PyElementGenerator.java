@@ -65,6 +65,7 @@ public abstract class PyElementGenerator {
    * @return the expression
    * @deprecated use the overload with language level specified
    */
+  @Deprecated
   public abstract PyExpression createExpressionFromText(String text);
 
   @NotNull

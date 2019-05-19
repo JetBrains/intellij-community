@@ -54,9 +54,7 @@ public class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private final FileBasedIndex.InputFilter myInputFilter = file -> {
-    return StringUtil.endsWith(file.getNameSequence(), NAMESPACE_FILE_SUFFIX) && !file.getFileType().isBinary();
-  };
+  private final FileBasedIndex.InputFilter myInputFilter = file -> StringUtil.endsWith(file.getNameSequence(), NAMESPACE_FILE_SUFFIX) && !file.getFileType().isBinary();
 
   @NotNull
   @Override

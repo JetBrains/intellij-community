@@ -16,8 +16,10 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +59,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
       }
     }
 
-    if (isUncheckedConversion(myT, myS)) {
+    if (isUncheckedConversion(myT, myS, session)) {
       session.setErased();
       return true;
     }
@@ -66,26 +68,51 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     return true;
   }
 
-  public static boolean isUncheckedConversion(final PsiType t, final PsiType s) {
-    if (t instanceof PsiClassType && !((PsiClassType)t).isRaw() && s instanceof PsiClassType) {
+  public static boolean isUncheckedConversion(final PsiType t,
+                                              final PsiType s,
+                                              InferenceSession session) {
+    if (t instanceof PsiClassType && !((PsiClassType)t).isRaw()) {
       final PsiClassType.ClassResolveResult tResult = ((PsiClassType)t).resolveGenerics();
-      final PsiClassType.ClassResolveResult sResult = ((PsiClassType)s).resolveGenerics();
       final PsiClass tClass = tResult.getElement();
-      final PsiClass sClass = sResult.getElement();
-      if (tClass != null && sClass != null && !(sClass instanceof InferenceVariable)) {
-        final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(tClass, sClass, sResult.getSubstitutor());
-        if (sSubstitutor != null) {
-          if (PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {
+      if (s instanceof PsiClassType && isUncheckedConversion(tClass, (PsiClassType)s, session)) {
+        return true;
+      }
+      else if (s instanceof PsiIntersectionType) {
+        for (PsiType conjunct : ((PsiIntersectionType)s).getConjuncts()) {
+          if (conjunct instanceof PsiClassType && isUncheckedConversion(tClass, (PsiClassType)conjunct, session)) {
             return true;
           }
         }
-        else if (tClass instanceof InferenceVariable && ((PsiClassType)s).isRaw() && tClass.isInheritor(sClass, true)) {
+      }
+    }
+    else if (t instanceof PsiArrayType && s != null && t.getArrayDimensions() == s.getArrayDimensions()) {
+      return isUncheckedConversion(t.getDeepComponentType(), s.getDeepComponentType(), session);
+    }
+    return false;
+  }
+
+  private static boolean isUncheckedConversion(PsiClass tClass,
+                                               PsiClassType s,
+                                               InferenceSession session) {
+    final PsiClassType.ClassResolveResult sResult = s.resolveGenerics();
+    final PsiClass sClass = sResult.getElement();
+    if (tClass != null && sClass != null && !(sClass instanceof InferenceVariable)) {
+      final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(tClass, sClass, sResult.getSubstitutor());
+      if (sSubstitutor != null) {
+        if (PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {
           return true;
         }
       }
-    } 
-    else if (t instanceof PsiArrayType && s != null && t.getArrayDimensions() == s.getArrayDimensions()) {
-      return isUncheckedConversion(t.getDeepComponentType(), s.getDeepComponentType());
+      else if (tClass instanceof InferenceVariable && s.isRaw()) {
+        for (PsiType bound : ((InferenceVariable)tClass).getBounds(InferenceBound.UPPER)) {
+          if (!session.isProperType(bound)) {
+            PsiClass boundClass = PsiUtil.resolveClassInClassTypeOnly(bound);
+            if (boundClass != null && InheritanceUtil.isInheritorOrSelf(boundClass, sClass, true)) {
+              return true;
+            }
+          }
+        }
+      }
     }
     return false;
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
@@ -31,6 +17,7 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ExternalProcessUtil;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -72,12 +59,12 @@ class ForkedGroovyc implements GroovycFlavor {
     }
 
     JpsGroovySettings settings = JpsGroovycRunner.getGroovyCompilerSettings(context);
-    
-    List<String> vmParams = ContainerUtilRt.newArrayList();
-    vmParams.add("-Xmx" + System.getProperty("groovyc.heap.size", settings.heapSize) + "m");
+
+    List<String> vmParams = new ArrayList<>();
+    vmParams.add("-Xmx" + System.getProperty("groovyc.heap.size", String.valueOf(Utils.suggestForkedCompilerHeapSize())) + "m");
     vmParams.add("-Dfile.encoding=" + System.getProperty("file.encoding"));
     //vmParams.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
-    
+
     if ("false".equals(System.getProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY))) {
       vmParams.add("-D" + GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY + "=false");
     }
@@ -92,7 +79,10 @@ class ForkedGroovyc implements GroovycFlavor {
     }
 
     if (byteCodeTargetLevel != null) {
-      vmParams.add("-Dgroovy.target.bytecode=" + byteCodeTargetLevel);
+      vmParams.add("-D" + GroovyRtConstants.GROOVY_TARGET_BYTECODE + "=" + byteCodeTargetLevel);
+    }
+    if ("true".equals(System.getProperty(GroovyRtConstants.GROOVYC_LEGACY_REMOVE_ANNOTATIONS))) {
+      vmParams.add("-D" + GroovyRtConstants.GROOVYC_LEGACY_REMOVE_ANNOTATIONS + "=true");
     }
 
     final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(

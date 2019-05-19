@@ -27,7 +27,7 @@ public class IdeaOpenApiNonCodeMembersContributor extends NonCodeMembersContribu
     }
   }
 
-  private static void traversePackage(PsiPackage psiPackage, Consumer<PsiClass> classConsumer) {
+  private static void traversePackage(PsiPackage psiPackage, Consumer<? super PsiClass> classConsumer) {
     for (PsiPackage aPackage : psiPackage.getSubPackages()) {
       traversePackage(aPackage, classConsumer);
     }

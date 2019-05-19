@@ -50,7 +50,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -77,12 +76,7 @@ public final class ExecutionHandler {
     );
     if (result != null) {
       try {
-        long l = System.currentTimeMillis();
-        try {
-          return result.get();
-        } finally {
-          new Throwable(EventQueue.isDispatchThread() + ": " + (System.currentTimeMillis() - l)).printStackTrace(System.out);
-        }
+        return result.get();
       }
       catch (InterruptedException | java.util.concurrent.ExecutionException e) {
         LOG.warn(e);
@@ -139,7 +133,7 @@ public final class ExecutionHandler {
       messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
       commandLine = builder.getCommandLine().toCommandLine();
       messageView.setBuildCommandLine(commandLine.getCommandLineString());
-      
+
       project.getMessageBus().syncPublisher(AntExecutionListener.TOPIC).beforeExecution(new AntBeforeExecutionEvent(buildFile, messageView));
     }
     catch (RunCanceledException e) {
@@ -174,6 +168,7 @@ public final class ExecutionHandler {
         listenerWrapper.buildFinished(AntBuildListener.ABORTED, 0);
       }
 
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           ProcessHandler handler = runBuild(indicator, messageView, buildFile, listenerWrapper, commandLine);
@@ -233,9 +228,11 @@ public final class ExecutionHandler {
 
     final OutputParser parser = OutputParser2.attachParser(project, handler, errorView, progress, buildFile);
 
+    handler.putUserData(AntRunProfileState.MESSAGE_VIEW, errorView);
     handler.addProcessListener(new ProcessAdapter() {
       private final StringBuilder myUnprocessedStdErr = new StringBuilder();
 
+      @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (outputType == ProcessOutputTypes.STDERR) {
           final String text = event.getText();
@@ -245,6 +242,7 @@ public final class ExecutionHandler {
         }
       }
 
+      @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         final long buildTime = System.currentTimeMillis() - startTime;
         checkCancelTask.cancel();
@@ -262,6 +260,7 @@ public final class ExecutionHandler {
             }
             if (!unprocessed.isEmpty()) {
               dispatcher.processOutput(new Printable() {
+                @Override
                 public void printOn(Printer printer) {
                   errorView.outputError(unprocessed, AntBuildMessageView.PRIORITY_ERR);
                 }
@@ -287,7 +286,7 @@ public final class ExecutionHandler {
     private final OSProcessHandler myProcessHandler;
     private volatile boolean myCanceled;
 
-    public CheckCancelTask(ProgressIndicator progressIndicator, OSProcessHandler process) {
+    CheckCancelTask(ProgressIndicator progressIndicator, OSProcessHandler process) {
       myProgressIndicator = progressIndicator;
       myProcessHandler = process;
     }
@@ -296,6 +295,7 @@ public final class ExecutionHandler {
       myCanceled = true;
     }
 
+    @Override
     public void run() {
       if (!myCanceled) {
         try {

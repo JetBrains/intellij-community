@@ -26,6 +26,7 @@ public class NamedScopeManager extends NamedScopesHolder {
     super(project);
   }
 
+  @NotNull
   public static NamedScopeManager getInstance(Project project) {
     return ServiceManager.getService(project, NamedScopeManager.class);
   }
@@ -44,6 +45,7 @@ public class NamedScopeManager extends NamedScopesHolder {
     return state;
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return IdeBundle.message("local.scopes.node.text");

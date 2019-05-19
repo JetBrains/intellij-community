@@ -21,7 +21,6 @@ import java.util.Set;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 2/8/12 7:21 PM
  */
 public class ExternalSystemFacadeWrapper<S extends ExternalSystemExecutionSettings> implements RemoteExternalSystemFacade<S> {
 

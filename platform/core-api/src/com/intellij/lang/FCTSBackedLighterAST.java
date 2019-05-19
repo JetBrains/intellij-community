@@ -61,7 +61,7 @@ public class FCTSBackedLighterAST extends LighterAST {
     private final int mySize;
     private final LighterASTNode[] myElements;
 
-    public LighterASTNodeList(int size, LighterASTNode[] elements) {
+    LighterASTNodeList(int size, LighterASTNode[] elements) {
       mySize = size;
       myElements = elements;
     }

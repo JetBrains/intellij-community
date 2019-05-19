@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
@@ -34,12 +35,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author anna
- * @since 29-May-2006
  */
 public abstract class MasterDetailsComponent implements Configurable, DetailsComponent.Facade, MasterDetails {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
@@ -125,7 +125,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected void reInitWholePanelIfNeeded() {
     if (!myToReInitWholePanel) return;
 
-    myWholePanel = new JPanel(new BorderLayout()) {
+    myWholePanel = new NonOpaquePanel(new BorderLayout()) {
       @Override
       public void addNotify() {
         super.addNotify();
@@ -166,7 +166,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     left.add(myMaster, BorderLayout.CENTER);
     mySplitter.setFirstComponent(left);
 
-    final JPanel right = new JPanel(new BorderLayout());
+    final JPanel right = new NonOpaquePanel(new BorderLayout());
     right.add(myDetails.getComponent(), BorderLayout.CENTER);
 
     mySplitter.setSecondComponent(right);
@@ -231,7 +231,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
   }
 
-  protected boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables) {
+  protected boolean updateMultiSelection(final List<? extends NamedConfigurable> selectedConfigurables) {
     return false;
   }
 
@@ -350,7 +350,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     if (!selected) {
       TreeUtil.selectFirstNode(myTree);
     }
-    updateSelectionFromTree();
+
+    //'updateSelectionFromTree' initializes 'details' components and it may take some time, so if the component isn't showing now
+    //  it's better to postpone calling it until 'addNotify' is called; in complex dialog like Project Structure the component may not be shown at all.
+    if (myWholePanel != null && myWholePanel.isShowing()) {
+      updateSelectionFromTree();
+    }
   }
 
   protected void loadComponentState() {
@@ -437,7 +442,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     ((DefaultTreeModel)myTree.getModel()).setRoot(myRoot);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(myTree);
     TreeUtil.installActions(myTree);
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
@@ -501,7 +505,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   private void createUIComponents() {
     myTree = new Tree() {
       @Override
-      @SuppressWarnings("NonStaticInitializer")
       public JToolTip createToolTip() {
         final JToolTip toolTip = new JToolTip() {
           {
@@ -596,7 +599,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return findNodeByCondition(root, configurable -> Comparing.equal(editableObject, configurable.getEditableObject()));
   }
 
-  protected static MyNode findNodeByCondition(final TreeNode root, final Condition<NamedConfigurable> condition) {
+  protected static MyNode findNodeByCondition(final TreeNode root, final Condition<? super NamedConfigurable> condition) {
     return TreeUtil.treeNodeTraverser(root)
       .filter(MyNode.class)
       .filter(node -> condition.value(node.getConfigurable()))
@@ -659,15 +662,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     myInitializedConfigurables.add(configurable);
   }
 
-  /**
-   * @deprecated use {@link #checkForEmptyAndDuplicatedNames(String, String, Class)} instead
-   */
-  protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
-    for (MyNode rootNode : rootNodes) {
-      checkForEmptyAndDuplicatedNames(rootNode, prefix, title, NamedConfigurable.class, false);
-    }
-  }
-
   protected final void checkForEmptyAndDuplicatedNames(String prefix, String title,
                                                        Class<? extends NamedConfigurable> configurableClass) throws ConfigurationException {
     checkForEmptyAndDuplicatedNames(myRoot, prefix, title, configurableClass, true);
@@ -717,7 +711,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     removeNodes(nodes);
   }
 
-  protected void removeNodes(final List<MyNode> nodes) {
+  protected void removeNodes(final List<? extends MyNode> nodes) {
     MyNode parentNode = null;
     int idx = -1;
     for (MyNode node : nodes) {
@@ -779,12 +773,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
     public MyDeleteAction(Condition<Object[]> availableCondition) {
       super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), PlatformIcons.DELETE_ICON);
-      registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree);
+      registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE), myTree);
       myCondition = availableCondition;
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
@@ -796,7 +790,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       removePaths(myTree.getSelectionPaths());
     }
   }
@@ -825,8 +819,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     @NotNull
     public String getDisplayName() {
       final NamedConfigurable configurable = (NamedConfigurable)getUserObject();
-      LOG.assertTrue(configurable != null, "Tree was already disposed");
-      return configurable.getDisplayName();
+      if (configurable != null) return configurable.getDisplayName();
+      LOG.debug("Tree was already disposed"); // workaround for IDEA-206547
+      return "DISPOSED";
     }
 
     public NamedConfigurable getConfigurable() {
@@ -856,7 +851,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   protected static class MyRootNode extends MyNode {
     public MyRootNode() {
       super(new NamedConfigurable(false, null) {
@@ -928,7 +922,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       JBPopupFactory popupFactory = JBPopupFactory.getInstance();
       DataContext dataContext = e.getDataContext();
       ListPopupStep step = popupFactory.createActionsStep(

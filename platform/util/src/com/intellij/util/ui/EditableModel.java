@@ -17,7 +17,6 @@ package com.intellij.util.ui;
 
 /**
  * @author Konstantin Bulenkov
- * @since 11.0
  */
 public interface EditableModel extends ItemRemovable {
   void addRow();

@@ -23,17 +23,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.UsageInfoToUsageConverter;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class PsiElement2UsageTargetComposite extends PsiElement2UsageTargetAdapter {
+class PsiElement2UsageTargetComposite extends PsiElement2UsageTargetAdapter {
   private final UsageInfoToUsageConverter.TargetElementsDescriptor myDescriptor;
-  public PsiElement2UsageTargetComposite(@NotNull PsiElement[] primaryElements,
-                                         @NotNull PsiElement[] secondaryElements,
-                                         @NotNull FindUsagesOptions options) {
+  PsiElement2UsageTargetComposite(@NotNull PsiElement[] primaryElements,
+                                  @NotNull PsiElement[] secondaryElements,
+                                  @NotNull FindUsagesOptions options) {
     super(primaryElements[0], options);
     myDescriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(primaryElements, secondaryElements);
   }

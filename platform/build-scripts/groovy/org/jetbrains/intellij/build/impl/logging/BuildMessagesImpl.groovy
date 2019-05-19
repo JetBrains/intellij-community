@@ -94,7 +94,10 @@ class BuildMessagesImpl implements BuildMessages {
 
   @Override
   void error(String message, Throwable cause) {
-    throw new BuildException(message, cause)
+    def writer = new StringWriter()
+    new PrintWriter(writer).withCloseable { cause?.printStackTrace(it) }
+    processMessage(new LogMessage(LogMessage.Kind.ERROR, "$message\n$writer"))
+    throw new BuildException(message)
   }
 
   @Override
@@ -130,10 +133,14 @@ class BuildMessagesImpl implements BuildMessages {
 
   @Override
   <V> V block(String blockName, Closure<V> body) {
+    long start = System.currentTimeMillis()
     try {
       blockNames.push(blockName)
       processMessage(new LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-      return body()
+      def result = body()
+      long elapsedTime = System.currentTimeMillis() - start
+      debug("${blockNames.join(" > ")} finished in ${elapsedTime}ms")
+      return result
     }
     catch (IntelliJBuildException e) {
       throw e

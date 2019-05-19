@@ -24,7 +24,8 @@ public class ClassGetClassInspection extends AbstractBaseJavaLocalInspectionTool
         if (!OBJECT_GET_CLASS.test(call)) return;
         // Sometimes people use xyz.getClass() for implicit NPE check. While it's a questionable code style
         // do not warn about such case
-        if (call.getParent() instanceof PsiExpressionStatement) return;
+        if (call.getParent() instanceof PsiExpressionStatement && 
+            !(call.getParent().getParent() instanceof PsiSwitchLabeledRuleStatement)) return;
         PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
         if (qualifier == null) return;
         PsiType type = qualifier.getType();
@@ -51,8 +52,7 @@ public class ClassGetClassInspection extends AbstractBaseJavaLocalInspectionTool
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;
-      CommentTracker ct = new CommentTracker();
-      ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
+      new CommentTracker().replaceAndRestoreComments(call, qualifier);
     }
   }
 

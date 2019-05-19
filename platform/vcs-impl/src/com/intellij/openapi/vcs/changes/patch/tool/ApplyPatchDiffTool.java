@@ -39,7 +39,7 @@ public class ApplyPatchDiffTool implements FrameDiffTool {
   }
 
   private static class MyApplyPatchViewer extends ApplyPatchViewer implements DiffViewer {
-    public MyApplyPatchViewer(@NotNull DiffContext context, @NotNull ApplyPatchDiffRequest request) {
+    MyApplyPatchViewer(@NotNull DiffContext context, @NotNull ApplyPatchDiffRequest request) {
       super(context, request);
     }
 

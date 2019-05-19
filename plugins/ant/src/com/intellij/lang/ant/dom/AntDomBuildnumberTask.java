@@ -34,16 +34,19 @@ public abstract class AntDomBuildnumberTask extends AntDomElement implements Pro
   @Attribute("file")
   @Convert(value = AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
-  
-  @NotNull 
+
+  @Override
+  @NotNull
   public Iterator<String> getNamesIterator() {
     return Collections.singletonList(PROPERTY_NAME).iterator();
   }
 
+  @Override
   public String getPropertyValue(String propertyName) {
     return PROPERTY_NAME.equals(propertyName)? "" : null;
   }
 
+  @Override
   public PsiElement getNavigationElement(String propertyName) {
     return PROPERTY_NAME.equals(propertyName)? getXmlElement() : null;
   }

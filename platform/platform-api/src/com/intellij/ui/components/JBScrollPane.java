@@ -9,6 +9,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.lang.reflect.Field;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
@@ -37,22 +39,24 @@ public class JBScrollPane extends JScrollPane {
    * If a client property is set to {@code true} the bar's brightness
    * will be modified according to the view's background.
    *
-   * @see UIUtil#putClientProperty
+   * @see UIUtil#putClientProperty(JComponent, Key, Object)
    * @see UIUtil#isUnderDarcula
    */
+  @Deprecated
   public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
 
-  @Deprecated
-  public static final RegionPainter<Float> THUMB_PAINTER = ScrollPainter.EditorThumb.DEFAULT;
-
-  @Deprecated
-  public static final RegionPainter<Float> THUMB_DARK_PAINTER = ScrollPainter.EditorThumb.DARCULA;
-
-  @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_PAINTER = ScrollPainter.EditorThumb.Mac.DEFAULT;
-
-  @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = ScrollPainter.EditorThumb.Mac.DARCULA;
+  /**
+   * Supposed to be used as a client property key for scrollbar and indicates if this scrollbar should be ignored
+   * when insets for {@code JScrollPane's} content are being calculated.
+   * <p>
+   * Without this key scrollbar's width is included to content insets when content is {@code JList}. As a result list items cannot intersect with
+   * scrollbar
+   * <p>
+   * Please use as a marker for scrollbars, that should be transparent and shown over content
+   *
+   * @see UIUtil#putClientProperty(JComponent, Key, Object)
+   */
+  public static final Key<Boolean> IGNORE_SCROLLBAR_IN_INSETS = Key.create("IGNORE_SCROLLBAR_IN_INSETS");
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
@@ -174,6 +178,10 @@ public class JBScrollPane extends JScrollPane {
                     }
                   }
                 }
+                if (!event.isConsumed()) {
+                  // try to process a mouse wheel event by outer scroll pane
+                  MouseEventAdapter.redispatch(event, UIUtil.getParentOfType(JScrollPane.class, pane.getParent()));
+                }
               }
             }
           };
@@ -235,7 +243,7 @@ public class JBScrollPane extends JScrollPane {
     return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
   }
 
-  public static boolean canBePreprocessed(MouseEvent e, JScrollBar bar) {
+  public static boolean canBePreprocessed(@NotNull MouseEvent e, @NotNull JScrollBar bar) {
     if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_PRESSED) {
       ScrollBarUI ui = bar.getUI();
       if (ui instanceof BasicScrollBarUI) {
@@ -276,10 +284,9 @@ public class JBScrollPane extends JScrollPane {
   private static class Corner extends JPanel {
     private final String myPos;
 
-    public Corner(String pos) {
+    Corner(String pos) {
       myPos = pos;
-      ScrollColorProducer.setBackground(this);
-      ScrollColorProducer.setForeground(this);
+      ScrollBarPainter.setBackground(this);
     }
 
     @Override
@@ -290,7 +297,7 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private static class ViewportBorder extends LineBorder {
-    public ViewportBorder(int thickness) {
+    ViewportBorder(int thickness) {
       super(null, thickness);
     }
 
@@ -700,9 +707,9 @@ public class JBScrollPane extends JScrollPane {
               vsbPolicy = VERTICAL_SCROLLBAR_ALWAYS;
             }
           }
-          if (!viewTracksViewportWidth && vsbPolicy == HORIZONTAL_SCROLLBAR_AS_NEEDED) {
+          if (!viewTracksViewportWidth && hsbPolicy == HORIZONTAL_SCROLLBAR_AS_NEEDED) {
             if (viewPreferredSize.width > viewportExtentSize.width || 0 != view.getX()) {
-              vsbPolicy = HORIZONTAL_SCROLLBAR_ALWAYS;
+              hsbPolicy = HORIZONTAL_SCROLLBAR_ALWAYS;
             }
           }
         }
@@ -787,4 +794,10 @@ public class JBScrollPane extends JScrollPane {
   private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
     ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
     ~InputEvent.BUTTON1_MASK & ~InputEvent.BUTTON1_DOWN_MASK; // for selection
+
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static RegionPainter<Float> getThumbPainter(@NotNull Supplier<? extends Component> supplier) {
+    return new ScrollBarPainter.Thumb(supplier, SystemInfo.isMac);
+  }
 }

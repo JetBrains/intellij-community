@@ -37,7 +37,7 @@ public enum FileEditorPolicy {
   HIDE_DEFAULT_EDITOR,
 
   /**
-   * Place created editor after the default EDEA'a editor (if any)
+   * Place created editor after the default IDEA'a editor (if any)
    *
    *
    */

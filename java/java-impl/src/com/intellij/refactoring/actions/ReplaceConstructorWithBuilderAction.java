@@ -16,32 +16,45 @@
 
 package com.intellij.refactoring.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceConstructorWithBuilderAction extends BaseRefactoringAction{
+public class ReplaceConstructorWithBuilderAction extends BaseJavaRefactoringAction{
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return true;
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file,
+                                                        @NotNull DataContext context, @NotNull String place) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement elementAt = file.findElementAt(offset);
     final PsiClass psiClass = ReplaceConstructorWithBuilderHandler.getParentNamedClass(elementAt);
-    return psiClass != null && psiClass.getConstructors().length > 0 && !psiClass.isEnum();
+    if (psiClass == null || psiClass.getConstructors().length == 0 || psiClass.isEnum()) {
+      return false;
+    }
+    if (ActionPlaces.isPopupPlace(place) || place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
+      PsiMethod method = RefactoringActionContextUtil.getJavaMethodHeader(elementAt);
+      return method != null && method.isConstructor();
+    }
+    return true;
   }
 
+  @Override
   protected boolean isEnabledOnElements(@NotNull final PsiElement[] elements) {
     return false;
   }
 
+  @Override
   protected RefactoringActionHandler getHandler(@NotNull final DataContext dataContext) {
     return new ReplaceConstructorWithBuilderHandler();
   }

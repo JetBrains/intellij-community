@@ -16,7 +16,6 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.JavaDebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.idea.ActionsBundle;
@@ -38,7 +37,7 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
   private static int ourLastSelectedTabIndex = 0;
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     perform(null, "", e);
   }
 
@@ -104,8 +103,8 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_VIEWS));
-    e.getPresentation().setEnabledAndVisible(DebuggerUtilsEx.isInJavaSession(e));
+    e.getPresentation().setEnabledAndVisible(DebuggerAction.isInJavaSession(e));
   }
 }

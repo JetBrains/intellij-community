@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.declaration;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -25,7 +11,6 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -137,7 +122,7 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
 
           GrTypeArgumentList argList;
           if (existingList == null) {
-            GrCodeReferenceElement codeRef = elementFactory.createCodeReferenceElementFromText("A<T>");
+            GrCodeReferenceElement codeRef = elementFactory.createCodeReference("A<T>");
             argList = ((GrTypeArgumentList)ref.add(codeRef.getTypeArgumentList()));
             argList.getTypeArgumentElements()[0].delete();
           }
@@ -171,7 +156,7 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
           editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
           CreateFromUsageBaseFix.startTemplate(editor, template, project, new TemplateEditingAdapter() {
             @Override
-            public void templateFinished(Template template, boolean brokenOff) {
+            public void templateFinished(@NotNull Template template, boolean brokenOff) {
               chooseAndImplement(psiClass, project,PsiTreeUtil.getParentOfType(containingFile.findElementAt(startClassOffset.getStartOffset()), GrTypeDefinition.class),editor);
             }
           }, getTitle(psiClass));

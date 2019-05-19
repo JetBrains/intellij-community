@@ -19,6 +19,7 @@ public class AlphaNumericTypeCommand extends TypeCommand {
     super(text, line, true);
   }
 
+  @Override
   public Promise<Object> _execute(PlaybackContext context) {
     return type(context, getText());
   }

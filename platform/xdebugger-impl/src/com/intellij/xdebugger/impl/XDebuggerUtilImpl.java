@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,6 +30,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,6 +43,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.*;
@@ -85,6 +88,7 @@ import static org.jetbrains.concurrency.Promises.resolvedPromise;
  * @author nik
  */
 public class XDebuggerUtilImpl extends XDebuggerUtil {
+  private static final Ref<Boolean> SHOW_BREAKPOINT_AD = new Ref<>(true);
   private XLineBreakpointType<?>[] myLineBreakpointTypes;
   private Map<Class<? extends XBreakpointType>, XBreakpointType> myBreakpointTypeByClass;
 
@@ -153,7 +157,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   public static Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>
   getLineBreakpointVariants(@NotNull final Project project,
-                            @NotNull List<XLineBreakpointType> types,
+                            @NotNull List<? extends XLineBreakpointType> types,
                             @NotNull final XSourcePosition position) {
     List<Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>> promises = new SmartList<>();
     for (XLineBreakpointType type : types) {
@@ -183,7 +187,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @NotNull
   public static Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
-                                                                       @NotNull List<XLineBreakpointType> types,
+                                                                       @NotNull List<? extends XLineBreakpointType> types,
                                                                        @NotNull final XSourcePosition position,
                                                                        final boolean temporary,
                                                                        @Nullable final Editor editor,
@@ -259,7 +263,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             for (XLineBreakpointType.XLineBreakpointVariant variant : variants) {
               TextRange range = variant.getHighlightRange();
               if (range != null && range.contains(caretOffset)) {
-                //noinspection ConstantConditions
                 if (defaultVariant == null || defaultVariant.getHighlightRange().getLength() > range.getLength()) {
                   defaultVariant = variant;
                 }
@@ -268,7 +271,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             final int defaultIndex = defaultVariant != null ? variants.indexOf(defaultVariant) : 0;
 
             final MySelectionListener selectionListener = new MySelectionListener();
-            ListPopupImpl popup = new ListPopupImpl(
+            BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant> step =
               new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>("Set Breakpoint", variants) {
                 @NotNull
                 @Override
@@ -299,15 +302,15 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                 public int getDefaultOptionIndex() {
                   return defaultIndex;
                 }
-              }) {
+              };
+            ListPopupImpl popup = new ListPopupImpl(project, step) {
               @Override
               protected void afterShow() {
                 super.afterShow();
                 selectionListener.initialSet(getList().getSelectedValue());
               }
             };
-            DebuggerUIUtil.registerExtraHandleShortcuts(popup, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
-            popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT));
+            DebuggerUIUtil.registerExtraHandleShortcuts(popup, SHOW_BREAKPOINT_AD, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
 
             popup.addListSelectionListener(selectionListener);
             popup.show(relativePoint);
@@ -327,7 +330,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   private static <P extends XBreakpointProperties> void insertBreakpoint(P properties,
-                                                                         AsyncPromise<XLineBreakpoint> res,
+                                                                         AsyncPromise<? super XLineBreakpoint> res,
                                                                          XBreakpointManager breakpointManager,
                                                                          VirtualFile file,
                                                                          int line,
@@ -344,11 +347,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       StringBuilder message = new StringBuilder(XDebuggerBundle.message("message.confirm.breakpoint.removal.message"));
       if (!isEmptyExpression(breakpoint.getConditionExpression())) {
         message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.condition",
-                                               StringUtil.escapeXml(breakpoint.getConditionExpression().getExpression())));
+                                               StringUtil.escapeXmlEntities(breakpoint.getConditionExpression().getExpression())));
       }
       if (!isEmptyExpression(breakpoint.getLogExpressionObject())) {
         message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.log",
-                                               StringUtil.escapeXml(breakpoint.getLogExpressionObject().getExpression())));
+                                               StringUtil.escapeXmlEntities(breakpoint.getLogExpressionObject().getExpression())));
       }
       if (Messages.showOkCancelDialog(message.toString(),
                                       XDebuggerBundle.message("message.confirm.breakpoint.removal.title"),
@@ -491,7 +494,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor) {
+  public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<? super PsiElement> processor) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) {
       return;
@@ -585,7 +588,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Nullable
   public static Editor createEditor(@NotNull OpenFileDescriptor descriptor) {
-    return descriptor.canNavigate() ? FileEditorManager.getInstance(descriptor.getProject()).openTextEditor(descriptor, false) : null;
+    if (descriptor.canNavigate()) {
+      FileEditorManager fileEditorManager = FileEditorManager.getInstance(descriptor.getProject());
+      Editor editor = fileEditorManager.getSelectedTextEditor();
+      return fileEditorManager.openTextEditor(descriptor, editor != null && IJSwingUtilities.hasFocus(editor.getContentComponent()));
+    }
+    return null;
   }
 
   public static void rebuildAllSessionsViews(@Nullable Project project) {
@@ -612,11 +620,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return expression == null || StringUtil.isEmptyOrSpaces(expression.getExpression());
   }
 
+  @Override
   public void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session) {
     XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
     if (activeExecutionStack != null) {
       activeExecutionStack.computeStackFrames(0, new XStackFrameContainerEx() {
-        List<XStackFrame> myFrames = new ArrayList<>();
+        final List<XStackFrame> myFrames = new ArrayList<>();
 
         @Override
         public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {
@@ -663,5 +672,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         }
       });
     }
+  }
+
+  public static Icon getVerifiedIcon(@NotNull XBreakpoint breakpoint) {
+    return breakpoint.getSuspendPolicy() == SuspendPolicy.NONE
+           ? AllIcons.Debugger.Db_verified_no_suspend_breakpoint
+           : AllIcons.Debugger.Db_verified_breakpoint;
   }
 }

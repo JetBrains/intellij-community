@@ -28,10 +28,6 @@ public class ReplaceInefficientStreamCountInspectionTest extends LightQuickFixPa
     return new LocalInspectionTool[]{new ReplaceInefficientStreamCountInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/inefficientStreamCount";

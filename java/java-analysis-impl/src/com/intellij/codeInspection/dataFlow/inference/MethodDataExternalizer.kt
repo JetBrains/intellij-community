@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInspection.dataFlow.ContractReturnValue
-import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.codeInspection.dataFlow.StandardMethodContract
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint
 import com.intellij.util.io.DataExternalizer
@@ -70,9 +70,9 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
   }
   private fun readNullity(input: DataInput): MethodReturnInferenceResult = when (input.readByte().toInt()) {
     0 -> MethodReturnInferenceResult.Predefined(
-      Nullness.values()[input.readByte().toInt()])
+      Nullability.values()[input.readByte().toInt()])
     else -> MethodReturnInferenceResult.FromDelegate(
-      Nullness.values()[input.readByte().toInt()],
+      Nullability.values()[input.readByte().toInt()],
       readRanges(input))
   }
 

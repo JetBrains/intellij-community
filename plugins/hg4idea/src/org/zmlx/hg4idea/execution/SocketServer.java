@@ -42,12 +42,8 @@ public class SocketServer {
       try {
         boolean _continue = true;
         while (_continue) {
-          Socket socket = myServerSocket.accept();
-          try {
+          try (Socket socket = myServerSocket.accept()) {
             _continue = myProtocol.handleConnection(socket);
-          }
-          finally {
-            socket.close();
           }
         }
       }

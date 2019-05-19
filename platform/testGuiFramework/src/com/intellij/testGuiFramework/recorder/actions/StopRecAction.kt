@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.testGuiFramework.recorder.GlobalActionRecorder
+import com.intellij.testGuiFramework.recorder.GuiRecorderListener
 import com.intellij.testGuiFramework.recorder.GuiRecorderManager
 import com.intellij.testGuiFramework.recorder.ui.Notifier
 
@@ -27,11 +28,13 @@ import com.intellij.testGuiFramework.recorder.ui.Notifier
  */
 class StopRecAction : AnAction(null, "Stop Recording, Compiling, Running and Clear Buffer", AllIcons.Actions.Suspend) {
 
-  override fun actionPerformed(p0: AnActionEvent?) {
+  override fun actionPerformed(p0: AnActionEvent) {
+    GuiRecorderListener.notifyBeforeRecordingFinish()
     GlobalActionRecorder.deactivate()
     GuiRecorderManager.cancelCurrentTask()
     Notifier.updateStatus("Stopped")
     GuiRecorderManager.placeCaretToEnd()
+    GuiRecorderListener.notifyRecordingFinished()
   }
 
 }

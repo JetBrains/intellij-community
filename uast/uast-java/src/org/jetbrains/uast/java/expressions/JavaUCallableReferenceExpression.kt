@@ -15,27 +15,34 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethodReferenceExpression
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import org.jetbrains.uast.UCallableReferenceExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMultiResolvable
 
 class JavaUCallableReferenceExpression(
-  override val psi: PsiMethodReferenceExpression,
+  override val sourcePsi: PsiMethodReferenceExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallableReferenceExpression {
-  override val qualifierExpression: UExpression? by lz { JavaConverter.convertOrNull(psi.qualifierExpression, this) }
+) : JavaAbstractUExpression(givenParent), UCallableReferenceExpression, UMultiResolvable {
+  override val qualifierExpression: UExpression? by lz { JavaConverter.convertOrNull(sourcePsi.qualifierExpression, this) }
 
   override val qualifierType: PsiType?
-    get() = psi.qualifierType?.type
+    get() = sourcePsi.qualifierType?.type
 
   override val callableName: String
-    get() = psi.referenceName.orAnonymous()
+    get() = sourcePsi.referenceName.orAnonymous()
 
-  override fun resolve(): PsiElement? = psi.resolve()
+  override fun resolve(): PsiElement? = sourcePsi.resolve()
 
-  override val resolvedName: String? = (psi.resolve() as? PsiNamedElement)?.name
+  override fun multiResolve(): Iterable<ResolveResult> = sourcePsi.multiResolve(false).asIterable()
+
+  override val resolvedName: String?
+    get() = (sourcePsi.resolve() as? PsiNamedElement)?.name
+
+  override val referenceNameElement: UElement? by lz {
+    sourcePsi.referenceNameElement?.let { JavaUSimpleNameReferenceExpression(it, callableName, this, it.reference) }
+  }
+
+
 }

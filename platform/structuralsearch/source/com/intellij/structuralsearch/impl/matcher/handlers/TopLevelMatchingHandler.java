@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -9,9 +9,6 @@ import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public final class TopLevelMatchingHandler extends MatchingHandler implements DelegatingHandler {
   private final MatchingHandler delegate;
@@ -26,12 +23,6 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
     final boolean matched = delegate.match(patternNode, matchedNode, matchContext);
 
     if (matched) {
-      List<PsiElement> matchedNodes = matchContext.getMatchedNodes();
-      if (matchedNodes == null) {
-        matchedNodes = new ArrayList<>();
-        matchContext.setMatchedNodes(matchedNodes);
-      }
-
       PsiElement elementToAdd = matchedNode;
 
       if (patternNode instanceof PsiComment && StructuralSearchUtil.isDocCommentOwner(matchedNode)) {
@@ -41,18 +32,17 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
         assert elementToAdd instanceof PsiComment;
       }
 
-      matchedNodes.add(elementToAdd);
+      matchContext.addMatchedNode(elementToAdd);
     }
 
     if ((!matched || matchContext.getOptions().isRecursiveSearch()) &&
         matchContext.getPattern().getStrategy().continueMatching(matchedNode) &&
         matchContext.shouldRecursivelyMatch()
        ) {
-      matchContext.getMatcher().matchContext(
-        new SsrFilteringNodeIterator(
-          new SiblingNodeIterator(matchedNode.getFirstChild())
-        )
-      );
+      final PsiElement child = matchedNode.getFirstChild();
+      if (child != null) {
+        matchContext.getMatcher().matchContext(new SsrFilteringNodeIterator(new SiblingNodeIterator(child)));
+      }
     }
     return matched;
   }

@@ -24,6 +24,7 @@ import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer;
  * @author Maxim.Mossienko
  */
 public class PropertiesIdIndexer extends LexerBasedIdIndexer {
+  @Override
   public Lexer createLexer(final OccurrenceConsumer consumer) {
     return createIndexingLexer(consumer);
   }

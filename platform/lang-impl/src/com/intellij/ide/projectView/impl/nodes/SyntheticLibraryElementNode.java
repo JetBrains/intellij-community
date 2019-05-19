@@ -56,7 +56,7 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     presentation.updateFrom(myItemPresentation);
   }
 

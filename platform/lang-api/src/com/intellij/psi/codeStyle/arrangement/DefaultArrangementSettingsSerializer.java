@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,9 +21,8 @@ import java.util.Set;
 /**
  * {@link ArrangementSettingsSerializer} which knows how to handle {@link StdArrangementSettings built-in arrangement tokens}
  * and {@link Mixin can be used as a base for custom serializer implementation}.
- * 
+ *
  * @author Denis Zhdanov
- * @since 7/18/12 10:37 AM
  */
 public class DefaultArrangementSettingsSerializer implements ArrangementSettingsSerializer {
   private static final Logger LOG = Logger.getInstance(DefaultArrangementSettingsSerializer.class);
@@ -129,7 +114,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
     final Set<StdArrangementRuleAliasToken> tokensDefinition = deserializeTokensDefinition(element, myDefaultSettings);
     final List<ArrangementGroupingRule> groupingRules = deserializeGropings(element, myDefaultSettings);
     final Element rulesElement = element.getChild(RULES_ELEMENT_NAME);
-    final List<ArrangementSectionRule> sectionRules = ContainerUtil.newArrayList();
+    final List<ArrangementSectionRule> sectionRules = new ArrayList<>();
     if(rulesElement == null) {
       sectionRules.addAll(myDefaultSettings.getSections());
     }
@@ -212,7 +197,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
 
   @NotNull
   private List<ArrangementSectionRule> deserializeSectionRules(@NotNull Element rulesElement,
-                                                               @Nullable Set<StdArrangementRuleAliasToken> tokens) {
+                                                               @Nullable Set<? extends StdArrangementRuleAliasToken> tokens) {
     final List<ArrangementSectionRule> sectionRules = new ArrayList<>();
     for (Object o : rulesElement.getChildren(SECTION_ELEMENT_NAME)) {
       final Element sectionElement = (Element)o;
@@ -227,7 +212,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
   }
 
   @NotNull
-  private List<StdArrangementMatchRule> deserializeRules(@NotNull Element element, @Nullable final Set<StdArrangementRuleAliasToken> aliases) {
+  private List<StdArrangementMatchRule> deserializeRules(@NotNull Element element, @Nullable final Set<? extends StdArrangementRuleAliasToken> aliases) {
     if (aliases != null && myMixin instanceof MutableMixin) {
       ((MutableMixin)myMixin).setMyRuleAliases(aliases);
     }
@@ -278,7 +263,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
     if (matcherElement == null) {
       return null;
     }
-    
+
     Element result = new Element(RULE_ELEMENT_NAME);
     result.addContent(new Element(MATCHER_ELEMENT_NAME).addContent(matcherElement));
     if (rule.getOrderType() != ArrangementMatchRule.DEFAULT_ORDER_TYPE) {
@@ -312,13 +297,13 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
 
   public static class MutableMixin implements Mixin {
     private final Mixin myDelegate;
-    private Set<StdArrangementRuleAliasToken> myRuleAliases;
+    private Set<? extends StdArrangementRuleAliasToken> myRuleAliases;
 
     public MutableMixin(Mixin delegate) {
       myDelegate = delegate;
     }
 
-    public void setMyRuleAliases(Set<StdArrangementRuleAliasToken> aliases) {
+    public void setMyRuleAliases(Set<? extends StdArrangementRuleAliasToken> aliases) {
       myRuleAliases = aliases;
     }
 
@@ -338,7 +323,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
       return null;
     }
   }
-  
+
   public interface Mixin {
 
     Mixin NULL = new Mixin() {

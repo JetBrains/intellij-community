@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.branch.GitRebaseParams;
@@ -40,7 +41,7 @@ public interface Git {
   }
 
   /**
-   * A generic method to run a Git command, when existing methods like {@link #fetch(GitRepository, String, String, List, String...)}
+   * A generic method to run a Git command, when existing methods like {@link #fetch(GitRepository, GitRemote, List, String...)}
    * are not sufficient.
    *
    * @param handlerConstructor this is needed, since the operation may need to repeat (e.g. in case of authentication failure).
@@ -69,6 +70,12 @@ public interface Git {
 
   @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<FilePath> paths) throws VcsException;
+
+  @NotNull
+  Set<VirtualFile> ignoredFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths) throws VcsException;
 
   @NotNull
   Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
@@ -108,6 +115,10 @@ public interface Git {
   @NotNull
   GitCommandResult createNewTag(@NotNull GitRepository repository, @NotNull String tagName,
                                 @Nullable GitLineHandlerListener listener, @NotNull String reference);
+
+  @NotNull
+  GitCommandResult deleteTag(@NotNull GitRepository repository, @NotNull String tagName,
+                             @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
   GitCommandResult branchDelete(@NotNull GitRepository repository, @NotNull String branchName, boolean force,
@@ -151,8 +162,19 @@ public interface Git {
   @NotNull
   GitCommandResult show(@NotNull GitRepository repository, @NotNull String... params);
 
+  /**
+   * @deprecated Use {@link #cherryPick(GitRepository, String, boolean, boolean, GitLineHandlerListener...)}
+   */
+  @Deprecated
   @NotNull
   GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
+                              @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  GitCommandResult cherryPick(@NotNull GitRepository repository,
+                              @NotNull String hash,
+                              boolean autoCommit,
+                              boolean addCherryPickedFromSuffix,
                               @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
@@ -196,25 +218,35 @@ public interface Git {
                             String... additionalParameters);
 
   @NotNull
+  GitCommandResult lsRemoteRefs(@NotNull Project project,
+                                @NotNull VirtualFile workingDir,
+                                @NotNull GitRemote remote,
+                                @NotNull List<String> refs,
+                                String... additionalParameters);
+
+  @NotNull
   GitCommandResult remotePrune(@NotNull GitRepository repository, @NotNull GitRemote remote);
 
   @NotNull
-  GitCommandResult rebase(@NotNull GitRepository repository,
-                          @NotNull GitRebaseParams parameters,
-                          @NotNull GitLineHandlerListener... listeners);
+  GitRebaseCommandResult rebase(@NotNull GitRepository repository,
+                                @NotNull GitRebaseParams parameters,
+                                @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult rebaseAbort(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+  GitRebaseCommandResult rebaseAbort(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult rebaseContinue(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+  GitRebaseCommandResult rebaseContinue(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult rebaseSkip(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+  GitRebaseCommandResult rebaseSkip(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
   GitCommandResult revert(@NotNull GitRepository repository,
                           @NotNull String commit,
                           boolean autoCommit,
                           @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object);
 }

@@ -41,7 +41,7 @@ import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
 
 /**
  * Validates the given external executable. If it is not valid, shows notification to fix it.
- * Notification group is registered as a {@link STICKY_BALLOON} by default.
+ * Notification group is registered as a {@link NotificationDisplayType#STICKY_BALLOON} by default.
  *
  * @author Kirill Likhodedov
  */

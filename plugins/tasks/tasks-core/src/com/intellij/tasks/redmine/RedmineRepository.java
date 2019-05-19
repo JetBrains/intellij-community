@@ -10,7 +10,6 @@ import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.redmine.model.RedmineIssue;
 import com.intellij.tasks.redmine.model.RedmineProject;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -44,24 +43,26 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
   private static final Logger LOG = Logger.getInstance(RedmineRepository.class);
   
-  public static final RedmineProject UNSPECIFIED_PROJECT = new RedmineProject() {
-    @NotNull
-    @Override
-    public String getName() {
-      return "-- from all projects --";
-    }
+  public static final RedmineProject UNSPECIFIED_PROJECT = createUnspecifiedProject();
 
-    @Nullable
-    @Override
-    public String getIdentifier() {
-      return getName();
-    }
+  @NotNull
+  private static RedmineProject createUnspecifiedProject() {
+    final RedmineProject unspecified = new RedmineProject() {
+      @NotNull
+      @Override
+      public String getName() {
+        return "-- from all projects --";
+      }
 
-    @Override
-    public int getId() {
-      return -1;
-    }
-  };
+      @NotNull
+      @Override
+      public String getIdentifier() {
+        return getName();
+      }
+    };
+    unspecified.setId(-1);
+    return unspecified;
+  }
 
   private String myAPIKey = "";
   private RedmineProject myCurrentProject;
@@ -157,7 +158,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
         result = ContainerUtil.append(result, found);
       }
     }
-    return ArrayUtil.toObjectArray(result, Task.class);
+    return result.toArray(Task.EMPTY_ARRAY);
   }
 
   public List<RedmineIssue> fetchIssues(String query, int offset, int limit, boolean withClosed) throws Exception {

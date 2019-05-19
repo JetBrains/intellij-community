@@ -49,11 +49,13 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
     return myPrompt;
   }
 
+  @NotNull
   @Override
   public String getNotInMessage() {
     return InspectionsBundle.message("nothing.found");
   }
 
+  @NotNull
   @Override
   public String getNotFoundMessage() {
     return InspectionsBundle.message("nothing.found");
@@ -64,10 +66,6 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
     return null;
   }
 
-  @Override
-  public char getCheckBoxMnemonic() {
-    return 0;
-  }
 
   @Override
   public boolean loadInitialCheckBoxState() {
@@ -86,7 +84,7 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
 
   @NotNull
   @Override
-  public Object[] getElementsByName(String name, boolean checkBoxState, String pattern) {
+  public Object[] getElementsByName(@NotNull String name, boolean checkBoxState, @NotNull String pattern) {
     return getElementsByName(name, pattern);
   }
 
@@ -97,7 +95,7 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
   }
 
   @Override
-  public String getFullName(Object element) {
+  public String getFullName(@NotNull Object element) {
     return getElementName(element);
   }
 

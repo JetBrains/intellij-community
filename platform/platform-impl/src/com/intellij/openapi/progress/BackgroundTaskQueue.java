@@ -44,7 +44,7 @@ public class BackgroundTaskQueue {
   @NotNull protected final QueueProcessor<TaskData> myProcessor;
 
   @NotNull private final Object TEST_TASK_LOCK = new Object();
-  private volatile boolean myForceAsyncInTests = false;
+  private volatile boolean myForceAsyncInTests;
 
   public BackgroundTaskQueue(@Nullable Project project, @NotNull String title) {
     myTitle = title;
@@ -81,16 +81,9 @@ public class BackgroundTaskQueue {
 
 
   @TestOnly
-  public void setForceAsyncInTests(boolean value, @Nullable Disposable disposable) {
+  public void setForceAsyncInTests(boolean value, @NotNull Disposable disposable) {
     myForceAsyncInTests = value;
-    if (disposable != null) {
-      Disposer.register(disposable, new Disposable() {
-        @Override
-        public void dispose() {
-          myForceAsyncInTests = false;
-        }
-      });
-    }
+    Disposer.register(disposable, () -> myForceAsyncInTests = false);
   }
 
   private void runTaskInCurrentThread(@NotNull BackgroundableTaskData data) {
@@ -110,6 +103,7 @@ public class BackgroundTaskQueue {
     }
   }
 
+  @FunctionalInterface
   protected interface TaskData extends Consumer<Runnable> {
   }
 
@@ -118,9 +112,9 @@ public class BackgroundTaskQueue {
     @Nullable private final ModalityState myModalityState;
     @Nullable private final ProgressIndicator myIndicator;
 
-    public BackgroundableTaskData(@NotNull Task.Backgroundable task,
-                                  @Nullable ModalityState modalityState,
-                                  @Nullable ProgressIndicator indicator) {
+    BackgroundableTaskData(@NotNull Task.Backgroundable task,
+                           @Nullable ModalityState modalityState,
+                           @Nullable ProgressIndicator indicator) {
       myTask = task;
       myModalityState = modalityState;
       myIndicator = indicator;
@@ -129,6 +123,11 @@ public class BackgroundTaskQueue {
     @Override
     public void consume(@NotNull Runnable continuation) {
       Task.Backgroundable task = myTask;
+      Project taskProject = task.getProject();
+      if (taskProject != null && taskProject.isDisposed()) {
+        continuation.run();
+        return;
+      }
       ProgressIndicator indicator = myIndicator;
       if (indicator == null) {
         if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -147,8 +146,8 @@ public class BackgroundTaskQueue {
         task.setTitle(myTitle);
       }
 
-      boolean synchronous = (task.isHeadless() && !myForceAsyncInTests) ||
-                            (task.isConditionalModal() && !task.shouldStartInBackground());
+      boolean synchronous = task.isHeadless() && !myForceAsyncInTests ||
+                            task.isConditionalModal() && !task.shouldStartInBackground();
 
       ProgressManagerImpl pm = (ProgressManagerImpl)ProgressManager.getInstance();
       if (synchronous) {

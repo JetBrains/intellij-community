@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.model;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.InvertibleArrangementSettingsToken;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * Not thread-safe..
  * 
  * @author Denis Zhdanov
- * @since 8/8/12 1:17 PM
  */
 public class ArrangementAtomMatchCondition implements ArrangementMatchCondition {
 
@@ -96,7 +96,7 @@ public class ArrangementAtomMatchCondition implements ArrangementMatchCondition 
       return String.format("%s%s", (Boolean)myValue ? "" : "not " , myType.getRepresentationValue());
     }
     else {
-      return String.format("%s: %s", myType.getRepresentationValue(), myValue.toString().toLowerCase());
+      return String.format("%s: %s", myType.getRepresentationValue(), StringUtil.toLowerCase(myValue.toString()));
     }
   }
 }

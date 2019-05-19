@@ -32,7 +32,7 @@ Groovy script
     PsiElement(*.)('*.')
     PsiElement(identifier)('bar')
   PsiElement(new line)('\n\n')
-  Reference expression
+  Method reference expression
     Reference expression
       PsiElement(identifier)('foo')
     PsiElement(new line)('\n  ')

@@ -15,12 +15,15 @@
  */
 package com.jetbrains.python.sdk.flavors;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import java.util.HashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -30,14 +33,15 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
   private MacPythonSdkFlavor() {
   }
 
-  public static MacPythonSdkFlavor INSTANCE = new MacPythonSdkFlavor();
+  public static final MacPythonSdkFlavor INSTANCE = new MacPythonSdkFlavor();
   private static final String[] POSSIBLE_BINARY_NAMES = {"python", "python2", "python3"};
 
   @Override
-  public Collection<String> suggestHomePaths() {
+  public Collection<String> suggestHomePaths(@Nullable Module module) {
     Set<String> candidates = new HashSet<>();
     collectPythonInstallations("/Library/Frameworks/Python.framework/Versions", candidates);
     collectPythonInstallations("/System/Library/Frameworks/Python.framework/Versions", candidates);
+    collectPythonInstallations("/usr/local/Cellar/python", candidates);
     UnixPythonSdkFlavor.collectUnixPythons("/usr/local/bin", candidates);
     UnixPythonSdkFlavor.collectUnixPythons("/usr/bin", candidates);
     return candidates;
@@ -51,7 +55,7 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
       }
       rootVDir.refresh(true, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
-        final String dirName = dir.getName().toLowerCase();
+        final String dirName = StringUtil.toLowerCase(dir.getName());
         if (dir.isDirectory()) {
           if ("Current".equals(dirName) || dirName.startsWith("2") || dirName.startsWith("3")) {
             final VirtualFile binDir = dir.findChild("bin");

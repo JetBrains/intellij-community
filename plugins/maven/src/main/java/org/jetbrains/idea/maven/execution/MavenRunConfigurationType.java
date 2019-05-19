@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -14,6 +12,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +33,7 @@ import java.util.List;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenRunConfigurationType implements ConfigurationType {
+public final class MavenRunConfigurationType extends AbstractExternalSystemTaskConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
   private static final int MAX_NAME_LENGTH = 40;
 
@@ -46,28 +45,28 @@ public class MavenRunConfigurationType implements ConfigurationType {
    * reflection
    */
   MavenRunConfigurationType() {
+    super(MavenUtil.SYSTEM_ID);
     myFactory = new ConfigurationFactory(this) {
       @NotNull
       @Override
-      public RunConfiguration createTemplateConfiguration(Project project) {
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new MavenRunConfiguration(project, this, "");
       }
 
       @NotNull
       @Override
-      public RunConfiguration createTemplateConfiguration(Project project, RunManager runManager) {
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project, @NotNull RunManager runManager) {
         return new MavenRunConfiguration(project, this, "");
       }
 
+      @NotNull
       @Override
-      public RunConfiguration createConfiguration(String name, RunConfiguration template) {
+      public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
         MavenRunConfiguration cfg = (MavenRunConfiguration)super.createConfiguration(name, template);
 
         if (!StringUtil.isEmptyOrSpaces(cfg.getRunnerParameters().getWorkingDirPath())) return cfg;
 
         Project project = cfg.getProject();
-        if (project == null) return cfg;
-
         MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
         List<MavenProject> projects = projectsManager.getProjects();
@@ -91,6 +90,7 @@ public class MavenRunConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return RunnerBundle.message("maven.run.configuration.name");
@@ -103,12 +103,17 @@ public class MavenRunConfigurationType implements ConfigurationType {
 
   @Override
   public Icon getIcon() {
-    return MavenIcons.Phase;
+    return MavenIcons.MavenLogo;
   }
 
   @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.MavenRunConfiguration";
   }
 
   @Override
@@ -177,6 +182,11 @@ public class MavenRunConfigurationType implements ConfigurationType {
                                       @Nullable MavenGeneralSettings settings,
                                       @Nullable  MavenRunnerSettings runnerSettings,
                                       @Nullable ProgramRunner.Callback callback) {
+
+    /*if (MavenUtil.isExternalBuildSystem()){
+      new MavenExternalSystemTaskRunner(project).runMavenTask(params, settings, runnerSettings);
+      return;
+    }*/
     RunnerAndConfigurationSettings configSettings = createRunnerAndConfigurationSettings(settings,
                                                                                          runnerSettings,
                                                                                          params,
@@ -199,7 +209,7 @@ public class MavenRunConfigurationType implements ConfigurationType {
                                                                                     Project project) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
 
-    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(generateName(project, params), type.myFactory);
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createConfiguration(generateName(project, params), type.myFactory);
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
     runConfiguration.setRunnerParameters(params);
     runConfiguration.setGeneralSettings(generalSettings);

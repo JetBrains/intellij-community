@@ -38,7 +38,6 @@ import java.lang.ref.WeakReference;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/15/11 6:29 PM
  */
 public class KillRingTransferable implements Transferable {
 

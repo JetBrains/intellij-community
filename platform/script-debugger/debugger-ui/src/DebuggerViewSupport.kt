@@ -57,7 +57,7 @@ interface DebuggerViewSupport {
 }
 
 open class PromiseDebuggerEvaluator(protected val context: VariableContext) : XDebuggerEvaluator() {
-  override final fun evaluate(expression: String, callback: XDebuggerEvaluator.XEvaluationCallback, expressionPosition: XSourcePosition?) {
+  final override fun evaluate(expression: String, callback: XDebuggerEvaluator.XEvaluationCallback, expressionPosition: XSourcePosition?) {
     try {
       evaluate(expression, expressionPosition)
         .onSuccess { callback.evaluated(VariableView(VariableImpl(expression, it.value), context)) }

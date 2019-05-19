@@ -1,0 +1,5 @@
+[foo]
+hello=world
+key=val<caret>ue
+# this is a comment
+bar=bas

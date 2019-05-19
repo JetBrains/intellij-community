@@ -21,8 +21,6 @@ import com.intellij.pom.java.LanguageLevel;
 
 public class MethodReturn8Test extends LightQuickFixParameterizedTestCase {
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/methodReturn8";

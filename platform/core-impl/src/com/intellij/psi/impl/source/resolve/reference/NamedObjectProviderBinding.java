@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
@@ -48,7 +49,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
     final Map<String, List<ProviderInfo<ElementPattern>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
 
     for (final String attributeName : names) {
-      String key = caseSensitive ? attributeName : attributeName.toLowerCase();
+      String key = caseSensitive ? attributeName : StringUtil.toLowerCase(attributeName);
       List<ProviderInfo<ElementPattern>> psiReferenceProviders = map.get(key);
 
       if (psiReferenceProviders == null) {
@@ -61,12 +62,12 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
 
   @Override
   public void addAcceptableReferenceProviders(@NotNull PsiElement position,
-                                              @NotNull List<ProviderInfo<ProcessingContext>> list,
+                                              @NotNull List<? super ProviderInfo<ProcessingContext>> list,
                                               @NotNull PsiReferenceService.Hints hints) {
     String name = getName(position);
     if (name != null) {
       addMatchingProviders(position, myNamesToProvidersMap.get(name), list, hints);
-      addMatchingProviders(position, myNamesToProvidersMapInsensitive.get(name.toLowerCase()), list, hints);
+      addMatchingProviders(position, myNamesToProvidersMapInsensitive.get(StringUtil.toLowerCase(name)), list, hints);
     }
   }
 
@@ -92,8 +93,8 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   protected abstract String getName(@NotNull PsiElement position);
 
   static void addMatchingProviders(@NotNull PsiElement position,
-                                   @Nullable final List<ProviderInfo<ElementPattern>> providerList,
-                                   @NotNull Collection<ProviderInfo<ProcessingContext>> output,
+                                   @Nullable final List<? extends ProviderInfo<ElementPattern>> providerList,
+                                   @NotNull Collection<? super ProviderInfo<ProcessingContext>> output,
                                    @NotNull PsiReferenceService.Hints hints) {
     if (providerList == null) return;
 

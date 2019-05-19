@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.update;
 
 import com.intellij.ide.UiActivity;
@@ -32,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -51,7 +38,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private volatile boolean myActive;
   private volatile boolean mySuspended;
 
-  private final TreeMap<Integer, Map<Update, Update>> myScheduledUpdates = ContainerUtil.newTreeMap();
+  private final Map<Integer, Map<Update, Update>> myScheduledUpdates = new TreeMap<>();
 
   private final Alarm myWaiterForMerge;
 
@@ -141,7 +128,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
-  protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, @Nullable Disposable parent) {
+  private static Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, @Nullable Disposable parent) {
     return parent == null ? AlarmFactory.getInstance().create(thread) : AlarmFactory.getInstance().create(thread, parent);
   }
 
@@ -347,7 +334,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     if (myTrackUiActivity) {
       startActivity();
     }
-    
+
     if (myPassThrough) {
       update.run();
       finishActivity();
@@ -401,10 +388,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   private void put(@NotNull Update update) {
-    Map<Update, Update> updates = myScheduledUpdates.get(update.getPriority());
-    if (updates == null) {
-      myScheduledUpdates.put(update.getPriority(), updates = ContainerUtil.newLinkedHashMap());
-    }
+    Map<Update, Update> updates = myScheduledUpdates.computeIfAbsent(update.getPriority(), __ -> new LinkedHashMap<>());
     final Update existing = updates.remove(update);
     if (existing != null && existing != update) {
       existing.setProcessed();
@@ -429,7 +413,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     myWaiterForMerge.cancelAllRequests();
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
+  @Override
   public String toString() {
     synchronized (myScheduledUpdates) {
       return myName + " active=" + myActive + " scheduled=" + getAllScheduledUpdates().size();
@@ -482,7 +466,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     if (myTrackUiActivity && !trackUiActivity) {
       finishActivity();
     }
-    
+
     myTrackUiActivity = trackUiActivity;
   }
 
@@ -494,8 +478,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   private void finishActivity() {
     if (!myTrackUiActivity) return;
-    
-    UiActivityMonitor.getInstance().removeActivity(getActivityId());    
+
+    UiActivityMonitor.getInstance().removeActivity(getActivityId());
   }
 
   @NotNull
@@ -503,7 +487,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     if (myUiActivity == null) {
       myUiActivity = new UiActivity.AsyncBgOperation("UpdateQueue:" + myName + hashCode());
     }
-    
+
     return myUiActivity;
   }
 

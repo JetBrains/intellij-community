@@ -21,7 +21,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.testFramework.PsiTestUtil
 
 class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
@@ -46,6 +48,26 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
     myFixture.addFileToProject("B/ClassB.java", "public class ClassB implements BaseClass{}")
     rebuildProject()
     assertEmpty(dirtyModules())
+  }
+
+  @Throws(Exception::class)
+  fun testDirtyScopeCachedResults() {
+    val file1 = myFixture.addFileToProject("A/Foo.java", "public class Foo {" +
+                                                        "static class Bar extends Foo {} " +
+                                                        "}")
+    myFixture.addFileToProject("B/Unrelated.java", "public class Unrelated {}")
+    rebuildProject()
+    val foo = (file1 as PsiClassOwner).classes[0]
+    assertOneElement(ClassInheritorsSearch.search(foo, foo.useScope, false).findAll())
+
+    try {
+      assertTrue(CompilerReferenceService.IS_ENABLED_KEY.asBoolean())
+      CompilerReferenceService.IS_ENABLED_KEY.setValue(false)
+      assertOneElement(ClassInheritorsSearch.search(foo, foo.useScope, false).findAll())
+    }
+    finally {
+      CompilerReferenceService.IS_ENABLED_KEY.setValue(true)
+    }
   }
 
   fun testLeafModuleTyping() {
@@ -76,12 +98,11 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
   private fun addTwoModules() {
     moduleA = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "A", myFixture.tempDirFixture.findOrCreateDir("A"))
     moduleB = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "B", myFixture.tempDirFixture.findOrCreateDir("B"))
-    ModuleRootModificationUtil.addDependency(moduleA!!, myModule)
-    ModuleRootModificationUtil.addDependency(moduleB!!, myModule)
+    ModuleRootModificationUtil.addDependency(moduleA!!, module)
+    ModuleRootModificationUtil.addDependency(moduleB!!, module)
   }
 
   private fun dirtyModules() =
     (CompilerReferenceService.getInstance(project) as CompilerReferenceServiceImpl)
-          .dirtyScopeHolder
           .allDirtyModulesForTest
 }

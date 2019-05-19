@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
+import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryAttachDialog
 import com.intellij.jarRepository.RepositoryLibraryType
@@ -80,7 +67,8 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
   private fun downloadLibraryAndReplace(library: LibraryEx,
                                         mavenCoordinates: JpsMavenRepositoryLibraryDescriptor) {
-    val libraryProperties = RepositoryLibraryProperties(mavenCoordinates.groupId, mavenCoordinates.artifactId, mavenCoordinates.version, mavenCoordinates.isIncludeTransitiveDependencies)
+    val libraryProperties = RepositoryLibraryProperties(mavenCoordinates.groupId, mavenCoordinates.artifactId, mavenCoordinates.version,
+                                                        mavenCoordinates.isIncludeTransitiveDependencies, mavenCoordinates.excludedDependencies)
     val hasSources = RepositoryUtils.libraryHasSources(library)
     val hasJavadoc = RepositoryUtils.libraryHasJavaDocs(library)
     LOG.debug("Resolving $mavenCoordinates")
@@ -151,7 +139,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
       return null
     }
 
-    return JpsMavenRepositoryLibraryDescriptor(dialog.coordinateText, dialog.includeTransitiveDependencies)
+    return dialog.selectedLibraryDescriptor
   }
 
   private fun replaceByLibrary(library: Library, configuration: NewLibraryConfiguration) {
@@ -254,7 +242,7 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
     if (file.isDirectory) {
       file.children.forEach { collectNestedJars(it, result) }
     }
-    else if (file.fileType == StdFileTypes.ARCHIVE) {
+    else if (file.fileType == ArchiveFileType.INSTANCE) {
       val jarRootUrl = VfsUtil.getUrlForLibraryRoot(VfsUtil.virtualToIoFile(file))
       VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarRootUrl)?.let { result.add(it) }
     }

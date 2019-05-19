@@ -34,6 +34,11 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return fieldTypeForNamedTuple
     }
 
+    val fieldTypeForTypingNTFunctionInheritor = getFieldTypeForTypingNTFunctionInheritor(referenceExpression, context)
+    if (fieldTypeForTypingNTFunctionInheritor != null) {
+      return fieldTypeForTypingNTFunctionInheritor
+    }
+
     val namedTupleTypeForCallee = getNamedTupleTypeForCallee(referenceExpression, context)
     if (namedTupleTypeForCallee != null) {
       return namedTupleTypeForCallee
@@ -88,6 +93,20 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
     private fun getFieldTypeForNamedTupleAsTarget(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
       val qualifierNTType = referenceExpression.qualifier?.let { context.getType(it) } as? PyNamedTupleType ?: return null
       return qualifierNTType.fields[referenceExpression.name]?.type
+    }
+
+    private fun getFieldTypeForTypingNTFunctionInheritor(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
+      val qualifierType = referenceExpression.qualifier?.let { context.getType(it) } as? PyWithAncestors
+      if (qualifierType == null || qualifierType is PyNamedTupleType) return null
+
+      return PyUnionType.union(
+        qualifierType
+          .getAncestorTypes(context)
+          .filterIsInstance<PyNamedTupleType>()
+          .mapNotNull { it.fields[referenceExpression.name] }
+          .map { it.type }
+          .toList()
+      )
     }
 
     private fun getNamedTupleTypeForCallee(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyNamedTupleType? {
@@ -221,10 +240,14 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       else null
     }
 
-    private fun createTypedNamedTupleReplaceType(anchor: PsiElement, fields: ImmutableNTFields, resultType: PyType): PyCallableType {
+    private fun createTypedNamedTupleReplaceType(anchor: PsiElement, fields: ImmutableNTFields, qualifierType: PyClassLikeType): PyCallableType {
       val parameters = mutableListOf<PyCallableParameter>()
+      val resultType = qualifierType.toInstance()
       val elementGenerator = PyElementGenerator.getInstance(anchor.project)
 
+      if (qualifierType.isDefinition) {
+        parameters.add(PyCallableParameterImpl.nonPsi(PyNames.CANONICAL_SELF, resultType))
+      }
       parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
 
       val ellipsis = elementGenerator.createEllipsis()
@@ -238,11 +261,15 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
 
     private fun createUntypedNamedTupleReplaceType(call: PyCallExpression,
                                                    fields: ImmutableNTFields,
-                                                   resultType: PyType,
+                                                   qualifierType: PyClassLikeType,
                                                    context: TypeEvalContext): PyCallableType {
       val parameters = mutableListOf<PyCallableParameter>()
+      val resultType = qualifierType.toInstance()
       val elementGenerator = PyElementGenerator.getInstance(call.project)
 
+      if (qualifierType.isDefinition) {
+        parameters.add(PyCallableParameterImpl.nonPsi(PyNames.CANONICAL_SELF, resultType))
+      }
       parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
 
       val ellipsis = elementGenerator.createEllipsis()

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
@@ -60,6 +46,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
@@ -97,9 +84,9 @@ public final class DomManagerImpl extends DomManager {
     final PomModel pomModel = PomManager.getModel(project);
     pomModel.addModelListener(new PomModelListener() {
       @Override
-      public void modelChanged(PomModelEvent event) {
+      public void modelChanged(@NotNull PomModelEvent event) {
         if (myChanging) return;
-        
+
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(pomModel.getModelAspect(XmlAspect.class));
         if (changeSet != null) {
           for (XmlFile file : changeSet.getChangedFiles()) {
@@ -112,7 +99,7 @@ public final class DomManagerImpl extends DomManager {
       }
 
       @Override
-      public boolean isAspectChangeInteresting(PomModelAspect aspect) {
+      public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
         return aspect instanceof XmlAspect;
       }
     }, project);
@@ -172,7 +159,7 @@ public final class DomManagerImpl extends DomManager {
       return Collections.emptyList();
     }
 
-    final List<DomEvent> events = ContainerUtil.newArrayList();
+    final List<DomEvent> events = new ArrayList<>();
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
@@ -192,7 +179,6 @@ public final class DomManagerImpl extends DomManager {
         return true;
       }
 
-      @Nullable
       @Override
       public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
         return ((NewVirtualFile)file).getCachedChildren();
@@ -221,13 +207,13 @@ public final class DomManagerImpl extends DomManager {
     return new ModelMergerImpl();
   }
 
-  final void fireEvent(DomEvent event) {
+  final void fireEvent(@NotNull DomEvent event) {
     if (mySemService.isInsideAtomicChange()) return;
     incModificationCount();
     myListeners.getMulticaster().eventOccured(event);
   }
 
-  private void fireEvents(Collection<DomEvent> events) {
+  private void fireEvents(@NotNull Collection<? extends DomEvent> events) {
     for (DomEvent event : events) {
       fireEvent(event);
     }
@@ -283,7 +269,6 @@ public final class DomManagerImpl extends DomManager {
   @Override
   @NotNull
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
-    //noinspection unchecked
     if (file.getUserData(MOCK_DESCRIPTION) == null) {
       file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<>(aClass, rootTagName, file.getViewProvider().getVirtualFile()));
       mySemService.clearCache();
@@ -296,7 +281,7 @@ public final class DomManagerImpl extends DomManager {
 
   @SuppressWarnings({"unchecked"})
   @NotNull
-  final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(final XmlFile xmlFile) {
+  final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(@NotNull XmlFile xmlFile) {
     //noinspection ConstantConditions
     return mySemService.getSemElement(FILE_DESCRIPTION_KEY, xmlFile);
   }
@@ -431,12 +416,12 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
+  public final <T extends DomElement> T createStableValue(final Factory<? extends T> provider) {
     return createStableValue(provider, t -> t.isValid());
   }
 
   @Override
-  public final <T> T createStableValue(final Factory<T> provider, final Condition<T> validator) {
+  public final <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator) {
     final T initial = provider.create();
     assert initial != null;
     final StableInvocationHandler handler = new StableInvocationHandler<>(initial, provider, validator);
@@ -450,15 +435,10 @@ public final class DomManagerImpl extends DomManager {
                                         handler);
   }
 
+  @TestOnly
   public final <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
     registerFileDescription(description);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        getFileDescriptions(description.getRootTagName()).remove(description);
-        getAcceptingOtherRootTagNameDescriptions().remove(description);
-      }
-    });
+    Disposer.register(parentDisposable, () -> myApplicationComponent.removeDescription(description));
   }
 
   @Override
@@ -476,7 +456,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public final DomElement getIdentityScope(DomElement element) {
     final DomFileDescription description = DomUtil.getFileElement(element).getFileDescription();
     return description.getIdentityScope(element);

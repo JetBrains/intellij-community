@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
  * with all necessary features applied or disabled.
  *
  * @author Denis Zhdanov
- * @since Aug 20, 2010 4:26:04 PM
  */
 public interface EditorCustomization {
 

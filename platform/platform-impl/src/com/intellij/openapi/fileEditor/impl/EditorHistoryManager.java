@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -9,6 +10,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -23,7 +25,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -136,19 +137,23 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   private void updateHistoryEntry(@Nullable final VirtualFile file,
-                                  @Nullable final FileEditor fallbackEditor,
-                                  @Nullable FileEditorProvider fallbackProvider,
+                                  @Nullable final FileEditor fileEditor,
+                                  @Nullable FileEditorProvider fileEditorProvider,
                                   final boolean changeEntryOrderOnly) {
     if (file == null) {
       return;
     }
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
-    final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = editorManager.getEditorsWithProviders(file);
-    FileEditor[] editors = editorsWithProviders.getFirst();
-    FileEditorProvider[] providers = editorsWithProviders.getSecond();
-    if (editors.length <= 0 && fallbackEditor != null) {
-      editors = new FileEditor[] {fallbackEditor};
-      providers = new FileEditorProvider[] {fallbackProvider};
+    FileEditor[] editors;
+    FileEditorProvider[] providers;
+    if (fileEditor == null || fileEditorProvider == null) {
+      final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = editorManager.getEditorsWithProviders(file);
+      editors = editorsWithProviders.getFirst();
+      providers = editorsWithProviders.getSecond();
+    }
+    else {
+      editors = new FileEditor[] {fileEditor};
+      providers = new FileEditorProvider[] {fileEditorProvider};
     }
 
     if (editors.length == 0) {
@@ -161,7 +166,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       // Size of entry list can be less than number of opened editors (some entries can be removed)
       if (file.isValid()) {
         // the file could have been deleted, so the isValid() check is essential
-        fileOpenedImpl(file, fallbackEditor, fallbackProvider);
+        fileOpenedImpl(file, fileEditor, fileEditorProvider);
       }
       return;
     }
@@ -171,7 +176,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       for (int i = editors.length - 1; i >= 0; i--) {
         final FileEditor           editor = editors   [i];
         final FileEditorProvider provider = providers [i];
-        if (provider == null) continue; // can happen if fallbackProvider is null
+        if (provider == null) continue; // can happen if fileEditorProvider is null
         if (!editor.isValid()) {
           // this can happen for example if file extension was changed
           // and this method was called during corresponding myEditor close up
@@ -185,13 +190,13 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
         }
       }
     }
-    final Pair <FileEditor, FileEditorProvider> selectedEditorWithProvider = editorManager.getSelectedEditorWithProvider(file);
+    final FileEditorWithProvider selectedEditorWithProvider = editorManager.getSelectedEditorWithProvider(file);
     if (selectedEditorWithProvider != null) {
       //LOG.assertTrue(selectedEditorWithProvider != null);
-      entry.setSelectedProvider(selectedEditorWithProvider.getSecond());
+      entry.setSelectedProvider(selectedEditorWithProvider.getProvider());
       LOG.assertTrue(entry.getSelectedProvider() != null);
 
-      if(changeEntryOrderOnly){
+      if (changeEntryOrderOnly) {
         moveOnTop(entry);
       }
     }
@@ -210,7 +215,10 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @TestOnly
+  /**
+   * For internal or test-only usage.
+   */
+  @VisibleForTesting
   public synchronized void removeAllFiles() {
     for (HistoryEntry entry : myEntriesList) {
       entry.destroy();
@@ -300,7 +308,9 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
   @Override
   public synchronized void loadState(@NotNull Element state) {
-    myEntriesList.clear();
+    // each HistoryEntry contains myDisposable that must be disposed to dispose corresponding virtual file pointer
+    removeAllFiles();
+
     // backward compatibility - previously entry maybe duplicated
     Map<String, Element> fileToElement = new LinkedHashMap<>();
     for (Element e : state.getChildren(HistoryEntry.TAG)) {
@@ -343,12 +353,9 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
   @Override
   public synchronized void dispose() {
-    for (HistoryEntry entry : myEntriesList) {
-      entry.destroy();
-    }
-    myEntriesList.clear();
+    removeAllFiles();
   }
-  
+
   /**
    * Updates history
    */

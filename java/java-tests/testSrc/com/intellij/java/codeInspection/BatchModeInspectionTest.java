@@ -12,18 +12,17 @@ import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class BatchModeInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testEnsureReferencesAreRemoved() {
     PsiClass aClass = myFixture.addClass("class Foo {public void bar(int i){}}");
     Project project = myFixture.getProject();
-    RefManagerImpl refManager = new RefManagerImpl(project, new AnalysisScope(aClass.getContainingFile()), InspectionManager.getInstance(
-      project).createNewGlobalContext(false));
+    RefManagerImpl refManager = new RefManagerImpl(project, new AnalysisScope(aClass.getContainingFile()), InspectionManager.getInstance(project).createNewGlobalContext());
     refManager.findAllDeclarations();
     List<RefElement> sortedElements = refManager.getSortedElements();
 
@@ -43,11 +42,12 @@ public class BatchModeInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.addFileToProject("Bar.groovy", "class Bar { void m() { new Foo(); }}");
     Project project = myFixture.getProject();
     RefManagerImpl refManager =
-      new RefManagerImpl(project, new AnalysisScope(project), InspectionManager.getInstance(project).createNewGlobalContext(false));
+      new RefManagerImpl(project, new AnalysisScope(project), InspectionManager.getInstance(project).createNewGlobalContext());
     refManager.findAllDeclarations();
 
     RefElement refClass = refManager.getReference(aClass);
-    Collection<RefElement> fileReferences = refClass.getInReferences().stream().filter(x -> x instanceof RefFile).collect(Collectors.toList());
+    Collection<RefElement> fileReferences =
+      ContainerUtil.filter(refClass.getInReferences(), x -> x instanceof RefFile);
     RefElement referent = assertOneElement(fileReferences);
     RefFile groovyFile = assertInstanceOf(referent, RefFile.class);
     assertEquals("Bar.groovy", groovyFile.getName());

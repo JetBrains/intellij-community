@@ -4,24 +4,26 @@ package com.intellij.ide.actions
 import com.intellij.CommonBundle
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
 import com.intellij.util.LineSeparator
 import java.io.File
@@ -45,10 +47,9 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
     if (project != null) {
       if (!file.exists()) {
         val confirmation = IdeBundle.message("edit.custom.settings.confirm", FileUtil.getLocationRelativeToUserHome(file.path))
-        val title = e.presentation.text!!
-        val ok = IdeBundle.message("button.create")
-        val cancel = IdeBundle.message("button.cancel")
-        val result = Messages.showOkCancelDialog(project, confirmation, title, ok, cancel, Messages.getQuestionIcon())
+        val result = showOkCancelDialog(title = e.presentation.text!!, message = confirmation,
+                                        okText = IdeBundle.message("button.create"), cancelText = IdeBundle.message("button.cancel"),
+                                        icon = Messages.getQuestionIcon(), project = project)
         if (result == Messages.CANCEL) return
 
         try {
@@ -65,7 +66,10 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
       val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
       if (vFile != null) {
         vFile.refresh(false, false)
-        OpenFileDescriptor(project, vFile, vFile.length.toInt()).navigate(true)
+        val psiFile = PsiManager.getInstance(project).findFile(vFile)
+        if (psiFile != null) {
+          PsiNavigationSupport.getInstance().createNavigatable(project, vFile, psiFile.textLength).navigate(true)
+        }
       }
     }
     else if (frame != null) {

@@ -13,11 +13,13 @@ public class WhitespacesBinders {
   private WhitespacesBinders() { }
 
   public static final WhitespacesAndCommentsBinder DEFAULT_LEFT_BINDER = new WhitespacesAndCommentsBinder() {
+    @Override
     public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
       return tokens.size();
     }
   };
   public static final WhitespacesAndCommentsBinder DEFAULT_RIGHT_BINDER = new WhitespacesAndCommentsBinder() {
+    @Override
     public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
       return 0;
     }

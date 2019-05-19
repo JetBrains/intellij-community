@@ -16,26 +16,53 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author Dmitry Avdeev
  */
 public class NewActionGroup extends ActionGroup {
+  private static final String PROJECT_OR_MODULE_GROUP_ID = "NewProjectOrModuleGroup";
 
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     AnAction[] actions = ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW)).getChildren(e);
     if (e == null || ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
-      AnAction newGroup = ActionManager.getInstance().getAction("NewProjectOrModuleGroup");
-      AnAction[] newProjectActions = newGroup == null ? EMPTY_ARRAY : ((ActionGroup)newGroup).getChildren(e);
-      return ArrayUtil.mergeArrays(newProjectActions, actions);
+      AnAction newGroup = ActionManager.getInstance().getAction(PROJECT_OR_MODULE_GROUP_ID);
+      if (newGroup != null) {
+        AnAction[] newProjectActions = ((ActionGroup)newGroup).getChildren(e);
+        if (newProjectActions.length > 0) {
+          List<AnAction> mergedActions = new ArrayList<>(newProjectActions.length + 1 + actions.length);
+          Collections.addAll(mergedActions, newProjectActions);
+          mergedActions.add(Separator.getInstance());
+          Collections.addAll(mergedActions, actions);
+          return mergedActions.toArray(AnAction.EMPTY_ARRAY);
+        }
+      }
     }
-    else {
-      return actions;
+    return actions;
+  }
+
+  public static boolean isActionInNewPopupMenu(@NotNull AnAction action) {
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionGroup fileGroup = (ActionGroup)actionManager.getAction(IdeActions.GROUP_FILE);
+    if (!ActionUtil.anyActionFromGroupMatches(fileGroup, false, child -> child instanceof NewActionGroup)) return false;
+
+    AnAction newProjectOrModuleGroup = ActionManager.getInstance().getAction(PROJECT_OR_MODULE_GROUP_ID);
+    if (newProjectOrModuleGroup instanceof ActionGroup
+        && ActionUtil.anyActionFromGroupMatches((ActionGroup)newProjectOrModuleGroup, false,Predicate.isEqual(action))) {
+      return true;
     }
+
+    ActionGroup newGroup = (ActionGroup)actionManager.getAction(IdeActions.GROUP_NEW);
+    return ActionUtil.anyActionFromGroupMatches(newGroup, false, Predicate.isEqual(action));
   }
 }

@@ -29,7 +29,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 public class PsiConcatenationUtil {
 
   public static void buildFormatString(PsiExpression expression, StringBuilder formatString,
-                                       List<PsiExpression> formatParameters, boolean printfFormat) {
+                                       List<? super PsiExpression> formatParameters, boolean printfFormat) {
     if (expression instanceof PsiLiteralExpression) {
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression) expression;
       final String text = String.valueOf(literalExpression.getValue());
@@ -86,7 +86,7 @@ public class PsiConcatenationUtil {
 
   private static void addFormatParameter(@NotNull PsiExpression expression,
                                          StringBuilder formatString,
-                                         List<PsiExpression> formatParameters, boolean printfFormat) {
+                                         List<? super PsiExpression> formatParameters, boolean printfFormat) {
     final PsiType type = expression.getType();
     if (!printfFormat) {
       formatString.append("{").append(formatParameters.size()).append("}");

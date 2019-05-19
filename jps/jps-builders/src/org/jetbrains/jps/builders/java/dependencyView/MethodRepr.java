@@ -105,7 +105,7 @@ class MethodRepr extends ProtoMember {
     };
   }
 
-  public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {
+  public void updateClassUsages(final DependencyContext context, final int owner, final Set<? super UsageRepr.Usage> s) {
     myType.updateClassUsages(context, owner, s);
 
     for (final TypeRepr.AbstractType argType : myArgumentTypes) {
@@ -134,7 +134,7 @@ class MethodRepr extends ProtoMember {
     myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
   }
 
-  public MethodRepr(final DependencyContext context, final DataInput in) {
+  MethodRepr(final DependencyContext context, final DataInput in) {
     super(context, in);
     try {
       final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);

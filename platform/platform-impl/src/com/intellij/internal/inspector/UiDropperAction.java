@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.inspector;
 
 import com.intellij.notification.Notification;
@@ -22,7 +8,6 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -69,12 +54,11 @@ import java.awt.geom.RoundRectangle2D;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static java.awt.event.MouseEvent.BUTTON1;
 import static java.awt.event.MouseEvent.MOUSE_CLICKED;
-import static java.util.Locale.ENGLISH;
 
 public class UiDropperAction extends ToggleAction implements DumbAware {
 
@@ -89,12 +73,12 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myUiDropper != null;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     if (state) {
       if (myUiDropper == null) {
         myUiDropper = new UiDropper();
@@ -144,12 +128,12 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       DefaultActionGroup actions = new DefaultActionGroup();
       actions.addAction(new IconWithTextAction("Highlight") {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           //highlightCmp(myHighlightComponent == null);
         }
 
         @Override
-        public void update(AnActionEvent e) {
+        public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(myComponent != null && myComponent.isVisible());
         }
       });
@@ -159,12 +143,12 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       actions.add(new IconWithTextAction("Refresh") {
 
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           getCurrentTable().refresh();
         }
 
         @Override
-        public void update(AnActionEvent e) {
+        public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(myComponent != null && myComponent.isVisible());
         }
       });
@@ -205,6 +189,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       });
 
       getRootPane().getActionMap().put("CLOSE", new AbstractAction() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           close();
         }
@@ -261,8 +246,8 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
-      Color background = selected ? UIUtil.getTreeSelectionBackground() : null;
+      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
+      Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : null;
       if (value instanceof HierarchyTree.ComponentNode) {
         HierarchyTree.ComponentNode componentNode = (HierarchyTree.ComponentNode)value;
         Component component = componentNode.getComponent();
@@ -299,7 +284,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
           append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         componentNode.setText(toString());
-        setIcon(JBUI.scale(new TwoColorsIcon(11, component.getForeground(), component.getBackground())));
+        setIcon(JBUI.scale(new ColorsIcon(11, component.getBackground(), component.getForeground())));
       }
 
       setForeground(foreground);
@@ -391,7 +376,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
 
       @SuppressWarnings("UseOfObsoleteCollectionType")
       private static Vector prepareChildren(Component parent) {
-        Vector<ComponentNode> result = new Vector<ComponentNode>();
+        Vector<ComponentNode> result = new Vector<>();
         if (parent instanceof Container) {
           for (Component component : ((Container)parent).getComponents()) {
             result.add(new ComponentNode(component));
@@ -422,7 +407,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       setFont(UIUtil.getLabelFont());
     }
 
-    public MyLabel(String text, JComponent glassPane, int width) {
+    MyLabel(String text, JComponent glassPane, int width) {
       super(text);
       myText = text;
       myGlasspane = glassPane;
@@ -566,7 +551,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       g2d.fillRect(insets.left, insets.top, bounds.width - insets.left - insets.right, bounds.height - insets.top - insets.bottom);
       g2d.setColor(getForeground());
 
-      final String sizeString = String.valueOf(myWidth) + " x " + myHeight;
+      final String sizeString = myWidth + " x " + myHeight;
 
       FontMetrics fm = g2d.getFontMetrics();
       int sizeWidth = fm.stringWidth(sizeString);
@@ -645,7 +630,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   private static class ValueCellRenderer implements TableCellRenderer {
-    private static final Map<Class, Renderer> RENDERERS = ContainerUtil.newHashMap();
+    private static final Map<Class, Renderer> RENDERERS = new HashMap<>();
 
     static {
       RENDERERS.put(Point.class, new PointRenderer());
@@ -662,6 +647,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
 
     private static final JLabel NULL_RENDERER = new JLabel("-");
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (value == null) {
         NULL_RENDERER.setOpaque(isSelected);
@@ -706,6 +692,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   private static class PointRenderer extends JLabel implements Renderer<Point> {
+    @Override
     public JComponent setValue(@NotNull final Point value) {
       setText(String.valueOf(value.x) + ':' + value.y);
       return this;
@@ -713,13 +700,15 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   private static class DimensionRenderer extends JLabel implements Renderer<Dimension> {
+    @Override
     public JComponent setValue(@NotNull final Dimension value) {
-      setText(String.valueOf(value.width) + "x" + value.height);
+      setText(value.width + "x" + value.height);
       return this;
     }
   }
 
   private static class InsetsRenderer extends JLabel implements Renderer<Insets> {
+    @Override
     public JComponent setValue(@NotNull final Insets value) {
       setText("top: " + value.top + " left:" + value.left + " bottom:" + value.bottom + " right:" + value.right);
       return this;
@@ -727,6 +716,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   private static class RectangleRenderer extends JLabel implements Renderer<Rectangle> {
+    @Override
     public JComponent setValue(@NotNull final Rectangle value) {
       setText(toString(value));
       return this;
@@ -739,6 +729,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   private static class ColorRenderer extends JLabel implements Renderer<Color> {
+    @Override
     public JComponent setValue(@NotNull final Color value) {
       StringBuilder sb = new StringBuilder();
       sb.append(" r:").append(value.getRed());
@@ -749,7 +740,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       sb.append(" argb:0x");
       String hex = Integer.toHexString(value.getRGB());
       for (int i = hex.length(); i < 8; i++) sb.append('0');
-      sb.append(hex.toUpperCase(ENGLISH));
+      sb.append(StringUtil.toUpperCase(hex));
 
       if (value instanceof UIResource) sb.append(" UIResource");
       setText(sb.toString());
@@ -759,6 +750,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   private static class FontRenderer extends JLabel implements Renderer<Font> {
+    @Override
     public JComponent setValue(@NotNull final Font value) {
       StringBuilder sb = new StringBuilder();
       sb.append(value.getFontName()).append(" (").append(value.getFamily()).append("), ").append(value.getSize()).append("px");
@@ -771,6 +763,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   private static class BooleanRenderer extends JLabel implements Renderer<Boolean> {
+    @Override
     public JComponent setValue(@NotNull final Boolean value) {
       setText(value ? "Yes" : "No");
       return this;
@@ -778,6 +771,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   }
 
   private static class IconRenderer extends JLabel implements Renderer<Icon> {
+    @Override
     public JComponent setValue(@NotNull final Icon value) {
       setIcon(value);
       return this;
@@ -789,6 +783,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       putClientProperty("html.disable", Boolean.TRUE);
     }
 
+    @Override
     public JComponent setValue(@NotNull final Object value) {
       setText(String.valueOf(value).replace('\n', ' '));
       return this;
@@ -833,7 +828,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
     );
 
     final Component myComponent;
-    final List<PropertyBean> myProperties = ContainerUtil.newArrayList();
+    final List<PropertyBean> myProperties = new ArrayList<>();
 
     InspectorTableModel(@NotNull Component c) {
       myComponent = c;
@@ -879,16 +874,12 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       }
     }
 
+    @Override
     @Nullable
     public Object getValueAt(int row, int column) {
       final PropertyBean bean = myProperties.get(row);
       if (bean != null) {
-        switch (column) {
-          case 0:
-            return bean.propertyName;
-          default:
-            return bean.propertyValue;
-        }
+        return column == 0 ? bean.propertyName : bean.propertyValue;
       }
 
       return null;
@@ -955,18 +946,22 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       return null;
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public int getRowCount() {
       return myProperties.size();
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
       return columnIndex == 0 ? "Property" : "Value";
     }
 
+    @Override
     public Class<?> getColumnClass(int columnIndex) {
       return columnIndex == 0 ? String.class : Object.class;
     }
@@ -984,17 +979,18 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
     Component lastComponent;
     MyLabel myLabel;
 
-    public UiDropper() {
+    UiDropper() {
       Toolkit.getDefaultToolkit()
         .addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
-      UiDropperActionExtension[] extensions = Extensions.getExtensions(UiDropperActionExtension.EP_NAME);
-      if (extensions.length > 0) {
-        AnAction action = extensions[0].getAnAction();
+      List<UiDropperActionExtension> extensions = UiDropperActionExtension.EP_NAME.getExtensionList();
+      if (extensions.size() > 0) {
+        AnAction action = extensions.get(0).getAnAction();
         setClickAction(action);
         return;
       }
     }
 
+    @Override
     public void dispose() {
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
       if (myHighlightComponent != null) {
@@ -1138,6 +1134,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       }
     }
 
+    @Override
     public void eventDispatched(AWTEvent event) {
       if (event instanceof MouseEvent) {
         processMouseEvent((MouseEvent)event);

@@ -73,9 +73,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
             myRevisionText.setText("HEAD");
           }
           myRevisionText.getTextField().selectAll();
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myRevisionText, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myRevisionText, true));
         }
       }
     });
@@ -110,7 +108,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   }
 
   private boolean isRevisionCanBeSpecifiedForRoot() {
-    final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot.getIOFile());
+    final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot);
     if (info != null) {
       boolean isExternalOrSwitched = NestedCopyType.external.equals(info.getType()) || NestedCopyType.switched.equals(info.getType());
       if (isExternalOrSwitched) {
@@ -159,24 +157,26 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     }
   }
 
+  @Override
   public JPanel getPanel() {
     return myPanel;
   }
 
   @Nullable
   private Url getBranchForUrl(@Nullable Url url) {
-    final RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot.getIOFile());
+    final RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot);
 
     return rootInfo != null && url != null ? SvnUtil.getBranchForUrl(myVcs, rootInfo.getVirtualFile(), url) : null;
   }
 
   @Nullable
   private SvnBranchConfigurationNew getBranchConfiguration() {
-    final RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot.getIOFile());
+    final RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot);
 
     return rootInfo != null ? SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(rootInfo.getVirtualFile()) : null;
   }
 
+  @Override
   public void reset(final SvnConfiguration configuration) {
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
 
@@ -195,6 +195,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myBranchField.setEnabled(myUpdateToSpecificUrl.isSelected() && (mySourceUrl != null));
   }
 
+  @Override
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
     if (myUpdateToSpecificUrl.isSelected()) {
@@ -214,6 +215,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     rootInfo.setRevision(revision);
   }
 
+  @Override
   public boolean canApply() {
     return true;
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
@@ -22,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,8 +23,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -53,7 +40,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final Runnable myListChangeListener;
   private String myOperationName;
 
-  public static void rollbackChanges(final Project project, final Collection<Change> changes) {
+  public static void rollbackChanges(final Project project, final Collection<? extends Change> changes) {
     final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
@@ -64,7 +51,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     final Set<LocalChangeList> lists = new THashSet<>();
     lists.addAll(manager.getAffectedLists(changes));
 
-    new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), new ArrayList<>(changes)).show();
+    new RollbackChangesDialog(project, new ArrayList<>(lists), new ArrayList<>(changes)).show();
   }
 
   public static void rollbackChanges(final Project project, final LocalChangeList changeList) {
@@ -101,7 +88,7 @@ public class RollbackChangesDialog extends DialogWrapper {
           List<Change> allChanges = myBrowser.getAllChanges();
           Collection<Change> includedChanges = myBrowser.getIncludedChanges();
 
-          myInfoCalculator.update(allChanges, ContainerUtil.newArrayList(includedChanges));
+          myInfoCalculator.update(allChanges, new ArrayList<>(includedChanges));
           myCommitLegendPanel.update();
 
           boolean hasNewFiles = ContainerUtil.exists(includedChanges, change -> change.getType() == Change.Type.NEW);
@@ -116,7 +103,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     Disposer.register(getDisposable(), myBrowser);
 
     myOperationName = operationNameByChanges(project, myBrowser.getAllChanges());
-    myBrowser.setToggleActionTitle("&Include in " + myOperationName.toLowerCase());
+    myBrowser.setToggleActionTitle("&Include in " + StringUtil.toLowerCase(myOperationName));
     setOKButtonText(myOperationName);
 
     myOperationName = UIUtil.removeMnemonic(myOperationName);
@@ -137,7 +124,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   @NotNull
-  public static String operationNameByChanges(@NotNull Project project, @NotNull Collection<Change> changes) {
+  public static String operationNameByChanges(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     return RollbackUtil.getRollbackOperationName(ChangesUtil.getAffectedVcses(changes, project));
   }
 
@@ -148,6 +135,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     worker.doRollback(myBrowser.getIncludedChanges(), myDeleteLocallyAddedFiles.isSelected());
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
@@ -180,10 +168,12 @@ public class RollbackChangesDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myBrowser.getPreferredFocusedComponent();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "RollbackChangesDialog";
   }

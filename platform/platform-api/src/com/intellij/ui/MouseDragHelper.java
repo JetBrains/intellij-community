@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,6 +50,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   private boolean myDetachPostponed;
   private boolean myDetachingMode;
   private boolean myCancelled;
+  private Disposable myGlassPaneListenersDisposable = Disposer.newDisposable();
 
   public MouseDragHelper(Disposable parent, final JComponent dragComponent) {
     myDragComponent = dragComponent;
@@ -58,7 +60,6 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   /**
    *
-   * @param event
    * @return false if Settings -> Appearance -> Drag-n-Drop with ALT pressed only is selected but event doesn't have ALT modifier
    */
   public static boolean checkModifiers(InputEvent event) {
@@ -72,21 +73,18 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     new UiNotifyConnector(myDragComponent, new Activatable() {
       @Override
       public void showNotify() {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(MouseDragHelper.this);
         attach();
       }
 
       @Override
       public void hideNotify() {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(MouseDragHelper.this);
         detach(true);
       }
     });
 
-    Disposer.register(myParentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        stop();
-      }
-    });
+    Disposer.register(myParentDisposable, () -> stop());
   }
 
   private void attach() {
@@ -95,15 +93,10 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
       return;
     }
     myGlassPane = IdeGlassPaneUtil.find(myDragComponent);
-    myGlassPane.addMousePreprocessor(this, myParentDisposable);
-    myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
-    Disposer.register(myParentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(MouseDragHelper.this);
-      }
-    });
+    myGlassPaneListenersDisposable = Disposer.newDisposable("myGlassPaneListeners");
+    Disposer.register(myParentDisposable, myGlassPaneListenersDisposable);
+    myGlassPane.addMousePreprocessor(this, myGlassPaneListenersDisposable);
+    myGlassPane.addMouseMotionPreprocessor(this, myGlassPaneListenersDisposable);
   }
 
   public void stop() {
@@ -116,8 +109,8 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
       return;
     }
     if (myGlassPane != null) {
-      myGlassPane.removeMousePreprocessor(this);
-      myGlassPane.removeMouseMotionPreprocessor(this);
+      Disposer.dispose(myGlassPaneListenersDisposable);
+      myGlassPaneListenersDisposable = Disposer.newDisposable();
       KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
       myGlassPane = null;
     }
@@ -211,7 +204,8 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
       if (myDetachingMode) {
         processDragOut(e, draggedTo, (Point)myPressPointScreen.clone(), dragOutStarted);
-      } else {
+      }
+      else {
         processDrag(e, draggedTo, (Point)myPressPointScreen.clone());
       }
     }
@@ -237,10 +231,10 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   protected void processDragCancel() {
   }
 
-  protected void processDragFinish(final MouseEvent event, boolean willDragOutStart) {
+  protected void processDragFinish(@NotNull MouseEvent event, boolean willDragOutStart) {
   }
 
-  protected void processDragOutFinish(final MouseEvent event) {
+  protected void processDragOutFinish(@NotNull MouseEvent event) {
   }
 
   protected void processDragOutCancel() {
@@ -250,13 +244,13 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     return myDragJustStarted;
   }
 
-  protected abstract void processDrag(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint);
+  protected abstract void processDrag(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint);
 
-  protected boolean isDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint) {
+  protected boolean isDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint) {
     return false;
   }
 
-  protected void processDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint, boolean justStarted) {
+  protected void processDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint, boolean justStarted) {
     event.consume();
   }
 

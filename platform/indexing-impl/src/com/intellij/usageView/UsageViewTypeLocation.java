@@ -18,10 +18,7 @@ package com.intellij.usageView;
 
 import com.intellij.ide.TypePresentationService;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.Language;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -62,13 +59,10 @@ public class UsageViewTypeLocation extends ElementDescriptionLocation {
         return LangBundle.message("terms.directory");
       }
 
-      final Language lang = psiElement.getLanguage();
-      FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
-      final String type = provider.getType(psiElement);
-      if (StringUtil.isNotEmpty(type)) {
+      String type = LanguageFindUsages.getType(psiElement);
+      if (!type.isEmpty()) {
         return type;
       }
-
       return TypePresentationService.getService().getTypePresentableName(psiElement.getClass());
     }
   };

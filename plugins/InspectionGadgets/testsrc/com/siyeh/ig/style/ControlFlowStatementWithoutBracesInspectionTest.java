@@ -1,27 +1,36 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
-public class ControlFlowStatementWithoutBracesInspectionTest extends IGInspectionTestCase {
-  public void test() {
-    doTest("com/siyeh/igtest/style/statements_without_braces", new ControlFlowStatementWithoutBracesInspection());
+public class ControlFlowStatementWithoutBracesInspectionTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/style/statements_without_braces";
   }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
+  private void doTest() {
+    ControlFlowStatementWithoutBracesInspection inspection = new ControlFlowStatementWithoutBracesInspection();
+    myFixture.enableInspections(inspection);
+    ProjectInspectionProfileManager.getInstance(myFixture.getProject()).getCurrentProfile()
+      .setErrorLevel(HighlightDisplayKey.find(inspection.getShortName()), HighlightDisplayLevel.WARNING, myFixture.getProject());
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
+  public void testControlFlowStatements() {
+    doTest();
+  }
+
 }

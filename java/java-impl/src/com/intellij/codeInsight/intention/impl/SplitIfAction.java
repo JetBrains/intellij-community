@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -35,7 +35,7 @@ import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getROpe
 /**
  * @author mike
  */
-public class SplitIfAction extends PsiElementBaseIntentionAction {
+public class SplitIfAction extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.SplitIfAction");
 
   @Override
@@ -76,7 +76,7 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     CommentTracker ct = new CommentTracker();
     PsiExpression lOperand = getLOperands(expression, token, ct);
     PsiExpression rOperand = getROperands(expression, token, ct);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
 
     PsiIfStatement replacement =
       SplitConditionUtil.create(factory, ifStatement, lOperand, rOperand, token.getTokenType(), ct);

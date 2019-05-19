@@ -57,11 +57,11 @@ public class VcsHistoryCache {
     synchronized (myLock) {
       myHistoryCache.put(new HistoryCacheBaseKey(filePath, vcsKey),
                          new CachedHistory(correctedPath != null ? correctedPath : filePath, session.getRevisionList(),
-                                           session.getCurrentRevisionNumber(), factory.getAddinionallyCachedData(session), isFull));
+                                           session.getCurrentRevisionNumber(), factory.getAdditionallyCachedData(session), isFull));
     }
   }
 
-  public void editCached(final FilePath filePath, final VcsKey vcsKey, final Consumer<List<VcsFileRevision>> consumer) {
+  public void editCached(final FilePath filePath, final VcsKey vcsKey, final Consumer<? super List<VcsFileRevision>> consumer) {
     synchronized (myLock) {
       final CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
       if (cachedHistory != null) {
@@ -96,7 +96,7 @@ public class VcsHistoryCache {
     }
   }
 
-  public void clear() {
+  public void clearHistory() {
     synchronized (myLock) {
       final Iterator<Map.Entry<HistoryCacheBaseKey,CachedHistory>> iterator = myHistoryCache.entrySet().iterator();
       while (iterator.hasNext()) {
@@ -108,16 +108,22 @@ public class VcsHistoryCache {
     }
   }
 
-  public void put(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number,
+  public void putAnnotation(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number,
                   @NotNull final Object vcsAnnotation) {
     synchronized (myLock) {
       myAnnotationCache.put(new HistoryCacheWithRevisionKey(filePath, vcsKey, number), vcsAnnotation);
     }
   }
 
-  public Object get(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number) {
+  public Object getAnnotation(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number) {
     synchronized (myLock) {
       return myAnnotationCache.get(new HistoryCacheWithRevisionKey(filePath, vcsKey, number));
+    }
+  }
+
+  public void clearAnnotations() {
+    synchronized (myLock) {
+      myAnnotationCache.clear();
     }
   }
 

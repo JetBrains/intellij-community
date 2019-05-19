@@ -17,7 +17,6 @@ package com.intellij.util.ui;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -36,8 +35,8 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
 
     int currentLength = 0;
 
-    List<String> end = new ArrayList<String>();
-    List<String> begin = new ArrayList<String>();
+    List<String> end = new ArrayList<>();
+    List<String> begin = new ArrayList<>();
 
     int size = components.size();
     int mult = 1;
@@ -61,10 +60,10 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
       return name;
     }
 
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
 
-    for (Iterator<String> iterator = begin.iterator(); iterator.hasNext();) {
-      result.append(iterator.next());
+    for (String line : begin) {
+      result.append(line);
     }
 
     result.append("...");
@@ -76,8 +75,8 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
     return result.toString();
   }
 
-  private ArrayList<String> getComponents(File file) {
-    ArrayList<String> result = new ArrayList<String>();
+  private static ArrayList<String> getComponents(File file) {
+    ArrayList<String> result = new ArrayList<>();
     File current = file;
     while (current != null) {
       result.add(getFileName(current));
@@ -87,7 +86,7 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
     return result;
   }
 
-  private String getFileName(File current) {
+  private static String getFileName(File current) {
     String result = current.getName();
     if (!result.isEmpty()) return result;
     String path = current.getPath();

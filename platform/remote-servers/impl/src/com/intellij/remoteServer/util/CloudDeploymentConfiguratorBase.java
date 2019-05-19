@@ -47,4 +47,9 @@ public abstract class CloudDeploymentConfiguratorBase<D extends DeploymentConfig
     }
     return result;
   }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
 }

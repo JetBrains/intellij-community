@@ -26,6 +26,7 @@ public class CvsModule extends CvsElement{
     super(name, icon);
   }
 
+  @Override
   public String createPathForChild(String name) {
     return name;
   }

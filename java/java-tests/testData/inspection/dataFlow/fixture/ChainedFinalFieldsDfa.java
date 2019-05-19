@@ -7,17 +7,17 @@ class BrokenAlignment {
     }
 
     data = new Data(null, <warning descr="Passing 'null' argument to non-annotated parameter">null</warning>);
-    System.out.println(data.text.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+    System.out.println(data.text.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
 
     if (data.inner != null) {
       System.out.println(data.inner.hashCode());
-      System.out.println(data.inner.text.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+      System.out.println(data.inner.text.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
       if (<warning descr="Condition 'data.inner != null' is always 'true'">data.inner != null</warning>) {
         System.out.println(data.inner.hashCode());
       }
 
       data = new Data(null, <warning descr="Passing 'null' argument to non-annotated parameter">null</warning>);
-      System.out.println(data.inner.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+      System.out.println(data.inner.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
     }
   }
 

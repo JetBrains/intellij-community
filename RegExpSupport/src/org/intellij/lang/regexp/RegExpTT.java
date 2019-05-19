@@ -92,6 +92,10 @@ public interface RegExpTT {
     IElementType DOT = new RegExpElementType("DOT");
     /** "|" */
     IElementType UNION = new RegExpElementType("UNION");
+    /**
+     * "=" in some unicode properties, e.g.(\p{name=value})
+     */
+    IElementType EQ = new RegExpElementType("EQ");
 
     /** ">" in Python/Ruby named group */
     IElementType GT = new RegExpElementType("GT");

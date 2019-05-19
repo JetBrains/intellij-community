@@ -46,7 +46,12 @@ public class TestRunnerService implements PersistentStateComponent<TestRunnerSer
   }
 
   public String getProjectConfiguration() {
-    return PROJECT_TEST_RUNNER.isEmpty() ? PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME : PROJECT_TEST_RUNNER;
+    String runnerFromConfig = PROJECT_TEST_RUNNER;
+    // User may have "py.test" in her .xml file
+    if ("py.test".equals(runnerFromConfig)) {
+      runnerFromConfig = "pytest";
+    }
+    return runnerFromConfig.isEmpty() ? PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME : runnerFromConfig;
   }
 
 }

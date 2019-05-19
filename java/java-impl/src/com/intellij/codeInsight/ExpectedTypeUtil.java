@@ -141,9 +141,9 @@ public class ExpectedTypeUtil {
   }
 
   public static class ExpectedClassesFromSetProvider implements ExpectedTypesProvider.ExpectedClassProvider {
-    private final Set<PsiClass> myOccurrenceClasses;
+    private final Set<? extends PsiClass> myOccurrenceClasses;
 
-    public ExpectedClassesFromSetProvider(@NotNull Set<PsiClass> occurrenceClasses) {
+    public ExpectedClassesFromSetProvider(@NotNull Set<? extends PsiClass> occurrenceClasses) {
       myOccurrenceClasses = occurrenceClasses;
     }
 

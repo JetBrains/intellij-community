@@ -24,26 +24,32 @@ public class TerminatedState extends AbstractState {
   protected TerminatedState() {
   }
 
+  @Override
   public boolean isInProgress() {
     return false;
   }
 
+  @Override
   public boolean isDefect() {
     return true;
   }
 
+  @Override
   public boolean wasLaunched() {
     return true;
   }
 
+  @Override
   public boolean isFinal() {
     return true;
   }
 
+  @Override
   public boolean wasTerminated() {
     return true;
   }
 
+  @Override
   public Magnitude getMagnitude() {
     return Magnitude.TERMINATED_INDEX;
   }

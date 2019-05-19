@@ -1,13 +1,33 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.classmetrics;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class FieldCountInspectionTest extends IGInspectionTestCase {
-
-  public void test() {
-    final FieldCountInspection tool = new FieldCountInspection();
-    tool.m_limit = 5;
-    tool.myCountEnumConstants = false;
-    doTest("com/siyeh/igtest/classmetrics/field_count", tool);
+public class FieldCountInspectionTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/classmetrics/field_count";
   }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
+  private void doTest() {
+    FieldCountInspection inspection = new FieldCountInspection();
+    inspection.m_limit = 5;
+    inspection.myCountEnumConstants = false;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
+  public void testFieldCount() {
+    doTest();
+  }
+
 }

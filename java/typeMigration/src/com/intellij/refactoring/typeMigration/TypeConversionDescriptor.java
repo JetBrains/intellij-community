@@ -92,7 +92,7 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     matchOptions.setFileType(StdFileTypes.JAVA);
     final String replacement = Replacer.testReplace(expression.getText(), stringToReplace, replaceByString, options, project);
     return (PsiExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression.replace(
-      JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression)));
+      JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, expression)));
   }
 
   @Override

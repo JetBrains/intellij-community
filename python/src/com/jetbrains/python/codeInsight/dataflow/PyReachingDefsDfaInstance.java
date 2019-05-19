@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.dataflow;
 
 import com.intellij.codeInsight.controlflow.Instruction;
@@ -27,6 +13,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
 import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTypeDeclarationStatement;
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +26,7 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
   // Use this its own map, because check in PyReachingDefsDfaSemilattice is important
   public static final DFAMap<ScopeVariable> INITIAL_MAP = new DFAMap<>();
 
+  @Override
   public DFAMap<ScopeVariable> fun(final DFAMap<ScopeVariable> map, final Instruction instruction) {
     final PsiElement element = instruction.getElement();
     if (element == null || ((PyFile) element.getContainingFile()).getLanguageLevel().isPython2()){
@@ -57,16 +45,20 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
             continue;
           }
         }
-      } 
+      }
       reducedMap.put(entry.getKey(), value);
     }
 
     return processReducedMap(reducedMap, instruction, element);
   }
 
-  private DFAMap<ScopeVariable> processReducedMap(DFAMap<ScopeVariable> map,
-                                                  final Instruction instruction,
-                                                  final PsiElement element) {
+  private static DFAMap<ScopeVariable> processReducedMap(DFAMap<ScopeVariable> map,
+                                                         final Instruction instruction,
+                                                         final PsiElement element) {
+    if (element != null && element.getParent() instanceof PyTypeDeclarationStatement) {
+      return map;
+    }
+
     String name = null;
     // Process readwrite instruction
     if (instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess()) {
@@ -103,6 +95,7 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
     return map;
   }
 
+  @Override
   @NotNull
   public DFAMap<ScopeVariable> initial() {
     return INITIAL_MAP;

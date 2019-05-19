@@ -16,12 +16,12 @@ public class Main {
   public static void testComplexFilter(List<String> list) {
     System.out.println(list.stream()
                          .filter(x -> x != null)
-                         .flatMap(s -> IntStream.range(0, 10).boxed().filter(Predicate.isEqual(s.length())))
+                         .flatMap(s -> (IntStream.range(0, 10).boxed().filter(Predicate.isEqual(s.length()))))
                          .collect(Collectors.toList()));
   }
 
   public void testConditional(List<List<String>> list) {
-    list.stream().flatMap(lst -> lst == null ? Stream.empty() : lst.stream()).forEach(System.out::println);
+    list.stream().flatMap(lst -> lst == null ? (Stream.empty()) : (lst.stream())).forEach(System.out::println);
   }
 
   private static long testDistinctUnpluralize(List<List<String>> nested) {

@@ -1,32 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.ui.AntialiasingType;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
-import javax.swing.Icon;
 
+import static com.intellij.ide.ui.UISettings.setupAntialiasing;
 import static com.intellij.ui.paint.RectanglePainter.FILL;
+import static java.awt.RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
 
 /**
  * @author Sergey.Malenkov
  */
 public final class TextIcon implements Icon {
-  private static final FontRenderContext CONTEXT = new FontRenderContext(null, true, false);
+  private static final FontRenderContext CONTEXT =
+    new FontRenderContext(null, AntialiasingType.getKeyForCurrentScope(false), VALUE_FRACTIONALMETRICS_OFF);
 
   @SuppressWarnings("UseDPIAwareInsets")
   private final Insets myInsets = new Insets(0, 0, 0, 0);
@@ -107,11 +98,7 @@ public final class TextIcon implements Icon {
       try {
         g.setColor(myForeground);
         g.setFont(myFont);
-        if (g instanceof Graphics2D) {
-          Graphics2D g2d = (Graphics2D)g;
-          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, CONTEXT.getAntiAliasingHint());
-          g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, CONTEXT.getFractionalMetricsHint());
-        }
+        setupAntialiasing(g);
         g.drawString(myText, myInsets.left + x - bounds.x, myInsets.top + y - bounds.y);
       }
       finally {

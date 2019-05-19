@@ -71,6 +71,7 @@ public class CalendarView extends JPanel {
     editor.getTextField().setColumns(4);
     myYears.setEditor(editor);
     myYears.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         refresh();
       }
@@ -105,6 +106,7 @@ public class CalendarView extends JPanel {
       myMonths.addItem(dateFormatSymbols.getMonths()[i]);
 
     myMonths.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         refresh();
       }
@@ -187,12 +189,12 @@ public class CalendarView extends JPanel {
   public void registerEnterHandler(final Runnable runnable) {
     new AnAction() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!myMonths.isPopupVisible() && !myDays.isPopupVisible());
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         runnable.run();
       }
     }.registerCustomShortcutSet(KeyEvent.VK_ENTER, 0, this);

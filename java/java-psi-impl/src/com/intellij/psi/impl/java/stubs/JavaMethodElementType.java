@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -38,7 +24,6 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.BitUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,9 +36,9 @@ import java.util.Set;
 /**
  * @author max
  */
-public abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
-  public static final String TYPE_PARAMETER_PSEUDO_NAME = "$TYPE_PARAMETER$";
-  public JavaMethodElementType(@NonNls final String name) {
+abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
+  private static final String TYPE_PARAMETER_PSEUDO_NAME = "$TYPE_PARAMETER$";
+  JavaMethodElementType(@NonNls final String name) {
     super(name);
   }
 
@@ -67,13 +52,12 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     if (node instanceof AnnotationMethodElement) {
       return new PsiAnnotationMethodImpl(node);
     }
-    else {
-      return new PsiMethodImpl(node);
-    }
+    return new PsiMethodImpl(node);
   }
 
+  @NotNull
   @Override
-  public PsiMethodStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+  public PsiMethodStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
     String name = null;
     boolean isConstructor = true;
     boolean isVarArgs = false;
@@ -103,7 +87,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
         if (!params.isEmpty()) {
           final LighterASTNode pType = LightTreeUtil.firstChildOfType(tree, params.get(params.size() - 1), JavaElementType.TYPE);
           if (pType != null) {
-            isVarArgs = (LightTreeUtil.firstChildOfType(tree, pType, JavaTokenType.ELLIPSIS) != null);
+            isVarArgs = LightTreeUtil.firstChildOfType(tree, pType, JavaTokenType.ELLIPSIS) != null;
           }
         }
       }
@@ -118,7 +102,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     }
 
     TypeInfo typeInfo = isConstructor ? TypeInfo.createConstructorType() : TypeInfo.create(tree, node, parentStub);
-    boolean isAnno = (node.getTokenType() == JavaElementType.ANNOTATION_METHOD);
+    boolean isAnno = node.getTokenType() == JavaElementType.ANNOTATION_METHOD;
     byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation, hasDocComment);
 
     return new PsiMethodStubImpl(parentStub, name, typeInfo, flags, defValueText);
@@ -182,7 +166,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     while (stub != null) {
       Set<String> names = getOwnTypeParameterNames(stub);
       if (!names.isEmpty()) {
-        if (result == null) result = ContainerUtil.newHashSet();
+        if (result == null) result = new HashSet<>();
         result.addAll(names);
       }
 

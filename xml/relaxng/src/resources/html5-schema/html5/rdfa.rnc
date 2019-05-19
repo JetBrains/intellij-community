@@ -189,20 +189,27 @@ link.rdfa.attrs.metadata =
 			&	link.attrs.rel
 			)
 		)
-	&	link.attrs.href
 	&	common.attrs.rdfa.about?
 	&	common.attrs.rdfa.prefix?
 	&	common.attrs.rdfa.typeof?
 	&	common.attrs.rdfa.vocab?
 	&	common.attrs.rdfa.content?
 	&	common.attrs.rdfa.datatype?
-	&	common.attrs.rdfa.resource?
+	&	(	(	common.attrs.rdfa.resource
+			&	link.attrs.href?
+			)
+			|
+			(	common.attrs.rdfa.resource?
+			&	link.attrs.href
+			)
+		)
 	&	common.attrs.rdfa.rev?
 	&	common.attrs.rdfa.inlist?
 	&	shared-hyperlink.attrs.hreflang?
 	&	shared-hyperlink.attrs.media?
 	&	shared-hyperlink.attrs.type?
 	&	link.attrs.sizes?
+	&	link.attrs.as?
 	#	link.attrs.title included in common.attrs
 	&	embedded.content.attrs.crossorigin?
 	&	(	common.attrs.aria.role.link

@@ -3,6 +3,7 @@ package com.intellij.ide.actions.runAnything.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -14,17 +15,19 @@ import java.awt.event.KeyEvent;
 
 public class RunAnythingScrollingUtil {
   @NonNls
-  protected static final String SELECT_PREVIOUS_ROW_ACTION_ID = "selectPreviousRow";
+  @Deprecated
+  protected static final String SELECT_PREVIOUS_ROW_ACTION_ID = ListActions.Up.ID;
   @NonNls
-  protected static final String SELECT_NEXT_ROW_ACTION_ID = "selectNextRow";
+  @Deprecated
+  protected static final String SELECT_NEXT_ROW_ACTION_ID = ListActions.Down.ID;
 
   public static void installActions(@NotNull JList list,
                                     @NotNull JTextField focusParent,
                                     @NotNull Runnable handleFocusParent,
                                     boolean isCycleScrolling) {
     ActionMap actionMap = list.getActionMap();
-    actionMap.put(SELECT_PREVIOUS_ROW_ACTION_ID, new MoveAction(SELECT_PREVIOUS_ROW_ACTION_ID, list, handleFocusParent, isCycleScrolling));
-    actionMap.put(SELECT_NEXT_ROW_ACTION_ID, new MoveAction(SELECT_NEXT_ROW_ACTION_ID, list, handleFocusParent, isCycleScrolling));
+    actionMap.put(ListActions.Up.ID, new MoveAction(ListActions.Up.ID, list, handleFocusParent, isCycleScrolling));
+    actionMap.put(ListActions.Down.ID, new MoveAction(ListActions.Down.ID, list, handleFocusParent, isCycleScrolling));
 
     maybeInstallDefaultShortcuts(list);
 
@@ -34,8 +37,8 @@ public class RunAnythingScrollingUtil {
 
   private static void maybeInstallDefaultShortcuts(@NotNull JComponent component) {
     InputMap map = component.getInputMap(JComponent.WHEN_FOCUSED);
-    UIUtil.maybeInstall(map, SELECT_PREVIOUS_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
-    UIUtil.maybeInstall(map, SELECT_NEXT_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
+    UIUtil.maybeInstall(map, ListActions.Up.ID, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
+    UIUtil.maybeInstall(map, ListActions.Down.ID, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
   }
 
   private static void installMoveDownAction(@NotNull JList list,
@@ -44,7 +47,7 @@ public class RunAnythingScrollingUtil {
                                             final boolean isCycleScrolling) {
     new ScrollingUtil.ListScrollAction(CommonShortcuts.getMoveDown(), focusParent) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         moveDown(list, handleFocusParent, isCycleScrolling);
       }
     };
@@ -56,7 +59,7 @@ public class RunAnythingScrollingUtil {
                                           final boolean isCycleScrolling) {
     new ScrollingUtil.ListScrollAction(CommonShortcuts.getMoveUp(), focusParent) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         moveUp(list, handleFocusParent, isCycleScrolling);
       }
     };
@@ -102,7 +105,7 @@ public class RunAnythingScrollingUtil {
     @NotNull private final Runnable myHandleFocusParent;
     private final boolean myIsCycleScrolling;
 
-    public MoveAction(@NotNull String id, @NotNull JList component, @NotNull Runnable handleFocusParent, boolean isCycleScrolling) {
+    MoveAction(@NotNull String id, @NotNull JList component, @NotNull Runnable handleFocusParent, boolean isCycleScrolling) {
       myId = id;
       myComponent = component;
       myHandleFocusParent = handleFocusParent;
@@ -111,10 +114,10 @@ public class RunAnythingScrollingUtil {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      if (SELECT_PREVIOUS_ROW_ACTION_ID.equals(myId)) {
+      if (ListActions.Up.ID.equals(myId)) {
         moveUp(myComponent, myHandleFocusParent, myIsCycleScrolling);
       }
-      else if (SELECT_NEXT_ROW_ACTION_ID.equals(myId)) {
+      else if (ListActions.Down.ID.equals(myId)) {
         moveDown(myComponent, myHandleFocusParent, myIsCycleScrolling);
       }
     }

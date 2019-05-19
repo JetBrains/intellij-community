@@ -65,7 +65,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     showTemplatesLookup(project, editor, file, matchingTemplates, customTemplatesLookupElements);
   }
 
-  public static Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<TemplateImpl> templates, @NotNull Editor editor,
+  public static Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<? extends TemplateImpl> templates, @NotNull Editor editor,
                                                                   int offset, boolean fullMatch, boolean searchInDescription) {
     if (offset > editor.getDocument().getTextLength()) {
       LOG.error("Cannot filter templates, index out of bounds. Offset: " + offset,
@@ -213,22 +213,22 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     return chars.subSequence(start, offset).toString();
   }
 
-  private static class MyLookupAdapter extends LookupAdapter {
+  private static class MyLookupAdapter implements LookupListener {
     private final Map<TemplateImpl, String> myTemplate2Argument;
     private final PsiFile myFile;
 
-    public MyLookupAdapter(@Nullable Map<TemplateImpl, String> template2Argument) {
+    MyLookupAdapter(@Nullable Map<TemplateImpl, String> template2Argument) {
       myTemplate2Argument = template2Argument;
       myFile = null;
     }
 
-    public MyLookupAdapter(@Nullable PsiFile file) {
+    MyLookupAdapter(@Nullable PsiFile file) {
       myTemplate2Argument = null;
       myFile = file;
     }
 
     @Override
-    public void itemSelected(final LookupEvent event) {
+    public void itemSelected(@NotNull final LookupEvent event) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.liveTemplates");
       final LookupElement item = event.getItem();
       final Lookup lookup = event.getLookup();
@@ -236,15 +236,11 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
       if (item instanceof LiveTemplateLookupElementImpl) {
         final TemplateImpl template = ((LiveTemplateLookupElementImpl)item).getTemplate();
         final String argument = myTemplate2Argument != null ? myTemplate2Argument.get(template) : null;
-        WriteCommandAction.writeCommandAction(project).run(() -> {
-          ((TemplateManagerImpl)TemplateManager.getInstance(project)).startTemplateWithPrefix(lookup.getEditor(), template, null, argument);
-        });
+        WriteCommandAction.writeCommandAction(project).run(() -> ((TemplateManagerImpl)TemplateManager.getInstance(project)).startTemplateWithPrefix(lookup.getEditor(), template, null, argument));
       }
       else if (item instanceof CustomLiveTemplateLookupElement) {
         if (myFile != null) {
-          WriteCommandAction.writeCommandAction(project).run(() -> {
-            ((CustomLiveTemplateLookupElement)item).expandTemplate(lookup.getEditor(), myFile);
-          });
+          WriteCommandAction.writeCommandAction(project).run(() -> ((CustomLiveTemplateLookupElement)item).expandTemplate(lookup.getEditor(), myFile));
         }
       }
     }

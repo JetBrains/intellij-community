@@ -35,9 +35,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
 import static org.zmlx.hg4idea.provider.update.HgUpdateType.MERGE;
 import static org.zmlx.hg4idea.provider.update.HgUpdateType.ONLY_UPDATE;
+import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
 
 public class HgRegularUpdater implements HgUpdater {
 
@@ -52,6 +52,7 @@ public class HgRegularUpdater implements HgUpdater {
     this.updateConfiguration = configuration;
   }
 
+  @Override
   public boolean update(final UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> warnings)
     throws VcsException {
     indicator.setText(HgVcsMessages.message("hg4idea.progress.updating", repoRoot.getPath()));
@@ -289,7 +290,6 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private static void reportWarning(List<VcsException> exceptions, String warningMessage) {
-    @SuppressWarnings({"ThrowableInstanceNeverThrown"})
     VcsException warningException = new VcsException(warningMessage);
     warningException.setIsWarning(true);
     exceptions.add(warningException);

@@ -14,10 +14,12 @@ import org.jetbrains.plugins.github.api.GithubFullPath;
 public class GithubProjectSettings implements PersistentStateComponent<GithubProjectSettings.State> {
   private State myState = new State();
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull State state) {
     myState = state;
   }

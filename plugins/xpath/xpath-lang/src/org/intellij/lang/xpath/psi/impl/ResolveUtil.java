@@ -88,7 +88,7 @@ public class ResolveUtil {
                 final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
                 for (ResolveResult result : results) {
                     if (result.isValidResult()) {
-                        // TODO: how to weigh/prioritize the results? 
+                        // TODO: how to weigh/prioritize the results?
                         final PsiElement element = result.getElement();
                         if (element != baseFile && element instanceof XmlFile) {
                             return (PsiFile)target;
@@ -139,6 +139,7 @@ public class ResolveUtil {
 
     private static class Stop extends RuntimeException {
         public static final Stop DONE = new Stop();
+        @Override
         public Throwable fillInStackTrace() {
             return this;
         }
@@ -199,6 +200,7 @@ public class ResolveUtil {
     }
 
     public interface XmlProcessor extends Processor<XmlTag> {
+        @Override
         boolean process(XmlTag tag);
     }
 

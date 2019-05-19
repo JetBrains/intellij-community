@@ -5,6 +5,8 @@ set -euo pipefail
 
 export COPY_EXTENDED_ATTRIBUTES_DISABLE=true
 export COPYFILE_DISABLE=true
+
+INPUT_FILE=$1
 EXPLODED=$2.exploded
 USERNAME=$3
 PASSWORD=$4
@@ -13,15 +15,14 @@ HELP_DIR_NAME=$6
 
 cd $(dirname $0)
 
+echo "Deleting ${EXPLODED}..."
 test -d ${EXPLODED} && chmod -R u+wx ${EXPLODED}/*
 rm -rf ${EXPLODED}
-rm -f $1.dmg
-rm -f pack.temp.dmg
-
 mkdir ${EXPLODED}
-echo "Unzipping $1.sit to ${EXPLODED}..."
-unzip -q $1.sit -d ${EXPLODED}/
-rm $1.sit
+
+echo "Unzipping ${INPUT_FILE} to ${EXPLODED}..."
+unzip -q ${INPUT_FILE} -d ${EXPLODED}/
+rm ${INPUT_FILE}
 BUILD_NAME=$(ls ${EXPLODED}/)
 
 if [ $# -eq 7 ] && [ -f $7 ]; then
@@ -32,7 +33,6 @@ if [ $# -eq 7 ] && [ -f $7 ]; then
   if [[ $1 == *custom-jdk-bundled* ]]; then
     jdk=custom-"$jdk"
   fi
-  sed -i -e 's/NoJavaDistribution/'$jdk'/' ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist
   rm -f ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist-e
   echo "Info.plist has been modified"
   echo "Copying JDK: $archiveJDK to ${EXPLODED}/"$BUILD_NAME"/Contents"
@@ -44,7 +44,6 @@ fi
 
 if [ $HELP_DIR_NAME != "no-help" ]; then
   HELP_DIR=${EXPLODED}/"$BUILD_NAME"/Contents/Resources/"$HELP_DIR_NAME"/Contents/Resources/English.lproj/
-
   echo "Building help indices for $HELP_DIR"
   hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
 fi
@@ -63,6 +62,13 @@ for f in ${EXPLODED}/"$BUILD_NAME"/Contents/*.txt ; do
   if [ -f "$f" ]; then
     echo "Moving $f"
     mv "$f" ${EXPLODED}/"$BUILD_NAME"/Contents/Resources
+  fi
+done
+
+for f in ${EXPLODED}/"$BUILD_NAME"/Contents/* ; do
+  if [ -f "$f" ] && [ $(basename -- "$f") != "Info.plist" ] ; then
+    echo "Only Info.plist file is allowed in Contents directory but $f is found"
+    exit 1
   fi
 done
 shopt -u nullglob
@@ -92,8 +98,8 @@ do
   fi
 done
 
-echo "Zipping ${BUILD_NAME} to $1.sit..."
+echo "Zipping ${BUILD_NAME} to ${INPUT_FILE}..."
 cd ${EXPLODED}
-ditto -c -k --sequesterRsrc --keepParent "${BUILD_NAME}" ../$1.sit
+ditto -c -k --sequesterRsrc --keepParent "${BUILD_NAME}" ../${INPUT_FILE}
 cd ..
 rm -rf ${EXPLODED}

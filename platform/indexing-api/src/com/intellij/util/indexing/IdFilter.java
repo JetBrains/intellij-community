@@ -16,6 +16,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -31,16 +32,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.BitSet;
 
 public abstract class IdFilter {
-  public static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor");
+  private static final Logger LOG = Logger.getInstance(IdFilter.class);
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");
   private static final Key<CachedValue<IdFilter>> OUTSIDE_PROJECT = Key.create("OUTSIDE_PROJECT");
 
-  public static IdFilter getProjectIdFilter(final Project project, final boolean includeNonProjectItems) {
+  @NotNull
+  public static IdFilter getProjectIdFilter(@NotNull Project project, final boolean includeNonProjectItems) {
     Key<CachedValue<IdFilter>> key = includeNonProjectItems ? OUTSIDE_PROJECT : INSIDE_PROJECT;
+    CachedValueProvider<IdFilter> provider = () -> CachedValueProvider.Result.create(buildProjectIdFilter(project, includeNonProjectItems),
+              ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
     return CachedValuesManager.getManager(project).getCachedValue(project, key,
-                                                                  () -> CachedValueProvider.Result
-                                                                    .create(buildProjectIdFilter(project, includeNonProjectItems),
-                                                                            ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS), false);
+                                                                  provider, false);
   }
 
   @NotNull
@@ -49,21 +51,22 @@ public abstract class IdFilter {
     final BitSet idSet = new BitSet();
 
     ContentIterator iterator = fileOrDir -> {
-      int id = ((VirtualFileWithId)fileOrDir).getId();
-      if (id < 0) id = -id; // workaround for encountering invalid files, see EA-49915, EA-50599
-      idSet.set(id);
+      idSet.set(((VirtualFileWithId)fileOrDir).getId());
       ProgressManager.checkCanceled();
       return true;
     };
 
     if (!includeNonProjectItems) {
       ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
-    } else {
-      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, null);
+    }
+    else {
+      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, ProgressIndicatorProvider.getGlobalProgressIndicator());
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Done filter " + (System.currentTimeMillis()  -started) + ":" + idSet.size());
+      long elapsed = System.currentTimeMillis() - started;
+      LOG.debug("Done filter (includeNonProjectItems=" + includeNonProjectItems+") "+
+                "in " + elapsed + "ms. Total files in set: " + idSet.cardinality());
     }
     return new IdFilter() {
       @Override

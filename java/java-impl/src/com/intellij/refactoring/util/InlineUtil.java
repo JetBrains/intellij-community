@@ -1,36 +1,30 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.inline.InlineTransformer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -87,7 +81,7 @@ public class InlineUtil {
     expr = (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
     PsiType exprType = RefactoringUtil.getTypeByExpression(expr);
     if (exprType != null && !exprType.equals(varType)) {
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
       PsiMethod method = qualifyWithExplicitTypeArguments(initializer, expr, varType);
       if (method != null) {
         if (expr instanceof PsiMethodCallExpression) {
@@ -98,7 +92,8 @@ public class InlineUtil {
             LOG.assertTrue(containingClass != null);
             if (method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
               methodExpression.setQualifierExpression(elementFactory.createReferenceExpression(containingClass));
-            } else {
+            }
+            else {
               methodExpression.setQualifierExpression(createThisExpression(method.getManager(), thisClass, refParent));
             }
           }
@@ -128,7 +123,7 @@ public class InlineUtil {
   private static PsiMethod qualifyWithExplicitTypeArguments(PsiExpression initializer,
                                                             PsiExpression expr,
                                                             PsiType varType) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(initializer.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(initializer.getProject());
     if (expr instanceof PsiCallExpression && ((PsiCallExpression)expr).getTypeArguments().length == 0) {
       final JavaResolveResult resolveResult = ((PsiCallExpression)initializer).resolveMethodGenerics();
       final PsiElement resolved = resolveResult.getElement();
@@ -169,7 +164,7 @@ public class InlineUtil {
     operand.replace(expr);
     expr = (PsiTypeCastExpression)expr.replace(cast);
     if (RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)expr)) {
-      return RedundantCastUtil.removeCast((PsiTypeCastExpression)expr);
+      return RemoveRedundantCastUtil.removeCast((PsiTypeCastExpression)expr);
     }
 
     return expr;
@@ -177,15 +172,10 @@ public class InlineUtil {
 
   private static PsiThisExpression createThisExpression(PsiManager manager, PsiClass thisClass, PsiClass refParent) {
     PsiThisExpression thisAccessExpr = null;
-    if (Comparing.equal(thisClass, refParent))
-
-    {
+    if (Comparing.equal(thisClass, refParent)) {
       thisAccessExpr = RefactoringChangeUtil.createThisExpression(manager, null);
     }
-
-    else
-
-    {
+    else {
       if (!(thisClass instanceof PsiAnonymousClass)) {
         thisAccessExpr = RefactoringChangeUtil.createThisExpression(manager, thisClass);
       }
@@ -207,7 +197,7 @@ public class InlineUtil {
   }
 
   public static void inlineArrayCreationForVarargs(final PsiNewExpression arrayCreation) {
-    PsiExpressionList argumentList = (PsiExpressionList)arrayCreation.getParent();
+    PsiExpressionList argumentList = (PsiExpressionList)PsiUtil.skipParenthesizedExprUp(arrayCreation.getParent());
     if (argumentList == null) return;
     PsiExpression[] args = argumentList.getExpressions();
     PsiArrayInitializerExpression arrayInitializer = arrayCreation.getArrayInitializer();
@@ -217,6 +207,7 @@ public class InlineUtil {
         return;
       }
 
+      CommentTracker cm = new CommentTracker();
       PsiExpression[] initializers = arrayInitializer.getInitializers();
       if (initializers.length > 0) {
         PsiElement lastInitializerSibling = initializers[initializers.length - 1];
@@ -240,8 +231,9 @@ public class InlineUtil {
           firstElement = leadingComment;
         }
         argumentList.addRange(firstElement, lastInitializerSibling);
+        cm.markRangeUnchanged(firstElement, lastInitializerSibling);
       }
-      args[args.length - 1].delete();
+      cm.deleteAndRestoreComments(args[args.length - 1]);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -303,7 +295,7 @@ public class InlineUtil {
   }
 
   public static boolean allUsagesAreTailCalls(final PsiMethod method) {
-    final List<PsiReference> nonTailCallUsages = Collections.synchronizedList(new ArrayList<PsiReference>());
+    final List<PsiReference> nonTailCallUsages = Collections.synchronizedList(new ArrayList<>());
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       (Runnable)() -> ReferencesSearch.search(method).forEach(psiReference -> {
         ProgressManager.checkCanceled();
@@ -321,9 +313,15 @@ public class InlineUtil {
     if (element instanceof PsiMethodReferenceExpression) return TailCallType.Return;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if (methodCall == null) return TailCallType.None;
-    PsiElement callParent = methodCall.getParent();
+    PsiElement callParent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
     if (callParent instanceof PsiReturnStatement || callParent instanceof PsiLambdaExpression) {
       return TailCallType.Return;
+    }
+    if (callParent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)callParent)) {
+      PsiElement negationParent = PsiUtil.skipParenthesizedExprUp(callParent.getParent());
+      if (negationParent instanceof PsiReturnStatement || negationParent instanceof PsiLambdaExpression) {
+        return TailCallType.Invert;
+      }
     }
     if (callParent instanceof PsiExpressionStatement) {
       PsiStatement curElement = (PsiStatement)callParent;
@@ -335,6 +333,7 @@ public class InlineUtil {
           if (blockParent instanceof PsiMethod || blockParent instanceof PsiLambdaExpression) return TailCallType.Simple;
           if (!(blockParent instanceof PsiBlockStatement)) return TailCallType.None;
           parent = blockParent.getParent();
+          if (parent instanceof PsiLoopStatement) return TailCallType.Continue;
         }
         if (!(parent instanceof PsiLabeledStatement) && !(parent instanceof PsiIfStatement)) return TailCallType.None;
         curElement = (PsiStatement)parent;
@@ -346,7 +345,8 @@ public class InlineUtil {
   public static void substituteTypeParams(PsiElement scope, final PsiSubstitutor substitutor, final PsiElementFactory factory) {
     final Map<PsiElement, PsiElement> replacement = new HashMap<>();
     scope.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitTypeElement(PsiTypeElement typeElement) {
+      @Override
+      public void visitTypeElement(PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);
         PsiType type = typeElement.getType();
         if (type instanceof PsiClassType) {
@@ -436,7 +436,140 @@ public class InlineUtil {
     }
   }
 
+  public static boolean isChainingConstructor(PsiMethod constructor) {
+    return getChainedConstructor(constructor) != null;
+  }
+
+  public static PsiMethod getChainedConstructor(PsiMethod constructor) {
+    PsiCodeBlock body = constructor.getBody();
+    if (body != null) {
+      PsiStatement[] statements = body.getStatements();
+      if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
+        PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+        if (expression instanceof PsiMethodCallExpression) {
+          PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expression).getMethodExpression();
+          if ("this".equals(methodExpr.getReferenceName())) {
+            PsiElement resolved = methodExpr.resolve();
+            return resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor() ? (PsiMethod)resolved : null; //delegated via "this" call
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Extracts all references from initializer and checks whether
+   * referenced variables are changed after variable initialization and before last usage of variable.
+   * If so, referenced value change returned with appropriate error message.
+   *
+   * @param conflicts map for found conflicts
+   * @param initializer variable initializer
+   * @return found changes and errors
+   */
+  public static void checkChangedBeforeLastAccessConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
+                                                           @NotNull PsiExpression initializer,
+                                                           @NotNull PsiVariable variable) {
+
+    Set<PsiVariable> referencedVars = VariableAccessUtils.collectUsedVariables(initializer);
+    if (referencedVars.isEmpty()) return;
+
+    PsiElement scope = PsiUtil.getTopLevelEnclosingCodeBlock(initializer, null);
+    if (scope == null) return;
+
+    ControlFlow flow = createControlFlow(scope);
+    if (flow == null) return;
+
+    int start = flow.getEndOffset(initializer);
+    if (start < 0) return;
+
+    Map<PsiElement, PsiVariable> writePlaces = ControlFlowUtil.getWritesBeforeReads(flow, referencedVars, Collections.singleton(variable), start);
+
+    String readVarName = variable.getName();
+    for (Map.Entry<PsiElement, PsiVariable> writePlaceEntry : writePlaces.entrySet()) {
+      String message = RefactoringBundle.message("variable.0.is.changed.before.last.access", writePlaceEntry.getValue().getName(), readVarName);
+      conflicts.putValue(writePlaceEntry.getKey(), message);
+    }
+  }
+
+  @Nullable
+  private static ControlFlow createControlFlow(@NotNull PsiElement scope) {
+    ControlFlowFactory factory = ControlFlowFactory.getInstance(scope.getProject());
+    ControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+
+    try {
+      return factory.getControlFlow(scope, policy);
+    }
+    catch (AnalysisCanceledException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Extracts side effects from return statements, replacing them with simple {@code return;} or {@code continue;}
+   * while preserving semantics.
+   *
+   * @param method method to process
+   * @param replaceWithContinue if true, returns will be replaced with {@code continue}.
+   */
+  public static void extractReturnValues(PsiMethod method, boolean replaceWithContinue) {
+    PsiCodeBlock block = Objects.requireNonNull(method.getBody());
+    PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(method);
+    for (PsiReturnStatement returnStatement : returnStatements) {
+      final PsiExpression returnValue = returnStatement.getReturnValue();
+      if (returnValue != null) {
+        List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(returnValue);
+        CommentTracker ct = new CommentTracker();
+        sideEffects.forEach(ct::markUnchanged);
+        PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, returnValue);
+        ct.delete(returnValue);
+        if (statements.length > 0) {
+          PsiStatement lastAdded = BlockUtils.addBefore(returnStatement, statements);
+          // Could be wrapped into {}, so returnStatement might be non-physical anymore
+          returnStatement = Objects.requireNonNull(PsiTreeUtil.getNextSiblingOfType(lastAdded, PsiReturnStatement.class));
+        }
+        ct.insertCommentsBefore(returnStatement);
+      }
+      if (ControlFlowUtils.blockCompletesWithStatement(block, returnStatement)) {
+        new CommentTracker().deleteAndRestoreComments(returnStatement);
+      } else if (replaceWithContinue) {
+        new CommentTracker().replaceAndRestoreComments(returnStatement, "continue;");
+      }
+    }
+  }
+
   public enum TailCallType {
-    None, Simple, Return
+    None(null),
+    Simple((methodCopy, callSite, returnType) -> {
+      extractReturnValues(methodCopy, false);
+      return null;
+    }),
+    Continue((methodCopy, callSite, returnType) -> {
+      extractReturnValues(methodCopy, true);
+      return null;
+    }),
+    Invert((methodCopy, callSite, returnType) -> {
+      for (PsiReturnStatement statement : PsiUtil.findReturnStatements(methodCopy)) {
+        PsiExpression value = statement.getReturnValue();
+        if (value != null) {
+          CommentTracker ct = new CommentTracker();
+          ct.replaceAndRestoreComments(value, BoolUtils.getNegatedExpressionText(value, ct));
+        }
+      }
+      return null;
+    }),
+    Return((methodCopy, callSite, returnType) -> null);
+
+    @Nullable
+    private final InlineTransformer myTransformer;
+
+    TailCallType(@Nullable InlineTransformer transformer) {
+      myTransformer = transformer;
+    }
+
+    @Nullable
+    public InlineTransformer getTransformer() {
+      return myTransformer;
+    }
   }
 }

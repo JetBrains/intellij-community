@@ -82,6 +82,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
     init(injection.copy());
   }
 
+  @Override
   protected void apply(BaseInjection other) {
     final String displayName = myNameTextField.getText();
     if (StringUtil.isEmpty(displayName)) {
@@ -131,6 +132,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
     other.setInjectionPlaces(places.toArray(InjectionPlace.EMPTY_ARRAY));
   }
 
+  @Override
   protected void resetImpl() {
     final StringBuilder sb = new StringBuilder();
     for (InjectionPlace place : myOrigInjection.getInjectionPlaces()) {
@@ -140,6 +142,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
     myNameTextField.setText(myOrigInjection.getDisplayName());
   }
 
+  @Override
   public JPanel getComponent() {
     return myRoot;
   }

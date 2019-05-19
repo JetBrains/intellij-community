@@ -45,6 +45,7 @@ import java.util.Collection;
  */
 public class PropertiesAnnotator implements Annotator {
 
+  @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (!(element instanceof Property)) return;
     final Property property = (Property)element;
@@ -93,16 +94,19 @@ public class PropertiesAnnotator implements Annotator {
           annotation.setEnforcedTextAttributes(attributes);
           if (key == PropertiesHighlighter.PROPERTIES_INVALID_STRING_ESCAPE) {
             annotation.registerFix(new IntentionAction() {
+              @Override
               @NotNull
               public String getText() {
                 return PropertiesBundle.message("unescape");
               }
 
+              @Override
               @NotNull
               public String getFamilyName() {
                 return getText();
               }
 
+              @Override
               public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
                 if (!property.isValid() || !property.getManager().isInProject(property)) return false;
 
@@ -111,6 +115,7 @@ public class PropertiesAnnotator implements Annotator {
                 return text.length() > startOffset && text.charAt(startOffset) == '\\';
               }
 
+              @Override
               public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
                 int offset = annotation.getStartOffset();
                 if (property.getPropertiesFile().getContainingFile().getText().charAt(offset) == '\\') {
@@ -118,6 +123,7 @@ public class PropertiesAnnotator implements Annotator {
                 }
               }
 
+              @Override
               public boolean startInWriteAction() {
                 return true;
               }

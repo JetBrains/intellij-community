@@ -64,7 +64,6 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
   public int BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS = 2;
   public int BLANK_LINES_BEFORE_FIRST_METHOD = 0;
-  // TODO make boolean (it needs special editor in BlankLinesPanel)
   public boolean BLANK_LINE_AT_FILE_END = true;
 
   public boolean ALIGN_COLLECTIONS_AND_COMPREHENSIONS = true;
@@ -96,11 +95,14 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
    * the same indentation level for arguments as for parameters.
    */
   public boolean USE_CONTINUATION_INDENT_FOR_ARGUMENTS = false;
+  public boolean USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = false;
 
   public boolean OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
   public boolean OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = false;
   public boolean OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST = true;
   public boolean OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = false;
+  public boolean OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = false;
+  public boolean OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER = false;
 
   /**
    * Affects wrapping of multiple imported names in a single "from" import.

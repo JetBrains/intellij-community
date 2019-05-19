@@ -29,6 +29,7 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,7 @@ class QuickListPanel {
   private JPanel myListPanel;
   QuickList item;
 
-  public QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
+  QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
     actionsModel = new CollectionListModel<>();
     myActionsList = new JBList(actionsModel);
     myActionsList.setCellRenderer(new MyListCellRenderer());
@@ -81,7 +82,7 @@ class QuickListPanel {
                       })
                       .addExtraAction(new AnActionButton("Add Separator", AllIcons.General.SeparatorH) {
                         @Override
-                        public void actionPerformed(@Nullable AnActionEvent e) {
+                        public void actionPerformed(@NotNull AnActionEvent e) {
                           actionsModel.add(QuickList.SEPARATOR_ID);
                         }
                       })
@@ -165,12 +166,17 @@ class QuickListPanel {
           }
         }
         if (actionId.startsWith(QuickList.QUICK_LIST_PREFIX)) {
-          icon = AllIcons.Actions.QuickList;
+          icon = null; // AllIcons.Actions.QuickList;
         }
         setIcon(ActionsTree.getEvenIcon(icon));
       }
 
       return this;
     }
-  }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return UIUtil.updateListRowHeight(super.getPreferredSize());
+    }
+   }
 }

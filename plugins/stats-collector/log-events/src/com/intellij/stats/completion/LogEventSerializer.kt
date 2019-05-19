@@ -19,6 +19,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.stats.completion.events.*
 import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 
 object JsonSerializer {
     private val gson = GsonBuilder().serializeNulls().create()
@@ -40,7 +41,9 @@ object JsonSerializer {
     }
 
     private fun <T> allFields(clazz: Class<T>): List<Field> {
-        val fields: List<Field> = clazz.declaredFields.toList()
+        val fields: List<Field> = clazz.declaredFields.asSequence()
+            .filter { !Modifier.isStatic(it.modifiers) }
+            .toList()
         if (clazz.superclass != null) {
             return fields + allFields(clazz.superclass)
         }
@@ -64,7 +67,8 @@ object LogEventSerializer {
         Action.COMPLETION_CANCELED to CompletionCancelledEvent::class.java,
         Action.EXPLICIT_SELECT to ExplicitSelectEvent::class.java,
         Action.TYPED_SELECT to TypedSelectEvent::class.java,
-        Action.CUSTOM to CustomMessageEvent::class.java
+        Action.CUSTOM to CustomMessageEvent::class.java,
+        Action.PERFORMANCE to PerformanceEvent::class.java
     )
 
 

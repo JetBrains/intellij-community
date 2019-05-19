@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -19,8 +20,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -35,11 +37,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
+import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
 import static org.junit.Assert.*;
 
 public class JarFileSystemTest extends BareTestFixtureTestCase {
@@ -49,19 +51,19 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   public void testFindFile() throws IOException {
     assertNull(JarFileSystem.getInstance().findFileByPath("/invalid/path"));
 
-    String rtJarPath = PlatformTestUtil.getRtJarPath();
+    String jarPath = PathManager.getJarPathForClass(Test.class);
 
-    VirtualFile jarRoot = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR);
+    VirtualFile jarRoot = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
 
-    VirtualFile file2 = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR + "java");
+    VirtualFile file2 = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org");
     assertTrue(file2.isDirectory());
 
-    VirtualFile file3 = jarRoot.findChild("java");
+    VirtualFile file3 = jarRoot.findChild("org");
     assertEquals(file2, file3);
 
-    VirtualFile file4 = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR + "java/lang/Object.class");
-    assertTrue(!file4.isDirectory());
+    VirtualFile file4 = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org/junit/Test.class");
+    assertFalse(file4.isDirectory());
 
     byte[] bytes = file4.contentsToByteArray();
     assertNotNull(bytes);
@@ -75,7 +77,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testMetaInf() {
-    VirtualFile jarRoot = findByPath(PlatformTestUtil.getRtJarPath() + JarFileSystem.JAR_SEPARATOR);
+    VirtualFile jarRoot = findByPath(PathManager.getJarPathForClass(Test.class) + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
 
     VirtualFile metaInf = jarRoot.findChild("META-INF");
@@ -92,7 +94,8 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(vFile);
 
     VirtualFile jarRoot = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    assertThat(Stream.of(jarRoot.getChildren()).map(VirtualFile::getName)).containsExactly("META-INF");
+    VirtualFile child = assertOneElement(jarRoot.getChildren());
+    assertEquals("META-INF", child.getName());
 
     VirtualFile entry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
     assertEquals("", VfsUtilCore.loadText(entry));
@@ -119,7 +122,10 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertTrue(updated.get());
     assertTrue(entry.isValid());
     assertEquals("update", VfsUtilCore.loadText(entry));
-    assertThat(Stream.of(jarRoot.getChildren()).map(VirtualFile::getName)).containsExactlyInAnyOrder("META-INF", "some.txt");
+    List<String> children = ContainerUtil.map(jarRoot.getChildren(), f -> f.getName());
+    assertEquals(2, children.size());
+    assertSameElements(children, "META-INF", "some.txt");
+
     VirtualFile newEntry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "some.txt");
     assertEquals("some text", VfsUtilCore.loadText(newEntry));
   }
@@ -190,6 +196,11 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
   }
 
+  @After
+  public void testDown() {
+    JarFileSystemImpl.cleanupForNextTest();
+  }
+
   @Test
   public void testJarHandlerDoNotCreateCopyWhenListingArchive() throws Exception {
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
@@ -208,7 +219,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
 
     jarFileSystem.setNoCopyJarForPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    assertTrue(!jarFileSystem.isMakeCopyOfJar(jar));
+    assertFalse(jarFileSystem.isMakeCopyOfJar(jar));
   }
 
   @Test
@@ -224,18 +235,18 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testJarRootForLocalFile() {
-    String rtJarPath = PlatformTestUtil.getRtJarPath();
+    String jarPath = PathManager.getJarPathForClass(Test.class);
 
-    VirtualFile rtJarFile = LocalFileSystem.getInstance().findFileByPath(rtJarPath);
-    assertNotNull(rtJarFile);
-    VirtualFile rtJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(rtJarFile);
-    assertNotNull(rtJarRoot);
+    VirtualFile jarFile = LocalFileSystem.getInstance().findFileByPath(jarPath);
+    assertNotNull(jarFile);
+    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jarFile);
+    assertNotNull(jarRoot);
 
-    VirtualFile entryFile = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR + "java/lang/Object.class");
+    VirtualFile entryFile = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org/junit/Test.class");
     VirtualFile entryRoot = JarFileSystem.getInstance().getJarRootForLocalFile(entryFile);
     assertNull(entryRoot);
 
-    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getJavaHome() + "/lib/calendars.properties");
+    VirtualFile nonJarFile = LocalFileSystem.getInstance().findFileByPath(PlatformTestUtil.getJavaExe());
     assertNotNull(nonJarFile);
     VirtualFile nonJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(nonJarFile);
     assertNull(nonJarRoot);
@@ -259,7 +270,9 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     VirtualFile small1 = jarRoot.findChild("small1");
     VirtualFile small2 = jarRoot.findChild("small2");
     VirtualFile large = jarRoot.findChild("large");
-    try (InputStream is1 = small1.getInputStream(); InputStream is2 = small2.getInputStream(); InputStream il = large.getInputStream()) {
+    try (InputStream is1 = small1.getInputStream();
+         InputStream is2 = small2.getInputStream();
+         InputStream il = large.getInputStream()) {
       assertSame(is1.getClass(), is2.getClass());
       assertNotSame(is1.getClass(), il.getClass());
     }

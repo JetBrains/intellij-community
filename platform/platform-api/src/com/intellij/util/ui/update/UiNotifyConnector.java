@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,11 +46,12 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     component.addHierarchyListener(this);
   }
 
+  @Override
   public void hierarchyChanged(@NotNull HierarchyEvent e) {
     if (isDisposed()) return;
 
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
-      final Runnable runnable = (DumbAwareRunnable)() -> {
+      final Runnable runnable = () -> {
         final Component c = myComponent.get();
         if (isDisposed() || c == null) return;
 
@@ -80,10 +80,15 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     myTarget.showNotify();
   }
 
+  protected void hideOnDispose() {
+    myTarget.hideNotify();
+  }
+
+  @Override
   public void dispose() {
     if (isDisposed()) return;
 
-    myTarget.hideNotify();
+    hideOnDispose();
     final Component c = myComponent.get();
     if (c != null) {
       c.removeHierarchyListener(this);
@@ -106,17 +111,22 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
       super(component, target);
     }
 
+    @Override
     protected final void hideNotify() {
       super.hideNotify();
       myHidden = true;
       disposeIfNeeded();
     }
 
+    @Override
     protected final void showNotify() {
       super.showNotify();
       myShown = true;
       disposeIfNeeded();
     }
+
+    @Override
+    protected void hideOnDispose() {}
 
     private void disposeIfNeeded() {
       if (myShown && myHidden) {
@@ -131,10 +141,12 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
 
   public static void doWhenFirstShown(@NotNull Component c, @NotNull final Runnable runnable) {
     Activatable activatable = new Activatable() {
+      @Override
       public void showNotify() {
         runnable.run();
       }
 
+      @Override
       public void hideNotify() {
       }
     };

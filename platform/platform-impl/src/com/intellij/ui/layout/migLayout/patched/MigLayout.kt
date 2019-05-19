@@ -196,9 +196,6 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
     dirty = false
   }
 
-  /**
-   * @since 3.7.3
-   */
   private fun resetLastInvalidOnParent(parent: Container?) {
     @Suppress("NAME_SHADOWING")
     var parent = parent

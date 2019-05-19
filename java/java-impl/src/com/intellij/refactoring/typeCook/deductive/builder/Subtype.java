@@ -26,14 +26,17 @@ public class Subtype extends Constraint {
     super(left, right);
   }
 
+  @Override
   String relationString() {
     return "<:";
   }
 
+  @Override
   int relationType() {
     return 1;
   }
 
+  @Override
   public Constraint apply(final Binding b) {
     return new Subtype(b.apply(myLeft), b.apply(myRight));
   }

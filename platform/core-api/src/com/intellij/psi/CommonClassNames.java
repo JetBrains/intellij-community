@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 /**
@@ -74,6 +74,7 @@ public interface CommonClassNames {
   String JAVA_LANG_DOUBLE = "java.lang.Double";
   String JAVA_LANG_CHARACTER = "java.lang.Character";
 
+  String JAVA_LANG_CHAR_SEQUENCE = "java.lang.CharSequence";
   String JAVA_LANG_STRING_BUFFER = "java.lang.StringBuffer";
   String JAVA_LANG_STRING_BUILDER = "java.lang.StringBuilder";
   String JAVA_LANG_ABSTRACT_STRING_BUILDER = "java.lang.AbstractStringBuilder";
@@ -107,9 +108,4 @@ public interface CommonClassNames {
 
   String CLASS_FILE_EXTENSION = ".class";
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #JAVA_UTIL_FUNCTION_BI_FUNCTION} (to be removed in IDEA 2019) */
-  @SuppressWarnings("SpellCheckingInspection")
-  String JAVA_UTIL_FUNCTION_BIFUNCTION = JAVA_UTIL_FUNCTION_BI_FUNCTION;
-  //</editor-fold>
 }

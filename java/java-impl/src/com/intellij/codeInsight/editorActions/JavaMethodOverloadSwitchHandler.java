@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.WriteAction;
@@ -17,6 +16,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import org.jetbrains.annotations.NotNull;
@@ -87,6 +87,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     if (enteredParameters == null) {
       exprList.putUserData(ENTERED_PARAMETERS, enteredParameters = new HashMap<>());
     }
+    boolean virtualComma = Registry.is("editor.completion.hints.virtual.comma");
     int currentIndex;
     if (highlighted == null) {
       currentIndex = mySwitchUp ? objects.length : -1;
@@ -99,7 +100,8 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
       int currentMethodParameterCount = currentMethod.getParameterList().getParametersCount();
       PsiExpression[] enteredExpressions = ((PsiExpressionList)exprList).getExpressions();
       int enteredCount = enteredExpressions.length;
-      if (currentMethodParameterCount != enteredCount && !(enteredCount == 0 && currentMethodParameterCount == 1)) {
+      if (currentMethodParameterCount != enteredCount && !(enteredCount == 0 && currentMethodParameterCount == 1) &&
+          (!virtualComma || !currentMethod.isVarArgs() && enteredCount > currentMethodParameterCount)) {
         // when parameter list has been edited, but popup wasn't updated for some reason
         return;
       }
@@ -114,30 +116,11 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
       }
     }
 
-    UsageTrigger.trigger("method.overload.switch");
-
     final PsiMethod targetMethod =
       (PsiMethod)((CandidateInfo)objects[(currentIndex + (mySwitchUp ? -1 : 1) + objects.length) % objects.length]).getElement();
-    PsiParameterList parameterList = targetMethod.getParameterList();
-    final int parametersCount = parameterList.getParametersCount();
-    caret.moveToOffset(lbraceOffset); // avoid caret impact on hints location
-    final int endOffset = exprList.getTextRange().getEndOffset() - 1;
-    Map<String, String> finalEnteredParameters = enteredParameters;
-    Ref<Integer> targetCaretPosition = new Ref<>();
-    WriteAction.run(() -> {
-      int offset = lbraceOffset + 1;
-      editor.getDocument().deleteString(offset, endOffset);
-      for (int i = 0; i < parametersCount; i++) {
-        String key = getParameterKey(targetMethod, i);
-        String value = finalEnteredParameters.getOrDefault(key, "");
-        if (value.isEmpty() && targetCaretPosition.isNull()) targetCaretPosition.set(offset);
-        if (i < parametersCount - 1) value += ", ";
-        editor.getDocument().insertString(offset, value);
-        offset += value.length();
-      }
-      if (targetCaretPosition.isNull()) targetCaretPosition.set(offset);
-    });
-    caret.moveToLogicalPosition(editor.offsetToLogicalPosition(targetCaretPosition.get()).leanForward(true));
+
+    updateParameterValues(editor, caret, targetMethod, exprList, lbraceOffset, enteredParameters, virtualComma);
+
     PsiCall methodCall = (PsiCall)call;
     JavaMethodCallElement.setCompletionModeIfNotSet(methodCall, controller);
 
@@ -148,8 +131,47 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     controller.showHint(false, false);
   }
 
+  private static void updateParameterValues(@NotNull final Editor editor, @NotNull Caret caret, @NotNull PsiMethod targetMethod,
+                                            @NotNull PsiElement exprList, int lbraceOffset, @NotNull Map<String, String> enteredParameters,
+                                            boolean virtualComma) {
+    PsiParameterList parameterList = targetMethod.getParameterList();
+    final int parametersCount = parameterList.getParametersCount();
+    caret.moveToOffset(lbraceOffset); // avoid caret impact on hints location
+    final int endOffset = exprList.getTextRange().getEndOffset() - 1;
+    int lastParameterWithValue = -1;
+    if (virtualComma) {
+      for (int i = parametersCount - 1; i >= 0; i--) {
+        String key = getParameterKey(targetMethod, i);
+        String value = enteredParameters.getOrDefault(key, "");
+        if (!value.isEmpty()) {
+          lastParameterWithValue = i;
+          break;
+        }
+      }
+    }
+    int paramsToInsert = virtualComma ? lastParameterWithValue + 1 : parametersCount;
+    Ref<Integer> targetCaretPosition = new Ref<>();
+    WriteAction.run(() -> {
+      int offset = lbraceOffset + 1;
+      editor.getDocument().deleteString(offset, endOffset);
+      for (int i = 0; i < paramsToInsert; i++) {
+        String key = getParameterKey(targetMethod, i);
+        String value = enteredParameters.getOrDefault(key, "");
+        if (value.isEmpty() && targetCaretPosition.isNull()) targetCaretPosition.set(offset);
+        if (i < parametersCount - 1 && (!virtualComma || i < paramsToInsert - 1 || targetCaretPosition.isNull())) value += ", ";
+        editor.getDocument().insertString(offset, value);
+        offset += value.length();
+      }
+      if (targetCaretPosition.isNull()) targetCaretPosition.set(offset);
+    });
+    caret.moveToOffset(targetCaretPosition.get());
+  }
+
   private static String getParameterKey(PsiMethod method, int parameterIndex) {
-    PsiParameter parameter = method.getParameterList().getParameters()[parameterIndex];
-    return parameter.getName() + ":" + parameter.getType().getCanonicalText();
+    int parameterCount = method.getParameterList().getParametersCount();
+    int mainIndex = method.isVarArgs() && parameterIndex >= parameterCount ? parameterCount - 1 : parameterIndex;
+    int subIndex = parameterIndex - mainIndex;
+    PsiParameter parameter = method.getParameterList().getParameters()[mainIndex];
+    return parameter.getName() + ":" + parameter.getType().getCanonicalText() + (subIndex == 0 ? "" : (":" + subIndex));
   }
 }

@@ -303,7 +303,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final PyDocstringGenerator generator = PyDocstringGenerator.forDocStringOwner(function);
     for (PyParameter p : function.getParameterList().getParameters()) {
       final String paramName = p.getName();
-      if (!names.contains(paramName) && paramName != null) {
+      if (paramName != null && !names.contains(paramName)) {
         generator.withoutParam(paramName);
       }
     }

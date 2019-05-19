@@ -30,8 +30,8 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.MapIndexStorage;
-import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.*;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +69,7 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
                                  boolean keyIsUniqueForIndexedFile,
                                  boolean buildKeyHashToVirtualFileMapping) throws IOException {
     super(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, false, false);
-    myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping && FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+    myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping;
     initMapAndCache();
   }
 
@@ -146,17 +146,19 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
   }
 
   @Override
-  public boolean processKeys(@NotNull final Processor<Key> processor, GlobalSearchScope scope, final IdFilter idFilter) throws StorageException {
+  public boolean processKeys(@NotNull final Processor<? super Key> processor, GlobalSearchScope scope, final IdFilter idFilter) throws StorageException {
     l.lock();
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map
+
       if (myBuildKeyHashToVirtualFileMapping && idFilter != null) {
         TIntHashSet hashMaskSet = null;
         long l = System.currentTimeMillis();
+        GlobalSearchScope effectiveFilteringScope = calculateEffectiveFilteringScope(scope, idFilter);
 
-        File fileWithCaches = getSavedProjectFileValueIds(myLastScannedId, scope);
+        File fileWithCaches = getSavedProjectFileValueIds(myLastScannedId, effectiveFilteringScope);
         final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS &&
-                                         (scope instanceof ProjectScopeImpl || scope instanceof ProjectAndLibrariesScope) &&
+                                         (effectiveFilteringScope instanceof ProjectScopeImpl || effectiveFilteringScope instanceof ProjectAndLibrariesScope) &&
                                          fileWithCaches != null;
         int id = myKeyHashToVirtualFileMapping.getCurrentLength();
 
@@ -190,7 +192,7 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
           });
 
           if (useCachedHashIds) {
-            saveHashedIds(hashMaskSet, id, scope);
+            saveHashedIds(hashMaskSet, id, effectiveFilteringScope);
           }
         }
 
@@ -217,58 +219,55 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
   }
 
   @NotNull
+  private static GlobalSearchScope calculateEffectiveFilteringScope(GlobalSearchScope scope, IdFilter idFilter) {
+    GlobalSearchScope effectiveFilteringScope = scope;
+    Project project = scope.getProject();
+
+    if (project != null) {
+      if(idFilter == IdFilter.getProjectIdFilter(project, true)) {
+        effectiveFilteringScope = GlobalSearchScope.allScope(project);
+      } else if (idFilter == IdFilter.getProjectIdFilter(project, false)) {
+        effectiveFilteringScope = GlobalSearchScope.projectScope(project);
+      }
+    }
+    return effectiveFilteringScope;
+  }
+
+  @NotNull
   private static TIntHashSet loadHashedIds(@NotNull File fileWithCaches) throws IOException {
-    DataInputStream inputStream = null;
-    try {
-      inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(fileWithCaches)));
+    try (DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(fileWithCaches)))) {
       int capacity = DataInputOutputUtil.readINT(inputStream);
       TIntHashSet hashMaskSet = new TIntHashSet(capacity);
-      while(capacity > 0) {
+      while (capacity > 0) {
         hashMaskSet.add(DataInputOutputUtil.readINT(inputStream));
         --capacity;
       }
-      inputStream.close();
       return hashMaskSet;
-    }
-    finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        }
-        catch (IOException ignored) {}
-      }
     }
   }
 
   private void saveHashedIds(@NotNull TIntHashSet hashMaskSet, int largestId, @NotNull GlobalSearchScope scope) {
     File newFileWithCaches = getSavedProjectFileValueIds(largestId, scope);
     assert newFileWithCaches != null;
-    DataOutputStream stream = null;
 
-    boolean savedSuccessfully = false;
-    try {
-      stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(newFileWithCaches)));
+    boolean savedSuccessfully;
+    try (DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(newFileWithCaches)))) {
       DataInputOutputUtil.writeINT(stream, hashMaskSet.size());
-      final DataOutputStream finalStream = stream;
       savedSuccessfully = hashMaskSet.forEach(value -> {
         try {
-          DataInputOutputUtil.writeINT(finalStream, value);
+          DataInputOutputUtil.writeINT(stream, value);
           return true;
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
           return false;
         }
       });
     }
     catch (IOException ignored) {
+      savedSuccessfully = false;
     }
-    finally {
-      if (stream != null) {
-        try {
-          stream.close();
-          if (savedSuccessfully) myLastScannedId = largestId;
-        }
-        catch (IOException ignored) {}
-      }
+    if (savedSuccessfully) {
+      myLastScannedId = largestId;
     }
   }
 

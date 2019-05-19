@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.IconLoader
 import com.intellij.util.io.isWriteFromBrowserWithoutOrigin
 import com.intellij.util.ui.UIUtil
 import io.netty.buffer.Unpooled
@@ -52,7 +37,7 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
       prevHandlerAttribute.set(null)
     }
 
-    for (handler in HttpRequestHandler.EP_NAME.extensions) {
+    for (handler in HttpRequestHandler.EP_NAME.extensionList) {
       try {
         if (handler.checkAndProcess()) {
           prevHandlerAttribute.set(handler)
@@ -65,16 +50,14 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
     }
 
     if (urlDecoder.path() == "/favicon.ico") {
-      val icon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().smallIconUrl)
-      if (icon != null) {
-        val image = UIUtil.createImage(icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB)
-        icon.paintIcon(null, image.graphics, 0, 0)
-        val icoBytes = Imaging.writeImageToBytes(image, ImageFormats.ICO, null)
-        response(FileResponses.getContentType(urlDecoder.path()), Unpooled.wrappedBuffer(icoBytes))
-          .addNoCache()
-          .send(context.channel(), request)
-        return true
-      }
+      val icon = ProductIcons.getInstance().productIcon
+      val image = UIUtil.createImage(icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB)
+      icon.paintIcon(null, image.graphics, 0, 0)
+      val icoBytes = Imaging.writeImageToBytes(image, ImageFormats.ICO, null)
+      response(FileResponses.getContentType(urlDecoder.path()), Unpooled.wrappedBuffer(icoBytes))
+        .addNoCache()
+        .send(context.channel(), request)
+      return true
     }
 
     return false

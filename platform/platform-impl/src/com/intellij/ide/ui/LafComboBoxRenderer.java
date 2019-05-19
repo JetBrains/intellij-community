@@ -16,9 +16,12 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ui.ListCellRendererWrapper;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 public class LafComboBoxRenderer extends ListCellRendererWrapper<UIManager.LookAndFeelInfo> {
   @Override
   public void customize(final JList list,

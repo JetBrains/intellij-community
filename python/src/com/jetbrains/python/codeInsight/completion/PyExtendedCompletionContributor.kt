@@ -10,6 +10,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 
 /**
  * Provides basic functionality for extended completion.
@@ -35,13 +36,22 @@ abstract class PyExtendedCompletionContributor : CompletionContributor() {
 
   protected val stringLiteralInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
     val element = item.psiElement
+    if (element == null) return@InsertHandler
     if (element is PyQualifiedNameOwner) {
-      val qName = element.qualifiedName
-      val name = element.name
-      if (qName != null && name != null) {
-        val qNamePrefix = qName.substring(0, qName.length - name.length)
-        context.document.insertString(context.startOffset, qNamePrefix)
+      insertStringLiteralPrefix(element.qualifiedName, element.name, context)
+    }
+    else {
+      val importPath = QualifiedNameFinder.findCanonicalImportPath(element, null)
+      if (importPath != null) {
+        insertStringLiteralPrefix(importPath.toString(), importPath.lastComponent.toString(), context)
       }
+    }
+  }
+
+  private fun insertStringLiteralPrefix(qualifiedName: String?, name: String?, context: InsertionContext) {
+    if (qualifiedName != null && name != null) {
+      val qualifiedNamePrefix = qualifiedName.substring(0, qualifiedName.length - name.length)
+      context.document.insertString(context.startOffset, qualifiedNamePrefix)
     }
   }
 

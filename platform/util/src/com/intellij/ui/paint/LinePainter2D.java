@@ -4,8 +4,9 @@ package com.intellij.ui.paint;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.paint.PaintUtil.ParityMode;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleType;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ import static com.intellij.ui.paint.PaintUtil.getParityMode;
  * Draws a line with a stroke defined by {@link StrokeType}, provided that the graphics stroke is {@link BasicStroke}),
  * otherwise defaults to {@code Graphics2D.draw(Line2D.Double)}.
  * <p>
- * It's assumed that the {@link JBUI.ScaleType#USR_SCALE} factor is already applied to the values (given in the user space)
+ * It's assumed that the {@link ScaleType#USR_SCALE} factor is already applied to the values (given in the user space)
  * passed to the methods of this class. So the user scale factor is not taken into account.
  *
  * @author tav
@@ -107,7 +108,6 @@ public class LinePainter2D {
    * @param strokeWidth the stroke width
    * @param valueAA     overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
    */
-  @SuppressWarnings("Duplicates")
   public static void paint(@NotNull final Graphics2D g,
                            double x1, double y1, double x2, double y2,
                            @NotNull StrokeType strokeType,
@@ -210,22 +210,12 @@ public class LinePainter2D {
       path.closePath();
 
       PaintUtil.paintWithAA(g, valueAA,
-        new Runnable() {
-          @Override
-          public void run() {
-            g.fill(path);
-          }
-        });
+                            () -> g.fill(path));
     }
     else {
       final Line2D line = new Line2D.Double(x1, y1, x2, y2);
       PaintUtil.paintWithAA(g, valueAA,
-        new Runnable() {
-          @Override
-          public void run() {
-            g.draw(line);
-          }
-        });
+                            () -> g.draw(line));
     }
   }
 
@@ -255,12 +245,7 @@ public class LinePainter2D {
     }
     path.closePath();
     PaintUtil.paintWithAA(g, valueAA,
-                          new Runnable() {
-                            @Override
-                            public void run() {
-                              g.fill(path);
-                            }
-                          });
+                          () -> g.fill(path));
   }
 
   /**
@@ -399,7 +384,7 @@ public class LinePainter2D {
       sizeWithStroke = sw_1 + prefSize + sw_2;
     }
     _xy -= (pm == ParityMode.ODD ? sizeWithStroke - PaintUtil.devPixel(g) : sizeWithStroke) / 2 - sw_1;
-    return new Pair<Double, Double>(_xy, prefSize);
+    return new Pair<>(_xy, prefSize);
   }
 
   /**
@@ -420,7 +405,7 @@ public class LinePainter2D {
    * Returns the x (y) coordinate of the center of the stroke.
    *
    * @param g           the graphics
-   * @param coord       the x or y coordinate
+   * @param xy       the x or y coordinate
    * @param strokeType  the stroke type
    * @param strokeWidth the stroke width
    * @return the coordinate of the center of the stroke

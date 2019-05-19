@@ -17,8 +17,8 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,7 @@ public class LengthOneStringInIndexOfInspection
       "length.one.string.in.indexof.display.name");
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -48,11 +50,9 @@ public class LengthOneStringInIndexOfInspection
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final String string = (String)infos[0];
-    final String escapedString = StringUtil.escapeStringCharacters(string);
-    return InspectionGadgetsBundle.message(
-      "expression.can.be.replaced.problem.descriptor",
-      escapedString);
+    final PsiExpression literal = (PsiExpression)infos[0];
+    final String replacement = getReplacement(literal);
+    return InspectionGadgetsBundle.message("expression.can.be.replaced.no.quotes.problem.descriptor", literal.getText(), replacement);
   }
 
   @Override
@@ -77,19 +77,24 @@ public class LengthOneStringInIndexOfInspection
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiExpression expression =
-        (PsiExpression)descriptor.getPsiElement();
-      final String text = expression.getText();
-      final int length = text.length();
-      final String character = text.substring(1, length - 1);
-      final String charLiteral;
-      if ("\'".equals(character)) {
-        charLiteral = "'\\''";
-      }
-      else {
-        charLiteral = '\'' + character + '\'';
-      }
+      final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
+      final String charLiteral = getReplacement(expression);
       PsiReplacementUtil.replaceExpression(expression, charLiteral);
+    }
+  }
+
+  @NotNull
+  private static String getReplacement(PsiExpression expression) {
+    final String text = expression.getText();
+    final int length = text.length();
+    final String character = text.substring(1, length - 1);
+    switch (character) {
+      case "\'":
+        return "'\\''";
+      case "\\\"":
+        return "'\"'";
+      default:
+        return '\'' + character + '\'';
     }
   }
 
@@ -111,11 +116,11 @@ public class LengthOneStringInIndexOfInspection
       if (!isArgumentOfIndexOf(expression)) {
         return;
       }
-      registerError(expression, value);
+      registerError(expression, expression);
     }
 
     static boolean isArgumentOfIndexOf(PsiExpression expression) {
-      final PsiElement parent = expression.getParent();
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
       if (parent == null) {
         return false;
       }

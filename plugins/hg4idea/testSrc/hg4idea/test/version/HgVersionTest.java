@@ -99,7 +99,7 @@ public class HgVersionTest extends HgPlatformTest {
     private final int middle;
     private final int minor;
 
-    public TestHgVersion(String output, int major, int middle, int minor) {
+    TestHgVersion(String output, int major, int middle, int minor) {
       this.output = output;
       this.major = major;
       this.middle = middle;

@@ -45,7 +45,7 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
+                                           @NotNull ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                PsiElement position = parameters.getOriginalPosition();
                PyClass containingClass = PsiTreeUtil.getParentOfType(position, PyClass.class);
@@ -65,9 +65,21 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                for (PyClass ancestor : containingClass.getAncestorClasses(null)) {
                  for (PyFunction superMethod : ancestor.getMethods()) {
                    if (!seenNames.contains(superMethod.getName())) {
-                     String text = superMethod.getName() + superMethod.getParameterList().getText();
-                     LookupElementBuilder element = LookupElementBuilder.create(text);
-                     result.addElement(TailTypeDecorator.withTail(element, TailType.CASE_COLON));
+                     StringBuilder builder = new StringBuilder();
+                     builder.append(superMethod.getName())
+                            .append(superMethod.getParameterList().getText());
+                     if (superMethod.getAnnotation() != null) {
+                       builder.append(" ")
+                              .append(superMethod.getAnnotation().getText())
+                              .append(":");
+                     } else if (superMethod.getTypeComment() != null) {
+                       builder.append(":  ")
+                              .append(superMethod.getTypeComment().getText());
+                     } else {
+                       builder.append(":");
+                     }
+                     LookupElementBuilder element = LookupElementBuilder.create(builder.toString());
+                     result.addElement(TailTypeDecorator.withTail(element, TailType.NONE));
                      seenNames.add(superMethod.getName());
                    }
                  }

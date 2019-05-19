@@ -78,7 +78,7 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
           private boolean removed;
 
           @Override
-          public void projectClosing(Project eventProject) {
+          public void projectClosing(@NotNull Project eventProject) {
             if (eventProject == project && !removed) {
               removed = true;
               myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
@@ -154,7 +154,7 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
         
         index.processChangedFiles(project, new Processor<VirtualFile>() {
           int filesInProjectToBeIndexed;
-          String projectBasePath = project.getBasePath();
+          final String projectBasePath = project.getBasePath();
           
           @Override
           public boolean process(VirtualFile file) {

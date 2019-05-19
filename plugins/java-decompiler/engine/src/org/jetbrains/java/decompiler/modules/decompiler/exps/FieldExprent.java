@@ -54,7 +54,7 @@ public class FieldExprent extends Exprent {
 
   @Override
   public int getExprentUse() {
-    return instance == null ? Exprent.MULTIPLE_USES : instance.getExprentUse() & Exprent.MULTIPLE_USES;
+    return 0; // multiple references to a field considered dangerous in a multithreaded environment, thus no Exprent.MULTIPLE_USES set here
   }
 
   @Override

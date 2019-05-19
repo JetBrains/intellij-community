@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
@@ -44,7 +45,7 @@ public class Replacer {
     this.options = options;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getMatchOptions().getFileType());
     assert profile != null;
-    replaceHandler = profile.getReplaceHandler(new ReplacementContext(options, project));
+    replaceHandler = profile.getReplaceHandler(project, options);
     assert replaceHandler != null;
     replacementBuilder = new ReplacementBuilder(this.project, this.options);
   }
@@ -66,7 +67,7 @@ public class Replacer {
   }
 
   public static String testReplace(String in, String what, String by, ReplaceOptions options, Project project, boolean sourceIsFile) {
-    FileType type = options.getMatchOptions().getFileType();
+    final FileType type = options.getMatchOptions().getFileType();
     return testReplace(in, what, by, options, project, sourceIsFile, false, type, null);
   }
 
@@ -78,14 +79,14 @@ public class Replacer {
     matchOptions.fillSearchCriteria(what);
 
     Matcher.validate(project, matchOptions);
-    checkSupportedReplacementPattern(project, replaceOptions);
+    checkReplacementPattern(project, replaceOptions);
 
     final Replacer replacer = new Replacer(project, replaceOptions);
     final Matcher matcher = new Matcher(project);
     try {
       final PsiElement firstElement, lastElement, parent;
 
-      if (replaceOptions.getMatchOptions().getScope() == null) {
+      if (matchOptions.getScope() == null) {
         final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
           in,
           sourceIsFile ? PatternTreeContext.File : PatternTreeContext.Block,
@@ -105,7 +106,7 @@ public class Replacer {
         lastElement = parent.getLastChild();
       }
 
-      CollectingMatchResultSink sink = new CollectingMatchResultSink();
+      final CollectingMatchResultSink sink = new CollectingMatchResultSink();
       matcher.testFindMatches(sink, matchOptions);
 
       final List<ReplacementInfo> resultPtrList = new SmartList<>();
@@ -135,6 +136,9 @@ public class Replacer {
 
       return result;
     }
+    catch (RuntimeException e) {
+      throw e;
+    }
     catch (Exception e) {
       throw new IncorrectOperationException(e);
     }
@@ -143,7 +147,7 @@ public class Replacer {
     }
   }
 
-  public void replaceAll(final List<ReplacementInfo> infos) {
+  public void replaceAll(final List<? extends ReplacementInfo> infos) {
     for (ReplacementInfo info : infos) {
       replaceHandler.prepare(info);
     }
@@ -161,9 +165,11 @@ public class Replacer {
             indicator.checkCanceled();
             indicator.setFraction((float)(i + 1) / size);
 
-            ReplacementInfo info = infos.get(i);
-            PsiElement element = info.getMatch(0);
-            assert element != null;
+            final ReplacementInfo info = infos.get(i);
+            final PsiElement element = info.getMatch(0);
+            if (element == null) {
+              continue;
+            }
             final VirtualFile vFile = element.getContainingFile().getVirtualFile();
             if (vFile != null && !vFile.equals(lastFile)) {
               indicator.setText2(vFile.getPresentableUrl());
@@ -210,13 +216,16 @@ public class Replacer {
   }
 
   private void reformatAndPostProcess(final PsiElement elementParent) {
-    if (elementParent == null) return;
+    if (elementParent == null || !elementParent.isValid()) return;
     final PsiFile containingFile = elementParent.getContainingFile();
 
     if (containingFile != null && options.isToReformatAccordingToStyle()) {
       final VirtualFile file = containingFile.getVirtualFile();
       if (file != null) {
-        PsiDocumentManager.getInstance(project).commitDocument(FileDocumentManager.getInstance().getDocument(file));
+        final Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null) {
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+        }
       }
 
       final int parentOffset = elementParent.getTextRange().getStartOffset();
@@ -254,34 +263,32 @@ public class Replacer {
     }
   }
 
-  public static void checkSupportedReplacementPattern(Project project, ReplaceOptions options) {
+  public static void checkReplacementPattern(Project project, ReplaceOptions options) {
     try {
       String search = options.getMatchOptions().getSearchPattern();
       String replacement = options.getReplacement();
       FileType fileType = options.getMatchOptions().getFileType();
-      Template template = TemplateManager.getInstance(project).createTemplate("","",search);
-      Template template2 = TemplateManager.getInstance(project).createTemplate("","",replacement);
+      Template template = TemplateManager.getInstance(project).createTemplate("" ,"", search);
+      Template template2 = TemplateManager.getInstance(project).createTemplate("", "", replacement);
 
       int segmentCount = template2.getSegmentsCount();
-      for(int i=0;i<segmentCount;++i) {
+      for(int i = 0; i < segmentCount; i++) {
         final String replacementSegmentName = template2.getSegmentName(i);
         final int segmentCount2  = template.getSegmentsCount();
-        int j;
+        int j = 0;
 
-        for(j=0;j<segmentCount2;++j) {
+        while (j < segmentCount2) {
           final String searchSegmentName = template.getSegmentName(j);
-
           if (replacementSegmentName.equals(searchSegmentName)) break;
 
           // Reference to
-          if (replacementSegmentName.startsWith(searchSegmentName) &&
-              replacementSegmentName.charAt(searchSegmentName.length())=='_'
-             ) {
+          if (replacementSegmentName.startsWith(searchSegmentName) && replacementSegmentName.charAt(searchSegmentName.length()) == '_') {
             try {
-              Integer.parseInt(replacementSegmentName.substring(searchSegmentName.length()+1));
+              Integer.parseInt(replacementSegmentName.substring(searchSegmentName.length() + 1));
               break;
-            } catch(NumberFormatException ex) {}
+            } catch (NumberFormatException ignore) {}
           }
+          j++;
         }
 
         if (j == segmentCount2) {

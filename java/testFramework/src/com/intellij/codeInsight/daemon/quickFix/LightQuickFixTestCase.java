@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
@@ -49,7 +49,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     final File testFile = new File(testFullPath);
     CommandProcessor.getInstance().executeCommand(quickFixTestCase.getProject(), () -> {
       try {
-        String contents = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, CharsetToolkit.UTF8_CHARSET));
+        String contents = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, StandardCharsets.UTF_8));
         quickFixTestCase.configureFromFileText(testFile.getName(), contents);
         quickFixTestCase.bringRealEditorBack();
         final ActionHint actionHint = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);
@@ -81,9 +81,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   public static void doAction(@NotNull ActionHint actionHint,
-                              String testFullPath,
-                              String testName,
-                              QuickFixTestCase quickFix) throws Exception {
+                              @NotNull String testFullPath,
+                              @NotNull String testName,
+                              @NotNull QuickFixTestCase quickFix) throws Exception {
     IntentionAction action = actionHint.findAndCheck(quickFix.getAvailableActions(),
                                                      () -> getTestInfo(testFullPath, quickFix));
     if (action != null) {
@@ -108,7 +108,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     }
   }
 
-  private static String getTestInfo(String testFullPath, QuickFixTestCase quickFix) {
+  private static String getTestInfo(@NotNull String testFullPath, @NotNull QuickFixTestCase quickFix) {
     String infos = StreamEx.of(quickFix.doHighlighting())
       .filter(info -> info.getSeverity() != HighlightInfoType.SYMBOL_TYPE_SEVERITY)
       .map(info -> {
@@ -131,7 +131,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
            "Infos: " + infos;
   }
 
-  protected void doAction(@NotNull ActionHint actionHint, final String testFullPath, final String testName)
+  protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName)
     throws Exception {
     doAction(actionHint, testFullPath, testName, myWrapper);
   }
@@ -155,7 +155,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return findActionWithText(getAvailableActions(), text);
   }
 
-  public static IntentionAction findActionWithText(@NotNull List<IntentionAction> actions, @NotNull String text) {
+  public static IntentionAction findActionWithText(@NotNull List<? extends IntentionAction> actions, @NotNull String text) {
     for (IntentionAction action : actions) {
       if (text.equals(action.getText())) {
         return action;
@@ -168,6 +168,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
    * @deprecated use {@link LightQuickFixParameterizedTestCase}
    * to get separate tests for all data files in testData directory.
    */
+  @Deprecated
   protected void doAllTests() {
     doAllTests(createWrapper());
   }

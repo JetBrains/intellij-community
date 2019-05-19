@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package com.siyeh.ig.assignment;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAssignmentExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NestedAssignmentInspection extends BaseInspection {
@@ -45,17 +46,9 @@ public class NestedAssignmentInspection extends BaseInspection {
   private static class NestedAssignmentVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(
-      @NotNull PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
-      final PsiElement parent = expression.getParent();
-      if (parent == null) {
-        return;
-      }
-      final PsiElement grandparent = parent.getParent();
-      if (parent instanceof PsiExpressionStatement ||
-          parent instanceof PsiLambdaExpression ||
-          grandparent instanceof PsiExpressionListStatement) {
+      if (ExpressionUtils.isVoidContext(expression)) {
         return;
       }
       registerError(expression);

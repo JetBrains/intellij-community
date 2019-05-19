@@ -78,21 +78,18 @@ abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase implemen
 
     if (!highlightPolicy.isShouldCompare()) return null;
 
+    indicator.checkCanceled();
+    List<List<LineFragment>> fragments = doCompare(text1, text2, lineOffsets1, lineOffsets2, linesRanges,
+                                                   ignorePolicy, highlightPolicy, indicator);
+    assert fragments.size() == (linesRanges != null ? linesRanges.size() : 1);
+
     ComparisonPolicy policy = ignorePolicy.getComparisonPolicy();
-    boolean innerFragments = highlightPolicy.isFineFragments();
     boolean squashFragments = highlightPolicy.isShouldSquash();
     boolean trimFragments = ignorePolicy.isShouldTrimChunks();
 
     indicator.checkCanceled();
-    List<List<LineFragment>> fragments = doCompare(text1, text2, lineOffsets1, lineOffsets2, linesRanges,
-                                                   ignorePolicy, innerFragments, indicator);
-    assert fragments.size() == (linesRanges != null ? linesRanges.size() : 1);
-
-    indicator.checkCanceled();
-    return ContainerUtil.map(fragments, rangeFragments -> {
-      return ComparisonManager.getInstance().processBlocks(rangeFragments, text1, text2,
-                                                           policy, squashFragments, trimFragments);
-    });
+    return ContainerUtil.map(fragments, rangeFragments -> ComparisonManager.getInstance().processBlocks(rangeFragments, text1, text2,
+                                                                                                      policy, squashFragments, trimFragments));
   }
 
   @NotNull
@@ -100,8 +97,8 @@ abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase implemen
                                                         @NotNull CharSequence text2,
                                                         @NotNull LineOffsets lineOffsets1,
                                                         @NotNull LineOffsets lineOffsets2,
-                                                        @Nullable List<Range> linesRanges,
+                                                        @Nullable List<? extends Range> linesRanges,
                                                         @NotNull IgnorePolicy ignorePolicy,
-                                                        boolean innerFragments,
+                                                        @NotNull HighlightPolicy highlightPolicy,
                                                         @NotNull ProgressIndicator indicator);
 }

@@ -28,7 +28,6 @@ import java.util.Arrays;
 
 /**
  * @author Denis Zhdanov
- * @since 11/18/10 7:42 PM
  */
 public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorTest {
   

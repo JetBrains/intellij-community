@@ -6,9 +6,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBRectangle;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import gnu.trove.THashSet;
@@ -155,6 +155,7 @@ public class LinkLabel<T> extends JLabel {
     return myVisitedLinksKey != null && ourVisitedLinks.contains(myVisitedLinksKey);
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     setForeground(getTextColor());
     super.paintComponent(g);
@@ -193,6 +194,7 @@ public class LinkLabel<T> extends JLabel {
     myPaintUnderline = paintUnderline;
   }
 
+  @Override
   public void removeNotify() {
     super.removeNotify();
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
@@ -287,19 +289,19 @@ public class LinkLabel<T> extends JLabel {
   }
 
   protected Color getVisited() {
-    return JBColor.linkVisited();
+    return JBUI.CurrentTheme.Link.linkVisitedColor();
   }
 
   protected Color getActive() {
-    return JBColor.linkPressed();
+    return JBUI.CurrentTheme.Link.linkPressedColor();
   }
 
   protected Color getNormal() {
-    return JBColor.link();
+    return JBUI.CurrentTheme.Link.linkColor();
   }
 
   protected Color getHover() {
-    return JBColor.linkHover();
+    return JBUI.CurrentTheme.Link.linkHoverColor();
   }
 
   public void entered(MouseEvent e) {
@@ -315,12 +317,14 @@ public class LinkLabel<T> extends JLabel {
   }
 
   private class MyMouseHandler extends MouseAdapter implements MouseMotionListener {
+    @Override
     public void mousePressed(MouseEvent e) {
       if (isEnabled() && isInClickableArea(e.getPoint())) {
         setActive(true);
       }
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
       if (isEnabled() && myIsLinkActive && isInClickableArea(e.getPoint())) {
         doClick(e);
@@ -328,6 +332,7 @@ public class LinkLabel<T> extends JLabel {
       setActive(false);
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
       if (isEnabled() && isInClickableArea(e.getPoint())) {
         enableUnderline();
@@ -337,10 +342,12 @@ public class LinkLabel<T> extends JLabel {
       }
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
       disableUnderline();
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
     }
   }

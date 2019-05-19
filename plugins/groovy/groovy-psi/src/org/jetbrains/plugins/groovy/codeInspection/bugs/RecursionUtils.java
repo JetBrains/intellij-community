@@ -114,8 +114,7 @@ class RecursionUtils {
       GrForStatement loopStatement, GrMethod method) {
     final GrForClause forClause = loopStatement.getClause();
     if (forClause != null) {
-      final GrVariable var = forClause.getDeclaredVariable();
-      if (var != null) {
+      for (GrVariable var : forClause.getDeclaredVariables()) {
         final GrExpression initializer = var.getInitializerGroovy();
         if (expressionDefinitelyRecurses(initializer, method)) {
           return false;
@@ -525,8 +524,7 @@ class RecursionUtils {
   private static boolean forStatementDefinitelyRecurses(GrForStatement forStatement, GrMethod method) {
     final GrForClause clause = forStatement.getClause();
     if (clause == null) return false;
-    final GrVariable var = clause.getDeclaredVariable();
-    if (var != null) {
+    for (GrVariable var : clause.getDeclaredVariables()) {
       final GrExpression initializer = var.getInitializerGroovy();
       if (expressionDefinitelyRecurses(initializer, method)) {
         return true;

@@ -50,10 +50,12 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     return SingletonHolder.ourInstance;
   }
 
+  @Override
   public JavaCodeFragment createPresentationCodeFragment(final TextWithImports item, final PsiElement context, final Project project) {
     return createCodeFragment(item, context, project);
   }
 
+  @Override
   public JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, final Project project) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final String text = item.getText();
@@ -87,10 +89,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
       }
 
       if (parameters.getInvocationCount() <= 1 && JavaCompletionUtil.mayHaveSideEffects(expression)) {
-        final CompletionService service = CompletionService.getCompletionService();
-        if (parameters.getInvocationCount() < 2) {
-          service.setAdvertisementText("Invoke completion once more to see runtime type variants");
-        }
+        CompletionService.getCompletionService().setAdvertisementText("Invoke completion once more to see runtime type variants");
         return null;
       }
 
@@ -121,10 +120,12 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     return fragment;
   }
 
+  @Override
   public boolean isContextAccepted(PsiElement contextElement) {
     return true; // default factory works everywhere debugger can stop
   }
 
+  @Override
   @NotNull
   public LanguageFileType getFileType() {
     return StdFileTypes.JAVA;

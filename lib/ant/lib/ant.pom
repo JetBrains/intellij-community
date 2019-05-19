@@ -27,26 +27,48 @@
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.9.4</version>
+    <version>1.10.5</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <url>http://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant</artifactId>
-  <version>1.9.4</version>
+  <version>1.10.5</version>
   <name>Apache Ant Core</name>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant-launcher</artifactId>
-      <version>1.9.4</version>
+      <version>1.10.5</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.11</version>
+      <version>4.12</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-library</artifactId>
+      <version>1.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.ant</groupId>
+      <artifactId>ant-antunit</artifactId>
+      <version>1.3</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.ant</groupId>
+          <artifactId>ant</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.ant</groupId>
+          <artifactId>ant-launcher</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
   <build>
@@ -98,46 +120,50 @@
         <configuration>
           <excludes>
             <exclude>org/apache/tools/ant/filters/util/JavaClassHelper*</exclude>
-            <exclude>org/apache/tools/ant/types/resolver/**</exclude>
-            <exclude>org/apache/tools/ant/listener/Log4jListener*</exclude>
-            <exclude>org/apache/tools/ant/listener/CommonsLoggingListener*</exclude>
-            <exclude>org/apache/tools/ant/util/regexp/JakartaRegexp*</exclude>
-            <exclude>org/apache/tools/ant/util/regexp/JakartaOro*</exclude>
-            <exclude>org/apache/tools/ant/taskdefs/email/MimeMailer*</exclude>
+            <exclude>org/apache/tools/ant/filters/util/JavaClassHelper*</exclude>
             <exclude>org/apache/tools/ant/launch/**</exclude>
+            <exclude>org/apache/tools/ant/listener/CommonsLoggingListener*</exclude>
+            <exclude>org/apache/tools/ant/listener/Log4jListener*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/email/MimeMailer*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/NetRexxC*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/Script*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/Xalan2TraceSupport*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/image/*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/jdepend/*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/junit/*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/junitlauncher/*</exclude>
             <exclude>org/apache/tools/ant/taskdefs/optional/net/FTP*</exclude>
             <exclude>org/apache/tools/ant/taskdefs/optional/net/RExec*</exclude>
             <exclude>org/apache/tools/ant/taskdefs/optional/net/TelnetTask*</exclude>
-            <exclude>org/apache/tools/ant/taskdefs/optional/junit/*</exclude>
-            <exclude>org/apache/tools/ant/taskdefs/optional/ssh/*</exclude>
-            <exclude>org/apache/tools/ant/taskdefs/optional/image/*</exclude>
-            <exclude>org/apache/tools/ant/types/optional/image/*</exclude>
-            <exclude>org/apache/tools/ant/taskdefs/optional/Script*</exclude>
             <exclude>org/apache/tools/ant/taskdefs/optional/script/**</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/ssh/*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/xz/*</exclude>
             <exclude>org/apache/tools/ant/types/optional/*Script*</exclude>
+            <exclude>org/apache/tools/ant/types/optional/image/*</exclude>
+            <exclude>org/apache/tools/ant/types/optional/xz/*</exclude>
+            <exclude>org/apache/tools/ant/types/resolver/**</exclude>
             <exclude>org/apache/tools/ant/util/ScriptRunner.java</exclude>
-            <exclude>org/apache/tools/ant/util/optional/ScriptRunner.java</exclude>
-            <exclude>org/apache/tools/ant/filters/util/JavaClassHelper*</exclude>
             <exclude>org/apache/tools/ant/util/depend/bcel/*</exclude>
-            <exclude>org/apache/tools/ant/taskdefs/optional/NetRexxC*</exclude>
-            <exclude>org/apache/tools/ant/taskdefs/optional/Xalan2TraceSupport*</exclude>
-            <exclude>org/apache/tools/ant/taskdefs/optional/jdepend/*</exclude>
+            <exclude>org/apache/tools/ant/util/optional/ScriptRunner.java</exclude>
+            <exclude>org/apache/tools/ant/util/regexp/JakartaOro*</exclude>
+            <exclude>org/apache/tools/ant/util/regexp/JakartaRegexp*</exclude>
           </excludes>
           <testExcludes>
             <exclude>org/apache/tools/ant/filters/util/JavaClassHelper*</exclude>
-            <exclude>org/apache/tools/ant/types/resolver/**</exclude>
-            <exclude>org/apache/tools/ant/util/Script*</exclude>
-            <exclude>org/apache/tools/ant/listener/Log4jListener*</exclude>
-            <exclude>org/apache/tools/ant/listener/CommonsLoggingListener*</exclude>
-            <exclude>org/apache/tools/ant/util/regexp/JakartaRegexp*</exclude>
-            <exclude>org/apache/tools/ant/util/regexp/JakartaOro*</exclude>
-            <exclude>org/apache/tools/ant/util/regexp/Jdk14Regexp*</exclude>
-            <exclude>org/apache/tools/ant/taskdefs/email/MimeMailer*</exclude>
             <exclude>org/apache/tools/ant/launch/**</exclude>
+            <exclude>org/apache/tools/ant/listener/CommonsLoggingListener*</exclude>
+            <exclude>org/apache/tools/ant/listener/Log4jListener*</exclude>
             <exclude>org/apache/tools/ant/taskdefs/StyleTest*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/email/MimeMailer*</exclude>
             <exclude>org/apache/tools/ant/taskdefs/optional/junit/</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/junitlauncher/</exclude>
             <exclude>org/apache/tools/ant/taskdefs/optional/net/FTP*</exclude>
             <exclude>org/apache/tools/ant/taskdefs/optional/ssh/*</exclude>
+            <exclude>org/apache/tools/ant/types/resolver/**</exclude>
+            <exclude>org/apache/tools/ant/util/Script*</exclude>
+            <exclude>org/apache/tools/ant/util/regexp/JakartaOro*</exclude>
+            <exclude>org/apache/tools/ant/util/regexp/JakartaRegexp*</exclude>
+            <exclude>org/apache/tools/ant/util/regexp/Jdk14Regexp*</exclude>
           </testExcludes>
         </configuration>
       </plugin>
@@ -145,7 +171,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <omitBasedir>true</omitBasedir>
+          <basedir>../../../..</basedir>
           <systemProperties>
             <property>
               <name>ant.home</name>
@@ -162,10 +188,6 @@
             <property>
               <name>offline</name>
               <value>true</value>
-            </property>
-            <property>
-              <name>root</name>
-              <value>../../../..</value>
             </property>
           </systemProperties>
         </configuration>

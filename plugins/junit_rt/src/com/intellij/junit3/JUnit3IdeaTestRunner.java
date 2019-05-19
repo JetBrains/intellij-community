@@ -203,8 +203,8 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
 
     public void endTest(Test test) {
       final long duration = System.currentTimeMillis() - myCurrentTestStart;
-      System.out.println("\n##teamcity[testFinished name=\'" + escapeName(getMethodName(test)) + 
-                         (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
+      System.out.println("\n##teamcity[testFinished name=\'" + escapeName(getMethodName(test)) +
+                         (duration > 0 ? "\' duration=\'" + duration : "") + "\']");
     }
 
     public void startTest(Test test) {
@@ -218,7 +218,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
       }
       final String methodName = getMethodName(test);
       System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + 
-                         "\' locationHint=\'java:test://" + escapeName(className + "." + methodName) + "\']");
+                         "\' locationHint=\'java:test://" + escapeName(className + "/" + methodName) + "\']");
     }
 
     protected void finishSuite() {

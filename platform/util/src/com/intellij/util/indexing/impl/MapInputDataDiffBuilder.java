@@ -37,14 +37,14 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
 
   public MapInputDataDiffBuilder(int inputId, @Nullable Map<Key, Value> map) {
     super(inputId);
-    myMap = map == null ? Collections.<Key, Value>emptyMap() : map;
+    myMap = map == null ? Collections.emptyMap() : map;
   }
 
   @Override
   public boolean differentiate(@NotNull Map<Key, Value> newData,
-                            @NotNull KeyValueUpdateProcessor<Key, Value> addProcessor,
-                            @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
-                            @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
+                            @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
+                            @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
+                            @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
     if (ourDiffUpdateEnabled) {
       if (myMap.isEmpty()) {
         EmptyInputDataDiffBuilder.processKeys(newData, addProcessor, myInputId);
@@ -105,7 +105,7 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
     return true;
   }
 
-  private void processAllKeysAsDeleted(final RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
+  private void processAllKeysAsDeleted(final RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
     if (myMap instanceof THashMap) {
       final StorageException[] exception = new StorageException[]{null};
       ((THashMap<Key, Value>)myMap).forEachEntry(new TObjectObjectProcedure<Key, Value>() {
@@ -128,6 +128,10 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
         removeProcessor.process(key, myInputId);
       }
     }
+  }
+
+  public Map<Key, Value> getMap() {
+    return myMap;
   }
 
   private static final AtomicInteger requests = new AtomicInteger();

@@ -126,7 +126,7 @@ public class PsiElement2UsageTargetAdapter
   public void findUsages() {
     PsiElement element = getElement();
     if (element == null) return;
-    ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager().startFindUsages(element, myOptions, null, null);
+    ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager().startFindUsages(element, myOptions);
   }
 
   @Override
@@ -203,7 +203,7 @@ public class PsiElement2UsageTargetAdapter
   }
 
   @Override
-  public void calcData(final DataKey key, final DataSink sink) {
+  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
     if (key == UsageView.USAGE_INFO_KEY) {
       PsiElement element = getElement();
       if (element != null && element.getTextRange() != null) {

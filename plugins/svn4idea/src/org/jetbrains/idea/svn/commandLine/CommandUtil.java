@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.application.PathManager;
@@ -28,9 +14,7 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.status.StatusType;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.*;
 import java.io.File;
 import java.io.StringReader;
 import java.util.List;
@@ -46,17 +30,17 @@ public class CommandUtil {
    * @param condition
    * @param value
    */
-  public static void put(@NotNull List<String> parameters, boolean condition, @NotNull String value) {
+  public static void put(@NotNull List<? super String> parameters, boolean condition, @NotNull String value) {
     if (condition) {
       parameters.add(value);
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull File path) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull File path) {
     put(parameters, path.getAbsolutePath(), Revision.UNDEFINED);
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull File path, boolean usePegRevision) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull File path, boolean usePegRevision) {
     if (usePegRevision) {
       put(parameters, path);
     } else {
@@ -64,11 +48,11 @@ public class CommandUtil {
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull File path, @Nullable Revision pegRevision) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull File path, @Nullable Revision pegRevision) {
     put(parameters, path.getAbsolutePath(), pegRevision);
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull String path, @Nullable Revision pegRevision) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull String path, @Nullable Revision pegRevision) {
     parameters.add(format(path, pegRevision));
   }
 
@@ -93,11 +77,11 @@ public class CommandUtil {
     return builder.toString();
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull Target target) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull Target target) {
     put(parameters, target.getPath(), target.getPegRevision());
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull Target target, boolean usePegRevision) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull Target target, boolean usePegRevision) {
     if (usePegRevision) {
       put(parameters, target);
     } else {
@@ -105,11 +89,11 @@ public class CommandUtil {
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable Depth depth) {
+  public static void put(@NotNull List<? super String> parameters, @Nullable Depth depth) {
     put(parameters, depth, false);
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable Depth depth, boolean sticky) {
+  public static void put(@NotNull List<? super String> parameters, @Nullable Depth depth, boolean sticky) {
     if (depth != null && !Depth.UNKNOWN.equals(depth)) {
       parameters.add("--depth");
       parameters.add(depth.getName());
@@ -121,14 +105,14 @@ public class CommandUtil {
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable Revision revision) {
+  public static void put(@NotNull List<? super String> parameters, @Nullable Revision revision) {
     if (revision != null && !Revision.UNDEFINED.equals(revision) && !Revision.WORKING.equals(revision) && revision.isValid()) {
       parameters.add("--revision");
       parameters.add(format(revision));
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull Revision startRevision, @NotNull Revision endRevision) {
+  public static void put(@NotNull List<? super String> parameters, @NotNull Revision startRevision, @NotNull Revision endRevision) {
     parameters.add("--revision");
     parameters.add(format(startRevision) + ":" + format(endRevision));
   }
@@ -138,7 +122,7 @@ public class CommandUtil {
     return revision.getDate() != null ? "{" + DateFormatUtil.getIso8601Format().format(revision.getDate()) + "}" : revision.toString();
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable DiffOptions diffOptions) {
+  public static void put(@NotNull List<? super String> parameters, @Nullable DiffOptions diffOptions) {
     if (diffOptions != null) {
       StringBuilder builder = new StringBuilder();
 
@@ -161,7 +145,7 @@ public class CommandUtil {
     }
   }
 
-  public static void putChangeLists(@NotNull List<String> parameters, @Nullable Iterable<String> changeLists) {
+  public static void putChangeLists(@NotNull List<? super String> parameters, @Nullable Iterable<String> changeLists) {
     if (changeLists != null) {
       for (String changeList : changeLists) {
         parameters.add("--cl");
@@ -178,7 +162,15 @@ public class CommandUtil {
     JAXBContext context = JAXBContext.newInstance(type);
     Unmarshaller unmarshaller = context.createUnmarshaller();
 
-    return (T) unmarshaller.unmarshal(new StringReader(data.trim()));
+    unmarshaller.setEventHandler(new ValidationEventHandler() {
+      @Override
+      public boolean handleEvent(@NotNull ValidationEvent event) {
+        // Fail on exceptions, but not on other errors like "unexpected element" as sometimes we do not use all provided xml data.
+        return event.getLinkedException() == null;
+      }
+    });
+    //noinspection unchecked
+    return (T)unmarshaller.unmarshal(new StringReader(data.trim()));
   }
 
   @NotNull

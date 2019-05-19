@@ -25,6 +25,7 @@ import java.io.File;
  * @author max
  */
 public class JarContainer extends ZipContainer {
+  @Override
   protected Zip createTask() {
     String version = Main.getAntVersion();
     Jar task;
@@ -53,6 +54,10 @@ public class JarContainer extends ZipContainer {
 
   public void setFilesetmanifest(Jar.FilesetManifestConfig config) {
     ((Jar) task).setFilesetmanifest(config);
+  }
+
+  public void setWhenmanifestonly(Zip.WhenEmpty we) {
+    ((Jar)task).setWhenmanifestonly(we);
   }
 
   public void addConfiguredManifest(Manifest newManifest) throws ManifestException {

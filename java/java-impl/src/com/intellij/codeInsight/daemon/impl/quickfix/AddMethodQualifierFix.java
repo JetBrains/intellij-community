@@ -74,7 +74,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiMethodCallExpression element = myMethodCall.getElement();
-    if (element == null || !element.isValid()) {
+    if (element == null || !element.isValid() || element.getMethodExpression().getQualifierExpression() != null) {
       return false;
     }
     if (myCandidates == null) {
@@ -131,7 +131,7 @@ public class AddMethodQualifierFix implements IntentionAction {
       qualify(candidates.get(0), editor);
     }
     else {
-      chooseAndQualify(editor, candidates);
+      chooseAndQualify(project, editor, candidates);
     }
   }
 
@@ -140,7 +140,7 @@ public class AddMethodQualifierFix implements IntentionAction {
     return false;
   }
 
-  private void chooseAndQualify(Editor editor, List<PsiVariable> candidates) {
+  private void chooseAndQualify(Project project, Editor editor, List<? extends PsiVariable> candidates) {
     final BaseListPopupStep<PsiVariable> step =
       new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), candidates) {
         @Override
@@ -163,7 +163,7 @@ public class AddMethodQualifierFix implements IntentionAction {
         }
       };
 
-    final ListPopupImpl popup = new ListPopupImpl(step);
+    ListPopupImpl popup = new ListPopupImpl(project, step);
     popup.showInBestPositionFor(editor);
   }
 

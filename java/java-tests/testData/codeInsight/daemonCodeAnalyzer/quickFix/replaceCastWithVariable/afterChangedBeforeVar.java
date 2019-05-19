@@ -1,4 +1,4 @@
-// "Replace '(FooBar)foo' with 'foobar'" "true"
+// "Replace '(FooBar)(foo)' with 'foobar'" "true"
 
 class FooBar {
   public int baz;

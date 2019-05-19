@@ -33,7 +33,6 @@ public interface ConflictResolutionPolicy {
      * Inject the policy to use when inserting a new method.
      *
      * @param strategy  the policy to use.
-     * @since 3.18
      */
     void setNewMethodStrategy(InsertNewMethodStrategy strategy);
 

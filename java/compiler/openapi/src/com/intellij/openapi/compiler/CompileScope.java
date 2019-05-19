@@ -50,7 +50,7 @@ public interface CompileScope extends ExportableUserDataHolder {
    * @return true if the url specified belongs to the scope, false otherwise.
    *         Note: the method may be time-consuming.
    */
-  boolean belongs(String url);
+  boolean belongs(@NotNull String url);
 
   /**
    * Returns the list of modules files in which belong to the scope.

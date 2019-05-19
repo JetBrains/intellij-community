@@ -25,7 +25,7 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ModuleRootModificationUtil.setModuleSdk(myModule, IdeaTestUtil.getMockJdk18());
+    ModuleRootModificationUtil.setModuleSdk(getModule(), IdeaTestUtil.getMockJdk18());
     myFixture.enableInspections(new MethodRefCanBeReplacedWithLambdaInspection());
     myDefaultHint = InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
   }

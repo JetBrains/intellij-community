@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>A.java</file>
+    <line>16</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Field has no usages.</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
+    <line>15</line>
+    <problem_class >unused declaration</problem_class>
+    <description>Class is not instantiated.</description>
+  </problem>
+</problems>

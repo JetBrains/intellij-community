@@ -45,6 +45,7 @@ public class MemberSelectionPanel extends AbstractMemberSelectionPanel<PsiMember
     return new MemberSelectionTable(memberInfo, abstractColumnHeader);
   }
 
+  @Override
   public MemberSelectionTable getTable() {
     return myTable;
   }

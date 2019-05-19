@@ -15,7 +15,8 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,14 +29,7 @@ public abstract class ActionRunner {
    */
   @Deprecated
   public static  void runInsideWriteAction(@NotNull final InterruptibleRunnable runnable) throws Exception {
-    RunResult result = new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        runnable.run();
-      }
-    }.execute();
-    if (result.getThrowable() instanceof Exception) throw (Exception)result.getThrowable();
-    result.throwException();
+    WriteAction.computeAndWait(()->{runnable.run(); return null; });
   }
 
   /**

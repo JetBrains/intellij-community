@@ -5,14 +5,12 @@ package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.progress.util.SmoothProgressAdapter;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -31,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
+  private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
   private final Set<CheckCanceledHook> myHooks = ContainerUtil.newConcurrentSet();
 
   public ProgressManagerImpl() {
@@ -57,26 +56,28 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       }
 
     }, this);
+    ExtensionPointImpl.setCheckCanceledAction(ProgressManager::checkCanceled);
   }
 
   @Override
-  public void setCancelButtonText(String cancelButtonText) {
-    ProgressIndicator progressIndicator = getProgressIndicator();
-    if (progressIndicator != null) {
-      if (progressIndicator instanceof SmoothProgressAdapter && cancelButtonText != null) {
-        ProgressIndicator original = ((SmoothProgressAdapter)progressIndicator).getOriginalProgressIndicator();
-        if (original instanceof ProgressWindow) {
-          ((ProgressWindow)original).setCancelButtonText(cancelButtonText);
-        }
-      }
-    }
+  public boolean hasUnsafeProgressIndicator() {
+    return super.hasUnsafeProgressIndicator() || ContainerUtil.exists(getCurrentIndicators(), ProgressManagerImpl::isUnsafeIndicator);
+  }
+
+  private static boolean isUnsafeIndicator(ProgressIndicator indicator) {
+    return indicator instanceof ProgressWindow && ((ProgressWindow)indicator).getUserData(SAFE_PROGRESS_INDICATOR) == null;
+  }
+
+  /**
+   * The passes progress won't count in {@link #hasUnsafeProgressIndicator()} and won't stop from application exiting.
+   */
+  public void markProgressSafe(@NotNull ProgressWindow progress) {
+    progress.putUserData(SAFE_PROGRESS_INDICATOR, true);
   }
 
   @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
-
-    CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread() 
+    CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread()
                              ? p -> { ((PingProgress)progress).interact(); return true; } 
                              : null;
     if (hook != null) addCheckCanceledHook(hook);
@@ -85,7 +86,6 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       super.executeProcessUnderProgress(process, progress);
     }
     finally {
-      if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
       if (hook != null) removeCheckCanceledHook(hook);
     }
   }

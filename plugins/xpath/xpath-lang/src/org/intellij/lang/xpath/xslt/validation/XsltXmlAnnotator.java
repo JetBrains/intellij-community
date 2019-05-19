@@ -55,7 +55,7 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
 
       final String s = value.getValue();
 
-      if (s == null || s.isEmpty()) {
+      if (s.isEmpty()) {
         if (XsltSupport.isXPathAttribute((XmlAttribute)parent)) {
           InjectedLanguageManager.getInstance(value.getProject()).enumerate(value, (injectedPsi, places) -> {
             if (injectedPsi instanceof XPathFile) {
@@ -65,7 +65,8 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
             }
           });
         }
-      } else if (XsltSupport.mayBeAVT((XmlAttribute)parent)) {
+      }
+      else if (XsltSupport.mayBeAVT((XmlAttribute)parent)) {
         final List<Integer> singleBraces = collectClosingBraceOffsets(s);
 
         if (singleBraces != null) {

@@ -9,18 +9,17 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HideableDecorator;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 
 public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
@@ -32,6 +31,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private JPanel myWholePanel;
 
   private JPanel myBeforeLaunchContainer;
+  private JBCheckBox myIsAllowRunningInParallelCheckBox;
   private final BeforeRunStepsPanel myBeforeRunStepsPanel;
 
   private final ConfigurationSettingsEditor myEditor;
@@ -71,10 +71,12 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     doReset(settings);
   }
 
-  private void doReset(RunnerAndConfigurationSettings settings) {
-    final RunConfiguration runConfiguration = settings.getConfiguration();
+  private void doReset(@NotNull RunnerAndConfigurationSettings settings) {
     myBeforeRunStepsPanel.doReset(settings);
-    myBeforeLaunchContainer.setVisible(!(runConfiguration instanceof WithoutOwnBeforeRunSteps));
+    myBeforeLaunchContainer.setVisible(!(settings.getConfiguration() instanceof WithoutOwnBeforeRunSteps));
+
+    myIsAllowRunningInParallelCheckBox.setSelected(settings.getConfiguration().isAllowRunningInParallel());
+    myIsAllowRunningInParallelCheckBox.setVisible(settings.isTemplate() && settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
   }
 
   @Override
@@ -82,7 +84,12 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   protected JComponent createEditor() {
     myComponentPlace.setLayout(new BorderLayout());
     myComponentPlace.add(myEditor.getComponent(), BorderLayout.CENTER);
-    DataManager.registerDataProvider(myWholePanel, new MyDataProvider());
+    DataManager.registerDataProvider(myWholePanel, dataId -> {
+      if (CONFIGURATION_EDITOR_KEY.is(dataId)) {
+        return this;
+      }
+      return null;
+    });
     return myWholePanel;
   }
 
@@ -95,36 +102,52 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   @Override
   public void applyEditorTo(@NotNull final RunnerAndConfigurationSettings settings) throws ConfigurationException {
     myEditor.applyEditorTo(settings);
-    doApply(settings);
+    doApply((RunnerAndConfigurationSettingsImpl)settings, false);
   }
 
+  @NotNull
   @Override
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings result = myEditor.getSnapshot();
-    doApply(result);
+    doApply((RunnerAndConfigurationSettingsImpl)result, true);
     return result;
   }
 
-  private void doApply(@NotNull RunnerAndConfigurationSettings settings) {
+  private void doApply(@NotNull RunnerAndConfigurationSettingsImpl settings, boolean isSnapshot) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
-    final RunManagerImpl runManager = ((RunnerAndConfigurationSettingsImpl)settings).getManager();
-    runManager.setBeforeRunTasks(runConfiguration, myBeforeRunStepsPanel.getTasks(true));
-    RunnerAndConfigurationSettings runManagerSettings = runManager.getSettings(runConfiguration);
-    if (runManagerSettings != null) {
-      runManagerSettings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
-      runManagerSettings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
-    } else {
-      settings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
-      settings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
+
+    List<BeforeRunTask<?>> tasks = ContainerUtil.copyList(myBeforeRunStepsPanel.getTasks());
+    RunnerAndConfigurationSettings settingsToApply = null;
+    if (isSnapshot) {
+      runConfiguration.setBeforeRunTasks(tasks);
+    }
+    else {
+      RunManagerImpl runManager = settings.getManager();
+      runManager.setBeforeRunTasks(runConfiguration, tasks);
+      settingsToApply = runManager.getSettings(runConfiguration);
+    }
+
+    if (settingsToApply == null) {
+      settingsToApply = settings;
+    }
+
+    settingsToApply.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
+    settingsToApply.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
+    if (myIsAllowRunningInParallelCheckBox.isVisible()) {
+      settings.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallelCheckBox.isSelected());
     }
   }
 
-  public void addBeforeLaunchStep(BeforeRunTask<?> task) {
+  public void addBeforeLaunchStep(@NotNull BeforeRunTask<?> task) {
     myBeforeRunStepsPanel.addTask(task);
   }
 
-  public List<BeforeRunTask> getStepsBeforeLaunch() {
-    return Collections.unmodifiableList(myBeforeRunStepsPanel.getTasks(true));
+  /**
+   * You MUST NOT modify tasks in the returned list.
+   */
+  @NotNull
+  public List<BeforeRunTask<?>> getStepsBeforeLaunch() {
+    return myBeforeRunStepsPanel.getTasks();
   }
 
   @Override
@@ -133,18 +156,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   @Override
-  public void titleChanged(String title) {
+  public void titleChanged(@NotNull String title) {
     myDecorator.setTitle(title);
-  }
-
-  private class MyDataProvider implements DataProvider {
-    @Nullable
-    @Override
-    public Object getData(@NonNls String dataId) {
-      if (CONFIGURATION_EDITOR_KEY.is(dataId)) {
-        return ConfigurationSettingsEditorWrapper.this;
-      }
-      return null;
-    }
   }
 }

@@ -35,6 +35,7 @@ public class MixinEP<T> extends AbstractExtensionPointBean {
   public String implementationClass;
 
   private final NotNullLazyValue<Class> myKey = new NotNullLazyValue<Class>() {
+    @Override
     @NotNull
     protected Class compute() {
       if (key == null) {
@@ -54,6 +55,7 @@ public class MixinEP<T> extends AbstractExtensionPointBean {
   };
 
   private final LazyInstance<T> myHandler = new LazyInstance<T>() {
+    @Override
     protected Class<T> getInstanceClass() throws ClassNotFoundException {
       return findClass(implementationClass);
     }

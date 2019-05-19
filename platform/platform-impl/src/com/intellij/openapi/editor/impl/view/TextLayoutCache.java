@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.Disposable;
@@ -20,37 +6,39 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
- * Editor text layout storage. Layout is stored on a per-logical-line basis, 
+ * Editor text layout storage. Layout is stored on a per-logical-line basis,
  * it's created lazily (when requested) and invalidated on document changes or when explicitly requested.
- * 
+ *
  * @see LineLayout
  */
-class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
+class TextLayoutCache implements PrioritizedInternalDocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(TextLayoutCache.class);
-  
+
   private static final int MAX_CHUNKS_IN_ACTIVE_EDITOR = 1000;
   private static final int MAX_CHUNKS_IN_INACTIVE_EDITOR = 10;
-  
+
   private final EditorView myView;
   private final Document myDocument;
   private final LineLayout myBidiNotRequiredMarker;
   private ArrayList<LineLayout> myLines = new ArrayList<>();
   private int myDocumentChangeOldEndLine;
-  
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
-  private LinkedHashMap<LineLayout.Chunk, Object> myLaidOutChunks = 
+
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+  private Map<LineLayout.Chunk, Object> myLaidOutChunks =
+    // using our own LinkedHashMap implementation to avoid IDEA-205735
     new LinkedHashMap<LineLayout.Chunk, Object>(MAX_CHUNKS_IN_ACTIVE_EDITOR, 0.75f, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<LineLayout.Chunk, Object> eldest) {
@@ -82,12 +70,12 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {
+  public void beforeDocumentChange(@NotNull DocumentEvent event) {
     myDocumentChangeOldEndLine = getAdjustedLineNumber(event.getOffset() + event.getOldLength());
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     int startLine = myDocument.getLineNumber(event.getOffset());
     int newEndLine = getAdjustedLineNumber(event.getOffset() + event.getNewLength());
     invalidateLines(startLine, myDocumentChangeOldEndLine, newEndLine, true,
@@ -98,6 +86,13 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
                 new Attachment("editorState.txt", myView.getEditor().dumpState()));
       resetToDocumentSize(true);
     }
+  }
+
+  @Override
+  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
+    int insertedStartLine = myDocument.getLineNumber(base);
+    int insertedEndLine = myDocument.getLineNumber(base + (end - start));
+    invalidateLines(insertedStartLine, insertedEndLine); // range highlighters could have been moved to the inserted range
   }
 
   @Override
@@ -175,7 +170,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   void onChunkAccess(LineLayout.Chunk chunk) {
-    myLaidOutChunks.put(chunk, null);
+    myLaidOutChunks.put(chunk, this); // value doesn't matter, null is not supported by our map implementation
   }
 
   private void removeChunksFromCache(LineLayout layout) {

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.actions;
 
+import com.intellij.lang.ant.AntActionsUsagesCollector;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
@@ -51,9 +38,11 @@ public class RunTargetAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Pair<AntBuildFileBase, AntDomTarget> antTarget = findAntTarget(e);
     if (antTarget == null) return;
+
+    AntActionsUsagesCollector.trigger(getEventProject(e), this, e);
 
     ExecutionHandler.runBuild(
       antTarget.first, Collections.singletonList(antTarget.second.getName().getValue()),
@@ -65,8 +54,7 @@ public class RunTargetAction extends AnAction {
 
 
   @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
+  public void update(@NotNull AnActionEvent e) {
 
     final Presentation presentation = e.getPresentation();
 

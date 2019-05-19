@@ -29,8 +29,12 @@ public class VcsLogSharedSettings implements PersistentStateComponent<VcsLogShar
     myState = state;
   }
 
+  public boolean isIndexSwitchedOn() {
+    return getState().IS_INDEX_ON;
+  }
+
   public static boolean isIndexSwitchedOn(@NotNull Project project) {
     VcsLogSharedSettings indexSwitch = ServiceManager.getService(project, VcsLogSharedSettings.class);
-    return indexSwitch.getState().IS_INDEX_ON || Registry.is("vcs.log.index.force");
+    return indexSwitch.isIndexSwitchedOn() || Registry.is("vcs.log.index.force");
   }
 }

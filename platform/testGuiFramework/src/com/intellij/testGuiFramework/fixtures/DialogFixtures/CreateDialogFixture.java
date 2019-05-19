@@ -43,6 +43,6 @@ public class CreateDialogFixture extends IdeaDialogFixture<CreateFileFromTemplat
   }
 
   public void clickOK() {
-    GuiTestUtil.findAndClickOkButton(this);
+    GuiTestUtil.INSTANCE.findAndClickOkButton(this);
   }
 }

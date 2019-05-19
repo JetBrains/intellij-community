@@ -50,8 +50,6 @@ import java.util.*;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.fromFoothold;
-import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.resolveTopLevelMember;
 
 /**
  * @author yole
@@ -164,7 +162,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public static List<PyExpression> getUnfoldedSuperClassExpressions(@NotNull PyClass pyClass) {
     return StreamEx
       .of(pyClass.getSuperClassExpressions())
-      .filter(expression -> !PyKeywordArgument.class.isInstance(expression))
+      .filter(expression -> !(expression instanceof PyKeywordArgument))
       .flatCollection(PyClassImpl::unfoldSuperClassExpression)
       .toList();
   }
@@ -521,7 +519,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     private int myLastResultIndex = -1;
     private PyClass myLastVisitedClass = null;
 
-    public NameFinder(String... names) {
+    NameFinder(String... names) {
       myNames = names;
       myResult = null;
     }
@@ -569,7 +567,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     @Nullable
     private PyClass myLastVisitedClass;
 
-    public MultiNameFinder(@NotNull String... names) {
+    MultiNameFinder(@NotNull String... names) {
       myResult = new ArrayList<>();
       myNames = names;
       myLastVisitedClass = null;
@@ -634,7 +632,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     else {
       proc = new NameFinder<>(PyNames.INIT);
     }
-    visitMethods(proc, inherited, true, context);
+    visitMethods(proc, inherited, context);
     return proc.getResult();
   }
 
@@ -645,7 +643,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       ? new MultiNameFinder<>(PyNames.INIT, PyNames.NEW)
       : new MultiNameFinder<>(PyNames.INIT);
 
-    visitMethods(processor, inherited, true, context);
+    visitMethods(processor, inherited, context);
     return processor.myResult;
   }
 
@@ -976,20 +974,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public boolean visitMethods(Processor<PyFunction> processor, boolean inherited, @Nullable final TypeEvalContext context) {
-    return visitMethods(processor, inherited, false, context);
-  }
-
-  private boolean visitMethods(Processor<PyFunction> processor,
-                              boolean inherited,
-                              boolean skipClassObj, TypeEvalContext context) {
-    PyFunction[] methods = getMethods();
-    if (!ContainerUtil.process(methods, processor)) return false;
+    if (!ContainerUtil.process(getMethods(), processor)) return false;
     if (inherited) {
       for (PyClass ancestor : getAncestorClasses(context)) {
-        if (skipClassObj && PyNames.TYPES_INSTANCE_TYPE.equals(ancestor.getQualifiedName())) {
-          continue;
-        }
-        if (!ancestor.visitMethods(processor, false, null)) {
+        if (!ancestor.visitMethods(processor, false, context)) {
           return false;
         }
       }
@@ -1329,9 +1317,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @NotNull
   @Override
   public List<PyClassLikeType> getSuperClassTypes(@NotNull final TypeEvalContext context) {
-    if (PyNames.TYPES_INSTANCE_TYPE.equals(getQualifiedName())) {
-      return Collections.emptyList();
-    }
     final List<PyClassLikeType> result = new ArrayList<>();
 
     // In some cases stub may not provide all information, so we use stubs only if AST access id disabled
@@ -1406,14 +1391,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
 
     if (LanguageLevel.forElement(this).isPython2() && getMetaClassQName() == null && !hasNewStyleMetaClass(this)) {
-      final QualifiedName typesInstanceTypeQName = QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE);
-      final PsiElement typesInstanceType = resolveTopLevelMember(typesInstanceTypeQName, fromFoothold(this));
-
-      return Optional
-        .ofNullable(as(typesInstanceType, PyClass.class))
-        .map(context::getType)
-        .map(type -> as(type, PyClassLikeType.class))
-        .orElse(null);
+      return null;
     }
 
     return objectType == null ? null : objectType.toClass();
@@ -1509,11 +1487,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return null;
     }
     try {
-      final String abcMeta = "abc." + PyNames.ABC_META_CLASS;
-
       return classTypes
         .stream()
-        .filter(t -> !abcMeta.equals(t.getClassQName()))
+        .filter(t -> !PyNames.ABC_META.equals(t.getClassQName()))
         .max(
           (t1, t2) -> {
             if (Objects.equals(t1, t2)) {
@@ -1711,7 +1687,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Nullable
   private static PyClassLikeType classTypeFromQName(@NotNull QualifiedName qualifiedName, @NotNull PyFile containingFile,
                                                     @NotNull TypeEvalContext context) {
-    final PsiElement element = ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInFile(qualifiedName, containingFile, context));
+    final PsiElement element = ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, containingFile, context));
     if (element instanceof PyTypedElement) {
       final PyType type = context.getType((PyTypedElement)element);
       if (type instanceof PyClassLikeType) {

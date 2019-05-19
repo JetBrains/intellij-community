@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
 public class OverrideImplementsTestNGAnnotationsHandler implements OverrideImplementsAnnotationsHandler{
+  @Override
   public String[] getAnnotations(Project project) {
     return TestNGUtil.CONFIG_ANNOTATIONS_FQN;
   }

@@ -28,7 +28,7 @@ public class ClassMap<T> {
   protected final Map<Class, T> myMap;
 
   public ClassMap() {
-    this(new THashMap<Class, T>());
+    this(new THashMap<>());
   }
   protected ClassMap(@NotNull Map<Class, T> map) {
     myMap = map; 

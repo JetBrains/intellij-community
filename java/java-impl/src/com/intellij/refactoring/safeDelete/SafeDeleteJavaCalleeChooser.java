@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 abstract class SafeDeleteJavaCalleeChooser extends AbstractJavaMemberCallerChooser<PsiMember> {
   private final Project myProject;
 
-  public SafeDeleteJavaCalleeChooser(PsiMember member,
+  SafeDeleteJavaCalleeChooser(PsiMember member,
                                      Project project,
                                      ArrayList<UsageInfo> result) {
     super(member, project, "Select Members To Cascade Safe Delete", null, members -> result.addAll(ContainerUtil.map(members, m -> {
@@ -118,7 +118,7 @@ abstract class SafeDeleteJavaCalleeChooser extends AbstractJavaMemberCallerChoos
 
   private class SafeDeleteJavaMemberNode extends JavaMemberNode<PsiMember> {
 
-    public SafeDeleteJavaMemberNode(PsiMember currentMember,
+    SafeDeleteJavaMemberNode(PsiMember currentMember,
                                     HashSet<PsiMember> callees,
                                     Runnable cancelCallback,
                                     Project project) {

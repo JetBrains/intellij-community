@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -35,6 +21,7 @@ public class ArrangementSectionRulesValidator extends ArrangementMatchingRulesVa
     mySectionRuleManager = sectionRuleManager;
   }
 
+  @Override
   @Nullable
   protected String validate(int index) {
     if (myRulesModel.getSize() < index) {
@@ -53,7 +40,7 @@ public class ArrangementSectionRulesValidator extends ArrangementMatchingRulesVa
   @Nullable
   private String validateSectionRule(@NotNull ArrangementSectionRuleManager.ArrangementSectionRuleData data, int index) {
     int startSectionIndex = -1;
-    final Set<String> sectionRules = ContainerUtil.newHashSet();
+    final Set<String> sectionRules = new HashSet<>();
     for (int i = 0; i < index; i++) {
       final ArrangementSectionRuleManager.ArrangementSectionRuleData section = extractSectionText(i);
       if (section != null) {

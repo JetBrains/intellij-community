@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.ThrowableConsumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -35,7 +36,7 @@ public interface LocalFileOperationsHandler {
    * @return true if the handler has performed the deletion, false if the deletion needs to be performed through
    * standard core logic.
    */
-  boolean delete(VirtualFile file) throws IOException;
+  boolean delete(@NotNull VirtualFile file) throws IOException;
 
   /**
    * Intercepts the movement of a file.
@@ -44,7 +45,7 @@ public interface LocalFileOperationsHandler {
    * @return true if the handler has performed the move, false if the move needs to be performed through
    * standard core logic.
    */
-  boolean move(VirtualFile file, VirtualFile toDir) throws IOException;
+  boolean move(@NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException;
 
   /**
    * Intercepts the copying of a file.
@@ -55,7 +56,7 @@ public interface LocalFileOperationsHandler {
    * standard core logic.
    */
   @Nullable
-  File copy(VirtualFile file, VirtualFile toDir, final String copyName) throws IOException;
+  File copy(@NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String copyName) throws IOException;
 
   /**
    * Intercepts the renaming of a file.
@@ -64,7 +65,7 @@ public interface LocalFileOperationsHandler {
    * @return true if the handler has performed the rename, false if the rename needs to be performed through
    * standard core logic.
    */
-  boolean rename(VirtualFile file, String newName) throws IOException;
+  boolean rename(@NotNull VirtualFile file, @NotNull String newName) throws IOException;
 
   /**
    * Intercepts the creation of a file.
@@ -73,7 +74,7 @@ public interface LocalFileOperationsHandler {
    * @return true if the handler has performed the file creation, false if the creation needs to be performed through
    * standard core logic.
    */
-  boolean createFile(VirtualFile dir, String name) throws IOException;
+  boolean createFile(@NotNull VirtualFile dir, @NotNull String name) throws IOException;
 
   /**
    * Intercepts the creation of a directory.
@@ -82,7 +83,7 @@ public interface LocalFileOperationsHandler {
    * @return true if the handler has performed the directory creation, false if the creation needs to be performed through
    * standard core logic.
    */
-  boolean createDirectory(VirtualFile dir, String name) throws IOException;
+  boolean createDirectory(@NotNull VirtualFile dir, @NotNull String name) throws IOException;
 
-  void afterDone(final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker);
+  void afterDone(@NotNull ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker);
 }

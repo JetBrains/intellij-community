@@ -17,7 +17,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.indexing.IdFilter;
@@ -50,6 +49,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       if (parameters.nameMatches(s)) {
         names.add(s);
       }
+      return true;
     });
 
     List<String> sorted = new ArrayList<>(names);
@@ -75,18 +75,15 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     return true;
   }
 
-  public static Project processClassNames(final Project project, final GlobalSearchScope scope, final Consumer<String> consumer) {
-    DumbService.getInstance(project).runReadActionInSmartMode((Computable<Void>)() -> {
+  public static boolean processClassNames(final Project project, final GlobalSearchScope scope, final Processor<? super String> processor) {
+    boolean success = DumbService.getInstance(project).runReadActionInSmartMode((Computable<Boolean>)() ->
       PsiShortNamesCache.getInstance(project).processAllClassNames(s -> {
         ProgressManager.checkCanceled();
-        consumer.consume(s);
-        return true;
-      }, scope, IdFilter.getProjectIdFilter(project, true));
-      return null;
-    });
+        return processor.process(s);
+      }, scope, IdFilter.getProjectIdFilter(project, true)));
 
     ProgressManager.checkCanceled();
-    return project;
+    return success;
   }
 
   private static boolean processScopeRootForAllClasses(@NotNull final PsiElement scopeRoot, @NotNull final Processor<? super PsiClass> processor) {

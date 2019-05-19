@@ -3,10 +3,7 @@ package com.jetbrains.python.validation;
 
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyExceptPart;
-import com.jetbrains.python.psi.PyFinallyPart;
-import com.jetbrains.python.psi.PyRaiseStatement;
-import com.jetbrains.python.psi.PyTryExceptStatement;
+import com.jetbrains.python.psi.*;
 
 /**
  * Marks misplaced default 'except' clauses.
@@ -30,7 +27,8 @@ public class TryExceptAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyRaiseStatement(PyRaiseStatement node) {
-    if (node.getExpressions().length == 0 && PsiTreeUtil.getParentOfType(node, PyExceptPart.class, PyFinallyPart.class) == null) {
+    if (node.getExpressions().length == 0 &&
+        PsiTreeUtil.getParentOfType(node, PyExceptPart.class, PyFinallyPart.class, PyFunction.class) == null) {
       markError(node, "No exception to reraise");
     }
   }

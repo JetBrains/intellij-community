@@ -1,18 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.lang.GroovyVersionBasedTest
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 @CompileStatic
-class Groovy30HighlightingTest extends GrHighlightingTestBase {
+class Groovy30HighlightingTest extends GroovyVersionBasedTest {
 
-  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_3_0
-  final String basePath = super.basePath + 'v30/'
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
+  final String basePath = TestUtils.testDataPath + 'highlighting/v30/'
 
   void 'test default method in interfaces'() {
-    testHighlighting '''
+    highlightingTest '''
 import groovy.transform.CompileStatic
 
 interface I {
@@ -31,7 +34,7 @@ interface I2 {
   }
 
   void 'test default modifier'() {
-    testHighlighting '''
+    highlightingTest '''
 default interface I {
 }
 
@@ -50,7 +53,7 @@ class C {
   }
 
   void 'test sam with default modifier'() {
-    testHighlighting '''
+    highlightingTest '''
 interface I {
     int foo() 
     default int bar() {
@@ -62,23 +65,19 @@ I i = {3}
 '''
   }
 
-  void 'test identity operators'() {
-    fixture.testHighlighting "${testName}.groovy"
+  void 'test constructor reference static access'() {
+    highlightingTest GrUnresolvedAccessInspection
   }
 
-  void 'test elvis assignment'() {
-    fixture.testHighlighting testName + '.groovy'
+  void 'test reassigned var in lambda'() {
+    highlightingTest GrUnresolvedAccessInspection
   }
 
-  void 'test safe index access'() {
-    fixture.testHighlighting testName + '.groovy'
+  void 'test reassigned var in lambda 2'() {
+    highlightingTest GrUnresolvedAccessInspection
   }
 
-  void 'test negated in'() {
-    fixture.testHighlighting testName + '.groovy'
-  }
-
-  void 'test negated instanceof'() {
-    fixture.testHighlighting testName + '.groovy'
+  void 'test illegal single argument lambda'() {
+    highlightingTest ()
   }
 }

@@ -1,4 +1,8 @@
 return t<caret>
 -----
+byte
+float
+int
+short
 this
 true

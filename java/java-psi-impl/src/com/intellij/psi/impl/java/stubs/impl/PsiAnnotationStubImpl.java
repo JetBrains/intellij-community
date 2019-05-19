@@ -32,6 +32,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -49,7 +50,7 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
   private final String myText;
   private SoftReference<PsiAnnotation> myParsedFromRepository;
 
-  public PsiAnnotationStubImpl(StubElement parent, String text) {
+  public PsiAnnotationStubImpl(StubElement parent, @NotNull String text) {
     super(parent, JavaStubElementTypes.ANNOTATION);
     CharSequence interned = CharTableImpl.getStaticInterned(text);
     myText = interned == null ? text : interned.toString();

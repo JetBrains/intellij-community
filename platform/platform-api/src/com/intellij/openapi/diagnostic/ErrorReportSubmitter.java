@@ -53,11 +53,11 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * @param consumer        a callback to be called after sending is finished (or failed).
    * @return {@code true} if reporting was started, {@code false} if a report can't be sent at the moment.
    */
-  @SuppressWarnings("deprecation")
   public boolean submit(@NotNull IdeaLoggingEvent[] events,
                         @Nullable String additionalInfo,
                         @NotNull Component parentComponent,
                         @NotNull Consumer<SubmittedReportInfo> consumer) {
+    //noinspection deprecation
     return trySubmitAsync(events, additionalInfo, parentComponent, consumer);
   }
 

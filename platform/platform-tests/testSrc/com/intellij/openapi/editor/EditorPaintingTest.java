@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -99,6 +102,51 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     myEditor.getInlayModel().addInlineElement(1, new MyInlayRenderer());
     myEditor.getInlayModel().addInlineElement(6, new MyInlayRenderer());
     addBorderHighlighter(0, 7, 0, Color.red);
+    checkResult();
+  }
+
+  public void testSoftWrapAtHighlighterBoundary() throws Exception {
+    initText("a bc");
+    configureSoftWraps(2);
+    assertNotNull(getEditor().getSoftWrapModel().getSoftWrap(2));
+    addRangeHighlighter(1, 3, HighlighterLayer.CARET_ROW + 1, null, Color.red);
+    addRangeHighlighter(1, 2, HighlighterLayer.CARET_ROW + 2, null, Color.blue);
+    checkResult();
+  }
+
+  public void testFontStyleAfterMove() throws Exception {
+    initText("text\ntext\n");
+    addRangeHighlighter(0, 4, 0, new TextAttributes(null, null, null, null, Font.BOLD));
+    addRangeHighlighter(5, 9, 0, new TextAttributes(null, null, null, null, Font.BOLD));
+    checkResult(); // initial text layout cache population
+
+    myEditor.getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        // force population of text layout cache on document update
+        // this can be done by editor implementation in real life,
+        // but we're doing it manually here to cover more potential cases
+        myEditor.visualPositionToXY(new VisualPosition(0, 10));
+      }
+    });
+
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> ((DocumentEx)myEditor.getDocument()).moveText(5, 10, 0));
+    checkResult();
+  }
+
+  public void testSoftWrapWithWithLineSeparator() throws Exception {
+    initText("x\nabcef\ny");
+    configureSoftWraps(2);
+    verifySoftWrapPositions(4, 5);
+
+    RangeHighlighter topHighlighter = addRangeHighlighter(4, 4, 0, null);
+    topHighlighter.setLineSeparatorColor(Color.red);
+    topHighlighter.setLineSeparatorPlacement(SeparatorPlacement.TOP);
+
+    RangeHighlighter bottomHighlighter = addRangeHighlighter(4, 4, 0, null);
+    bottomHighlighter.setLineSeparatorColor(Color.blue);
+    bottomHighlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
+
     checkResult();
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -94,13 +95,11 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
                                                  @Nullable Module module,
                                                  @Nullable PsiElement context,
                                                  @NotNull Project project) {
+    List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, customScope, module, context);
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
       AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
-      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
-      project,
-      customScope,
-      module,
-      true, AnalysisUIOptions.getInstance(project), context);
+      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), project,
+      items, AnalysisUIOptions.getInstance(project), true);
     if (!dlg.showAndGet()) {
       return;
     }
@@ -124,7 +123,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
                                                           @NotNull InspectionManagerEx managerEx,
                                                           @Nullable PsiElement psiElement) {
     final InspectionProfileImpl model = createProfile(toolWrapper, managerEx, psiElement);
-    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
+    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext();
     inspectionContext.setExternalProfile(model);
     return inspectionContext;
   }

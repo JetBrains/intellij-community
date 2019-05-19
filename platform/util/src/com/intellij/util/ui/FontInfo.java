@@ -94,7 +94,7 @@ public final class FontInfo {
    */
   public static List<FontInfo> getAll(boolean withAllStyles) {
     return GraphicsEnvironment.isHeadless()
-           ? Collections.<FontInfo>emptyList()
+           ? Collections.emptyList()
            : withAllStyles
              ? LazyListByFont.LIST
              : LazyListByName.LIST;
@@ -115,7 +115,7 @@ public final class FontInfo {
 
   private static List<FontInfo> byName() {
     String[] names = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames(ENGLISH);
-    List<FontInfo> list = new ArrayList<FontInfo>(names.length);
+    List<FontInfo> list = new ArrayList<>(names.length);
     for (String name : names) {
       FontInfo info = byName(name);
       if (info != null) list.add(info);
@@ -126,7 +126,7 @@ public final class FontInfo {
         if (info != null) list.add(info);
       }
     }
-    Collections.sort(list, COMPARATOR);
+    list.sort(COMPARATOR);
     return Collections.unmodifiableList(list);
   }
 
@@ -136,7 +136,7 @@ public final class FontInfo {
 
   private static List<FontInfo> byFont() {
     Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-    List<FontInfo> list = new ArrayList<FontInfo>(fonts.length);
+    List<FontInfo> list = new ArrayList<>(fonts.length);
     for (Font font : fonts) {
       FontInfo info = byFont(font);
       if (info != null) list.add(info);
@@ -145,7 +145,7 @@ public final class FontInfo {
       FontInfo info = find(list, name);
       if (info != null) list.remove(info);
     }
-    Collections.sort(list, COMPARATOR);
+    list.sort(COMPARATOR);
     return Collections.unmodifiableList(list);
   }
 

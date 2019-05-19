@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
+@FunctionalInterface
 public interface NullableFactory<T> extends Factory<T>{
   @Override
   @Nullable

@@ -33,9 +33,9 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
   final JPanel myWrapper;
   private final UserDefinedJsonSchemaConfiguration.Item myItem;
   private final Project myProject;
-  private final Runnable myTreeUpdater;
+  private final TreeUpdater myTreeUpdater;
 
-  public JsonMappingsTableCellEditor(UserDefinedJsonSchemaConfiguration.Item item, Project project, Runnable treeUpdater) {
+  JsonMappingsTableCellEditor(UserDefinedJsonSchemaConfiguration.Item item, Project project, TreeUpdater treeUpdater) {
     myItem = item;
     myProject = project;
     myTreeUpdater = treeUpdater;
@@ -84,12 +84,8 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
     myComponent.getTextField().addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()) {
-          case KeyEvent.VK_ENTER:
-            if (finalField == null || !finalField.isPopupDisplayed()) {
-              stopCellEditing();
-            }
-            break;
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && (finalField == null || !finalField.isPopupDisplayed())) {
+          stopCellEditing();
         }
       }
     });
@@ -104,14 +100,14 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
 
   @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-    myComponent.getChildComponent().setText(myItem.path);
+    myComponent.getChildComponent().setText(myItem.getPath());
     return myWrapper;
   }
 
   @Override
   public boolean stopCellEditing() {
     myItem.setPath(myComponent.getChildComponent().getText());
-    myTreeUpdater.run();
+    myTreeUpdater.updateTree(true);
     return super.stopCellEditing();
   }
 
@@ -124,7 +120,7 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
     private final JTextField myTextField;
     private final Project myProject;
 
-    public MyFileTextFieldImpl(LocalFsFinder finder, FileChooserDescriptor descriptor, JTextField textField, Project project, Disposable parent) {
+    MyFileTextFieldImpl(LocalFsFinder finder, FileChooserDescriptor descriptor, JTextField textField, Project project, Disposable parent) {
       super(textField, finder, new LocalFsFinder.FileChooserFilter(descriptor, true),
             FileChooserFactoryImpl.getMacroMap(), parent);
       myTextField = textField;

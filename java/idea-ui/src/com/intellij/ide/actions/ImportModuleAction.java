@@ -32,12 +32,14 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,24 +50,29 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.util.ArrayUtil.toObjectArray;
-
 /**
  * @author Dmitry Avdeev
  */
-public class ImportModuleAction extends AnAction {
+public class ImportModuleAction extends AnAction implements NewProjectOrModuleAction {
 
   private static final String LAST_IMPORTED_LOCATION = "last.imported.location";
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     doImport(getEventProject(e));
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(getEventProject(e) != null);
+    NewProjectAction.updateActionText(this, e);
+  }
+
+  @NotNull
+  @Override
+  public String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
+    return ProjectBundle.message("import.module.action.text", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 : 0);
   }
 
   @Override
@@ -79,8 +86,12 @@ public class ImportModuleAction extends AnAction {
     if (wizard == null || wizard.getStepCount() > 0 && !wizard.showAndGet()) {
       return Collections.emptyList();
     }
-
-    return createFromWizard(project, wizard);
+    try {
+      return createFromWizard(project, wizard);
+    }
+    finally {
+      wizard.disposeIfNeeded();
+    }
   }
 
   public static List<Module> createFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
@@ -90,12 +101,19 @@ public class ImportModuleAction extends AnAction {
   }
 
   private static List<Module> doCreateFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
+    final ProjectBuilder projectBuilder = wizard.getProjectBuilder();
     if (project == null) {
-      Project newProject = NewProjectUtil.createFromWizard(wizard, null);
+      Project newProject;
+      if (projectBuilder instanceof DeprecatedProjectBuilderForImport) {
+        // The path to remove import action
+        newProject = ProjectUtil.openOrImport(wizard.getNewProjectFilePath(), null, false);
+      }
+      else {
+        newProject = NewProjectUtil.createFromWizard(wizard, null);
+      }
       return newProject == null ? Collections.emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
     }
 
-    final ProjectBuilder projectBuilder = wizard.getProjectBuilder();
     try {
       if (wizard.getStepCount() > 0) {
         Module module = new NewModuleAction().createModuleFromWizard(project, null, wizard);
@@ -120,7 +138,7 @@ public class ImportModuleAction extends AnAction {
     List<ProjectImportProvider> providers = getProviders(project);
     String description = getFileChooserDescription(providers);
     descriptor.setDescription(description);
-    return selectFileAndCreateWizard(project, dialogParent, descriptor, toObjectArray(providers, ProjectImportProvider.class));
+    return selectFileAndCreateWizard(project, dialogParent, descriptor, providers.toArray(new ProjectImportProvider[0]));
   }
 
   @Nullable

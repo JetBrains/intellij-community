@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -14,7 +14,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
@@ -248,7 +247,7 @@ public class CompleteReferenceExpression {
     final PsiType substituted = resolveResult != null ? resolveResult.getSubstitutor().substitute(propType) : propType;
 
     LookupElementBuilder builder =
-      LookupElementBuilder.create(generatePropertyResolveResult(propName, accessor, propType, resolveResult), propName)
+      LookupElementBuilder.create(generatePropertyElement(propName, accessor, propType), propName)
         .withIcon(JetgroovyIcons.Groovy.Property);
     if (substituted != null) {
       builder = builder.withTypeText(substituted.getPresentableText());
@@ -257,20 +256,9 @@ public class CompleteReferenceExpression {
   }
 
   @NotNull
-  private static GroovyResolveResult generatePropertyResolveResult(@NotNull String name,
-                                                                   @NotNull PsiMethod method,
-                                                                   @Nullable PsiType type,
-                                                                   @Nullable GroovyResolveResult resolveResult) {
-    PsiType nonNullType = type != null ? type : TypesUtil.getJavaLangObject(method);
-
-    final GrPropertyForCompletion field = new GrPropertyForCompletion(method, name, nonNullType);
-    if (resolveResult != null) {
-      return new GroovyResolveResultImpl(field, resolveResult.getCurrentFileResolveContext(), resolveResult.getSpreadState(),
-                                         resolveResult.getSubstitutor(), resolveResult.isAccessible(), resolveResult.isStaticsOK());
-    }
-    else {
-      return new GroovyResolveResultImpl(field, true);
-    }
+  private static PsiElement generatePropertyElement(@NotNull String name, @NotNull PsiMethod method, @Nullable PsiType type) {
+    PsiType nonNullType = type == null ? TypesUtil.getJavaLangObject(method) : type;
+    return new GrPropertyForCompletion(method, name, nonNullType);
   }
 
   private void getVariantsFromQualifier(@NotNull GrExpression qualifier) {
@@ -458,7 +446,7 @@ public class CompleteReferenceExpression {
 
       GroovyResolveResult result = (GroovyResolveResult)o;
       if (!result.isStaticsOK()) {
-        if (myInapplicable == null) myInapplicable = ContainerUtil.newArrayList();
+        if (myInapplicable == null) myInapplicable = new ArrayList<>();
         myInapplicable.add(result);
         return;
       }
@@ -542,7 +530,7 @@ public class CompleteReferenceExpression {
         final String name = listenerMethod.getName();
         if (myPropertyNames.add(name)) {
           LookupElementBuilder builder = LookupElementBuilder
-            .create(generatePropertyResolveResult(name, listenerMethod, null, null), name)
+            .create(generatePropertyElement(name, listenerMethod, null), name)
             .withIcon(JetgroovyIcons.Groovy.Property);
           myConsumer.consume(builder);
         }
@@ -557,7 +545,7 @@ public class CompleteReferenceExpression {
       List<GroovyResolveResult> list = new ArrayList<>(results.length);
       myPropertyNames.removeAll(myPreferredFieldNames);
 
-      Set<String> usedFields = ContainerUtil.newHashSet();
+      Set<String> usedFields = new java.util.HashSet<>();
       for (GroovyResolveResult result : results) {
         final PsiElement element = result.getElement();
         if (element instanceof PsiField) {

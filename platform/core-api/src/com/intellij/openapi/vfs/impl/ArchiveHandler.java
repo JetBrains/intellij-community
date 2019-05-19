@@ -224,7 +224,7 @@ public abstract class ArchiveHandler {
     if (entry == null) {
       Pair<String, String> path = splitPath(entryName);
       EntryInfo parentEntry = getOrCreate(map, path.first);
-      CharSequence shortName = ByteArrayCharSequence.convertToBytesIfAsciiString(path.second);
+      CharSequence shortName = ByteArrayCharSequence.convertToBytesIfPossible(path.second);
       entry = new EntryInfo(shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parentEntry);
       map.put(entryName, entry);
     }

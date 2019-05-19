@@ -35,11 +35,10 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,15 +89,12 @@ public class ReassignVariableUtil {
           .createPopupChooserBuilder(vars)
           .setTitle("Choose variable to reassign")
           .setRequestFocus(true)
-          .setRenderer(new ListCellRendererWrapper<PsiVariable>() {
-            @Override
-            public void customize(JList list, PsiVariable value, int index, boolean selected, boolean hasFocus) {
-              if (value != null) {
-                setText(value.getName());
-                setIcon(value.getIcon(0));
-              }
+          .setRenderer(SimpleListCellRenderer.<PsiVariable>create((label, value, index) -> {
+            if (value != null) {
+              label.setText(value.getName());
+              label.setIcon(value.getIcon(0));
             }
-          })
+          }))
           .setItemChosenCallback((selectedValue) -> replaceWithAssignment(declaration, selectedValue, editor))
           .createPopup();
         if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -170,7 +166,6 @@ public class ReassignVariableUtil {
       if (modifierList != null) {
         modifierList.setModifierProperty(PsiModifier.FINAL, false);
       }
-      ;
     });
     finishTemplate(editor);
   }

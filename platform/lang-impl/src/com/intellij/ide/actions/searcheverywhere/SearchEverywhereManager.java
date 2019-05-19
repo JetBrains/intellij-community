@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -17,14 +18,16 @@ public interface SearchEverywhereManager {
 
   boolean isShown();
 
-  void show(@NotNull String selectedContributorID, @Nullable String searchText); //todo change to contributor??? UX-1
+  void show(@NotNull String contributorID, @Nullable String searchText, @NotNull AnActionEvent initEvent); //todo change to contributor??? UX-1
 
-  String getShownContributorID();
+  @NotNull
+  String getSelectedContributorID();
 
-  void setShownContributor(@NotNull String newSelectedContributorID); //todo change to contributor??? UX-1
+  void setSelectedContributor(@NotNull String contributorID); //todo change to contributor??? UX-1
 
-  boolean isShowNonProjectItems();
+  void toggleEverywhereFilter();
 
-  void setShowNonProjectItems(boolean show);
+  // todo remove
+  boolean isEverywhere();
 
 }

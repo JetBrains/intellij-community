@@ -23,11 +23,11 @@ import com.intellij.util.xmlb.annotations.Tag;
  * @author nik
  */
 @Tag("plugin")
-class DependencyOnPluginState {
-  public DependencyOnPluginState() {
+public class DependencyOnPluginState {
+  DependencyOnPluginState() {
   }
 
-  public DependencyOnPluginState(DependencyOnPlugin dependency) {
+  DependencyOnPluginState(DependencyOnPlugin dependency) {
     myId = dependency.getPluginId();
     myMinVersion = dependency.getMinVersion();
     myMaxVersion = dependency.getMaxVersion();

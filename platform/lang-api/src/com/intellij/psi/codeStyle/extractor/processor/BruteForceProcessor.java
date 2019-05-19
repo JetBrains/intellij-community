@@ -46,6 +46,7 @@ public class BruteForceProcessor extends CodeStyleDeriveProcessor {
     return container;
   }
 
+  @Override
   @NotNull
   public String getHTMLReport() {
     return "";

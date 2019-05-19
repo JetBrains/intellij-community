@@ -21,13 +21,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
-import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyStubImpl;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -62,18 +62,20 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     final List<FoldingDescriptor> result = new ArrayList<>();
     boolean hasJsp = ContainerUtil.intersects(Arrays.asList(StdLanguages.JSP, StdLanguages.JSPX), file.getViewProvider().getLanguages());
     //hack here because JspFile PSI elements are not threaded correctly via nextSibling/prevSibling
-    file.accept(hasJsp ? new JavaRecursiveElementVisitor() {
+    file.accept(hasJsp ? new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
+        ProgressManager.checkCanceled();
         ULiteralExpression uLiteralExpression = UastContextKt.toUElement(expression, ULiteralExpression.class);
         if (uLiteralExpression != null) {
           checkLiteral(uLiteralExpression, result);
         }
       }
-    } : new PsiRecursiveElementVisitor() {
+    } : new PsiRecursiveElementWalkingVisitor() {
 
       @Override
       public void visitElement(PsiElement element) {
+        ProgressManager.checkCanceled();
         ULiteralExpression uLiteralExpression = UastContextKt.toUElement(element, ULiteralExpression.class);
         if (uLiteralExpression != null) {
           checkLiteral(uLiteralExpression, result);
@@ -89,7 +91,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     return JavaCodeFoldingSettings.getInstance().isCollapseI18nMessages();
   }
 
-  private static void checkLiteral(ULiteralExpression expression, List<FoldingDescriptor> result) {
+  private static void checkLiteral(ULiteralExpression expression, List<? super FoldingDescriptor> result) {
     PsiElement sourcePsi = expression.getSourcePsi();
     if (sourcePsi == null) return;
     if (!isI18nProperty(expression)) return;
@@ -129,14 +131,14 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
             elementToFold = callSourcePsi;
           }
           result.add(
-            new NamedFoldingDescriptor(ObjectUtils.assertNotNull(elementToFold.getNode()), elementToFold.getTextRange(), null,
-                                       formatMethodCallExpression(expressions), isFoldingsOn(), set));
+            new FoldingDescriptor(ObjectUtils.assertNotNull(elementToFold.getNode()), elementToFold.getTextRange(), null,
+                                  formatMethodCallExpression(expressions), isFoldingsOn(), set));
           return;
         }
       }
     }
-    result.add(new NamedFoldingDescriptor(ObjectUtils.assertNotNull(sourcePsi.getNode()), sourcePsi.getTextRange(), null,
-                                          getI18nMessage(expression), isFoldingsOn(), set));
+    result.add(new FoldingDescriptor(ObjectUtils.assertNotNull(sourcePsi.getNode()), sourcePsi.getTextRange(), null,
+                                     getI18nMessage(expression), isFoldingsOn(), set));
   }
 
 
@@ -251,7 +253,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (property == NULL) return false;
     if (property != null) return true;
 
-    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr);
+    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr, null);
     if (!isI18n) {
       sourcePsi.putUserData(CACHE, NULL);
     }

@@ -67,6 +67,7 @@ public class GenericValueNode extends AbstractDomElementNode {
     }
   }
 
+  @NotNull
   @Override
   public SimpleNode[] getChildren() {
     return NO_CHILDREN;

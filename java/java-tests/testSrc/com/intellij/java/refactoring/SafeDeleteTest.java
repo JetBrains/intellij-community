@@ -25,6 +25,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 public class SafeDeleteTest extends MultiFileTestCase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
@@ -98,6 +99,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeleteParameterOfASiblingMethod() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testDeleteMethodCascade() throws Exception {
     doSingleFileTest();
   }
@@ -159,13 +164,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testRemoveOverridersInspiteOfUnsafeUsages() {
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doTest("A");
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doTest("A"));
   }
 
   public void testLocalVariable() {
@@ -327,13 +326,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
 
   public void testParameterInMethodUsedInMethodReference() throws Exception {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doSingleFileTest();
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doSingleFileTest());
   }
 
   public void testNoConflictOnDeleteParameterWithMethodRefArg() throws Exception {
@@ -342,13 +335,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testShowConflictsButRemoveAnnotationsIfAnnotationTypeIsDeleted() throws Exception {
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doSingleFileTest();
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doSingleFileTest());
   }
 
   public void testUsagesInScratch() throws Exception {
@@ -390,6 +377,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testForUpdateList() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testUpdateContractOnParameterRemoval() throws Exception {
     doSingleFileTest();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
@@ -110,7 +110,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
         if (!(value instanceof CheckedTreeNode)) return;
         CheckedTreeNode node = (CheckedTreeNode)value;
 
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        Color background = UIUtil.getTreeBackground(selected, true);
         PostfixTemplateCheckedTreeNode templateNode = ObjectUtils.tryCast(node, PostfixTemplateCheckedTreeNode.class);
         SimpleTextAttributes attributes;
         if (templateNode != null) {
@@ -188,7 +188,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
 
   @NotNull
   public Map<String, Set<String>> getDisabledTemplatesState() {
-    final Map<String, Set<String>> result = ContainerUtil.newHashMap();
+    final Map<String, Set<String>> result = new HashMap<>();
     visitTemplateNodes(template -> {
       if (!template.isChecked()) {
         Set<String> templatesForProvider =
@@ -227,7 +227,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     });
   }
 
-  private void visitTemplateNodes(@NotNull Consumer<PostfixTemplateCheckedTreeNode> consumer) {
+  private void visitTemplateNodes(@NotNull Consumer<? super PostfixTemplateCheckedTreeNode> consumer) {
     Enumeration languages = myRoot.children();
     while (languages.hasMoreElements()) {
       CheckedTreeNode langNode = (CheckedTreeNode)languages.nextElement();
@@ -253,7 +253,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       if (StringUtil.isEmpty(providerName)) continue;
       group.add(new DumbAwareAction(providerName) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           PostfixTemplateEditor editor = provider.createEditor(null);
           if (editor != null) {
             PostfixEditTemplateDialog dialog = new PostfixEditTemplateDialog(PostfixTemplatesCheckboxTree.this, editor, providerName, null);
@@ -336,7 +336,15 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       return false;
     }
     PostfixTemplateProvider provider = selectedTemplate.getProvider();
-    return provider != null && provider.createEditor(selectedTemplate) != null;
+    if (provider == null) {
+      return false;
+    }
+    PostfixTemplateEditor editor = provider.createEditor(selectedTemplate);
+    if (editor != null) {
+      Disposer.dispose(editor);
+      return true;
+    }
+    return false;
   }
 
   public void duplicateSelectedTemplate() {
@@ -424,7 +432,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
   private static class LangTreeNode extends CheckedTreeNode {
     @NotNull private final String myLanguageId;
 
-    public LangTreeNode(@NotNull String languageName, @NotNull String languageId) {
+    LangTreeNode(@NotNull String languageName, @NotNull String languageId) {
       super(languageName);
       myLanguageId = languageId;
     }

@@ -4,21 +4,20 @@ package com.intellij.util;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
-import com.intellij.ide.presentation.VirtualFilePresentation;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.ide.TypePresentationService;
+import com.intellij.openapi.fileTypes.DirectoryFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
-import com.intellij.ui.IconDeferrer;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.*;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.JBUI.ScaleContextAware;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContextAware;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,10 +27,12 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.RGBImageFilter;
 import java.lang.ref.WeakReference;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
-import static java.lang.Math.round;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 
 
 /**
@@ -76,8 +77,8 @@ public class IconUtil {
     int imageWidth = ImageUtil.getRealWidth(image);
     int imageHeight = ImageUtil.getRealHeight(image);
 
-    maxWidth = maxWidth == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)round(maxWidth * scale);
-    maxHeight = maxHeight == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)round(maxHeight * scale);
+    maxWidth = maxWidth == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)Math.round(maxWidth * scale);
+    maxHeight = maxHeight == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)Math.round(maxHeight * scale);
     final int w = Math.min(imageWidth, maxWidth);
     final int h = Math.min(imageHeight, maxHeight);
 
@@ -133,16 +134,16 @@ public class IconUtil {
   }
 
   private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> {
-    final VirtualFile file = key.getFile();
-    final int flags = filterFileIconFlags(file, key.getFlags());
-    final Project project = key.getProject();
+    VirtualFile file = key.getFile();
+    int flags = filterFileIconFlags(file, key.getFlags());
+    Project project = key.getProject();
 
     if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
 
-    final Icon providersIcon = getProvidersIcon(file, flags, project);
-    Icon icon = providersIcon == null ? VirtualFilePresentation.getIconImpl(file) : providersIcon;
+    Icon providersIcon = getProvidersIcon(file, flags, project);
+    Icon icon = providersIcon != null ? providersIcon : getBaseIcon(file);
 
-    final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
+    boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     for (FileIconPatcher patcher : getPatchers()) {
       if (dumb && !DumbService.isDumbAware(patcher)) {
         continue;
@@ -166,7 +167,7 @@ public class IconUtil {
   };
 
   @Iconable.IconFlags
-  private static int filterFileIconFlags(@NotNull VirtualFile file, @Iconable.IconFlags int flags) {
+  private static int filterFileIconFlags(VirtualFile file, @Iconable.IconFlags int flags) {
     UserDataHolder fileTypeDataHolder = ObjectUtils.tryCast(file.getFileType(), UserDataHolder.class);
     int fileTypeFlagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0);
     int flagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask);
@@ -174,11 +175,22 @@ public class IconUtil {
     return flags & ~flagIgnoreMask;
   }
 
-  public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
+  public static Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
-
-    final Icon base = lastIcon != null ? lastIcon : VirtualFilePresentation.getIconImpl(file);
+    Icon base = lastIcon != null ? lastIcon : getBaseIcon(file);
     return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
+  }
+
+  private static Icon getBaseIcon(VirtualFile vFile) {
+    Icon icon = TypePresentationService.getService().getIcon(vFile);
+    if (icon != null) {
+      return icon;
+    }
+    FileType fileType = vFile.getFileType();
+    if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
+      return PlatformIcons.FOLDER_ICON;
+    }
+    return fileType.getIcon();
   }
 
   @Nullable
@@ -193,37 +205,28 @@ public class IconUtil {
   @NotNull
   public static Icon getEmptyIcon(boolean showVisibility) {
     RowIcon baseIcon = new RowIcon(2);
-    baseIcon.setIcon(createEmptyIconLike(PlatformIcons.CLASS_ICON_PATH), 0);
+    baseIcon.setIcon(EmptyIcon.create(PlatformIcons.CLASS_ICON), 0);
     if (showVisibility) {
-      baseIcon.setIcon(createEmptyIconLike(PlatformIcons.PUBLIC_ICON_PATH), 1);
+      baseIcon.setIcon(EmptyIcon.create(PlatformIcons.PUBLIC_ICON), 1);
     }
     return baseIcon;
   }
 
-  @NotNull
-  private static Icon createEmptyIconLike(@NotNull String baseIconPath) {
-    Icon baseIcon = IconLoader.findIcon(baseIconPath);
-    if (baseIcon == null) {
-      return EmptyIcon.ICON_16;
-    }
-    return EmptyIcon.create(baseIcon);
-  }
-
   private static class FileIconProviderHolder {
-    private static final FileIconProvider[] myProviders = Extensions.getExtensions(FileIconProvider.EP_NAME);
+    private static final List<FileIconProvider> myProviders = FileIconProvider.EP_NAME.getExtensionList();
   }
 
   @NotNull
-  private static FileIconProvider[] getProviders() {
+  private static List<FileIconProvider> getProviders() {
     return FileIconProviderHolder.myProviders;
   }
 
   private static class FileIconPatcherHolder {
-    private static final FileIconPatcher[] ourPatchers = Extensions.getExtensions(FileIconPatcher.EP_NAME);
+    private static final List<FileIconPatcher> ourPatchers = FileIconPatcher.EP_NAME.getExtensionList();
   }
 
   @NotNull
-  private static FileIconPatcher[] getPatchers() {
+  private static List<FileIconPatcher> getPatchers() {
     return FileIconPatcherHolder.ourPatchers;
   }
 
@@ -403,16 +406,12 @@ public class IconUtil {
     }
   }
 
+  /**
+   * @deprecated use {@link #scale(Icon, Component, float)}
+   */
+  @Deprecated
   @NotNull
   public static Icon scale(@NotNull final Icon source, double _scale) {
-    final int hiDPIScale;
-    if (source instanceof ImageIcon) {
-      Image image = ((ImageIcon)source).getImage();
-      hiDPIScale = image instanceof JBHiDPIScaledImage ? 2 : 1;
-    }
-    else {
-      hiDPIScale = 1;
-    }
     final double scale = Math.min(32, Math.max(.1, _scale));
     return new Icon() {
       @Override
@@ -433,14 +432,34 @@ public class IconUtil {
 
       @Override
       public int getIconWidth() {
-        return (int)(source.getIconWidth() * scale) / hiDPIScale;
+        return (int)(source.getIconWidth() * scale);
       }
 
       @Override
       public int getIconHeight() {
-        return (int)(source.getIconHeight() * scale) / hiDPIScale;
+        return (int)(source.getIconHeight() * scale);
       }
     };
+  }
+
+  /**
+   * Returns a copy of the provided {@code icon}.
+   *
+   * @see CopyableIcon
+   */
+  @Contract("null, _->null; !null, _->!null")
+  public static Icon copy(@Nullable Icon icon, @Nullable Component ancestor) {
+    return IconLoader.copy(icon, ancestor, false);
+  }
+
+  /**
+   * Returns a deep copy of the provided {@code icon}.
+   *
+   * @see CopyableIcon
+   */
+  @Contract("null, _->null; !null, _->!null")
+  public static Icon deepCopy(@Nullable Icon icon, @Nullable Component ancestor) {
+    return IconLoader.copy(icon, ancestor, true);
   }
 
   /**
@@ -494,17 +513,33 @@ public class IconUtil {
   @NotNull
   public static Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
     float scale = JBUI.getFontScale(fontSize);
-    if (icon instanceof ScalableIcon) {
-      if (icon instanceof ScaleContextAware) {
-        ScaleContextAware ctxIcon = (ScaleContextAware)icon;
-        ctxIcon.updateScaleContext(ancestor != null ? ScaleContext.create(ancestor) : null);
-        // take into account the user scale of the icon
-        double usrScale = ctxIcon.getScaleContext().getScale(USR_SCALE);
-        scale /= usrScale;
-      }
-      return ((ScalableIcon)icon).scale(scale);
+    if (icon instanceof ScaleContextAware) {
+      ScaleContextAware ctxIcon = (ScaleContextAware)icon;
+      // take into account the user scale of the icon
+      double usrScale = ctxIcon.getScaleContext().getScale(USR_SCALE);
+      scale /= usrScale;
     }
-    return scale(icon, scale);
+    return scale(icon, ancestor, scale);
+  }
+
+  /**
+   * Overrides the provided scale in the icon's scale context and in the composited icon's scale contexts (when applicable).
+   *
+   * @see JBUIScale.UserScaleContext#overrideScale(JBUIScale.Scale)
+   */
+  @NotNull
+  public static Icon overrideScale(@NotNull Icon icon, JBUIScale.Scale scale) {
+    if (icon instanceof CompositeIcon) {
+      CompositeIcon compositeIcon = (CompositeIcon)icon;
+      for (int i = 0; i < compositeIcon.getIconCount(); i++) {
+        Icon subIcon = compositeIcon.getIcon(i);
+        if (subIcon != null) overrideScale(subIcon, scale);
+      }
+    }
+    if (icon instanceof ScaleContextAware) {
+      ((ScaleContextAware)icon).getScaleContext().overrideScale(scale);
+    }
+    return icon;
   }
 
   @NotNull
@@ -519,55 +554,52 @@ public class IconUtil {
 
   @NotNull
   public static Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
-    return filterIcon(null, source, new ColorFilter(color, keepGray));
+    Icon icon = filterIcon(source, () -> new ColorFilter(color, keepGray), null);
+    return icon != null ? icon : getEmptyIcon(true);
   }
 
   @NotNull
   public static Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color, boolean keepGray) {
     return filterIcon(g, source, new ColorFilter(color, keepGray));
   }
-  @NotNull
+
+  @Nullable
   public static Icon desaturate(@NotNull Icon source) {
-    return filterIcon(null, source, new DesaturationFilter());
+    return filterIcon(source, () -> new DesaturationFilter(), null);
   }
 
-  @NotNull
+  @Nullable
   public static Icon brighter(@NotNull Icon source, int tones) {
-    return filterIcon(null, source, new BrighterFilter(tones));
+    return filterIcon(source, () -> new BrighterFilter(tones), null);
   }
 
-  @NotNull
+  @Nullable
   public static Icon darker(@NotNull Icon source, int tones) {
-    return filterIcon(null, source, new DarkerFilter(tones));
+    return filterIcon(source, () -> new DarkerFilter(tones), null);
   }
 
   @NotNull
-  private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull Filter filter) {
-    BufferedImage src = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT) :
-                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
+  private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull ColorFilter filter) {
+    BufferedImage src = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
+                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2d = src.createGraphics();
     source.paintIcon(null, g2d, 0, 0);
     g2d.dispose();
-    BufferedImage img = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT) :
-                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
-    int[] rgba = new int[4];
+    BufferedImage img = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
+                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    int rgba;
     for (int y = 0; y < src.getRaster().getHeight(); y++) {
       for (int x = 0; x < src.getRaster().getWidth(); x++) {
-        src.getRaster().getPixel(x, y, rgba);
-        if (rgba[3] != 0) {
-          img.getRaster().setPixel(x, y, filter.convert(rgba));
+        rgba = src.getRGB(x, y);
+        if ((rgba & 0xff000000) != 0) {
+          img.setRGB(x, y, filter.filterRGB(x, y, rgba));
         }
       }
     }
     return createImageIcon((Image)img);
   }
 
-  private static abstract class Filter {
-    @NotNull
-    abstract int[] convert(@NotNull int[] rgba);
-  }
-
-  private static class ColorFilter extends Filter {
+  private static class ColorFilter extends RGBImageFilter {
     private final float[] myBase;
     private final boolean myKeepGray;
 
@@ -576,66 +608,60 @@ public class IconUtil {
       myBase = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
     }
 
-    @NotNull
     @Override
-    int[] convert(@NotNull int[] rgba) {
+    public int filterRGB(int x, int y, int rgba) {
+      int r = rgba >> 16 & 0xff;
+      int g = rgba >> 8 & 0xff;
+      int b = rgba & 0xff;
       float[] hsb = new float[3];
-      Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], hsb);
+      Color.RGBtoHSB(r, g, b, hsb);
       int rgb = Color.HSBtoRGB(myBase[0], myBase[1] * (myKeepGray ? hsb[1] : 1f), myBase[2] * hsb[2]);
-      return new int[]{rgb >> 16 & 0xff, rgb >> 8 & 0xff, rgb & 0xff, rgba[3]};
+      return (rgba & 0xff000000) | (rgb & 0xffffff);
     }
   }
 
-  private static class DesaturationFilter extends Filter {
-    @NotNull
+  private static class DesaturationFilter extends RGBImageFilter {
     @Override
-    int[] convert(@NotNull int[] rgba) {
-      int min = Math.min(Math.min(rgba[0], rgba[1]), rgba[2]);
-      int max = Math.max(Math.max(rgba[0], rgba[1]), rgba[2]);
+    public int filterRGB(int x, int y, int rgba) {
+      int r = rgba >> 16 & 0xff;
+      int g = rgba >> 8 & 0xff;
+      int b = rgba & 0xff;
+      int min = Math.min(Math.min(r, g), b);
+      int max = Math.max(Math.max(r, g), b);
       int grey = (max + min) / 2;
-      return new int[]{grey, grey, grey, rgba[3]};
+      return (rgba & 0xff000000) | (grey << 16) | (grey << 8) | grey;
     }
   }
 
-  private static class BrighterFilter extends Filter {
+  private static class BrighterFilter extends RGBImageFilter {
     private final int myTones;
 
-    public BrighterFilter(int tones) {
+    BrighterFilter(int tones) {
       myTones = tones;
     }
 
-    @NotNull
+    @SuppressWarnings("UseJBColor")
     @Override
-    int[] convert(@NotNull int[] rgba) {
-      final float[] hsb = Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], null);
-      float brightness = hsb[2];
-      for (int i = 0; i < myTones; i++) {
-        brightness = Math.min(1, brightness * 1.1F);
-        if (brightness == 1) break;
-      }
-      Color color = Color.getHSBColor(hsb[0], hsb[1], brightness);
-      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
+    public int filterRGB(int x, int y, int rgb) {
+      Color originalColor = new Color(rgb, true);
+      Color filteredColor = ColorUtil.toAlpha(ColorUtil.brighter(originalColor, myTones), originalColor.getAlpha());
+      return filteredColor.getRGB();
     }
   }
 
-  private static class DarkerFilter extends Filter {
+  private static class DarkerFilter extends RGBImageFilter {
     private final int myTones;
 
-    public DarkerFilter(int tones) {
+    DarkerFilter(int tones) {
       myTones = tones;
     }
 
-    @NotNull
+    @SuppressWarnings("UseJBColor")
     @Override
-    int[] convert(@NotNull int[] rgba) {
-      final float[] hsb = Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], null);
-      float brightness = hsb[2];
-      for (int i = 0; i < myTones; i++) {
-        brightness = Math.max(0, brightness / 1.1F);
-        if (brightness == 0) break;
-      }
-      Color color = Color.getHSBColor(hsb[0], hsb[1], brightness);
-      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
+    public int filterRGB(int x, int y, int rgb) {
+      Color originalColor = new Color(rgb, true);
+      Color filteredColor = ColorUtil.toAlpha(ColorUtil.darker(originalColor, myTones), originalColor.getAlpha());
+      return filteredColor.getRGB();
     }
   }
 
@@ -665,12 +691,14 @@ public class IconUtil {
 
   @NotNull
   public static Icon textToIcon(@NotNull final String text, @NotNull final Component component, final float fontSize) {
-    class MyIcon extends JBUI.ScalableJBIcon {
-      Font myFont;
-      FontMetrics myMetrics;
-      final WeakReference<Component> myCompRef = new WeakReference<>(component);
+    class MyIcon extends JBScalableIcon {
+      private @NotNull final String myText;
+      private Font myFont;
+      private FontMetrics myMetrics;
+      private final WeakReference<Component> myCompRef = new WeakReference<>(component);
 
-      private MyIcon() {
+      private MyIcon(@NotNull final String text) {
+        myText = text;
         setIconPreScaled(false);
         getScaleContext().addUpdateListener(() -> update());
         update();
@@ -682,7 +710,7 @@ public class IconUtil {
         try {
           GraphicsUtil.setupAntialiasing(g);
           g.setFont(myFont);
-          UIUtil.drawStringWithHighlighting(g, text,
+          UIUtil.drawStringWithHighlighting(g, myText,
                                             (int)scaleVal(x, OBJ_SCALE) + (int)scaleVal(2),
                                             (int)scaleVal(y, OBJ_SCALE) + getIconHeight() - (int)scaleVal(1),
                                             JBColor.foreground(), JBColor.background());
@@ -694,7 +722,7 @@ public class IconUtil {
 
       @Override
       public int getIconWidth() {
-        return myMetrics.stringWidth(text) + (int)scaleVal(4);
+        return myMetrics.stringWidth(myText) + (int)scaleVal(4);
       }
 
       @Override
@@ -708,9 +736,20 @@ public class IconUtil {
         if (comp == null) comp = new Component() {};
         myMetrics = comp.getFontMetrics(myFont);
       }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MyIcon)) return false;
+        final MyIcon icon = (MyIcon)o;
+
+        if (!Objects.equals(myText, icon.myText)) return false;
+        if (!Objects.equals(myFont, icon.myFont)) return false;
+        return true;
+      }
     }
 
-    return new MyIcon();
+    return new MyIcon(text);
   }
 
   @NotNull
@@ -725,7 +764,39 @@ public class IconUtil {
    * Creates new icon with the filter applied.
    */
   @Nullable
-  public static Icon filterIcon(@NotNull Icon icon, RGBImageFilter filter, @Nullable Component ancestor) {
-    return IconLoader.filterIcon(icon, filter, ancestor);
+  public static Icon filterIcon(@NotNull Icon icon, Supplier<? extends RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
+    return IconLoader.filterIcon(icon, filterSupplier, ancestor);
+  }
+
+  /**
+   * This method works with compound icons like RowIcon or LayeredIcon
+   * and replaces its inner 'simple' icon with another one recursively
+   * @return original icon with modified inner state
+   */
+  public static Icon replaceInnerIcon(@Nullable Icon icon, @NotNull Icon toCheck, @NotNull Icon toReplace) {
+    if (icon  instanceof LayeredIcon) {
+      Icon[] layers = ((LayeredIcon)icon).getAllLayers();
+      for (int i = 0; i < layers.length; i++) {
+        Icon layer = layers[i];
+        if (layer == toCheck) {
+          layers[i] = toReplace;
+        } else {
+          replaceInnerIcon(layer, toCheck, toReplace);
+        }
+      }
+    }
+    else if (icon instanceof RowIcon) {
+      Icon[] allIcons = ((RowIcon)icon).getAllIcons();
+      for (int i = 0; i < allIcons.length; i++) {
+        Icon anIcon = allIcons[i];
+        if (anIcon == toCheck) {
+          ((RowIcon)icon).setIcon(toReplace, i);
+        }
+        else {
+          replaceInnerIcon(anIcon, toCheck, toReplace);
+        }
+      }
+    }
+    return icon;
   }
 }

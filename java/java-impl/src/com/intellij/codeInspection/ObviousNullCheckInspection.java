@@ -2,15 +2,13 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.ParameterReturnValue;
-import com.intellij.codeInspection.dataFlow.ContractValue;
-import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
-import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -30,35 +28,26 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        // Avoid method resolve if no argument is a candidate for obvious non-null warning
+        // (checking this is easier than resolving and calls without arguments are excluded at all)
+        if (!ContainerUtil.exists(args, arg -> TrackingRunner.getObviouslyNonNullExplanation(PsiUtil.skipParenthesizedExprDown(arg)) != null)) return;
         NullCheckParameter nullCheckParameter = NullCheckParameter.fromCall(call);
         if (nullCheckParameter == null) return;
-        if (!(call.getParent() instanceof PsiExpressionStatement || nullCheckParameter.myReturnsParameter)) return;
-        PsiExpression[] args = call.getArgumentList().getExpressions();
+        if (!ExpressionUtils.isVoidContext(call) && !nullCheckParameter.myReturnsParameter) return;
         if (args.length <= nullCheckParameter.myIndex) return;
         PsiExpression nullArg = PsiUtil.skipParenthesizedExprDown(args[nullCheckParameter.myIndex]);
-        String explanation = getObviouslyNonNullExplanation(nullArg);
+        String explanation = TrackingRunner.getObviouslyNonNullExplanation(nullArg);
         if (explanation == null) return;
         if(nullCheckParameter.myNull) {
-          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.useless.null.check.always.fail.message", explanation));
+          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.redundant.null.check.always.fail.message", explanation));
         } else {
-          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.useless.null.check.message", explanation),
-                                 new RemoveNullCheckFix());
+          PsiReferenceExpression comparedToNull = ExpressionUtils.getReferenceExpressionFromNullComparison(nullArg, false);
+          LocalQuickFix fix = comparedToNull == null ? new RemoveNullCheckFix() : new RemoveExcessiveNullComparisonFix();
+          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.redundant.null.check.message", explanation), fix);
         }
       }
     };
-  }
-
-  @Nullable
-  private static String getObviouslyNonNullExplanation(PsiExpression arg) {
-    if (arg == null || ExpressionUtils.isNullLiteral(arg)) return null;
-    if (arg instanceof PsiNewExpression) return "newly created object";
-    if (arg instanceof PsiLiteralExpression) return "literal";
-    if (arg.getType() instanceof PsiPrimitiveType) return "a value of primitive type";
-    if (arg instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)arg).getOperationTokenType() == JavaTokenType.PLUS) {
-      return "concatenation";
-    }
-    if (arg instanceof PsiThisExpression) return "this object";
-    return null;
   }
 
   static class NullCheckParameter {
@@ -66,7 +55,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     boolean myNull;
     boolean myReturnsParameter;
 
-    public NullCheckParameter(int index, boolean aNull, boolean returnsParameter) {
+    NullCheckParameter(int index, boolean aNull, boolean returnsParameter) {
       myIndex = index;
       myNull = aNull;
       myReturnsParameter = returnsParameter;
@@ -75,7 +64,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     @Nullable
     static NullCheckParameter fromCall(PsiMethodCallExpression call) {
       PsiMethod method = call.resolveMethod();
-      if (method == null) return null;
+      if (method == null || method.isConstructor()) return null;
       if (!JavaMethodContractUtil.isPure(method)) return null;
       List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
       if (contracts.isEmpty() || contracts.size() > 2) return null;
@@ -105,12 +94,30 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
   }
 
+  public static class RemoveExcessiveNullComparisonFix implements LocalQuickFix {
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.redundant.null.check.fix.notnull.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiExpression arg = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
+      if (arg == null) return;
+      PsiReferenceExpression comparedToNull = ExpressionUtils.getReferenceExpressionFromNullComparison(arg, false);
+      if (comparedToNull == null) return;
+      new CommentTracker().replaceAndRestoreComments(arg, comparedToNull);
+    }
+  }
+
   public static class RemoveNullCheckFix implements LocalQuickFix {
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.useless.null.check.fix.family.name");
+      return InspectionsBundle.message("inspection.redundant.null.check.fix.family.name");
     }
 
     @Override
@@ -131,7 +138,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         }
         ct.deleteAndRestoreComments(parent);
       } else {
-        ct.replaceAndRestoreComments(call, ct.markUnchanged(startElement));
+        ct.replaceAndRestoreComments(call, startElement);
       }
     }
   }

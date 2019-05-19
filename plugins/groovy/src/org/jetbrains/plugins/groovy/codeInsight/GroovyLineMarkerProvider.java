@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight;
 
 import com.intellij.codeHighlighting.Pass;
@@ -56,22 +42,13 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ilyas
  * Same logic as for Java LMP
  */
-public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
-
-  public GroovyLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) {
-    super(daemonSettings, colorsManager);
-  }
-
+final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
     final PsiElement parent = element.getParent();
@@ -101,7 +78,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       }
     }
     //need to draw method separator above docComment
-    if (myDaemonSettings.SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
+    if (DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
       PsiElement element1 = element;
       boolean isMember = false;
       while (element1 != null && !(element1 instanceof PsiFile) && element1.getPrevSibling() == null) {
@@ -136,7 +113,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
             new LineMarkerInfo<>(element, comment != null ? comment.getTextRange() : element.getTextRange(), null,
                                  Pass.LINE_MARKERS, FunctionUtil.<Object, String>nullConstant(), null,
                                  GutterIconRenderer.Alignment.RIGHT);
-          EditorColorsScheme scheme = myColorsManager.getGlobalScheme();
+          EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;
           return info;
@@ -243,7 +220,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       PsiElement range = element instanceof GrNamedElement ? ((GrNamedElement)element).getNameIdentifierGroovy() : element;
 
       final MarkerType type = element instanceof GrField ? GroovyMarkerTypes.OVERRIDEN_PROPERTY_TYPE
-                                                         : GroovyMarkerTypes.GR_OVERRIDEN_METHOD;
+                                                         : GroovyMarkerTypes.GR_OVERRIDDEN_METHOD;
       LineMarkerInfo info = new LineMarkerInfo<>(range, range.getTextRange(), icon, Pass.LINE_MARKERS, type.getTooltip(),
                                                  type.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
       result.add(info);

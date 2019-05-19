@@ -17,6 +17,7 @@ package com.intellij.util.xml;
 
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This strategy splits property name into words, decapitalizes them and joins using hyphen as separator,
@@ -25,8 +26,9 @@ import com.intellij.openapi.util.text.StringUtil;
  * @author peter
  */
 public class HyphenNameStrategy extends DomNameStrategy {
+  @NotNull
   @Override
-  public String convertName(String propertyName) {
+  public String convertName(@NotNull String propertyName) {
     final String[] words = NameUtil.nameToWords(propertyName);
     for (int i = 0; i < words.length; i++) {
       words[i] = StringUtil.decapitalize(words[i]);

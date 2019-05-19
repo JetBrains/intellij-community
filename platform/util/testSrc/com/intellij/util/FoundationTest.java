@@ -28,7 +28,7 @@ import static org.junit.Assert.assertThat;
 public class FoundationTest {
   @BeforeClass
   public static void assumeMac() {
-    Assume.assumeTrue(SystemInfo.isMac);
+    Assume.assumeTrue("mac only", SystemInfo.isMac);
   }
 
   @Test
@@ -53,10 +53,10 @@ public class FoundationTest {
     assertThat(Foundation.getEncodingName(10), equalTo("utf-16"));
     assertThat(Foundation.getEncodingCode("utf-16"), equalTo(10L));
 
-    assertThat(Foundation.getEncodingName(2483028224l), equalTo("utf-16le"));
-    assertThat(Foundation.getEncodingCode("utf-16le"), equalTo(2483028224l));
-    assertThat(Foundation.getEncodingName(2415919360l), equalTo("utf-16be"));
-    assertThat(Foundation.getEncodingCode("utf-16be"), equalTo(2415919360l));
+    assertThat(Foundation.getEncodingName(2483028224L), equalTo("utf-16le"));
+    assertThat(Foundation.getEncodingCode("utf-16le"), equalTo(2483028224L));
+    assertThat(Foundation.getEncodingName(2415919360L), equalTo("utf-16be"));
+    assertThat(Foundation.getEncodingCode("utf-16be"), equalTo(2415919360L));
   }
 
   @Test

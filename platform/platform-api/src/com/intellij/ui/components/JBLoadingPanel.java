@@ -53,13 +53,24 @@ public class JBLoadingPanel extends JPanel {
     });
   }
 
-  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull NotNullFunction<JPanel, LoadingDecorator> createLoadingDecorator) {
+  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull NotNullFunction<? super JPanel, ? extends LoadingDecorator> createLoadingDecorator) {
     super(new BorderLayout());
     myPanel = manager == null ? new JPanel() : new JPanel(manager);
     myPanel.setOpaque(false);
     myPanel.setFocusable(false);
     myDecorator = createLoadingDecorator.fun(myPanel);
     super.add(myDecorator.getComponent(), BorderLayout.CENTER);
+  }
+
+  @Override
+  public void setLayout(LayoutManager mgr) {
+    if (!(mgr instanceof BorderLayout)) {
+      throw new IllegalArgumentException(String.valueOf(mgr));
+    }
+    super.setLayout(mgr);
+    if (myDecorator != null) {
+      super.add(myDecorator.getComponent(), BorderLayout.CENTER);
+    }
   }
 
   public static void customizeStatusText(JLabel text) {

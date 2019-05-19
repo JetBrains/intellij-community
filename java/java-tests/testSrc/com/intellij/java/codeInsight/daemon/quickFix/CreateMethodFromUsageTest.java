@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class CreateMethodFromUsageTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createMethodFromUsage";

@@ -1,58 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
+
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.geb.GebTestsTest
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-import static org.jetbrains.plugins.groovy.util.TestUtils.getAbsoluteTestDataPath
-/**
- * @author Max Medvedev
- */
 class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
+
   final String basePath = TestUtils.testDataPath + 'resolve/clsMethod'
 
-  final LightProjectDescriptor projectDescriptor = new GroovyLightProjectDescriptor(TestUtils.mockGroovy2_1LibraryName) {
-    @Override
-    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      super.configureModule(module, model, contentEntry)
-
-      final Library.ModifiableModel gebModel = model.moduleLibraryTable.createLibrary("Geb").modifiableModel
-      final VirtualFile gebJar = JarFileSystem.instance.refreshAndFindFileByPath(absoluteTestDataPath + 'mockGeb/geb-core-0.7.1.jar!/')
-      assert gebJar != null
-      gebModel.addRoot(gebJar, OrderRootType.CLASSES)
-      final VirtualFile gebSource = JarFileSystem.instance.refreshAndFindFileByPath(absoluteTestDataPath + 'mockGeb/geb-core-0.7.1-sources.jar!/')
-      assert gebSource != null
-      gebModel.addRoot(gebSource, OrderRootType.SOURCES)
-
-      gebModel.commit()
-
-    }
-  }
+  final LightProjectDescriptor projectDescriptor = GebTestsTest.DESCRIPTOR
 
   void testNavigationInGroovy() {
     myFixture.with {
@@ -68,7 +28,7 @@ class A extends Page {
       def instance = TargetElementUtil.getInstance()
       def resolved = instance.findTargetElement(editor, instance.allAccepted, editor.caretModel.offset)
       assertInstanceOf resolved, PsiMethod
-      assertEquals ('NavigableSupport', (resolved as PsiMethod).containingClass.name)
+      assertEquals('Page', (resolved as PsiMethod).containingClass.name)
     }
   }
 
@@ -86,8 +46,7 @@ class A extends Page {
       def instance = TargetElementUtil.getInstance()
       def resolved = instance.findTargetElement(editor, instance.allAccepted, editor.caretModel.offset).navigationElement
       assertInstanceOf resolved, PsiMethod
-      assertEquals ('NavigableSupport', (resolved as PsiMethod).containingClass.name)
+      assertEquals('Page', (resolved as PsiMethod).containingClass.name)
     }
   }
-
 }

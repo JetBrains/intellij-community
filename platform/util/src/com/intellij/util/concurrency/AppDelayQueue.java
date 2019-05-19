@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.DelayQueue;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -30,56 +29,52 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.AppDelayQueue");
-  private final Thread scheduledToPooledTransferer;
+  private final Thread scheduledToPooledTransferrer;
   private final AtomicBoolean shutdown = new AtomicBoolean();
 
   AppDelayQueue() {
     /* this thread takes the ready-to-execute scheduled tasks off the queue and passes them for immediate execution to {@link SchedulingWrapper#backendExecutorService} */
-    scheduledToPooledTransferer = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        while (!shutdown.get()) {
-          try {
-            final SchedulingWrapper.MyScheduledFutureTask task = take();
-            if (LOG.isTraceEnabled()) {
-              LOG.trace("Took "+BoundedTaskExecutor.info(task));
-            }
-            if (!task.isDone()) {  // can be cancelled already
-              ExecutorService backendExecutorService = task.getBackendExecutorService();
-              try {
-                backendExecutorService.execute(task);
-              }
-              catch (Throwable e) {
-                try {
-                  LOG.error("Error executing "+task+" in "+backendExecutorService, e);
-                }
-                catch (Throwable ignored) {
-                  // do not let it stop the thread
-                }
-              }
-            }
+    scheduledToPooledTransferrer = new Thread(() -> {
+      while (!shutdown.get()) {
+        try {
+          final SchedulingWrapper.MyScheduledFutureTask task = take();
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Took "+BoundedTaskExecutor.info(task));
           }
-          catch (InterruptedException e) {
-            if (!shutdown.get()) {
-              LOG.error(e);
+          if (!task.isDone()) {  // can be cancelled already
+            try {
+              task.executeMeInBackendExecutor();
+            }
+            catch (Throwable e) {
+              try {
+                LOG.error("Error executing "+task, e);
+              }
+              catch (Throwable ignored) {
+                // do not let it stop the thread
+              }
             }
           }
         }
-        LOG.debug("scheduledToPooledTransferer Stopped");
+        catch (InterruptedException e) {
+          if (!shutdown.get()) {
+            LOG.error(e);
+          }
+        }
       }
+      LOG.debug("scheduledToPooledTransferrer Stopped");
     }, "Periodic tasks thread");
-    scheduledToPooledTransferer.setDaemon(true); // mark as daemon to not prevent JVM to exit (needed for Kotlin CLI compiler)
-    scheduledToPooledTransferer.start();
+    scheduledToPooledTransferrer.setDaemon(true); // mark as daemon to not prevent JVM to exit (needed for Kotlin CLI compiler)
+    scheduledToPooledTransferrer.start();
   }
 
   void shutdown() {
     if (shutdown.getAndSet(true)) {
       throw new IllegalStateException("Already shutdown");
     }
-    scheduledToPooledTransferer.interrupt();
+    scheduledToPooledTransferrer.interrupt();
 
     try {
-      scheduledToPooledTransferer.join();
+      scheduledToPooledTransferrer.join();
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -88,6 +83,6 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
 
   @NotNull
   Thread getThread() {
-    return scheduledToPooledTransferer;
+    return scheduledToPooledTransferrer;
   }
 }

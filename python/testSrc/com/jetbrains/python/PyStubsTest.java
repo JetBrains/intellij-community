@@ -196,9 +196,7 @@ public class PyStubsTest extends PyTestCase {
     StubElement fileStub = fileImpl.getStub();
     assertNull("There should be no stub if file holds tree element", fileStub);
 
-    WriteCommandAction.writeCommandAction(myFixture.getProject(), fileImpl).run(() -> {
-      ((SingleRootFileViewProvider)fileImpl.getViewProvider()).onContentReload();
-    });
+    WriteCommandAction.writeCommandAction(myFixture.getProject(), fileImpl).run(() -> ((SingleRootFileViewProvider)fileImpl.getViewProvider()).onContentReload());
     assertNull(fileImpl.getTreeElement()); // Test unload succeeded.
 
     assertEquals("RenamedClass", fileImpl.getTopLevelClasses().get(0).getName());
@@ -360,9 +358,7 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(fooDocument);
     final Collection<PyClass> classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
     assertEquals(0, classes.size());
-    WriteCommandAction.writeCommandAction(project, fooPyFile).run(() -> {
-      fooDocument.setText("class Foo: pass");
-    });
+    WriteCommandAction.writeCommandAction(project, fooPyFile).run(() -> fooDocument.setText("class Foo: pass"));
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(fooDocument);
     documentManager.performForCommittedDocument(fooDocument, () -> {
@@ -926,8 +922,8 @@ public class PyStubsTest extends PyTestCase {
         checker.check("b", false, true, true);
         checker.check("c", false, false, false);
         checker.check("d", false, false, true);
-        checker.check("e", false, false, false);
-        checker.check("f", false, false, false);
+        checker.check("e", false, false, true); // fallback `init` value
+        checker.check("f", false, false, true); // fallback `init` value
         checker.check("g", false, false, true); // fallback `init` value
         checker.check("h", false, false, true);
         checker.check("i", false, false, true);

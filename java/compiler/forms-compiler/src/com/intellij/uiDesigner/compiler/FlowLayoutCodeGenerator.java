@@ -31,6 +31,7 @@ public class FlowLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Type ourFlowLayoutType = Type.getType(FlowLayout.class);
   private static final Method ourConstructor = Method.getMethod("void <init>(int,int,int)");
 
+  @Override
   public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
     generator.loadLocal(componentLocal);
 
@@ -44,6 +45,7 @@ public class FlowLayoutCodeGenerator extends LayoutCodeGenerator {
 
     generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
   }
+  @Override
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,

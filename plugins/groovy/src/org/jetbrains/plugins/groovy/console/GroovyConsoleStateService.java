@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.openapi.components.*;
@@ -8,13 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 @State(
   name = "GroovyConsoleState",
@@ -31,12 +28,12 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
   }
 
   public static class MyState {
-    public Collection<Entry> list = ContainerUtil.newArrayList();
+    public Collection<Entry> list = new ArrayList<>();
   }
 
   private final ModuleManager myModuleManager;
   private final VirtualFileManager myFileManager;
-  private final Map<VirtualFile, Pair<Module, String>> myFileModuleMap = Collections.synchronizedMap(ContainerUtil.newHashMap());
+  private final Map<VirtualFile, Pair<Module, String>> myFileModuleMap = Collections.synchronizedMap(new HashMap<>());
 
   public GroovyConsoleStateService(ModuleManager manager, VirtualFileManager fileManager) {
     myModuleManager = manager;
@@ -51,7 +48,7 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
       for (Map.Entry<VirtualFile, Pair<Module, String>> entry : myFileModuleMap.entrySet()) {
         final VirtualFile file = entry.getKey();
         final Pair<Module, String> pair = entry.getValue();
-        final Module module = pair == null ? null : pair.first;
+        final Module module = Pair.getFirst(pair);
         final Entry e = new Entry();
         e.url = file.getUrl();
         e.moduleName = module == null ? "" : module.getName();
@@ -84,13 +81,13 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
   @Nullable
   public Module getSelectedModule(@NotNull VirtualFile file) {
     final Pair<Module, String> pair = myFileModuleMap.get(file);
-    return pair == null ? null : pair.first;
+    return Pair.getFirst(pair);
   }
 
   @Nullable
   public String getSelectedModuleTitle(@NotNull VirtualFile file) {
     final Pair<Module, String> pair = myFileModuleMap.get(file);
-    return pair == null ? null : pair.second;
+    return Pair.getSecond(pair);
   }
 
   public void setFileModule(@NotNull VirtualFile file, @NotNull Module module) {

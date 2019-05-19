@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
@@ -13,24 +13,21 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.patterns.CharPattern;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.util.UnmodifiableIterator;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.intellij.patterns.PlatformPatterns.character;
 
 public class CompletionUtil {
 
@@ -64,7 +61,7 @@ public class CompletionUtil {
 
   @Nullable
   private static CompletionData getCompletionDataByFileType(FileType fileType) {
-    for(CompletionDataEP ep: Extensions.getExtensions(CompletionDataEP.EP_NAME)) {
+    for(CompletionDataEP ep: CompletionDataEP.EP_NAME.getExtensionList()) {
       if (ep.fileType.equals(fileType.getName())) {
         return ep.getHandler();
       }
@@ -89,7 +86,7 @@ public class CompletionUtil {
   }
 
   public static String findJavaIdentifierPrefix(final PsiElement insertedElement, final int offset) {
-    return findIdentifierPrefix(insertedElement, offset, character().javaIdentifierPart(), character().javaIdentifierStart());
+    return findIdentifierPrefix(insertedElement, offset, CharPattern.javaIdentifierPartCharacter(), CharPattern.javaIdentifierStartCharacter());
   }
 
   public static String findReferenceOrAlphanumericPrefix(CompletionParameters parameters) {
@@ -98,23 +95,17 @@ public class CompletionUtil {
   }
 
   public static String findAlphanumericPrefix(CompletionParameters parameters) {
-    return findIdentifierPrefix(parameters.getPosition().getContainingFile(), parameters.getOffset(), character().letterOrDigit(), character().letterOrDigit());
+    return findIdentifierPrefix(parameters.getPosition().getContainingFile(), parameters.getOffset(), CharPattern.letterOrDigitCharacter(), CharPattern.letterOrDigitCharacter());
   }
 
   public static String findIdentifierPrefix(PsiElement insertedElement, int offset, ElementPattern<Character> idPart,
-                                             ElementPattern<Character> idStart) {
-    if(insertedElement == null) return "";
-    final String text = insertedElement.getText();
-
+                                            ElementPattern<Character> idStart) {
+    if (insertedElement == null) return "";
     int startOffset = insertedElement.getTextRange().getStartOffset();
-    return findInText(offset, startOffset, idPart, idStart, text);
+    return findInText(offset, startOffset, idPart, idStart, insertedElement.getNode().getChars());
   }
 
-  public static String findIdentifierPrefix(String wholeText, int offset, ElementPattern<Character> idPart,
-                                             ElementPattern<Character> idStart) {
-    return findInText(offset, 0, idPart, idStart, wholeText);
-  }
-
+  @SuppressWarnings("unused") // used in Rider
   public static String findIdentifierPrefix(@NotNull Document document, int offset, ElementPattern<Character> idPart,
                                             ElementPattern<Character> idStart) {
     final String text = document.getText();
@@ -122,10 +113,10 @@ public class CompletionUtil {
   }
 
   @NotNull
-  private static String findInText(int offset, int startOffset, ElementPattern<Character> idPart, ElementPattern<Character> idStart, String text) {
+  private static String findInText(int offset, int startOffset, ElementPattern<Character> idPart, ElementPattern<Character> idStart, CharSequence text) {
     final int offsetInElement = offset - startOffset;
     int start = offsetInElement - 1;
-    while (start >=0 ) {
+    while (start >=0) {
       if (!idPart.accepts(text.charAt(start))) break;
       --start;
     }
@@ -133,7 +124,7 @@ public class CompletionUtil {
       start++;
     }
 
-    return text.substring(start + 1, offsetInElement).trim();
+    return text.subSequence(start + 1, offsetInElement).toString().trim();
   }
 
   @Nullable
@@ -142,7 +133,7 @@ public class CompletionUtil {
   }
 
 
-  static InsertionContext emulateInsertion(InsertionContext oldContext, int newStart, final LookupElement item) {
+  public static InsertionContext emulateInsertion(InsertionContext oldContext, int newStart, final LookupElement item) {
     final InsertionContext newContext = newContext(oldContext, item);
     emulateInsertion(item, newStart, newContext);
     return newContext;
@@ -210,14 +201,14 @@ public class CompletionUtil {
   }
 
   /**
-   * Filters _names for strings that match given matcher and sorts them. 
-   * "Start matching" items go first, then others. 
+   * Filters _names for strings that match given matcher and sorts them.
+   * "Start matching" items go first, then others.
    * Within both groups names are sorted lexicographically in a case-insensitive way.
    */
   public static LinkedHashSet<String> sortMatching(final PrefixMatcher matcher, Collection<String> _names) {
     ProgressManager.checkCanceled();
     if (matcher.getPrefix().isEmpty()) {
-      return ContainerUtil.newLinkedHashSet(_names);
+      return new LinkedHashSet<>(_names);
     }
 
     List<String> sorted = new ArrayList<>();

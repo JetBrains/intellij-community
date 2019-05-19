@@ -95,7 +95,7 @@ public class RadGridBagLayoutManagerTest extends TestCase {
   }
 
   private class GridBagCase extends JPanel {
-    public GridBagCase() {
+    GridBagCase() {
       GridBagLayout layout = new GridBagLayout();
       setLayout(layout);
     }

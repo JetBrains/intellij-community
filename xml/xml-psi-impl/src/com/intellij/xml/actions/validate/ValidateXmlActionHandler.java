@@ -51,8 +51,6 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Map;
 
-import static com.sun.org.apache.xerces.internal.impl.Constants.SECURITY_MANAGER;
-
 /**
  * @author Mike
  */
@@ -155,7 +153,9 @@ public class ValidateXmlActionHandler {
 
   public void doParse() {
     try {
-      myParser.parse(new InputSource(new StringReader(myFile.getText())), new DefaultHandler() {
+      InputSource inputSource = new InputSource(new StringReader(myFile.getText()));
+      inputSource.setSystemId(myFile.getVirtualFile().getUrl().replace("file:", "file:/"));
+      myParser.parse(inputSource, new DefaultHandler() {
         @Override
         public void warning(SAXParseException e) throws SAXException {
           if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, ProblemType.WARNING);
@@ -249,7 +249,7 @@ public class ValidateXmlActionHandler {
 
       String property = System.getProperty(JDK_XML_MAX_OCCUR_LIMIT);
       if (property != null) {
-        SecurityManager securityManager = (SecurityManager)parser.getProperty(SECURITY_MANAGER);
+        SecurityManager securityManager = (SecurityManager)parser.getProperty(Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY);
         securityManager.setMaxOccurNodeLimit(Integer.parseInt(property));
       }
 

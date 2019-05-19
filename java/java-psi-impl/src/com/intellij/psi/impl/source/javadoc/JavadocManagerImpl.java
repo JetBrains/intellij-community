@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.codeInspection.SuppressionUtilCore;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -42,6 +41,7 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new SimpleDocTagInfo("literal", LanguageLevel.JDK_1_5, true, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("code", LanguageLevel.JDK_1_5, true, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("index", LanguageLevel.JDK_1_9, true, PsiElement.class));
+    myInfos.add(new SimpleDocTagInfo("systemProperty", LanguageLevel.JDK_12, true, PsiElement.class));
 
     // not a standard tag, used by IDEA for suppressing inspections
     myInfos.add(new SimpleDocTagInfo(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME, LanguageLevel.JDK_1_3, false, PsiElement.class));
@@ -58,9 +58,9 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new ServiceReferenceTagInfo("uses"));
     myInfos.add(new ValueDocTagInfo());
 
-    Collections.addAll(myInfos, Extensions.getExtensions(JavadocTagInfo.EP_NAME, project));
+    Collections.addAll(myInfos, JavadocTagInfo.EP_NAME.getExtensions(project));
 
-    for (CustomJavadocTagProvider extension : Extensions.getExtensions(CustomJavadocTagProvider.EP_NAME)) {
+    for (CustomJavadocTagProvider extension : CustomJavadocTagProvider.EP_NAME.getExtensionList()) {
       myInfos.addAll(extension.getSupportedTags());
     }
   }

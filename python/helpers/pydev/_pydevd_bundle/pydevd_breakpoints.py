@@ -152,6 +152,8 @@ def _excepthook(exctype, value, tb):
     except:
         thread.additional_info.pydev_message = exception_breakpoint.qname.encode('utf-8')
 
+    thread.additional_info.pydev_message = 'python-%s' % thread.additional_info.pydev_message
+
     pydevd_tracing.SetTrace(None) #no tracing from here
 
     pydev_log.debug('Handling post-mortem stop on exception breakpoint %s' % exception_breakpoint.qname)

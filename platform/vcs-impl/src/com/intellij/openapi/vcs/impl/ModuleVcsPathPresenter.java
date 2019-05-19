@@ -42,6 +42,7 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     myProject = project;
   }
 
+  @NotNull
   @Override
   public String getPresentableRelativePathFor(final VirtualFile file) {
     if (file == null) return "";
@@ -60,6 +61,7 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     });
   }
 
+  @NotNull
   @Override
   public String getPresentableRelativePath(@NotNull final ContentRevision fromRevision, @NotNull final ContentRevision toRevision) {
     final FilePath fromPath = fromRevision.getFile();
@@ -94,9 +96,8 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     }
 
     final RelativePathCalculator calculator = new RelativePathCalculator(toPath.getPath(), fromPath.getPath());
-    calculator.execute();
-    final String result = calculator.getResult();
-    return result != null ? result.replace("/", File.separator) : null;
+    final String result = calculator.execute();
+    return result.replace("/", File.separator);
   }
 
   @Nullable

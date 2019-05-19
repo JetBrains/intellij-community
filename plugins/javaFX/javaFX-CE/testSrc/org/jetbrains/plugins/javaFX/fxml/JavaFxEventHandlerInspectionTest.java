@@ -2,7 +2,6 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection;
@@ -78,15 +77,9 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
   }
 
   public void testQuickfixNoFieldNested() {
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    final boolean oldImports = settings.INSERT_INNER_CLASS_IMPORTS;
-    try {
-      settings.INSERT_INNER_CLASS_IMPORTS = true;
-      doQuickfixTest("Create method 'onColumnEditStart'");
-    }
-    finally {
-      settings.INSERT_INNER_CLASS_IMPORTS = oldImports;
-    }
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.INSERT_INNER_CLASS_IMPORTS = true;
+    doQuickfixTest("Create method 'onColumnEditStart'");
   }
 
   public void testQuickfixSuper() {

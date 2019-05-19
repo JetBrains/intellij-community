@@ -65,4 +65,11 @@ public abstract class JavaCodeFoldingSettings {
 
   public abstract boolean isCollapseEndOfLineComments();
   public abstract void setCollapseEndOfLineComments(boolean value);
+
+  public abstract boolean isCollapseMultilineComments();
+
+  public abstract void setCollapseMultilineComments(boolean value);
+
+  public abstract boolean isReplaceVarWithInferredType();
+  public abstract void setReplaceVarWithInferredType(boolean value);
 }

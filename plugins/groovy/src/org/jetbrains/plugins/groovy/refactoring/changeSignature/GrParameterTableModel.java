@@ -58,7 +58,7 @@ public class GrParameterTableModel extends ParameterTableModelBase<GrParameterIn
 
   private static class GrTypeColumn extends TypeColumn<GrParameterInfo, GrParameterTableModelItem> {
 
-    public GrTypeColumn(Project project) {
+    GrTypeColumn(Project project) {
       super(project, GroovyFileType.GROOVY_FILE_TYPE, "Type");
     }
 
@@ -71,7 +71,7 @@ public class GrParameterTableModel extends ParameterTableModelBase<GrParameterIn
   private static class GrDefaultValueColumn extends DefaultValueColumn<GrParameterInfo, GrParameterTableModelItem> {
     private final Project myProject;
 
-    public GrDefaultValueColumn(Project project) {
+    GrDefaultValueColumn(Project project) {
       super(project, GroovyFileType.GROOVY_FILE_TYPE);
       myProject = project;
     }
@@ -83,7 +83,7 @@ public class GrParameterTableModel extends ParameterTableModelBase<GrParameterIn
   }
 
   private static class GrInitializerColumn extends GrDefaultValueColumn {
-    public GrInitializerColumn(Project project) {
+    GrInitializerColumn(Project project) {
       super(project);
     }
 

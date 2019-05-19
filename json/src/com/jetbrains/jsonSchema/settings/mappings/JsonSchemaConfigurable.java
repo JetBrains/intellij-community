@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 
+import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
+
 /**
  * @author Irina.Chernushina on 2/2/2016.
  */
@@ -32,17 +34,21 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   private final Project myProject;
   @NotNull private final String mySchemaFilePath;
   @NotNull private final UserDefinedJsonSchemaConfiguration mySchema;
-  @Nullable private final Runnable myTreeUpdater;
-  @NotNull private final Function<String, String> myNameCreator;
+  @Nullable private final TreeUpdater myTreeUpdater;
+  @NotNull private final Function<? super String, String> myNameCreator;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
   private String myError;
 
   public JsonSchemaConfigurable(Project project,
                                 @NotNull String schemaFilePath, @NotNull UserDefinedJsonSchemaConfiguration schema,
-                                @Nullable Runnable updateTree,
-                                @NotNull Function<String, String> nameCreator) {
-    super(true, updateTree);
+                                @Nullable TreeUpdater updateTree,
+                                @NotNull Function<? super String, String> nameCreator) {
+    super(true, () -> {
+      if (updateTree != null) {
+        updateTree.updateTree(true);
+      }
+    });
     myProject = project;
     mySchemaFilePath = schemaFilePath;
     mySchema = schema;
@@ -74,12 +80,12 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @Override
   public JComponent createOptionsPanel() {
     if (myView == null) {
-      myView = new JsonSchemaMappingsView(myProject, myTreeUpdater, s -> {
-        if (myDisplayName.startsWith(JsonSchemaMappingsConfigurable.STUB_SCHEMA_NAME)) {
+      myView = new JsonSchemaMappingsView(myProject, myTreeUpdater, (s, force) -> {
+        if (myDisplayName.startsWith(JsonSchemaMappingsConfigurable.STUB_SCHEMA_NAME) || force) {
           int lastSlash = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
-          if (lastSlash > 0) {
-            String substring = s.substring(lastSlash + 1);
-            int dot = substring.lastIndexOf('.');
+          if (lastSlash > 0 || force) {
+            String substring = lastSlash > 0 ? s.substring(lastSlash + 1) : s;
+            int dot = lastSlash > 0 ? substring.lastIndexOf('.') : -1;
             if (dot != -1) {
               substring = substring.substring(0, dot);
             }
@@ -88,7 +94,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
           }
         }
       });
-      myView.setError(myError);
+      myView.setError(myError, true);
     }
     return myView.getComponent();
   }
@@ -124,7 +130,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   }
 
   public static boolean isValidURL(@NotNull final String url) {
-    return JsonFileResolver.isHttpPath(url) && Urls.parse(url, false) != null;
+    return isHttpPath(url) && Urls.parse(url, false) != null;
   }
 
   private void doValidation() throws ConfigurationException {
@@ -137,7 +143,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     VirtualFile vFile;
     String filename;
 
-    if (JsonFileResolver.isHttpPath(schemaSubPath)) {
+    if (isHttpPath(schemaSubPath)) {
       filename = schemaSubPath;
 
       if (!isValidURL(schemaSubPath)) {
@@ -174,7 +180,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   }
 
   private void logErrorForUser(@NotNull final String error) {
-    JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(error, MessageType.ERROR).notify(myProject);
+    JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(error, MessageType.WARNING).notify(myProject);
   }
 
   @Override
@@ -206,10 +212,10 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     if (myView != null) Disposer.dispose(myView);
   }
 
-  public void setError(String error) {
+  public void setError(String error, boolean showWarning) {
     myError = error;
     if (myView != null) {
-      myView.setError(error);
+      myView.setError(error, showWarning);
     }
   }
 }

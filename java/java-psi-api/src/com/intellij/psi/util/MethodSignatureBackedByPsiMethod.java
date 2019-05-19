@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,6 +52,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     return myMethod.isConstructor();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o instanceof MethodSignatureBackedByPsiMethod){ // optimization
       if (((MethodSignatureBackedByPsiMethod)o).myMethod == myMethod) return true;
@@ -72,11 +75,19 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   public static MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean isRaw) {
     PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
     if (isRaw) {
-      substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, methodTypeParameters);
+      substitutor = JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(substitutor, methodTypeParameters);
       methodTypeParameters = PsiTypeParameter.EMPTY_ARRAY;
     }
-    
-    assert substitutor.isValid();
+
+    try {
+      substitutor.ensureValid();
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw PluginException.createByClass(e, method.getClass());
+    }
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiType[] parameterTypes = PsiType.createArray(parameters.length);
@@ -84,9 +95,6 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
       PsiParameter parameter = parameters[i];
       PsiType type = parameter.getType();
       parameterTypes[i] = isRaw ? TypeConversionUtil.erasure(substitutor.substitute(type)) : type;
-      if (parameterTypes[i] != null && !parameterTypes[i].isValid()) {
-        PsiUtil.ensureValidType(parameterTypes[i], "Method " + method + " of " + method.getClass() + "; param " + parameter + " of " + parameter.getClass());
-      }
     }
 
     return new MethodSignatureBackedByPsiMethod(method, substitutor, isRaw, parameterTypes, methodTypeParameters);

@@ -87,6 +87,7 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
       .setMovable(true)
       .setDimensionServiceKey(myProject, DIMENSION_SERVICE_KEY, false)
       .setMayBeParent(true)
+      .setCancelOnOtherWindowOpen(true)
       .setKeyEventHandler(event -> {
         if (AbstractPopup.isCloseRequest(event)) {
           // Do not process a close request if the tree shows a speed search popup
@@ -97,7 +98,7 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
       })
       .addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           if (myHideRunnable != null) {
             myHideRunnable.run();
           }

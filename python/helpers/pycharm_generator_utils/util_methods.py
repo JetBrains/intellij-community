@@ -1,5 +1,7 @@
-from pycharm_generator_utils.constants import *
+import ast
 import keyword
+
+from pycharm_generator_utils.constants import *
 
 try:
     import inspect
@@ -236,7 +238,7 @@ def is_callable(x):
 
 
 def sorted_no_case(p_array):
-    """Sort an array case insensitevely, returns a sorted copy"""
+    """Sort an array case insensitively, returns a sorted copy"""
     p_array = list(p_array)
     p_array = sorted(p_array, key=lambda x: x.upper())
     return p_array
@@ -259,8 +261,18 @@ def cleanup(value):
         if replacement:
             result.append(value[prev:i])
             result.append(replacement)
+            prev = i + 1
         i += 1
+    result.append(value[prev:])
     return "".join(result)
+
+
+def is_valid_expr(s):
+    try:
+        compile(s, '<unknown>', 'eval', ast.PyCF_ONLY_AST)
+    except SyntaxError:
+        return False
+    return True
 
 
 _prop_types = [type(property())]
@@ -615,9 +627,14 @@ def action(msg, *data):
     CURRENT_ACTION = msg % data
     note(msg, *data)
 
+
+def set_verbose(verbose):
+    global _is_verbose
+    _is_verbose = verbose
+
+
 def note(msg, *data):
     """Say something at debug info level (stderr)"""
-    global _is_verbose
     if _is_verbose:
         sys.stderr.write(msg % data)
         sys.stderr.write("\n")
@@ -729,3 +746,36 @@ def isidentifier(s):
                 not s[:1].isdigit() and
                 "-" not in s and
                 " " not in s)
+
+
+def is_text_file(path):
+    """
+    Verify that some path is a text file (not a binary file).
+    Ideally there should be usage of libmagic but it can be not
+    installed on a target machine.
+
+    Actually this algorithm is inspired by function `file_encoding`
+    from libmagic.
+    """
+    try:
+        with open(path, 'rb') as candidate_stream:
+            # Buffer size like in libmagic
+            buffer = candidate_stream.read(256 * 1024)
+    except EnvironmentError:
+        return False
+
+    # Verify that it looks like ASCII, UTF-8 or UTF-16.
+    for encoding in 'utf-8', 'utf-16', 'utf-16-be', 'utf-16-le':
+        try:
+            buffer.decode(encoding)
+        except UnicodeDecodeError as err:
+            if err.args[0].endswith(('truncated data', 'unexpected end of data')):
+                return True
+        else:
+            return True
+
+    # Verify that it looks like ISO-8859 or non-ISO extended ASCII.
+    return all(c not in _bytes_that_never_appears_in_text for c in buffer)
+
+
+_bytes_that_never_appears_in_text = set(range(7)) | {11} | set(range(14, 27)) | set(range(28, 32)) | {127}

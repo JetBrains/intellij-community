@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -36,9 +37,15 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     ContainerUtil.addAll(myExceptions, exceptions);
   }
 
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return myStartElement.getContainingFile();
+  }
+
   @NotNull
   private static PsiMethod createMethod(final String methodText, final PsiClass implClass) {
-    return JavaPsiFacade.getInstance(implClass.getProject()).getElementFactory().createMethodFromText(methodText, implClass);
+    return JavaPsiFacade.getElementFactory(implClass.getProject()).createMethodFromText(methodText, implClass);
   }
 
   private static PsiMethod reformat(Project project, PsiMethod result) throws IncorrectOperationException {
@@ -77,7 +84,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
     return methodPrototype != null &&
            methodPrototype.isValid() &&
-           myClass.getManager().isInProject(myClass) &&
+           BaseIntentionAction.canModify(myClass) &&
            myText != null &&
            MethodSignatureUtil.findMethodBySignature(myClass, methodPrototype, false) == null
       ;
@@ -86,7 +93,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
-                     @Nullable("is null when called from inspection") Editor editor,
+                     @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     PsiMethod methodPrototype = myMethodPrototype.getElement();
@@ -105,7 +112,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   protected void postAddAction(@NotNull PsiFile file,
-                               @Nullable("is null when called from inspection") Editor editor,
+                               @Nullable Editor editor,
                                PsiMethod newMethod) {
     if (editor != null && newMethod.getContainingFile() == file) {
       GenerateMembersUtil.positionCaret(editor, newMethod, true);

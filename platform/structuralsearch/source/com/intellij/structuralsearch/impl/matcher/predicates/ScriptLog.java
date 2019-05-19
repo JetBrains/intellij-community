@@ -43,6 +43,6 @@ public class ScriptLog {
         break;
       }
     }
-    UIUtil.SSR_NOTIFICATION_GROUP.createNotification(location + String.valueOf(message), type).notify(myProject);
+    UIUtil.SSR_NOTIFICATION_GROUP.createNotification(location + message, type).notify(myProject);
   }
 }

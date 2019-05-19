@@ -19,7 +19,29 @@ class InlayModelWindow implements InlayModel {
 
   @Nullable
   @Override
-  public Inlay addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer) {
+  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                           boolean relatesToPrecedingText,
+                                                                           @NotNull T renderer) {
+    logUnsupported();
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                          boolean relatesToPrecedingText,
+                                                                          boolean showAbove,
+                                                                          int priority,
+                                                                          @NotNull T renderer) {
+    logUnsupported();
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+                                                                                 boolean relatesToPrecedingText,
+                                                                                 @NotNull T renderer) {
     logUnsupported();
     return null;
   }
@@ -27,6 +49,20 @@ class InlayModelWindow implements InlayModel {
   @NotNull
   @Override
   public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
+    logUnsupported();
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getBlockElementsInRange(int startOffset, int endOffset) {
+    logUnsupported();
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getBlockElementsForVisualLine(int visualLine, boolean above) {
     logUnsupported();
     return Collections.emptyList();
   }
@@ -49,6 +85,25 @@ class InlayModelWindow implements InlayModel {
   public Inlay getElementAt(@NotNull Point point) {
     logUnsupported();
     return null;
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
+    logUnsupported();
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getAfterLineEndElementsForLogicalLine(int logicalLine) {
+    logUnsupported();
+    return Collections.emptyList();
+  }
+
+  @Override
+  public void setConsiderCaretPositionOnDocumentUpdates(boolean enabled) {
+    logUnsupported();
   }
 
   @Override

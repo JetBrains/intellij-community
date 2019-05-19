@@ -1,9 +1,13 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
-import com.intellij.util.io.*
+import com.intellij.util.io.ConnectToChannelResult
+import com.intellij.util.io.addChannelListener
+import com.intellij.util.io.closeAndShutdownEventLoop
+import com.intellij.util.io.connectRetrying
 import com.intellij.util.net.loopbackSocketAddress
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
@@ -11,19 +15,21 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.catchError
 import org.jetbrains.concurrency.resolvedPromise
-import org.jetbrains.io.oioClientBootstrap
+import org.jetbrains.ide.BuiltInServerManager
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class SingleConnectionNetService(project: Project) : NetService(project) {
-  protected val processChannel: AtomicReference<Channel> = AtomicReference<Channel>()
+  protected val processChannel = AtomicReference<Channel>()
 
-  private @Volatile var port = -1
-  private @Volatile var bootstrap: Bootstrap? = null
+  @Volatile
+  private var port = -1
+  @Volatile
+  private var bootstrap: Bootstrap? = null
 
   protected abstract fun configureBootstrap(bootstrap: Bootstrap, errorOutputConsumer: Consumer<String>)
 
-  override final fun connectToProcess(promise: AsyncPromise<OSProcessHandler>, port: Int, processHandler: OSProcessHandler, errorOutputConsumer: Consumer<String>) {
-    val bootstrap = oioClientBootstrap()
+  final override fun connectToProcess(promise: AsyncPromise<OSProcessHandler>, port: Int, processHandler: OSProcessHandler, errorOutputConsumer: Consumer<String>) {
+    val bootstrap = BuiltInServerManager.getInstance().createClientBootstrap()
     configureBootstrap(bootstrap, errorOutputConsumer)
 
     this.bootstrap = bootstrap
@@ -72,13 +78,11 @@ abstract class SingleConnectionNetService(project: Project) : NetService(project
 
   private fun addCloseListener(it: Channel) {
     it.closeFuture().addChannelListener {
-      val channel = it.channel()
-      processChannel.compareAndSet(channel, null)
-      channel.eventLoop().shutdownIfOio()
+      processChannel.compareAndSet(it.channel(), null)
     }
   }
 
   override fun closeProcessConnections() {
-    processChannel.getAndSet(null)?.let { it.closeAndShutdownEventLoop() }
+    processChannel.getAndSet(null)?.closeAndShutdownEventLoop()
   }
 }

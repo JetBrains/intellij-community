@@ -1,0 +1,2 @@
+deprecated: currentLine.png; to be removed in IDEA 2020 - use AllIcons.Actions.Forward
+deprecated: Diff.png; to be removed in IDEA 2020 - use AllIcons.Actions.Diff

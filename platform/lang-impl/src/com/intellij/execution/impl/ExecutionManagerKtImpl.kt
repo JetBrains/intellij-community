@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionManager
 import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
@@ -28,6 +29,7 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
   @Volatile var forceCompilationInTests: Boolean = false
 
   override fun startRunProfile(starter: RunProfileStarter, state: RunProfileState, environment: ExecutionEnvironment) {
+    triggerUsage(environment)
     val project = environment.project
     val reuseContent = contentManager.getReuseContent(environment)
     if (reuseContent != null) {
@@ -118,6 +120,12 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
       })
     }
   }
+}
+
+private fun triggerUsage(environment: ExecutionEnvironment) {
+  val runConfiguration = environment.runnerAndConfigurationSettings?.configuration ?: return
+  val configurationFactory = runConfiguration.factory ?: return
+  RunConfigurationUsageTriggerCollector.trigger(environment.project, configurationFactory, environment.executor)
 }
 
 private class ProcessExecutionListener(private val project: Project,

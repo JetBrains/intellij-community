@@ -29,7 +29,7 @@ import javax.swing.*;
 
 class RerunFailedTestsAction extends AnAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
    e.getPresentation().setEnabled(getAction(e, false));
   }
 

@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -44,14 +45,16 @@ public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
       if (elseBranch != null && grandParent != null) {
         if (!(grandParent instanceof PsiCodeBlock)) {
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-          PsiCodeBlock codeBlock = factory.createCodeBlockFromText("{" + ifStatement.getText() + "}", ifStatement);
-          codeBlock = (PsiCodeBlock)ifStatement.replace(codeBlock);
-          ifStatement = (PsiIfStatement)codeBlock.getStatements()[0];
+          PsiBlockStatement blockStatement =
+            (PsiBlockStatement)factory.createStatementFromText("{" + ifStatement.getText() + "}", ifStatement);
+          blockStatement = (PsiBlockStatement)ifStatement.replace(blockStatement);
+          ifStatement = (PsiIfStatement)blockStatement.getCodeBlock().getStatements()[0];
           elseBranch = ifStatement.getElseBranch();
           LOG.assertTrue(elseBranch != null);
         }
-        InvertIfConditionAction.addAfter(ifStatement, elseBranch);
-        elseBranch.delete();
+        CommentTracker ct = new CommentTracker();
+        InvertIfConditionAction.addAfter(ifStatement, elseBranch, ct);
+        ct.deleteAndRestoreComments(elseBranch);
       }
     }
   }

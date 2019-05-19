@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -23,17 +25,14 @@ import javax.swing.event.ChangeListener;
 public abstract class BaseConfigurableWithChangeSupport extends BaseConfigurable {
   private final EventDispatcher<ChangeListener> myDispatcher = EventDispatcher.create(ChangeListener.class);
 
+  @Override
   public void setModified(boolean modified) {
     fireStateChanged();
     super.setModified(modified);
   }
 
-  public void addChangeListener(ChangeListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void removeChangeListener(ChangeListener listener) {
-    myDispatcher.addListener(listener);
+  public void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent) {
+    myDispatcher.addListener(listener, parent);
   }
 
   public void fireStateChanged() {

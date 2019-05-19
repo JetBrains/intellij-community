@@ -7,11 +7,12 @@ import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.dataRules.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -65,7 +66,8 @@ public class DataManagerImpl extends DataManager {
   }
 
   @Nullable
-  private Object getDataFromProvider(@NotNull final DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
+  public Object getDataFromProvider(@NotNull final DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
+    ProgressManager.checkCanceled();
     if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) {
       return null;
     }
@@ -77,12 +79,7 @@ public class DataManagerImpl extends DataManager {
       if (dataRule != null) {
         final Set<String> ids = alreadyComputedIds == null ? new THashSet<>() : alreadyComputedIds;
         ids.add(dataId);
-        data = dataRule.getData(new DataProvider() {
-          @Override
-          public Object getData(String dataId) {
-            return getDataFromProvider(provider, dataId, ids);
-          }
-        });
+        data = dataRule.getData(id -> getDataFromProvider(provider, id, ids));
 
         if (data != null) return validated(data, dataId, provider);
       }
@@ -119,18 +116,7 @@ public class DataManagerImpl extends DataManager {
 
     final GetDataRule plainRule = getRuleFromMap(AnActionEvent.uninjectedId(dataId));
     if (plainRule != null) {
-      return new GetDataRule() {
-        @Override
-        public Object getData(final DataProvider dataProvider) {
-          return plainRule.getData(new DataProvider() {
-            @Override
-            @Nullable
-            public Object getData(@NonNls String dataId) {
-              return dataProvider.getData(AnActionEvent.injectedId(dataId));
-            }
-          });
-        }
-      };
+      return dataProvider -> plainRule.getData(id -> dataProvider.getData(AnActionEvent.injectedId(id)));
     }
 
     return null;
@@ -140,8 +126,7 @@ public class DataManagerImpl extends DataManager {
   private GetDataRule getRuleFromMap(@NotNull String dataId) {
     GetDataRule rule = myDataConstantToRuleMap.get(dataId);
     if (rule == null && !myDataConstantToRuleMap.containsKey(dataId)) {
-      final KeyedLazyInstanceEP<GetDataRule>[] eps = Extensions.getExtensions(GetDataRule.EP_NAME);
-      for(KeyedLazyInstanceEP<GetDataRule> ruleEP: eps) {
+      for (KeyedLazyInstanceEP<GetDataRule> ruleEP : GetDataRule.EP_NAME.getExtensions()) {
         if (ruleEP.key.equals(dataId)) {
           rule = ruleEP.getInstance();
         }
@@ -166,11 +151,14 @@ public class DataManagerImpl extends DataManager {
     return data;
   }
 
+  @NotNull
   @Override
   public DataContext getDataContext(Component component) {
+    //noinspection deprecation
     return new MyDataContext(component);
   }
 
+  @NotNull
   @Override
   public DataContext getDataContext(@NotNull Component component, int x, int y) {
     if (x < 0 || x >= component.getWidth() || y < 0 || y >= component.getHeight()) {
@@ -212,6 +200,7 @@ public class DataManagerImpl extends DataManager {
     return result;
   }
 
+  @NotNull
   public DataContext getDataContextTest(Component component) {
     DataContext dataContext = getDataContext(component);
     if (myWindowManager == null) {
@@ -317,6 +306,11 @@ public class DataManagerImpl extends DataManager {
     PlatformDataKeys.MODALITY_STATE.getName()
   ));
 
+  /**
+   * todo make private in 2020
+   * @deprecated use {@link DataManager#getDataContext(Component)} instead
+   */
+  @Deprecated
   public static class MyDataContext implements DataContext, UserDataHolder {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
@@ -326,7 +320,7 @@ public class DataManagerImpl extends DataManager {
     private Map<Key, Object> myUserData;
     private final Map<String, Object> myCachedData = ContainerUtil.createWeakValueMap();
 
-    public MyDataContext(final Component component) {
+    public MyDataContext(@Nullable Component component) {
       myEventCount = -1;
       myRef = component == null ? null : new WeakReference<>(component);
     }
@@ -338,13 +332,15 @@ public class DataManagerImpl extends DataManager {
     }
 
     @Override
-    public Object getData(String dataId) {
-      if (dataId == null) return null;
-      int currentEventCount = IdeEventQueue.getInstance().getEventCount();
-      if (myEventCount != -1 && myEventCount != currentEventCount) {
-        LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +
-                  currentEventCount);
-        return doGetData(dataId);
+    public Object getData(@NotNull String dataId) {
+      ProgressManager.checkCanceled();
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        int currentEventCount = IdeEventQueue.getInstance().getEventCount();
+        if (myEventCount != -1 && myEventCount != currentEventCount) {
+          LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +
+                    currentEventCount);
+          return doGetData(dataId);
+        }
       }
 
       if (ourSafeKeys.contains(dataId)) {
@@ -376,12 +372,16 @@ public class DataManagerImpl extends DataManager {
         return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
       }
       if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
-        Editor editor = (Editor)((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
-        return validateEditor(editor);
+        return validateEditor((Editor)calcData(dataId, component));
       }
+      return calcData(dataId, component);
+    }
+
+    protected Object calcData(@NotNull String dataId, Component component) {
       return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
     }
 
+    @Override
     @NonNls
     public String toString() {
       return "component=" + SoftReference.dereference(myRef);

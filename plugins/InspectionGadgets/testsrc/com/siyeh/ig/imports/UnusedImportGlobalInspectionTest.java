@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.imports;
 
 import com.intellij.analysis.AnalysisScope;
@@ -97,6 +83,21 @@ public class UnusedImportGlobalInspectionTest extends LightCodeInsightFixtureTes
            "}}");
   }
 
+  
+  public void testUnresolvedReferencesInsideAmbiguousCallToImportedMethod() {
+    myFixture.addClass("package a; public class A {\n" +
+                       " public static void foo(Object o) {}\n" +
+                       " public static void foo(String s) {}\n" +
+                       "}");
+    doTest("import static a.A.foo;\n" +
+           "class Test {\n" +
+           "     {\n" +
+           "          foo(<error descr=\"Cannot resolve method 'unresolvedMethodCall()'\">unresolvedMethodCall</error>());\n" +
+           "     }\n" +
+           "}");
+  }
+
+  
   public void testNoHighlightingInInvalidCode() {
     myFixture.configureByText("a.java",
                               "import<EOLError></EOLError>\n" +
@@ -231,6 +232,14 @@ public class UnusedImportGlobalInspectionTest extends LightCodeInsightFixtureTes
            "import java.util.*;" +
            "class X {{" +
            "  List list = new ArrayList();" +
+           "}}");
+  }
+
+  public void testUsedButUnresolved() {
+    doTest("package a;" +
+           "import java.util.List1;" +
+           "class X {{" +
+           "  List1 list = null;" +
            "}}");
   }
 

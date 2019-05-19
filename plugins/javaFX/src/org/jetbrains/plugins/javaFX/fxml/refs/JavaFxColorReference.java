@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -40,7 +41,7 @@ public class JavaFxColorReference extends PsiReferenceBase<XmlAttributeValue> {
     final PsiClass psiClass =
       JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_SCENE_COLOR, GlobalSearchScope.allScope(project));
     if (psiClass != null) {
-      return psiClass.findFieldByName(getCanonicalText().toUpperCase(), false);
+      return psiClass.findFieldByName(StringUtil.toUpperCase(getCanonicalText()), false);
     }
     return null;
   }

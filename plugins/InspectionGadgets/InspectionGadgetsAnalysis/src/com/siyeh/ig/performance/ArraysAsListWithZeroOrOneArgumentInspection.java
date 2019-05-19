@@ -3,6 +3,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -12,6 +13,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ConstructionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +77,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify";
+      return CommonQuickFixBundle.message("fix.simplify");
     }
 
     @Override
@@ -117,15 +120,20 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length == 1) {
-        final PsiExpression argument = arguments[0];
-        final PsiType type = argument.getType();
-        if (type instanceof PsiArrayType) {
-          return;
-        }
+      if (arguments.length > 1) return;
+
+      boolean empty = false;
+      if (arguments.length == 0) {
+        empty = true;
       }
-      else if (arguments.length != 0) {
-        return;
+      else {
+        final PsiExpression argument = arguments[0];
+        if (!MethodCallUtils.isVarArgCall(expression)) {
+          if (!ConstructionUtils.isEmptyArrayInitializer(argument)) {
+            return;
+          }
+          empty = true;
+        }
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
@@ -139,7 +147,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
       if (!"java.util.Arrays".equals(className)) {
         return;
       }
-      registerMethodCallError(expression, Boolean.valueOf(arguments.length == 0));
+      registerMethodCallError(expression, empty);
     }
   }
 }

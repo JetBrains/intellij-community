@@ -52,24 +52,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnusedDefineInspection extends BaseInspection {
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Unused Define";
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
-    return "UnusedDefine";
-  }
 
   @Override
   @NotNull
@@ -87,7 +69,7 @@ public class UnusedDefineInspection extends BaseInspection {
       }
     };
 
-    public MyElementVisitor(ProblemsHolder holder) {
+    MyElementVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -201,7 +183,7 @@ public class UnusedDefineInspection extends BaseInspection {
     private static class MyFix<T extends PsiElement> implements LocalQuickFix {
       private final T myTag;
 
-      public MyFix(T tag) {
+      MyFix(T tag) {
         myTag = tag;
       }
 

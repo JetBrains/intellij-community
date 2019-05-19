@@ -21,7 +21,6 @@ import org.gradle.tooling.CancellationTokenSource;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/25/2015
  */
 public class UnsupportedCancellationToken implements CancellationTokenSource {
   @Override

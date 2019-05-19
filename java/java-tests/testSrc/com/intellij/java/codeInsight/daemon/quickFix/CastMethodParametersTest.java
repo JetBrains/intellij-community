@@ -25,8 +25,6 @@ public class CastMethodParametersTest extends LightQuickFixParameterizedTestCase
     return LanguageLevel.JDK_1_3;
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/castMethodParameters";

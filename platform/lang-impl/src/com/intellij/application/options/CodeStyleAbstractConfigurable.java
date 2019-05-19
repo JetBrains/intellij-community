@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -30,7 +16,6 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
   private final CodeStyleSettings mySettings;
   private final CodeStyleSettings myCloneSettings;
   private final String myDisplayName;
-  private CodeStyleSchemesModel myModel;
 
   public CodeStyleAbstractConfigurable(@NotNull CodeStyleSettings settings, CodeStyleSettings cloneSettings,
                                        final String displayName) {
@@ -47,7 +32,6 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
   @Override
   public JComponent createComponent() {
     myPanel = createPanel(myCloneSettings);
-    myPanel.setModel(myModel);
     return myPanel.getPanel();
   }
 
@@ -100,17 +84,17 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
     return myPanel;
   }
 
-  public void setModel(final CodeStyleSchemesModel model) {
+  public void setModel(@NotNull CodeStyleSchemesModel model) {
     if (myPanel != null) {
       myPanel.setModel(model);
     }
-    myModel = model;
   }
 
   public void onSomethingChanged() {
     myPanel.onSomethingChanged();
   }
 
+  @NotNull
   @Override
   public Set<String> processListOptions() {
     return myPanel.processListOptions();

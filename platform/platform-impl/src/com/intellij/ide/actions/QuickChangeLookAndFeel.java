@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,13 +21,15 @@ import javax.swing.*;
  */
 public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
 
+  @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     LafManager lafMan = LafManager.getInstance();
     UIManager.LookAndFeelInfo[] lfs = lafMan.getInstalledLookAndFeels();
     UIManager.LookAndFeelInfo current = lafMan.getCurrentLookAndFeel();
     for (UIManager.LookAndFeelInfo lf : lfs) {
       group.add(new DumbAwareAction(lf.getName(), "", lf == current ? ourCurrentAction : ourNotCurrentAction) {
-        public void actionPerformed(AnActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
           switchLafAndUpdateUI(lafMan, lf, false);
         }
       });
@@ -36,6 +39,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {
     UIManager.LookAndFeelInfo cur = lafMan.getCurrentLookAndFeel();
     if (cur == lf) return;
+    ChangeLAFAnimator animator = Registry.is("ide.intellij.laf.enable.animation") ? ChangeLAFAnimator.showSnapshot() : null;
 
     final boolean wasDarcula = UIUtil.isUnderDarcula();
     lafMan.setCurrentLookAndFeel(lf);
@@ -59,6 +63,9 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
         if (!updated.get()) {
           lafMan.updateUI();
         }
+        if (animator != null) {
+          animator.hideSnapshotWithAnimation();
+        }
       }
     };
     if (async) {
@@ -70,6 +77,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     }
   }
 
+  @Override
   protected boolean isEnabled() {
     return LafManager.getInstance().getInstalledLookAndFeels().length > 1;
   }

@@ -10,18 +10,21 @@ public abstract class CvsElementFactory {
   public abstract CvsElement createElement(String name, CvsEnvironment env, Project project);
 
   public static final CvsElementFactory FOLDER_ELEMENT_FACTORY = new CvsElementFactory(){
+    @Override
     public CvsElement createElement(String name, CvsEnvironment env, Project project) {
       return new CvsElement(name, AllIcons.Nodes.Folder);
     }
   };
 
   public static final CvsElementFactory MODULE_ELEMENT_FACTORY = new CvsElementFactory(){
+    @Override
     public CvsElement createElement(String name, CvsEnvironment env, Project project) {
       return new CvsModule(name, AllIcons.Nodes.Module);
     }
   };
 
   public static final CvsElementFactory FILE_ELEMENT_FACTORY = new CvsElementFactory(){
+    @Override
     public CvsElement createElement(String name, CvsEnvironment env, Project project) {
       return new CvsFile(name, env, project);
     }

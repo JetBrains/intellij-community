@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFunction, PyOverridingMethodsSearch.SearchParameters> {
+  @Override
   public boolean execute(@NotNull final PyOverridingMethodsSearch.SearchParameters queryParameters,
                          @NotNull final Processor<? super PyFunction> consumer) {
     final PyFunction baseMethod = queryParameters.getFunction();

@@ -42,13 +42,15 @@ public abstract class AntDomPathElement extends AntDomFilesProviderImpl{
   @Convert(value = AntMultiPathStringConverter.class)
   public abstract GenericAttributeValue<List<File>> getPath();
 
-  
+
+  @Override
   @Nullable
   protected AntDomPattern getAntPattern() {
     return null; // not available
   }
-  
-  @NotNull 
+
+  @Override
+  @NotNull
   protected List<File> getFiles(AntDomPattern pattern, Set<AntFilesProvider> processed) {
     final List<File> files = new ArrayList<>();
     final File baseDir = getCanonicalFile(".");
@@ -66,7 +68,7 @@ public abstract class AntDomPathElement extends AntDomFilesProviderImpl{
     return files;
   }
 
-  private static void addLocation(final File baseDir, final List<File> files, final String locationPath) {
+  private static void addLocation(final File baseDir, final List<? super File> files, final String locationPath) {
     if (locationPath != null) {
       File file = new File(locationPath);
       if (file.isAbsolute()) {

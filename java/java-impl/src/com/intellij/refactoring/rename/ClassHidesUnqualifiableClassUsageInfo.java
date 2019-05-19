@@ -33,6 +33,7 @@ public class ClassHidesUnqualifiableClassUsageInfo extends UnresolvableCollision
     myHiddenClass = hiddenClass;
   }
 
+  @Override
   public String getDescription() {
     final PsiElement container = ConflictsUtil.getContainer(myHiddenClass);
     return RefactoringBundle.message("renamed.class.will.hide.0.in.1", RefactoringUIUtil.getDescription(myHiddenClass, false),

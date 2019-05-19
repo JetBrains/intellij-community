@@ -38,6 +38,11 @@ public final class PyRemotePathField {
     return myMainPanel;
   }
 
+  void setReadOnly(final boolean readOnly) {
+    myLocationField.setEditable(! readOnly);
+    myLocationField.getButton().setVisible(! readOnly);
+  }
+
   /**
    * Add listener for "browse" button
    */

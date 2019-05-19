@@ -16,13 +16,8 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.TitledHandler;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -30,30 +25,25 @@ import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.file.PsiPackageBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @author yole
  */
-public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectoryContainer> implements RenameHandler, TitledHandler {
+public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectoryContainer> extends DirectoryRenameHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.DirectoryAsPackageRenameHandler");
 
   protected abstract VirtualFile[] occursInPackagePrefixes(T aPackage);
@@ -72,56 +62,12 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                                                               boolean searchInNonJavaFiles);
 
   @Override
-  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
-    PsiDirectory directory = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
-    if (directory != null) {
-      final VirtualFile virtualFile = directory.getVirtualFile();
-      final Project project = directory.getProject();
-      if (Comparing.equal(project.getBaseDir(), virtualFile)) return false;
-      if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private PsiDirectory adjustForRename(DataContext dataContext, PsiElement element) {
-    if (element instanceof PsiDirectoryContainer) {
-      final Module module = LangDataKeys.MODULE.getData(dataContext);
-      if (module != null) {
-        PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories(GlobalSearchScope.moduleScope(module));
-        Optional<PsiDirectory> directoryWithPackage = Arrays.stream(directories).filter(directory -> getPackage(directory) != null).findFirst();
-        return directoryWithPackage.orElse(null);
-      }
-    }
-    return element instanceof PsiDirectory && getPackage((PsiDirectory)element) != null ? (PsiDirectory)element : null;
+  protected boolean isSuitableDirectory(PsiDirectory directory) {
+    return getPackage(directory) != null;
   }
 
   @Override
-  public boolean isRenaming(@NotNull final DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
-  }
-
-  @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
-    PsiElement element = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
-    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
-    doRename(element, project, nameSuggestionContext, editor);
-  }
-
-  @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
-    PsiElement element = elements.length == 1 ? elements[0] : null;
-    if (element == null) element = PsiElementRenameHandler.getElement(dataContext);
-    final PsiElement nameSuggestionContext = element;
-    element = adjustForRename(dataContext, element);
-    LOG.assertTrue(element != null);
-    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    doRename(element, project, nameSuggestionContext, editor);
-  }
-
-  private void doRename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
+  protected void doRename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
     final PsiDirectory psiDirectory = (PsiDirectory)element;
     final T aPackage = getPackage(psiDirectory);
     final String qualifiedName = aPackage != null ? getQualifiedName(aPackage) : "";
@@ -236,10 +182,5 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
       message.append(StringUtil.join(generated, directoryPresentation, "\n"));
       
     }
-  }
-
-  @Override
-  public String getActionTitle() {
-    return RefactoringBundle.message("rename.directory.title");
   }
 }

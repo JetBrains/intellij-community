@@ -1,13 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,7 +22,7 @@ public class SequenceStatement extends Statement {
     type = Statement.TYPE_SEQUENCE;
   }
 
-  public SequenceStatement(List<Statement> lst) {
+  public SequenceStatement(List<? extends Statement> lst) {
 
     this();
 
@@ -86,6 +84,7 @@ public class SequenceStatement extends Statement {
     return null;
   }
 
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buf = new TextBuffer();
     boolean islabeled = isLabeled();
@@ -122,6 +121,7 @@ public class SequenceStatement extends Statement {
     return buf;
   }
 
+  @Override
   public Statement getSimpleCopy() {
     return new SequenceStatement();
   }

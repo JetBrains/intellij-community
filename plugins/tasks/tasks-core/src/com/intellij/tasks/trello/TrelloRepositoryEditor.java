@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.trello;
 
@@ -25,6 +11,7 @@ import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.tasks.trello.model.TrelloBoard;
 import com.intellij.tasks.trello.model.TrelloList;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
@@ -45,15 +32,15 @@ import java.util.List;
 public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepository> {
   private static final Logger LOG = Logger.getInstance(TrelloRepositoryEditor.class);
 
-  private ComboBox myBoardComboBox;
-  private ComboBox myListComboBox;
+  private ComboBox<TrelloBoard> myBoardComboBox;
+  private ComboBox<TrelloList> myListComboBox;
   private JBLabel myListLabel;
   private JBLabel myBoardLabel;
   private JBCheckBox myAllCardsCheckBox;
 
   public TrelloRepositoryEditor(Project project,
                                 TrelloRepository repository,
-                                Consumer<TrelloRepository> changeListener) {
+                                Consumer<? super TrelloRepository> changeListener) {
     super(project, repository, changeListener);
     myUrlLabel.setVisible(false);
     myURLText.setVisible(false);
@@ -65,7 +52,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
 
     myPasswordText.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         final String password = String.valueOf(myPasswordText.getPassword());
         if (password.isEmpty() || password.equals(myRepository.getPassword())) {
           return;
@@ -109,13 +96,8 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
         doApply();
       }
     });
-    myBoardComboBox.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer<TrelloBoard>("Set token first") {
-      @NotNull
-      @Override
-      protected String getDescription(@NotNull TrelloBoard board) {
-        return board.isClosed() ? board.getName() + " (closed)" : board.getName();
-      }
-    });
+    myBoardComboBox.setRenderer(SimpleListCellRenderer.create("Set token first", board ->
+      board.isClosed() ? board.getName() + " (closed)" : board.getName()));
 
     myListComboBox.addItemListener(new ItemListener() {
       @Override
@@ -128,23 +110,19 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
         }
       }
     });
-    myListComboBox.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer<TrelloList>("Select board first") {
-      @NotNull
-      @Override
-      protected String getDescription(@NotNull TrelloList list) {
-        String text = list.getName();
-        if (list.isClosed() && list.isMoved()) {
-          text += " (archived,moved)";
-        }
-        else if (list.isMoved()) {
-          text += " (moved)";
-        }
-        else if (list.isClosed()) {
-          text += " (archived)";
-        }
-        return text;
+    myListComboBox.setRenderer(SimpleListCellRenderer.create("Select board first", list -> {
+      String text = list.getName();
+      if (list.isClosed() && list.isMoved()) {
+        text += " (archived,moved)";
       }
-    });
+      else if (list.isMoved()) {
+        text += " (moved)";
+      }
+      else if (list.isClosed()) {
+        text += " (archived)";
+      }
+      return text;
+    }));
 
     installListener(myAllCardsCheckBox);
 
@@ -197,11 +175,11 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
-    myBoardComboBox = new ComboBox(300);
+    myBoardComboBox = new ComboBox<>(300);
     myBoardLabel = new JBLabel("Board:", SwingConstants.RIGHT);
     myBoardLabel.setLabelFor(myBoardComboBox);
 
-    myListComboBox = new ComboBox(300);
+    myListComboBox = new ComboBox<>(300);
     myListLabel = new JBLabel("List:", SwingConstants.RIGHT);
     myListLabel.setLabelFor(myListComboBox);
 
@@ -229,7 +207,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
 
 
   private class BoardsComboBoxUpdater extends TaskUiUtil.ComboBoxUpdater<TrelloBoard> {
-    public BoardsComboBoxUpdater() {
+    BoardsComboBoxUpdater() {
       super(TrelloRepositoryEditor.this.myProject, "Downloading Trello boards...", myBoardComboBox);
     }
 
@@ -264,7 +242,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
   }
 
   private class ListsComboBoxUpdater extends TaskUiUtil.ComboBoxUpdater<TrelloList> {
-    public ListsComboBoxUpdater() {
+    ListsComboBoxUpdater() {
       super(TrelloRepositoryEditor.this.myProject, "Downloading Trello lists...", myListComboBox);
     }
 

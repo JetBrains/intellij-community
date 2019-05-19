@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.services;
 
 import com.intellij.jarRepository.RemoteRepositoryDescription;
@@ -16,14 +14,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,12 +34,9 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   private static final Logger LOG = Logger.getInstance("#com.intellij.repository.services.MavenRepositoryServicesManager");
   private final List<String> myUrls = new ArrayList<>();
 
-  public static final List<String> DEFAULT_SERVICES = Collections.unmodifiableList(Arrays.asList(
-    "https://oss.sonatype.org/service/local/",
-    "http://repo.jfrog.org/artifactory/api/",
-    "https://repository.jboss.org/nexus/service/local/",
-    "https://jcenter.bintray.com"
-  ));
+  public static final List<String> DEFAULT_SERVICES = ContainerUtil
+    .immutableList("https://oss.sonatype.org/service/local/", "https://repo.jfrog.org/artifactory/api/",
+                   "https://repository.jboss.org/nexus/service/local/", "https://jcenter.bintray.com");
 
   public MavenRepositoryServicesManager() {
     myUrls.addAll(DEFAULT_SERVICES);

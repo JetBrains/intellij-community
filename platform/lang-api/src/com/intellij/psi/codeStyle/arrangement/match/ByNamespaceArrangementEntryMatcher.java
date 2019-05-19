@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
- * @since 3/14/13 1:01 PM
  */
 public class ByNamespaceArrangementEntryMatcher extends AbstractRegexpArrangementMatcher {
 

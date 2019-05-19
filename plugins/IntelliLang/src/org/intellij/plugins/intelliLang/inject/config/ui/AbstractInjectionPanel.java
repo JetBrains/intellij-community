@@ -58,11 +58,13 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     }
   }
 
+  @Override
   public final T getInjection() {
     apply(myEditCopy);
     return myEditCopy;
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public final void init(@NotNull T copy) {
     myEditCopy = copy;
@@ -73,6 +75,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     }
   }
 
+  @Override
   public final boolean isModified() {
     apply(myEditCopy);
 
@@ -84,7 +87,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     return !myEditCopy.equals(myOrigInjection);
   }
 
-  @SuppressWarnings({"unchecked"})
+  @Override
   public final void apply() {
     for (Field panel : myOtherPanels) {
       getField(panel).apply();
@@ -100,7 +103,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
 
   protected abstract void apply(T other);
 
-  @SuppressWarnings({"unchecked"})
+  @Override
   public final void reset() {
     if (!myOtherPanels.isEmpty()) {
       myEditCopy.copyFrom(myOrigInjection);
@@ -113,6 +116,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
 
   protected abstract void resetImpl();
 
+  @Override
   public void addUpdater(Runnable updater) {
     myUpdaters.add(updater);
     for (Field panel : myOtherPanels) {

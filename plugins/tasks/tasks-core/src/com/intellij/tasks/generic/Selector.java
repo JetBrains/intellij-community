@@ -16,7 +16,6 @@ public final class Selector {
   /**
    * Serialization constructor
    */
-  @SuppressWarnings({"UnusedDeclatation"})
   public Selector() {
     // empty
   }
@@ -55,6 +54,7 @@ public final class Selector {
     myPath = path;
   }
 
+  @Override
   public Selector clone() {
     return new Selector(this);
   }

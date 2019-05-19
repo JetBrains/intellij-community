@@ -20,12 +20,14 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.NavigatablePsiElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.rest.psi.RestTitle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -71,7 +73,7 @@ public class RestStructureViewElement extends PsiTreeElementBase<NavigatablePsiE
           break;
         }
         if (underline.equals(adornmentsToUse.getSecond()) && ((adornmentsToUse.getFirst() == null && overline == null) ||
-                                                              adornmentsToUse.getFirst().equals(overline))) {
+                                                              (overline != null && overline.equals(adornmentsToUse.getFirst())))) {
           result.add(new RestStructureViewElement(child));
         }
       }
@@ -96,5 +98,14 @@ public class RestStructureViewElement extends PsiTreeElementBase<NavigatablePsiE
   public String getPresentableText() {
     final NavigatablePsiElement element = getElement();
     return element != null ? element.getName() : "";
+  }
+
+  @Override
+  public Icon getIcon(boolean open) {
+    final PsiElement element = getElement();
+    if (!(element instanceof PsiFile)) {
+      return null;
+    }
+    return super.getIcon(open);
   }
 }

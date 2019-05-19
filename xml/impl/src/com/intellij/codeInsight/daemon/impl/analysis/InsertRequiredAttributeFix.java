@@ -18,9 +18,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.editorActions.XmlEditUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,7 +70,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
   @Override
   public void invoke(@NotNull final Project project,
                      @NotNull PsiFile file,
-                     @Nullable("is null when called from inspection") final Editor editor,
+                     @Nullable final Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     XmlTag myTag = (XmlTag)startElement;
@@ -107,36 +108,14 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
       template.addTextSegment(" " + myAttrName);
       if (!insertShorthand) {
         String quote = XmlEditUtil.getAttributeQuote(file);
-        AttributeValuePresentation presentation = XmlExtension.getExtension(file).getAttributeValuePresentation(attrDescriptor, quote);
+        AttributeValuePresentation presentation = XmlExtension.getExtension(file).getAttributeValuePresentation(attrDescriptor, quote, file);
 
         valuePostfix = presentation.getPostfix();
         template.addTextSegment("=" + presentation.getPrefix());
       }
     }
 
-    Expression expression = new Expression() {
-      final TextResult result = new TextResult("");
-
-      @Override
-      public Result calculateResult(ExpressionContext context) {
-        return result;
-      }
-
-      @Override
-      public Result calculateQuickResult(ExpressionContext context) {
-        return null;
-      }
-
-      @Override
-      public LookupElement[] calculateLookupItems(ExpressionContext context) {
-        final LookupElement[] items = new LookupElement[myValues.length];
-
-        for (int i = 0; i < items.length; i++) {
-          items[i] = LookupElementBuilder.create(myValues[i]);
-        }
-        return items;
-      }
-    };
+    Expression expression = new ConstantNode("").withLookupStrings(myValues);
     if (!insertShorthand) template.addVariable(NAME_TEMPLATE_VARIABLE, expression, expression, true);
 
     if (indirectSyntax) {

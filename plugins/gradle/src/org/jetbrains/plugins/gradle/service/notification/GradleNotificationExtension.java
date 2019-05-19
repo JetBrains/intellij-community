@@ -27,9 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.io.ObjectStreamException;
+
 /**
  * @author Vladislav.Soroka
- * @since 3/27/14
  */
 public class GradleNotificationExtension implements ExternalSystemNotificationExtension {
   @NotNull
@@ -39,11 +40,35 @@ public class GradleNotificationExtension implements ExternalSystemNotificationEx
   }
 
   @Override
+  public boolean isInternalError(@NotNull Throwable error) {
+    Throwable unwrapped = RemoteUtil.unwrap(error);
+    String message = unwrapped.getMessage();
+    if ("Compilation failed; see the compiler error output for details.".equals(message)) {
+      // compiler errors should be handled by BuildOutputParsers
+      return true;
+    }
+    if (unwrapped.getCause() instanceof ObjectStreamException) {
+      // gradle tooling internal serialization issues
+      return true;
+    }
+    if (unwrapped instanceof ExternalSystemException) {
+      Throwable cause = unwrapped.getCause();
+      if (cause != null) {
+        String name = cause.getClass().getName();
+        if (name.startsWith("groovy.lang.") || // Gradle Groovy DSL errors should be handled by GradleBuildScriptErrorParser
+            name.startsWith("org.gradle.")) {
+          return ((ExternalSystemException)unwrapped).getQuickFixes().length == 0;
+        }
+      }
+    }
+    return false;
+  }
+
+  @Override
   public void customize(@NotNull NotificationData notification,
                         @NotNull Project project,
                         @Nullable Throwable error) {
     if (error == null) return;
-    //noinspection ThrowableResultOfMethodCallIgnored
     Throwable unwrapped = RemoteUtil.unwrap(error);
     if (unwrapped instanceof ExternalSystemException) {
       updateNotification(notification, project, (ExternalSystemException)unwrapped);
@@ -51,9 +76,8 @@ public class GradleNotificationExtension implements ExternalSystemNotificationEx
   }
 
   protected void updateNotification(@NotNull final NotificationData notificationData,
-                                         @NotNull final Project project,
-                                         @NotNull ExternalSystemException e) {
-
+                                    @NotNull final Project project,
+                                    @NotNull ExternalSystemException e) {
     for (String fix : e.getQuickFixes()) {
       if (OpenGradleSettingsCallback.ID.equals(fix)) {
         notificationData.setListener(OpenGradleSettingsCallback.ID, new OpenGradleSettingsCallback(project));

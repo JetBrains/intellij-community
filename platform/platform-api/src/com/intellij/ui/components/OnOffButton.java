@@ -71,6 +71,14 @@ public class OnOffButton extends JToggleButton {
   }
 
   private static class DefaultOnOffButtonUI extends BasicToggleButtonUI {
+    private static final Color BORDER_COLOR = JBColor.namedColor("ToggleButton.borderColor", new JBColor(Gray._192, Gray._80));
+    private static final Color BUTTON_COLOR = JBColor.namedColor("ToggleButton.buttonColor", new JBColor(Gray._200, Gray._100));
+    private static final Color ON_BACKGROUND = JBColor.namedColor("ToggleButton.onBackground", new JBColor(new Color(74, 146, 73), new Color(77, 105, 76)));
+    private static final Color ON_FOREGROUND = JBColor.namedColor("ToggleButton.onForeground", new JBColor(() -> UIUtil.getListForeground(true, true)));
+
+    private static final Color OFF_BACKGROUND = JBColor.namedColor("ToggleButton.offBackground", new JBColor(() -> UIUtil.getPanelBackground()));
+    private static final Color OFF_FOREGROUND = JBColor.namedColor("ToggleButton.offForeground", new JBColor(() -> UIUtil.getLabelDisabledForeground()));
+
     @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
     public static ComponentUI createUI(JComponent c) {
       c.setAlignmentY(0.5f);
@@ -93,14 +101,13 @@ public class OnOffButton extends JToggleButton {
     }
 
     @Override
-    public void paint(Graphics gr, JComponent c) {
+    public void paint(Graphics g, JComponent c) {
       if (!(c instanceof OnOffButton)) return;
 
       int toggleArc = JBUI.scale(3);
       int buttonArc = JBUI.scale(5);
       int vGap = JBUI.scale(4);
       int hGap = JBUI.scale(3);
-      int border = 1;
 
       OnOffButton button = (OnOffButton)c;
       Dimension size = button.getSize();
@@ -109,35 +116,63 @@ public class OnOffButton extends JToggleButton {
       if (h % 2 == 1) {
         h--;
       }
-      Graphics2D g = ((Graphics2D)gr);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      int xOff = (button.getWidth() - w) / 2;
-      int yOff = (button.getHeight() - h) / 2;
-      g.translate(xOff, yOff);
-      if (button.isSelected()) {
-        g.setColor(new JBColor(new Color(74, 146, 73), new Color(77, 105, 76)));
-        g.fillRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(new JBColor(Gray._192, Gray._80));
-        g.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(new JBColor(Gray._200, Gray._100));
-        g.fillRoundRect(w - h, border, h, h - border, toggleArc, toggleArc);
-        g.setColor(UIUtil.getListForeground(true));
-        g.drawString(button.getOnText(), h / 2, h - vGap);
+
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int xOff = (button.getWidth() - w) / 2;
+        int yOff = (button.getHeight() - h) / 2;
+        g2.translate(xOff, yOff);
+
+        boolean selected = button.isSelected();
+        g2.setColor(selected ? ON_BACKGROUND : OFF_BACKGROUND);
+        g2.fillRoundRect(0, 0, w, h, buttonArc, buttonArc);
+
+        g2.setColor(BORDER_COLOR);
+        g2.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
+
+        int knobWidth = w - SwingUtilities.computeStringWidth(g2.getFontMetrics(), button.getOffText()) - JBUI.scale(2);
+        knobWidth = knobWidth > h ? h : knobWidth;
+
+        int textAscent = g2.getFontMetrics().getAscent();
+
+        Rectangle viewRect = new Rectangle();
+        Rectangle textRect = new Rectangle();
+        Rectangle iconRect = new Rectangle();
+
+        g2.setColor(BUTTON_COLOR);
+        if (selected) {
+          g2.fillRoundRect(w - knobWidth, 0, knobWidth, h, toggleArc, toggleArc);
+
+          viewRect.setBounds(0, 0, w - knobWidth, h);
+          SwingUtilities.layoutCompoundLabel(g2.getFontMetrics(),
+                                             button.getOnText(),
+                                             null,
+                                             SwingConstants.CENTER, SwingConstants.CENTER,
+                                             SwingConstants.CENTER, SwingConstants.CENTER,
+                                             viewRect, iconRect, textRect, 0);
+
+          g2.setColor(ON_FOREGROUND);
+          g2.drawString(button.getOnText(), textRect.x, textRect.y + textAscent);
+        }
+        else {
+          g2.fillRoundRect(0, 0, knobWidth, h, toggleArc, toggleArc);
+
+          viewRect.setBounds(knobWidth, 0, w - knobWidth, h);
+          SwingUtilities.layoutCompoundLabel(g2.getFontMetrics(),
+                                             button.getOffText(),
+                                             null,
+                                             SwingConstants.CENTER, SwingConstants.CENTER,
+                                             SwingConstants.CENTER, SwingConstants.CENTER,
+                                             viewRect, iconRect, textRect, 0);
+
+          g2.setColor(OFF_FOREGROUND);
+          g2.drawString(button.getOffText(), textRect.x, textRect.y + textAscent);
+        }
       }
-      else {
-        g.setColor(UIUtil.getPanelBackground());
-        g.fillRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(new JBColor(Gray._192, Gray._100));
-        g.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(UIUtil.getLabelDisabledForeground());
-        g.drawString(button.getOffText(), h + vGap, h - vGap);
-        g.setColor(JBColor.border());
-        g.setPaint(new GradientPaint(h, 0, new JBColor(Gray._158, Gray._100), 0, h, new JBColor(Gray._210, Gray._100)));
-        g.fillRoundRect(0, 0, h, h, toggleArc, toggleArc);
-        // g.setColor(UIUtil.getBorderColor());
-        // g.drawOval(0, 0, h, h);
+      finally {
+        g2.dispose();
       }
-      g.translate(-xOff, -yOff);
     }
 
     @Override

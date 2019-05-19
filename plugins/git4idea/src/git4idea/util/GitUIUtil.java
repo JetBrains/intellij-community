@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
@@ -69,7 +54,7 @@ public class GitUIUtil {
       notificator.notifyError(title, desc);
     }
     else {
-      notificator.notifyImportantWarning(title, desc, null);
+      notificator.notifyImportantWarning(title, desc);
     }
   }
 
@@ -106,7 +91,8 @@ public class GitUIUtil {
    * Splits the given VcsExceptions to one string. Exceptions are separated by &lt;br/&gt;
    * Line separator is also replaced by &lt;br/&gt;
    */
-  public static @NotNull String stringifyErrors(@Nullable Collection<VcsException> errors) {
+  @NotNull
+  public static String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
     if (errors == null) {
       return "";
     }
@@ -121,32 +107,6 @@ public class GitUIUtil {
 
   public static void notifyImportantError(Project project, String title, String description) {
     notifyMessage(project, title, description, true, null);
-  }
-
-  public static void notifyGitErrors(Project project, String title, String description, Collection<VcsException> gitErrors) {
-    StringBuilder content = new StringBuilder();
-    if (!StringUtil.isEmptyOrSpaces(description)) {
-      content.append(description);
-    }
-    if (!gitErrors.isEmpty()) {
-      content.append("<br/>");
-    }
-    for (VcsException e : gitErrors) {
-      content.append(e.getLocalizedMessage()).append("<br/>");
-    }
-    notifyMessage(project, title, content.toString(), false, null);
-  }
-
-  /**
-   * @return a list cell renderer for virtual files (it renders presentable URL)
-   */
-  public static ListCellRendererWrapper<VirtualFile> getVirtualFileListCellRenderer() {
-    return new ListCellRendererWrapper<VirtualFile>() {
-      @Override
-      public void customize(final JList list, final VirtualFile file, final int index, final boolean selected, final boolean hasFocus) {
-        setText(file == null ? "(invalid)" : file.getPresentableUrl());
-      }
-    };
   }
 
   /**
@@ -169,17 +129,18 @@ public class GitUIUtil {
    * @param currentBranchLabel current branch label (might be null)
    */
   public static void setupRootChooser(@NotNull final Project project,
-                                      @NotNull final List<VirtualFile> roots,
+                                      @NotNull final List<? extends VirtualFile> roots,
                                       @Nullable final VirtualFile defaultRoot,
                                       @NotNull final JComboBox gitRootChooser,
                                       @Nullable final JLabel currentBranchLabel) {
     for (VirtualFile root : roots) {
       gitRootChooser.addItem(root);
     }
-    gitRootChooser.setRenderer(getVirtualFileListCellRenderer());
+    gitRootChooser.setRenderer(SimpleListCellRenderer.create("(invalid)", VirtualFile::getPresentableUrl));
     gitRootChooser.setSelectedItem(defaultRoot != null ? defaultRoot : roots.get(0));
     if (currentBranchLabel != null) {
       final ActionListener listener = new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           VirtualFile root = (VirtualFile)gitRootChooser.getSelectedItem();
           assert root != null : "The root must not be null";
@@ -218,10 +179,9 @@ public class GitUIUtil {
    * @param operation the operation name
    */
   public static void showOperationErrors(final Project project,
-                                         final Collection<VcsException> exs,
+                                         final Collection<? extends VcsException> exs,
                                          @NonNls @NotNull final String operation) {
     if (exs.size() == 1) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       showOperationError(project, operation, exs.iterator().next().getMessage());
     }
     else if (exs.size() > 1) {
@@ -246,17 +206,6 @@ public class GitUIUtil {
   }
 
   /**
-   * Show errors on the tab
-   *
-   * @param project the context project
-   * @param title   the operation title
-   * @param errors  the errors to display
-   */
-  public static void showTabErrors(Project project, String title, List<VcsException> errors) {
-    AbstractVcsHelper.getInstance(project).showErrors(errors, title);
-  }
-
-  /**
    * Checks state of the {@code checked} checkbox and if state is {@code checkedState} than to disable {@code changed}
    * checkbox and change its state to {@code impliedState}. When the {@code checked} checkbox changes states to other state,
    * than enable {@code changed} and restore its state. Note that the each checkbox should be implied by only one other checkbox.
@@ -270,6 +219,7 @@ public class GitUIUtil {
     ActionListener l = new ActionListener() {
       Boolean previousState;
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (checked.isSelected() == checkedState) {
           if (previousState == null) {
@@ -323,6 +273,7 @@ public class GitUIUtil {
       /**
        * {@inheritDoc}
        */
+      @Override
       public void actionPerformed(ActionEvent e) {
         check(first, firstState, second, !secondState);
         check(second, secondState, first, !firstState);
@@ -347,6 +298,7 @@ public class GitUIUtil {
     ActionListener l = new ActionListener() {
       String previousState;
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (checked.isSelected() == checkedState) {
           if (previousState == null) {
@@ -375,9 +327,8 @@ public class GitUIUtil {
   public static String code(String s) {
     return surround(s, "code");
   }
-  
+
   private static String surround(String s, String tag) {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
-
 }

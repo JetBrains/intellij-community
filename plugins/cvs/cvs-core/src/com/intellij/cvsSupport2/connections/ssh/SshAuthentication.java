@@ -20,7 +20,7 @@ import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
 public interface SshAuthentication {
 
-  void authenticate(final Connection connection) throws AuthenticationException, SolveableAuthenticationException;
+  void authenticate(final Connection connection) throws AuthenticationException;
 
   String getLogin();
 }

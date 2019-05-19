@@ -36,13 +36,16 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class BaseConfigurationTestCase extends IdeaTestCase {
+public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
   private final List<Module> myModulesToDispose = new ArrayList<>();
 
   @Override
   protected void tearDown() throws Exception {
     try {
       myModulesToDispose.clear();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

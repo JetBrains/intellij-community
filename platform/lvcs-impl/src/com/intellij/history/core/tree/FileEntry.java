@@ -78,7 +78,7 @@ public class FileEntry extends Entry {
   }
 
   @Override
-  public boolean hasUnavailableContent(List<Entry> entriesWithUnavailableContent) {
+  public boolean hasUnavailableContent(List<? super Entry> entriesWithUnavailableContent) {
     if (myContent.isAvailable()) return false;
     entriesWithUnavailableContent.add(this);
     return true;
@@ -97,21 +97,21 @@ public class FileEntry extends Entry {
   }
 
   @Override
-  public void collectDifferencesWith(@NotNull Entry e, @NotNull List<Difference> result) {
+  public void collectDifferencesWith(@NotNull Entry e, @NotNull List<? super Difference> result, boolean isRightContentCurrent) {
     if (getPath().equals(e.getPath())
         && myContent.equals(e.getContent())
         && isReadOnly == e.isReadOnly()) return;
     
-    result.add(new Difference(true, this, e));
+    result.add(new Difference(true, this, e, isRightContentCurrent));
   }
 
   @Override
-  protected void collectCreatedDifferences(@NotNull List<Difference> result) {
-    result.add(new Difference(true, null, this));
+  protected void collectCreatedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
+    result.add(new Difference(true, null, this, isRightContentCurrent));
   }
 
   @Override
-  protected void collectDeletedDifferences(@NotNull List<Difference> result) {
-    result.add(new Difference(true, this, null));
+  protected void collectDeletedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
+    result.add(new Difference(true, this, null, isRightContentCurrent));
   }
 }

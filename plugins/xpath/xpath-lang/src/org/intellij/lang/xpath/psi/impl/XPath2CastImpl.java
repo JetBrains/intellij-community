@@ -35,12 +35,14 @@ public class XPath2CastImpl extends XPath2ElementImpl implements XPath2Cast {
     return node != null ? node.getDeclaredType() : null;
   }
 
+  @Override
   @NotNull
   public XPathType getType() {
     final XPathType type = getTargetType();
     return type != null ? type : XPathType.UNKNOWN;
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2Cast(this);
   }

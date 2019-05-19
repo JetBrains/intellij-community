@@ -87,10 +87,9 @@ public class LineReader {
         return getLineArray();
       }
     }
-    final byte[] buffer = myBuffer;
     while (myBytesBuffered != -1) {
       for (; myPosition < myBytesBuffered; myPosition++) {
-        final byte c = buffer[myPosition];
+        final byte c = myBuffer[myPosition];
         switch (c) {
           case '\r':
             if (myLastEol == '\r') {

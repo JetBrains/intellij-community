@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -41,15 +41,15 @@ import java.util.*;
 /**
  * @author nik
  */
-public class MavenProjectModelModifier extends JavaProjectModelModifier {
+public final class MavenProjectModelModifier extends JavaProjectModelModifier {
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
   private final MavenProjectIndicesManager myIndicesManager;
 
-  public MavenProjectModelModifier(Project project, MavenProjectsManager projectsManager, MavenProjectIndicesManager manager) {
+  public MavenProjectModelModifier(Project project) {
     myProject = project;
-    myProjectsManager = projectsManager;
-    myIndicesManager = manager;
+    myProjectsManager = MavenProjectsManager.getInstance(project);
+    myIndicesManager = MavenProjectIndicesManager.getInstance(project);
   }
 
   @Nullable
@@ -61,13 +61,13 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     return addDependency(Collections.singletonList(from), mavenId, scope);
   }
 
-  private Promise<Void> addDependency(@NotNull Collection<Module> fromModules,
+  private Promise<Void> addDependency(@NotNull Collection<? extends Module> fromModules,
                                       @NotNull final MavenId mavenId,
                                       @NotNull final DependencyScope scope) {
     return addDependency(fromModules, mavenId, null, null, null, scope);
   }
 
-  private Promise<Void> addDependency(@NotNull Collection<Module> fromModules,
+  private Promise<Void> addDependency(@NotNull Collection<? extends Module> fromModules,
                                       @NotNull final MavenId mavenId,
                                       @Nullable String minVersion,
                                       @Nullable String maxVersion,
@@ -108,6 +108,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     }
 
     WriteCommandAction.writeCommandAction(myProject, PsiUtilCore.toPsiFileArray(files)).withName("Add Maven Dependency").run(() -> {
+      PsiDocumentManager pdm = PsiDocumentManager.getInstance(myProject);
       for (Trinity<MavenDomProjectModel, MavenId, String> trinity : models) {
         final MavenDomProjectModel model = trinity.first;
         MavenDomDependency dependency = MavenDomUtil.createDomDependency(model, null, trinity.second);
@@ -115,8 +116,9 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
         if (ms != null) {
           dependency.getScope().setStringValue(ms);
         }
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
+        Document document = pdm.getDocument(DomUtil.getFile(model));
         if (document != null) {
+          pdm.doPostponedOperationsAndUnblockDocument(document);
           FileDocumentManager.getInstance().saveDocument(document);
         }
       }
@@ -126,7 +128,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
 
   @Nullable
   @Override
-  public Promise<Void> addExternalLibraryDependency(@NotNull Collection<Module> modules,
+  public Promise<Void> addExternalLibraryDependency(@NotNull Collection<? extends Module> modules,
                                                     @NotNull ExternalLibraryDescriptor descriptor,
                                                     @NotNull DependencyScope scope) {
     for (Module module : modules) {
@@ -155,7 +157,10 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
         suitableVersions.add(version);
       }
     }
-    return suitableVersions.isEmpty() ? "RELEASE" : Collections.max(suitableVersions, VersionComparatorUtil.COMPARATOR);
+    if (suitableVersions.isEmpty()) {
+      return mavenId.getVersion() == null ? "RELEASE" : mavenId.getVersion();
+    }
+    return Collections.max(suitableVersions, VersionComparatorUtil.COMPARATOR);
   }
 
   @Nullable

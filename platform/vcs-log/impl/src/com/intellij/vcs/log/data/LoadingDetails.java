@@ -25,11 +25,11 @@ public class LoadingDetails implements VcsFullCommitDetails {
   private static final VcsUserImpl STUB_USER = new VcsUserImpl("", "");
   private static final String LOADING = "Loading...";
 
-  @NotNull private final Computable<CommitId> myCommitIdComputable;
+  @NotNull private final Computable<? extends CommitId> myCommitIdComputable;
   private final long myLoadingTaskIndex;
   @Nullable private volatile CommitId myCommitId;
 
-  public LoadingDetails(@NotNull Computable<CommitId> commitIdComputable, long loadingTaskIndex) {
+  public LoadingDetails(@NotNull Computable<? extends CommitId> commitIdComputable, long loadingTaskIndex) {
     myCommitIdComputable = commitIdComputable;
     myLoadingTaskIndex = loadingTaskIndex;
   }

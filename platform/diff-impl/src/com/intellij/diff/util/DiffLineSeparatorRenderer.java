@@ -15,34 +15,43 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.codeInsight.daemon.impl.HintRenderer;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
 public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSeparatorRenderer {
+  private static Object[] ourCachedImageKey = null;
+  private static BufferedImage outCachedImage = null;
+
   @NotNull private final Editor myEditor;
   @NotNull private final BooleanGetter myCondition;
+  @Nullable private final String myDescription;
 
-  public DiffLineSeparatorRenderer(@NotNull Editor editor, @NotNull BooleanGetter condition) {
+  public DiffLineSeparatorRenderer(@NotNull Editor editor, @NotNull BooleanGetter condition, @Nullable String description) {
     myEditor = editor;
     myCondition = condition;
+    myDescription = description;
   }
 
   /*
@@ -55,33 +64,15 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                                        @Nullable EditorColorsScheme scheme) {
     int step = getStepSize(lineHeight);
     int height = getHeight(lineHeight);
-    int dx = getDeltaX(lineHeight);
-    int dy = getDeltaY(lineHeight);
+    int verticalOffset = getVerticalOffset(lineHeight, step, height);
 
-    int start1 = y1 + (lineHeight - height - step) / 2 + step / 2;
-    int start2 = y2 + (lineHeight - height - step) / 2 + step / 2;
+    int start1 = y1 + verticalOffset + step / 2;
+    int start2 = y2 + verticalOffset + step / 2;
     int end1 = start1 + height - 1;
     int end2 = start2 + height - 1;
 
-    int[] xPoints;
-    int[] yPoints;
-
-    if (Math.abs(x2 - x1) < Math.abs(y2 - y1)) {
-      if (y2 < y1) {
-        xPoints = new int[]{x1, x2 - dx, x2, x2, x1 + dx, x1};
-        yPoints = new int[]{start1, start2 + dy, start2, end2, end1 - dy, end1};
-      }
-      else {
-        xPoints = new int[]{x1, x1 + dx, x2, x2, x2 - dx, x1};
-        yPoints = new int[]{start1, start1 + dy, start2, end2, end2 - dy, end1};
-      }
-    }
-    else {
-      xPoints = new int[]{x1, x2, x2, x1};
-      yPoints = new int[]{start1, start2, end2, end1};
-    }
-
-    paintConnectorLine(g, xPoints, yPoints, lineHeight, scheme);
+    Color color = getBackgroundColor(scheme);
+    DiffDrawUtil.drawCurveTrapezium(g, x1, x2, start1, end1, start2, end2, color, null);
   }
 
   /*
@@ -128,7 +119,39 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
       shiftX += -gutterWidth % interval - interval;
     }
 
-    draw(g, shiftX, y, lineHeight, myEditor.getColorsScheme());
+    if (myDescription != null && myEditor instanceof EditorImpl) {
+      drawWithDescription((Graphics2D)g, x1, y, shiftX, lineHeight, (EditorImpl)myEditor, myDescription);
+    }
+    else {
+      draw(g, shiftX, y, lineHeight, myEditor.getColorsScheme());
+    }
+  }
+
+  private static void drawWithDescription(Graphics2D g,
+                                          int x,
+                                          int y,
+                                          int shiftX,
+                                          int lineHeight,
+                                          @NotNull EditorImpl editor,
+                                          @NotNull String description) {
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    int rectX = x + JBUI.scale(5);
+    int rectWidth = HintRenderer.calcWidthInPixels(editor, description, null);
+
+    Shape oldClip = g.getClip();
+    g.clip(new Rectangle(0, 0, rectX, Integer.MAX_VALUE));
+    draw(g, shiftX, y, lineHeight, editor.getColorsScheme());
+    g.setClip(oldClip);
+
+    g.clip(new Rectangle(rectX + rectWidth, 0, Integer.MAX_VALUE, Integer.MAX_VALUE));
+    draw(g, shiftX, y, lineHeight, editor.getColorsScheme());
+    g.setClip(oldClip);
+
+    HintRenderer.paintHint(g, editor,
+                           new Rectangle(rectX, y, rectWidth, lineHeight),
+                           description,
+                           scheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT),
+                           scheme.getAttributes(HighlighterColors.TEXT), null);
   }
 
   @NotNull
@@ -141,112 +164,67 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                            int shiftX,
                            int shiftY,
                            int lineHeight,
-                           @Nullable EditorColorsScheme scheme) {
+                           @NotNull EditorColorsScheme scheme) {
     int step = getStepSize(lineHeight);
     int height = getHeight(lineHeight);
+    Color color = getBackgroundColor(scheme);
 
     Rectangle clip = g.getClipBounds();
     if (clip.width <= 0) return;
-    int count = (clip.width / step + 3);
-    int shift = (clip.x - shiftX) / step;
 
-    int[] xPoints = new int[count];
-    int[] yPoints = new int[count];
+    int startX = clip.x - shiftX;
+    int endX = startX + clip.width;
 
-    shiftY += (lineHeight - height - step) / 2;
+    int startIndex = startX / step;
+    int endIndex = endX / step + 1;
 
-    for (int index = 0; index < count; index++) {
-      int absIndex = index + shift;
+    Graphics2D gg = (Graphics2D)g.create();
+    gg.translate(shiftX, shiftY + getVerticalOffset(lineHeight, step, height));
 
-      int xPos = absIndex * step + shiftX;
-      int yPos;
-
-      if (absIndex == 0) {
-        yPos = step / 2 + shiftY;
-      }
-      else if (absIndex % 2 == 0) {
-        yPos = shiftY;
-      }
-      else {
-        yPos = step + shiftY;
-      }
-
-      xPoints[index] = xPos;
-      yPoints[index] = yPos;
-    }
-
-    GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
-    try {
-      paintLine(g, xPoints, yPoints, lineHeight, scheme);
-    }
-    finally {
-      config.restore();
-    }
-  }
-
-  private static void paintLine(@NotNull Graphics g,
-                                @NotNull int[] xPoints, @NotNull int[] yPoints,
-                                int lineHeight,
-                                @Nullable EditorColorsScheme scheme) {
-    int height = getHeight(lineHeight);
-    if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
-
-    Graphics2D gg = ((Graphics2D)g);
-    AffineTransform oldTransform = gg.getTransform();
-
-    for (int i = 0; i < height; i++) {
-      Color color = getTopBorderColor(i, lineHeight, scheme);
-      if (color == null) color = getBottomBorderColor(i, lineHeight, scheme);
-      if (color == null) color = getBackgroundColor(scheme);
-
+    if (startIndex == 0) {
       gg.setColor(color);
-      gg.drawPolyline(xPoints, yPoints, xPoints.length);
-      gg.translate(0, 1);
+      LinePainter2D.fillPolygon(gg,
+                                new double[]{0, step, step, 0},
+                                new double[]{step / 2, step, step + height, step / 2 + height}, 4,
+                                LinePainter2D.StrokeType.CENTERED_CAPS_SQUARE, 1.0,
+                                RenderingHints.VALUE_ANTIALIAS_OFF);
     }
-    gg.setTransform(oldTransform);
+    else if (startIndex % 2 == 0) {
+      startIndex--; // we should start painting with even index
+    }
+
+    BufferedImage image = createImage(gg, color, step, height);
+    gg.setComposite(AlphaComposite.SrcOver);
+
+    for (int index = startIndex; index < endIndex; index++) {
+      if (index % 2 == 0) continue;
+      UIUtil.drawImage(gg, image, index * step, 0, null);
+    }
+    gg.dispose();
   }
 
-  private static void paintConnectorLine(@NotNull Graphics g,
-                                         @NotNull int[] xPoints, @NotNull int[] yPoints,
-                                         int lineHeight,
-                                         @Nullable EditorColorsScheme scheme) {
-    // TODO: shadow looks bad with big lineHeight and slope
-    int height = getHeight(lineHeight);
-    if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
+  @NotNull
+  private static BufferedImage createImage(@NotNull Graphics2D g, @NotNull Color color, int step, int height) {
+    Object[] key = new Object[]{color.getRGB(), JBUI.sysScale(g), step, height};
+    if (Arrays.equals(ourCachedImageKey, key) && outCachedImage != null) return outCachedImage;
 
-    Graphics2D gg = ((Graphics2D)g);
-    AffineTransform oldTransform = gg.getTransform();
+    int imageWidth = step * 2;
+    int imageHeight = step + height;
+    BufferedImage image = UIUtil.createImage(g, imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
 
-    // background
-    gg.setColor(getBackgroundColor(scheme));
-    gg.fillPolygon(xPoints, yPoints, xPoints.length);
+    Graphics2D gg = image.createGraphics();
 
-    if (scheme.getColor(TOP_BORDER) != null) {
-      for (int i = 0; i < height; i++) {
-        Color color = getTopBorderColor(i, lineHeight, scheme);
-        if (color == null) break;
+    gg.setColor(color);
+    LinePainter2D.fillPolygon(gg,
+                              new double[]{0, step, step * 2, step * 2, step, 0},
+                              new double[]{step, 0, step, step + height, height, step + height}, 6,
+                              LinePainter2D.StrokeType.CENTERED_CAPS_SQUARE, 1.0,
+                              RenderingHints.VALUE_ANTIALIAS_OFF);
 
-        gg.setColor(color);
-        gg.drawPolyline(xPoints, yPoints, xPoints.length / 2);
-        gg.translate(0, 1);
-      }
-      gg.setTransform(oldTransform);
-    }
+    outCachedImage = image;
+    ourCachedImageKey = key;
 
-    if (scheme.getColor(BOTTOM_BORDER) != null) {
-      int[] xBottomPoints = Arrays.copyOfRange(xPoints, xPoints.length / 2, xPoints.length);
-      int[] yBottomPoints = Arrays.copyOfRange(yPoints, xPoints.length / 2, xPoints.length);
-
-      for (int i = height - 1; i >= 0; i--) {
-        Color color = getBottomBorderColor(i, lineHeight, scheme);
-        if (color == null) break;
-
-        gg.setColor(color);
-        gg.drawPolyline(xBottomPoints, yBottomPoints, xPoints.length / 2);
-        gg.translate(0, -1);
-      }
-      gg.setTransform(oldTransform);
-    }
+    return image;
   }
 
   //
@@ -254,8 +232,6 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
   //
 
   public static final ColorKey BACKGROUND = ColorKey.createColorKey("DIFF_SEPARATORS_BACKGROUND");
-  public static final ColorKey TOP_BORDER = ColorKey.createColorKey("DIFF_SEPARATORS_TOP_BORDER");
-  public static final ColorKey BOTTOM_BORDER = ColorKey.createColorKey("DIFF_SEPARATORS_BOTTOM_BORDER");
 
   private static int getStepSize(int lineHeight) {
     return Math.max(lineHeight / 3, 1);
@@ -265,46 +241,14 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     return Math.max(lineHeight / 2, 1);
   }
 
-  private static int getDeltaX(int lineHeight) {
-    return Math.max(lineHeight / 4, 1);
-  }
-
-  private static int getDeltaY(int lineHeight) {
-    return Math.max(lineHeight / 6, 1);
+  private static int getVerticalOffset(int lineHeight, int step, int height) {
+    return (lineHeight - height - step) / 2;
   }
 
   @NotNull
-  private static Color getBackgroundColor(@NotNull EditorColorsScheme scheme) {
+  private static Color getBackgroundColor(@Nullable EditorColorsScheme scheme) {
+    if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Color color = scheme.getColor(BACKGROUND);
     return color != null ? color : Gray._128;
-  }
-
-  @Nullable
-  private static Color getTopBorderColor(int i, int lineHeight, @NotNull EditorColorsScheme scheme) {
-    int border = Math.max(lineHeight / 4, 1);
-    double ratio = (double)i / border;
-    if (ratio > 1) return null;
-
-    Color top = scheme.getColor(TOP_BORDER);
-    if (top == null) return null;
-
-    Color background = getBackgroundColor(scheme);
-    return ColorUtil.mix(top, background, ratio);
-  }
-
-  @Nullable
-  private static Color getBottomBorderColor(int i, int lineHeight, @NotNull EditorColorsScheme scheme) {
-    int height = getHeight(lineHeight);
-    int border = Math.max(lineHeight / 12, 1);
-
-    int index = (height - i - 1);
-    double ratio = (double)index / border;
-    if (ratio > 1) return null;
-
-    Color bottom = scheme.getColor(BOTTOM_BORDER);
-    if (bottom == null) return null;
-
-    Color background = getBackgroundColor(scheme);
-    return ColorUtil.mix(bottom, background, ratio);
   }
 }

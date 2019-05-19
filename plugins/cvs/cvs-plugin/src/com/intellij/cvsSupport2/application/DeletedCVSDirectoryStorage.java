@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.application;
 
 import com.intellij.cvsSupport2.CvsUtil;
@@ -20,14 +6,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.util.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 
 public class DeletedCVSDirectoryStorage {
   private final File myRoot;
-  public static final String CVS_ADMIN_DIR = CvsUtil.CVS;
+  private static final String CVS_ADMIN_DIR = CvsUtil.CVS;
 
   private final Collection<VirtualFile> myFilesToDelete = new HashSet<>();
 
@@ -44,7 +31,7 @@ public class DeletedCVSDirectoryStorage {
     return file.getName().equals(CVS_ADMIN_DIR);
   }
 
-  public void checkNeedForPurge(File file) {
+  void checkNeedForPurge(File file) {
     if (!file.isDirectory()) return;
 
     File[] subdirectories = file.listFiles(FileUtilRt.ALL_DIRECTORIES);
@@ -56,7 +43,7 @@ public class DeletedCVSDirectoryStorage {
     if (canDeleteSavedCopy(file, savedCopy)) FileUtil.delete(savedCopy);
   }
 
-  public File translatePath(File file) {
+  private File translatePath(File file) {
     return translatePath(file.getAbsolutePath());
   }
 
@@ -77,7 +64,7 @@ public class DeletedCVSDirectoryStorage {
   }
 
   private boolean containsCvsDirFor(File file) {
-    return (translatePath(new File(file.getParentFile(), CVS_ADMIN_DIR)).exists());
+    return translatePath(new File(file.getParentFile(), CVS_ADMIN_DIR)).exists();
   }
 
 
@@ -90,7 +77,7 @@ public class DeletedCVSDirectoryStorage {
     return true;
   }
 
-  public synchronized void deleteIfAdminDirCreated(final VirtualFile file) {
+  synchronized void deleteIfAdminDirCreated(@NotNull VirtualFile file) {
     if (isAdminDir(file)) {
       myFilesToDelete.add(file);
     }
@@ -102,7 +89,8 @@ public class DeletedCVSDirectoryStorage {
     }
   }
 
-  public DeleteHandler createDeleteHandler(Project project, CvsStorageComponent cvsStorageComponent) {
+  @NotNull
+  DeleteHandler createDeleteHandler(Project project, CvsStorageSupportingDeletionComponent cvsStorageComponent) {
     return new DeleteHandler(project, cvsStorageComponent);
   }
 }

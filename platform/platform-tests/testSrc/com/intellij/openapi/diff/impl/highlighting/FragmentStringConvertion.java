@@ -24,6 +24,6 @@ public class FragmentStringConvertion extends StringConvertion {
   public String convert(Object obj) {
     Assert.assertNotNull(obj);
     DiffFragment fragment = (DiffFragment)obj;
-    return String.valueOf(fragment.getText1()) + "->" + String.valueOf(fragment.getText2()) + "\n-----------";
+    return fragment.getText1() + "->" + fragment.getText2() + "\n-----------";
   }
 }

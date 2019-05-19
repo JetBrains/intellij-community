@@ -54,7 +54,7 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
   }
 
   private static String parseFilePattern(Lexer lexer) throws ParsingException {
-    StringBuffer pattern = new StringBuffer();
+    StringBuilder pattern = new StringBuilder();
     boolean wasIdentifier = false;
     while (true) {
       if (lexer.getTokenType() == ScopeTokenTypes.DIV) {

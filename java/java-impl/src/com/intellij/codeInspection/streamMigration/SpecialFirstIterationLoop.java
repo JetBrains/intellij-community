@@ -42,7 +42,7 @@ class SpecialFirstIterationLoop {
   private final @NotNull List<PsiStatement> myOtherIterationStatements;
   private final @Nullable PsiLocalVariable myVariable;
 
-  public SpecialFirstIterationLoop(@NotNull List<PsiStatement> firstIterationStatements,
+  SpecialFirstIterationLoop(@NotNull List<PsiStatement> firstIterationStatements,
                                    @NotNull List<PsiStatement> otherIterationStatements,
                                    @Nullable PsiLocalVariable variable) {
     myFirstIterationStatements = firstIterationStatements;
@@ -272,10 +272,8 @@ class SpecialFirstIterationLoop {
   sb.append(mainPart)
  */
     @Nullable
-    static SpecialFirstIterationLoop extract(@NotNull TerminalBlock terminalBlock) {
-      StreamApiMigrationInspection.CountingLoopSource countingLoopSource =
-        terminalBlock.getLastOperation(StreamApiMigrationInspection.CountingLoopSource.class);
-      if (countingLoopSource == null) return null;
+    static SpecialFirstIterationLoop extract(@NotNull TerminalBlock terminalBlock,
+                                             StreamApiMigrationInspection.CountingLoopSource countingLoopSource) {
       PsiVariable loopVar = countingLoopSource.getVariable();
       PsiLocalVariable loopLocalVar = tryCast(loopVar, PsiLocalVariable.class);
       if (loopLocalVar == null) return null;

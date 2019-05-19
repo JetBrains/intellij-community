@@ -21,6 +21,7 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 
+@FunctionalInterface
 public interface ArrayFactory<T> {
   @NotNull
   T[] create(int count);

@@ -26,7 +26,7 @@ import java.util.List;
 public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
-  public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
       return null;

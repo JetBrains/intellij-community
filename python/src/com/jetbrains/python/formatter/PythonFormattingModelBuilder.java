@@ -17,7 +17,6 @@ package com.jetbrains.python.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -113,6 +112,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .between(COMMA, RBRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS | commonSettings.SPACE_AFTER_COMMA)
       .withinPair(LBRACKET, RBRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS)
 
+      .withinPair(FSTRING_FRAGMENT_START, FSTRING_FRAGMENT_END).spaces(0)
+
       .before(COLON).spaceIf(pySettings.SPACE_BEFORE_PY_COLON)
       .afterInside(LPAR, FROM_IMPORT_STATEMENT).spaces(0, pySettings.FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS)
       .betweenInside(COMMA, RPAR, FROM_IMPORT_STATEMENT).spaceIf(commonSettings.SPACE_AFTER_COMMA,
@@ -165,11 +166,6 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
   private static TokenSet allButLambda() {
     final PythonLanguage pythonLanguage = PythonLanguage.getInstance();
     return TokenSet.create(IElementType.enumerate(type -> type != LAMBDA_KEYWORD && type.getLanguage().isKindOf(pythonLanguage)));
-  }
-
-  @Override
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
-    return null;
   }
 
   private static void printAST(ASTNode node, int indent) {

@@ -15,14 +15,19 @@
  */
 package org.jetbrains.intellij.build.pycharm
 
+import groovy.io.FileType
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.IdeaCommunityProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
+
+import static org.jetbrains.intellij.build.python.PythonCommunityPluginModules.PYTHON_COMMUNITY_PLUGIN_MODULE
 
 /**
  * @author vlan
  */
+@SuppressWarnings("unused")
 class PythonCommunityPluginBuilder {
   private final String home
 
@@ -32,17 +37,32 @@ class PythonCommunityPluginBuilder {
 
   def build() {
     def pluginBuildNumber = System.getProperty("build.number", "SNAPSHOT")
-    def options = new BuildOptions(targetOS: BuildOptions.OS_NONE, buildNumber: pluginBuildNumber, outputRootPath: "$home/out/pycharmCE")
-    def buildContext = BuildContext.createContext(home, home, new PythonCommunityPluginProperties(), ProprietaryBuildTools.DUMMY, options)
-    def buildTasks = BuildTasks.create(buildContext)
-    buildTasks.buildDistributions()
-    
-    def builtPlugins = new File("$buildContext.paths.artifacts/${buildContext.productProperties.productCode}-plugins").listFiles()
-    if (builtPlugins == null || builtPlugins.length == 0) {
-      buildContext.messages.warning("No plugins were built")
-      return 
+    def pluginsForIdeaCommunity = [
+      PYTHON_COMMUNITY_PLUGIN_MODULE,
+      "intellij.reStructuredText",
+    ]
+
+    def options = new BuildOptions(buildNumber: pluginBuildNumber,
+                                   outputRootPath: "$home/out/pycharmCE")
+    def buildContext = BuildContext.createContext(home,
+                                                  home,
+                                                  new IdeaCommunityProperties(home),
+                                                  ProprietaryBuildTools.DUMMY,
+                                                  options)
+    BuildTasks.create(buildContext).buildNonBundledPlugins(pluginsForIdeaCommunity)
+
+    List<File> builtPlugins = []
+    new File(buildContext.paths.artifacts, "${buildContext.applicationInfo.productCode}-plugins").eachFileRecurse(FileType.FILES) {
+      if (it.name.endsWith(".zip")) {
+        builtPlugins << it
+      }
     }
-    
+    if (builtPlugins.isEmpty()) {
+      buildContext.messages.warning("No plugins were built")
+      return
+    }
+
     def pluginsPaths = new File("$buildContext.paths.buildOutputRoot/plugins-paths.txt")
-    pluginsPaths.text = builtPlugins.collect { it.toString() }.join("\n") }
+    pluginsPaths.text = builtPlugins.collect { it.toString() }.join("\n")
+  }
 }

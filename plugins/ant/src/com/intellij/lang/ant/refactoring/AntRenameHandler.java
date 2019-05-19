@@ -27,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,12 +36,14 @@ import java.util.Collection;
  * @author Eugene Zhuravlev
  */
 public final class AntRenameHandler extends PsiElementRenameHandler {
-  
+
+  @Override
   public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
     final PsiElement[] elements = getElements(dataContext);
     return elements != null && elements.length > 1;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     final PsiElement[] elements = getElements(dataContext);
     if (elements != null && elements.length > 0) {
@@ -62,7 +63,7 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
     }
     return getPsiElementsIn(editor);
   }
-  
+
   @Nullable
   private static PsiElement[] getPsiElementsIn(final Editor editor) {
     try {
@@ -71,11 +72,11 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
         return null;
       }
       final Collection<PsiElement> candidates = TargetElementUtil.getInstance().getTargetCandidates(reference);
-      return ContainerUtil.toArray(candidates, new PsiElement[candidates.size()]);
+      return candidates.toArray(PsiElement.EMPTY_ARRAY);
     }
     catch (IndexNotReadyException e) {
       return null;
     }
   }
-  
+
 }

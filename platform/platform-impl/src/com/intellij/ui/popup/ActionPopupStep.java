@@ -2,7 +2,6 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
@@ -21,21 +20,21 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                         SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
   private final List<PopupFactoryImpl.ActionItem> myItems;
   private final String myTitle;
-  private final Supplier<DataContext> myContext;
+  private final Supplier<? extends DataContext> myContext;
   private final String myActionPlace;
   private final boolean myEnableMnemonics;
   private final int myDefaultOptionIndex;
   private final boolean myAutoSelectionEnabled;
   private final boolean myShowDisabledActions;
   private Runnable myFinalRunnable;
-  private final Condition<AnAction> myPreselectActionCondition;
+  private final Condition<? super AnAction> myPreselectActionCondition;
 
   public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
                          String title,
-                         @NotNull Supplier<DataContext> context,
+                         @NotNull Supplier<? extends DataContext> context,
                          @Nullable String actionPlace,
                          boolean enableMnemonics,
-                         @Nullable Condition<AnAction> preselectActionCondition,
+                         @Nullable Condition<? super AnAction> preselectActionCondition,
                          boolean autoSelection,
                          boolean showDisabledActions) {
     myItems = items;
@@ -49,8 +48,8 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     myShowDisabledActions = showDisabledActions;
   }
 
-  private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<AnAction> preselectActionCondition,
-                                                              @NotNull List<PopupFactoryImpl.ActionItem> items) {
+  private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<? super AnAction> preselectActionCondition,
+                                                              @NotNull List<? extends PopupFactoryImpl.ActionItem> items) {
     int defaultOptionIndex = 0;
     if (preselectActionCondition != null) {
       for (int i = 0; i < items.size(); i++) {
@@ -72,9 +71,9 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                 String title,
                                                 boolean honorActionMnemonics,
                                                 boolean autoSelectionEnabled,
-                                                Supplier<DataContext> contextSupplier,
+                                                Supplier<? extends DataContext> contextSupplier,
                                                 @Nullable String actionPlace,
-                                                Condition<AnAction> preselectCondition,
+                                                Condition<? super AnAction> preselectCondition,
                                                 int defaultOptionIndex) {
     final ActionStepBuilder builder =
       new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
@@ -198,10 +197,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
       ActionManager.getInstance(), modifiers);
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-      manager.fireBeforeActionPerformed(action, dataContext, event);
-      ActionUtil.performActionDumbAware(action, event);
-      manager.fireAfterActionPerformed(action, dataContext, event);
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
     }
   }
 
@@ -227,11 +223,6 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   @Override
   public MnemonicNavigationFilter<PopupFactoryImpl.ActionItem> getMnemonicNavigationFilter() {
     return this;
-  }
-
-  @Override
-  public boolean canBeHidden(final PopupFactoryImpl.ActionItem value) {
-    return true;
   }
 
   @Override

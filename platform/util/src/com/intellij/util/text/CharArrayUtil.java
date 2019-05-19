@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,14 +100,6 @@ public class CharArrayUtil {
     for (int i = 0, j = srcOffset, max = srcOffset + len; j < max && i < dst.length; i++, j++) {
       dst[i + dstOffset] = src.charAt(j);
     }
-  }
-
-  /**
-   * @deprecated use {@link #fromSequence(CharSequence)}
-   */
-  @NotNull
-  public static char[] fromSequenceStrict(@NotNull CharSequence seq) {
-    return fromSequence(seq);
   }
 
   @Nullable
@@ -471,7 +464,7 @@ public class CharArrayUtil {
 
   @NotNull
   public static TextRange[] getIndents(@NotNull CharSequence charsSequence, int shift) {
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = new ArrayList<>();
     int whitespaceEnd = -1;
     int lastTextFound = 0;
     for(int i = charsSequence.length() - 1; i >= 0; i--){
@@ -495,10 +488,8 @@ public class CharArrayUtil {
       }
     }
     if(whitespaceEnd > 0) result.add(new TextRange(0, whitespaceEnd + 1).shiftRight(shift));
-    if (lastTextFound < result.size()) {
-      result = result.subList(0, lastTextFound);
-    }
-    return result.toArray(new TextRange[0]);
+    result = ContainerUtil.getFirstItems(result, lastTextFound);
+    return result.toArray(TextRange.EMPTY_ARRAY);
   }
 
   public static boolean containLineBreaks(@NotNull CharSequence seq) {
@@ -535,7 +526,6 @@ public class CharArrayUtil {
   @NotNull
   public static Reader readerFromCharSequence(@NotNull CharSequence text) {
     char[] chars = fromSequenceWithoutCopying(text);
-    //noinspection IOResourceOpenedButNotSafelyClosed
     return chars == null ? new CharSequenceReader(text.toString()) : new UnsyncCharArrayReader(chars, 0, text.length());
   }
 

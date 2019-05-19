@@ -15,6 +15,8 @@
  */
 package org.jetbrains.ether;
 
+import org.jetbrains.jps.builders.CompileScopeTestBuilder;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
@@ -47,10 +49,12 @@ public class MarkDirtyTest extends IncrementalTestCase {
     doTestBuild(1).assertSuccessful();
   }
 
+  @Override
   protected boolean useCachedProjectDescriptorOnEachMake() {
     return !"recompileTargetOnExportedLibraryChange".equals(getTestName(true));
   }
 
+  @Override
   protected void modify(int stage) {
     if (stage == 0 && "recompileTargetOnExportedLibraryChange".equals(getTestName(true))) {
       final JpsTypedLibrary<JpsDummyElement> library = myProject.getLibraryCollection().findLibrary("l", JpsJavaLibraryType.INSTANCE);
@@ -65,12 +69,28 @@ public class MarkDirtyTest extends IncrementalTestCase {
     }
   }
 
+  @Override
+  protected CompileScopeTestBuilder createCompileScope(int stage) {
+    if ("cleanTimestampsWithOutputOnModuleRebuild".equals(getTestName(true))) {
+      if (stage == 0) {
+        return CompileScopeTestBuilder.recompile().targetTypes(JavaModuleBuildTargetType.PRODUCTION);
+      }
+    }
+    return super.createCompileScope(stage);
+  }
+
+  public void testCleanTimestampsWithOutputOnModuleRebuild() {
+    setupInitialProject();
+    setupModules();
+    doTestBuild(2).assertSuccessful();
+  }
+
   public void testRecompileTargetOnExportedLibraryChange() {
     setupInitialProject();
     final Map<String, JpsModule> modules = setupModules();
     final JpsModule moduleA = modules.get("A");
     assertNotNull(moduleA);
-    
+
     JpsLibrary library = addLibrary("moduleA/lib/util.jar");
     JpsModuleRootModificationUtil.addDependency(moduleA, library, JpsJavaDependencyScope.COMPILE, true);
 
@@ -88,7 +108,7 @@ public class MarkDirtyTest extends IncrementalTestCase {
     JpsModuleRootModificationUtil.addDependency(util, lib);
     doTestBuild(1).assertSuccessful();
   }
-  
+
   public void testRecompileTwinDependencies() {
     doTest().assertSuccessful();
   }

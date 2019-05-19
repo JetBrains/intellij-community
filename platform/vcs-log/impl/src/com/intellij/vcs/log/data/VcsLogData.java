@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
-import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -34,6 +19,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
@@ -44,10 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +46,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     }
   };
   public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
+  public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
@@ -73,7 +57,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
    * Current user name, as specified in the VCS settings.
    * It can be configured differently for different roots => store in a map.
    */
-  private final Map<VirtualFile, VcsUser> myCurrentUser = ContainerUtil.newHashMap();
+  private final Map<VirtualFile, VcsUser> myCurrentUser = new HashMap<>();
 
   /**
    * Cached details of the latest commits.
@@ -89,7 +73,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
-  @NotNull private final VcsLogIndex myIndex;
+  @NotNull private final VcsLogModifiableIndex myIndex;
 
   @NotNull private final Object myLock = new Object();
   @NotNull private State myState = State.CREATED;
@@ -106,8 +90,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
     VcsLogProgress progress = new VcsLogProgress(project, this);
 
-    VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
-    if (invalidator.isValid()) {
+    if (VcsLogCachesInvalidator.getInstance().isValid()) {
       myStorage = createStorage();
       if (VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
         myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myFatalErrorsConsumer, this);
@@ -216,7 +199,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
           }
         };
         CoreProgressManager manager = (CoreProgressManager)ProgressManager.getInstance();
-        ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator();
+        ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator(DATA_PACK_REFRESH);
         Future<?> future = manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null);
         myInitialization = new SingleTaskController.SingleTaskImpl(future, indicator);
       }
@@ -315,17 +298,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   /**
-   * Refreshes specified roots.
-   * Does not re-read all log but rather the most recent commits.
-   *
-   * @param roots roots to refresh
-   */
-  public void refreshSoftly(@NotNull Set<VirtualFile> roots) {
-    initialize();
-    myRefresher.refresh(roots);
-  }
-
-  /**
    * Makes the log perform refresh for the given root.
    * This refresh can be optimized, i. e. it can query VCS just for the part of the log.
    */
@@ -334,6 +306,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myRefresher.refresh(roots);
   }
 
+  @NotNull
   public CommitDetailsGetter getCommitDetailsGetter() {
     return myDetailsGetter;
   }
@@ -387,6 +360,11 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull
   public VcsLogIndex getIndex() {
+    return getModifiableIndex();
+  }
+
+  @NotNull
+  VcsLogModifiableIndex getModifiableIndex() {
     return myIndex;
   }
 

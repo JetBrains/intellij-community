@@ -35,13 +35,13 @@
     <g fill="rgb(242,242,242)" font-family="'Segoe UI'" transform="translate(0,219)" stroke="rgb(242,242,242)">
       <rect x="0" width="480" height="26" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="0" width="480" height="26" y="0" clip-path="url(#1)" stroke="none"/>
-      <image x="1" y="7" clip-path="url(#1)" width="13" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/win10/radio.png" height="13" preserveAspectRatio="none"/>
+      <image x="1" y="7" clip-path="url(#1)" width="13" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/win10/radio.svg" height="13" preserveAspectRatio="none"/>
       <text fill="black" x="18" xml:space="preserve" y="18" clip-path="url(#1)" stroke="none">label</text>
     </g>
     <g fill="rgb(242,242,242)" font-family="'Segoe UI'" transform="translate(0,183)" stroke="rgb(242,242,242)">
       <rect x="0" width="480" height="26" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="0" width="480" height="26" y="0" clip-path="url(#1)" stroke="none"/>
-      <image x="1" y="7" clip-path="url(#1)" width="13" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/win10/checkBox.png" height="13" preserveAspectRatio="none"/>
+      <image x="1" y="7" clip-path="url(#1)" width="13" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/win10/checkBox.svg" height="13" preserveAspectRatio="none"/>
       <text fill="black" x="18" xml:space="preserve" y="18" clip-path="url(#1)" stroke="none">enabled</text>
     </g>
     <g fill="rgb(227,227,227)" font-family="'Segoe UI'" transform="translate(0,147)" stroke="rgb(227,227,227)">

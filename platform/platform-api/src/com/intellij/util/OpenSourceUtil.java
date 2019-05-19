@@ -66,7 +66,7 @@ public class OpenSourceUtil {
    * @param navigatables   an iterable collection of navigatables
    * @return {@code true} if at least one navigatable was processed, {@code false} otherwise
    */
-  public static boolean navigate(boolean requestFocus, boolean tryNotToScroll, @Nullable Iterable<Navigatable> navigatables) {
+  public static boolean navigate(boolean requestFocus, boolean tryNotToScroll, @Nullable Iterable<? extends Navigatable> navigatables) {
     if (navigatables == null) return false;
     Navigatable nonSourceNavigatable = null;
     boolean alreadyNavigatedToSource = false;
@@ -92,7 +92,7 @@ public class OpenSourceUtil {
    * @param navigatables   an iterable collection of navigatables
    * @return {@code true} if at least one navigatable was processed, {@code false} otherwise
    */
-  public static boolean navigateToSource(boolean requestFocus, boolean tryNotToScroll, @Nullable Iterable<Navigatable> navigatables) {
+  public static boolean navigateToSource(boolean requestFocus, boolean tryNotToScroll, @Nullable Iterable<? extends Navigatable> navigatables) {
     if (navigatables == null) return false;
     boolean alreadyNavigatedToSource = false;
     for (Navigatable navigatable : navigatables) {

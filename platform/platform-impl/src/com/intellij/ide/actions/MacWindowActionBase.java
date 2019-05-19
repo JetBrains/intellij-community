@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -31,7 +32,7 @@ import javax.swing.*;
  */
 public abstract class MacWindowActionBase extends AnAction implements DumbAware {
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     Presentation p = e.getPresentation();
     p.setVisible(SystemInfo.isMac);
 

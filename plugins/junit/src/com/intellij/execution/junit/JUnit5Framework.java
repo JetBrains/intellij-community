@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class JUnit5Framework extends JavaTestFramework {
+  @Override
   @NotNull
   public String getName() {
     return "JUnit5";
@@ -32,6 +32,7 @@ public class JUnit5Framework extends JavaTestFramework {
     return AllIcons.RunConfigurations.Junit;
   }
 
+  @Override
   protected String getMarkerClassFQName() {
     return JUnitUtil.TEST5_ANNOTATION;
   }
@@ -42,11 +43,13 @@ public class JUnit5Framework extends JavaTestFramework {
     return JUnitExternalLibraryDescriptor.JUNIT5;
   }
 
+  @Override
   @Nullable
   public String getDefaultSuperClass() {
     return null;
   }
 
+  @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
     if (canBePotential) return isUnderTestSources(clazz);
     return JUnitUtil.isJUnit5TestClass(clazz, false);
@@ -86,7 +89,7 @@ public class JUnit5Framework extends JavaTestFramework {
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.OK :
                        Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @BeforeEach. Annotate?",
-                                                   CommonBundle.getWarningTitle(),
+                                                   "Create SetUp",
                                                    Messages.getWarningIcon());
       if (exit == Messages.OK) {
         new AddAnnotationFix(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
@@ -130,14 +133,17 @@ public class JUnit5Framework extends JavaTestFramework {
     return true;
   }
 
+  @Override
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 SetUp Method.java");
   }
 
+  @Override
   public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 TearDown Method.java");
   }
 
+  @Override
   @NotNull
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 Test Method.java");

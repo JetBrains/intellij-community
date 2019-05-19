@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison.iterables;
 
 import com.intellij.diff.comparison.DiffTooBigException;
@@ -23,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +62,7 @@ public class DiffIterableUtil {
    * Compare two lists, basing on equals() and hashCode() of it's elements
    */
   @NotNull
-  public static <T> FairDiffIterable diff(@NotNull List<T> objects1, @NotNull List<T> objects2, @NotNull ProgressIndicator indicator)
+  public static <T> FairDiffIterable diff(@NotNull List<? extends T> objects1, @NotNull List<? extends T> objects2, @NotNull ProgressIndicator indicator)
     throws DiffTooBigException {
     // TODO: compare lists instead of arrays in Diff
     return diff(objects1.toArray(), objects2.toArray(), indicator);
@@ -169,7 +154,6 @@ public class DiffIterableUtil {
         if (equals) {
           Range range = lastUnchanged;
           lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
-          //noinspection ConstantConditions
           return Pair.create(range, true);
         }
         else {
@@ -218,7 +202,7 @@ public class DiffIterableUtil {
     }
   }
 
-  private static void verify(@NotNull Iterable<Range> iterable) {
+  private static void verify(@NotNull Iterable<? extends Range> iterable) {
     for (Range range : iterable) {
       // verify range
       assert range.start1 <= range.end1;
@@ -326,6 +310,7 @@ public class DiffIterableUtil {
       super(length1, length2);
     }
 
+    @Override
     protected void addChange(int start1, int start2, int end1, int end2) {
       Diff.Change change = new Diff.Change(start1, start2, end1 - start1, end2 - start2, null);
       if (myLastChange != null) {
@@ -367,10 +352,10 @@ public class DiffIterableUtil {
 
   @SuppressWarnings("unused")
   @NotNull
-  public static <T> List<LineRangeData> extractDataRanges(@NotNull List<T> objects1,
-                                                          @NotNull List<T> objects2,
+  public static <T> List<LineRangeData> extractDataRanges(@NotNull List<? extends T> objects1,
+                                                          @NotNull List<? extends T> objects2,
                                                           @NotNull DiffIterable iterable) {
-    List<LineRangeData> result = ContainerUtil.newArrayList();
+    List<LineRangeData> result = new ArrayList<>();
 
     for (Pair<Range, Boolean> pair : iterateAll(iterable)) {
       Range range = pair.first;

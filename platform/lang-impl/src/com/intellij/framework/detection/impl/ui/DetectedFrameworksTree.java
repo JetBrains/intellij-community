@@ -80,7 +80,7 @@ public class DetectedFrameworksTree extends CheckboxTree {
     }
   }
 
-  public void processUncheckedNodes(@NotNull final Consumer<DetectedFrameworkTreeNodeBase> consumer) {
+  public void processUncheckedNodes(@NotNull final Consumer<? super DetectedFrameworkTreeNodeBase> consumer) {
     TreeUtil.traverse(getRoot(), node -> {
       if (node instanceof DetectedFrameworkTreeNodeBase) {
         final DetectedFrameworkTreeNodeBase frameworkNode = (DetectedFrameworkTreeNodeBase)node;

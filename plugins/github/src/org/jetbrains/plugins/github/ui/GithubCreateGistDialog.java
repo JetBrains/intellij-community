@@ -42,6 +42,7 @@ public class GithubCreateGistDialog extends DialogWrapper {
   @NotNull private final JTextArea myDescriptionField;
   @NotNull private final JBCheckBox mySecretCheckBox;
   @NotNull private final JBCheckBox myOpenInBrowserCheckBox;
+  @NotNull private final JBCheckBox myCopyLinkCheckBox;
   @NotNull private final GithubAccountCombobox myAccountSelector;
 
   public GithubCreateGistDialog(@NotNull Project project,
@@ -49,13 +50,15 @@ public class GithubCreateGistDialog extends DialogWrapper {
                                 @Nullable GithubAccount defaultAccount,
                                 @Nullable String fileName,
                                 boolean secret,
-                                boolean openInBrowser) {
+                                boolean openInBrowser,
+                                boolean copyLink) {
     super(project, true);
 
     myFileNameField = fileName != null ? new JBTextField(fileName) : null;
     myDescriptionField = new JTextArea();
     mySecretCheckBox = new JBCheckBox("Secret", secret);
     myOpenInBrowserCheckBox = new JBCheckBox("Open in browser", openInBrowser);
+    myCopyLinkCheckBox = new JBCheckBox("Copy URL", copyLink);
     myAccountSelector = new GithubAccountCombobox(accounts, defaultAccount, null);
 
     setTitle("Create Gist");
@@ -68,6 +71,8 @@ public class GithubCreateGistDialog extends DialogWrapper {
     checkBoxes.add(mySecretCheckBox);
     checkBoxes.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
     checkBoxes.add(myOpenInBrowserCheckBox);
+    checkBoxes.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
+    checkBoxes.add(myCopyLinkCheckBox);
 
     JBScrollPane descriptionPane = new JBScrollPane(myDescriptionField);
     descriptionPane.setPreferredSize(new JBDimension(270, 55));
@@ -75,8 +80,7 @@ public class GithubCreateGistDialog extends DialogWrapper {
 
     PanelGridBuilder grid = grid().resize();
     if (myFileNameField != null) grid.add(panel(myFileNameField).withLabel("Filename:"));
-    grid.add(panel(descriptionPane).withLabel("Description:").anchorLabelOn(UI.Anchor.Top).resizeY(true))
-        .add(panel(checkBoxes));
+    grid.add(panel(descriptionPane).withLabel("Description:").anchorLabelOn(UI.Anchor.Top).resizeY(true)).add(panel(checkBoxes));
     if (myAccountSelector.isEnabled()) grid.add(panel(myAccountSelector).withLabel("Create for:").resizeX(false));
     return grid.createPanel();
   }
@@ -112,6 +116,10 @@ public class GithubCreateGistDialog extends DialogWrapper {
 
   public boolean isOpenInBrowser() {
     return myOpenInBrowserCheckBox.isSelected();
+  }
+
+  public boolean isCopyURL() {
+    return myCopyLinkCheckBox.isSelected();
   }
 
   @SuppressWarnings("ConstantConditions")

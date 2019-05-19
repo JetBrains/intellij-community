@@ -31,7 +31,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class CustomCodeStyleSettings implements Cloneable {
-  private final CodeStyleSettings myContainer;
+  private CodeStyleSettings myContainer;
   private final String myTagName;
 
   protected CustomCodeStyleSettings(@NonNls @NotNull String tagName, CodeStyleSettings container) {
@@ -71,6 +71,12 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
     }
   }
 
+  CustomCodeStyleSettings copyWith(@NotNull CodeStyleSettings container) {
+    CustomCodeStyleSettings cloned = (CustomCodeStyleSettings)clone();
+    cloned.myContainer = container;
+    return cloned;
+  }
+
   @Override
   public Object clone() {
     try {
@@ -86,6 +92,23 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
    */
   protected void importLegacySettings(@NotNull CodeStyleSettings rootSettings) {
   }
+
+  /**
+   * Fired before loading.
+   */
+  protected void beforeLoading() {}
+
+
+  /**
+   * Fired when settings just loaded.
+   *
+   * <p>
+   *   When the common version (the {@link CodeStyleSettings#myVersion} is not changed, this method is called just after loading.
+   *   When the common version is changed, this method called after {@link CustomCodeStyleSettings#importLegacySettings}.
+   * </p>
+   */
+  protected void afterLoaded() {}
+
 
   @Override
   public boolean equals(Object obj) {

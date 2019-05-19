@@ -114,7 +114,7 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiExpression expression = getExpression(element);
     assert expression != null;
     final PsiExpression toReplace = elementFactory.createExpressionFromText(getArrayCreation(expression), element);

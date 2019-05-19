@@ -4,6 +4,7 @@ import com.intellij.designer.palette.PaletteItem;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -14,6 +15,7 @@ import javax.swing.*;
  */
 public class VariationPaletteItem implements PaletteItem {
   private final PaletteItem myDefaultItem;
+  @NotNull
   private final String myTitle;
   private final String myIconPath;
   private final String myTooltip;
@@ -52,6 +54,7 @@ public class VariationPaletteItem implements PaletteItem {
     }
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     return myTitle;

@@ -1,13 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.SerializationFilter;
-import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -21,7 +19,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -29,7 +26,6 @@ import java.util.stream.Collectors;
 @State(name = "debuggerHistoryManager", storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE))
 public class XDebuggerHistoryManager implements PersistentStateComponent<Element> {
   public static final int MAX_RECENT_EXPRESSIONS = 10;
-  private static final SerializationFilter SERIALIZATION_FILTER = new SkipDefaultsSerializationFilter();
   private static final String STATE_TAG = "root";
   private static final String ID_ATTRIBUTE = "id";
   private static final String EXPRESSIONS_TAG = "expressions";
@@ -42,7 +38,7 @@ public class XDebuggerHistoryManager implements PersistentStateComponent<Element
   }
 
   public boolean addRecentExpression(@NotNull @NonNls String id, @Nullable XExpression expression) {
-    if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
+    if (XDebuggerUtilImpl.isEmptyExpression(expression) || expression.getExpression().length() > 100000) {
       return false;
     }
 
@@ -67,11 +63,11 @@ public class XDebuggerHistoryManager implements PersistentStateComponent<Element
     Element state = new Element(STATE_TAG);
     for (String id : myRecentExpressions.keySet()) {
       LinkedList<XExpression> expressions = myRecentExpressions.get(id);
-      List<ExpressionState> states = expressions.stream().map(ExpressionState::new).collect(Collectors.toList());
+      List<ExpressionState> states = ContainerUtil.map(expressions, ExpressionState::new);
       Element entryElement = new Element(EXPRESSIONS_TAG);
       entryElement.setAttribute(ID_ATTRIBUTE, id);
       for (ExpressionState expressionState : states) {
-        entryElement.addContent(XmlSerializer.serialize(expressionState, SERIALIZATION_FILTER));
+        entryElement.addContent(XmlSerializer.serialize(expressionState));
       }
       state.addContent(entryElement);
     }

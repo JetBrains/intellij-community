@@ -15,9 +15,10 @@ try {
 5(9) element: Assignment expression MAYBE_RETURN
 6(11) element: Finally clause
 7(6,8)  CALL 6
-8(13) AFTER CALL 7
+8(14) AFTER CALL 7
 9(6,10)  CALL 6
-10(13) AFTER CALL 9
+10(14) AFTER CALL 9
 11(12) READ a
-12(8,10)  RETURN
-13() element: null
+12(13) ARGUMENTS element: Method call
+13(8,10)  RETURN
+14() element: null

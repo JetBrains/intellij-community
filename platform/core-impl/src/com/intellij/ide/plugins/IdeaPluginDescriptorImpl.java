@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.AbstractBundle;
@@ -7,32 +7,36 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.OldComponentConfig;
+import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.xmlb.BeanBinding;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.THashMap;
-import org.jdom.Document;
+import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -48,24 +52,21 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
 
+  private static final String APPLICATION_SERVICE = "com.intellij.applicationService";
+  private static final String PROJECT_SERVICE = "com.intellij.projectService";
+  private static final String MODULE_SERVICE = "com.intellij.moduleService";
+
+  @SuppressWarnings("SSBasedInspection")
+  public static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
+
   private final File myPath;
   private final boolean myBundled;
-
-  private final NullableLazyValue<String> myDescription = new NullableLazyValue<String>() {
-    @Override
-    protected String compute() {
-      return computeDescription();
-    }
-  };
   private String myName;
   private PluginId myId;
-
-  @Nullable
-  private String myProductCode;
-  @Nullable
-  private Date myReleaseDate;
+  private final NullableLazyValue<String> myDescription = NullableLazyValue.createValue(() -> computeDescription());
+  private @Nullable String myProductCode;
+  private @Nullable Date myReleaseDate;
   private int myReleaseVersion;
-
   private String myResourceBundleBaseName;
   private String myChangeNotes;
   private String myVersion;
@@ -79,70 +80,33 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
   private Map<PluginId, List<String>> myOptionalConfigs;
   private Map<PluginId, List<IdeaPluginDescriptorImpl>> myOptionalDescriptors;
-  @Nullable private List<Element> myActionElements;
-  private ComponentConfig[] myAppComponents;
-  private ComponentConfig[] myProjectComponents;
-  private ComponentConfig[] myModuleComponents;
-  private boolean myDeleted;
+  private @Nullable List<Element> myActionElements;
+  private @Nullable List<ComponentConfig> myAppComponents;
+  private @Nullable List<ComponentConfig> myProjectComponents;
+  private @Nullable List<ComponentConfig> myModuleComponents;
+  private @Nullable MultiMap<String, Element> myExtensions;  // extension point name -> list of extension elements
+  private @Nullable List<ServiceDescriptor> myAppServices;
+  private @Nullable List<ServiceDescriptor> myProjectServices;
+  private @Nullable List<ServiceDescriptor> myModuleServices;
+  private @Nullable MultiMap<String, Element> myExtensionsPoints;
+  private List<String> myModules;
   private ClassLoader myLoader;
   private HelpSetPath[] myHelpSets;
-  @Nullable private MultiMap<String, Pair<String, Element>> myExtensions; // extension point name -> list of (extension default NS, extension element)
-  @Nullable private MultiMap<String, Element> myExtensionsPoints;
   private String myDescriptionChildText;
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
   private boolean myAllowBundledUpdate;
-  private boolean myEnabled = true;
+  private boolean myImplementationDetail;
   private String mySinceBuild;
   private String myUntilBuild;
+
+  private boolean myEnabled = true;
+  private boolean myDeleted;
   private Boolean mySkipped;
-  private List<String> myModules;
 
   public IdeaPluginDescriptorImpl(@NotNull File pluginPath, boolean bundled) {
     myPath = pluginPath;
     myBundled = bundled;
-  }
-
-  @Nullable
-  private static List<Element> copyChildren(@Nullable Element[] elements) {
-    if (elements == null || elements.length == 0) {
-      return null;
-    }
-
-    List<Element> result = new SmartList<>();
-    for (Element extensionsRoot : elements) {
-      result.addAll(extensionsRoot.getChildren());
-    }
-    return result;
-  }
-
-  @Nullable
-  private static List<Pair<String, Element>> copyChildrenAndNs(@Nullable Element[] elements) {
-    if (elements == null || elements.length == 0) {
-      return null;
-    }
-
-    List<Pair<String, Element>> result = new SmartList<>();
-    for (Element extensionsRoot : elements) {
-      String ns = extensionsRoot.getAttributeValue("defaultExtensionNs");
-      result.addAll(ContainerUtil.map(extensionsRoot.getChildren(), e->Pair.create(ns, e)));
-    }
-    return result;
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  private static String createDescriptionKey(final PluginId id) {
-    return "plugin." + id + ".description";
-  }
-
-  private static ComponentConfig[] mergeComponents(ComponentConfig[] first, ComponentConfig[] second) {
-    if (first == null) {
-      return second;
-    }
-    if (second == null) {
-      return first;
-    }
-    return ArrayUtil.mergeArrays(first, second);
   }
 
   @Override
@@ -150,37 +114,38 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myPath;
   }
 
-  /** @deprecated changing a plugin path after loading is not expected (to be removed in IDEA 2019) */
-  public void setPath(@SuppressWarnings("unused") File path) { }
-
-  public void readExternal(@NotNull Document document, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
-    Application application = ApplicationManager.getApplication();
-    readExternal(document, url, application != null && application.isUnitTestMode(), pathResolver);
+  public void readExternal(@NotNull Element element,
+                           @NotNull URL url,
+                           @NotNull JDOMXIncluder.PathResolver pathResolver,
+                           @Nullable Interner<String> stringInterner) throws InvalidDataException, MalformedURLException {
+    Application app = ApplicationManager.getApplication();
+    readExternal(element, url, app != null && app.isUnitTestMode(), pathResolver, stringInterner);
   }
 
-  public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
-    document = JDOMXIncluder.resolve(document, url.toExternalForm(), ignoreMissingInclude, pathResolver);
-    Element rootElement = document.getRootElement();
-    Element newElement = JDOMUtil.internElement(rootElement);
-    readExternal(newElement);
+  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory) throws IOException, JDOMException {
+    Application app = ApplicationManager.getApplication();
+    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), app != null && app.isUnitTestMode(),
+                 JDOMXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner());
   }
 
-  public void readExternal(@NotNull URL url) throws InvalidDataException, FileNotFoundException {
-    try {
-      Document document = JDOMUtil.loadDocument(url);
-      readExternal(document, url, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
+  private void readExternal(@NotNull Element element,
+                            @NotNull URL url,
+                            boolean ignoreMissingInclude,
+                            @NotNull JDOMXIncluder.PathResolver pathResolver,
+                            @Nullable Interner<String> stringInterner) throws InvalidDataException, MalformedURLException {
+    // root element always `!isIncludeElement` and it means that result always is a singleton list
+    // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
+    if (JDOMUtil.isEmpty(element)) {
+      return;
     }
-    catch (FileNotFoundException e) {
-      throw e;
-    }
-    catch (IOException | JDOMException e) {
-      throw new InvalidDataException(e);
-    }
+
+    JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
+    readExternal(element, stringInterner);
   }
 
   // used in upsource
-  protected void readExternal(@NotNull Element element) {
-    PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
+  protected void readExternal(@NotNull Element element, @Nullable Interner<String> stringInterner) {
+    OptimizedPluginBean pluginBean = XmlSerializer.deserialize(element, OptimizedPluginBean.class);
     myUrl = pluginBean.url;
 
     String idString = StringUtil.nullize(pluginBean.id, true);
@@ -188,13 +153,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myId = idString != null ? PluginId.getId(idString) : nameString != null ? PluginId.getId(nameString) : null;
     myName = ObjectUtils.chooseNotNull(nameString, idString);
 
-    myProductCode = pluginBean.productCode;
+    ProductDescriptor pd = pluginBean.productDescriptor;
+    myProductCode = pd != null? pd.code : null;
     myReleaseDate = parseReleaseDate(pluginBean);
-    myReleaseVersion = pluginBean.releaseVersion;
+    myReleaseVersion = pd != null? pd.releaseVersion : 0;
+
     String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
       try {
-        //noinspection ResultOfMethodCallIgnored
         Integer.parseInt(internalVersionString);
       }
       catch (NumberFormatException e) {
@@ -203,6 +169,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
     myUseIdeaClassLoader = pluginBean.useIdeaClassLoader;
     myAllowBundledUpdate = pluginBean.allowBundledUpdate;
+    myImplementationDetail = pluginBean.implementationDetail;
     if (pluginBean.ideaVersion != null) {
       mySinceBuild = pluginBean.ideaVersion.sinceBuild;
       myUntilBuild = convertExplicitBigNumberInUntilBuildToStar(pluginBean.ideaVersion.untilBuild);
@@ -228,26 +195,33 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     // preserve items order as specified in xml (filterBadPlugins will not fail if module comes first)
     Set<PluginId> dependentPlugins = new LinkedHashSet<>();
-    Set<PluginId> optionalDependentPlugins = new LinkedHashSet<>();
+    Set<PluginId> nonOptionalDependentPlugins = new LinkedHashSet<>();
     if (pluginBean.dependencies != null) {
-      myOptionalConfigs = new THashMap<>();
+      myOptionalConfigs = new LinkedHashMap<>();
       for (PluginDependency dependency : pluginBean.dependencies) {
         String text = dependency.pluginId;
         if (!StringUtil.isEmptyOrSpaces(text)) {
           PluginId id = PluginId.getId(text);
           dependentPlugins.add(id);
           if (dependency.optional) {
-            optionalDependentPlugins.add(id);
             if (!StringUtil.isEmptyOrSpaces(dependency.configFile)) {
               myOptionalConfigs.computeIfAbsent(id, it -> new SmartList<>()).add(dependency.configFile);
             }
+          }
+          else {
+            nonOptionalDependentPlugins.add(id);
           }
         }
       }
     }
 
     myDependencies = dependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : dependentPlugins.toArray(PluginId.EMPTY_ARRAY);
-    myOptionalDependencies = optionalDependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : optionalDependentPlugins.toArray(PluginId.EMPTY_ARRAY);
+    if (nonOptionalDependentPlugins.size() == dependentPlugins.size()) {
+      myOptionalDependencies = PluginId.EMPTY_ARRAY;
+    }
+    else {
+      myOptionalDependencies = ContainerUtil.filter(dependentPlugins, id -> !nonOptionalDependentPlugins.contains(id)).toArray(PluginId.EMPTY_ARRAY);
+    }
 
     if (pluginBean.helpSets == null || pluginBean.helpSets.length == 0) {
       myHelpSets = HelpSetPath.EMPTY;
@@ -261,42 +235,181 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    myAppComponents = pluginBean.applicationComponents;
-    myProjectComponents = pluginBean.projectComponents;
-    myModuleComponents = pluginBean.moduleComponents;
+    // we cannot use our new kotlin-aware XmlSerializer, so, will be used different bean cache,
+    // but it is not a problem because in any case new XmlSerializer is not used for our core classes (plugin bean, component config and so on).
+    Ref<BeanBinding> oldComponentConfigBeanBinding = new Ref<>();
 
-    if (myAppComponents == null) myAppComponents = ComponentConfig.EMPTY_ARRAY;
-    if (myProjectComponents == null) myProjectComponents = ComponentConfig.EMPTY_ARRAY;
-    if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
-
-    List<Pair<String, Element>> extensions = copyChildrenAndNs(pluginBean.extensions);
-    if (extensions != null) {
-      myExtensions = MultiMap.createSmart();
-      for (Pair<String, Element> pair : extensions) {
-        String ns = pair.first;
-        Element extension = pair.second;
-        myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension, ns), Pair.create(ns, extension));
-      }
+    // only for CoreApplicationEnvironment
+    if (stringInterner == null) {
+      stringInterner = new Interner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
     }
 
-    List<Element> extensionPoints = copyChildren(pluginBean.extensionPoints);
-    if (extensionPoints != null) {
-      myExtensionsPoints = MultiMap.createSmart();
-      for (Element extensionPoint : extensionPoints) {
-        myExtensionsPoints.putValue(StringUtil.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
+    MultiMap<String, Element> extensions = myExtensions;
+    for (Content content : element.getContent()) {
+      if (!(content instanceof Element)) {
+        continue;
       }
+
+      Element child = (Element)content;
+      switch (child.getName()) {
+        case "extensions": {
+          String ns = child.getAttributeValue("defaultExtensionNs");
+          for (Element extensionElement : child.getChildren()) {
+            String os = extensionElement.getAttributeValue("os");
+            if (os != null) {
+              extensionElement.removeAttribute("os");
+              if (!isComponentSuitableForOs(os)) {
+                continue;
+              }
+            }
+
+            String qualifiedExtensionPointName = stringInterner.intern(ExtensionsAreaImpl.extractPointName(extensionElement, ns));
+            List<ServiceDescriptor> services;
+            if (qualifiedExtensionPointName.equals(APPLICATION_SERVICE)) {
+              if (myAppServices == null) {
+                myAppServices = new ArrayList<>();
+              }
+              services = myAppServices;
+            }
+            else if (qualifiedExtensionPointName.equals(PROJECT_SERVICE)) {
+              if (myProjectServices == null) {
+                myProjectServices = new ArrayList<>();
+              }
+              services = myProjectServices;
+            }
+            else if (qualifiedExtensionPointName.equals(MODULE_SERVICE)) {
+              if (myModuleServices == null) {
+                myModuleServices = new ArrayList<>();
+              }
+              services = myModuleServices;
+            }
+            else {
+              if (extensions == null) {
+                extensions = MultiMap.createSmart();
+                myExtensions = extensions;
+              }
+              extensions.putValue(qualifiedExtensionPointName, extensionElement);
+              continue;
+            }
+
+            services.add(readServiceDescriptor(extensionElement));
+          }
+        }
+        break;
+
+        case "extensionPoints": {
+          if (myExtensionsPoints == null) {
+            myExtensionsPoints = MultiMap.createSmart();
+          }
+          for (Element extensionPoint : child.getChildren()) {
+            myExtensionsPoints.putValue(StringUtilRt.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
+          }
+        }
+        break;
+
+        case "actions": {
+          if (myActionElements == null) {
+            myActionElements = new ArrayList<>(child.getChildren());
+          }
+          else {
+            myActionElements.addAll(child.getChildren());
+          }
+        }
+        break;
+
+        case "module": {
+          String moduleName = child.getAttributeValue("value");
+          if (moduleName != null) {
+            if (myModules == null) {
+              myModules = new SmartList<>();
+            }
+            myModules.add(moduleName);
+          }
+        }
+        break;
+
+        case OptimizedPluginBean.APPLICATION_COMPONENTS: {
+          // because of x-pointer, maybe several application-components tag in document
+          if (myAppComponents == null) {
+            myAppComponents = new ArrayList<>();
+          }
+          readComponents(child, oldComponentConfigBeanBinding, (ArrayList<ComponentConfig>)myAppComponents);
+        }
+        break;
+
+        case OptimizedPluginBean.PROJECT_COMPONENTS: {
+          if (myProjectComponents == null) {
+            myProjectComponents = new ArrayList<>();
+          }
+          readComponents(child, oldComponentConfigBeanBinding, (ArrayList<ComponentConfig>)myProjectComponents);
+        }
+        break;
+
+        case OptimizedPluginBean.MODULE_COMPONENTS: {
+          if (myModuleComponents == null) {
+            myModuleComponents = new ArrayList<>();
+          }
+          readComponents(child, oldComponentConfigBeanBinding, (ArrayList<ComponentConfig>)myModuleComponents);
+        }
+        break;
+      }
+
+      child.getContent().clear();
+    }
+  }
+
+  @NotNull
+  private static ServiceDescriptor readServiceDescriptor(@NotNull Element element) {
+    ServiceDescriptor descriptor = new ServiceDescriptor();
+    descriptor.serviceInterface = element.getAttributeValue("serviceInterface");
+    descriptor.serviceImplementation = element.getAttributeValue("serviceImplementation");
+    descriptor.testServiceImplementation = element.getAttributeValue("testServiceImplementation");
+    descriptor.configurationSchemaKey = element.getAttributeValue("configurationSchemaKey");
+    descriptor.overrides = Boolean.parseBoolean(element.getAttributeValue("overrides"));
+    return descriptor;
+  }
+
+  private static void readComponents(@NotNull Element parent, @NotNull Ref<BeanBinding> oldComponentConfigBean, @NotNull ArrayList<? super ComponentConfig> result) {
+    List<Content> content = parent.getContent();
+    int contentSize = content.size();
+    if (contentSize == 0) {
+      return;
     }
 
-    myActionElements = copyChildren(pluginBean.actions);
+    result.ensureCapacity(result.size() + contentSize);
 
-    if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
-      myModules = pluginBean.modules;
+    for (Content child : content) {
+      if (!(child instanceof Element)) {
+        continue;
+      }
+
+      Element componentElement = ((Element)child);
+      if (!componentElement.getName().equals("component")) {
+        continue;
+      }
+
+      OldComponentConfig componentConfig = new OldComponentConfig();
+
+      BeanBinding beanBinding = oldComponentConfigBean.get();
+      if (beanBinding == null) {
+        beanBinding = XmlSerializer.getBeanBinding(componentConfig);
+        oldComponentConfigBean.set(beanBinding);
+      }
+
+      beanBinding.deserializeInto(componentConfig, componentElement);
+      Map<String, String> options = componentConfig.options;
+      if (options != null && (!isComponentSuitableForOs(options.get("os")))) {
+        continue;
+      }
+
+      result.add(componentConfig);
     }
   }
 
   @Nullable
-  private static Date parseReleaseDate(PluginBean bean) {
-    final String dateStr = bean.releaseDate;
+  private static Date parseReleaseDate(@NotNull OptimizedPluginBean bean) {
+    final ProductDescriptor pd = bean.productDescriptor;
+    final String dateStr = pd != null? pd.releaseDate : null;
     if (dateStr != null) {
       try {
         return new SimpleDateFormat("yyyyMMdd", Locale.US).parse(dateStr);
@@ -323,7 +436,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return build;
   }
 
-  // made public for Upsource
   public void registerExtensionPoints(@NotNull ExtensionsArea area) {
     if (myExtensionsPoints != null) {
       for (Element element : myExtensionsPoints.get(StringUtil.notNullize(area.getAreaClass()))) {
@@ -332,15 +444,22 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  // made public for Upsource
-  public void registerExtensions(@NotNull ExtensionsArea area, @NotNull String epName) {
-    if (myExtensions != null) {
-      for (Pair<String, Element> pair : myExtensions.get(epName)) {
-        Element element = pair.second;
-        String ns = pair.first;
-        area.registerExtension(this, element, ns);
-      }
+  void registerExtensions(@NotNull ExtensionPointImpl<?>[] extensionPoints, @NotNull MutablePicoContainer picoContainer) {
+    if (myExtensions == null) {
+      return;
     }
+
+    for (ExtensionPointImpl<?> extensionPoint : extensionPoints) {
+      extensionPoint.createAndRegisterAdapters(myExtensions.get(extensionPoint.getName()), this, picoContainer);
+    }
+  }
+
+  // made public for Upsource
+  public void registerExtensions(@NotNull ExtensionsArea area, @NotNull ExtensionPoint<?> extensionPoint) {
+    if (myExtensions == null) {
+      return;
+    }
+    ((ExtensionPointImpl)extensionPoint).createAndRegisterAdapters(myExtensions.get(extensionPoint.getName()), this, area.getPicoContainer());
   }
 
   @Override
@@ -370,6 +489,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myReleaseDate;
   }
 
+  @Override
   public int getReleaseVersion() {
     return myReleaseVersion;
   }
@@ -413,7 +533,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
      category in its .xml file so to be consistent in plugins representation
      (e.g. in the Plugins form) we have to set this value outside.
   */
-  public void setCategory( String category ){
+  public void setCategory(String category) {
     myCategory = category;
   }
 
@@ -428,10 +548,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public MultiMap<String, Element> getExtensions() {
     if (myExtensions == null) return null;
     MultiMap<String, Element> result = MultiMap.create();
-
-    for (Map.Entry<String, Collection<Pair<String, Element>>> entry : myExtensions.entrySet()) {
-      result.put(entry.getKey(), ContainerUtil.map(entry.getValue(), p->p.second));
-    }
+    result.putAllValues(myExtensions);
     return result;
   }
 
@@ -470,26 +587,43 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   @Nullable
-  public List<Element> getActionsDescriptionElements() {
-    return myActionElements;
+  public List<Element> getAndClearActionDescriptionElements() {
+    List<Element> result = myActionElements;
+    myActionElements = null;
+    return result;
   }
 
   @Override
   @NotNull
-  public ComponentConfig[] getAppComponents() {
-    return myAppComponents;
+  public List<ComponentConfig> getAppComponents() {
+    return ContainerUtil.notNullize(myAppComponents);
   }
 
   @Override
   @NotNull
-  public ComponentConfig[] getProjectComponents() {
-    return myProjectComponents;
+  public List<ComponentConfig> getProjectComponents() {
+    return ContainerUtil.notNullize(myProjectComponents);
   }
 
   @Override
   @NotNull
-  public ComponentConfig[] getModuleComponents() {
-    return myModuleComponents;
+  public List<ComponentConfig> getModuleComponents() {
+    return ContainerUtil.notNullize(myModuleComponents);
+  }
+
+  @NotNull
+  public List<ServiceDescriptor> getAppServices() {
+    return ContainerUtil.notNullize(myAppServices);
+  }
+
+  @NotNull
+  public List<ServiceDescriptor> getProjectServices() {
+    return ContainerUtil.notNullize(myProjectServices);
+  }
+
+  @NotNull
+  public List<ServiceDescriptor> getModuleServices() {
+    return ContainerUtil.notNullize(myModuleServices);
   }
 
   @Override
@@ -507,14 +641,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myUrl;
   }
 
-  public void setUrl( final String val )
-  {
+  public void setUrl(String val) {
     myUrl = val;
-  }
-
-  @Override
-  public String toString() {
-    return "PluginDescriptor[name='" + myName + "', classpath='" + myPath + "']";
   }
 
   public boolean isDeleted() {
@@ -530,21 +658,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof IdeaPluginDescriptorImpl)) return false;
-
-    final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)o;
-
-    return myName == null ? pluginDescriptor.myName == null : myName.equals(pluginDescriptor.myName);
-  }
-
-  @Override
-  public int hashCode() {
-    return myName != null ? myName.hashCode() : 0;
-  }
-
-  @Override
   @NotNull
   public HelpSetPath[] getHelpSets() {
     return myHelpSets;
@@ -556,13 +669,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
+  @Override
+  @Deprecated
   public String getDownloads() {
     return null;
-  }
-
-  /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDate (to be removed in IDEA 2019) */
-  public long getDate() {
-    return 0;
   }
 
   @Override
@@ -580,11 +690,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myUseIdeaClassLoader;
   }
 
-  public boolean isUseCoreClassLoader() {
+  boolean isUseCoreClassLoader() {
     return myUseCoreClassLoader;
   }
 
-  public void setUseCoreClassLoader(final boolean useCoreClassLoader) {
+  void setUseCoreClassLoader(@SuppressWarnings("SameParameterValue") boolean useCoreClassLoader) {
     myUseCoreClassLoader = useCoreClassLoader;
   }
 
@@ -603,10 +713,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return myDescriptionChildText;
     }
 
-    return CommonBundle.messageOrDefault(bundle, createDescriptionKey(myId), myDescriptionChildText == null ? "" : myDescriptionChildText);
+    return CommonBundle.messageOrDefault(bundle, "plugin." + myId + ".description", StringUtil.notNullize(myDescriptionChildText));
   }
 
-  public void insertDependency(@NotNull IdeaPluginDescriptor d) {
+  void insertDependency(@NotNull IdeaPluginDescriptor d) {
     PluginId[] deps = new PluginId[getDependentPluginIds().length + 1];
     deps[0] = d.getPluginId();
     System.arraycopy(myDependencies, 0, deps, 1, deps.length - 1);
@@ -637,15 +747,16 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myOptionalConfigs;
   }
 
+  @Nullable
   Map<PluginId, List<IdeaPluginDescriptorImpl>> getOptionalDescriptors() {
     return myOptionalDescriptors;
   }
 
-  void setOptionalDescriptors(@NotNull Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors) {
+  void setOptionalDescriptors(@Nullable Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors) {
     myOptionalDescriptors = optionalDescriptors;
   }
 
-  void mergeOptionalConfig(final IdeaPluginDescriptorImpl descriptor) {
+  void mergeOptionalConfig(@NotNull IdeaPluginDescriptorImpl descriptor) {
     if (myExtensions == null) {
       myExtensions = descriptor.myExtensions;
     }
@@ -667,9 +778,26 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myActionElements.addAll(descriptor.myActionElements);
     }
 
-    myAppComponents = mergeComponents(myAppComponents, descriptor.myAppComponents);
-    myProjectComponents = mergeComponents(myProjectComponents, descriptor.myProjectComponents);
-    myModuleComponents = mergeComponents(myModuleComponents, descriptor.myModuleComponents);
+    myAppComponents = concatOrNull(myAppComponents, descriptor.myAppComponents);
+    myProjectComponents = concatOrNull(myProjectComponents, descriptor.myProjectComponents);
+    myModuleComponents = concatOrNull(myModuleComponents, descriptor.myModuleComponents);
+
+    myAppServices = concatOrNull(myAppServices, descriptor.myAppServices);
+    myProjectServices = concatOrNull(myProjectServices, descriptor.myProjectServices);
+    myModuleServices = concatOrNull(myModuleServices, descriptor.myModuleServices);
+  }
+
+  @Nullable
+  private static <T> List<T> concatOrNull(@Nullable List<T> l1, @Nullable List<T> l2) {
+    if (l1 == null) {
+      return l2;
+    }
+    else if (l2 == null) {
+      return l1;
+    }
+    else {
+      return ContainerUtil.concat(l1, l2);
+    }
   }
 
   public Boolean getSkipped() {
@@ -690,8 +818,53 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myAllowBundledUpdate;
   }
 
-  @Nullable
+  @Override
+  public boolean isImplementationDetail() {
+    return myImplementationDetail;
+  }
+
+  @NotNull
   public List<String> getModules() {
-    return myModules;
+    return ContainerUtil.notNullize(myModules);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o || o instanceof IdeaPluginDescriptorImpl && myId == ((IdeaPluginDescriptorImpl)o).myId;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(myId);
+  }
+
+  @Override
+  public String toString() {
+    return "PluginDescriptor(name=" + myName + ", classpath=" + myPath + ")";
+  }
+
+  private static boolean isComponentSuitableForOs(@Nullable String os) {
+    if (StringUtil.isEmpty(os)) {
+      return true;
+    }
+
+    if (os.equals(Extensions.OS.mac.name())) {
+      return SystemInfoRt.isMac;
+    }
+    else if (os.equals(Extensions.OS.linux.name())) {
+      return SystemInfoRt.isLinux;
+    }
+    else if (os.equals(Extensions.OS.windows.name())) {
+      return SystemInfoRt.isWindows;
+    }
+    else if (os.equals(Extensions.OS.unix.name())) {
+      return SystemInfoRt.isUnix;
+    }
+    else if (os.equals(Extensions.OS.freebsd.name())) {
+      return SystemInfoRt.isFreeBSD;
+    }
+    else {
+      throw new IllegalArgumentException("Unknown OS '" + os + "'");
+    }
   }
 }

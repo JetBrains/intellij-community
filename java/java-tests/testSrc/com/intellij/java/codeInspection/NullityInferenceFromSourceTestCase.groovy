@@ -15,42 +15,49 @@
  */
 package com.intellij.java.codeInspection
 import com.intellij.codeInsight.InferredAnnotationsManager
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.DfaUtil
-import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.NotNull
 
-import static com.intellij.codeInspection.dataFlow.Nullness.*
+import static com.intellij.codeInsight.Nullability.*
 /**
  * @author peter
  */
 abstract class NullityInferenceFromSourceTestCase extends LightCodeInsightFixtureTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8_ANNOTATED
+  }
 
   void "test return string literal"() {
-    assert inferNullity(parse('String foo() { return "a"; }')) == NOT_NULL
+    assert inferNullability(parse('String foo() { return "a"; }')) == NOT_NULL
   }
 
   void "test return null"() {
-    assert inferNullity(parse('String foo() { return null; }')) == NULLABLE
+    assert inferNullability(parse('String foo() { return null; }')) == NULLABLE
   }
 
   void "test primitive return type"() {
-    assert inferNullity(parse('int foo() { return "z"; }')) == UNKNOWN
+    assert inferNullability(parse('int foo() { return "z"; }')) == UNKNOWN
   }
 
   void "test delegation"() {
-    assert inferNullity(parse('String foo() { return bar(); }; String bar() { return "z"; }; ')) == NOT_NULL
+    assert inferNullability(parse('String foo() { return bar(); }; String bar() { return "z"; }; ')) == NOT_NULL
   }
 
   void "test same delegate method invoked twice"() {
-    assert inferNullity(parse('''
+    assert inferNullability(parse('''
 String foo() { 
   if (equals(2)) return bar();
   if (equals(3)) return bar();
@@ -61,7 +68,7 @@ String bar() { return "z"; }
   }
 
   void "test unknown wins over a single delegate"() {
-    assert inferNullity(parse('''
+    assert inferNullability(parse('''
 String foo() { 
   if (equals(3)) return bar();
   return smth; 
@@ -71,66 +78,66 @@ String bar() { return "z"; }
   }
 
   void "test if branch returns null"() {
-    assert inferNullity(parse('String bar() { if (equals(2)) return null; return "a"; }; ')) == NULLABLE
+    assert inferNullability(parse('String bar() { if (equals(2)) return null; return "a"; }; ')) == NULLABLE
   }
 
   void "test ternary branch returns null"() {
-    assert inferNullity(parse('String bar() { return equals(2) ? "a" : equals(3) ? null : "a"; }; ')) == NULLABLE
+    assert inferNullability(parse('String bar() { return equals(2) ? "a" : equals(3) ? null : "a"; }; ')) == NULLABLE
   }
 
   void "test ternary branch notnull"() {
-    assert inferNullity(parse('String bar() { return equals(2) ? "a" : equals(3) ? "b" : "c"; }; ')) == NOT_NULL
+    assert inferNullability(parse('String bar() { return equals(2) ? "a" : equals(3) ? "b" : "c"; }; ')) == NOT_NULL
   }
 
   void "test type cast notnull"() {
-    assert inferNullity(parse('String foo() { return (String)bar(); }; Object bar() { return "a"; }; ')) == NOT_NULL
+    assert inferNullability(parse('String foo() { return (String)bar(); }; Object bar() { return "a"; }; ')) == NOT_NULL
   }
 
   void "test string concatenation"() {
-    assert inferNullity(parse('String bar(String s1, String s2) { return s1 + s2; }; ')) == NOT_NULL
+    assert inferNullability(parse('String bar(String s1, String s2) { return s1 + s2; }; ')) == NOT_NULL
   }
 
   void "test delegation to nullable means nothing"() {
-    assert inferNullity(parse('String foo() { return bar("2"); }; String bar(String s) { if (s != "2") return null; return "a"; }; ')) == UNKNOWN
+    assert inferNullability(parse('String foo() { return bar("2"); }; String bar(String s) { if (s != "2") return null; return "a"; }; ')) == UNKNOWN
   }
 
   void "test return boxed boolean constant"() {
-    assert inferNullity(parse('Object foo() { return true; }')) == NOT_NULL
+    assert inferNullability(parse('Object foo() { return true; }')) == NOT_NULL
   }
 
   void "test return boxed boolean value"() {
-    assert inferNullity(parse('Object foo(Object o) { return o == null; }')) == NOT_NULL
+    assert inferNullability(parse('Object foo(Object o) { return o == null; }')) == NOT_NULL
   }
 
   void "test return boxed integer"() {
-    assert inferNullity(parse('Object foo() { return 1; }')) == NOT_NULL
+    assert inferNullability(parse('Object foo() { return 1; }')) == NOT_NULL
   }
 
   void "test null inside lambda"() {
-    assert inferNullity(parse('Object foo() { return () -> { return null; }; }')) == NOT_NULL
+    assert inferNullability(parse('Object foo() { return () -> { return null; }; }')) == NOT_NULL
   }
 
   void "test in presence of explicit null contract"() {
-    assert inferNullity(parse('''
+    assert inferNullability(parse('''
 @Contract("null->null")
 Object foo(Object o) { if (o == null) return null; return 2; }
 ''')) == UNKNOWN
   }
   void "test in presence of inferred null contract"() {
-    assert inferNullity(parse('''
+    assert inferNullability(parse('''
 Object foo(Object o) { if (o == null) return null; return 2; }
 ''')) == UNKNOWN
   }
 
   void "test in presence of fail contract"() {
-    assert inferNullity(parse('''
+    assert inferNullability(parse('''
 @Contract("null->fail")
 Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
 ''')) == NOT_NULL
   }
 
   void "test returning instanceof-ed variable via statement"() {
-    assert inferNullity(parse('''
+    assert inferNullability(parse('''
     String foo(Object o) { 
       if (o instanceof String) return ((String)o); 
       return "abc"; 
@@ -138,33 +145,144 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
   }
 
   void "test returning instanceof-ed variable via ternary"() {
-    assert inferNullity(parse('String foo(Object o) { return o instanceof String ? (String)o : "abc"; }')) == NOT_NULL
+    assert inferNullability(parse('String foo(Object o) { return o instanceof String ? (String)o : "abc"; }')) == NOT_NULL
   }
   
   void "test System exit"() {
-    assert inferNullity(parse('String foo(Object obj) {try {return bar();} catch(Exception ex) {System.exit(1);return null;}}')) == UNKNOWN
+    assert inferNullability(parse('String foo(Object obj) {try {return bar();} catch(Exception ex) {System.exit(1);return null;}}')) == UNKNOWN
   }
 
   void "test System exit2"() {
-    assert inferNullity(parse('String foo(boolean b) {' +
-                              'if(b) return null;' +
-                              'try {x();} ' +
-                              'catch(Exception ex) {System.exit(1);return null;}' +
-                              'return "xyz".trim();' +
-                              '}')) == UNKNOWN
+    assert inferNullability(parse('String foo(boolean b) {' +
+                                  'if(b) return null;' +
+                                  'try {x();} ' +
+                                  'catch(Exception ex) {System.exit(1);return null;}' +
+                                  'return "xyz".trim();' +
+                                  '}')) == UNKNOWN
+  }
+  
+  void "test declare and fill"() {
+    assert inferNullability(parse("""java.util.List<String> foo() {
+                                    java.util.List<String> x = new java.util.ArrayList<>();
+                                    for(int i=0; i<10; i++) x.add("foo");
+                                    return x;
+                                  }""")) == NOT_NULL
   }
 
-  protected abstract Nullness inferNullity(PsiMethod method)
+  void "test assign and fill"() {
+    assert inferNullability(parse("""java.util.List<String> foo() {
+                                    java.util.List<String> x;
+                                    x = new java.util.ArrayList<>();
+                                    for(int i=0; i<10; i++) x.add("foo");
+                                    return x;
+                                  }""")) == NOT_NULL
+  }
+  
+  void "test dereference"() {
+    assert inferNullability(parse("""String foo() {
+                                    String x = getUnknown();
+                                    System.out.println(x.trim());
+                                    return x;
+                                  }""")) == NOT_NULL
+  }
+  
+  void "test reassigned in if"() {
+    assert inferNullability(parse("""String foo() {
+                                      String res = "start";
+                                      if(foo) {
+                                        res = getBar();
+                                      }
+                                      return res;
+                                    }""")) == UNKNOWN
+  }
+  
+  void "test reassigned in both branches"() {
+    assert inferNullability(parse("""String foo() {
+                                      String res;
+                                      if(foo) {
+                                        res = getBar();
+                                      } else {
+                                        res = null;
+                                      }
+                                      return res;
+                                    }""")) == NULLABLE
+  }
+  
+  void "test reassigned in switch"() {
+    assert inferNullability(parse("""String foo() {
+                                      String res = "bar";
+                                      switch(foo) {
+                                      case 1:res = getSomething();
+                                      case 2:return res;
+                                      }
+                                      return "";
+                                    }""")) == UNKNOWN
+  }
+  
+  void "test null check with return"() {
+    assert inferNullability(parse("""String foo() {
+                                      String res = getUnknown();
+                                      if (res == null) return "foo";
+                                      return res;
+                                    }""")) == NOT_NULL
+  }
+  
+  void "test if null reassign"() {
+    assert inferNullability(parse("""String test() {
+                            String result = getFoo();
+                            if (result != null && result.isEmpty()) {
+                              result = null;
+                            }
+                            if (result == null) {
+                              result = getBar();
+                            }
+                            return result;
+                          }""")) == UNKNOWN
+  }
+  
+  void "test nested ifs"() {
+    assert inferNullability(parse("""String test() {
+                            String result = "foo";
+                            if (bar) {
+                              if(baz) {
+                                System.out.println(result.trim());
+                              }
+                            }
+                            return result;
+                          }""")) == NOT_NULL
+  }
+  
+  void "test null or empty"() {
+    assert inferNullability(parse("""String test() {
+                            String p = isFoo() ? null : getFoo();
+                            if (p == null || p.isEmpty()) return p;
+                            return "foo";
+                          }""")) == NULLABLE
+  }
+  
+  void "test set to null in if branch"() {
+    assert inferNullability(parse("""String test(String r) {
+                            String p;
+                            if(r == null) {
+                              p = null;
+                            } else {
+                              p = " foo ".trim();
+                            }
+                            return p;
+                          }""")) != NOT_NULL
+  }
+
+  protected abstract Nullability inferNullability(PsiMethod method)
 
   protected PsiMethod parse(String method) {
     return myFixture.addClass("import org.jetbrains.annotations.*; final class Foo { $method }").methods[0]
   }
 
   static class LightInferenceTest extends NullityInferenceFromSourceTestCase {
-    Nullness inferNullity(PsiMethod method) {
+    Nullability inferNullability(PsiMethod method) {
       def file = (PsiFileImpl)method.containingFile
       assert !file.contentsLoaded
-      def result = NullableNotNullManager.isNotNull(method) ? NOT_NULL : NullableNotNullManager.isNullable(method) ? NULLABLE : UNKNOWN
+      def result = NullableNotNullManager.getNullability(method)
       assert !file.contentsLoaded
 
       // check inference works same on both light and real AST
@@ -173,12 +291,12 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
         PsiDocumentManager.getInstance(project).commitAllDocuments()
       }
       assert method.node
-      assert result == JavaSourceInference.inferNullity(method as PsiMethodImpl)
+      assert result == JavaSourceInference.inferNullability(method as PsiMethodImpl)
       return result
     }
 
     void "test skip when errors"() {
-      assert inferNullity(parse('String foo() { if(); return 2; } ')) == UNKNOWN
+      assert inferNullability(parse('String foo() { if(); return 2; } ')) == UNKNOWN
     }
 
     void "test no nullable annotation in presence of inferred null contract"() {
@@ -190,8 +308,8 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
   }
 
   static class DfaInferenceTest extends NullityInferenceFromSourceTestCase {
-    Nullness inferNullity(PsiMethod method) {
-      return DfaUtil.inferMethodNullity(method)
+    Nullability inferNullability(PsiMethod method) {
+      return DfaUtil.inferMethodNullability(method)
     }
   }
 }

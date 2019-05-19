@@ -22,13 +22,12 @@ import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
-import org.gradle.composite.internal.IncludedBuildInternal
+import org.gradle.composite.internal.DefaultIncludedBuild
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 
 /**
  * @author Vladislav.Soroka
- * @since 5/19/2016
  */
 @CompileStatic
 class SourceSetCachedFinder {
@@ -68,9 +67,9 @@ class SourceSetCachedFinder {
           if (archivePath) {
             artifactsMap[archivePath.path] = sourceSet
           }
-          }
         }
       }
+    }
 
     myArtifactsMap = Collections.unmodifiableMap(artifactsMap)
     mySourcesMap = [:]
@@ -91,8 +90,8 @@ class SourceSetCachedFinder {
 
   private static List<Project> exposeIncludedBuilds(Project project, List<Project> projects) {
     for (IncludedBuild includedBuild : project.gradle.includedBuilds) {
-      if (includedBuild instanceof IncludedBuildInternal) {
-        def build = includedBuild as IncludedBuildInternal
+      if (includedBuild instanceof DefaultIncludedBuild) {
+        def build = includedBuild as DefaultIncludedBuild
         projects += build.configuredBuild.rootProject.allprojects
       }
     }
@@ -103,11 +102,13 @@ class SourceSetCachedFinder {
     myArtifactsMap[artifactPath]
   }
 
+  static SourceSetContainer getSourceSetContainer(Project p) {
+    JavaPluginUtil.getJavaPluginConvention(p)?.sourceSets
+  }
+}
+
+public class JavaPluginUtil {
   static JavaPluginConvention getJavaPluginConvention(Project p) {
     p.convention.findPlugin(JavaPluginConvention)
-  }
-
-  static SourceSetContainer getSourceSetContainer(Project p) {
-    getJavaPluginConvention(p)?.sourceSets
   }
 }

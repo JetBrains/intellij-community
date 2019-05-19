@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.picker;
 
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
@@ -33,7 +34,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
   }
 
   public static boolean canUseMacPipette() {
-    return SystemInfo.isMac && Registry.is("ide.mac.new.color.picker");
+    return SystemInfo.isMac && Registry.is("ide.mac.new.color.picker") && JnaLoader.isLoaded();
   }
 
   @Override
@@ -131,6 +132,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
       }
     });
     myPickerFrame.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
           case KeyEvent.VK_ESCAPE:

@@ -26,6 +26,7 @@ public class TestErrorState extends TestFailedState {
     super(localizedMessage, stackTrace);
   }
 
+  @Override
   public Magnitude getMagnitude() {
     return Magnitude.ERROR_INDEX;
   }

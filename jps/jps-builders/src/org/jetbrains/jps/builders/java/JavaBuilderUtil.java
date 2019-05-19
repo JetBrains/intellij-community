@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +31,11 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -61,11 +64,11 @@ public class JavaBuilderUtil {
     registerFilesToCompile(context, Collections.singleton(file));
   }
 
-  public static void registerFilesToCompile(CompileContext context, Collection<File> files) {
+  public static void registerFilesToCompile(CompileContext context, Collection<? extends File> files) {
     getFilesContainer(context, FILES_TO_COMPILE_KEY).addAll(files);
   }
 
-  public static void registerFilesWithErrors(CompileContext context, Collection<File> files) {
+  public static void registerFilesWithErrors(CompileContext context, Collection<? extends File> files) {
     getFilesContainer(context, COMPILED_WITH_ERRORS_KEY).addAll(files);
   }
 
@@ -73,7 +76,7 @@ public class JavaBuilderUtil {
     registerSuccessfullyCompiled(context, Collections.singleton(file));
   }
 
-  public static void registerSuccessfullyCompiled(CompileContext context, Collection<File> files) {
+  public static void registerSuccessfullyCompiled(CompileContext context, Collection<? extends File> files) {
     getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY).addAll(files);
   }
 
@@ -134,12 +137,13 @@ public class JavaBuilderUtil {
    * {@link #registerFilesToCompile(CompileContext, Collection)}, or
    * {@link #registerSuccessfullyCompiled(CompileContext, Collection)} instead.
    */
+  @Deprecated
   public static boolean updateMappings(CompileContext context,
                                        final Mappings delta,
                                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                        ModuleChunk chunk,
-                                       Collection<File> filesToCompile,
-                                       Collection<File> successfullyCompiled) throws IOException {
+                                       Collection<? extends File> filesToCompile,
+                                       Collection<? extends File> successfullyCompiled) throws IOException {
     return updateMappings(context, delta, dirtyFilesHolder, chunk, filesToCompile, successfullyCompiled, CompilationRound.NEXT, null);
   }
 
@@ -161,8 +165,8 @@ public class JavaBuilderUtil {
                                         final Mappings delta,
                                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                         ModuleChunk chunk,
-                                        Collection<File> filesToCompile,
-                                        Collection<File> successfullyCompiled,
+                                        Collection<? extends File> filesToCompile,
+                                        Collection<? extends File> successfullyCompiled,
                                         final CompilationRound markDirtyRound,
                                         @Nullable FileFilter skipMarkingDirtyFilter) throws IOException {
     try {
@@ -352,7 +356,7 @@ public class JavaBuilderUtil {
     }
   }
 
-  private static boolean containsProcessorGeneratedFiles(ModuleChunk chunk, Collection<File> files) {
+  private static boolean containsProcessorGeneratedFiles(ModuleChunk chunk, Collection<? extends File> files) {
     final JpsModule module = chunk.representativeTarget().getModule();
     final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
     assert compilerConfig != null;
@@ -382,7 +386,7 @@ public class JavaBuilderUtil {
     return JpsJavaExtensionService.getInstance().getJavaModuleIndex(project);
   }
 
-  private static FileFilter createOrFilter(final List<FileFilter> filters) {
+  private static FileFilter createOrFilter(final List<? extends FileFilter> filters) {
     if (filters == null || filters.isEmpty()) return null;
     return pathname -> {
       for (FileFilter filter : filters) {
@@ -394,9 +398,9 @@ public class JavaBuilderUtil {
     };
   }
 
-  private static void removeFilesAcceptedByFilter(@NotNull Set<File> files, @Nullable FileFilter filter) {
+  private static void removeFilesAcceptedByFilter(@NotNull Set<? extends File> files, @Nullable FileFilter filter) {
     if (filter != null) {
-      for (final Iterator<File> it = files.iterator(); it.hasNext();) {
+      for (final Iterator<? extends File> it = files.iterator(); it.hasNext();) {
         if (filter.accept(it.next())) {
           it.remove();
         }
@@ -415,7 +419,7 @@ public class JavaBuilderUtil {
     return scope.isBuildIncrementally(JavaModuleBuildTargetType.PRODUCTION) || scope.isBuildIncrementally(JavaModuleBuildTargetType.TEST);
   }
 
-  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<File> affected, ModulesBasedFileFilter moduleBasedFilter) {
+  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<? extends File> affected, ModulesBasedFileFilter moduleBasedFilter) {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
@@ -478,8 +482,16 @@ public class JavaBuilderUtil {
 
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdkLibrary = reference.resolve();
     if (sdkLibrary == null) {
-      context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR,
-                                                 "Cannot find JDK '" + reference.getSdkName() + "' for module '" + module.getName() + "'"));
+      JpsLibrary library = context.getProjectDescriptor().getModel().getGlobal().getLibraryCollection().findLibrary(reference.getSdkName());
+      JpsSdkType sdkType = library != null ? ObjectUtils.tryCast(library.getType(), JpsSdkType.class) : null;
+      String errorMessage;
+      if (sdkType == null) {
+        errorMessage = "Cannot find JDK '" + reference.getSdkName() + "' for module '" + module.getName() + "'";
+      }
+      else {
+        errorMessage = "Cannot find JDK for module '" + module.getName() + "': '" + reference.getSdkName() + "' points to " + sdkType.getPresentableName();
+      }
+      context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR, errorMessage));
       throw new StopBuildException();
     }
     return sdkLibrary.getProperties();
@@ -533,7 +545,7 @@ public class JavaBuilderUtil {
       return rd != null && myChunkTargets.contains(rd.target);
     }
 
-    public boolean containsFilesFromCurrentTargetChunk(Collection<File> files) {
+    public boolean containsFilesFromCurrentTargetChunk(Collection<? extends File> files) {
       for (File file : files) {
         if (belongsToCurrentTargetChunk(file)) {
           return true;
@@ -546,7 +558,7 @@ public class JavaBuilderUtil {
   private static class NegationFileFilter implements FileFilter {
     private final FileFilter myFilter;
 
-    public NegationFileFilter(FileFilter filter) {
+    NegationFileFilter(FileFilter filter) {
       myFilter = filter;
     }
 

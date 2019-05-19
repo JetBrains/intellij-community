@@ -45,24 +45,25 @@ import java.util.Collection;
 import java.util.List;
 
 class MultilinePopupBuilder {
-  private static final char[] SEPARATORS = {'|', '\n'};
+  static final char[] SEPARATORS = {'|', '\n'};
+  private static final String COMPLETION_ADVERTISEMENT = "Select one or more values separated with | or new lines";
 
   @NotNull private final EditorTextField myTextField;
 
   MultilinePopupBuilder(@NotNull Project project,
                         @NotNull final Collection<String> values,
                         @NotNull String initialValue,
-                        boolean supportsNegativeValues) {
-    myTextField = createTextField(project, values, supportsNegativeValues, initialValue);
+                        @Nullable CompletionPrefixProvider completionPrefixProvider) {
+    myTextField = createTextField(project, values, completionPrefixProvider, initialValue);
   }
 
   @NotNull
   private static EditorTextField createTextField(@NotNull Project project,
                                                  Collection<String> values,
-                                                 boolean supportsNegativeValues,
+                                                 @Nullable CompletionPrefixProvider completionPrefixProvider,
                                                  @NotNull String initialValue) {
     TextFieldWithCompletion textField =
-      new TextFieldWithCompletion(project, new MyCompletionProvider(values, supportsNegativeValues), initialValue, false, true, false) {
+      new TextFieldWithCompletion(project, new MyCompletionProvider(values, completionPrefixProvider), initialValue, false, true, false) {
         @Override
         protected EditorEx createEditor() {
           EditorEx editor = super.createEditor();
@@ -80,7 +81,8 @@ class MultilinePopupBuilder {
     panel.add(myTextField, BorderLayout.CENTER);
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField)
       .setCancelOnClickOutside(true)
-      .setAdText(KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()) + " to finish")
+      .setAdText(
+        COMPLETION_ADVERTISEMENT + ", use " + KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()) + " to finish")
       .setRequestFocus(true)
       .setResizable(true)
       .setMayBeParent(true);
@@ -106,26 +108,29 @@ class MultilinePopupBuilder {
     });
   }
 
-  private static class MyCompletionProvider extends ValuesCompletionProviderDumbAware<String> {
-    private final boolean mySupportsNegativeValues;
+  interface CompletionPrefixProvider {
+    String getPrefix(@NotNull String text, int offset);
+  }
 
-    MyCompletionProvider(@NotNull Collection<String> values, boolean supportsNegativeValues) {
+  private static class MyCompletionProvider extends ValuesCompletionProviderDumbAware<String> {
+    @Nullable private final CompletionPrefixProvider myCompletionPrefixProvider;
+
+    MyCompletionProvider(@NotNull Collection<String> values, @Nullable CompletionPrefixProvider completionPrefixProvider) {
       super(new DefaultTextCompletionValueDescriptor.StringValueDescriptor(), Chars.asList(SEPARATORS), values, false);
-      mySupportsNegativeValues = supportsNegativeValues;
+      myCompletionPrefixProvider = completionPrefixProvider;
     }
 
     @Nullable
     @Override
     public String getPrefix(@NotNull String text, int offset) {
-      String prefix = super.getPrefix(text, offset);
-      if (mySupportsNegativeValues && prefix != null) return StringUtil.trimLeading(prefix, '-');
-      return prefix;
+      if (myCompletionPrefixProvider != null) return myCompletionPrefixProvider.getPrefix(text, offset);
+      else return super.getPrefix(text, offset);
     }
 
     @Nullable
     @Override
     public String getAdvertisement() {
-      return "Select one or more values separated with | or new lines";
+      return COMPLETION_ADVERTISEMENT;
     }
   }
 }

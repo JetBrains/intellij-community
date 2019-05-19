@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -20,12 +6,8 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,17 +15,11 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
-  static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
-    }
-  };
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
+    return JAVA_8_ANNOTATED;
   }
 
   @Override
@@ -61,8 +37,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
   public void testGenericParameterNullity() { doTestWithCustomAnnotations(); }
   public void testMethodReferenceConstantValue() { doTestWithCustomAnnotations(); }
+  public void testLambdaAutoCloseable() { doTest(); }
 
   public void testOptionalOfNullable() { doTest(); }
+  public void testPrimitiveOptional() { doTest(); }
   public void testOptionalOrElse() { doTest(); }
   public void testOptionalIsPresent() {
     myFixture.addClass("package org.junit;" +
@@ -197,6 +175,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testStreamCollectorInlining() { doTest(); }
   public void testStreamComparatorInlining() { doTest(); }
   public void testStreamKnownSource() { doTest(); }
+  public void testStreamTypeAnnoInlining() {
+    setupTypeUseAnnotations("foo", myFixture);
+    doTest();
+  }
   
   public void testMapGetWithNotNullKeys() { doTestWithCustomAnnotations(); }
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }
@@ -214,11 +196,11 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
 
   public void testMutabilityJdk() { doTest(); }
-  public void testMutabilityInferred() { doTest(); }
 
   public void testPrimitiveGetters() { doTest(); }
   public void testUnknownOnStack() { doTest(); }
   public void testMapUpdateInlining() { doTestWithCustomAnnotations(); }
+  public void testHashMapImplementation() { doTest(); }
 
   public void testOptionalTooComplex() { doTest(); }
 
@@ -229,9 +211,38 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testForeachCollectionElement() { doTest(); }
   public void testContractReturnValues() { doTest(); }
   public void testTryFinallySimple() { doTest(); }
-  
+  public void testAssertAll() {
+    myFixture.addClass("package org.junit.jupiter.api;\n" +
+                       "\n" +
+                       "import org.junit.jupiter.api.function.Executable;\n" +
+                       "\n" +
+                       "public class Assertions {\n" +
+                       "  public static void assertAll(String s, Executable... e) {}\n" +
+                       "  public static void assertAll(Executable... e) {}\n" +
+                       "  public static void assertNotNull(Object o) {}\n" +
+                       "  public static void assertTrue(boolean b) {}\n" +
+                       "}");
+    myFixture.addClass("package org.junit.jupiter.api.function;public interface Executable { void execute() throws Throwable;}\n");
+    doTest();
+  }
+
   public void testConflictsInInferredTypes() { 
     setupAmbiguousAnnotations("foo", myFixture);
     doTest();
   }
+  public void testObjectsEquals() { doTest(); }
+  public void testManyObjectEquals() { doTest(); }
+  public void testLambdaAfterNullCheck() { doTest(); }
+  public void testFlatMapSideEffect() { doTest(); }
+  public void testOptionalValueTracking() { doTest(); }
+  public void testClearZeroesSize() { doTest(); }
+  public void testLambdaInlineReassignReturnWithDeeperEquality() { doTest(); }
+
+  public void testReturningNonNullFromMethodWithNullableArrayInReturnType() {
+    setupAmbiguousAnnotations("mixed", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
+    NullableNotNullManager.getInstance(getProject()).setNullables("mixed.Nullable", "typeUse.Nullable");
+    doTest();
+  }
+
 }

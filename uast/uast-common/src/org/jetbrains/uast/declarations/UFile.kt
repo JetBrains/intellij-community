@@ -15,6 +15,7 @@
  */
 package org.jetbrains.uast
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
@@ -29,6 +30,11 @@ interface UFile : UElement, UAnnotated {
    * Returns the original [PsiFile].
    */
   override val psi: PsiFile
+
+  @JvmDefault
+  @Suppress("DEPRECATION")
+  override val sourcePsi: PsiFile
+    get() = psi
 
   /**
    * Returns the Java package name of this file.

@@ -2,11 +2,14 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
+    <content url="file://$MODULE_DIR$/compatibilityResources">
+      <sourceFolder url="file://$MODULE_DIR$/compatibilityResources" type="java-resource" />
+    </content>
     <content url="file://$MODULE_DIR$/resources">
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>
     <content url="file://$MODULE_DIR$/src">
-          <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -19,7 +22,9 @@
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
     <orderEntry type="library" name="Kryo" level="project" />
+    <orderEntry type="library" name="Objenesis" level="project" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
   </component>
 </module>

@@ -58,6 +58,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     super(XmlElementType.XML_TEXT);
   }
 
+  @Override
   public String toString() {
     return "XmlText";
   }

@@ -14,7 +14,7 @@ public class Main {
   }
 
   public static long testCounting(List<String> strings) {
-    return strings.stream().filter(s -> !s.isEmpty()).collect(Collectors.counting());
+    return strings.stream().filter(s -> !s.isEmpty()).collect((Collectors.counting()));
   }
 
   public static Optional<String> testMaxBy(List<String> strings) {

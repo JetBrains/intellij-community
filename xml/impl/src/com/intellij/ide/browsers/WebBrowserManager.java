@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,12 +25,13 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   // default standard browser ID must be constant across all IDE versions on all machines for all users
   private static final UUID PREDEFINED_CHROME_ID = UUID.fromString("98CA6316-2F89-46D9-A9E5-FA9E2B0625B3");
-  // public, but only internal use
+  @ApiStatus.Internal
   public static final UUID PREDEFINED_FIREFOX_ID = UUID.fromString("A7BB68E0-33C0-4D6F-A81A-AAC1FDB870C8");
   private static final UUID PREDEFINED_SAFARI_ID = UUID.fromString("E5120D43-2C3F-47EF-9F26-65E539E05186");
   private static final UUID PREDEFINED_OPERA_ID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776");
   private static final UUID PREDEFINED_YANDEX_ID = UUID.fromString("B1B2EC2C-20BD-4EE2-89C4-616DB004BCD4");
   private static final UUID PREDEFINED_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
+  private static final UUID PREDEFINED_EDGE_ID = UUID.fromString("B2A9DCA7-9D0B-4E1E-98A8-AFB19C1328D2");
 
   private static final UUID[] PREDEFINED_BROWSER_IDS = new UUID[]{
     PREDEFINED_CHROME_ID,
@@ -37,8 +39,11 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     PREDEFINED_SAFARI_ID,
     PREDEFINED_OPERA_ID,
     PREDEFINED_YANDEX_ID,
-    PREDEFINED_EXPLORER_ID
+    PREDEFINED_EXPLORER_ID,
+    PREDEFINED_EDGE_ID
   };
+
+  private static final String EDGE_COMMAND = "microsoft-edge";
 
   private static List<ConfigurableWebBrowser> getPredefinedBrowsers() {
     return Arrays.asList(
@@ -47,7 +52,8 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
       new ConfigurableWebBrowser(PREDEFINED_SAFARI_ID, BrowserFamily.SAFARI),
       new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.OPERA),
       new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex", SystemInfo.isWindows ? "browser" : (SystemInfo.isMac ? "Yandex" : "yandex"), false, BrowserFamily.CHROME.createBrowserSpecificSettings()),
-      new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER)
+      new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER),
+      new ConfigurableWebBrowser(PREDEFINED_EDGE_ID, BrowserFamily.EXPLORER, "Edge", SystemInfo.isWindows ? EDGE_COMMAND : null, true, null)
     );
   }
 
@@ -69,6 +75,13 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   public static boolean isDartium(@NotNull WebBrowser browser) {
     return browser.getFamily().equals(BrowserFamily.CHROME) && checkNameAndPath("Dartium", browser);
+  }
+
+  public static boolean isEdge(@NotNull WebBrowser browser) {
+    return browser.getFamily() == BrowserFamily.EXPLORER &&
+           (browser.getId().equals(PREDEFINED_EDGE_ID) ||
+            checkNameAndPath(EDGE_COMMAND, browser) ||
+            checkNameAndPath("MicrosoftEdge", browser));
   }
 
   static boolean checkNameAndPath(@NotNull String what, @NotNull WebBrowser browser) {
@@ -102,7 +115,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   public Element getState() {
     Element state = new Element("state");
     if (defaultBrowserPolicy != DefaultBrowserPolicy.SYSTEM) {
-      state.setAttribute("default", defaultBrowserPolicy.name().toLowerCase(Locale.ENGLISH));
+      state.setAttribute("default", StringUtil.toLowerCase(defaultBrowserPolicy.name()));
     }
     if (!myShowBrowserHover) {
       state.setAttribute("showHover", "false");
@@ -205,7 +218,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     String defaultValue = element.getAttributeValue("default");
     if (!StringUtil.isEmpty(defaultValue)) {
       try {
-        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(defaultValue.toUpperCase(Locale.ENGLISH));
+        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(StringUtil.toUpperCase(defaultValue));
       }
       catch (IllegalArgumentException e) {
         LOG.warn(e);
@@ -293,12 +306,12 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   }
 
   @NotNull
-  public List<WebBrowser> getBrowsers(@NotNull Condition<WebBrowser> condition) {
+  public List<WebBrowser> getBrowsers(@NotNull Condition<? super WebBrowser> condition) {
     return getBrowsers(condition, true);
   }
 
   @NotNull
-  public List<WebBrowser> getBrowsers(@NotNull Condition<WebBrowser> condition, boolean onlyActive) {
+  public List<WebBrowser> getBrowsers(@NotNull Condition<? super WebBrowser> condition, boolean onlyActive) {
     List<WebBrowser> result = new SmartList<>();
     for (ConfigurableWebBrowser browser : browsers) {
       if ((!onlyActive || browser.isActive()) && condition.value(browser)) {

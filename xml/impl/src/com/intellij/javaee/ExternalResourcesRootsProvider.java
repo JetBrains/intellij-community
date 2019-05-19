@@ -16,10 +16,13 @@
 package com.intellij.javaee;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.util.CachedValueImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexableSetContributor;
 import gnu.trove.THashSet;
@@ -32,40 +35,30 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class ExternalResourcesRootsProvider extends IndexableSetContributor {
-  private final NotNullLazyValue<Set<String>> myStandardResources = new NotNullLazyValue<Set<String>>() {
-    @NotNull
-    @Override
-    protected Set<String> compute() {
-      ExternalResourceManagerExImpl manager = (ExternalResourceManagerExImpl)ExternalResourceManager.getInstance();
-      Set<ExternalResourceManagerExImpl.Resource> dirs = new THashSet<>();
-      Set<String> set = new THashSet<>();
-      for (Map<String, ExternalResourceManagerExImpl.Resource> map : manager.getStandardResources()) {
-        for (ExternalResourceManagerExImpl.Resource resource : map.values()) {
-          ExternalResourceManagerExImpl.Resource dir = new ExternalResourceManagerExImpl.Resource(
-            resource.directoryName(), resource);
+  private final CachedValue<Set<VirtualFile>> myStandardResources = new CachedValueImpl<>(() -> {
+    ExternalResourceManagerExImpl manager = (ExternalResourceManagerExImpl)ExternalResourceManager.getInstance();
+    Set<ExternalResourceManagerExImpl.Resource> dirs = new THashSet<>();
+    Set<VirtualFile> set = new THashSet<>();
+    for (Map<String, ExternalResourceManagerExImpl.Resource> map : manager.getStandardResources()) {
+      for (ExternalResourceManagerExImpl.Resource resource : map.values()) {
+        ExternalResourceManagerExImpl.Resource dir = new ExternalResourceManagerExImpl.Resource(
+          resource.directoryName(), resource);
 
-          if (dirs.add(dir)) {
-            String url = resource.getResourceUrl();
-            if (url != null) {
-              set.add(url.substring(0, url.lastIndexOf('/') + 1));
-            }
+        if (dirs.add(dir)) {
+          String url = resource.getResourceUrl();
+          if (url != null) {
+            ContainerUtil.addIfNotNull(set, VfsUtilCore.findRelativeFile(url.substring(0, url.lastIndexOf('/') + 1), null));
           }
         }
       }
-      return set;
     }
-  };
+    return CachedValueProvider.Result.create(set, VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
+  });
 
   @NotNull
   @Override
   public Set<VirtualFile> getAdditionalRootsToIndex() {
-    Set<VirtualFile> roots = new THashSet<>();
-    for (String url : myStandardResources.getValue()) {
-      VirtualFile file = VfsUtilCore.findRelativeFile(url, null);
-      if (file != null) {
-        roots.add(file);
-      }
-    }
+    Set<VirtualFile> roots = new THashSet<>(myStandardResources.getValue());
 
     String path = FetchExtResourceAction.getExternalResourcesPath();
     VirtualFile extResources = LocalFileSystem.getInstance().findFileByPath(path);

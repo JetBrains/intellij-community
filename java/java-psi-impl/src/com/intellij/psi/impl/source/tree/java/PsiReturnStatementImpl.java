@@ -89,6 +89,7 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
     }
   }
 
+  @Override
   public String toString() {
     return "PsiReturnStatement";
   }

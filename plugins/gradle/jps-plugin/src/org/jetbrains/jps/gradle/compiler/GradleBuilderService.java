@@ -27,7 +27,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class GradleBuilderService extends BuilderService {
   @NotNull

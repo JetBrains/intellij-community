@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -16,14 +16,18 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author mike
  */
 @SuppressWarnings("TestOnlyProblems")
 public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
   private final LightProjectDescriptor myProjectDescriptor;
-  private CodeStyleSettings myOldCodeStyleSettings;
   private SdkLeakTracker myOldSdks;
+  private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
+  private Project myProject;
+  private Module myModule;
 
   public LightIdeaTestFixtureImpl(@NotNull LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
@@ -34,11 +38,12 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     super.setUp();
 
     IdeaTestApplication application = LightPlatformTestCase.initApplication();
-    LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable());
+    Pair<Project, Module> setup = LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable());
+    myProject = setup.getFirst();
+    myModule = setup.getSecond();
     InjectedLanguageManagerImpl.pushInjectors(getProject());
 
-    myOldCodeStyleSettings = getCurrentCodeStyleSettings().clone();
-    myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
+    myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(this::getCurrentCodeStyleSettings);
 
     application.setDataProvider(new TestDataProvider(getProject()));
     myOldSdks = new SdkLeakTracker();
@@ -48,19 +53,24 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
   public void tearDown() {
     Project project = getProject();
     CodeStyle.dropTemporarySettings(project);
-    CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
-    myOldCodeStyleSettings = null;
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> {
-        if (oldCodeStyleSettings != null) {
-          UsefulTestCase.doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
+        if (myCodeStyleSettingsTracker != null) {
+          myCodeStyleSettingsTracker.checkForSettingsDamage();
         }
       })
+      .append(() -> {
+        PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
+      })
       .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
-      .append(() -> LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication()))
+      .append(() -> {
+        myProject = null;
+        myModule = null;
+        LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication());
+      })
       .append(() -> LightPlatformTestCase.checkEditorsReleased())
       .append(() -> {
         SdkLeakTracker oldSdks = myOldSdks;
@@ -76,7 +86,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
 
   @Override
   public Project getProject() {
-    return LightPlatformTestCase.getProject();
+    return myProject;
   }
 
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
@@ -86,6 +96,6 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
 
   @Override
   public Module getModule() {
-    return LightPlatformTestCase.getModule();
+    return myModule;
   }
 }

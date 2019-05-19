@@ -15,9 +15,9 @@
  */
 package com.siyeh.ipp.bool;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
@@ -33,10 +33,10 @@ public class DemorgansIntention extends MutablyNamedIntention {
     final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (tokenType.equals(JavaTokenType.ANDAND)) {
-      return IntentionPowerPackBundle.message("demorgans.intention.name1");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "&&", "||");
     }
     else {
-      return IntentionPowerPackBundle.message("demorgans.intention.name2");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "||", "&&");
     }
   }
 

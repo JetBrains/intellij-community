@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
+import com.intellij.openapi.ide.Sizeable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,13 +19,13 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 
-public class TextBlockTransferable implements Transferable {
-  private final Collection<TextBlockTransferableData> myExtraData;
+public class TextBlockTransferable implements Transferable, Sizeable {
+  private final Collection<? extends TextBlockTransferableData> myExtraData;
   private final RawText myRawText;
   private final String myText;
   private final DataFlavor[] myTransferDataFlavors;
 
-  public TextBlockTransferable(@NotNull String text, @NotNull Collection<TextBlockTransferableData> extraData, @Nullable RawText rawText) {
+  public TextBlockTransferable(@NotNull String text, @NotNull Collection<? extends TextBlockTransferableData> extraData, @Nullable RawText rawText) {
     myText = cleanFromNullsIfNeeded(text);
     myExtraData = extraData;
     myRawText = rawText;
@@ -45,6 +46,15 @@ public class TextBlockTransferable implements Transferable {
     }
     dataFlavors.sort(Comparator.comparingInt(value -> -value.priority));
     myTransferDataFlavors = ContainerUtil.map2Array(dataFlavors, DataFlavor.class, value -> value.flavor);
+  }
+
+  @Override
+  public int getSize() {
+    int size = myText.length();
+    if (myRawText != null && myRawText.rawText != myText) {
+      size += StringUtil.length(myRawText.rawText);
+    }
+    return size;
   }
 
   @NotNull
@@ -100,14 +110,14 @@ public class TextBlockTransferable implements Transferable {
 
   @NotNull
   public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input,
-                                             @NotNull Collection<TextBlockTransferableData> itemsToUpdate) {
+                                             @NotNull Collection<? extends TextBlockTransferableData> itemsToUpdate) {
     // converting line separators to spaces matches the behavior of Swing text components on paste
     return convertLineSeparators(input, editor.isOneLineMode() ? " " : "\n", itemsToUpdate);
   }
 
   public static String convertLineSeparators(String text,
                                              String newSeparator,
-                                             Collection<TextBlockTransferableData> itemsToUpdate) {
+                                             Collection<? extends TextBlockTransferableData> itemsToUpdate) {
     if (itemsToUpdate.size() > 0){
       int size = 0;
       for(TextBlockTransferableData data: itemsToUpdate) {

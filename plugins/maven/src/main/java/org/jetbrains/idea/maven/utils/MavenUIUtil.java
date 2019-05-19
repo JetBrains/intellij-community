@@ -15,12 +15,8 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.UIUtil;
 
@@ -37,20 +33,14 @@ import java.util.TreeSet;
 
 public class MavenUIUtil {
   public static void executeAction(final String actionId, final InputEvent e) {
-    final ActionManager actionManager = ActionManager.getInstance();
-    final AnAction action = actionManager.getAction(actionId);
-    if (action != null) {
-      final Presentation presentation = new Presentation();
-      final AnActionEvent event =
-        new AnActionEvent(e, DataManager.getInstance().getDataContext(e.getComponent()), "", presentation, actionManager, 0);
-      action.update(event);
-      if (presentation.isEnabled()) {
-        action.actionPerformed(event);
-      }
-    }
+    executeAction(actionId, "", e);
   }
 
-  public static <E> void setElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator) {
+  public static void executeAction(final String actionId, final String place, final InputEvent e) {
+    ExternalSystemActionUtil.executeAction(actionId, place, e);
+  }
+
+  public static <E> void setElements(ElementsChooser<E> chooser, Collection<? extends E> all, Collection<? extends E> selected, Comparator<? super E> comparator) {
     List<E> selection = chooser.getSelectedElements();
     chooser.clear();
     Collection<E> sorted = new TreeSet<>(comparator);
@@ -69,6 +59,7 @@ public class MavenUIUtil {
 
     final TreeCellRenderer baseRenderer = tree.getCellRenderer();
     tree.setCellRenderer(new TreeCellRenderer() {
+      @Override
       public Component getTreeCellRendererComponent(final JTree tree,
                                                     final Object value,
                                                     final boolean selected,
@@ -83,9 +74,8 @@ public class MavenUIUtil {
           return baseComponent;
         }
 
-        final Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
-
-        Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeTextBackground();
+        Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
+        Color background = UIUtil.getTreeBackground(selected, hasFocus);
 
         panel.add(baseComponent, BorderLayout.CENTER);
         panel.setBackground(background);
@@ -102,6 +92,7 @@ public class MavenUIUtil {
     });
 
     tree.addMouseListener(new MouseAdapter() {
+      @Override
       public void mousePressed(MouseEvent e) {
         int row = tree.getRowForLocation(e.getX(), e.getY());
         if (row >= 0) {
@@ -120,6 +111,7 @@ public class MavenUIUtil {
     });
 
     tree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
           TreePath[] treePaths = tree.getSelectionPaths();

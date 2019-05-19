@@ -120,7 +120,7 @@ public class WrapProcessor {
     return wrap == currentWrap || !wrap.isChildOf(currentWrap, currentBlock);
   }
 
-  public LeafBlockWrapper processWrap(LeafBlockWrapper currentBlock) {
+  LeafBlockWrapper processWrap(LeafBlockWrapper currentBlock) {
     final SpacingImpl spacing = currentBlock.getSpaceProperty();
     final WhiteSpace whiteSpace = currentBlock.getWhiteSpace();
 
@@ -195,12 +195,7 @@ public class WrapProcessor {
     return wrap != null && wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && isSuitableInTheCurrentPosition(wrap, currentBlock);
   }
 
-
-  public void reset() {
-    myWrapCandidate = null;
-  }
-  
-  public void onCurrentLineChanged() {
+  void onCurrentLineChanged() {
     myWrapCandidate = null;
   }
   

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.presentation;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,5 +32,6 @@ public abstract class PresentationProvider<T> {
   public Icon getIcon(T t) { return null; }
 
   @Nullable
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getTypeName(T t) { return null; }
 }

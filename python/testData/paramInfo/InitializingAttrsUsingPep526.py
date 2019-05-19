@@ -63,3 +63,11 @@ class E1:
     _x: int
 
 E1(<arg7>)
+
+
+@attr.dataclass
+class F1:
+    foo = "bar"  # <- has no type annotation, so doesn't count.
+    baz: str
+
+F1(<arg8>)

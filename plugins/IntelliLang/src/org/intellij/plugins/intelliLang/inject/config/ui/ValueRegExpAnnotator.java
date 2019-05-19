@@ -43,6 +43,7 @@ public class ValueRegExpAnnotator implements Annotator {
   public ValueRegExpAnnotator() {
   }
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof RegExpFile && psiElement.getCopyableUserData(KEY) == Boolean.TRUE) {
       final PsiElement pattern = psiElement.getFirstChild();

@@ -82,7 +82,7 @@ public class ReturnInstruction extends GoToInstruction {
 
   @Override
   public int getNext(int index, int no) {
-    if (offset == 0)
+    if (offset == 0) {
       switch (no) {
         case 0: return getProcBegin() - 5; // call normal
         case 1: return getProcBegin() - 3; // call return
@@ -91,13 +91,12 @@ public class ReturnInstruction extends GoToInstruction {
           LOG.assertTrue (false);
           return -1;
       }
-    else
-      switch (no) {
-        case 0: return offset; // call normal
-        default:
-          LOG.assertTrue (false);
-          return -1;
-      }
+    }
+    if (no == 0) {
+      return offset; // call normal
+    }
+    LOG.assertTrue(false);
+    return -1;
   }
 
   @Override

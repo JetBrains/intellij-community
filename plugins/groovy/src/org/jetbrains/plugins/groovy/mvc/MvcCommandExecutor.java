@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 6/19/2014
  */
 public abstract class MvcCommandExecutor {
   private static final ExtensionPointName<MvcCommandExecutor> EP_NAME =

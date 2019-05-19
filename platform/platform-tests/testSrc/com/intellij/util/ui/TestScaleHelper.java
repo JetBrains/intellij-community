@@ -6,10 +6,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.UserScaleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,12 +24,11 @@ import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
 
 /**
  * @author tav
  */
-@SuppressWarnings("JUnitTestCaseWithNoTests")
 public class TestScaleHelper {
   private static final String STANDALONE_PROP = "intellij.test.standalone";
 
@@ -34,17 +36,20 @@ public class TestScaleHelper {
   private static final Map<String, String> originalRegProps = new HashMap<>();
 
   private static float originalUserScale;
+  private static float originalSysScale;
   private static boolean originalJreHiDPIEnabled;
 
   @BeforeClass
   public static void setState() {
     originalUserScale = JBUI.scale(1f);
+    originalSysScale = JBUI.sysScale();
     originalJreHiDPIEnabled = UIUtil.isJreHiDPIEnabled();
   }
 
   @AfterClass
   public static void restoreState() {
     JBUI.setUserScaleFactor(originalUserScale);
+    JBUI.setSystemScaleFactor(originalSysScale);
     overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
     restoreRegistryProperties();
     restoreSystemProperties();
@@ -116,7 +121,6 @@ public class TestScaleHelper {
     };
   }
 
-  @SuppressWarnings("unused")
   public static void saveImage(BufferedImage image, String path) {
     try {
       javax.imageio.ImageIO.write(image, "png", new File(path));
@@ -126,14 +130,22 @@ public class TestScaleHelper {
   }
 
   public static BufferedImage loadImage(String path) {
+    return loadImage(path, ScaleContext.createIdentity());
+  }
+
+  public static BufferedImage loadImage(String path, ScaleContext ctx) {
     try {
       Image img = ImageLoader.loadFromUrl(
-        new File(path).toURI().toURL(), false, false, null, ScaleContext.createIdentity());
+        new File(path).toURI().toURL(), true, false, null, ctx);
       return ImageUtil.toBufferedImage(img);
     }
     catch (MalformedURLException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static String msg(UserScaleContext ctx) {
+    return "[JRE-HiDPI " + UIUtil.isJreHiDPIEnabled() + "], " + ctx.toString();
   }
 
   private static class MyGraphicsConfiguration extends GraphicsConfiguration {

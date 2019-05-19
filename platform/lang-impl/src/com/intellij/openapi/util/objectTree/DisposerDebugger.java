@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.util.objectTree;
 
@@ -15,14 +15,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.util.PlatformIcons;
@@ -51,22 +52,22 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.DisposerDebugger");
 
   private JComponent myComponent;
-  private JBTabsImpl myTreeTabs;
+  private JBTabs myTreeTabs;
 
   private void initUi() {
     myComponent = new JPanel();
 
-    myTreeTabs = new JBTabsImpl(null, null, this);
+    myTreeTabs = JBTabsFactory.createTabs(null, this);
 
     final Splitter splitter = new Splitter(true);
 
-    final JBTabsImpl bottom = new JBTabsImpl(null, null, this);
+    final JBTabs bottom = JBTabsFactory.createTabs(null, this);
     final AllocationPanel allocations = new AllocationPanel(myTreeTabs);
     bottom.addTab(new TabInfo(allocations).setText("Allocation")).setActions(allocations.getActions(), ActionPlaces.UNKNOWN);
 
 
-    splitter.setFirstComponent(myTreeTabs);
-    splitter.setSecondComponent(bottom);
+    splitter.setFirstComponent(myTreeTabs.getComponent());
+    splitter.setSecondComponent(bottom.getComponent());
 
     myComponent.setLayout(new BorderLayout());
     myComponent.add(splitter, BorderLayout.CENTER);
@@ -95,12 +96,12 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setIcon(AllIcons.Debugger.Watch);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myTree.clear();
     }
   }
@@ -182,26 +183,25 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     }
 
     private class CopyAllocationAction extends AnAction {
-      public CopyAllocationAction() {
+      CopyAllocationAction() {
         super("Copy", "Copy allocation to clipboard", PlatformIcons.COPY_ICON);
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myAllocation.getDocument().getLength() > 0);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         try {
-          CopyPasteManager.getInstance().setContents(new TextTransferable(myAllocation.getText()));
+          CopyPasteManager.getInstance().setContents(new TextTransferable(StringUtil.notNullize(myAllocation.getText())));
         }
         catch (HeadlessException e1) {
           LOG.error(e1);
         }
       }
     }
-
   }
 
   private static class DisposerTree extends JPanel implements Disposable, ObjectTreeListener, ElementFilter<DisposerNode> {
@@ -219,7 +219,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       tree.setRootVisible(false);
       tree.setShowsRootHandles(true);
       tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-      myTreeBuilder = new FilteringTreeBuilder(tree, DisposerTree.this, structure, AlphaComparator.INSTANCE) {
+      myTreeBuilder = new FilteringTreeBuilder(tree, this, structure, AlphaComparator.INSTANCE) {
         @Override
         public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
           return structure.getRootElement() == getOriginalNode(nodeDescriptor);
@@ -255,7 +255,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     }
 
     private void queueUpdate() {
-      UIUtil.invokeLaterIfNeeded(() -> myTreeBuilder.refilter());
+      UIUtil.invokeLaterIfNeeded(() -> myTreeBuilder.refilterAsync());
     }
 
     @Override
@@ -275,7 +275,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
     public void clear() {
       myModificationToFilter = Disposer.getTree().getModification();
-      myTreeBuilder.refilter();
+      myTreeBuilder.refilterAsync();
     }
   }
 
@@ -298,12 +298,13 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
   }
 
 
+  private static final ObjectNode<Disposable> ROOT = new ObjectNode<>(Disposer.getTree(), null, Disposer.newDisposable(), -1);
   private static class DisposerStructure extends AbstractTreeStructureBase {
     private final DisposerNode myRoot;
 
     private DisposerStructure(DisposerTree tree) {
       super(null);
-      myRoot = new DisposerNode(tree, null);
+      myRoot = new DisposerNode(tree, ROOT);
     }
 
     @Override
@@ -311,6 +312,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       return null;
     }
 
+    @NotNull
     @Override
     public Object getRootElement() {
       return myRoot;
@@ -329,7 +331,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
   private static class DisposerNode extends AbstractTreeNode<ObjectNode> {
     private final DisposerTree myTree;
 
-    private DisposerNode(DisposerTree tree, ObjectNode value) {
+    private DisposerNode(DisposerTree tree, @NotNull ObjectNode value) {
       super(null, value);
       myTree = tree;
     }
@@ -338,11 +340,11 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     @NotNull
     public Collection<? extends AbstractTreeNode> getChildren() {
       final ObjectNode value = getValue();
-      if (value != null) {
-        final Collection subnodes = value.getChildren();
-        final ArrayList<DisposerNode> children = new ArrayList<>(subnodes.size());
-        for (Object subnode : subnodes) {
-          children.add(new DisposerNode(myTree, (ObjectNode)subnode));
+      if (value != ROOT) {
+        Collection<ObjectNode> subnodes = value.getChildren();
+        List<DisposerNode> children = new ArrayList<>(subnodes.size());
+        for (ObjectNode subnode : subnodes) {
+          children.add(new DisposerNode(myTree, subnode));
         }
         return children;
       }
@@ -359,7 +361,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
     @Nullable
     public Throwable getAllocation() {
-      return getValue() != null ? getValue().getAllocation() : null;
+      return getValue() != null ? getValue().getTrace() : null;
     }
 
     @Override
@@ -368,7 +370,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       if (getValue() != null) {
         final Object object = getValue().getObject();
         final String classString = object.getClass().toString();

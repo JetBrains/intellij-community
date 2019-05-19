@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 
+@FunctionalInterface
 public interface Generator<T> {
   void generate(@NotNull Processor<T> processor);
 }

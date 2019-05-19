@@ -34,8 +34,7 @@ import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.Predicate;
+import com.intellij.util.containers.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -114,27 +113,37 @@ class RefCountHolder {
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile virtualFile = viewProvider.getVirtualFile();
-    boolean inLibrary = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
+    boolean inLibrary = fileIndex.isInLibrary(virtualFile);
 
-    boolean myDeadCodeEnabled = deadCodeInspection != null && isUnusedToolEnabled && deadCodeInspection.isGlobalEnabledInEditor();
-    Predicate<PsiElement> myIsEntryPointPredicate = (@NotNull PsiElement member) -> !myDeadCodeEnabled || deadCodeInspection.isEntryPoint(member);
+    boolean isDeadCodeEnabled = deadCodeInspection != null && isUnusedToolEnabled && deadCodeInspection.isGlobalEnabledInEditor();
+    if (isDeadCodeEnabled && !inLibrary) {
+      return new GlobalUsageHelperBase() {
+        final Map<PsiMember, Boolean> myEntryPointCache = FactoryMap.create((PsiMember member) -> {
+          if (isEntryPoint(member)) return true;
+          if (member instanceof PsiClass) {
+            return !JBTreeTraverser
+              .<PsiMember>from(m -> m instanceof PsiClass
+                                    ? JBIterable.from(PsiTreeUtil.getStubChildrenOfTypeAsList(m, PsiMember.class))
+                                    : JBIterable.empty())
+              .withRoot(member)
+              .traverse()
+              .skip(1)
+              .processEach(this::shouldCheckUsages);
+          }
+          return false;
+        });
 
-    return new GlobalUsageHelper() {
-      @Override
-      public boolean shouldCheckUsages(@NotNull PsiMember member) {
-        return !inLibrary && !myIsEntryPointPredicate.apply(member);
-      }
+        @Override
+        public boolean shouldCheckUsages(@NotNull PsiMember member) {
+          return !myEntryPointCache.get(member);
+        }
 
-      @Override
-      public boolean isCurrentFileAlreadyChecked() {
-        return true;
-      }
-
-      @Override
-      public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
-        return isReferenced(member);
-      }
-    };
+        private boolean isEntryPoint(@NotNull PsiElement element) {
+          return deadCodeInspection.isEntryPoint(element);
+        }
+      };
+    }
+    return new GlobalUsageHelperBase();
   }
 
   private void clear() {
@@ -161,6 +170,15 @@ class RefCountHolder {
     if (resolveScope instanceof PsiImportStatementBase) {
       registerImportStatement(ref, (PsiImportStatementBase)resolveScope);
     }
+    else if (refElement == null && ref instanceof PsiJavaReference) {
+      for (JavaResolveResult result : ((PsiJavaReference)ref).multiResolve(true)) {
+        resolveScope = result.getCurrentFileResolveScope();
+        if (resolveScope instanceof PsiImportStatementBase) {
+          registerImportStatement(ref, (PsiImportStatementBase)resolveScope);
+          break;
+        }
+      }
+    }
   }
 
   private void registerImportStatement(@NotNull PsiReference ref, @NotNull PsiImportStatementBase importStatement) {
@@ -172,8 +190,20 @@ class RefCountHolder {
   }
 
   private void registerLocalRef(@NotNull PsiReference ref, PsiElement refElement) {
-    if (refElement instanceof PsiMethod && PsiTreeUtil.isAncestor(refElement, ref.getElement(), true)) return; // filter self-recursive calls
-    if (refElement instanceof PsiClass && PsiTreeUtil.isAncestor(refElement, ref.getElement(), true)) return; // filter inner use of itself
+    PsiElement element = ref.getElement();
+    if (refElement instanceof PsiMethod && PsiTreeUtil.isAncestor(refElement, element, true)) return; // filter self-recursive calls
+    if (refElement instanceof PsiClass) {
+      if (PsiTreeUtil.isAncestor(refElement, element, true)) {
+        return; // filter inner use of itself
+      }
+      PsiImportStatementBase importStmt = PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class);
+      if (importStmt != null) {
+        PsiElement resolve = importStmt.resolve();
+        if (resolve != null && PsiTreeUtil.isAncestor(refElement, resolve, false)) {
+          return;//filter refs on inner members in imports
+        }
+      }
+    }
     synchronized (myLocalRefsMap) {
       myLocalRefsMap.putValue(refElement, ref);
     }
@@ -217,7 +247,7 @@ class RefCountHolder {
     return usedStatus == Boolean.TRUE;
   }
 
-  private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull Collection<PsiReference> array) {
+  private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull Collection<? extends PsiReference> array) {
     if (!(element instanceof PsiParameter)) return false;
     PsiParameter parameter = (PsiParameter)element;
     PsiElement scope = parameter.getDeclarationScope();
@@ -346,5 +376,22 @@ class RefCountHolder {
 
   private static void log(@NonNls @NotNull Object... info) {
     FileStatusMap.log(info);
+  }
+
+  private class GlobalUsageHelperBase extends GlobalUsageHelper {
+    @Override
+    public boolean shouldCheckUsages(@NotNull PsiMember member) {
+      return false;
+    }
+
+    @Override
+    public boolean isCurrentFileAlreadyChecked() {
+      return true;
+    }
+
+    @Override
+    public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
+      return isReferenced(member);
+    }
   }
 }

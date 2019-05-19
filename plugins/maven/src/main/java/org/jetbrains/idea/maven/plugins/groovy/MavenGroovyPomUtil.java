@@ -27,7 +27,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/1/2016
  */
 public class MavenGroovyPomUtil {
 

@@ -2,20 +2,19 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Enumeration;
-import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class ZipUtil {
@@ -26,20 +25,20 @@ public class ZipUtil {
   public interface FileContentProcessor {
     FileContentProcessor STANDARD = new FileContentProcessor() {
       @Override
-      public InputStream getContent(File file) throws IOException {
+      public InputStream getContent(@NotNull File file) throws IOException {
         return new FileInputStream(file);
       }
     };
 
-    InputStream getContent(File file) throws IOException;
+    InputStream getContent(@NotNull File file) throws IOException;
   }
 
   public static boolean addFileToZip(@NotNull ZipOutputStream zos,
                                      @NotNull File file,
                                      @NotNull String relativeName,
-                                     @Nullable Set<String> writtenItemRelativePaths,
+                                     @Nullable Set<? super String> writtenItemRelativePaths,
                                      @Nullable FileFilter fileFilter) throws IOException {
-    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD);
+    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD, file.isDirectory());
   }
 
   /*
@@ -48,14 +47,14 @@ public class ZipUtil {
   public static boolean addFileToZip(@NotNull ZipOutputStream zos,
                                      @NotNull File file,
                                      @NotNull String relativeName,
-                                     @Nullable Set<String> writtenItemRelativePaths,
+                                     @Nullable Set<? super String> writtenItemRelativePaths,
                                      @Nullable FileFilter fileFilter,
-                                     @NotNull FileContentProcessor contentProcessor) throws IOException {
+                                     @NotNull FileContentProcessor contentProcessor,
+                                     boolean isDir) throws IOException {
     while (!relativeName.isEmpty() && relativeName.charAt(0) == '/') {
       relativeName = relativeName.substring(1);
     }
 
-    boolean isDir = file.isDirectory();
     if (isDir && !StringUtil.endsWithChar(relativeName, '/')) {
       relativeName += "/";
     }
@@ -76,12 +75,8 @@ public class ZipUtil {
     }
     zos.putNextEntry(e);
     if (!isDir) {
-      InputStream is = contentProcessor.getContent(file);
-      try {
-        FileUtil.copy(is, zos);
-      }
-      finally {
-        is.close();
+      try (InputStream is = contentProcessor.getContent(file)) {
+        FileUtilRt.copy(is, zos);
       }
     }
     zos.closeEntry();
@@ -112,8 +107,9 @@ public class ZipUtil {
       return false;
     }
     if (!relativePath.isEmpty()) {
-      addFileToZip(outputStream, dir, relativePath, writtenItemRelativePaths, fileFilter);
+      addFileToZip(outputStream, dir, relativePath, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD, true);
     }
+
     File[] children = dir.listFiles();
     if (children != null) {
       for (File child : children) {
@@ -124,118 +120,42 @@ public class ZipUtil {
     return true;
   }
 
-  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filenameFilter) throws IOException {
-    extract(file, outputDir, filenameFilter, true);
+  /** @see Decompressor.Zip */
+  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
+    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir, filter)).extract(outputDir);
   }
 
-  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filenameFilter, boolean overwrite) throws IOException {
-    ZipFile zipFile = new ZipFile(file);
-    try {
-      extract(zipFile, outputDir, filenameFilter, overwrite);
-    }
-    finally {
-      zipFile.close();
-    }
+  /** @see Decompressor.Zip */
+  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter, boolean overwrite) throws IOException {
+    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir, filter)).overwrite(overwrite).extract(outputDir);
   }
 
-  public static void extract(@NotNull ZipFile zipFile,
-                             @NotNull File outputDir,
-                             @Nullable FilenameFilter filenameFilter) throws IOException {
-    extract(zipFile, outputDir, filenameFilter, true);
-  }
-
-  public static void extract(@NotNull ZipFile zipFile,
-                             @NotNull File outputDir,
-                             @Nullable FilenameFilter filenameFilter,
-                             boolean overwrite) throws IOException {
-    Enumeration entries = zipFile.entries();
-    while (entries.hasMoreElements()) {
-      ZipEntry entry = (ZipEntry)entries.nextElement();
-      File outputFile = newFileForEntry(outputDir, entry.getName());
-      if (filenameFilter == null || filenameFilter.accept(outputFile.getParentFile(), outputFile.getName())) {
-        createFileOrDirectory(outputFile, zipFile, entry, overwrite);
-      }
-    }
-  }
-
-  @NotNull
-  public static File newFileForEntry(@NotNull File outputDir, @NotNull String entryName) throws IOException {
-    // we check that name contains .. for performance reasons
-    if (entryName.contains("..") && ArrayUtil.contains("..", entryName.split("[/\\\\]"))) {
-      throw new IOException("Invalid entry name: " + entryName);
-    }
-    return new File(outputDir, entryName);
-  }
-
-  @NotNull
-  public static File extractEntry(@NotNull ZipFile zipFile, @NotNull ZipEntry entry, @NotNull File outputDir) throws IOException {
-    return extractEntry(zipFile, entry, outputDir, true);
-  }
-
-  @NotNull
-  public static File extractEntry(@NotNull ZipFile zipFile, @NotNull ZipEntry entry, @NotNull File outputDir, boolean overwrite) throws IOException {
-    File outputFile = newFileForEntry(outputDir, entry.getName());
-    createFileOrDirectory(outputFile, zipFile, entry, overwrite);
-    return outputFile;
-  }
-
-  /** @deprecated use {@link #extractEntry(ZipFile, ZipEntry, File, boolean)} (to be removed in IDEA 2019) */
-  public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean isOverwrite) throws IOException {
-    File outputFile = newFileForEntry(outputDir, entry.getName());
-    if (entry.isDirectory()) {
-      FileUtil.createDirectory(outputFile);
-    }
-    else {
-      try {
-        createFile(outputFile, inputStream, isOverwrite);
-      }
-      finally {
-        inputStream.close();
-      }
-    }
-  }
-
-  private static void createFileOrDirectory(File outputFile, ZipFile zipFile, ZipEntry entry, boolean overwrite) throws IOException {
-    if (entry.isDirectory()) {
-      FileUtil.createDirectory(outputFile);
-    }
-    else {
-      InputStream inputStream = zipFile.getInputStream(entry);
-      try {
-        createFile(outputFile, inputStream, overwrite);
-      }
-      finally {
-        inputStream.close();
-      }
-    }
-  }
-
-  private static void createFile(File outputFile, InputStream inputStream, boolean isOverwrite) throws IOException {
-    boolean exists = outputFile.exists();
-    if (exists && !isOverwrite) {
-      return;
+  private static class FileFilterAdapter implements Condition<String> {
+    private static FileFilterAdapter wrap(File outputDir, FilenameFilter filter) {
+      return filter == null ? null : new FileFilterAdapter(outputDir, filter);
     }
 
-    if (!exists) {
-      FileUtil.createParentDirs(outputFile);
+    private final File myOutputDir;
+    private final FilenameFilter myFilter;
+
+    private FileFilterAdapter(File outputDir, FilenameFilter filter) {
+      myOutputDir = outputDir;
+      myFilter = filter;
     }
 
-    FileOutputStream os = new FileOutputStream(outputFile);
-    try {
-      FileUtilRt.copy(inputStream, os);
-    }
-    finally {
-      os.close();
+    @Override
+    public boolean value(String entryName) {
+      File outputFile = new File(myOutputDir, entryName);
+      return myFilter.accept(outputFile.getParentFile(), outputFile.getName());
     }
   }
 
   @SuppressWarnings("unused")
   public static boolean isZipContainsFolder(File zip) throws IOException {
-    ZipFile zipFile = new ZipFile(zip);
-    try {
-      Enumeration en = zipFile.entries();
+    try (ZipFile zipFile = new ZipFile(zip)) {
+      Enumeration<? extends ZipEntry> en = zipFile.entries();
       while (en.hasMoreElements()) {
-        ZipEntry zipEntry = (ZipEntry)en.nextElement();
+        ZipEntry zipEntry = en.nextElement();
         // we do not necessarily get a separate entry for the subdirectory when the file
         // in the ZIP archive is placed in a subdirectory, so we need to check if the slash
         // is found anywhere in the path
@@ -245,91 +165,45 @@ public class ZipUtil {
       }
       return false;
     }
-    finally {
-      zipFile.close();
-    }
-  }
-
-  @SuppressWarnings("unused")
-  public static boolean isZipContainsEntry(File zip, String relativePath) throws IOException {
-    ZipFile zipFile = new ZipFile(zip);
-    try {
-      Enumeration en = zipFile.entries();
-      while (en.hasMoreElements()) {
-        ZipEntry zipEntry = (ZipEntry)en.nextElement();
-        if (relativePath.equals(zipEntry.getName())) {
-          return true;
-        }
-      }
-      return false;
-    }
-    finally {
-      zipFile.close();
-    }
-  }
-
-  /*
-   * Updates an existing archive (adds or replaces files specified in {@code relPathToFile} parameter).
-   */
-  public static void update(InputStream in, OutputStream out, Map<String, File> relPathToFile) throws IOException {
-    ZipInputStream zis = new ZipInputStream(in);
-    ZipOutputStream zos = new ZipOutputStream(out);
-
-    try {
-      // put the old entries first, replace if necessary
-      ZipEntry e;
-      while ((e = zis.getNextEntry()) != null) {
-        String name = e.getName();
-
-        if (!relPathToFile.containsKey(name)) { // copy the old stuff
-          // do our own compression
-          ZipEntry e2 = new ZipEntry(name);
-          e2.setMethod(e.getMethod());
-          e2.setTime(e.getTime());
-          e2.setComment(e.getComment());
-          e2.setExtra(e.getExtra());
-          if (e.getMethod() == ZipEntry.STORED) {
-            e2.setSize(e.getSize());
-            e2.setCrc(e.getCrc());
-          }
-          zos.putNextEntry(e2);
-          FileUtil.copy(zis, zos);
-        }
-        else { // replace with the new files
-          File file = relPathToFile.get(name);
-          //addFile(file, name, zos);
-          relPathToFile.remove(name);
-          addFileToZip(zos, file, name, null, null);
-        }
-      }
-
-      // add the remaining new files
-      for (String path : relPathToFile.keySet()) {
-        File file = relPathToFile.get(path);
-        addFileToZip(zos, file, path, null, null);
-      }
-    }
-    finally {
-      zis.close();
-      zos.close();
-    }
   }
 
   public static void compressFile(@NotNull File srcFile, @NotNull File zipFile) throws IOException {
-    InputStream is = new FileInputStream(srcFile);
-    try {
-      ZipOutputStream os = new ZipOutputStream(new FileOutputStream(zipFile));
-      try {
+    try (InputStream is = new FileInputStream(srcFile)) {
+      try (ZipOutputStream os = new ZipOutputStream(new FileOutputStream(zipFile))) {
         os.putNextEntry(new ZipEntry(srcFile.getName()));
         FileUtilRt.copy(is, os);
         os.closeEntry();
       }
-      finally {
-        os.close();
+    }
+  }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link Decompressor.Zip} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  public static void extract(@NotNull ZipFile zip, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
+    new Decompressor.Zip(new File(zip.getName())).filter(FileFilterAdapter.wrap(outputDir, filter)).extract(outputDir);
+  }
+
+  /** @deprecated use {@link Decompressor.Zip} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean overwrite) throws IOException {
+    File outputFile = Decompressor.entryFile(outputDir, entry.getName());
+    try {
+      if (entry.isDirectory()) {
+        FileUtil.createDirectory(outputFile);
+      }
+      else if (!outputFile.exists() || overwrite) {
+        FileUtil.createParentDirs(outputFile);
+        try (FileOutputStream os = new FileOutputStream(outputFile)) {
+          FileUtilRt.copy(inputStream, os);
+        }
       }
     }
     finally {
-      is.close();
+      inputStream.close();
     }
   }
+  //</editor-fold>
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -43,12 +29,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author anna
- * @since 25-May-2007
  */
 public abstract class TestConsoleProperties extends StoringPropertyContainer implements Disposable {
   public static final BooleanProperty SCROLL_TO_STACK_TRACE = new BooleanProperty("scrollToStackTrace", false);
@@ -73,7 +59,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   private GlobalSearchScope myScope;
   private boolean myPreservePresentableName = false;
 
-  protected final Map<AbstractProperty, List<TestFrameworkPropertyListener>> myListeners = ContainerUtil.newHashMap();
+  protected final Map<AbstractProperty, List<TestFrameworkPropertyListener>> myListeners = new HashMap<>();
 
   public TestConsoleProperties(@NotNull Storage storage, Project project, Executor executor) {
     super(storage);
@@ -105,11 +91,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
       return GlobalSearchScope.allScope(myProject);
     }
 
-    GlobalSearchScope scope = GlobalSearchScope.EMPTY_SCOPE;
-    for (Module each : modules) {
-      scope = scope.uniteWith(GlobalSearchScope.moduleRuntimeScope(each, true));
-    }
-    return scope;
+    GlobalSearchScope[] scopes =
+      ContainerUtil.map2Array(modules, GlobalSearchScope.class, module -> GlobalSearchScope.moduleRuntimeScope(module, true));
+    return GlobalSearchScope.union(scopes);
   }
 
   public boolean isPreservePresentableName() {
@@ -121,10 +105,8 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   public <T> void addListener(@NotNull AbstractProperty<T> property, @NotNull TestFrameworkPropertyListener<T> listener) {
-    List<TestFrameworkPropertyListener> listeners = myListeners.get(property);
-    if (listeners == null) {
-      myListeners.put(property, (listeners = ContainerUtil.newArrayList()));
-    }
+    List<TestFrameworkPropertyListener> listeners =
+      myListeners.computeIfAbsent(property, __ -> ContainerUtil.createLockFreeCopyOnWriteList());
     listeners.add(listener);
   }
 
@@ -157,8 +139,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   protected <T> void onPropertyChanged(@NotNull AbstractProperty<T> property, T value) {
     List<TestFrameworkPropertyListener> listeners = myListeners.get(property);
     if (listeners != null) {
-      for (Object o : listeners.toArray()) {
-        @SuppressWarnings("unchecked") TestFrameworkPropertyListener<T> listener = (TestFrameworkPropertyListener<T>)o;
+      for (TestFrameworkPropertyListener<T> listener : listeners) {
         listener.onChanged(value);
       }
     }
@@ -213,7 +194,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent, TestConsoleProperties target) { }
-  
+
   @Nullable
   protected AnAction createImportAction() {
     return null;
@@ -224,7 +205,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
     return new DumbAwareToggleBooleanProperty(text, null, null, target, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
   }
-  
+
   @NotNull
   protected ToggleBooleanProperty createHideSuccessfulConfig(TestConsoleProperties target) {
     String text = ExecutionBundle.message("junit.runing.info.hide.successful.config.action.name");
@@ -236,7 +217,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public int getSelectionMode() {
     return TreeSelectionModel.SINGLE_TREE_SELECTION;
   }
-  
+
   @NotNull
   public ExecutionTarget getExecutionTarget() {
     return DefaultExecutionTarget.INSTANCE;

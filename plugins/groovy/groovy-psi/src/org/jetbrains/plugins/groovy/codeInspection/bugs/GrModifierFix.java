@@ -51,12 +51,12 @@ public class GrModifierFix extends GroovyFix {
   private final String myModifier;
   private final String myText;
   private final boolean myDoSet;
-  private final Function<ProblemDescriptor, PsiModifierList> myModifierListProvider;
+  private final Function<? super ProblemDescriptor, ? extends PsiModifierList> myModifierListProvider;
 
   public GrModifierFix(@NotNull GrVariable member,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean doSet,
-                       @NotNull Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
+                       @NotNull Function<? super ProblemDescriptor, ? extends PsiModifierList> modifierListProvider) {
     this(initText(doSet, member.getName(), modifier), modifier, doSet, modifierListProvider);
   }
 
@@ -64,14 +64,14 @@ public class GrModifierFix extends GroovyFix {
                        @GrModifier.GrModifierConstant String modifier,
                        boolean showContainingClass,
                        boolean doSet,
-                       @NotNull Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
+                       @NotNull Function<? super ProblemDescriptor, ? extends PsiModifierList> modifierListProvider) {
     this(initText(doSet, getMemberName(member, showContainingClass), modifier), modifier, doSet, modifierListProvider);
   }
 
   public GrModifierFix(@NotNull String text,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean doSet,
-                       @NotNull Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
+                       @NotNull Function<? super ProblemDescriptor, ? extends PsiModifierList> modifierListProvider) {
     myText = text;
     myModifier = modifier;
     myModifierListProvider = modifierListProvider;

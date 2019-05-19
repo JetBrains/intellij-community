@@ -23,14 +23,14 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public abstract class DistinctRootsCollection<T> implements Collection<T> {
-  private final Collection<T> myCollection = new ArrayList<T>();
+  private final Collection<T> myCollection = new ArrayList<>();
 
   protected abstract boolean isAncestor(@NotNull T ancestor, @NotNull T t);
 
   public DistinctRootsCollection() {
   }
 
-  public DistinctRootsCollection(Collection<T> collection) {
+  public DistinctRootsCollection(Collection<? extends T> collection) {
     addAll(collection);
   }
 
@@ -73,7 +73,7 @@ public abstract class DistinctRootsCollection<T> implements Collection<T> {
 
   @Override
   public boolean add(T o) {
-    Collection<T> toRemove = new ArrayList<T>();
+    Collection<T> toRemove = new ArrayList<>();
     for (T existing : myCollection) {
       if (isAncestor(existing, o)) {
         return false;

@@ -70,7 +70,7 @@ public class FirefoxUtil {
   }
 
   @Nullable
-  public static FirefoxProfile findProfileByNameOrDefault(@Nullable String name, @NotNull List<FirefoxProfile> profiles) {
+  public static FirefoxProfile findProfileByNameOrDefault(@Nullable String name, @NotNull List<? extends FirefoxProfile> profiles) {
     for (FirefoxProfile profile : profiles) {
       if (profile.getName().equals(name)) {
         return profile;
@@ -80,7 +80,7 @@ public class FirefoxUtil {
   }
 
   @Nullable
-  public static FirefoxProfile getDefaultProfile(List<FirefoxProfile> profiles) {
+  public static FirefoxProfile getDefaultProfile(List<? extends FirefoxProfile> profiles) {
     if (profiles.isEmpty()) {
       return null;
     }
@@ -99,10 +99,7 @@ public class FirefoxUtil {
       return Collections.emptyList();
     }
 
-    try {
-      BufferedReader reader;
-      reader = new BufferedReader(new FileReader(profilesFile));
-      try {
+      try (BufferedReader reader = new BufferedReader(new FileReader(profilesFile))) {
         final List<FirefoxProfile> profiles = new SmartList<>();
         boolean insideProfile = false;
         String currentName = null;
@@ -147,16 +144,12 @@ public class FirefoxUtil {
             }
             else //noinspection SpellCheckingInspection
               if (name.equalsIgnoreCase("isrelative") && value.equals("1")) {
-              isRelative = true;
-            }
+                isRelative = true;
+              }
           }
         }
         return profiles;
       }
-      finally {
-        reader.close();
-      }
-    }
     catch (IOException e) {
       LOG.info(e);
       return Collections.emptyList();

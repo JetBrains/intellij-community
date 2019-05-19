@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight;
 
@@ -28,7 +14,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,6 +28,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -87,35 +73,35 @@ public class AutoPopupController implements Disposable {
   }
 
   private void setupListeners() {
-    ActionManagerEx.getInstanceEx().addAnActionListener(new AnActionListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         cancelAllRequests();
       }
 
       @Override
-      public void beforeEditorTyping(char c, DataContext dataContext) {
+      public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
         cancelAllRequests();
       }
-    }, this);
+    });
 
     IdeEventQueue.getInstance().addActivityListener(this::cancelAllRequests, this);
   }
 
-  public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<PsiFile> condition){
+  public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<? super PsiFile> condition){
     autoPopupMemberLookup(editor, CompletionType.BASIC, condition);
   }
 
-  public void autoPopupMemberLookup(final Editor editor, CompletionType completionType, @Nullable final Condition<PsiFile> condition){
+  public void autoPopupMemberLookup(final Editor editor, CompletionType completionType, @Nullable final Condition<? super PsiFile> condition){
     scheduleAutoPopup(editor, completionType, condition);
   }
 
-  public void scheduleAutoPopup(final Editor editor, CompletionType completionType, @Nullable final Condition<PsiFile> condition) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
+  public void scheduleAutoPopup(@NotNull Editor editor, @NotNull CompletionType completionType, @Nullable final Condition<? super PsiFile> condition) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       return;
     }
 
-    boolean alwaysAutoPopup = editor != null && Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP));
+    boolean alwaysAutoPopup = Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP));
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && !alwaysAutoPopup) {
       return;
     }
@@ -127,26 +113,12 @@ public class AutoPopupController implements Disposable {
       return;
     }
 
-    final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
     if (currentCompletion != null) {
       currentCompletion.closeAndFinish(true);
     }
 
-    final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(null, editor);
-    CompletionServiceImpl.setCompletionPhase(phase);
-    phase.ignoreCurrentDocumentChange();
-
-    runTransactionWithEverythingCommitted(myProject, () -> {
-      if (phase.checkExpired()) return;
-
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-      if (file != null && condition != null && !condition.value(file)) {
-        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-        return;
-      }
-
-      CompletionAutoPopupHandler.invokeCompletion(completionType, true, myProject, editor, 0, false);
-    });
+    CompletionPhase.CommittingDocuments.scheduleAsyncCompletion(editor, completionType, condition, myProject, null);
   }
 
   public void scheduleAutoPopup(final Editor editor) {
@@ -185,8 +157,8 @@ public class AutoPopupController implements Disposable {
       }
 
       Runnable request = () -> {
-        if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() && 
-            (ApplicationManager.getApplication().isUnitTestMode() || editor.getComponent().isShowing())) {
+        if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() &&
+            (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getComponent().isShowing())) {
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
             PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -207,6 +179,10 @@ public class AutoPopupController implements Disposable {
   public void dispose() {
   }
 
+  /**
+   * @deprecated can be emulated with {@link AppUIExecutor}
+   */
+  @Deprecated
   public static void runTransactionWithEverythingCommitted(@NotNull final Project project, @NotNull final Runnable runnable) {
     AppUIExecutor.onUiThread().later().withDocumentsCommitted(project).inTransaction(project).execute(runnable);
   }

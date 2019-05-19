@@ -139,7 +139,6 @@ public class MergeChangeCollector {
           }
         }
       } catch (IOException e) {
-        //noinspection ThrowableInstanceNeverThrown
         throw new VcsException("Unable to read the file " + mergeHeadsFile + ": " + e.getMessage(), e);
       }
     } else {

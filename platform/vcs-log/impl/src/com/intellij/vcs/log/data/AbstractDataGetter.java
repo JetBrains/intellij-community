@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -94,7 +95,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   @Override
   @NotNull
-  public T getCommitData(@NotNull Integer hash, @NotNull Iterable<Integer> neighbourHashes) {
+  public T getCommitData(int hash, @NotNull Iterable<Integer> neighbourHashes) {
     assert EventQueue.isDispatchThread();
     T details = getFromCache(hash);
     if (details != null) {
@@ -109,22 +110,17 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   @Override
-  public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer, @Nullable ProgressIndicator indicator) {
-    assert EventQueue.isDispatchThread();
-    loadCommitsData(hashes, consumer, Consumer.EMPTY_CONSUMER, indicator);
-  }
-
-  public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer,
-                              @NotNull Consumer<Throwable> errorConsumer, @Nullable ProgressIndicator indicator) {
+  public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<? super List<T>> consumer,
+                              @NotNull Consumer<? super Throwable> errorConsumer, @Nullable ProgressIndicator indicator) {
     assert EventQueue.isDispatchThread();
     loadCommitsData(getCommitsMap(hashes), consumer, errorConsumer, indicator);
   }
 
   private void loadCommitsData(@NotNull TIntIntHashMap commits,
-                               @NotNull Consumer<List<T>> consumer,
-                               @NotNull Consumer<Throwable> errorConsumer,
+                               @NotNull Consumer<? super List<T>> consumer,
+                               @NotNull Consumer<? super Throwable> errorConsumer,
                                @Nullable ProgressIndicator indicator) {
-    final List<T> result = ContainerUtil.newArrayList();
+    final List<T> result = new ArrayList<>();
     final TIntHashSet toLoad = new TIntHashSet();
 
     long taskNumber = myCurrentTaskIndex++;
@@ -184,7 +180,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     }
   }
 
-  private void sortCommitsByRow(@NotNull List<T> result, @NotNull final TIntIntHashMap rowsForCommits) {
+  private void sortCommitsByRow(@NotNull List<? extends T> result, @NotNull final TIntIntHashMap rowsForCommits) {
     ContainerUtil.sort(result, (details1, details2) -> {
       int row1 = rowsForCommits.get(myStorage.getCommitIndex(details1.getId(), details1.getRoot()));
       int row2 = rowsForCommits.get(myStorage.getCommitIndex(details2.getId(), details2.getRoot()));
@@ -274,7 +270,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     for (Map.Entry<VirtualFile, Collection<String>> entry : rootsAndHashes.entrySet()) {
       VcsLogProvider logProvider = myLogProviders.get(entry.getKey());
       if (logProvider != null) {
-        List<? extends T> details = readDetails(logProvider, entry.getKey(), ContainerUtil.newArrayList(entry.getValue()));
+        List<? extends T> details = readDetails(logProvider, entry.getKey(), new ArrayList<>(entry.getValue()));
         for (T data : details) {
           int index = myStorage.getCommitIndex(data.getId(), data.getRoot());
           result.put(index, data);
@@ -294,6 +290,10 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       myCache.put(key, value);
       return true;
     }));
+  }
+
+  protected void clear() {
+    UIUtil.invokeLaterIfNeeded(() -> myCache.removeByCondition(t -> !(t instanceof LoadingDetails)));
   }
 
   @NotNull

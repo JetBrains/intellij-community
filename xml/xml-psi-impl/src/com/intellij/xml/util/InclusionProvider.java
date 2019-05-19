@@ -18,6 +18,7 @@ package com.intellij.xml.util;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -36,13 +37,13 @@ import java.util.regex.Matcher;
 class InclusionProvider implements CachedValueProvider<PsiElement[]> {
   private final XmlTag myXincludeTag;
 
-  public InclusionProvider(XmlTag xincludeTag) {
+  InclusionProvider(XmlTag xincludeTag) {
     myXincludeTag = xincludeTag;
   }
 
   @NotNull
   public static PsiElement[] getIncludedTags(XmlTag xincludeTag) {
-    if (XmlUtil.isStubBuilding()) return PsiElement.EMPTY_ARRAY;
+    if (!XmlTagImpl.shouldProcessIncludesNow()) return PsiElement.EMPTY_ARRAY;
     return CachedValuesManager.getCachedValue(xincludeTag, new InclusionProvider(xincludeTag));
   }
 

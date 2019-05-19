@@ -21,7 +21,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 11/12/12 12:34 PM
  */
 public interface ArrangementEditorAware {
 

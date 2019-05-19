@@ -15,12 +15,12 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.magicConstant.MagicConstantInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class MagicConstantQuickFixTest extends LightQuickFixTestCase {
+public class MagicConstantQuickFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/magicConstant";
@@ -32,5 +32,4 @@ public class MagicConstantQuickFixTest extends LightQuickFixTestCase {
     return new LocalInspectionTool[]{new MagicConstantInspection()};
   }
 
-  public void test() { doAllTests(); }
 }

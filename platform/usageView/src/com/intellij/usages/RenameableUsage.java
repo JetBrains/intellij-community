@@ -16,11 +16,12 @@
 package com.intellij.usages;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public interface RenameableUsage extends Usage{
-  void rename(String newName) throws IncorrectOperationException;
+  void rename(@NotNull String newName) throws IncorrectOperationException;
 
 }

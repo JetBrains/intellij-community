@@ -19,8 +19,6 @@ package com.intellij.find;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 public abstract class FindSettings{
 
   public static FindSettings getInstance() {
@@ -92,12 +90,6 @@ public abstract class FindSettings{
   public abstract void addStringToReplace(@NotNull String s);
 
   /**
-   * Use FindInProjectSettings.addDirectory
-   */
-  @Deprecated
-  public abstract void addDirectory(@NotNull String s);
-
-  /**
    * FindInProjectSettings.addDirectory
    */
   @NotNull
@@ -114,17 +106,9 @@ public abstract class FindSettings{
    * group box.
    *
    * @return the recent file masks list
-   * @since 5.0.2
    */
   @NotNull
   public abstract String[] getRecentFileMasks();
-
-  /**
-   * Use FindInProjectSettings.getRecentDirectories
-   */
-  @Deprecated
-  @NotNull
-  public abstract List<String> getRecentDirectories();
 
   public abstract void setWithSubdirectories(boolean b);
 

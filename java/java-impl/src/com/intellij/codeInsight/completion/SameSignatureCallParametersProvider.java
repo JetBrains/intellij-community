@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypesProvider;
@@ -34,10 +20,11 @@ import com.intellij.util.Consumer;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -64,12 +51,12 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     addSignatureItems(parameters, result);
   }
 
-  void addSignatureItems(@NotNull CompletionParameters parameters, @NotNull Consumer<LookupElement> result) {
+  void addSignatureItems(@NotNull CompletionParameters parameters, @NotNull Consumer<? super LookupElement> result) {
     final PsiCall methodCall = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiCall.class);
     assert methodCall != null;
     Set<Pair<PsiMethod, PsiSubstitutor>> candidates = getCallCandidates(methodCall);
@@ -103,7 +90,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     boolean makeFinalIfNeeded = PsiTreeUtil.isAncestor(takeParametersFrom, call, true);
     element = element.withInsertHandler(new InsertHandler<LookupElement>() {
       @Override
-      public void handleInsert(InsertionContext context, LookupElement item) {
+      public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
         context.commitDocument();
         int startOffset = context.getTailOffset();
         PsiExpressionList exprList =
@@ -127,7 +114,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
 
   private static Set<Pair<PsiMethod, PsiSubstitutor>> getCallCandidates(PsiCall expression) {
     PsiMethod chosenMethod = CompletionMemory.getChosenMethod(expression);
-    Set<Pair<PsiMethod, PsiSubstitutor>> candidates = ContainerUtil.newLinkedHashSet();
+    Set<Pair<PsiMethod, PsiSubstitutor>> candidates = new LinkedHashSet<>();
     JavaResolveResult[] results;
     if (expression instanceof PsiMethodCallExpression) {
       results = ((PsiMethodCallExpression)expression).getMethodExpression().multiResolve(false);
@@ -162,7 +149,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
       return place;
     }
 
-    Map<String, PsiType> requiredNames = ContainerUtil.newHashMap();
+    Map<String, PsiType> requiredNames = new HashMap<>();
     final PsiParameter[] parameters = place.getParameterList().getParameters();
     final PsiParameter[] callParams = invoked.getParameterList().getParameters();
     if (callParams.length > parameters.length) {

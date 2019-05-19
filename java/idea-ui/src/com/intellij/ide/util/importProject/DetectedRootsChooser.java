@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ColumnInfo;
@@ -36,8 +22,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -115,13 +101,8 @@ public class DetectedRootsChooser {
 
     @Override
     public TableCellEditor getEditor(DetectedRootData o) {
-      final ComboBox comboBox = new ComboBox(new CollectionComboBoxModel(Arrays.asList(o.getAllRoots()), o.getSelectedRoot()));
-      comboBox.setRenderer(new ListCellRendererWrapper<DetectedProjectRoot>() {
-        @Override
-        public void customize(JList list, DetectedProjectRoot value, int index, boolean selected, boolean hasFocus) {
-          setText(value.getRootTypeName());
-        }
-      });
+      ComboBox<DetectedProjectRoot> comboBox = new ComboBox<>(new CollectionComboBoxModel(Arrays.asList(o.getAllRoots()), o.getSelectedRoot()));
+      comboBox.setRenderer(SimpleListCellRenderer.create("", DetectedProjectRoot::getRootTypeName));
       return new DefaultCellEditor(comboBox);
     }
 
@@ -148,6 +129,7 @@ public class DetectedRootsChooser {
     myComponent = ScrollPaneFactory.createScrollPane(myTable);
     myTable.registerKeyboardAction(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           invertSelectedRows();
         }

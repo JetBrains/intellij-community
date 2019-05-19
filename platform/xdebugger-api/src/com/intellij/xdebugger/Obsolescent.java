@@ -10,6 +10,7 @@ public interface Obsolescent extends org.jetbrains.concurrency.Obsolescent {
   /**
    * @return {@code true} if result of computation won't be used so computation may be interrupted
    */
+  @Override
   default boolean isObsolete() {
     return false;
   }

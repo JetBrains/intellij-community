@@ -113,7 +113,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
   }
 
   @Nullable
-  private PsiReference checkReferenceRange(PsiElement element, Function<Integer, PsiReference> fn) {
+  private PsiReference checkReferenceRange(PsiElement element, Function<? super Integer, ? extends PsiReference> fn) {
     final int start = myReferenceRangeMarker.getStartOffset() - element.getTextRange().getStartOffset();
     final int end = myReferenceRangeMarker.getEndOffset() - element.getTextRange().getStartOffset();
     final PsiReference reference = fn.fun(start);

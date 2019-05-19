@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-/**
- * @author Alexey
- */
 package com.intellij.lang.properties.parsing;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.openapi.diagnostic.Logger;
 
+/**
+ * @author Alexey
+ */
 public class Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.parsing.Parsing");
 

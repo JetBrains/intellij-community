@@ -40,6 +40,7 @@ public class IDEARemoteTestNG extends TestNG {
     }
   }
 
+   @Override
    public void run() {
     try {
       initializeSuitesAndJarFile();
@@ -70,15 +71,16 @@ public class IDEARemoteTestNG extends TestNG {
 
         attachListeners(new IDEATestNGRemoteListener());
         super.run();
-        System.exit(0);
       }
       else {
         System.out.println("##teamcity[enteredTheMatrix]");
         System.err.println("Nothing found to run");
       }
+      System.exit(0);
     }
     catch(Throwable cause) {
       cause.printStackTrace(System.err);
+      System.exit(-1);
     }
   }
 
@@ -88,11 +90,11 @@ public class IDEARemoteTestNG extends TestNG {
     try {
       Class<?> configClass = Class.forName("org.testng.IDEATestNGConfigurationListener");
       Object configurationListener = configClass.getConstructor(new Class[] {IDEATestNGRemoteListener.class}).newInstance(listener);
-      addListener((Object)configurationListener);
+      addListener(configurationListener);
 
       Class<?> invokeClass = Class.forName("org.testng.IDEATestNGInvokedMethodListener");
       Object invokedMethodListener = invokeClass.getConstructor(new Class[]{IDEATestNGRemoteListener.class}).newInstance(listener);
-      addListener((Object)invokedMethodListener);
+      addListener(invokedMethodListener);
 
       //start with configuration started if invoke method listener was not added, otherwise with
       configClass.getMethod("setIgnoreStarted").invoke(configurationListener);

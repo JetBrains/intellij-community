@@ -13,6 +13,7 @@ import com.intellij.psi.JavaCodeFragmentFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_ALWAYS
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.IncorrectOperationException
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.NonNls
  */
 class JavaFormatterTest : AbstractJavaFormatterTest() {
   fun testPaymentManager() {
-    AbstractJavaFormatterTest.getSettings().KEEP_LINE_BREAKS = false
+    getSettings().KEEP_LINE_BREAKS = false
     doTest("paymentManager.java", "paymentManager_after.java")
   }
 
@@ -45,12 +46,8 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testLabel1() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-
-    settings.LABELED_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
-    settings.rootSettings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE = true
-    settings.rootSettings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_SIZE = 0
-
+    getIndentOptions().LABEL_INDENT_SIZE = 0
+    getIndentOptions().LABEL_INDENT_ABSOLUTE = true
     doTest("Label.java", "Label_after1.java")
   }
 
@@ -60,21 +57,21 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testNullMethodParameter() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
     doTest("NullMethodParameter.java", "NullMethodParameter_after.java")
   }
 
   fun test_DoNot_JoinLines_If_KeepLineBreaksIsOn() {
-    AbstractJavaFormatterTest.getSettings().KEEP_LINE_BREAKS = true
-    AbstractJavaFormatterTest.getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    getSettings().KEEP_LINE_BREAKS = true
+    getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
     doTextTest(
       "public class Test<Param> {\n" +
       "    @SuppressWarnings(\"unchecked\")\n" +
       "        void executeParallel(Param... params) {\n" +
       "    }\n" +
       "}",
+
       "public class Test<Param> {\n" +
       "    @SuppressWarnings(\"unchecked\")\n" +
       "    void executeParallel(Param... params) {\n" +
@@ -84,8 +81,8 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun test_DoNot_JoinLines_If_KeepLineBreaksIsOn_WithMultipleAnnotations() {
-    AbstractJavaFormatterTest.getSettings().KEEP_LINE_BREAKS = true
-    AbstractJavaFormatterTest.getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    getSettings().KEEP_LINE_BREAKS = true
+    getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
     doTextTest(
       "public class Test<Param> {\n" +
       "    @Override @SuppressWarnings(\"unchecked\")\n" +
@@ -113,14 +110,12 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testNew() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.rootSettings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8
+    getIndentOptions().CONTINUATION_INDENT_SIZE = 8
     doTest("New.java", "New_after.java")
   }
 
   fun testJavaDoc() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.BLANK_LINES_AROUND_FIELD = 1
+    getSettings().BLANK_LINES_AROUND_FIELD = 1
     doTest("JavaDoc.java", "JavaDoc_after.java")
   }
 
@@ -129,27 +124,24 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testAssert() {
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.HIGHEST
+    LanguageLevelProjectExtension.getInstance(getProject()).languageLevel = LanguageLevel.HIGHEST
     doTest()
   }
 
   fun testCastInsideElse() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    val indentOptions = settings.rootSettings.getIndentOptions(StdFileTypes.JAVA)
-    indentOptions.CONTINUATION_INDENT_SIZE = 2
-    indentOptions.INDENT_SIZE = 2
-    indentOptions.LABEL_INDENT_SIZE = 0
-    indentOptions.TAB_SIZE = 8
-    settings.SPACE_WITHIN_CAST_PARENTHESES = false
-    settings.SPACE_AFTER_TYPE_CAST = true
-    settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
+    getIndentOptions().CONTINUATION_INDENT_SIZE = 2
+    getIndentOptions().INDENT_SIZE = 2
+    getIndentOptions().LABEL_INDENT_SIZE = 0
+    getIndentOptions().TAB_SIZE = 8
+    getSettings().SPACE_WITHIN_CAST_PARENTHESES = false
+    getSettings().SPACE_AFTER_TYPE_CAST = true
+    getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
     doTest()
   }
 
   fun testAlignMultiLine() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
+    getSettings().ALIGN_MULTILINE_BINARY_OPERATION = true
     doTest()
   }
 
@@ -158,10 +150,11 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testSynchronizedBlock() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false
-    settings.SPACE_WITHIN_SYNCHRONIZED_PARENTHESES = false
-    settings.SPACE_BEFORE_SYNCHRONIZED_LBRACE = false
+    getSettings().apply {
+      SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false
+      SPACE_WITHIN_SYNCHRONIZED_PARENTHESES = false
+      SPACE_BEFORE_SYNCHRONIZED_LBRACE = false
+    }
     doTest()
   }
 
@@ -184,61 +177,64 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testIfElse() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE
-    settings.FOR_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
-    settings.WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
-    settings.DOWHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
+    getSettings().apply {
+      IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE
+      FOR_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
+      WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
+      DOWHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
 
-    settings.ELSE_ON_NEW_LINE = true
-    settings.SPECIAL_ELSE_IF_TREATMENT = false
-    settings.WHILE_ON_NEW_LINE = true
-    settings.CATCH_ON_NEW_LINE = true
-    settings.FINALLY_ON_NEW_LINE = true
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
-    settings.ALIGN_MULTILINE_ASSIGNMENT = true
-    settings.ALIGN_MULTILINE_EXTENDS_LIST = true
-    settings.ALIGN_MULTILINE_THROWS_LIST = true
-    settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
-    settings.ALIGN_MULTILINE_FOR = true
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
-    settings.ALIGN_MULTILINE_PARAMETERS = true
-    settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true
-    settings.WHILE_ON_NEW_LINE = true
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+      ELSE_ON_NEW_LINE = true
+      SPECIAL_ELSE_IF_TREATMENT = false
+      WHILE_ON_NEW_LINE = true
+      CATCH_ON_NEW_LINE = true
+      FINALLY_ON_NEW_LINE = true
+      ALIGN_MULTILINE_BINARY_OPERATION = true
+      ALIGN_MULTILINE_TERNARY_OPERATION = true
+      ALIGN_MULTILINE_ASSIGNMENT = true
+      ALIGN_MULTILINE_EXTENDS_LIST = true
+      ALIGN_MULTILINE_THROWS_LIST = true
+      ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
+      ALIGN_MULTILINE_FOR = true
+      ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+      ALIGN_MULTILINE_PARAMETERS = true
+      KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true
+      WHILE_ON_NEW_LINE = true
+      BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    }
     doTest()
   }
 
   fun testIfBraces() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    settings.KEEP_LINE_BREAKS = false
+    getSettings().apply {
+      IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+      BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+      KEEP_LINE_BREAKS = false
+    }
     doTest()
   }
 
   fun testTernaryExpression() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    getSettings().ALIGN_MULTILINE_TERNARY_OPERATION = true
     doTest()
 
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = false
+    getSettings().ALIGN_MULTILINE_TERNARY_OPERATION = false
     doTest("TernaryExpression.java", "TernaryExpression_DoNotAlign_after.java")
 
   }
 
   fun testAlignAssignment() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_ASSIGNMENT = true
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    getSettings().apply {
+      ALIGN_MULTILINE_ASSIGNMENT = true
+      ALIGN_MULTILINE_BINARY_OPERATION = true
+    }
     doTest()
   }
 
   fun testAlignFor() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    settings.ALIGN_MULTILINE_FOR = true
+    getSettings().apply {
+      ALIGN_MULTILINE_BINARY_OPERATION = true
+      ALIGN_MULTILINE_FOR = true
+    }
     doTest()
   }
 
@@ -251,38 +247,44 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testIf() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
     doTest()
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
     doTest("If.java", "If.java")
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    settings.KEEP_LINE_BREAKS = false
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    getSettings().KEEP_LINE_BREAKS = false
     doTest("If_after.java", "If.java")
 
   }
 
   fun test2() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
     doTest()
   }
 
   fun testBlocks() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.KEEP_LINE_BREAKS = false
+    getSettings().KEEP_LINE_BREAKS = false
     doTest()
   }
 
   @Throws(IncorrectOperationException::class)
   fun testBinaryOperation() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-
     @NonNls val text = "class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        + ccc + eee + ddd;\n" + "    }\n" + "}"
 
-
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    settings.ALIGN_MULTILINE_ASSIGNMENT = true
+    getSettings().apply {
+      ALIGN_MULTILINE_BINARY_OPERATION = true
+      ALIGN_MULTILINE_ASSIGNMENT = true
+    }
+    doTextTest(text, "class Foo {\n" +
+                     "    void foo() {\n" +
+                     "        xxx = aaa + bbb\n" +
+                     "              + ccc + eee + ddd;\n" +
+                     "    }\n" +
+                     "}")
+    getSettings().apply {
+      ALIGN_MULTILINE_BINARY_OPERATION = true
+      ALIGN_MULTILINE_ASSIGNMENT = false
+    }
     doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
@@ -290,18 +292,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "    }\n" +
                      "}")
 
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    settings.ALIGN_MULTILINE_ASSIGNMENT = false
-    doTextTest(text, "class Foo {\n" +
-                     "    void foo() {\n" +
-                     "        xxx = aaa + bbb\n" +
-                     "              + ccc + eee + ddd;\n" +
-                     "    }\n" +
-                     "}")
-
-
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = false
-    settings.ALIGN_MULTILINE_ASSIGNMENT = true
+    getSettings().apply {
+      ALIGN_MULTILINE_BINARY_OPERATION = false
+      ALIGN_MULTILINE_ASSIGNMENT = true
+    }
     doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
@@ -309,18 +303,17 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "    }\n" +
                      "}")
 
+    getSettings().apply {
+      ALIGN_MULTILINE_ASSIGNMENT = false
+      ALIGN_MULTILINE_BINARY_OPERATION = false
+    }
 
-    settings.ALIGN_MULTILINE_ASSIGNMENT = false
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = false
     doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "                + ccc + eee + ddd;\n" +
                      "    }\n" +
                      "}")
-
-    settings.ALIGN_MULTILINE_ASSIGNMENT = false
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = false
 
     doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
@@ -330,7 +323,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "}")
 
 
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    getSettings().ALIGN_MULTILINE_BINARY_OPERATION = true
 
     doTextTest("class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        - ccc + eee + ddd;\n" + "    }\n" + "}",
                "class Foo {\n" +
@@ -378,10 +371,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testStringBinaryOperation() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-
-    settings.ALIGN_MULTILINE_ASSIGNMENT = false
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = false
+    getSettings().apply {
+      ALIGN_MULTILINE_ASSIGNMENT = false
+      ALIGN_MULTILINE_BINARY_OPERATION = false
+    }
 
     doTextTest("class Foo {\n" + "    void foo () {\n" + "String s = \"abc\" +\n" + "\"def\";" + "    }\n" + "}",
 
@@ -404,7 +397,6 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testBraces() {
-    val settings = AbstractJavaFormatterTest.getSettings()
 
     @NonNls val text = "class Foo {\n" +
                        "void foo () {\n" +
@@ -414,8 +406,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                        "}\n" +
                        "}"
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    getSettings().apply {
+      BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+      METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    }
     doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        if (a) {\n" +
@@ -424,8 +418,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "    }\n" +
                      "}")
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    getSettings().apply {
+      BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+      METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    }
     doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "    {\n" +
@@ -436,9 +432,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "    }\n" +
                      "}")
 
-
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    getSettings().apply {
+      BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+      METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    }
     doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "        {\n" +
@@ -448,9 +445,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "            }\n" +
                      "        }\n" +
                      "}")
-
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    getSettings().apply {
+      METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+      BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    }
     doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "        {\n" +
@@ -460,9 +458,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "        }\n" +
                      "}")
 
-
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+    getSettings().apply {
+      METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+      BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+    }
     doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "        {\n" +
@@ -473,15 +472,14 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "        }\n" +
                      "}")
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
     doTextTest("class Foo {\n" + "    static{\n" + "foo();\n" + "}" + "}",
                "class Foo {\n" + "    static\n" + "    {\n" + "        foo();\n" + "    }\n" + "}")
 
   }
 
   fun testExtendsList() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_EXTENDS_LIST = true
+    getSettings().ALIGN_MULTILINE_EXTENDS_LIST = true
     doTextTest("class A extends B, \n" + "C {}", "class A extends B,\n" + "                C {\n}")
   }
 
@@ -535,8 +533,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testSpaceAroundField() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.BLANK_LINES_AROUND_FIELD = 1
+    getSettings().BLANK_LINES_AROUND_FIELD = 1
 
     doTextTest("class Foo {\n" +
                "    boolean a;\n" +
@@ -561,34 +558,52 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testArray() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = true
-    settings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true
+    getSettings().apply {
+      SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = true
+      SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true
+    }
     doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{0};\n" + " }\n" + "}",
                "class a {\n" + "    void f() {\n" + "        final int[] i = new int[] { 0 };\n" + "    }\n" + "}")
   }
 
   fun testEmptyArray() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = true
-    settings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true
-    settings.SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = false
+    getSettings().apply {
+      SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = true
+      SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true
+      SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = false
+    }
     doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{ };\n" + " }\n" + "}",
                "class a {\n" + "    void f() {\n" + "        final int[] i = new int[] {};\n" + "    }\n" + "}")
   }
 
   fun testEmptyArrayIsntWrapped() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true
-    settings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true
-    settings.SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = true
+    getSettings().apply {
+      ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true
+      ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true
+      SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = true
+    }
     doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{ };\n" + " }\n" + "}",
                "class a {\n" + "    void f() {\n" + "        final int[] i = new int[]{ };\n" + "    }\n" + "}")
   }
 
   fun testTwoJavaDocs() {
-    doTextTest("/**\n" + " * \n" + " */\n" + "        class Test {\n" + "    /**\n" + "     */\n" + "     public void foo();\n" + "}",
-               "/**\n" + " *\n" + " */\n" + "class Test {\n" + "    /**\n" + "     */\n" + "    public void foo();\n" + "}")
+    doTextTest("""/**
+ *
+ */
+        class Test {
+    /**
+     */
+     public void foo();
+}""",
+               """/**
+ *
+ */
+class Test {
+    /**
+     *
+     */
+    public void foo();
+}""")
   }
 
   fun testJavaDocLinksWithParameterNames() {
@@ -611,7 +626,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testIf3() {
-    AbstractJavaFormatterTest.getSettings().KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
+    getSettings().KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
     doTextTest("public abstract class A {\n" +
                "    abstract void f(boolean b);\n" +
                "\n" +
@@ -649,7 +664,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testDocComment2() {
-    AbstractJavaFormatterTest.getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
     doTextTest("class Test {\n" +
                "/**\n" +
                "*\n" +
@@ -695,8 +710,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testDoNotIndentCaseFromSwitch() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.INDENT_CASE_FROM_SWITCH = false
+    getSettings().INDENT_CASE_FROM_SWITCH = false
     doTextTest("class A {\n" + "void foo() {\n" + "switch(a){\n" + "case 1: \n" + "break;\n" + "}\n" + "}\n" + "}", "class A {\n" +
                                                                                                                     "    void foo() {\n" +
                                                                                                                     "        switch (a) {\n" +
@@ -708,8 +722,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testClass2() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.KEEP_FIRST_COLUMN_COMMENT = false
+    getSettings().KEEP_FIRST_COLUMN_COMMENT = false
     doTextTest("class A {\n" + "// comment before\n" + "protected Object a;//  comment after\n" + "}",
                "class A {\n" + "    // comment before\n" + "    protected Object a;//  comment after\n" + "}")
   }
@@ -720,18 +733,20 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testParametersAlignment() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
-    settings.RIGHT_MARGIN = 140
+    getSettings().apply {
+      ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+      RIGHT_MARGIN = 140
+    }
     doTest()
   }
 
   fun testConditionalExpression() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.SPACE_BEFORE_QUEST = true
-    settings.SPACE_AFTER_QUEST = false
-    settings.SPACE_BEFORE_COLON = true
-    settings.SPACE_AFTER_COLON = false
+    getSettings().apply {
+      SPACE_BEFORE_QUEST = true
+      SPACE_AFTER_QUEST = false
+      SPACE_BEFORE_COLON = true
+      SPACE_AFTER_COLON = false
+    }
 
     doTextTest("class Foo{\n" + "  void foo(){\n" + "  return name   !=   null   ?   1   :   2   ;" + "}\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        return name != null ?1 :2;\n" + "    }\n" + "}")
@@ -843,8 +858,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testLBraceAfterComment() {
-    val settings = AbstractJavaFormatterTest.getSettings()
-    settings.KEEP_LINE_BREAKS = false
+    getSettings().KEEP_LINE_BREAKS = false
     doTextTest("public class Foo {\n" +
                "    public int foo() {\n" +
                "        if (a) \n" +
@@ -1012,15 +1026,15 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testAssertStatementWrapping() {
-    AbstractJavaFormatterTest.getSettings().ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    AbstractJavaFormatterTest.getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
-    AbstractJavaFormatterTest.getSettings().RIGHT_MARGIN = 40
+    getSettings().ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    getSettings().BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    getSettings().RIGHT_MARGIN = 40
     val facade = LightIdeaTestCase.getJavaFacade()
     val effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.project).languageLevel
     try {
       LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = LanguageLevel.JDK_1_5
 
-      AbstractJavaFormatterTest.getSettings().ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false
+      getSettings().ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false
       doTextTest("class Foo {\n" +
                  "    void foo() {\n" +
                  "        assert methodWithVeryVeryLongName() : foo;\n" +
@@ -1035,7 +1049,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                         "    }\n" +
                         "}\n")
 
-      AbstractJavaFormatterTest.getSettings().ASSERT_STATEMENT_COLON_ON_NEXT_LINE = true
+      getSettings().ASSERT_STATEMENT_COLON_ON_NEXT_LINE = true
       doTextTest("class Foo {\n" +
                  "    void foo() {\n" +
                  "        assert methodWithVeryVeryLongName() : foo;\n" +
@@ -1201,14 +1215,14 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testFormatCodeFragment() {
-    val factory = JavaCodeFragmentFactory.getInstance(LightPlatformTestCase.getProject())
+    val factory = JavaCodeFragmentFactory.getInstance(getProject())
     val fragment = factory.createCodeBlockCodeFragment("a=1;int b=2;", null, true)
     val result = arrayOfNulls<PsiElement>(1)
 
-    CommandProcessor.getInstance().executeCommand(LightPlatformTestCase.getProject(), {
+    CommandProcessor.getInstance().executeCommand(getProject(), {
       WriteCommandAction.runWriteCommandAction(null) {
         try {
-          result[0] = CodeStyleManager.getInstance(LightPlatformTestCase.getProject()).reformat(fragment)
+          result[0] = CodeStyleManager.getInstance(getProject()).reformat(fragment)
         }
         catch (e: IncorrectOperationException) {
           TestCase.fail(e.localizedMessage)
@@ -1799,6 +1813,30 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
     }
   }
 
+  fun testWrapBetweenCommaAndSemicolon() {
+      doTextTest("""
+enum Foo {
+    VALUE_A,
+    VALUE_B,;
+
+    Foo() {
+        // whatever
+    }
+}
+            """.trimIndent(),
+                 """
+enum Foo {
+    VALUE_A,
+    VALUE_B,
+    ;
+
+    Foo() {
+        // whatever
+    }
+}
+                 """.trimIndent())
+  }
+
   @Throws(IncorrectOperationException::class)
   fun testRemoveBraceBeforeInstanceOf() {
     doTextTest("class ReformatInstanceOf {\n" +
@@ -1994,10 +2032,9 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testCommentAfterDeclaration() {
-    val codeStyleSettings = CodeStyle.getSettings(LightPlatformTestCase.getProject())
+    val codeStyleSettings = CodeStyle.getSettings(getProject())
     val javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE)
 
-    val oldMargin = codeStyleSettings.defaultRightMargin
     val oldWrap = javaSettings.ASSIGNMENT_WRAP
 
     try {
@@ -2010,7 +2047,6 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
 
     }
     finally {
-      codeStyleSettings.defaultRightMargin = oldMargin
       javaSettings.ASSIGNMENT_WRAP = oldWrap
     }
   }
@@ -3507,7 +3543,7 @@ class Test {
   }
 
   fun testBlankLinesBeforeClassEnd () {
-    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2;
+    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2
     doTextTest(
 """
 public class Test {
@@ -3552,7 +3588,7 @@ public class Test {
   }
 
   fun testBlankLinesBeforeClassEnd_afterField () {
-    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2;
+    getSettings().BLANK_LINES_BEFORE_CLASS_END = 2
     doTextTest(
 """
 public class Test {
@@ -3576,7 +3612,7 @@ public class Test {
 
 
   fun testBlankLinesBeforeClassEnd_afterInnerClass () {
-    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2;
+    getSettings().BLANK_LINES_BEFORE_CLASS_END = 2
     doTextTest(
 """
 public class Test {
@@ -3601,4 +3637,199 @@ public class Test {
 """
     )
   }
+
+  fun testSpacing() {
+    doTextTest(
+      "enum A{\n" +
+      "  B,\n" +
+      "  /** or like this */C();\n" +
+      "}",
+
+      "enum A {\n" +
+       "    B,\n" +
+       "    /**\n" +
+       "     * or like this\n" +
+       "     */\n" +
+       "    C();\n" +
+       "}"
+    )
+  }
+
+
+  fun testIdea192024() {
+    getSettings().apply{
+      RIGHT_MARGIN = 30
+    }
+    doTextTest(
+        """
+          public class Main {
+          public static void main(String[] args) {
+        int longCountVar = 0;
+              do {
+        System.out.println("Test");
+                  longCountVar ++;
+              } while(longCountVar <= 1000);
+          }
+      }""".trimIndent(),
+
+      """
+      public class Main {
+          public static void main(String[] args) {
+              int longCountVar = 0;
+              do {
+                  System.out.println("Test");
+                  longCountVar++;
+              } while (longCountVar <= 1000);
+          }
+      }""".trimIndent()
+    )
+  }
+
+  fun testIdeaIDEA203464() {
+    getSettings().apply{
+      ENUM_CONSTANTS_WRAP = WRAP_ALWAYS
+      KEEP_LINE_BREAKS = false
+    }
+    doTextTest(
+        """
+/**
+ * javadoc
+ */
+public enum EnumApplyChannel {
+
+    C;
+
+    public String method() {
+        return null;
+    }
+}""".trimIndent(),
+
+      """
+/**
+ * javadoc
+ */
+public enum EnumApplyChannel {
+
+    C;
+
+    public String method() {
+        return null;
+    }
+}""".trimIndent()
+    )
+  }
+
+
+  fun testIdeaIDEA198408() {
+    getSettings().apply{
+      ENUM_CONSTANTS_WRAP = WRAP_ALWAYS
+      KEEP_LINE_BREAKS = false
+    }
+    doTextTest(
+        """
+/** JavaDoc */
+public enum LevelCode {HIGH(3),
+   MEDIUM(2),
+   LOW(1);
+
+   private final int levelCode;
+
+   LevelCode(int levelCode) {
+       this.levelCode = levelCode;
+   }
+}""".trimIndent(),
+
+      """
+/**
+ * JavaDoc
+ */
+public enum LevelCode {
+    HIGH(3),
+    MEDIUM(2),
+    LOW(1);
+
+    private final int levelCode;
+
+    LevelCode(int levelCode) {
+        this.levelCode = levelCode;
+    }
+}""".trimIndent()
+    )
+  }
+
+
+  fun testIdea195707() {
+    getSettings().apply {
+      CASE_STATEMENT_ON_NEW_LINE = true
+      KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true
+    }
+
+    doTextTest(
+      """
+      public enum RotationDirection {
+        CLOCKWISE, COUNTERCLOCKWISE;
+
+        public RotationDirection inverse() {
+            switch(this) {
+                case CLOCKWISE: return COUNTERCLOCKWISE; case COUNTERCLOCKWISE: return CLOCKWISE;
+            }
+            throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+        }
+      }
+      """.trimIndent(),
+
+      """
+      public enum RotationDirection {
+          CLOCKWISE, COUNTERCLOCKWISE;
+
+          public RotationDirection inverse() {
+              switch (this) {
+                  case CLOCKWISE:
+                      return COUNTERCLOCKWISE;
+                  case COUNTERCLOCKWISE:
+                      return CLOCKWISE;
+              }
+              throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+          }
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea195707_1() {
+    getSettings().apply {
+      CASE_STATEMENT_ON_NEW_LINE = false
+      KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true
+    }
+
+    doTextTest(
+      """
+      public enum RotationDirection {
+        CLOCKWISE, COUNTERCLOCKWISE;
+
+        public RotationDirection inverse() {
+            switch(this) {
+                case CLOCKWISE: return COUNTERCLOCKWISE; case COUNTERCLOCKWISE: return CLOCKWISE;
+            }
+            throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+        }
+      }
+      """.trimIndent(),
+
+      """
+      public enum RotationDirection {
+          CLOCKWISE, COUNTERCLOCKWISE;
+
+          public RotationDirection inverse() {
+              switch (this) {
+                  case CLOCKWISE: return COUNTERCLOCKWISE;
+                  case COUNTERCLOCKWISE: return CLOCKWISE;
+              }
+              throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+          }
+      }
+      """.trimIndent()
+    )
+  }
+
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,26 +25,26 @@ import static git4idea.history.GitLogParser.GitLogOption.TREE;
  * This class collects records for one commit and sends them together for processing.
  * It also deals with problems with `-m` flag, when `git log` does not provide empty records when a commit is not different from one of the parents.
  */
-class GitLogRecordCollector implements Consumer<GitLogRecord> {
+abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer<R> {
   private static final Logger LOG = Logger.getInstance(GitLogRecordCollector.class);
 
   @NotNull protected final Project myProject;
   @NotNull protected final VirtualFile myRoot;
-  @NotNull protected final Consumer<List<GitLogRecord>> myConsumer;
+  @NotNull protected final Consumer<List<R>> myConsumer;
 
-  @NotNull private final MultiMap<String, GitLogRecord> myHashToRecord = MultiMap.createLinked();
+  @NotNull private final MultiMap<String, R> myHashToRecord = MultiMap.createLinked();
   @Nullable private String myLastHash = null;
 
   protected GitLogRecordCollector(@NotNull Project project,
                                   @NotNull VirtualFile root,
-                                  @NotNull Consumer<List<GitLogRecord>> consumer) {
+                                  @NotNull Consumer<List<R>> consumer) {
     myProject = project;
     myRoot = root;
     myConsumer = consumer;
   }
 
   @Override
-  public void consume(@NotNull GitLogRecord record) {
+  public void consume(@NotNull R record) {
     if (!record.getHash().equals(myLastHash)) {
       processCollectedRecords();
     }
@@ -63,8 +63,8 @@ class GitLogRecordCollector implements Consumer<GitLogRecord> {
 
   protected void processCollectedRecords() {
     for (String hash : myHashToRecord.keySet()) {
-      ArrayList<GitLogRecord> records = ContainerUtil.newArrayList(notNull(myHashToRecord.get(hash)));
-      GitLogRecord firstRecord = records.get(0);
+      ArrayList<R> records = new ArrayList<>(notNull(myHashToRecord.get(hash)));
+      R firstRecord = records.get(0);
       if (firstRecord.getParentsHashes().length != 0 && records.size() != firstRecord.getParentsHashes().length) {
         processIncompleteRecord(hash, records);
       }
@@ -75,7 +75,7 @@ class GitLogRecordCollector implements Consumer<GitLogRecord> {
     myHashToRecord.clear();
   }
 
-  protected void processIncompleteRecord(@NotNull String hash, @NotNull List<GitLogRecord> records) {
+  protected void processIncompleteRecord(@NotNull String hash, @NotNull List<R> records) {
     // there is a surprising (or not really surprising, depending how to look at it) problem with `-m` option
     // despite what is written in git-log documentation, it does not always output a record for each parent of a merge commit
     // if a merge commit has no changes with one of the parents, nothing is output for that parent
@@ -85,7 +85,7 @@ class GitLogRecordCollector implements Consumer<GitLogRecord> {
     // and there is no format option to display it
     // so the solution is to run another git log command and get tree hashes for all participating commits
     // tree hashes allow to determine, which parent of the commit in question is the same as the commit itself and create an empty record for it
-    MultiMap<String, GitLogRecord> incompleteRecords = MultiMap.create();
+    MultiMap<String, R> incompleteRecords = MultiMap.create();
     incompleteRecords.put(hash, records);
     try {
       processIncompleteRecords(incompleteRecords, myProject, myRoot, myConsumer);
@@ -95,14 +95,15 @@ class GitLogRecordCollector implements Consumer<GitLogRecord> {
     }
   }
 
-  public static void processIncompleteRecords(@NotNull MultiMap<String, GitLogRecord> incompleteRecords,
-                                              @NotNull Project project,
-                                              @NotNull VirtualFile root,
-                                              @NotNull Consumer<List<GitLogRecord>> consumer) throws VcsException {
-    List<GitLogRecord> firstRecords = ContainerUtil.map(incompleteRecords.entrySet(), e -> ContainerUtil.getFirstItem(e.getValue()));
+  public void processIncompleteRecords(@NotNull MultiMap<String, R> incompleteRecords,
+                                       @NotNull Project project,
+                                       @NotNull VirtualFile root,
+                                       @NotNull Consumer<? super List<R>> consumer)
+    throws VcsException {
+    List<R> firstRecords = ContainerUtil.map(incompleteRecords.entrySet(), e -> ContainerUtil.getFirstItem(e.getValue()));
     Map<String, String> hashToTreeMap = getHashToTreeMap(project, root, firstRecords);
     for (String hash : incompleteRecords.keySet()) {
-      ArrayList<GitLogRecord> records = ContainerUtil.newArrayList(notNull(incompleteRecords.get(hash)));
+      ArrayList<R> records = new ArrayList<>(notNull(incompleteRecords.get(hash)));
       fillWithEmptyRecords(records, hashToTreeMap);
       consumer.consume(records);
     }
@@ -112,19 +113,19 @@ class GitLogRecordCollector implements Consumer<GitLogRecord> {
    * This method calculates tree hashes for commits and their parents.
    */
   @NotNull
-  private static Map<String, String> getHashToTreeMap(@NotNull Project project,
-                                                      @NotNull VirtualFile root,
-                                                      @NotNull Collection<GitLogRecord> records)
+  private static <R extends GitLogRecord> Map<String, String> getHashToTreeMap(@NotNull Project project,
+                                                                               @NotNull VirtualFile root,
+                                                                               @NotNull Collection<R> records)
     throws VcsException {
-    Set<String> hashes = ContainerUtil.newHashSet();
+    Set<String> hashes = new HashSet<>();
 
-    for (GitLogRecord r : records) {
+    for (R r : records) {
       hashes.add(r.getHash());
       ContainerUtil.addAll(hashes, r.getParentsHashes());
     }
 
     GitLineHandler handler = GitLogUtil.createGitHandler(project, root);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, TREE);
+    GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, TREE);
     GitVcs vcs = GitVcs.getInstance(project);
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty());
@@ -142,8 +143,9 @@ class GitLogRecordCollector implements Consumer<GitLogRecord> {
   /*
    * This method places an empty record for parents that have same tree hash.
    */
-  private static void fillWithEmptyRecords(@NotNull List<GitLogRecord> records, @NotNull Map<String, String> hashToTreeMap) {
-    GitLogRecord firstRecord = records.get(0);
+  private void fillWithEmptyRecords(@NotNull List<R> records,
+                                    @NotNull Map<String, String> hashToTreeMap) {
+    R firstRecord = records.get(0);
     String commit = firstRecord.getHash();
     String[] parents = firstRecord.getParentsHashes();
 
@@ -157,8 +159,10 @@ class GitLogRecordCollector implements Consumer<GitLogRecord> {
       String parentTreeHash = hashToTreeMap.get(parent);
       LOG.assertTrue(parentTreeHash != null, "Could not get tree hash for commit " + parent);
       if (parentTreeHash.equals(commitTreeHash) && records.size() < parents.length) {
-        records.add(parentIndex, new GitLogRecord(firstRecord.getOptions(), ContainerUtil.emptyList(), firstRecord.isSupportsRawBody()));
+        records.add(parentIndex, createEmptyCopy(firstRecord));
       }
     }
   }
+
+  protected abstract R createEmptyCopy(@NotNull R record);
 }

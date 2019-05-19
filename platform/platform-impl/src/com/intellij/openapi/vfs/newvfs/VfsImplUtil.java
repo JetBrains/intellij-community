@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
@@ -15,14 +15,12 @@ import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -125,7 +123,7 @@ public class VfsImplUtil {
 
   @Nullable
   private static Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    String normalizedPath = normalize(vfs, path);
+    String normalizedPath = vfs.normalize(path);
     if (StringUtil.isEmptyOrSpaces(normalizedPath)) {
       return null;
     }
@@ -184,7 +182,7 @@ public class VfsImplUtil {
   @NotNull
   public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
                                                         @NotNull VirtualFile entryFile,
-                                                        @NotNull Function<String, T> producer) {
+                                                        @NotNull Function<? super String, ? extends T> producer) {
     String localPath = vfs.extractLocalPath(vfs.extractRootPath(entryFile.getPath()));
     checkSubscription();
 
@@ -199,7 +197,7 @@ public class VfsImplUtil {
         ourHandlers.put(localPath, record);
 
         forEachDirectoryComponent(localPath, containingDirectoryPath -> {
-          Set<String> handlers = ourDominatorsMap.computeIfAbsent(containingDirectoryPath, __ -> ContainerUtil.newTroveSet());
+          Set<String> handlers = ourDominatorsMap.computeIfAbsent(containingDirectoryPath, __ -> new THashSet<>());
           handlers.add(localPath);
         });
       }
@@ -211,7 +209,7 @@ public class VfsImplUtil {
     return handler;
   }
 
-  private static void forEachDirectoryComponent(String rootPath, Consumer<String> consumer) {
+  private static void forEachDirectoryComponent(String rootPath, Consumer<? super String> consumer) {
     int index = rootPath.lastIndexOf('/');
     while (index > 0) {
       String containingDirectoryPath = rootPath.substring(0, index);
@@ -256,7 +254,7 @@ public class VfsImplUtil {
             else {
               Collection<String> affectedPaths = ourDominatorsMap.get(path);
               if (affectedPaths != null) {
-                affectedPaths = ContainerUtil.newArrayList(affectedPaths);  // defensive copying; original may be updated on invalidation
+                affectedPaths = new ArrayList<>(affectedPaths);  // defensive copying; original may be updated on invalidation
                 for (String affectedPath : affectedPaths) {
                   state = invalidate(state, affectedPath);
                 }
@@ -296,7 +294,7 @@ public class VfsImplUtil {
     private void registerPathToRefresh(String path, ArchiveFileSystem vfs) {
       NewVirtualFile root = ManagingFS.getInstance().findRoot(vfs.composeRootPath(path), vfs);
       if (root != null) {
-        if (myRootsToRefresh == null) myRootsToRefresh = ContainerUtil.newHashSet();
+        if (myRootsToRefresh == null) myRootsToRefresh = new HashSet<>();
         myRootsToRefresh.add(root);
       }
     }

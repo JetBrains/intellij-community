@@ -37,6 +37,7 @@ public class HibernateResourceInspection extends ResourceInspection {
     return InspectionGadgetsBundle.message("hibernate.resource.opened.not.closed.display.name");
   }
 
+  @Override
   protected boolean isResourceCreation(PsiExpression expression) {
     if (!(expression instanceof PsiMethodCallExpression)) {
       return false;

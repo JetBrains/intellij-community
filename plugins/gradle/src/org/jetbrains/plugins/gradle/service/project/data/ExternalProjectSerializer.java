@@ -32,6 +32,7 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/15/2014
  */
 public class ExternalProjectSerializer {
   private static final Logger LOG = Logger.getInstance(ExternalProjectSerializer.class);
@@ -289,13 +289,13 @@ public class ExternalProjectSerializer {
   }
 
   private static File getPluginSystemDir(ProjectSystemId externalSystemId, String folder) {
-    return new File(PathManager.getSystemPath(), externalSystemId.getId().toLowerCase() + "/" + folder).getAbsoluteFile();
+    return new File(PathManager.getSystemPath(), StringUtil.toLowerCase(externalSystemId.getId()) + "/" + folder).getAbsoluteFile();
   }
 
   private static class FileSerializer extends Serializer<File> {
     private final Kryo myStdKryo;
 
-    public FileSerializer() {
+    FileSerializer() {
       myStdKryo = new Kryo();
       myStdKryo.register(File.class);
       myStdKryo.setInstantiatorStrategy(new StdInstantiatorStrategy());

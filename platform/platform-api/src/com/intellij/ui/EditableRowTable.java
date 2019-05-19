@@ -74,6 +74,7 @@ public class EditableRowTable{
 
     addButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           TableUtil.stopEditing(table);
           tableModel.addRow();
@@ -86,9 +87,7 @@ public class EditableRowTable{
           if (editorComponent != null) {
             final Rectangle bounds = editorComponent.getBounds();
             table.scrollRectToVisible(bounds);
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(editorComponent, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(editorComponent, true));
           }
         }
       }
@@ -96,6 +95,7 @@ public class EditableRowTable{
 
     removeButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           TableUtil.stopEditing(table);
           int index = table.getSelectedRow();
@@ -113,15 +113,14 @@ public class EditableRowTable{
           }
 
           table.getParent().repaint();
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
         }
       }
     );
 
     upButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           TableUtil.stopEditing(table);
           int index = table.getSelectedRow();
@@ -129,15 +128,14 @@ public class EditableRowTable{
             tableModel.exchangeRows(index, index - 1);
             table.setRowSelectionInterval(index - 1, index - 1);
           }
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
         }
       }
     );
 
     downButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           TableUtil.stopEditing(table);
           int index = table.getSelectedRow();
@@ -145,15 +143,14 @@ public class EditableRowTable{
             tableModel.exchangeRows(index, index + 1);
             table.setRowSelectionInterval(index + 1, index + 1);
           }
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
         }
       }
     );
 
     table.getSelectionModel().addListSelectionListener(
       new ListSelectionListener() {
+        @Override
         public void valueChanged(ListSelectionEvent e) {
           updateButtons(table, tableModel, addButton, removeButton, upButton, downButton);
         }
@@ -181,7 +178,7 @@ public class EditableRowTable{
         upButton.setEnabled(false);
         downButton.setEnabled(false);
       }
-      
+
       addButton.setEnabled(true);
     }
   }

@@ -85,6 +85,11 @@ public class LightFieldBuilder extends LightVariableBuilder<LightFieldBuilder> i
   }
 
   @Override
+  public PsiElement getParent() {
+    return getContainingClass();
+  }
+
+  @Override
   public boolean isEquivalentTo(PsiElement another) {
     if (!(another instanceof PsiField)) return false;
     if (!((PsiField)another).getName().equals(getName())) return false;

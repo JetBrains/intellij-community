@@ -2,31 +2,49 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
-import com.intellij.testGuiFramework.framework.GuiTestSuiteParam
+import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.io.Serializable
 
 @RunWith(GuiTestSuiteParam::class)
-class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) : KotlinGuiTestCase() {
+class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParameters) : KotlinGuiTestCase() {
 
   data class TestParameters(
     val projectName: String,
-    val kotlinKind: KotlinKind,
     val project: ProjectProperties,
-    val expectedFacet: FacetStructure) {
+    val gradleModuleGroup: NewProjectDialogModel.GradleGroupModules,
+    val expectedFacet: FacetStructure) : Serializable {
     override fun toString() = projectName
   }
 
+  @Before
+  fun beforeTest(){
+    screenshot("before")
+  }
+
+  @After
+  fun afterTest(){
+    screenshot("after")
+  }
 
   @Test
   fun createGradleWithKotlin() {
-    createGradleWith(
-      projectName = testParameters.projectName,
-      kotlinKind = testParameters.kotlinKind,
+    testGradleProjectWithKotlin(
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = testParameters.project,
-      expectedFacet = testParameters.expectedFacet)
+      expectedFacet = testParameters.expectedFacet,
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testParameters.projectName,
+        framework = testParameters.project.frameworkName,
+        useKotlinDsl = testParameters.project.isKotlinDsl,
+        groupModules = testParameters.gradleModuleGroup
+      )
+    )
   }
 
   companion object {
@@ -35,64 +53,19 @@ class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) :
     fun data(): Collection<TestParameters> {
       return listOf(
         TestParameters(
-          projectName = "gradle_with_jvm",
-          kotlinKind = KotlinKind.JVM,
-          project = kotlinLibs.getValue(KotlinKind.JVM).gradleGProject,
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
+          projectName = "gradle_with_jvm_qualified",
+          project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18),
+          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.QualifiedNames
         ),
         TestParameters(
-          projectName = "gradle_mpp_jvm",
-          kotlinKind = KotlinKind.JVM,
-          project = kotlinLibs.getValue(KotlinKind.JVM).gradleGMPProject,
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
-        ),
-        TestParameters(
-          projectName = "gradle_with_js",
-          kotlinKind = KotlinKind.JS,
-          project = kotlinLibs.getValue(KotlinKind.JS).gradleGProject,
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
-        ),
-        TestParameters(
-          projectName = "gradle_mpp_js",
-          kotlinKind = KotlinKind.JS,
-          project = kotlinLibs.getValue(KotlinKind.JS).gradleGMPProject,
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
-        ),
-        TestParameters(
-          projectName = "gradle_mpp_common",
-          kotlinKind = KotlinKind.Common,
-          project = kotlinLibs.getValue(KotlinKind.Common).gradleGMPProject,
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.Common)
+          projectName = "gradle_with_js_qualified",
+          project = kotlinProjects.getValue(Projects.GradleGProjectJs),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript),
+          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.QualifiedNames
         )
       )
     }
   }
 
-  private fun createGradleWith(
-    projectName: String,
-    kotlinKind: KotlinKind,
-    kotlinVersion: String,
-    project: ProjectProperties,
-    expectedFacet: FacetStructure) {
-    val groupName = "group_gradle"
-    val extraTimeOut = 4000L
-    createGradleProject(
-      projectPath = projectFolder,
-      group = groupName,
-      artifact = projectName,
-      gradleOptions = BuildGradleOptions().build(),
-      framework = project.frameworkName)
-    waitAMoment(extraTimeOut)
-    editBuildGradle(
-      kotlinVersion = kotlinVersion,
-      isKotlinDslUsed = false,
-      kotlinKind = kotlinKind
-    )
-    gradleReimport()
-    waitAMoment(extraTimeOut)
-
-    checkInProjectStructureGradleExplicitModuleGroups(
-      project, kotlinVersion, projectName, expectedFacet
-    )
-  }
 }

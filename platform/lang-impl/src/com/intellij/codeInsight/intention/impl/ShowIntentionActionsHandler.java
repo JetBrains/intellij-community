@@ -5,7 +5,10 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.IntentionsUI;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -26,6 +29,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -47,6 +51,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    invoke(project, editor, file, false);
+  }
+
+  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file, boolean showFeedbackOnEmptyMenu) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
@@ -62,7 +70,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     letAutoImportComplete(editor, file, codeAnalyzer);
 
-    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file);
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file, true);
     IntentionsUI.getInstance(project).hide();
 
     if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
@@ -74,11 +82,19 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return;
     }
 
-    showIntentionHint(project, editor, file, intentions);
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    Editor finalEditor = editor;
+    PsiFile finalFile = file;
+    if (!intentions.isEmpty()) {
+      editor.getScrollingModel().runActionOnScrollingFinished(() -> {
+        showIntentionHint(project, finalEditor, finalFile, intentions);
+      });
+    }
+    else if (showFeedbackOnEmptyMenu) {
+      HintManager.getInstance().showInformationHint(finalEditor, "No context actions available at this location");
+    }
   }
 
-  // added for override into Rider
-  @SuppressWarnings("WeakerAccess")
   protected void showIntentionHint(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     if (!intentions.isEmpty()) {
       CachedIntentions cachedIntentions = CachedIntentions.createAndUpdateActions(project, file, editor, intentions);
@@ -100,7 +116,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     int offset = editor.getCaretModel().getOffset();
     PsiElement psiElement = psiFile.findElementAt(offset);
-    boolean inProject = psiFile.getManager().isInProject(psiFile);
     try {
       Project project = psiFile.getProject();
       if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
@@ -116,7 +131,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       }
       
       if (action instanceof PsiElementBaseIntentionAction) {
-        if (!inProject || psiElement == null || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) return false;
+        PsiElementBaseIntentionAction psiAction = (PsiElementBaseIntentionAction)action;
+        if (psiElement == null || !psiAction.checkFile(psiFile) || !psiAction.isAvailable(project, editor, psiElement)) return false;
       }
       else if (!action.isAvailable(project, editor, psiFile)) {
         return false;
@@ -129,7 +145,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  public static Pair<PsiFile,Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile, @NotNull Editor hostEditor, @NotNull PairProcessor<PsiFile, Editor> predicate) {
+  public static Pair<PsiFile,Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile, @NotNull Editor hostEditor, @NotNull PairProcessor<? super PsiFile, ? super Editor> predicate) {
     Editor editorToApply = null;
     PsiFile fileToApply = null;
 
@@ -191,7 +207,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file) {
-    IntentionsCollector.getInstance().record(action, file.getLanguage());
+    IntentionsCollector.getInstance().record(file.getProject(), action, file.getLanguage());
     PsiElement elementToMakeWritable = action.getElementToMakeWritable(file);
     if (elementToMakeWritable != null && !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
       return;
@@ -206,9 +222,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
 
-  static Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
-                                                   @Nullable Editor hostEditor,
-                                                   @NotNull IntentionAction action) {
+  @Nullable
+  public static Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
+                                                          @Nullable Editor hostEditor,
+                                                          @NotNull IntentionAction action) {
     return hostEditor == null ? Pair.create(hostFile, null) :
            chooseBetweenHostAndInjected(hostFile, hostEditor, (psiFile, editor) -> availableFor(psiFile, editor, action));
   }

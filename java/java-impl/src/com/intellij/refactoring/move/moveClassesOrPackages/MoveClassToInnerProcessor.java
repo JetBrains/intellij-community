@@ -90,21 +90,25 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new MoveMultipleElementsViewDescriptor(myClassesToMove, myTargetClass.getQualifiedName());
   }
 
+  @Override
   @NotNull
   public UsageInfo[] findUsages() {
     final List<UsageInfo> usages = new ArrayList<>();
     for (PsiClass classToMove : myClassesToMove) {
       final String newName = myTargetClass.getQualifiedName() + "." + classToMove.getName();
-      Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(classToMove, mySearchInComments, mySearchInNonJavaFiles, newName));
+      Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(
+        classToMove, myRefactoringScope, mySearchInComments, mySearchInNonJavaFiles, newName));
     }
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
     return showConflicts(getConflicts(usages), usages);
@@ -121,6 +125,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     });
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     MoveClassToInnerHandler[] handlers = MoveClassToInnerHandler.EP_NAME.getExtensions();
 
@@ -212,6 +217,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("move.class.to.inner.command.name",
@@ -299,7 +305,8 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   private static PsiElement[] collectPackageLocalMembers(PsiElement classToMove) {
     return PsiTreeUtil.collectElements(classToMove, new PsiElementFilter() {
-      public boolean isAccepted(final PsiElement element) {
+      @Override
+      public boolean isAccepted(@NotNull final PsiElement element) {
         if (element instanceof PsiMember) {
           PsiMember member = (PsiMember) element;
           if (VisibilityUtil.getVisibilityModifier(member.getModifierList()) == PsiModifier.PACKAGE_LOCAL) {
@@ -320,7 +327,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     private final MultiMap<PsiElement, String> myConflicts;
     private final Set<PsiElement> myReportedContainers = new HashSet<>();
 
-    public ConflictsCollector(PsiClass classToMove, final MultiMap<PsiElement, String> conflicts) {
+    ConflictsCollector(PsiClass classToMove, final MultiMap<PsiElement, String> conflicts) {
       myClassToMove = classToMove;
       myConflicts = conflicts;
     }

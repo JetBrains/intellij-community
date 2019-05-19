@@ -6,8 +6,10 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -39,7 +41,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
           if (argument == null) continue;
           if (argument instanceof PsiMethodCallExpression && PsiResolveHelper.ourGuard.currentStack().contains(argument)) continue;
 
-          final RecursionGuard.StackStamp stackStamp = PsiDiamondType.ourDiamondGuard.markStack();
+          RecursionGuard.StackStamp stackStamp = RecursionManager.markStack();
           argTypes[j] = argument.getType();
           if (!stackStamp.mayCacheNow()) {
             argTypes[j] = null;
@@ -162,7 +164,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
   }
 
   private static Pair<PsiType, ConstraintType> getFailedInferenceConstraint(@NotNull PsiTypeParameter typeParameter) {
-    return new Pair<>(JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter),
+    return new Pair<>(JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter),
                       ConstraintType.EQUALS);
   }
 
@@ -185,7 +187,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
   public PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
                                            @NotNull PsiParameter[] parameters,
                                            @NotNull PsiExpression[] arguments,
-                                           @NotNull PsiSubstitutor partialSubstitutor,
+                                           @Nullable MethodCandidateInfo currentMethod, @NotNull PsiSubstitutor partialSubstitutor,
                                            @NotNull PsiElement parent,
                                            @NotNull ParameterTypeInferencePolicy policy,
                                            @NotNull LanguageLevel languageLevel) {
@@ -281,7 +283,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       }
 
       if (substitution == null) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
         return factory.createRawSubstitutor(partialSubstitutor, typeParameters);
       }
       if (substitution != PsiType.NULL) {
@@ -442,7 +444,6 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     }
 
     if (!(param instanceof PsiClassType)) return null;
-    PsiManager manager = myManager;
     if (arg instanceof PsiPrimitiveType) {
       if (!JavaVersionService.getInstance().isAtLeast(typeParam, JavaSdkVersion.JDK_1_7) && !isContraVariantPosition) return null;
       arg = ((PsiPrimitiveType)arg).getBoxedType(typeParam);
@@ -477,7 +478,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     PsiClass argClass = (PsiClass)argResult.getElement();
     if (argClass == null) return null;
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
     PsiType patternType = factory.createType(typeParam);
     if (isContraVariantPosition) {
       PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(paramClass, argClass, argResult.getSubstitutor());
@@ -686,6 +687,10 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         expectedType = methodCall instanceof PsiCallExpression ? policy.getDefaultExpectedType((PsiCallExpression)methodCall) : null;
       }
 
+      if (policy.requestForBoxingExplicitly() && TypeConversionUtil.isPrimitiveAndNotNull(expectedType)) {
+        expectedType = ((PsiPrimitiveType)expectedType).getBoxedType(typeParameter);
+      }
+
       returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
 
       constraint =
@@ -737,7 +742,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       PsiSubstitutor newSubstitutor = substitutor.put(typeParameter, guess);
       for (PsiClassType extendsType1 : extendsTypes) {
         PsiType extendsType = newSubstitutor.substitute(extendsType1);
-        if (guess != null && !extendsType.isAssignableFrom(guess)) {
+        if (guess != null && extendsType != null && !extendsType.isAssignableFrom(guess)) {
           if (guess.isAssignableFrom(extendsType)) {
             guess = extendsType;
             newSubstitutor = substitutor.put(typeParameter, guess);

@@ -1,10 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -117,7 +114,7 @@ public class PyCallExpressionHelper {
     final List<PyCallExpression.PyMarkedCallee> ratedMarkedCallees = new ArrayList<>();
 
     for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(call.getCallee(), resolveContext)) {
-      for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(resolveResult, resolveContext)) {
+      for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(call, resolveResult, resolveContext)) {
         final PyCallExpression.PyMarkedCallee markedCallee = markResolveResult(clarifiedResolveResult, context, implicitOffset);
         if (markedCallee == null) continue;
 
@@ -130,9 +127,9 @@ public class PyCallExpressionHelper {
       .collect(
         Collectors.groupingBy(markedCallee -> markedCallee.getCallableType(), LinkedHashMap::new, Collectors.toList())
       )
-      .entrySet()
+      .values()
       .stream()
-      .map(entry -> entry.getValue().stream().max(Comparator.comparingInt(PyCallExpression.PyMarkedCallee::getRate)).orElse(null))
+      .map(callees -> callees.stream().max(Comparator.comparingInt(PyCallExpression.PyMarkedCallee::getRate)).orElse(null))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
   }
@@ -144,7 +141,7 @@ public class PyCallExpressionHelper {
       final PyReferenceExpression referenceExpression = (PyReferenceExpression)callee;
 
       final List<PyCallExpression.PyMarkedCallee> callees = StreamEx
-        .of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
+        .of(PyTypeProvider.EP_NAME.getExtensionList())
         .map(provider -> provider.getReferenceExpressionType(referenceExpression, context))
         .select(PyCallableType.class)
         .map(type -> new PyCallExpression.PyMarkedCallee(type, null, null, 0, false, RatedResolveResult.RATE_NORMAL))
@@ -174,7 +171,8 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static List<ClarifiedResolveResult> clarifyResolveResult(@NotNull QualifiedRatedResolveResult resolveResult,
+  private static List<ClarifiedResolveResult> clarifyResolveResult(@NotNull PyCallExpression call,
+                                                                   @NotNull QualifiedRatedResolveResult resolveResult,
                                                                    @NotNull PyResolveContext resolveContext) {
     final PsiElement resolved = resolveResult.getElement();
 
@@ -227,8 +225,11 @@ public class PyCallExpressionHelper {
       }
     }
 
+    final boolean isConstructor = resolved instanceof PyFunction &&
+                                  isConstructorName(((PyFunction)resolved).getName()) &&
+                                  call.getReceiver((PyCallable)resolved) == null;
     return resolved != null
-           ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, resolved, null, false))
+           ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, resolved, null, isConstructor))
            : Collections.emptyList();
   }
 
@@ -530,7 +531,7 @@ public class PyCallExpressionHelper {
     }
     else if (target instanceof PyFunction) {
       final PyFunction f = (PyFunction)target;
-      if (PyNames.INIT.equals(f.getName())) {
+      if (isConstructorName(f.getName())) {
         init = f;
         cls = f.getContainingClass();
       }
@@ -556,7 +557,7 @@ public class PyCallExpressionHelper {
         return Ref.create(t);
       }
       if (cls != null) {
-        final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true, null);
+        final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true, context);
         if (newMethod != null && !PyBuiltinCache.getInstance(call).isBuiltin(newMethod)) {
           return Ref.create(PyUnionType.createWeakType(new PyClassTypeImpl(cls, false)));
         }
@@ -601,7 +602,7 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static Maybe<PyType> getSuperCallType(@NotNull PyCallExpression call, TypeEvalContext context) {
+  private static Maybe<PyType> getSuperCallType(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     final PyExpression callee = call.getCallee();
     if (callee instanceof PyReferenceExpression) {
       PsiElement must_be_super_init = ((PyReferenceExpression)callee).getReference().resolve();
@@ -612,7 +613,7 @@ public class PyCallExpressionHelper {
           if (argumentList != null) {
             final PyClass containingClass = PsiTreeUtil.getParentOfType(call, PyClass.class);
             PyExpression[] args = argumentList.getArguments();
-            if (args.length > 1) {
+            if (containingClass != null && args.length > 1) {
               PyExpression first_arg = args[0];
               if (first_arg instanceof PyReferenceExpression) {
                 final PyReferenceExpression firstArgRef = (PyReferenceExpression)first_arg;
@@ -647,7 +648,9 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  private static PyType getSuperCallTypeForArguments(TypeEvalContext context, PyClass firstClass, PyExpression second_arg) {
+  private static PyType getSuperCallTypeForArguments(@NotNull TypeEvalContext context,
+                                                     @NotNull PyClass firstClass,
+                                                     @Nullable PyExpression second_arg) {
     // check 2nd argument, too; it should be an instance
     if (second_arg != null) {
       PyType second_type = context.getType(second_arg);
@@ -658,9 +661,15 @@ public class PyCallExpressionHelper {
           return getSuperClassUnionType(firstClass, context);
         }
         if (secondClass.isSubclass(firstClass, context)) {
-          final Iterator<PyClass> iterator = firstClass.getAncestorClasses(context).iterator();
-          if (iterator.hasNext()) {
-            return new PyClassTypeImpl(iterator.next(), false); // super(Foo, self) has type of Foo, modulo __get__()
+          final PyClass nextAfterFirstInMro = StreamEx
+            .of(secondClass.getAncestorClasses(context))
+            .dropWhile(it -> it != firstClass)
+            .skip(1)
+            .findFirst()
+            .orElse(null);
+
+          if (nextAfterFirstInMro != null) {
+            return new PyClassTypeImpl(nextAfterFirstInMro, false);
           }
         }
       }
@@ -757,7 +766,7 @@ public class PyCallExpressionHelper {
       return ContainerUtil.map(PyUtil.filterTopPriorityResults(callees),
                                callee -> Pair.create(callee.getElement(), callee.getCallableType()));
     }
-    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
+    else {
       final List<Pair<PyCallable, PyCallableType>> results = new ArrayList<>();
 
       for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
@@ -773,9 +782,6 @@ public class PyCallExpressionHelper {
       }
 
       return results;
-    }
-    else {
-      return Collections.emptyList();
     }
   }
 
@@ -819,16 +825,12 @@ public class PyCallExpressionHelper {
 
   @NotNull
   public static List<PyExpression> getArgumentsMappedToPositionalContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
-    return mapping.entrySet().stream()
-      .filter(e -> e.getValue().isPositionalContainer())
-      .map(e -> e.getKey()).collect(Collectors.toList());
+    return StreamEx.ofKeys(mapping, PyCallableParameter::isPositionalContainer).toList();
   }
 
   @NotNull
   public static List<PyExpression> getArgumentsMappedToKeywordContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
-    return mapping.entrySet().stream()
-      .filter(e -> e.getValue().isKeywordContainer())
-      .map(e -> e.getKey()).collect(Collectors.toList());
+    return StreamEx.ofKeys(mapping, PyCallableParameter::isKeywordContainer).toList();
   }
 
   @NotNull
@@ -1208,7 +1210,7 @@ public class PyCallExpressionHelper {
     @NotNull private final List<PyExpression> componentsOfVariadicPositionalArguments;
     @NotNull private final List<PyExpression> variadicPositionalArguments;
 
-    public PositionalArgumentsAnalysisResults(@NotNull List<PyExpression> allPositionalArguments,
+    PositionalArgumentsAnalysisResults(@NotNull List<PyExpression> allPositionalArguments,
                                               @NotNull List<PyExpression> componentsOfVariadicPositionalArguments,
                                               @NotNull List<PyExpression> variadicPositionalArguments) {
       this.allPositionalArguments = allPositionalArguments;
@@ -1309,11 +1311,8 @@ public class PyCallExpressionHelper {
         implicitOffset = 0;
       }
     }
-    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
-      implicitOffset = 1;
-    }
     else {
-      implicitOffset = 0;
+      implicitOffset = 1;
     }
     return parameters.subList(Math.min(implicitOffset, parameters.size()), parameters.size());
   }
@@ -1331,7 +1330,7 @@ public class PyCallExpressionHelper {
 
     private final boolean myIsConstructor;
 
-    public ClarifiedResolveResult(@NotNull QualifiedRatedResolveResult originalResolveResult,
+    ClarifiedResolveResult(@NotNull QualifiedRatedResolveResult originalResolveResult,
                                   @NotNull PsiElement clarifiedResolved,
                                   @Nullable PyFunction.Modifier wrappedModifier,
                                   boolean isConstructor) {

@@ -1,9 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +16,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
@@ -38,25 +40,32 @@ import java.util.*;
  * @author mike
  */
 public class ExtensionDomExtender extends DomExtender<Extensions> {
+
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
   private static final Converter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
-  private static final DomExtender EXTENSION_EXTENDER = new DomExtender() {
-    public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
-      final ExtensionPoint extensionPoint = (ExtensionPoint)domElement.getChildDescription().getDomDeclaration();
+
+  private static final DomExtender<Extension> EXTENSION_EXTENDER = new DomExtender<Extension>() {
+
+    private final XmlName IMPLEMENTATION_XML_NAME = new XmlName(Extension.IMPLEMENTATION_ATTRIBUTE);
+
+    @Override
+    public void registerExtensions(@NotNull final Extension extension, @NotNull final DomExtensionsRegistrar registrar) {
+      final ExtensionPoint extensionPoint = (ExtensionPoint)extension.getChildDescription().getDomDeclaration();
       assert extensionPoint != null;
 
       final String interfaceName = extensionPoint.getInterface().getStringValue();
       if (interfaceName != null) {
         final DomExtension implementationAttribute =
-          registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class)
+          registrar.registerGenericAttributeValueChildExtension(IMPLEMENTATION_XML_NAME, PsiClass.class)
             .setConverter(CLASS_CONVERTER)
-            .addCustomAnnotation(new MyExtendClass(interfaceName))
-            .addCustomAnnotation(new MyRequired());
+            .addCustomAnnotation(new MyImplementationExtendClass(interfaceName))
+            .addCustomAnnotation(MyRequired.INSTANCE);
 
         final PsiClass interfaceClass = extensionPoint.getInterface().getValue();
         if (interfaceClass != null) {
           implementationAttribute.setDeclaringElement(interfaceClass);
-        } else {
+        }
+        else {
           implementationAttribute.setDeclaringElement(extensionPoint);
         }
 
@@ -70,10 +79,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   };
 
   private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
-    Set<IdeaPlugin> result = ContainerUtil.newHashSet();
+    Set<IdeaPlugin> result = new HashSet<>();
     MultiMap<String, IdeaPlugin> byId = getPluginMap(ideaPlugin.getManager().getProject());
     collectDependencies(ideaPlugin, result, byId);
-    //noinspection NullableProblems
     result.addAll(byId.get(null));
     return result;
   }
@@ -87,6 +95,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static void collectDependencies(final IdeaPlugin ideaPlugin, Set<IdeaPlugin> result, final MultiMap<String, IdeaPlugin> byId) {
+    ProgressManager.checkCanceled();
     if (!result.add(ideaPlugin)) {
       return;
     }
@@ -131,7 +140,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   @Nullable
-  public static With findWithElement(List<With> elements, PsiField field) {
+  public static With findWithElement(List<? extends With> elements, PsiField field) {
     for (With element : elements) {
       if (Comparing.equal(field.getName(), element.getAttribute().getStringValue())) {
         return element;
@@ -152,10 +161,10 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(field.getProject()).getConstantEvaluationHelper();
     final PsiAnnotation attrAnno = findAnnotation(Attribute.class, field, getter, setter);
     if (attrAnno != null) {
-      final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
+      final String attrName = getStringAttribute(attrAnno, "value", evalHelper, fieldName);
       if (attrName != null) {
         Class clazz = String.class;
-        if (withElement != null || isClassField(fieldName)) {
+        if (withElement != null || Extension.isClassField(fieldName)) {
           clazz = PsiClass.class;
         } else if (PsiType.BOOLEAN.equals(field.getType())) {
           clazz = Boolean.class;
@@ -173,7 +182,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     final PsiAnnotation propAnno = findAnnotation(Property.class, field, getter, setter);
     final PsiAnnotation collectionAnnotation = findAnnotation(XCollection.class, field, getter, setter);
     //final PsiAnnotation colAnno = modifierList.findAnnotation(Collection.class.getName()); // todo
-    final String tagName = tagAnno != null? getStringAttribute(tagAnno, "value", evalHelper) :
+    final String tagName = tagAnno != null ? getStringAttribute(tagAnno, "value", evalHelper, fieldName) :
                            propAnno != null && getBooleanAttribute(propAnno, "surroundWithTag", evalHelper)? Constants.OPTION : null;
     if (tagName != null) {
       if (collectionAnnotation == null) {
@@ -211,16 +220,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         }
       });
     }
-    if (withElement != null || isClassField(fieldName)) {
+    if (withElement != null || Extension.isClassField(fieldName)) {
       extension.setConverter(CLASS_CONVERTER);
     }
-  }
-
-  public static boolean isClassField(String fieldName) {
-    return (fieldName.endsWith("Class") && !fieldName.equals("forClass")) || 
-           fieldName.equals("implementation") || 
-           fieldName.equals("serviceInterface") || 
-           fieldName.equals("serviceImplementation");
   }
 
   @Nullable
@@ -245,8 +247,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
                                                 PsiConstantEvaluationHelper evalHelper) {
     final boolean surroundWithTag = getBooleanAttribute(anno, "surroundWithTag", evalHelper);
     if (surroundWithTag) return; // todo Set, List, Array
-    final String tagName = getStringAttribute(anno, "elementTag", evalHelper);
-    final String attrName = getStringAttribute(anno, "elementValueAttribute", evalHelper);
+    final String tagName = getStringAttribute(anno, "elementTag", evalHelper, null);
+    final String attrName = getStringAttribute(anno, "elementValueAttribute", evalHelper, null);
     final PsiType elementType = getElementType(type);
     if (elementType == null || TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(elementType)
         || CommonClassNames.JAVA_LANG_STRING.equals(elementType.getCanonicalText())
@@ -268,7 +270,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       if (psiClass != null) {
         final PsiModifierList modifierList = psiClass.getModifierList();
         final PsiAnnotation tagAnno = modifierList == null? null : modifierList.findAnnotation(Tag.class.getName());
-        final String classTagName = tagAnno == null? psiClass.getName() : getStringAttribute(tagAnno, "value", evalHelper);
+        final String classTagName = tagAnno == null? psiClass.getName() : getStringAttribute(tagAnno, "value", evalHelper, null);
         if (classTagName != null) {
           registrar.registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class).addExtender(new DomExtender() {
             @Override
@@ -284,11 +286,14 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   @Nullable
   static String getStringAttribute(final PsiAnnotation annotation,
                                    final String name,
-                                   final PsiConstantEvaluationHelper evalHelper) {
+                                   final PsiConstantEvaluationHelper evalHelper, String defaultValueIfEmpty) {
     String value = getAttributeValue(annotation, name);
-    if (value != null) return value;
-    final Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
-    return o instanceof String && StringUtil.isNotEmpty((String)o)? (String)o : null;
+    if (value != null) {
+      return value.isEmpty() ? defaultValueIfEmpty : value;
+    }
+    Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
+    if (!(o instanceof String)) return null;
+    return StringUtil.isNotEmpty((String)o) ? (String)o : defaultValueIfEmpty;
   }
 
   private static boolean getBooleanAttribute(final PsiAnnotation annotation,
@@ -360,14 +365,20 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     return result;
   }
 
+  @Override
   public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
     IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
     if (ideaPlugin == null) return;
 
     String epPrefix = extensions.getEpPrefix();
     for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
-      final String pluginId = StringUtil.notNullize(plugin.getPluginId(), "com.intellij");
-      for (ExtensionPoints points : plugin.getExtensionPoints()) {
+      final String pluginId = StringUtil.notNullize(plugin.getPluginId(), PluginManagerCore.CORE_PLUGIN_ID);
+      AbstractCollectionChildDescription collectionChildDescription =
+        (AbstractCollectionChildDescription)plugin.getGenericInfo().getCollectionChildDescription("extensionPoints");
+      DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(plugin);
+      assert handler != null;
+      List<ExtensionPoints> children = handler.getCollectionChildren(collectionChildDescription, false);
+      for (ExtensionPoints points : children) {
         for (ExtensionPoint point : points.getExtensionPoints()) {
           registerExtensionPoint(registrar, point, epPrefix, pluginId);
         }
@@ -380,14 +391,14 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     return false;
   }
 
-  public interface SimpleTagValue extends DomElement {
-    @SuppressWarnings("UnusedDeclaration")
-    @TagValue
-    String getTagValue();
+  public interface SimpleTagValue extends GenericDomValue<String> {
   }
 
   @SuppressWarnings("ClassExplicitlyAnnotation")
   private static class MyRequired implements Required {
+
+    private static final MyRequired INSTANCE = new MyRequired();
+
     @Override
     public boolean value() {
       return true;
@@ -409,10 +420,10 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
   }
 
-  private static class MyExtendClass extends ExtendClassImpl {
+  private static class MyImplementationExtendClass extends ExtendClassImpl {
     private final String myInterfaceName;
 
-    private MyExtendClass(String interfaceName) {
+    private MyImplementationExtendClass(String interfaceName) {
       myInterfaceName = interfaceName;
     }
 

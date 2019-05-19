@@ -26,7 +26,7 @@ print(map.get(2));
 
 
 Foo foo = new Foo();
-foo.putAt("a", 2, 4);
+org.codehaus.groovy.runtime.DefaultGroovyMethods.putAt(foo, "a", 2);
 print(putAt1(foo, "a", 2, 4));
 
 print(foo.getAt("b", 1));
@@ -48,8 +48,8 @@ private static <K, V, Value extends V>Value putAt0(java.util.Map<K, V> propOwner
 propOwner.put(key, value);
 return value;
 }
-private static <Value>Value putAt1(Foo propOwner, java.lang.String s, java.lang.Integer x, Value value) {
-propOwner.putAt(s, x, value);
-return value;
+private static <Value>Value putAt1(java.lang.Object propOwner, java.lang.String property, Value newValue) {
+org.codehaus.groovy.runtime.DefaultGroovyMethods.putAt(propOwner, property, newValue);
+return newValue;
 }
 }

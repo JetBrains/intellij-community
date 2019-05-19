@@ -331,7 +331,7 @@ def _is_django_exception_break_context(frame):
 # Django Step Commands
 #=======================================================================================================================
 
-def can_not_skip(plugin, main_debugger, pydb_frame, frame):
+def can_not_skip(plugin, main_debugger, pydb_frame, frame, info):
     return main_debugger.django_breakpoints and _is_django_render_call(frame)
 
 
@@ -376,7 +376,7 @@ def cmd_step_over(plugin, main_debugger, frame, event, args, stop_info, stop):
             info.pydev_step_stop = frame.f_back
             info.pydev_django_resolve_frame = False
             thread.additional_info.suspend_type = DJANGO_SUSPEND
-        stop = info.pydev_step_stop is frame and event in ('line', 'return')
+            stop = info.pydev_step_stop is frame and event in ('line', 'return')
     return stop, plugin_stop
 
 
@@ -435,7 +435,7 @@ def exception_break(plugin, main_debugger, pydb_frame, frame, args, arg):
             if suspend_frame:
                 add_exception_to_frame(suspend_frame, (exception, value, trace))
                 flag = True
-                thread.additional_info.pydev_message = 'VariableDoesNotExist'
+                thread.additional_info.pydev_message = 'django-VariableDoesNotExist'
                 suspend_frame.f_back = frame
                 frame = suspend_frame
                 return (flag, frame)

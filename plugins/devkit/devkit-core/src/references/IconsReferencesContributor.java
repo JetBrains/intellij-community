@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -34,10 +34,8 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageViewPresentation;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.Processor;
-import com.intellij.util.QueryExecutor;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -46,7 +44,6 @@ import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.UastLiteralUtils;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
@@ -121,7 +118,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
             @Override
             public PsiElement resolve() {
               String value = ((XmlAttributeValue)element).getValue();
-              if (value != null && value.startsWith("/")) {
+              if (value.startsWith("/")) {
                 FileReference lastRef = new FileReferenceSet(element).getLastReference();
                 return lastRef != null ? lastRef.resolve() : null;
               }
@@ -130,7 +127,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
             }
 
             @Override
-            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+            public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
               PsiElement element = resolve();
               PsiElement resultForFile = handleFile(element, lastRef -> lastRef.handleElementRename(newElementName));
               if (resultForFile != null) {
@@ -197,12 +194,6 @@ public class IconsReferencesContributor extends PsiReferenceContributor
               parent.setValue(fqn.substring(pckg.length()) + "." + newName);
               return parent.getValueElement();
             }
-
-            @NotNull
-            @Override
-            public Object[] getVariants() {
-              return EMPTY_ARRAY;
-            }
           }
         };
       }
@@ -221,23 +212,22 @@ public class IconsReferencesContributor extends PsiReferenceContributor
         return new FileReferenceSet(element) {
           @Override
           protected Collection<PsiFileSystemItem> getExtraContexts() {
-            Module icons = ModuleManager.getInstance(element.getProject()).findModuleByName("icons");
-            if (icons == null) {
-              icons = ModuleManager.getInstance(element.getProject()).findModuleByName("intellij.platform.icons");
+            Module iconsModule = ModuleManager.getInstance(element.getProject()).findModuleByName("intellij.platform.icons");
+            if (iconsModule == null) {
+              iconsModule = ModuleManager.getInstance(element.getProject()).findModuleByName("icons");
             }
-            if (icons != null) {
-              final ArrayList<PsiFileSystemItem> result = new ArrayList<>();
-              final VirtualFile[] roots = ModuleRootManager.getInstance(icons).getSourceRoots();
-              final PsiManager psiManager = element.getManager();
-              for (VirtualFile root : roots) {
-                final PsiDirectory directory = psiManager.findDirectory(root);
-                if (directory != null) {
-                  result.add(directory);
-                }
-              }
-              return result;
+            if (iconsModule == null) {
+              return super.getExtraContexts();
             }
-            return super.getExtraContexts();
+
+            final List<PsiFileSystemItem> result = new SmartList<>();
+            final VirtualFile[] roots = ModuleRootManager.getInstance(iconsModule).getSourceRoots();
+            final PsiManager psiManager = element.getManager();
+            for (VirtualFile root : roots) {
+              final PsiDirectory directory = psiManager.findDirectory(root);
+              ContainerUtil.addIfNotNull(result, directory);
+            }
+            return result;
           }
         }.getAllReferences();
       }
@@ -247,10 +237,10 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   private static void registerForPresentationAnnotation(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar.registerUastReferenceProvider(
       registrar,
-      UastPatterns.stringLiteralExpression()
+      UastPatterns.injectionHostUExpression()
         .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
         .annotationParam(Presentation.class.getName(), "icon"),
-      UastReferenceRegistrar.uastLiteralReferenceProvider((uElement, referencePsiElement) -> new PsiReference[]{
+      UastReferenceRegistrar.uastInjectionHostReferenceProvider((uElement, referencePsiElement) -> new PsiReference[]{
         new IconPsiReferenceBase(referencePsiElement) {
 
           private UElement getUElement() {
@@ -267,7 +257,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
           }
 
           @Override
-          public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+          public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
             PsiElement field = resolve();
             PsiElement result = handleElement(field, newElementName);
             if (result != null) {
@@ -301,12 +291,6 @@ public class IconsReferencesContributor extends PsiReferenceContributor
           private PsiElement replace(String newElementName, String fqn, String packageName) {
             String newValue = fqn.substring(packageName.length()) + "." + newElementName;
             return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), newValue);
-          }
-
-          @NotNull
-          @Override
-          public Object[] getVariants() {
-            return EMPTY_ARRAY;
           }
         }
       }), PsiReferenceRegistrar.HIGHER_PRIORITY);
@@ -365,7 +349,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   private static abstract class IconPsiReferenceBase extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
-    public IconPsiReferenceBase(@NotNull PsiElement element) {
+    IconPsiReferenceBase(@NotNull PsiElement element) {
       super(element, true);
     }
 

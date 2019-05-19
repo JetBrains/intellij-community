@@ -1,33 +1,35 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
+import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.VcsEP;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
 public class AllVcses implements AllVcsesI, Disposable {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.projectlevelman.AllVcses");
@@ -37,12 +39,14 @@ public class AllVcses implements AllVcsesI, Disposable {
   private final Project myProject;
   private final Map<String, VcsEP> myExtensions;    // +-
 
+  private final AtomicBoolean unbundledVcsNotificationShown = new AtomicBoolean();
+
   private AllVcses(final Project project) {
     myProject = project;
     myVcses = new HashMap<>();
     myLock = new Object();
 
-    final VcsEP[] vcsEPs = Extensions.getExtensions(VcsEP.EP_NAME, myProject);
+    final VcsEP[] vcsEPs = VcsEP.EP_NAME.getExtensions(myProject);
     final HashMap<String, VcsEP> map = new HashMap<>();
     for (VcsEP vcsEP : vcsEPs) {
       map.put(vcsEP.name, vcsEP);
@@ -70,6 +74,7 @@ public class AllVcses implements AllVcsesI, Disposable {
     vcs.getProvidedStatuses();
   }
 
+  @Override
   public void registerManually(@NotNull final AbstractVcs vcs) {
     synchronized (myLock) {
       if (myVcses.containsKey(vcs.getName())) return;
@@ -77,6 +82,7 @@ public class AllVcses implements AllVcsesI, Disposable {
     }
   }
 
+  @Override
   public void unregisterManually(@NotNull final AbstractVcs vcs) {
     synchronized (myLock) {
       if (! myVcses.containsKey(vcs.getName())) return;
@@ -85,6 +91,7 @@ public class AllVcses implements AllVcsesI, Disposable {
     }
   }
 
+  @Override
   public AbstractVcs getByName(final String name) {
     synchronized (myLock) {
       final AbstractVcs vcs = myVcses.get(name);
@@ -96,6 +103,10 @@ public class AllVcses implements AllVcsesI, Disposable {
     // unmodifiable map => no sync needed
     final VcsEP ep = myExtensions.get(name);
     if (ep == null) {
+      ObsoleteVcs obsoleteVcs = ObsoleteVcs.findByName(name);
+      if (obsoleteVcs != null && unbundledVcsNotificationShown.compareAndSet(false, true)) {
+        proposeToInstallPlugin(obsoleteVcs);
+      }
       return null;
     }
 
@@ -118,6 +129,7 @@ public class AllVcses implements AllVcsesI, Disposable {
     return ep == null ? null : ep.createDescriptor();
   }
 
+  @Override
   public void dispose() {
     synchronized (myLock) {
       for (AbstractVcs vcs : myVcses.values()) {
@@ -135,10 +147,12 @@ public class AllVcses implements AllVcsesI, Disposable {
     }
   }
 
+  @Override
   public boolean isEmpty() {
     return myExtensions.isEmpty();
   }
 
+  @Override
   public VcsDescriptor[] getAll() {
     final List<VcsDescriptor> result = new ArrayList<>(myExtensions.size());
     for (VcsEP vcsEP : myExtensions.values()) {
@@ -146,5 +160,74 @@ public class AllVcses implements AllVcsesI, Disposable {
     }
     Collections.sort(result);
     return result.toArray(new VcsDescriptor[0]);
+  }
+
+  private enum ObsoleteVcs {
+    CVS("CVS", "CVS", "https://plugins.jetbrains.com/plugin/10746-cvs-integration"),
+    TFS("TFS", "TFS", "https://plugins.jetbrains.com/plugin/4578-tfs");
+
+    @NotNull private final String vcsName;
+    @NotNull private final String pluginId;
+    @NotNull private final String pluginUrl;
+
+    ObsoleteVcs(@NotNull String vcsName, @NotNull String pluginId, @NotNull String pluginUrl) {
+      this.vcsName = vcsName;
+      this.pluginId = pluginId;
+      this.pluginUrl = pluginUrl;
+    }
+
+    @Nullable
+    public static ObsoleteVcs findByName(@NotNull String name) {
+      return ContainerUtil.find(values(), vcs -> vcs.vcsName.equals(name));
+    }
+  }
+
+  private void proposeToInstallPlugin(@NotNull ObsoleteVcs vcs) {
+    String message = "The " + vcs + " plugin was unbundled and needs to be installed manually";
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("", message, NotificationType.WARNING, null);
+    notification.addAction(NotificationAction.createSimple("Install", () -> {
+      notification.expire();
+      installPlugin(vcs);
+    }));
+    notification.addAction(NotificationAction.createSimple("Read more", () -> {
+      BrowserUtil.browse("https://blog.jetbrains.com/idea/2019/02/unbundling-tfs-and-cvs-integration-plugins/");
+    }));
+    VcsNotifier.getInstance(myProject).notify(notification);
+  }
+
+  private void installPlugin(@NotNull ObsoleteVcs vcs) {
+    new Task.Backgroundable(myProject, "Installing Plugin") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(indicator);
+          IdeaPluginDescriptor descriptor = ContainerUtil.find(plugins, d -> d.getPluginId().getIdString().equalsIgnoreCase(vcs.pluginId));
+          if (descriptor != null) {
+            PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
+            if (downloader.prepareToInstall(indicator)) {
+              downloader.install();
+              PluginManagerCore.enablePlugin(vcs.pluginId);
+              PluginManagerMain.notifyPluginsUpdated(myProject);
+            }
+          }
+          else {
+            showErrorNotification(vcs, "Couldn't find the plugin " + vcs.pluginId);
+          }
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+          showErrorNotification(vcs, e.getMessage());
+        }
+      }
+
+      private void showErrorNotification(@NotNull ObsoleteVcs vcs, @NotNull String message) {
+        String title = "Failed to Install Plugin";
+        Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null);
+        notification.addAction(NotificationAction.createSimple("Open Plugin Page", () -> {
+          BrowserUtil.browse(vcs.pluginUrl);
+        }));
+        VcsNotifier.getInstance(myProject).notify(notification);
+      }
+    }.queue();
   }
 }

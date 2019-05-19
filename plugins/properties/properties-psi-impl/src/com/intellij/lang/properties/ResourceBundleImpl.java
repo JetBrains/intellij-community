@@ -1,10 +1,6 @@
 /*
  * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-
-/**
- * @author Alexey
- */
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -17,6 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * @author Alexey
+ */
 public class ResourceBundleImpl extends ResourceBundle {
   @NotNull
   private final SmartPsiElementPointer<PsiFile> myDefaultPropertiesFile;
@@ -44,6 +43,7 @@ public class ResourceBundleImpl extends ResourceBundle {
     return ResourceBundleManager.getInstance(getProject()).getBaseName(Objects.requireNonNull(myDefaultPropertiesFile.getElement()));
   }
 
+  @Override
   @NotNull
   public VirtualFile getBaseDirectory() {
     return getDefaultPropertiesFile().getParent().getVirtualFile();
@@ -51,7 +51,7 @@ public class ResourceBundleImpl extends ResourceBundle {
 
   @Override
   public boolean isValid() {
-    return myValid && myDefaultPropertiesFile.getElement() != null;
+    return myValid && PropertiesImplUtil.getPropertiesFile(myDefaultPropertiesFile.getElement()) != null;
   }
 
   public void invalidate() {

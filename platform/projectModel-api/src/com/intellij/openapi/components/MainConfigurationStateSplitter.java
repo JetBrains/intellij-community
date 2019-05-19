@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class MainConfigurationStateSplitter extends StateSplitterEx {
+  @NotNull
   @Override
   public final List<Pair<Element, String>> splitState(@NotNull Element state) {
     UniqueNameGenerator generator = new UniqueNameGenerator();

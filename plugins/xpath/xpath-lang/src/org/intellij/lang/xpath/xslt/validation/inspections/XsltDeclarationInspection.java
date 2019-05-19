@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -25,21 +26,25 @@ public class XsltDeclarationInspection extends XsltInspection {
     private XsltElementFactory myXsltElementFactory;
     private NamesValidator myNamesValidator;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return "Declaration Problems";
     }
 
+    @Override
     @NotNull
     public String getShortName() {
         return "XsltDeclarations";
     }
 
+    @Override
     @NotNull
     public HighlightDisplayLevel getDefaultLevel() {
         return HighlightDisplayLevel.ERROR;
     }
 
+    @Override
     @NotNull
     public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
         if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
@@ -35,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,10 +48,12 @@ import java.util.StringTokenizer;
 public class CreateFileAction extends CreateElementActionBase implements DumbAware {
 
   public CreateFileAction() {
-    super(IdeBundle.message("action.create.new.file"), IdeBundle.message("action.create.new.file.description"), AllIcons.FileTypes.Text);
+    super(ActionsBundle.message("action.NewFile.text"), IdeBundle.message("action.create.new.file.description"), AllIcons.FileTypes.Text);
   }
 
-  public CreateFileAction(final String text, final String description, final Icon icon) {
+  public CreateFileAction(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                          @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                          final Icon icon) {
     super(text, description, icon);
   }
 
@@ -79,7 +83,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
 
   @Override
   @NotNull
-  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception {
     MkDirs mkdirs = new MkDirs(newName, directory);
     return new PsiElement[]{WriteAction.compute(() -> mkdirs.directory.createFile(getFileName(mkdirs.newName)))};
   }
@@ -218,8 +222,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
 
     @Override
-    public PsiElement[] create(String newName) throws Exception {
-      UsageTrigger.trigger("CreateFile." + CreateFileAction.this.getClass().getSimpleName());
+    public PsiElement[] create(@NotNull String newName) throws Exception {
       return super.create(newName);
     }
 
@@ -232,10 +235,9 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       final PsiDirectory psiDirectory = getDirectory();
 
       final Project project = psiDirectory.getProject();
-      final boolean[] result = {false};
-      FileTypeChooser.getKnownFileTypeOrAssociate(psiDirectory.getVirtualFile(), getFileName(inputString), project);
-      result[0] = super.canClose(getFileName(inputString));
-      return result[0];
+      FileType fileType = FileTypeChooser.getKnownFileTypeOrAssociate(psiDirectory.getVirtualFile(), getFileName(inputString), project);
+      if (fileType == null) return false;
+      return super.canClose(getFileName(inputString));
     }
   }
 }

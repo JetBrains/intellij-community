@@ -25,6 +25,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 /**
  * @author nik
@@ -50,7 +51,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
                                          editor.getSelectionModel().getSelectionEnd(),
                                          CommonDataKeys.PSI_FILE.getData(dataContext));
     }
-    Promise<String> expressionTextPromise = Promise.resolve(selectedText);
+    Promise<String> expressionTextPromise = Promises.resolvedPromise(selectedText);
 
     if (selectedText == null && editor != null) {
       expressionTextPromise = getExpressionText(evaluator, CommonDataKeys.PROJECT.getData(dataContext), editor);
@@ -104,7 +105,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   @NotNull
   public static Promise<String> getExpressionText(@Nullable XDebuggerEvaluator evaluator, @Nullable Project project, @NotNull Editor editor) {
     if (project == null || evaluator == null) {
-      return Promise.resolve(null);
+      return Promises.resolvedPromise(null);
     }
 
     Document document = editor.getDocument();

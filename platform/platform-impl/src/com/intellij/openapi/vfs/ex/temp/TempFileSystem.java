@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.ex.temp;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
@@ -30,17 +17,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author max
  */
-public class TempFileSystem extends LocalFileSystemBase {
+public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePointerCapableFileSystem {
+  private static final String TEMP_PROTOCOL = "temp";
   private final FSItem myRoot = new FSDir(null, "/");
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static TempFileSystem getInstance() {
-    return ApplicationManager.getApplication().getComponent(TempFileSystem.class);
+    return (TempFileSystem)VirtualFileManager.getInstance().getFileSystem(TEMP_PROTOCOL);
   }
 
   @NotNull
@@ -100,7 +91,8 @@ public class TempFileSystem extends LocalFileSystemBase {
     return new FakeVirtualFile(parent, file);
   }
 
-  @Nullable public VirtualFile findModelChild(@NotNull VirtualFile parent, @NotNull String name) {
+  @Nullable
+  public VirtualFile findModelChild(@NotNull VirtualFile parent, @NotNull String name) {
     FSItem child = convertDirectory(parent).findChild(name);
     return child == null ? null : new FakeVirtualFile(parent, name);
   }
@@ -150,7 +142,7 @@ public class TempFileSystem extends LocalFileSystemBase {
   @Override
   @NotNull
   public String getProtocol() {
-    return "temp";
+    return TEMP_PROTOCOL;
   }
 
   @Override
@@ -265,7 +257,7 @@ public class TempFileSystem extends LocalFileSystemBase {
     public abstract boolean isDirectory();
 
     @Nullable
-    public FSItem findChild(final String name) {
+    public FSItem findChild(@NotNull String name) {
       return null;
     }
 
@@ -299,7 +291,7 @@ public class TempFileSystem extends LocalFileSystemBase {
 
     @Override
     @Nullable
-    public FSItem findChild(final String name) {
+    public FSItem findChild(@NotNull final String name) {
       return myChildren.get(name);
     }
 

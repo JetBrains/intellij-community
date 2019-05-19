@@ -34,7 +34,6 @@ import javax.swing.event.HyperlinkEvent;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/14
  */
 public class ConfigurationErrorEvent extends AbstractTestEvent {
 

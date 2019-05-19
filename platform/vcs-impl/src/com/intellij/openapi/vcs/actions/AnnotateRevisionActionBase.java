@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,6 +20,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -56,6 +58,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
     return editor == null ? 0 : editor.getCaretModel().getLogicalPosition().line;
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e));
   }
@@ -70,10 +73,13 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
                                   @Nullable VirtualFile file,
                                   @Nullable VcsFileRevision fileRevision) {
     if (VcsHistoryUtil.isEmpty(fileRevision) || file == null || vcs == null) return false;
-
     AnnotationProvider provider = vcs.getAnnotationProvider();
-    if (provider == null || !provider.isAnnotationValid(fileRevision)) return false;
-    if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) return false;
+    if (provider == null) return false;
+    if (!provider.isAnnotationValid(fileRevision)) return false;
+
+    if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) {
+      return false;
+    }
 
     return true;
   }
@@ -101,12 +107,14 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
     final Ref<Integer> newLineRef = new Ref<>();
     final Ref<VcsException> exceptionRef = new Ref<>();
 
-    VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).lock();
+    final BackgroundableActionLock actionLock = VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file);
+    actionLock.lock();
 
     Semaphore semaphore = new Semaphore(0);
     AtomicBoolean shouldOpenEditorInSync = new AtomicBoolean(true);
 
     ProgressManager.getInstance().run(new Task.Backgroundable(vcs.getProject(), VcsBundle.message("retrieving.annotations"), true) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           FileAnnotation fileAnnotation = annotationProvider.annotate(file, fileRevision);
@@ -126,7 +134,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
 
       @Override
       public void onFinished() {
-        VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).unlock();
+        actionLock.unlock();
       }
 
       @Override

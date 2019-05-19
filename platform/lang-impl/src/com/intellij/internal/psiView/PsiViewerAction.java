@@ -24,21 +24,23 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class PsiViewerAction extends DumbAwareAction {
-
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Editor editor = isForContext() ? e.getData(CommonDataKeys.EDITOR) : null;
-    new PsiViewerDialog(e.getProject(), editor).show();
+    Project project = e.getProject();
+    assert project != null;
+    new PsiViewerDialog(project, editor).show();
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enabled = isEnabled(e.getProject());
     e.getPresentation().setEnabledAndVisible(enabled);
     if (enabled && isForContext() && e.getData(CommonDataKeys.EDITOR) == null) {
@@ -62,7 +64,6 @@ public class PsiViewerAction extends DumbAwareAction {
   }
 
   public static class ForContext extends PsiViewerAction {
-
     @Override
     protected boolean isForContext() {
       return true;

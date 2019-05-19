@@ -21,10 +21,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
  * @author yole
  */
 public class CreateInnerClassFromNewTest extends LightQuickFixParameterizedTestCase {
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createInnerClassFromNew";

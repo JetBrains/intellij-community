@@ -74,7 +74,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
 
   @NotNull
   @Override
-  public Object[] getDependences(){
+  public Object[] getDependencies(){
     return new Object[]{myDecl};
   }
 

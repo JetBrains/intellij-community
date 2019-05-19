@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.util.Pair;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
@@ -25,7 +26,6 @@ import java.util.regex.Matcher;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/16/13
  */
 public abstract class AbstractProjectImportErrorHandler {
   public static final String OPEN_GRADLE_SETTINGS = "Please fix the project's Gradle settings.";
@@ -37,7 +37,8 @@ public abstract class AbstractProjectImportErrorHandler {
   public static final String EMPTY_LINE = "\n\n";
 
   @Nullable
-  public abstract ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
+  public abstract ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                                               @NotNull Throwable error,
                                                                @NotNull String projectPath,
                                                                @Nullable String buildFilePath);
 
@@ -55,6 +56,7 @@ public abstract class AbstractProjectImportErrorHandler {
   /**
    * @deprecated use {@link GradleExecutionErrorHandler#getRootCauseAndLocation(Throwable)}
    */
+  @Deprecated
   @NotNull
   public Pair<Throwable, String> getRootCauseAndLocation(@NotNull Throwable error) {
     return GradleExecutionErrorHandler.getRootCauseAndLocation(error);
@@ -63,6 +65,7 @@ public abstract class AbstractProjectImportErrorHandler {
   /**
    * @deprecated use {@link GradleExecutionErrorHandler#getLocationFrom(Throwable)}
    */
+  @Deprecated
   @Nullable
   public String getLocationFrom(@NotNull Throwable error) {
     return GradleExecutionErrorHandler.getLocationFrom(error);

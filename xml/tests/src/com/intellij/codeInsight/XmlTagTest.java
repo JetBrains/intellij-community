@@ -17,7 +17,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -30,14 +29,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.xml.XmlTagValueImpl;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xml.util.XmlTagUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -250,9 +247,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
 
     assertEquals(text, textRange.substring(file.getText()));
 
-    WriteCommandAction.writeCommandAction(getProject(), file).run(() -> {
-      CodeStyleManager.getInstance(getProject()).adjustLineIndent(file, y.getTextOffset());
-    });
+    WriteCommandAction.writeCommandAction(getProject(), file).run(() -> CodeStyleManager.getInstance(getProject()).adjustLineIndent(file, y.getTextOffset()));
 
     text = y.getValue().getText();
     textRange = y.getValue().getTextRange();
@@ -287,9 +282,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testDeleteTagBetweenText() {
     final XmlTag tag = createTag("foo.xhtml", "<p>a<div/>b</p>");
     final XmlTag div = tag.getSubTags()[0];
-    WriteCommandAction.writeCommandAction(getProject(), tag.getContainingFile()).run(() -> {
-      div.delete();
-    });
+    WriteCommandAction.writeCommandAction(getProject(), tag.getContainingFile()).run(() -> div.delete());
     assertEquals("<p>ab</p>", tag.getText());
   }
 

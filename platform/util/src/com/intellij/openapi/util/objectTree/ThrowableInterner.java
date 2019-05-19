@@ -26,7 +26,7 @@ import java.util.Arrays;
  * 1) too slow and 2) explodes Throwable retained size by polluting Throwable.stackTrace fields.
  */
 public class ThrowableInterner {
-  private static final WeakInterner<Throwable> myTraceInterner = new WeakInterner<Throwable>(new TObjectHashingStrategy<Throwable>() {
+  private static final WeakInterner<Throwable> myTraceInterner = new WeakInterner<>(new TObjectHashingStrategy<Throwable>() {
     @Override
     public int computeHashCode(Throwable throwable) {
       String message = throwable.getMessage();

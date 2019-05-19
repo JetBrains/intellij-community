@@ -44,6 +44,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
   private JPanel myPanel;
   private JBCheckBox myAddTrailingBlankLineCheckbox;
   private JBCheckBox myUseContinuationIndentForArguments;
+  private JBCheckBox myUseContinuationIndentForCollectionsAndComprehensions;
   private ComboBox myDictAlignmentCombo;
   private JPanel myPreviewPanel;
 
@@ -104,14 +105,16 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   protected void resetImpl(CodeStyleSettings settings) {
+    final PyCodeStyleSettings pySettings = getCustomSettings(settings);
     for (DictAlignment alignment : DictAlignment.values()) {
-      if (getCustomSettings(settings).DICT_ALIGNMENT == alignment.asInt()) {
+      if (pySettings.DICT_ALIGNMENT == alignment.asInt()) {
         myDictAlignmentCombo.setSelectedItem(alignment);
         break;
       }
     }
-    myAddTrailingBlankLineCheckbox.setSelected(getCustomSettings(settings).BLANK_LINE_AT_FILE_END);
-    myUseContinuationIndentForArguments.setSelected(getCustomSettings(settings).USE_CONTINUATION_INDENT_FOR_ARGUMENTS);
+    myAddTrailingBlankLineCheckbox.setSelected(pySettings.BLANK_LINE_AT_FILE_END);
+    myUseContinuationIndentForArguments.setSelected(pySettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS);
+    myUseContinuationIndentForCollectionsAndComprehensions.setSelected(pySettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS);
   }
 
   @Override
@@ -120,6 +123,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     customSettings.DICT_ALIGNMENT = getDictAlignmentAsInt();
     customSettings.BLANK_LINE_AT_FILE_END = ensureTrailingBlankLine();
     customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS = useContinuationIndentForArguments();
+    customSettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = useContinuationIndentForCollectionLiterals();
   }
 
   @Override
@@ -127,7 +131,8 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     final PyCodeStyleSettings customSettings = getCustomSettings(settings);
     return customSettings.DICT_ALIGNMENT != getDictAlignmentAsInt() ||
            customSettings.BLANK_LINE_AT_FILE_END != ensureTrailingBlankLine() || 
-           customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS != useContinuationIndentForArguments() ;
+           customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS != useContinuationIndentForArguments() ||
+           customSettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS != useContinuationIndentForCollectionLiterals();
   }
 
   @Override
@@ -152,13 +157,22 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     return myUseContinuationIndentForArguments.isSelected();
   }
 
+  protected boolean useContinuationIndentForCollectionLiterals() {
+    return myUseContinuationIndentForCollectionsAndComprehensions.isSelected();
+  }
+
   public static final String PREVIEW = "x = max(\n" +
-    "    1,\n" +
-    "    2,\n" +
-    "    3)\n" +
-    "\n" +
-    "{\n" +
-    "    \"green\": 42,\n" +
-    "    \"eggs and ham\": -0.0e0\n" +
-    "}";
+                                       "    1,\n" +
+                                       "    2,\n" +
+                                       "    3)\n" +
+                                       "\n" +
+                                       "{\n" +
+                                       "    \"green\": 42,\n" +
+                                       "    \"eggs and ham\": -0.0e0\n" +
+                                       "}\n" +
+                                       "\n" +
+                                       "odds = [\n" +
+                                       "    num for num in range(42)\n" +
+                                       "    if num % 2 != 0 \n" +
+                                       "]";
 }

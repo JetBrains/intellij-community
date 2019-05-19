@@ -38,4 +38,8 @@ public class JavaVersionService {
   public JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
     return JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(element));
   }
+
+  public boolean isCompilerVersionAtLeast(@NotNull PsiElement element, @NotNull JavaSdkVersion version) {
+    return isAtLeast(element, version);
+  }
 }

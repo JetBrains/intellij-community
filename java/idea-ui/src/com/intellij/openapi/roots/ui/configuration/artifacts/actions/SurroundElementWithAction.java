@@ -53,7 +53,7 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final LayoutTreeComponent treeComponent = myArtifactEditor.getLayoutTreeComponent();
     final LayoutTreeSelection selection = treeComponent.getSelection();
     final CompositePackagingElement<?> parent = selection.getCommonParentElement();
@@ -91,7 +91,7 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
     }
   }
 
-  private void surroundWith(final CompositePackagingElementType<?> type, final CompositePackagingElement<?> parent, final List<PackagingElement<?>> selected,
+  private void surroundWith(final CompositePackagingElementType<?> type, final CompositePackagingElement<?> parent, final List<? extends PackagingElement<?>> selected,
                             LayoutTreeComponent treeComponent) {
     if (myArtifactEditor.isDisposed() || selected.isEmpty()) return;
 

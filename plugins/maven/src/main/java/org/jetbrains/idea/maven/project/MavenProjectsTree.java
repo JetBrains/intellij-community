@@ -1,23 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -27,8 +17,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -42,20 +32,27 @@ import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
+import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
+
 
 public class MavenProjectsTree {
 
@@ -526,7 +523,6 @@ public class MavenProjectsTree {
       return;
     }
     updateStack.push(mavenProject);
-
     process.setText(ProjectBundle.message("maven.reading.pom", mavenProject.getPath()));
     process.setText2("");
 
@@ -669,9 +665,9 @@ public class MavenProjectsTree {
       long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
       VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
       long profilesTimestamp = getFileTimestamp(profilesXmlFile);
-      VirtualFile jvmConfigFile = getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH);
+      VirtualFile jvmConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH);
       long jvmConfigTimestamp = getFileTimestamp(jvmConfigFile);
-      VirtualFile mavenConfigFile = getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+      VirtualFile mavenConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
       long mavenConfigTimestamp = getFileTimestamp(mavenConfigFile);
 
       long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
@@ -690,12 +686,12 @@ public class MavenProjectsTree {
     });
   }
 
-  private static VirtualFile getConfigFile(MavenProject mavenProject, String fileRelativePath) {
-    VirtualFile baseDir = VfsUtil.findFileByIoFile(MavenUtil.getBaseDir(mavenProject.getDirectoryFile()), false);
-    if (baseDir != null) {
-      return baseDir.findFileByRelativePath(fileRelativePath);
-    }
-    return null;
+  @Override
+  public String toString() {
+    return "MavenProjectsTree{" +
+           "myRootProjects=" + myRootProjects +
+           ", myProject=" + myProject +
+           '}';
   }
 
   private static long getFileTimestamp(VirtualFile file) {
@@ -1239,7 +1235,7 @@ public class MavenProjectsTree {
                       @NotNull MavenEmbeddersManager embeddersManager,
                       @NotNull MavenConsole console,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    resolve(project, ContainerUtil.list(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(), process);
+    resolve(project, Collections.singletonList(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(), process);
   }
 
   public void resolve(@NotNull Project project,
@@ -1257,6 +1253,7 @@ public class MavenProjectsTree {
       try {
         Properties userProperties = new Properties();
         for (MavenProject mavenProject : mavenProjects) {
+          mavenProject.setConfigFileError(null);
           for (MavenImporter mavenImporter : mavenProject.getSuitableImporters()) {
             mavenImporter.customizeUserProperties(project, mavenProject, userProperties);
           }
@@ -1264,10 +1261,62 @@ public class MavenProjectsTree {
         embedder.customizeForResolve(getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots(), userProperties);
         doResolve(project, entry.getValue(), generalSettings, embedder, context, process);
       }
+      catch (Throwable t) {
+        MavenConfigParseException cause = findParseException(t);
+        if (cause != null) {
+          for (MavenProject mavenProject : mavenProjects) {
+            if (FileUtil.pathsEqual(mavenProject.getDirectory(), cause.getDirectory())) {
+              showNotificationInvalidConfig(project, mavenProject, cause.getMessage());
+              mavenProject.setConfigFileError(cause.getMessage());
+              MavenProjectsManager.getInstance(myProject).getSyncConsole().addRootError(RunnerBundle.message("maven.invalid.config.file", cause.getMessage()), cause);
+            }
+          }
+        }
+        else {
+          throw t;
+        }
+      }
       finally {
         embeddersManager.release(embedder);
       }
+
+      MavenUtil.restartConfigHighlightning(mavenProjects);
     }
+  }
+
+
+  public static void showNotificationInvalidConfig(@NotNull Project project, @Nullable MavenProject mavenProject, String message) {
+    VirtualFile configFile = mavenProject == null ? null : MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+    if (configFile != null) {
+      NotificationListener listener = new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          FileEditorManager.getInstance(project).openFile(configFile, true);
+        }
+      };
+      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", RunnerBundle.message("maven.invalid.config.file.with.link", message),
+                       NotificationType.ERROR, listener).notify(project);
+    }
+    else {
+      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", RunnerBundle.message("maven.invalid.config.file", message),
+                       NotificationType.ERROR).notify(project);
+    }
+  }
+
+  private static MavenConfigParseException findParseException(Throwable t) {
+    MavenConfigParseException parseException = ExceptionUtil.findCause(t, MavenConfigParseException.class);
+    if (parseException != null) {
+      return parseException;
+    }
+
+    Throwable cause = ExceptionUtil.getRootCause(t);
+    if (cause instanceof InvocationTargetException) {
+      Throwable target = ((InvocationTargetException)cause).getTargetException();
+      if (target == null) {
+        return ExceptionUtil.findCause(target, MavenConfigParseException.class);
+      }
+    }
+    return null;
   }
 
   private void doResolve(@NotNull Project project,
@@ -1293,6 +1342,7 @@ public class MavenProjectsTree {
     Collection<MavenProjectReaderResult> results = new MavenProjectReader(project).resolveProject(
       generalSettings, embedder, files, explicitProfiles, myProjectLocator);
 
+    MavenUtil.notifySyncForUnresolved(project, results);
     for (MavenProjectReaderResult result : results) {
       MavenProject mavenProjectCandidate = null;
       for (MavenProject mavenProject : mavenProjects) {
@@ -1343,6 +1393,11 @@ public class MavenProjectsTree {
             filesToRefresh.add(pluginDir); // Refresh both *.pom and *.jar files.
           }
         }
+        if(artifacts.isEmpty()) {
+          process.startTask(MavenSyncConsole.PLUGINS_RESOLVE_PREFIX + each.getMavenId());
+          process.completeTask(MavenSyncConsole.PLUGINS_RESOLVE_PREFIX + each.getMavenId(), "Cannot Resolve plugin");
+        }
+
       }
 
       mavenProject.resetCache();
@@ -1486,38 +1541,38 @@ public class MavenProjectsTree {
     }
   }
 
-  private void fireProjectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+  private void fireProjectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
     for (Listener each : myListeners) {
       each.projectsIgnoredStateChanged(ignored, unignored, fromImport);
     }
   }
 
-  private void fireProjectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+  private void fireProjectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
     for (Listener each : myListeners) {
       each.projectsUpdated(updated, deleted);
     }
   }
 
-  private void fireProjectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                   NativeMavenProjectHolder nativeMavenProject) {
+  private void fireProjectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                   @Nullable NativeMavenProjectHolder nativeMavenProject) {
     for (Listener each : myListeners) {
       each.projectResolved(projectWithChanges, nativeMavenProject);
     }
   }
 
-  private void firePluginsResolved(MavenProject project) {
+  private void firePluginsResolved(@NotNull MavenProject project) {
     for (Listener each : myListeners) {
       each.pluginsResolved(project);
     }
   }
 
-  private void fireFoldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+  private void fireFoldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     for (Listener each : myListeners) {
       each.foldersResolved(projectWithChanges);
     }
   }
 
-  private void fireArtifactsDownloaded(MavenProject project) {
+  private void fireArtifactsDownloaded(@NotNull MavenProject project) {
     for (Listener each : myListeners) {
       each.artifactsDownloaded(project);
     }
@@ -1544,7 +1599,10 @@ public class MavenProjectsTree {
     }
 
     public void fireUpdatedIfNecessary() {
-      if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) return;
+      if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) {
+        //MavenProjectsManager.getInstance(myProject).getSyncConsole().finishImport();
+        return;
+      }
       List<MavenProject> mavenProjects = deletedProjects.isEmpty()
                                          ? Collections.emptyList()
                                          : new ArrayList<>(deletedProjects);
@@ -1687,23 +1745,23 @@ public class MavenProjectsTree {
     default void profilesChanged() {
     }
 
-    default void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+    default void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
     }
 
-    default void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+    default void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
     }
 
-    default void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                         @Nullable NativeMavenProjectHolder nativeMavenProject) {
+    default void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                 @Nullable NativeMavenProjectHolder nativeMavenProject) {
     }
 
-    default void pluginsResolved(MavenProject project) {
+    default void pluginsResolved(@NotNull MavenProject project) {
     }
 
-    default void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+    default void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     }
 
-    default void artifactsDownloaded(MavenProject project) {
+    default void artifactsDownloaded(@NotNull MavenProject project) {
     }
   }
 
@@ -1717,8 +1775,8 @@ public class MavenProjectsTree {
     @Override
     public boolean equals(MavenCoordinate o1, MavenCoordinate o2) {
       return Comparing.equal(o1.getArtifactId(), o2.getArtifactId())
-        && Comparing.equal(o1.getVersion(), o2.getVersion())
-        && Comparing.equal(o1.getGroupId(), o2.getGroupId());
+             && Comparing.equal(o1.getVersion(), o2.getVersion())
+             && Comparing.equal(o1.getGroupId(), o2.getGroupId());
     }
   }
 }

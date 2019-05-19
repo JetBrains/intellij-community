@@ -84,6 +84,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     return MavenDomProjectProcessorUtils.searchManagingDependency(dependency, project);
   }
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof XmlTag) {
       final DomElement element = DomManager.getDomManager(psiElement.getProject()).getDomElement((XmlTag)psiElement);
@@ -216,7 +217,7 @@ public class MavenDomGutterAnnotator implements Annotator {
 
     res.append("</dependency>");
 
-    return StringUtil.escapeXml(res.toString()).replace(" ", "&nbsp;");
+    return StringUtil.escapeXmlEntities(res.toString()).replace(" ", "&nbsp;");
   }
 
   private static class MyListCellRenderer extends PsiElementListCellRenderer<XmlTag> {
@@ -260,6 +261,7 @@ public class MavenDomGutterAnnotator implements Annotator {
   private static class DependencyConverter implements NotNullFunction<MavenDomDependency, Collection<? extends PsiElement>> {
     public static final DependencyConverter INSTANCE = new DependencyConverter();
 
+    @Override
     @NotNull
     public Collection<? extends PsiElement> fun(final MavenDomDependency pointer) {
       return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
@@ -269,6 +271,7 @@ public class MavenDomGutterAnnotator implements Annotator {
   private static class PluginConverter implements NotNullFunction<MavenDomPlugin, Collection<? extends PsiElement>> {
     public static final PluginConverter INSTANCE = new PluginConverter();
 
+    @Override
     @NotNull
     public Collection<? extends PsiElement> fun(final MavenDomPlugin pointer) {
       return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
@@ -278,6 +281,7 @@ public class MavenDomGutterAnnotator implements Annotator {
   private static class MavenProjectConverter implements NotNullFunction<MavenDomProjectModel, Collection<? extends PsiElement>> {
     public static final MavenProjectConverter INSTANCE = new MavenProjectConverter();
 
+    @Override
     @NotNull
     public Collection<? extends PsiElement> fun(final MavenDomProjectModel pointer) {
       return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());

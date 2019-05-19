@@ -1,56 +1,47 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretStateTransferableData;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.CutElementMarker;
 import com.intellij.openapi.ide.KillRingTransferable;
+import com.intellij.openapi.ide.Sizeable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.LinkedListWithSum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
 
+/**
+ * This implementation attempts to limit memory occupied by clipboard history. To make it work, {@link Transferable} instances passed to
+ * {@link #setContents(Transferable)} should implement {@link Sizeable} interface. See {@link #getSize(Transferable)} method for details on
+ * estimating the size of {@code Transferable} and {@link #deleteAfterAllowedMaximum()} method for history trimming logic.
+ */
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
-  private final List<Transferable> myData = new ArrayList<>();
+  private static final Logger LOG = Logger.getInstance(CopyPasteManagerEx.class);
+
+  private final LinkedListWithSum<Transferable> myData = new LinkedListWithSum<>(CopyPasteManagerEx::getSize);
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
-  private final ClipboardSynchronizer myClipboardSynchronizer;
   private boolean myOwnContent;
 
   public static CopyPasteManagerEx getInstanceEx() {
     return (CopyPasteManagerEx)getInstance();
   }
 
-  public CopyPasteManagerEx(ClipboardSynchronizer clipboardSynchronizer) {
-    myClipboardSynchronizer = clipboardSynchronizer;
-  }
-
   @Override
   public void lostOwnership(Clipboard clipboard, Transferable contents) {
     myOwnContent = false;
-    myClipboardSynchronizer.resetContent();
+    ClipboardSynchronizer.getInstance().resetContent();
     fireContentChanged(contents, null);
   }
 
@@ -75,7 +66,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   @Override
   public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
-    return flavors.length > 0 &&  myClipboardSynchronizer.areDataFlavorsAvailable(flavors);
+    return flavors.length > 0 && ClipboardSynchronizer.getInstance().areDataFlavorsAvailable(flavors);
   }
 
   @Override
@@ -90,7 +81,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   @Override
   public boolean isCutElement(@Nullable final Object element) {
-    for (CutElementMarker marker : Extensions.getExtensions(CutElementMarker.EP_NAME)) {
+    for (CutElementMarker marker : CutElementMarker.EP_NAME.getExtensionList()) {
       if (marker.isCutElement(element)) return true;
     }
     return false;
@@ -106,7 +97,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   private void setSystemClipboardContent(Transferable content) {
-    myClipboardSynchronizer.setContent(content, this);
+    ClipboardSynchronizer.getInstance().setContent(content, this);
     myOwnContent = true;
   }
 
@@ -144,11 +135,12 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       }
 
       CaretStateTransferableData caretData = CaretStateTransferableData.getFrom(content);
-      for (int i = 0; i < myData.size(); i++) {
-        Transferable old = myData.get(i);
+      Iterator<Transferable> it = myData.iterator();
+      while (it.hasNext()) {
+        Transferable old = it.next();
         if (clipString.equals(getStringContent(old)) &&
             CaretStateTransferableData.areEquivalent(caretData, CaretStateTransferableData.getFrom(old))) {
-          myData.remove(i);
+          it.remove();
           myData.add(0, content);
           return content;
         }
@@ -215,7 +207,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     return null;
   }
 
-  private static String getStringContent(Transferable content) {
+  private static String getStringContent(@NotNull Transferable content) {
     try {
       return (String)content.getTransferData(DataFlavor.stringFlavor);
     }
@@ -224,15 +216,26 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   private void deleteAfterAllowedMaximum() {
-    int max = UISettings.getInstance().getMaxClipboardContents();
-    for (int i = myData.size() - 1; i >= max; i--) {
+    int maxCount = Math.max(1, Registry.intValue("clipboard.history.max.items"));
+    int maxMemory = Math.max(0, Registry.intValue("clipboard.history.max.memory"));
+    int smallItemSizeLimit = maxMemory / maxCount / 10;
+
+    for (int i = myData.size() - 1; i >= maxCount; i--) {
       myData.remove(i);
+    }
+
+    LinkedListWithSum<Transferable>.ListIterator it = myData.listIterator(myData.size());
+    while (myData.getSum() > maxMemory && it.hasPrevious() && it.previousIndex() > 0) {
+      it.previous();
+      if (it.getValue() > smallItemSizeLimit) {
+        it.set(createPurgedItem());
+      }
     }
   }
 
   @Override
   public Transferable getContents() {
-    return myClipboardSynchronizer.getContents();
+    return ClipboardSynchronizer.getInstance().getContents();
   }
 
   @Nullable
@@ -240,7 +243,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   public <T> T getContents(@NotNull DataFlavor flavor) {
     if (areDataFlavorsAvailable(flavor)) {
       //noinspection unchecked
-      return (T)myClipboardSynchronizer.getData(flavor);
+      return (T)ClipboardSynchronizer.getInstance().getData(flavor);
     }
     return null;
   }
@@ -276,5 +279,28 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     else {
       setSystemClipboardContent(t);
     }
+  }
+
+  private static Transferable createPurgedItem() {
+    return new StringSelection(UIBundle.message("clipboard.history.purged.item"));
+  }
+
+  private static int getSize(Transferable t) {
+    if (t instanceof StringSelection) {
+      try {
+        return StringUtil.length((String)t.getTransferData(DataFlavor.stringFlavor));
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+    else if (t instanceof Sizeable) {
+      int size = ((Sizeable)t).getSize();
+      if (size >= 0) {
+        return size;
+      }
+      LOG.error("Got negative size (" + size + ") from " + t);
+    }
+    return 1000; // some value for an unknown type
   }
 }

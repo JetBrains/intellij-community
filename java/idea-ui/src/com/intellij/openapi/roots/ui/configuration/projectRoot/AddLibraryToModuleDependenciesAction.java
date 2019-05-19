@@ -39,7 +39,7 @@ public class AddLibraryToModuleDependenciesAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final ProjectStructureElement element = myConfigurable.getSelectedElement();
     boolean visible = false;
     if (element instanceof LibraryProjectStructureElement) {
@@ -50,7 +50,7 @@ public class AddLibraryToModuleDependenciesAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final LibraryProjectStructureElement element = (LibraryProjectStructureElement)myConfigurable.getSelectedElement();
     if (element == null) return;
     final Library library = element.getLibrary();

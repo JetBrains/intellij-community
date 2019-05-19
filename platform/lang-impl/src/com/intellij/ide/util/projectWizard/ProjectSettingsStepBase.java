@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.BundleBase;
@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
@@ -22,7 +23,6 @@ import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,13 +35,14 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
 
 public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implements DumbAware, Disposable {
   protected DirectoryProjectGenerator<T> myProjectGenerator;
-  protected AbstractNewProjectStep.AbstractCallback myCallback;
+  protected AbstractNewProjectStep.AbstractCallback<T> myCallback;
   protected TextFieldWithBrowseButton myLocationField;
   protected File myProjectDirectory;
   protected JButton myCreateButton;
@@ -49,7 +50,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
 
   public ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
-                                 AbstractNewProjectStep.AbstractCallback callback) {
+                                 AbstractNewProjectStep.AbstractCallback<T> callback) {
     super();
     getTemplatePresentation().setIcon(projectGenerator.getLogo());
     getTemplatePresentation().setText(projectGenerator.getName());
@@ -132,7 +133,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          myCallback.consume(ProjectSettingsStepBase.this, getPeer());
+          TransactionGuard.getInstance().submitTransactionAndWait(() -> myCallback.consume(ProjectSettingsStepBase.this, getPeer()));
         }
       }
     };
@@ -178,7 +179,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   protected void registerValidators() {
     final DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         checkValid();
       }
     };
@@ -196,7 +197,6 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   public boolean checkValid() {
     if (myLocationField == null) return true;
     final String projectName = myLocationField.getText();
-    setErrorText(null);
 
     if (projectName.trim().isEmpty()) {
       setErrorText("Project name can't be empty");
@@ -234,6 +234,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
       }
     }
 
+    setErrorText(null);
     return true;
   }
 
@@ -253,7 +254,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     if (settingsStep.isEmpty()) return createContentPanelWithAdvancedSettingsPanel();
 
     final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
-    List<LabeledComponent> labeledComponentList = ContainerUtil.newArrayList();
+    List<LabeledComponent> labeledComponentList = new ArrayList<>();
     labeledComponentList.add(createLocationComponent());
     labeledComponentList.addAll(settingsStep.getFields());
 

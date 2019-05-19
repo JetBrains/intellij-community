@@ -52,6 +52,7 @@ public class ConfigUI extends JPanel {
         useContextAtCursor = new JCheckBox("Use node at cursor as context node");
         useContextAtCursor.setMnemonic('N');
         useContextAtCursor.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 stateChanged();
             }

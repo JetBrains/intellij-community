@@ -12,11 +12,6 @@ public class RequestFailedException extends RuntimeException {
   private TaskRepository myRepository;
 
   @NotNull
-  public static RequestFailedException forStatusCode(int code) {
-    return new RequestFailedException(TaskBundle.messageForStatusCode(code));
-  }
-
-  @NotNull
   public static RequestFailedException forStatusCode(int code, @NotNull String message) {
     return new RequestFailedException(TaskBundle.message("failure.http.error", code, message));
   }

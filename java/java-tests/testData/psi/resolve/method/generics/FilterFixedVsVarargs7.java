@@ -14,6 +14,6 @@ import java.util.List;
      public static void main(String[] args) {
          String[] array = {"foo", "bar"};
          //resolves to nonvarargs method
-         List<String[]> listOfString =  <ref>listOf(array);
+         List<String[]> listOfString =  <caret>listOf(array);
      }
  }

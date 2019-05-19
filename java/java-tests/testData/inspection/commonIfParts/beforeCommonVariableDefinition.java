@@ -1,4 +1,4 @@
-// "Collapse if statement " "true"
+// "Collapse 'if' statement" "true"
 
 import java.util.List;
 import java.util.Map;

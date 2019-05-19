@@ -83,7 +83,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   protected void nodeStateWillChangeImpl(CheckedTreeNode node) {
   }
 
-  private void setGroupingRulesInternal(final Collection<XBreakpointGroupingRule> groupingRules) {
+  private void setGroupingRulesInternal(final Collection<? extends XBreakpointGroupingRule> groupingRules) {
     myGroupingRules = new ArrayList<>(groupingRules);
   }
 
@@ -150,12 +150,12 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     return groupNode;
   }
 
-  public void setGroupingRules(Collection<XBreakpointGroupingRule> groupingRules) {
+  public void setGroupingRules(Collection<? extends XBreakpointGroupingRule> groupingRules) {
     setGroupingRulesInternal(groupingRules);
     rebuildTree(new ArrayList<>(myNodes.keySet()));
   }
 
-  public void rebuildTree(Collection<BreakpointItem> items) {
+  public void rebuildTree(Collection<? extends BreakpointItem> items) {
     List<BreakpointItem> selectedBreakpoints = getSelectedBreakpoints(false);
     TreePath path = myTreeView.getSelectionPath();
     buildTree(items);
@@ -230,11 +230,10 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   }
 
   private static class TreeNodeComparator implements Comparator<TreeNode> {
+    @Override
     public int compare(final TreeNode o1, final TreeNode o2) {
       if (o1 instanceof BreakpointItemNode && o2 instanceof BreakpointItemNode) {
-        //noinspection unchecked
         BreakpointItem b1 = ((BreakpointItemNode)o1).getBreakpointItem();
-        //noinspection unchecked
         BreakpointItem b2 = ((BreakpointItemNode)o2).getBreakpointItem();
         boolean default1 = b1.isDefaultBreakpoint();
         boolean default2 = b2.isDefaultBreakpoint();

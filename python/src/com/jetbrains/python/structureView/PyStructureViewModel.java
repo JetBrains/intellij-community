@@ -29,7 +29,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class PyStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
+public class PyStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider,
+                                                                            StructureViewModel.ExpandInfoProvider {
   public PyStructureViewModel(@NotNull PsiFile psiFile, @Nullable Editor editor) {
     this(psiFile, editor, new PyStructureViewElement((PyElement) psiFile));
     withSorters(Sorter.ALPHA_SORTER);
@@ -63,5 +64,20 @@ public class PyStructureViewModel extends StructureViewModelBase implements Stru
       new PyInheritedMembersFilter(),
       new PyFieldsFilter(),
     };
+  }
+
+  @Override
+  public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
+    return false;
+  }
+
+  @Override
+  public boolean isSmartExpand() {
+    return false;
+  }
+
+  @Override
+  public int getMinimumAutoExpandDepth() {
+    return 1;
   }
 }

@@ -22,7 +22,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageViewUtil;
@@ -31,8 +30,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class JavaNameSuggestionProvider implements NameSuggestionProvider {
+  @Override
   @Nullable
   public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, Set<String> result) {
     if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return null;
@@ -102,13 +103,8 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       prefix = codeStyleManager.getPrefixByVariableKind(kind);
       if (kind == VariableKind.STATIC_FINAL_FIELD) {
         final String[] words = NameUtil.splitNameIntoWords(name);
-        StringBuilder buffer = new StringBuilder();
-        for (int i = 0; i < words.length; i++) {
-          String word = words[i];
-          if (i > 0) buffer.append('_');
-          buffer.append(StringUtil.toUpperCase(word));
-        }
-        return new String[] {buffer.toString()};
+        String buffer = Arrays.stream(words).map(StringUtil::toUpperCase).collect(Collectors.joining("_"));
+        return new String[] {buffer};
       }
     }
     final List<String> result = new ArrayList<>();
@@ -117,7 +113,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       name = name.substring(prefix.length());
       result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
     }
-    result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name.toLowerCase())));
+    result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(StringUtil.toLowerCase(name))));
     return ArrayUtil.toStringArray(result);
   }
 
@@ -157,7 +153,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     final PsiExpression expression = PsiTreeUtil.getParentOfType(nameSuggestionContext, PsiCallExpression.class, false, PsiLambdaExpression.class, PsiClass.class);
     if (expression != null) {
       return new SuggestedNameInfo.Delegate(codeStyleManager.suggestVariableName(variableKind, null, expression, var.getType()).names, nameInfo);
-      
+
     }
     return nameInfo;
   }

@@ -1,35 +1,40 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcsUtil;
 
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
+import com.intellij.openapi.vcs.changes.IgnoredFileGenerator;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
+import static com.intellij.openapi.vcs.FileStatus.IGNORED;
+import static com.intellij.openapi.vcs.FileStatus.UNKNOWN;
+import static com.intellij.vcsUtil.VcsUtil.isFileUnderVcs;
+
 /**
  * <p>{@link VcsUtil} extension that needs access to the {@code intellij.platform.vcs.impl} module.</p>
- *
- * @author Kirill Likhodedov
  */
 public class VcsImplUtil {
+
+  private static final Logger LOG = Logger.getInstance(VcsImplUtil.class);
+
   /**
    * Shows error message with specified message text and title.
    * The parent component is the root frame.
@@ -38,8 +43,7 @@ public class VcsImplUtil {
    * @param message information message
    * @param title   Dialog title
    */
-  public static void showErrorMessage(final Project project, final String message, final String title)
-  {
+  public static void showErrorMessage(final Project project, final String message, final String title) {
     Runnable task = () -> Messages.showErrorDialog(project, message, title);
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(task, null, project);
   }
@@ -57,5 +61,74 @@ public class VcsImplUtil {
     }
 
     return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
+  }
+
+  public static boolean isNonModalCommit() {
+    return Registry.is("vcs.non.modal.commit");
+  }
+
+  @Nullable
+  public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull Project project,
+                                                                           AbstractVcs vcs) {
+    IgnoredFileContentProvider ignoreContentProvider = IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
+      .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
+      .findFirst()
+      .orElse(null);
+
+    if (ignoreContentProvider == null) {
+      LOG.debug("Cannot get ignore content provider for vcs " + vcs.getName());
+      return null;
+    }
+    return ignoreContentProvider;
+  }
+
+  public static void proposeUpdateIgnoreFile(@NotNull Project project,
+                                             @NotNull AbstractVcs vcs,
+                                             @NotNull VirtualFile ignoreFileRoot) {
+    generateIgnoreFile(project, vcs, ignoreFileRoot, true);
+  }
+
+  public static void generateIgnoreFileIfNeeded(@NotNull Project project,
+                                                @NotNull AbstractVcs vcs,
+                                                @NotNull VirtualFile ignoreFileRoot) {
+    generateIgnoreFile(project, vcs, ignoreFileRoot, false);
+  }
+
+  private static void generateIgnoreFile(@NotNull Project project,
+                                         @NotNull AbstractVcs vcs,
+                                         @NotNull VirtualFile ignoreFileRoot, boolean notify) {
+    IgnoredFileGenerator ignoredFileGenerator = ServiceManager.getService(project, IgnoredFileGenerator.class);
+    if (ignoredFileGenerator == null) {
+      LOG.debug("Cannot find ignore file ignoredFileGenerator for " + vcs.getName() + " VCS");
+      return;
+    }
+    ignoredFileGenerator.generateFile(ignoreFileRoot, vcs, notify);
+  }
+
+  @Nullable
+  public static IgnoredFileContentProvider getIgnoredFileContentProvider(@NotNull Project project,
+                                                                          @NotNull AbstractVcs vcs) {
+    return IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
+      .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
+      .findFirst()
+      .orElse(null);
+  }
+
+  private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManagerEx changeListManager, @NotNull String filePath) {
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
+    if (file == null) return false;
+    FileStatus fileStatus = changeListManager.getStatus(file);
+    return isFileUnderVcs(project, filePath) &&
+           (fileStatus != UNKNOWN && fileStatus != IGNORED);
+  }
+
+  public static boolean isProjectSharedInVcs(@NotNull Project project) {
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) return false;
+      @SystemIndependent String projectFilePath = project.getProjectFilePath();
+      ChangeListManagerEx changeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+      return !changeListManager.isInUpdate()
+             && (projectFilePath != null && isFileSharedInVcs(project, changeListManager, projectFilePath));
+    });
   }
 }

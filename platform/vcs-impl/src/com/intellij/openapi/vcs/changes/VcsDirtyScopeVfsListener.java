@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
@@ -28,14 +14,15 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Listens to file system events and notifies VcsDirtyScopeManagers responsible for changed files to mark these files dirty.
@@ -64,8 +51,8 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
         myQueue.clear();
       }
 
-      HashSet<FilePath> dirtyFiles = ContainerUtil.newHashSet();
-      HashSet<FilePath> dirtyDirs = ContainerUtil.newHashSet();
+      HashSet<FilePath> dirtyFiles = new HashSet<>();
+      HashSet<FilePath> dirtyDirs = new HashSet<>();
       for (FilesAndDirs filesAndDirs : list) {
         dirtyFiles.addAll(filesAndDirs.dirtyFiles);
         dirtyDirs.addAll(filesAndDirs.dirtyDirs);
@@ -95,15 +82,21 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
     myForbid = forbid;
   }
 
-  public void flushDirt() {
-    myDirtReporter.run();
-  }
-
   @Override
   public void dispose() {
     synchronized (myLock) {
       myQueue.clear();
     }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //noinspection TestOnlyProblems
+      waitForAsyncTaskCompletion();
+    }
+  }
+
+  @TestOnly
+  void waitForAsyncTaskCompletion() {
+    myZipperUpdater.waitForAllExecuted(10, TimeUnit.SECONDS);
   }
 
   @Override
@@ -148,7 +141,7 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
       }
       else if (event instanceof VFilePropertyChangeEvent) {
         final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
-        if (pce.getPropertyName().equals(VirtualFile.PROP_NAME)) {
+        if (pce.isRename()) {
           // if a file was renamed, then the file is dirty and its parent directory is dirty too;
           // if a directory was renamed, all its children are recursively dirty, the parent dir is also dirty but not recursively.
           dirtyFilesAndDirs.add(file);   // the file is dirty recursively
@@ -176,8 +169,8 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
    * not recursively, you should add it to files.
    */
   private static class FilesAndDirs {
-    @NotNull HashSet<FilePath> dirtyFiles = ContainerUtil.newHashSet();
-    @NotNull HashSet<FilePath> dirtyDirs = ContainerUtil.newHashSet();
+    @NotNull HashSet<FilePath> dirtyFiles = new HashSet<>();
+    @NotNull HashSet<FilePath> dirtyDirs = new HashSet<>();
 
     private void add(@Nullable VirtualFile file, boolean addToFiles) {
       if (file == null) return;

@@ -24,27 +24,20 @@ import org.jetbrains.annotations.NotNull;
  * @author Nikolay.Tropin
  */
 public class DefaultSyntheticProvider implements SyntheticTypeComponentProvider {
+
   @Override
   public boolean isSynthetic(@NotNull TypeComponent typeComponent) {
-    return checkIsSynthetic(typeComponent);
+    if (DebuggerUtilsEx.isLambdaClassName(typeComponent.declaringType().name())) {
+      return true;
+    }
+
+    VirtualMachine vm = typeComponent.virtualMachine();
+    return vm != null && vm.canGetSyntheticAttribute() ? typeComponent.isSynthetic() : typeComponent.name().contains("$");
   }
 
-  public static boolean checkIsSynthetic(@NotNull TypeComponent typeComponent) {
+  @Override
+  public boolean isNotSynthetic(TypeComponent typeComponent) {
     String name = typeComponent.name();
-    if (DebuggerUtilsEx.isLambdaName(name)) {
-      return false;
-    }
-    else {
-      if (DebuggerUtilsEx.isLambdaClassName(typeComponent.declaringType().name())) {
-        return true;
-      }
-    }
-    VirtualMachine machine = typeComponent.virtualMachine();
-    if (machine != null && machine.canGetSyntheticAttribute()) {
-      return typeComponent.isSynthetic();
-    }
-    else {
-      return name.contains("$");
-    }
+    return DebuggerUtilsEx.isLambdaName(name);
   }
 }

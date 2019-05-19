@@ -60,7 +60,6 @@ public abstract class KeymapManagerEx extends KeymapManager {
   /**
    * @deprecated Please use {@link #getSchemeManager()}
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   public final SchemesManager<Keymap> getSchemesManager() {
     return (SchemesManager<Keymap>)getSchemeManager();

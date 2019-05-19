@@ -7,5 +7,6 @@ class IndexOfReplaceableByContains {
 
     boolean d = <warning descr="'haystack.indexOf(needle) > -1' can be replaced with 'haystack.contains(needle)'">haystack.indexOf(needle) > -1</warning>;
     boolean e = <warning descr="'haystack.indexOf(needle) >= 0' can be replaced with 'haystack.contains(needle)'">haystack.indexOf(needle) >= 0</warning>;
+    boolean f = <warning descr="'(haystack.indexOf(needle)) >= (0)' can be replaced with 'haystack.contains(needle)'">(haystack.indexOf(needle)) >= (0)</warning>;
   }
 }

@@ -37,5 +37,5 @@ public interface SvnServerFileKeys {
   String SSL_CLIENT_CERT_FILE = "ssl-client-cert-file";
   String SSL_CLIENT_CERT_PASSWORD = "ssl-client-cert-password";
 
-  List YES_OPTIONS = Arrays.asList(new String[]{"yes", "on", "true", "1"});
+  List YES_OPTIONS = Arrays.asList("yes", "on", "true", "1");
 }

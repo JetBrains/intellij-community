@@ -1,14 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.settings.mappings;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
@@ -29,11 +31,14 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.jetbrains.jsonSchema.JsonMappingKind;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import com.jetbrains.jsonSchema.widget.JsonSchemaInfoPopupStep;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,9 +50,10 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
@@ -58,8 +64,8 @@ public class JsonSchemaMappingsView implements Disposable {
   private static final String ADD_SCHEMA_MAPPING = "settings.json.schema.add.mapping";
   private static final String EDIT_SCHEMA_MAPPING = "settings.json.schema.edit.mapping";
   private static final String REMOVE_SCHEMA_MAPPING = "settings.json.schema.remove.mapping";
-  private final Runnable myTreeUpdater;
-  private final Consumer<String> mySchemaPathChangedCallback;
+  private final TreeUpdater myTreeUpdater;
+  private final BiConsumer<? super String, ? super Boolean> mySchemaPathChangedCallback;
   private TableView<UserDefinedJsonSchemaConfiguration.Item> myTableView;
   private JComponent myComponent;
   private Project myProject;
@@ -71,8 +77,8 @@ public class JsonSchemaMappingsView implements Disposable {
   private boolean myInitialized;
 
   public JsonSchemaMappingsView(Project project,
-                                Runnable treeUpdater,
-                                Consumer<String> schemaPathChangedCallback) {
+                                TreeUpdater treeUpdater,
+                                BiConsumer<? super String, ? super Boolean> schemaPathChangedCallback) {
     myTreeUpdater = treeUpdater;
     mySchemaPathChangedCallback = schemaPathChangedCallback;
     createUI(project);
@@ -96,12 +102,29 @@ public class JsonSchemaMappingsView implements Disposable {
 
     JBTextField schemaFieldBacking = new JBTextField();
     mySchemaField = new TextFieldWithBrowseButton(schemaFieldBacking);
+    mySchemaField.setButtonIcon(AllIcons.General.OpenDiskHover);
+    FixedSizeButton urlButton = new FixedSizeButton();
+    urlButton.setIcon(AllIcons.General.Web);
+    urlButton.addActionListener(a -> {
+      final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
+      List<JsonSchemaInfo> schemas = service.getAllUserVisibleSchemas();
+      JBPopupFactory.getInstance().createListPopup(new JsonSchemaInfoPopupStep(schemas,
+                                                                               myProject, null, service, "Remote Schema URLs") {
+        @Override
+        protected void setMapping(@Nullable JsonSchemaInfo selectedValue, @Nullable VirtualFile virtualFile, @NotNull Project project) {
+          if (selectedValue != null) {
+            mySchemaField.setText(selectedValue.getUrl(myProject));
+            mySchemaPathChangedCallback.accept(selectedValue.getDescription(), true); // force updating name
+          }
+        }
+      }).showInCenterOf(urlButton);
+    });
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
     mySchemaField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
-        mySchemaPathChangedCallback.accept(mySchemaField.getText());
+      protected void textChanged(@NotNull DocumentEvent e) {
+        mySchemaPathChangedCallback.accept(mySchemaField.getText(), false);
       }
     });
     attachNavigateToSchema();
@@ -114,12 +137,16 @@ public class JsonSchemaMappingsView implements Disposable {
       builder.createBalloon().showInCenterOf(myError);
     });
 
+    JPanel schemaSelector = new JPanel(new BorderLayout());
+    schemaSelector.add(mySchemaField, BorderLayout.CENTER);
+    schemaSelector.add(urlButton, BorderLayout.EAST);
+
     final FormBuilder builder = FormBuilder.createFormBuilder();
     final JBLabel label = new JBLabel(JsonBundle.message("json.schema.file.selector.title"));
-    builder.addLabeledComponent(label, mySchemaField);
-    label.setLabelFor(mySchemaField);
+    builder.addLabeledComponent(label, schemaSelector);
+    label.setLabelFor(schemaSelector);
     label.setBorder(JBUI.Borders.empty(0, 10));
-    mySchemaField.setBorder(JBUI.Borders.emptyRight(10));
+    schemaSelector.setBorder(JBUI.Borders.emptyRight(10));
     JBLabel versionLabel = new JBLabel("Schema version:");
     mySchemaVersionComboBox = new ComboBox<>(new DefaultComboBoxModel<>(JsonSchemaVersion.values()));
     versionLabel.setLabelFor(mySchemaVersionComboBox);
@@ -134,7 +161,7 @@ public class JsonSchemaMappingsView implements Disposable {
     JPanel panel = decorator.createPanel();
     panel.setBorder(BorderFactory.createCompoundBorder(JBUI.Borders.empty(0, 8), panel.getBorder()));
     builder.addComponentFillVertically(panel, 5);
-    JLabel commentComponent = ComponentPanelBuilder.createCommentComponent("Path to file, directory or file name pattern *.config.json", false);
+    JLabel commentComponent = ComponentPanelBuilder.createCommentComponent("Path to file or directory relative to project root, or file name pattern like *.config.json", false);
     commentComponent.setBorder(JBUI.Borders.empty(0, 8, 5, 0));
     builder.addComponent(commentComponent);
 
@@ -145,10 +172,10 @@ public class JsonSchemaMappingsView implements Disposable {
   public void dispose() {
   }
 
-  public void setError(final String text) {
+  public void setError(final String text, boolean showWarning) {
     myErrorText = text;
-    myError.setVisible(text != null);
-    myErrorIcon.setVisible(text != null);
+    myError.setVisible(showWarning && text != null);
+    myErrorIcon.setVisible(showWarning && text != null);
   }
 
   private void attachNavigateToSchema() {
@@ -163,12 +190,14 @@ public class JsonSchemaMappingsView implements Disposable {
         balloon.showInCenterOf(mySchemaField);
         return;
       }
-      new OpenFileDescriptor(myProject, virtualFile).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(myProject, virtualFile, -1).navigate(true);
     }).registerCustomShortcutSet(CommonShortcuts.getEditSource(), mySchemaField);
   }
 
   public List<UserDefinedJsonSchemaConfiguration.Item> getData() {
-    return myTableView.getListTableModel().getItems();
+    return Collections.unmodifiableList(
+      ContainerUtil
+        .filter(myTableView.getListTableModel().getItems(), i -> i.mappingKind == JsonMappingKind.Directory || !StringUtil.isEmpty(i.path)));
   }
 
   public void setItems(String schemaFilePath,
@@ -204,7 +233,7 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   private class MappingItemColumnInfo extends ColumnInfo<UserDefinedJsonSchemaConfiguration.Item, String> {
-    public MappingItemColumnInfo() {super("");}
+    MappingItemColumnInfo() {super("");}
 
     @Nullable
     @Override
@@ -225,7 +254,20 @@ public class JsonSchemaMappingsView implements Disposable {
                                                        int column) {
           JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           label.setIcon(item.mappingKind.getIcon());
-          return label;
+
+          String error = item.getError();
+          if (error == null) {
+            return label;
+          }
+
+          JPanel panel = new JPanel();
+          panel.setLayout(new BorderLayout());
+          panel.add(label, BorderLayout.CENTER);
+          JLabel warning = new JLabel(AllIcons.General.Warning);
+          panel.setBackground(label.getBackground());
+          panel.setToolTipText(error);
+          panel.add(warning, BorderLayout.LINE_END);
+          return panel;
         }
       };
     }
@@ -243,7 +285,7 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   class MyAddActionButtonRunnable implements AnActionButtonRunnable {
-    public MyAddActionButtonRunnable() {
+    MyAddActionButtonRunnable() {
       super();
     }
 
@@ -281,12 +323,12 @@ public class JsonSchemaMappingsView implements Disposable {
       myTableView.getListTableModel().addRow(currentItem);
       myTableView.editCellAt(myTableView.getListTableModel().getRowCount() - 1, 0);
 
-      myTreeUpdater.run();
+      myTreeUpdater.updateTree(false);
     }
   }
 
   private class MyEditActionButtonRunnableImpl implements AnActionButtonRunnable {
-    public MyEditActionButtonRunnableImpl() {
+    MyEditActionButtonRunnableImpl() {
       super();
     }
 
@@ -313,7 +355,7 @@ public class JsonSchemaMappingsView implements Disposable {
           ++cnt;
         }
         myTableView.getListTableModel().fireTableDataChanged();
-        myTreeUpdater.run();
+        myTreeUpdater.updateTree(true);
       }
     }
   }

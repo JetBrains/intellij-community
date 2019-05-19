@@ -39,7 +39,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   private final boolean myExported;
   private final String myQualifiedClassName;
 
-  public AddLibraryDependencyFix(PsiReference reference,
+  AddLibraryDependencyFix(PsiReference reference,
                                  Module currentModule,
                                  Library library,
                                  DependencyScope scope,

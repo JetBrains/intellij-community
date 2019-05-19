@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  */
 public class AntHectorPanelProvider implements HectorComponentPanelsProvider{
+  @Override
   public HectorComponentPanel createConfigurable(@NotNull final PsiFile file) {
     if (file instanceof XmlFile && AntDomFileDescription.isAntFile(((XmlFile)file))) {
       return new AntHectorConfigurable(((XmlFile)file));

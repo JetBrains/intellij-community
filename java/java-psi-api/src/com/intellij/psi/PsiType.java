@@ -73,6 +73,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   }
 
   /** @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
+  @Deprecated
   @NotNull
   public PsiArrayType createArrayType(@NotNull PsiAnnotation... annotations) {
     return new PsiArrayType(this, annotations);
@@ -155,7 +156,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    */
   @NotNull
   public static PsiClassType getTypeByName(@NotNull String qName, @NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     return factory.createTypeByFQClassName(qName, resolveScope);
   }
 

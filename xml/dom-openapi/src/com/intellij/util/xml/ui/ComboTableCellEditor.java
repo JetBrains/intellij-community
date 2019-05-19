@@ -30,11 +30,11 @@ import java.util.Map;
  */
 public class ComboTableCellEditor extends DefaultCellEditor {
   private final boolean myNullable;
-  private final Factory<List<Pair<String, Icon>>> myDataFactory;
+  private final Factory<? extends List<Pair<String, Icon>>> myDataFactory;
   private Map<String, Icon> myData;
   private static final Pair<String,Icon> EMPTY = Pair.create(" ", null);
 
-  public ComboTableCellEditor(Factory<List<Pair<String, Icon>>> dataFactory, final boolean nullable) {
+  public ComboTableCellEditor(Factory<? extends List<Pair<String, Icon>>> dataFactory, final boolean nullable) {
     super(new JComboBox());
     myDataFactory = dataFactory;
     myNullable = nullable;

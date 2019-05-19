@@ -24,8 +24,6 @@ public interface FileDocumentManagerListener extends EventListener {
    * Fired before processing FileDocumentManager.saveAllDocuments(). Can be used by plugins
    * which need to perform additional save operations when documents, rather than settings,
    * are saved.
-   *
-   * @since 8.0
    */
   default void beforeAllDocumentsSaving() {
   }
@@ -39,7 +37,7 @@ public interface FileDocumentManagerListener extends EventListener {
   /**
    * NOTE: Vetoing facility is deprecated in this listener implement {@link FileDocumentSynchronizationVetoer} instead.
    */
-  default void beforeFileContentReload(VirtualFile file, @NotNull Document document) {
+  default void beforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
   }
 
   default void fileWithNoDocumentChanged(@NotNull VirtualFile file) {

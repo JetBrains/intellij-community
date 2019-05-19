@@ -16,13 +16,21 @@ import java.util.*
 
 object PyCollectionTypeUtil {
 
-  val DICT_CONSTRUCTOR: String = "dict.__init__"
+  const val DICT_CONSTRUCTOR: String = "dict.__init__"
   private const val LIST_CONSTRUCTOR = "list.__init__"
   private const val SET_CONSTRUCTOR = "set.__init__"
+  private const val RANGE_CONSTRUCTOR = "range"
 
-  var COLLECTION_CONSTRUCTORS: Set<String> = setOf(LIST_CONSTRUCTOR, DICT_CONSTRUCTOR, SET_CONSTRUCTOR)
+  private const val MAX_ANALYZED_ELEMENTS_OF_LITERALS = 10 /* performance */
 
-  private val MAX_ANALYZED_ELEMENTS_OF_LITERALS = 10 /* performance */
+  fun getCollectionConstructors(languageLevel: LanguageLevel): Set<String> {
+    return if (languageLevel.isPython2) {
+      setOf(LIST_CONSTRUCTOR, DICT_CONSTRUCTOR, SET_CONSTRUCTOR, RANGE_CONSTRUCTOR)
+    }
+    else {
+      setOf(LIST_CONSTRUCTOR, DICT_CONSTRUCTOR, SET_CONSTRUCTOR)
+    }
+  }
 
   fun getTypeByModifications(sequence: PySequenceExpression, context: TypeEvalContext): List<PyType?> {
     return when (sequence) {
@@ -166,7 +174,7 @@ object PyCollectionTypeUtil {
   private fun getVisitorForQualifiedName(qualifiedName: String, element: PsiElement,
                                          context: TypeEvalContext): PyCollectionTypeVisitor? {
     return when (qualifiedName) {
-      LIST_CONSTRUCTOR -> PyListTypeVisitor(element, context)
+      LIST_CONSTRUCTOR, RANGE_CONSTRUCTOR -> PyListTypeVisitor(element, context)
       DICT_CONSTRUCTOR -> PyDictTypeVisitor(element, context)
       SET_CONSTRUCTOR -> PySetTypeVisitor(element, context)
       else -> null

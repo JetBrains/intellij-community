@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 public interface SelectInContext {
   DataKey<SelectInContext> DATA_KEY = DataKey.create("SelectInContext");
 
-  @Deprecated String DATA_CONTEXT_ID = DATA_KEY.getName();
-
   @NotNull
   Project getProject();
 
@@ -40,4 +38,15 @@ public interface SelectInContext {
 
   @Nullable
   FileEditorProvider getFileEditorProvider();
+
+  /**
+   * @param target       an object that supports a context selection
+   * @param requestFocus specifies whether a focus request is needed or not
+   * @return {@code true} if a selection request is approved and executed by the given target
+   */
+  default boolean selectIn(@NotNull SelectInTarget target, boolean requestFocus) {
+    if (!target.canSelect(this)) return false;
+    target.selectIn(this, requestFocus);
+    return true;
+  }
 }

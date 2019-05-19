@@ -45,7 +45,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
   private final PreviewDiffPanel myDiffPanel;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  public PreviewPanel(ExtractMethodProcessor processor) {
+  PreviewPanel(ExtractMethodProcessor processor) {
     myProject = processor.getProject();
     myTree = new PreviewTree(processor);
     JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree.getComponent());
@@ -78,7 +78,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
       return myExclusionHandler;
     }
@@ -143,6 +143,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
 
   void onTreeUpdated() {
     myTree.repaint();
+    myDiffPanel.updateLater();
   }
 
   private void updateLater() {
@@ -171,7 +172,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     private final Project myProject;
     private boolean myModified; // Accessed in EDT
 
-    public ButtonsPanel(@NotNull Project project) {
+    ButtonsPanel(@NotNull Project project) {
       super(new FlowLayout(FlowLayout.LEFT, JBUI.scale(8), 0));
       myProject = project;
 

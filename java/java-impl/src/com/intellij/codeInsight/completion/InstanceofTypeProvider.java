@@ -39,7 +39,7 @@ class InstanceofTypeProvider extends CompletionProvider<CompletionParameters> {
 
   @Override
   protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                final ProcessingContext context,
+                                @NotNull final ProcessingContext context,
                                 @NotNull final CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
     final PsiType[] leftTypes = InstanceOfLeftPartTypeGetter.getLeftTypes(position);
@@ -68,7 +68,7 @@ class InstanceofTypeProvider extends CompletionProvider<CompletionParameters> {
       });
   }
 
-  private static LookupElement createInstanceofLookupElement(PsiClass psiClass, Set<PsiClass> toWildcardInheritors) {
+  private static LookupElement createInstanceofLookupElement(PsiClass psiClass, Set<? extends PsiClass> toWildcardInheritors) {
     final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
     if (typeParameters.length > 0) {
       for (final PsiClass parameterizedType : toWildcardInheritors) {

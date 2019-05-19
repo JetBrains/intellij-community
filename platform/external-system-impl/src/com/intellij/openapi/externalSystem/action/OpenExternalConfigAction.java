@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/17/2014
  */
 public class OpenExternalConfigAction extends ExternalSystemNodeAction<ExternalConfigPathAware> {
 
@@ -25,7 +24,7 @@ public class OpenExternalConfigAction extends ExternalSystemNodeAction<ExternalC
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
 
     final ExternalEntityData externalData = getExternalData(e, ExternalEntityData.class);

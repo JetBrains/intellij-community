@@ -36,7 +36,7 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
   private JBLabel mySearchLabel;
   private JBLabel myNoteLabel;
 
-  public JiraRepositoryEditor(Project project, JiraRepository repository, Consumer<JiraRepository> changeListener) {
+  public JiraRepositoryEditor(Project project, JiraRepository repository, Consumer<? super JiraRepository> changeListener) {
     super(project, repository, changeListener);
   }
 

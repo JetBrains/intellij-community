@@ -42,9 +42,12 @@ public class SettingsEditorGroup<T> extends SettingsEditor<T> {
     return myEditors;
   }
 
+  @Override
   public void resetEditorFrom(@NotNull T t) {}
+  @Override
   public void applyEditorTo(@NotNull T t) throws ConfigurationException {}
 
+  @Override
   @NotNull
   public JComponent createEditor() {
     throw new UnsupportedOperationException("This method should never be called!");

@@ -78,12 +78,10 @@ class SourceResolver(private val rawSources: List<String>,
     return if (resolveByCanonicalizedUrls != -1) resolveByCanonicalizedUrls else resolver.resolve(rawSources)
   }
 
-  fun findSourceIndex(sourceUrls: List<Url>, sourceFile: VirtualFile?, localFileUrlOnly: Boolean): Int {
-    for (sourceUrl in sourceUrls) {
-      val index = canonicalizedUrlToSourceIndex.get(sourceUrl)
-      if (index != -1) {
-        return index
-      }
+  fun findSourceIndex(sourceUrl: Url, sourceFile: VirtualFile?, localFileUrlOnly: Boolean): Int {
+    val index = canonicalizedUrlToSourceIndex.get(sourceUrl)
+    if (index != -1) {
+      return index
     }
 
     if (sourceFile != null) {
@@ -172,6 +170,11 @@ fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFil
     // file:///home/user/foo.js.map, foo.ts -> /home/user/foo.ts (baseUrl is in local fs)
     // http://localhost/home/user/foo.js.map, foo.ts -> /home/user/foo.ts (File(path) exists)
     return Urls.newLocalFileUrl(path)
+  }
+  else if (!path.startsWith("/")) {
+    // http://localhost/source.js.map, C:/foo.ts webpack-dsj3c45 -> C:/foo.ts webpack-dsj3c45
+    // (we can't append path suffixes unless they start with /
+    return Urls.parse(path, true) ?: Urls.newUnparsable(path)
   }
   else {
     // new url from path and baseUrl's scheme and authority

@@ -1,9 +1,11 @@
 package com.intellij.openapi.externalSystem.service.internal;
 
+import com.intellij.build.events.ProgressBuildEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.*;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
@@ -26,7 +28,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since 1/24/12 7:03 AM
  */
 public abstract class AbstractExternalSystemTask extends UserDataHolderBase implements ExternalSystemTask {
 
@@ -57,11 +58,13 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     return myExternalSystemId;
   }
 
+  @Override
   @NotNull
   public ExternalSystemTaskId getId() {
     return myId;
   }
 
+  @Override
   @NotNull
   public ExternalSystemTaskState getState() {
     return myState.get();
@@ -90,6 +93,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     return myExternalProjectPath;
   }
 
+  @Override
   public void refreshState() {
     if (getState() != ExternalSystemTaskState.IN_PROGRESS) {
       return;
@@ -114,28 +118,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     ExternalSystemTaskNotificationListenerAdapter adapter = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
       public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-        if (event instanceof ExternalSystemTaskExecutionEvent &&
-            ((ExternalSystemTaskExecutionEvent)event).getProgressEvent() instanceof ExternalSystemStatusEvent) {
-          ExternalSystemStatusEvent progressEvent = (ExternalSystemStatusEvent)((ExternalSystemTaskExecutionEvent)event).getProgressEvent();
-          String sizeInfo;
-          if (progressEvent.getTotal() <= 0) {
-            indicator.setIndeterminate(true);
-            sizeInfo = "bytes".equals(progressEvent.getUnit()) ? (StringUtil.formatFileSize(progressEvent.getProgress()) + " / ?") : "";
-          }
-          else {
-            indicator.setIndeterminate(false);
-            indicator.setFraction((double)progressEvent.getProgress() / progressEvent.getTotal());
-            sizeInfo = "bytes".equals(progressEvent.getUnit()) ? (StringUtil.formatFileSize(progressEvent.getProgress()) +
-                                                                  " / " +
-                                                                  StringUtil.formatFileSize(progressEvent.getTotal())) : "";
-          }
-          String description = event.getDescription();
-          indicator.setText(wrapProgressText(description) + (sizeInfo.isEmpty() ? "" : "  (" + sizeInfo + ')'));
-        }
-        else {
-          indicator.setIndeterminate(true);
-          indicator.setText(wrapProgressText(event.getDescription()));
-        }
+        updateProgressIndicator(event, indicator);
       }
     };
     final ExternalSystemTaskNotificationListener[] ls;
@@ -166,7 +149,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     catch (Throwable e) {
       setState(ExternalSystemTaskState.FAILED);
       myError.set(e);
-      LOG.warn(e);
+      LOG.debug(e);
     }
     finally {
       for (ExternalSystemTaskNotificationListener listener : listeners) {
@@ -259,5 +242,42 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   @Override
   public String toString() {
     return String.format("%s task %s: %s", myExternalSystemId.getReadableName(), myId, myState);
+  }
+
+  private void updateProgressIndicator(@NotNull ExternalSystemTaskNotificationEvent event, @NotNull ProgressIndicator indicator) {
+    long total;
+    long progress;
+    String unit;
+    if (event instanceof ExternalSystemBuildEvent &&
+        ((ExternalSystemBuildEvent)event).getBuildEvent() instanceof ProgressBuildEvent) {
+      ProgressBuildEvent progressEvent = (ProgressBuildEvent)((ExternalSystemBuildEvent)event).getBuildEvent();
+      total = progressEvent.getTotal();
+      progress = progressEvent.getProgress();
+      unit = progressEvent.getUnit();
+    }
+    else if (event instanceof ExternalSystemTaskExecutionEvent &&
+             ((ExternalSystemTaskExecutionEvent)event).getProgressEvent() instanceof ExternalSystemStatusEvent) {
+      ExternalSystemStatusEvent progressEvent = (ExternalSystemStatusEvent)((ExternalSystemTaskExecutionEvent)event).getProgressEvent();
+      total = progressEvent.getTotal();
+      progress = progressEvent.getProgress();
+      unit = progressEvent.getUnit();
+    } else {
+      return;
+    }
+
+    String sizeInfo;
+    if (total <= 0) {
+      indicator.setIndeterminate(true);
+      sizeInfo = "bytes".equals(unit) ? (StringUtil.formatFileSize(progress) + " / ?") : "";
+    }
+    else {
+      indicator.setIndeterminate(false);
+      indicator.setFraction((double)progress / total);
+      sizeInfo = "bytes".equals(unit) ? (StringUtil.formatFileSize(progress) +
+                                         " / " +
+                                         StringUtil.formatFileSize(total)) : "";
+    }
+    String description = event.getDescription();
+    indicator.setText(wrapProgressText(description) + (sizeInfo.isEmpty() ? "" : "  (" + sizeInfo + ')'));
   }
 }

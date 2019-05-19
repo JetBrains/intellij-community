@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -25,13 +11,16 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,9 +28,8 @@ import java.util.List;
  * (e.g. imports missing libraries).
  *
  * @author Denis Zhdanov
- * @since 1/23/12 3:48 PM
  */
-public class RefreshAllExternalProjectsAction extends AnAction implements AnAction.TransparentUpdate {
+public class RefreshAllExternalProjectsAction extends AnAction implements AnAction.TransparentUpdate, DumbAware {
 
   public RefreshAllExternalProjectsAction() {
     getTemplatePresentation().setText(ExternalSystemBundle.message("action.refresh.all.projects.text", "external"));
@@ -49,7 +37,7 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       e.getPresentation().setEnabled(false);
@@ -71,7 +59,7 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       e.getPresentation().setEnabled(false);
@@ -88,6 +76,7 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
     FileDocumentManager.getInstance().saveAllDocuments();
 
     for (ProjectSystemId externalSystemId : systemIds) {
+      ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
       ExternalSystemUtil.refreshProjects(
         new ImportSpecBuilder(project, externalSystemId)
           .forceWhenUptodate(true)
@@ -96,10 +85,10 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
     }
   }
 
-  private static List<ProjectSystemId> getSystemIds(AnActionEvent e) {
-    final List<ProjectSystemId> systemIds = ContainerUtil.newArrayList();
+  private static List<ProjectSystemId> getSystemIds(@NotNull AnActionEvent e) {
+    final List<ProjectSystemId> systemIds = new ArrayList<>();
 
-    final ProjectSystemId externalSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
+    final ProjectSystemId externalSystemId = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID);
     if (externalSystemId != null) {
       systemIds.add(externalSystemId);
     }

@@ -20,11 +20,11 @@ import javax.swing.*;
  * @author ven
  */
 public abstract class LanguageLevelCombo extends ComboBox<Object> {
-  private boolean myDefaultWasSelectedBeforeRemoving;
   private final String myDefaultItem;
 
   public LanguageLevelCombo(String defaultItem) {
     myDefaultItem = defaultItem;
+    insertItemAt(myDefaultItem, 0);
     for (LanguageLevel level : LanguageLevel.values()) {
       addItem(level);
     }
@@ -47,6 +47,8 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
   }
 
   private void checkAcceptedLevel(LanguageLevel selectedLevel) {
+    if (selectedLevel == null)
+      return;
     LanguageLevel level = AcceptedLanguageLevelsSettings.checkAccepted(this, selectedLevel);
     if (level == null) {
       setSelectedItem(AcceptedLanguageLevelsSettings.getHighestAcceptedLevel());
@@ -54,10 +56,6 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
   }
 
   public void reset(@NotNull Project project) {
-    removeAllItems();
-    for (LanguageLevel level : LanguageLevel.values()) {
-      addItem(level);
-    }
     Sdk sdk = ProjectRootManagerEx.getInstanceEx(project).getProjectSdk();
     sdkUpdated(sdk, project.isDefault());
 
@@ -88,30 +86,11 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
 
   private void updateDefaultLevel(LanguageLevel newLevel, boolean isDefaultProject) {
     if (newLevel == null && !isDefaultProject) {
-      if (isDefaultItemAdded()) {
-        boolean defaultSelected = getSelectedItem() == myDefaultItem;
-        if (defaultSelected) {
-          setSelectedItem(getDefaultLevel());
-        }
-        myDefaultWasSelectedBeforeRemoving = defaultSelected;
-        removeItem(myDefaultItem);
-      }
-    }
-    else if (!(isDefaultItemAdded())) {
-      addDefaultItem();
-      if (myDefaultWasSelectedBeforeRemoving) {
-        setSelectedIndex(0);
+      if (getSelectedItem() == myDefaultItem) {
+        setSelectedItem(getDefaultLevel());
       }
     }
     repaint();
-  }
-
-  private boolean isDefaultItemAdded() {
-    return getItemAt(0) instanceof String;
-  }
-
-  void addDefaultItem() {
-    insertItemAt(myDefaultItem, 0);
   }
 
   public LanguageLevel getSelectedLevel() {

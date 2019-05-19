@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Denis Zhdanov
- * @since 3/14/13 1:02 PM
  */
 public abstract class AbstractRegexpArrangementMatcher implements ArrangementEntryMatcher {
   

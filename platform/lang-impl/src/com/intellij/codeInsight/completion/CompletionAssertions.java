@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -22,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.Contract;
 
 import java.util.List;
@@ -99,9 +99,12 @@ class CompletionAssertions {
   static void assertInjectedOffsets(int hostStartOffset, PsiFile injected, DocumentWindow documentWindow) {
     assert documentWindow != null : "no DocumentWindow for an injected fragment";
 
-    TextRange host = InjectedLanguageManager.getInstance(injected.getProject()).injectedToHost(injected, injected.getTextRange());
-    assert hostStartOffset >= host.getStartOffset() : "startOffset before injected";
-    assert hostStartOffset <= host.getEndOffset() : "startOffset after injected";
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(injected.getProject());
+    TextRange injectedRange = injected.getTextRange();
+    int hostMinOffset = injectedLanguageManager.injectedToHost(injected, injectedRange.getStartOffset(), true);
+    int hostMaxOffset = injectedLanguageManager.injectedToHost(injected, injectedRange.getEndOffset(), false);
+    assert hostStartOffset >= hostMinOffset : "startOffset before injected";
+    assert hostStartOffset <= hostMaxOffset : "startOffset after injected";
   }
 
   static void assertHostInfo(PsiFile hostCopy, OffsetMap hostMap) {
@@ -127,7 +130,8 @@ class CompletionAssertions {
     final TextRange range = insertedElement.getTextRange();
     CharSequence fileCopyText = fileCopy.getViewProvider().getContents();
     if ((range.getEndOffset() > fileCopyText.length()) ||
-        !fileCopyText.subSequence(range.getStartOffset(), range.getEndOffset()).toString().equals(insertedElement.getText())) {
+        !isEquals(fileCopyText.subSequence(range.getStartOffset(), range.getEndOffset()),
+                  insertedElement.getNode().getChars())) {
       throw new RuntimeExceptionWithAttachments(
         "Inconsistent completion tree",
         "range=" + range,
@@ -135,6 +139,14 @@ class CompletionAssertions {
         createAstAttachment(fileCopy, originalFile),
         new Attachment("Element at caret.txt", insertedElement.getText()));
     }
+  }
+
+  private static boolean isEquals(CharSequence left, CharSequence right) {
+    if (left == right) return true;
+    if (left instanceof ImmutableCharSequence && right instanceof ImmutableCharSequence) {
+      return left.equals(right);
+    }
+    return left.toString().equals(right.toString());
   }
 
   static void assertCorrectOriginalFile(String prefix, PsiFile file, PsiFile copy) {
@@ -157,11 +169,10 @@ class CompletionAssertions {
     DocumentEvent killer;
     private RangeMarkerSpy spy;
 
-    public WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
+    WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
       super(offsetMap, completionChar, items.toArray(LookupElement.EMPTY_ARRAY),
             file, editor,
-            completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
-            completionChar != Lookup.NORMAL_SELECT_CHAR);
+            shouldAddCompletionChar(completionChar));
     }
 
     @Override

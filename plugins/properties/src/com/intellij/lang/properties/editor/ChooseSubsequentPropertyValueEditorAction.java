@@ -49,10 +49,8 @@ public class ChooseSubsequentPropertyValueEditorAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getNext(e).getContentComponent(), true);
-    });
+  public void actionPerformed(@NotNull final AnActionEvent e) {
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getNext(e).getContentComponent(), true));
   }
 
   @Override
@@ -61,7 +59,7 @@ public class ChooseSubsequentPropertyValueEditorAction extends AnAction {
     e.getPresentation().setEnabled(enabled);
   }
 
-  protected Editor getNext(AnActionEvent e) {
+  protected Editor getNext(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor == null) {
       return null;

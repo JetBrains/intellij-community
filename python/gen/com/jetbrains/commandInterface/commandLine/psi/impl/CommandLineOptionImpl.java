@@ -22,6 +22,7 @@ public class CommandLineOptionImpl extends CommandLineElement implements Command
     visitor.visitOption(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof CommandLineVisitor) accept((CommandLineVisitor)visitor);
     else super.accept(visitor);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.inspector;
 
 import com.google.common.base.MoreObjects;
@@ -44,9 +44,9 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
+import net.miginfocom.layout.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,11 +69,10 @@ import java.awt.event.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY;
-import static java.util.Locale.ENGLISH;
+import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
 public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static final String CLICK_INFO = "CLICK_INFO";
@@ -84,17 +83,21 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   public UiInspectorAction() {
     if (Boolean.getBoolean("idea.ui.debug.mode")) {
-      ApplicationManager.getApplication().invokeLater(() -> setSelected(null, true));
+      ApplicationManager.getApplication().invokeLater(() -> setSelected(true));
     }
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myInspector != null;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    setSelected(state);
+  }
+
+  void setSelected(boolean state) {
     if (state) {
       if (myInspector == null) {
         myInspector = new UiInspector();
@@ -125,7 +128,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class InspectorWindow extends JDialog {
     private InspectorTable myInspectorTable;
     private Component myComponent;
-    private List<PropertyBean> myInfo;
+    private List<? extends PropertyBean> myInfo;
     private final Component myInitialComponent;
     private HighlightComponent myHighlightComponent;
     private final HierarchyTree myHierarchyTree;
@@ -151,12 +154,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       DefaultActionGroup actions = new DefaultActionGroup();
       actions.addAction(new IconWithTextAction("Highlight") {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           setHighlightingEnabled(myHighlightComponent == null);
         }
 
         @Override
-        public void update(AnActionEvent e) {
+        public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(myInfo != null || (myComponent != null && myComponent.isVisible()));
         }
 
@@ -167,12 +170,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       actions.add(new IconWithTextAction("Refresh") {
 
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           getCurrentTable().refresh();
         }
 
         @Override
-        public void update(AnActionEvent e) {
+        public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(myComponent != null && myComponent.isVisible());
         }
       });
@@ -193,7 +196,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         }
 
         @Override
-        public void onComponentChanged(List<PropertyBean> info) {
+        public void onComponentChanged(List<? extends PropertyBean> info) {
           boolean wasHighlighted = myHighlightComponent != null;
           setHighlightingEnabled(false);
           switchInfo(info);
@@ -218,6 +221,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       });
 
       getRootPane().getActionMap().put("CLOSE", new AbstractAction() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           close();
         }
@@ -254,7 +258,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myWrapperPanel.repaint();
     }
 
-    private void switchInfo(@NotNull List<PropertyBean> clickInfo) {
+    private void switchInfo(@NotNull List<? extends PropertyBean> clickInfo) {
       myComponent = null;
       myInfo = clickInfo;
       setTitle("Click Info");
@@ -359,8 +363,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
-      Color background = selected ? UIUtil.getTreeSelectionBackground() : null;
+      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
+      Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : null;
       if (value instanceof HierarchyTree.ComponentNode) {
         HierarchyTree.ComponentNode componentNode = (HierarchyTree.ComponentNode)value;
         Component component = componentNode.getComponent();
@@ -400,7 +404,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         componentNode.setText(toString());
-        setIcon(createColorIcon(component.getForeground(), component.getBackground()));
+        setIcon(createColorIcon(component.getBackground(), component.getForeground()));
       }
       if (value instanceof HierarchyTree.ClickInfoNode) {
         append(value.toString());
@@ -468,7 +472,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       setCellRenderer(new ComponentTreeCellRenderer(c));
       getSelectionModel().addTreeSelectionListener(this);
       new TreeSpeedSearch(this);
-      if (((JComponent)c).getClientProperty(CLICK_INFO) != null) {
+      if (c instanceof JComponent && ((JComponent)c).getClientProperty(CLICK_INFO) != null) {
         SwingUtilities.invokeLater(() -> getSelectionModel().setSelectionPath(getPathForRow(getLeadSelectionRow() + 1)));
       }
     }
@@ -518,7 +522,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       }
     }
 
-    public abstract void onComponentChanged(List<PropertyBean> info);
+    public abstract void onComponentChanged(List<? extends PropertyBean> info);
 
     public abstract void onComponentChanged(Component c);
 
@@ -580,7 +584,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private static class ClickInfoNode extends DefaultMutableTreeNode {
       private final List<PropertyBean> myInfo;
 
-      public ClickInfoNode(List<PropertyBean> info) {
+      ClickInfoNode(List<PropertyBean> info) {
         myInfo = info;
       }
 
@@ -627,7 +631,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     InspectorTableModel myModel;
     DimensionsComponent myDimensionComponent;
 
-    private InspectorTable(@NotNull final List<PropertyBean> clickInfo) {
+    private InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo) {
        myModel = new InspectorTableModel(clickInfo);
        init(null);
     }
@@ -665,6 +669,24 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           return result;
         }
       });
+      new DoubleClickListener(){
+        @Override
+        protected boolean onDoubleClick(MouseEvent event) {
+          int row = table.rowAtPoint(event.getPoint());
+          int column = table.columnAtPoint(event.getPoint());
+          if (row >=0 && row < table.getRowCount() && column >=0 && column < table.getColumnCount()) {
+            Component renderer = table.getCellRenderer(row, column)
+                                        .getTableCellRendererComponent(table, myModel.getValueAt(row, column), false, false, row, column);
+            if (renderer instanceof JLabel) {
+              //noinspection UseOfSystemOutOrSystemErr
+              System.out.println((component != null ? getComponentName(component)+ " " : "" )
+                                 + ((JLabel)renderer).getText().replace("\r", "").replace("\tat", "\n\tat"));
+              return true;
+            }
+          }
+          return false;
+        }
+      }.installOn(table);
 
       table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
@@ -681,7 +703,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myDimensionComponent.repaint();
     }
 
-    private class PropertyNameRenderer extends DefaultTableCellRenderer {
+    private static class PropertyNameRenderer extends DefaultTableCellRenderer {
       @Override
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,
@@ -696,7 +718,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           changed = ((InspectorTableModel)model).myProperties.get(row).changed;
         }
 
-        final Color fg = isSelected ? table.getSelectionForeground() : changed ? JBColor.link() : table.getForeground();
+        final Color fg = isSelected ? table.getSelectionForeground() : changed ? JBUI.CurrentTheme.Link.linkColor() : table.getForeground();
         final JBFont font = JBUI.Fonts.label();
         setFont(changed ? font.asBold() : font);
         setForeground(fg);
@@ -824,7 +846,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class ValueCellRenderer implements TableCellRenderer {
-    private static final Map<Class, Renderer> RENDERERS = ContainerUtil.newHashMap();
+    private static final Map<Class, Renderer> RENDERERS = new HashMap<>();
 
     static {
       RENDERERS.put(Point.class, new PointRenderer());
@@ -842,6 +864,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     private static final JLabel NULL_RENDERER = new JLabel("-");
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (value == null) {
         NULL_RENDERER.setOpaque(isSelected);
@@ -886,6 +909,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class PointRenderer extends JLabel implements Renderer<Point> {
+    @Override
     public JComponent setValue(@NotNull final Point value) {
       setText(String.valueOf(value.x) + ':' + value.y);
       return this;
@@ -893,13 +917,15 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class DimensionRenderer extends JLabel implements Renderer<Dimension> {
+    @Override
     public JComponent setValue(@NotNull final Dimension value) {
-      setText(String.valueOf(value.width) + "x" + value.height);
+      setText(value.width + "x" + value.height);
       return this;
     }
   }
 
   private static class InsetsRenderer extends JLabel implements Renderer<Insets> {
+    @Override
     public JComponent setValue(@NotNull final Insets value) {
       setText("top: " + value.top + " left:" + value.left + " bottom:" + value.bottom + " right:" + value.right);
       return this;
@@ -907,6 +933,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class RectangleRenderer extends JLabel implements Renderer<Rectangle> {
+    @Override
     public JComponent setValue(@NotNull final Rectangle value) {
       setText(toString(value));
       return this;
@@ -919,6 +946,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class ColorRenderer extends JLabel implements Renderer<Color> {
+    @Override
     public JComponent setValue(@NotNull final Color value) {
       StringBuilder sb = new StringBuilder();
       sb.append(" r:").append(value.getRed());
@@ -929,7 +957,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       sb.append(" argb:0x");
       String hex = Integer.toHexString(value.getRGB());
       for (int i = hex.length(); i < 8; i++) sb.append('0');
-      sb.append(hex.toUpperCase(ENGLISH));
+      sb.append(StringUtil.toUpperCase(hex));
 
       if (value instanceof UIResource) sb.append(" UIResource");
       setText(sb.toString());
@@ -939,6 +967,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class FontRenderer extends JLabel implements Renderer<Font> {
+    @Override
     public JComponent setValue(@NotNull final Font value) {
       StringBuilder sb = new StringBuilder();
       sb.append(value.getFontName()).append(" (").append(value.getFamily()).append("), ").append(value.getSize()).append("px");
@@ -951,6 +980,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class BooleanRenderer extends JLabel implements Renderer<Boolean> {
+    @Override
     public JComponent setValue(@NotNull final Boolean value) {
       setText(value ? "Yes" : "No");
       return this;
@@ -958,6 +988,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class IconRenderer extends JLabel implements Renderer<Icon> {
+    @Override
     public JComponent setValue(@NotNull final Icon value) {
       setIcon(value);
       setText(getToStringValue(value));
@@ -966,6 +997,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class BorderRenderer extends JLabel implements Renderer<Border> {
+    @Override
     public JComponent setValue(@NotNull final Border value) {
       setText(getTextDescription(value));
 
@@ -973,7 +1005,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         Color insideColor = getBorderColor(((CompoundBorder)value).getInsideBorder());
         Color outsideColor = getBorderColor(((CompoundBorder)value).getOutsideBorder());
         if (insideColor != null && outsideColor != null) {
-          setIcon(createColorIcon(outsideColor, insideColor));
+          setIcon(createColorIcon(insideColor, outsideColor));
         }
         else if (insideColor != null) {
           setIcon(createColorIcon(insideColor));
@@ -1050,6 +1082,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     {
       putClientProperty("html.disable", Boolean.TRUE);
     }
+    @Override
     public JComponent setValue(@NotNull final Object value) {
       setText(getToStringValue(value));
       return this;
@@ -1074,7 +1107,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static Icon createColorIcon(Color color1, Color color2) {
-    return JBUI.scale(new TwoColorsIcon(11, color1, color2));
+    return JBUI.scale(new ColorsIcon(11, color1, color2));
   }
 
 
@@ -1105,7 +1138,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "getText", "isEditable", "getIcon",
       "getVisibleRect", "getLayout",
       "getAlignmentX", "getAlignmentY",
-      "getTooltipText", "getToolTipText",
+      "getTooltipText", "getToolTipText", "cursor",
       "isShowing", "isEnabled", "isVisible", "isDoubleBuffered",
       "isFocusable", "isFocusCycleRoot", "isFocusOwner",
       "isValid", "isDisplayable", "isLightweight"
@@ -1125,10 +1158,14 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "getAccessibleValue", "accessibleChangeSupport"
     );
 
-    final Component myComponent;
-    final List<PropertyBean> myProperties = ContainerUtil.newArrayList();
+    final List<String> MIGLAYOUT_CC_PROPERTIES = Arrays.asList(
+      "getHorizontal", "getVertical"
+    );
 
-    InspectorTableModel(@NotNull List<PropertyBean> clickInfo) {
+    final Component myComponent;
+    final List<PropertyBean> myProperties = new ArrayList<>();
+
+    InspectorTableModel(@NotNull List<? extends PropertyBean> clickInfo) {
       myComponent = null;
       myProperties.addAll(clickInfo);
     }
@@ -1157,6 +1194,15 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (myComponent instanceof Container) {
         addLayoutProperties((Container)myComponent);
       }
+      if (myComponent.getParent() != null) {
+        LayoutManager layout = myComponent.getParent().getLayout();
+        if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout) {
+          CC cc = ((com.intellij.ui.layout.migLayout.patched.MigLayout)layout).getComponentConstraints().get(myComponent);
+          if (cc != null) {
+            addMigLayoutComponentConstraints(cc);
+          }
+        }
+      }
     }
 
     private void addProperties(@NotNull String prefix, @NotNull Object component, @NotNull List<String> methodNames) {
@@ -1172,6 +1218,14 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         if (JComponent.class.getName().equals(cl.getName())) break;
       }
       myProperties.add(new PropertyBean(prefix + "hierarchy", classHierarchy.toString()));
+      addPropertiesFromMethodNames(prefix, component, methodNames);
+    }
+
+    private void addPropertiesFromMethodNames(@NotNull String prefix,
+                                              @NotNull Object component,
+                                              @NotNull List<String> methodNames) {
+      Class<?> clazz0 = component.getClass();
+      Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
       for (String name: methodNames) {
         String propertyName = ObjectUtils.notNull(StringUtil.getPropertyName(name), name);
         Object propertyValue;
@@ -1285,13 +1339,81 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         MigLayout migLayout = (MigLayout)layout;
 
         myProperties.add(new PropertyBean("MigLayout layout constraints", migLayout.getLayoutConstraints()));
-        myProperties.add(new PropertyBean("MigLayout column constraints", migLayout.getColumnConstraints()));
-        myProperties.add(new PropertyBean("MigLayout row constraints", migLayout.getRowConstraints()));
+
+        Object constraints = migLayout.getColumnConstraints();
+        if (constraints instanceof AC) {
+          addMigLayoutAxisConstraints("MigLayout column constraints", (AC) constraints);
+        }
+        else {
+          myProperties.add(new PropertyBean("MigLayout column constraints", constraints));
+        }
+
+        constraints = migLayout.getRowConstraints();
+        if (constraints instanceof AC) {
+          addMigLayoutAxisConstraints("MigLayout row constraints", (AC) constraints);
+        }
+        else {
+          myProperties.add(new PropertyBean("MigLayout row constraints", constraints));
+        }
 
         for (Component child : component.getComponents()) {
           myProperties.add(new PropertyBean(prefix + getComponentName(child), migLayout.getComponentConstraints(child)));
         }
       }
+      else if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout) {
+        com.intellij.ui.layout.migLayout.patched.MigLayout migLayout = (com.intellij.ui.layout.migLayout.patched.MigLayout)layout;
+
+        myProperties.add(new PropertyBean("MigLayout layout constraints", migLayout.getLayoutConstraints()));
+        addMigLayoutAxisConstraints("MigLayout column constraints", migLayout.getColumnConstraints());
+        addMigLayoutAxisConstraints("MigLayout row constraints", migLayout.getRowConstraints());
+      }
+    }
+
+    private void addMigLayoutAxisConstraints(String title, AC ac) {
+      myProperties.add(new PropertyBean(title, ac));
+      DimConstraint[] constraints = ac.getConstaints();
+      for (int i = 0; i < constraints.length; i++) {
+        addDimConstraintProperties("  [" + i + "]", constraints[i]);
+      }
+    }
+
+    private void addMigLayoutComponentConstraints(CC cc) {
+      myProperties.add(new PropertyBean("MigLayout component constraints", cc));
+      DimConstraint horizontal = cc.getHorizontal();
+      addDimConstraintProperties("  cc.horizontal", horizontal);
+      DimConstraint vertical = cc.getVertical();
+      addDimConstraintProperties("  cc.vertical", vertical);
+    }
+
+    private void addDimConstraintProperties(String name, DimConstraint constraint) {
+      myProperties.add(new PropertyBean(name, dimConstraintToString(constraint)));
+      BoundSize size = constraint.getSize();
+      if (size != null) {
+        myProperties.add(new PropertyBean("  " + name + ".size", size.toString()));
+      }
+      UnitValue align = constraint.getAlign();
+      if (align != null) {
+        myProperties.add(new PropertyBean("  " + name + ".align", align.toString()));
+      }
+      BoundSize gapBefore = constraint.getGapBefore();
+      if (gapBefore != null && !gapBefore.isUnset()) {
+        myProperties.add(new PropertyBean("  " + name + ".gapBefore", gapBefore.toString()));
+      }
+      BoundSize gapAfter = constraint.getGapAfter();
+      if (gapAfter != null && !gapAfter.isUnset()) {
+        myProperties.add(new PropertyBean("  " + name + ".gapAfter", gapAfter.toString()));
+      }
+    }
+
+    private static String dimConstraintToString(DimConstraint constraint) {
+      return "grow=" + constraint.getGrow() +
+             " growPrio=" + constraint.getGrowPriority() +
+             " shrink=" + constraint.getShrink() +
+             " shrinkPrio=" + constraint.getShrinkPriority() +
+             " fill=" + constraint.isFill() +
+             " noGrid=" + constraint.isNoGrid() +
+             " sizeGroup=" + constraint.getSizeGroup() +
+             " endGroup=" + constraint.getEndGroup();
     }
 
     @NotNull
@@ -1321,16 +1443,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (!Comparing.equal(value, defaultValue)) h.add(field, value);
     }
 
+    @Override
     @Nullable
     public Object getValueAt(int row, int column) {
       final PropertyBean bean = myProperties.get(row);
       if (bean != null) {
-        switch (column) {
-          case 0:
-            return bean.propertyName;
-          default:
-            return bean.propertyValue;
-        }
+        return column == 0 ? bean.propertyName : bean.propertyValue;
       }
 
       return null;
@@ -1354,7 +1472,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     @Nullable
     public Function<Object, Object> updater(PropertyBean bean) {
       if (myComponent == null) return null;
-      
+
       String name = bean.propertyName.trim();
       try {
         try {
@@ -1399,18 +1517,22 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       return null;
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public int getRowCount() {
       return myProperties.size();
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
       return columnIndex == 0 ? "Property" : "Value";
     }
 
+    @Override
     public Class<?> getColumnClass(int columnIndex) {
       return columnIndex == 0 ? String.class : Object.class;
     }
@@ -1424,21 +1546,16 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   @Nullable
   private static AnAction getAction(Component c) {
-    if (c instanceof JComponent) {
-      Object obj = ((JComponent)c).getClientProperty(CUSTOM_COMPONENT_ACTION_PROPERTY);
-      if (obj instanceof AnAction) {
-        return (AnAction)obj;
-      }
-    }
-    return null;
+    return UIUtil.getClientProperty(c, ACTION_KEY);
   }
 
   private static class UiInspector implements AWTEventListener, Disposable {
 
-    public UiInspector() {
+    UiInspector() {
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     }
 
+    @Override
     public void dispose() {
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
       for (Window window : Window.getWindows()) {
@@ -1457,6 +1574,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       window.toFront();
     }
 
+    @Override
     public void eventDispatched(AWTEvent event) {
       if (event instanceof MouseEvent) {
         processMouseEvent((MouseEvent)event);

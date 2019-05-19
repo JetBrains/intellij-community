@@ -39,6 +39,7 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
   private JCheckBox myOptimizeImports;
   private JCheckBox myOnlyChangedText;
   private JCheckBox myRearrangeEntriesCb;
+  private JCheckBox myCleanupCode;
 
   private final LastRunReformatCodeOptionsProvider myLastRunSettings;
 
@@ -50,6 +51,7 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
     myOnlyChangedText.setEnabled(canTargetVcsChanges);
     myOnlyChangedText.setSelected(canTargetVcsChanges && myLastRunSettings.getLastTextRangeType() == VCS_CHANGED_TEXT);
     myOptimizeImports.setSelected(myLastRunSettings.getLastOptimizeImports());
+    myCleanupCode.setSelected(myLastRunSettings.getLastCodeCleanup());
     myRearrangeEntriesCb.setSelected(myLastRunSettings.getLastRearrangeCode());
     myRearrangeEntriesCb.setEnabled(containsAtLeastOneFileToRearrange(files));
 
@@ -94,9 +96,15 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
   }
 
   @Override
+  public boolean isCodeCleanup() {
+    return myCleanupCode.isSelected();
+  }
+
+  @Override
   protected void doOKAction() {
     super.doOKAction();
     myLastRunSettings.saveOptimizeImportsState(isOptimizeImports());
+    myLastRunSettings.saveCodeCleanupState(isCodeCleanup());
     if (myRearrangeEntriesCb.isEnabled()) {
       myLastRunSettings.saveRearrangeCodeState(isRearrangeCode());
     }

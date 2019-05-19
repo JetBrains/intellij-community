@@ -9,7 +9,6 @@ import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.findUsages.JavaClassFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.PluginPathManager;
@@ -23,12 +22,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
  */
 public class PropertiesFindUsagesTest extends CodeInsightTestCase {
   private static final String BASE_PATH = "testData/findUsages/";
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/";
@@ -96,8 +97,7 @@ public class PropertiesFindUsagesTest extends CodeInsightTestCase {
   private PsiNamedElement getElementAtCaret() {
     PsiElement element = myFile.findElementAt(myEditor.getCaretModel().getOffset());
     PsiNamedElement namedElement = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class);
-    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(namedElement.getLanguage());
-    assertTrue("Cannot find element in caret",provider.canFindUsagesFor(namedElement));
+    assertTrue("Cannot find element in caret", LanguageFindUsages.canFindUsagesFor(namedElement));
     return namedElement;
   }
 }

@@ -23,7 +23,7 @@ final class TagParser extends DefaultEntryParser {
 
 	// Setup ==================================================================
 
-	public TagParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
+	TagParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
 		super(eventManager, cvsFileSystem);
 	}
 }

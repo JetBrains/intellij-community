@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiMethodUtil;
 
 public class ConfigurationUtil {
   public static final Condition<PsiClass> PUBLIC_INSTANTIATABLE_CLASS = new Condition<PsiClass>() {
+    @Override
     public boolean value(final PsiClass psiClass) {
       return MAIN_CLASS.value(psiClass) &&
              psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&

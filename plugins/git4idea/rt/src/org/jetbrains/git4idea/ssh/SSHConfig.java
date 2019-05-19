@@ -302,7 +302,7 @@ public class SSHConfig {
      *
      * @param patterns a patterns to match
      */
-    public HostEntry(final String patterns) {
+    HostEntry(final String patterns) {
       for (String pattern : patterns.split("[\t ,]+")) {
         if (pattern.length() == 0) {
           continue;
@@ -417,7 +417,6 @@ public class SSHConfig {
     /**
      * @return port number
      */
-    @SuppressWarnings({"NullableProblems"})
     public int getPort() {
       return notNull(myPort).intValue();
     }
@@ -444,7 +443,6 @@ public class SSHConfig {
     /**
      * @return true if the host should be use in the batch mode
      */
-    @SuppressWarnings({"NullableProblems"})
     public boolean isBatchMode() {
       return notNull(myBatchMode).booleanValue();
     }
@@ -460,7 +458,6 @@ public class SSHConfig {
     /**
      * @return the number of the password prompts
      */
-    @SuppressWarnings({"NullableProblems"})
     public int getNumberOfPasswordPrompts() {
       return notNull(myNumberOfPasswordPrompts).intValue();
     }
@@ -490,7 +487,6 @@ public class SSHConfig {
     /**
      * Set defaults for unspecified fields
      */
-    @SuppressWarnings({"HardCodedStringLiteral"})
     private void setDefaults() {
       if (myUser == null) {
         myUser = System.getProperty("user.name");

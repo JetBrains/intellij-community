@@ -4,12 +4,20 @@ package org.jetbrains.plugins.gradle.importing;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.junit.Test;
+
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  */
-public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest {
+public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTestCase {
   @Test
   public void testCompilerConfigurationSettingsImport() throws Exception {
 
@@ -26,6 +34,11 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
         "      enableAutomake false\n" +
         "      parallelCompilation true\n" +
         "      rebuildModuleOnDependencyChange false\n" +
+        "      javac {\n" +
+        "        preferTargetJDKCompiler false\n" +
+        "        javacAdditionalOptions '-Dkey=val'\n" +
+        "        generateNoWarnings true\n" +
+        "      }\n" +
         "    }\n" +
         "  }\n" +
         "}")
@@ -42,5 +55,67 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
     assertFalse(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     assertTrue(workspaceConfiguration.PARALLEL_COMPILATION);
     assertFalse(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
+
+    final JpsJavaCompilerOptions javacOpts = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
+    assertFalse(javacOpts.PREFER_TARGET_JDK_COMPILER);
+    assertEquals("-Dkey=val", javacOpts.ADDITIONAL_OPTIONS_STRING);
+    assertTrue(javacOpts.GENERATE_NO_WARNINGS);
+  }
+
+  @Test
+  public void testArtifactsSettingsImport() throws Exception {
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    ideArtifacts {\n" +
+        "      myArt {\n" +
+        "         file(\"build.gradle\")\n" +
+        "      }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}"
+      )
+    );
+    importProject();
+    final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
+
+    final Artifact artifact = artifactManager.getArtifacts()[0];
+    assertEquals("myArt", artifact.getName());
+  }
+
+
+  @Test
+  public void testArtifactsReferenceImport() throws Exception {
+    importProject(
+      new GradleBuildScriptBuilderEx()
+        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+        .addPostfix(
+          "idea.project.settings {",
+          "  ideArtifacts {",
+          "    SomeArt {",
+          "      archive(\"main.jar\") {",
+          "        moduleOutput(idea.module.name)",
+          "      }",
+          "    }",
+          "    ArtifactRef {",
+          "      artifact('SomeArt')",
+          "    }",
+          "  }",
+          "}"
+        )
+        .generate()
+    );
+
+
+    ArtifactManager artifactsManager = ArtifactManager.getInstance(myProject);
+    Artifact artifact = artifactsManager.findArtifact("ArtifactRef");
+    assertNotNull(artifact);
+    List<PackagingElement<?>> children = artifact.getRootElement().getChildren();
+    assertSize( 1, children);
+    PackagingElement<?> element = children.get(0);
+    assertInstanceOf(element, ArtifactPackagingElement.class);
+    assertEquals("SomeArt", ((ArtifactPackagingElement)element).getArtifactName());
   }
 }

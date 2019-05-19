@@ -100,13 +100,11 @@ public class UsageViewUtil {
     Set<UsageInfo> set = new LinkedHashSet<>(Arrays.asList(usages));
 
     // Replace duplicates of move rename usage infos in injections from non code usages of master files
-    String newTextInNonCodeUsage = null;
-
-    for(UsageInfo usage:usages) {
-      if (!(usage instanceof NonCodeUsageInfo)) continue;
-      newTextInNonCodeUsage = ((NonCodeUsageInfo)usage).newText;
-      break;
-    }
+    String newTextInNonCodeUsage =
+      Arrays.stream(usages)
+            .filter(usage -> usage instanceof NonCodeUsageInfo)
+            .map(usage -> ((NonCodeUsageInfo)usage).newText)
+            .findFirst().orElse(null);
 
     if (newTextInNonCodeUsage != null) {
       for(UsageInfo usage:usages) {

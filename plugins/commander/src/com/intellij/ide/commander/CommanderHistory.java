@@ -116,7 +116,7 @@ public class CommanderHistory {
     private final boolean myElementExpanded;
     private final boolean myIsLeftPanel;
 
-    public HistoryState(PsiElement element, boolean isElementExpanded, boolean isLeftPanel) {
+    HistoryState(PsiElement element, boolean isElementExpanded, boolean isLeftPanel) {
       myElement = element;
       myElementExpanded = isElementExpanded;
       myIsLeftPanel = isLeftPanel;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.mock.MockApplicationEx;
@@ -43,6 +29,7 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     Extensions.cleanRootArea(getTestRootDisposable());
   }
 
+  @NotNull
   public static MockApplicationEx getApplication() {
     return (MockApplicationEx)ApplicationManager.getApplication();
   }
@@ -67,43 +54,43 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     }
   }
 
-  protected <T> void registerExtension(final ExtensionPointName<T> extensionPointName, @NotNull final T t) {
-    registerExtension(Extensions.getRootArea(), extensionPointName, t);
+  protected <T> void registerExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull T extension) {
+    registerExtension(Extensions.getRootArea(), extensionPointName, extension);
   }
 
-  public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> name, final T t) {
-    registerExtensionPoint(area, name, (Class<T>)t.getClass());
-
-
-    PlatformTestUtil.registerExtension(area, name, t, getTestRootDisposable());
+  public <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> name, @NotNull T extension) {
+    //noinspection unchecked
+    registerExtensionPoint(area, name, (Class<T>)extension.getClass());
+    PlatformTestUtil.registerExtension(area, name, extension, getTestRootDisposable());
   }
 
-  protected <T> void registerExtensionPoint(final ExtensionPointName<T> extensionPointName, final Class<T> aClass) {
+  protected <T> void registerExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> aClass) {
     registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
   }
 
-  protected <T> void registerExtensionPoint(final ExtensionsArea area, final ExtensionPointName<T> extensionPointName,
-                                            final Class<? extends T> aClass) {
-    final String name = extensionPointName.getName();
-    if (!area.hasExtensionPoint(name)) {
+  protected <T> void registerExtensionPoint(@NotNull ExtensionsArea area,
+                                            @NotNull ExtensionPointName<T> extensionPointName,
+                                            @NotNull Class<? extends T> aClass) {
+    if (!area.hasExtensionPoint(extensionPointName)) {
       ExtensionPoint.Kind kind = aClass.isInterface() || (aClass.getModifiers() & Modifier.ABSTRACT) != 0 ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
-      area.registerExtensionPoint(name, aClass.getName(), kind);
+      area.registerExtensionPoint(extensionPointName, aClass.getName(), kind, getTestRootDisposable());
     }
   }
 
-  protected void registerComponentImplementation(final MutablePicoContainer container, final Class<?> key, final Class<?> implementation) {
+  protected void registerComponentImplementation(@NotNull MutablePicoContainer container, @NotNull Class<?> key, @NotNull Class<?> implementation) {
     container.unregisterComponent(key);
     container.registerComponentImplementation(key, implementation);
   }
 
-  public static <T> T registerComponentInstance(final MutablePicoContainer container, final Class<T> key, final T implementation) {
+  public static <T> T registerComponentInstance(@NotNull MutablePicoContainer container, @NotNull Class<T> key, @NotNull T implementation) {
     Object old = container.getComponentInstance(key);
     container.unregisterComponent(key);
     container.registerComponentInstance(key, implementation);
+    //noinspection unchecked
     return (T)old;
   }
 
-  public static <T> T registerComponentInstance(final ComponentManager container, final Class<T> key, final T implementation) {
+  public static <T> T registerComponentInstance(@NotNull ComponentManager container, @NotNull Class<T> key, @NotNull T implementation) {
     return registerComponentInstance((MutablePicoContainer)container.getPicoContainer(), key, implementation);
   }
 

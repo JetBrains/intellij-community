@@ -18,13 +18,16 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+
 public class ProjectCoreUtil {
+  @Deprecated
+  @ApiStatus.Experimental
   public static volatile Project theProject;
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {
@@ -33,22 +36,12 @@ public class ProjectCoreUtil {
   }
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
-    if (fileType instanceof InternalFileType) {
-      return true;
-    }
-
-    VirtualFile parent = file.isDirectory() ? file: file.getParent();
-    while (parent != null) {
-      if (Comparing.equal(parent.getNameSequence(), Project.DIRECTORY_STORE_FOLDER, SystemInfoRt.isFileSystemCaseSensitive)) {
-        return true;
-      }
-      parent = parent.getParent();
-    }
-    return false;
+    return fileType instanceof InternalFileType ||
+           VfsUtilCore.findContainingDirectory(file, Project.DIRECTORY_STORE_FOLDER) != null;
   }
 
   /**
-   * @return the only open project if there is one, null if no or several projects are open
+   * @return the only open project if there is one, null if no projects open, or several projects are open, or default project is created
    */
   @Nullable
   public static Project theOnlyOpenProject() {

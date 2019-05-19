@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.thumbnail.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
-import org.intellij.images.fileTypes.ImageFileTypeManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Level up to browse images.
@@ -30,7 +17,8 @@ import org.intellij.images.fileTypes.ImageFileTypeManager;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class EnterAction extends AnAction {
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         if (view != null) {
             VirtualFile[] selection = view.getSelection();
@@ -48,8 +36,8 @@ public final class EnterAction extends AnAction {
         }
     }
 
-    public void update(AnActionEvent e) {
-        super.update(e);
+    @Override
+    public void update(@NotNull AnActionEvent e) {
         if (ThumbnailViewActionUtil.setEnabled(e)) {
             Presentation presentation = e.getPresentation();
             ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
@@ -67,8 +55,7 @@ public final class EnterAction extends AnAction {
                     presentation.setVisible(false);
                 }
             } else {
-                presentation.setVisible(false);
-                presentation.setEnabled(false);
+                presentation.setEnabledAndVisible(false);
             }
         }
     }

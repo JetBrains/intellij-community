@@ -33,7 +33,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 11/13/12 7:25 PM
  */
 public class ArrangementGroupingRulesPanel extends JPanel implements DataProvider {
 
@@ -57,7 +56,7 @@ public class ArrangementGroupingRulesPanel extends JPanel implements DataProvide
     add(myControl, new GridBag().fillCell().weightx(1).weighty(1).insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 
-  public void setRules(@Nullable List<ArrangementGroupingRule> rules) {
+  public void setRules(@Nullable List<? extends ArrangementGroupingRule> rules) {
     myControl.setRules(rules);
   }
   
@@ -68,7 +67,7 @@ public class ArrangementGroupingRulesPanel extends JPanel implements DataProvide
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (ArrangementGroupingRulesControl.KEY.is(dataId)) {
       return myControl;
     }

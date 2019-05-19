@@ -56,7 +56,7 @@
     <g fill="white" font-family="'Segoe UI'" transform="translate(0,26)" stroke="white">
       <rect x="0" width="373" height="284" y="0" clip-path="url(#2)" stroke="none"/>
     </g>
-    <g fill="silver" font-family="'Segoe UI'" transform="translate(0,26)" stroke="silver">
+    <g fill="rgb(50,50,50)" font-family="'Segoe UI'" transform="translate(0,26)" stroke="rgb(50,50,50)">
       <rect x="0" width="1" height="284" y="0" clip-path="url(#2)" stroke="none"/>
       <rect x="0" width="373" height="1" y="0" clip-path="url(#2)" stroke="none"/>
       <rect x="372" width="1" height="284" y="0" clip-path="url(#2)" stroke="none"/>

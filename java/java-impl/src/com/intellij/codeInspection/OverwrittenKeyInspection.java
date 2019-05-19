@@ -2,7 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,7 +46,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
   private static class OverwrittenKeyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
-    public OverwrittenKeyVisitor(ProblemsHolder holder) {
+    OverwrittenKeyVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -103,7 +103,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       PsiExpression arg = call.getArgumentList().getExpressions()[0];
       Object key = getKey(arg);
       if (key == null) return statement;
-      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getQualifierOrThis(call.getMethodExpression()));
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(call.getMethodExpression()));
       if (qualifier == null) return statement;
       PsiVariable qualifierVar =
         qualifier instanceof PsiReferenceExpression ? tryCast(((PsiReferenceExpression)qualifier).resolve(), PsiVariable.class) : null;
@@ -116,7 +116,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
         PsiMethodCallExpression nextCall = tryCast(nextStatement.getExpression(), PsiMethodCallExpression.class);
         if (!myMatcher.test(nextCall)) break;
         PsiExpression nextQualifier =
-          PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getQualifierOrThis(nextCall.getMethodExpression()));
+          PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(nextCall.getMethodExpression()));
         if (nextQualifier == null || !PsiEquivalenceUtil.areElementsEquivalent(qualifier, nextQualifier)) break;
         if (qualifierVar != null && VariableAccessUtils.variableIsUsed(qualifierVar, nextCall.getArgumentList())) break;
         PsiExpression nextArg = nextCall.getArgumentList().getExpressions()[0];
@@ -164,7 +164,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
   private static class NavigateToDuplicateFix implements LocalQuickFix {
     private final SmartPsiElementPointer<PsiExpression> myPointer;
 
-    public NavigateToDuplicateFix(PsiExpression arg) {
+    NavigateToDuplicateFix(PsiExpression arg) {
       myPointer = SmartPointerManager.getInstance(arg.getProject()).createSmartPsiElementPointer(arg);
     }
 
@@ -182,7 +182,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       PsiFile file = element.getContainingFile();
       if (file == null) return;
       int offset = element.getTextRange().getStartOffset();
-      new OpenFileDescriptor(project, file.getVirtualFile(), offset).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(project, file.getVirtualFile(), offset).navigate(true);
     }
   }
 }

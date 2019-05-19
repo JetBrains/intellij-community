@@ -18,5 +18,6 @@ package com.intellij.openapi.vfs;
 /**
  * @deprecated Use {@link VirtualFileListener} instead
  */
+@Deprecated
 public abstract class VirtualFileAdapter implements VirtualFileListener {
 }

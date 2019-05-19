@@ -52,6 +52,10 @@ class TypesParsingTest extends GroovyParsingTestCase {
 
   void testType9() throws Throwable { doTest() }
 
+  void testType16() { doTest() }
+
+  void testType17() { doTest() }
+
   void testIdentifierInsteadOfImplements() { doTest() }
 
   void testInnerEnum() throws Throwable { doTest() }
@@ -135,4 +139,6 @@ class TypesParsingTest extends GroovyParsingTestCase {
   void testmembers$constructorIdentifierAndLeftParen() { doTest() }
 
   void testmembers$identifierAndLeftParen() { doTest() }
+
+  void testmembers$constructorAfterInnerClass() { doTest() }
 }

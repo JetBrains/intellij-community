@@ -20,6 +20,8 @@ public abstract class AbstractMessage {
   private SubmittedReportInfo mySubmissionInfo;
   private String myAdditionalInfo;
   private Integer myAssigneeId;
+  private boolean myAssigneeVisible;
+  private Long myDevelopersTimestamp;
 
   public abstract @NotNull Throwable getThrowable();
   public abstract @NotNull String getThrowableText();
@@ -96,7 +98,24 @@ public abstract class AbstractMessage {
     myAssigneeId = assigneeId;
   }
 
+  boolean isAssigneeVisible() {
+    return myAssigneeVisible;
+  }
+
+  void setAssigneeVisible(boolean assigneeVisible) {
+    myAssigneeVisible = assigneeVisible;
+  }
+
+  public @Nullable Long getDevelopersTimestamp() {
+    return myDevelopersTimestamp;
+  }
+
+  public void setDevelopersTimestamp(@Nullable Long developersTimestamp) {
+    myDevelopersTimestamp = developersTimestamp;
+  }
+
   /** @deprecated use {@link #getIncludedAttachments()} instead (to be removed in IDEA 2020) */
+  @Deprecated
   public List<Attachment> getAttachments() {
     return getIncludedAttachments();
   }

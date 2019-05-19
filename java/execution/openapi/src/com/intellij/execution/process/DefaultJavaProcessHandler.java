@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.charset.Charset;
 
 /** @deprecated use {@link OSProcessHandler} (to be removed in IDEA 17) */
+@Deprecated
 public class DefaultJavaProcessHandler extends OSProcessHandler {
   public DefaultJavaProcessHandler(@NotNull JavaParameters javaParameters) throws ExecutionException {
     super(javaParameters.toCommandLine());

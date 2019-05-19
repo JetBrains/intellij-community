@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -44,8 +29,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * User : ktisha
@@ -82,7 +65,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
   }
 
   private static class PyParameterColumn extends NameColumn<PyParameterInfo, PyParameterTableModelItem> {
-    public PyParameterColumn(Project project) {
+    PyParameterColumn(Project project) {
       super(project);
     }
   }
@@ -113,10 +96,12 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
       parameter.setDefaultInSignature(value.getSecond());
     }
 
+    @Override
     public TableCellRenderer doCreateRenderer(TableItem item) {
       return new MyCodeFragmentTableCellRenderer(myProject);
     }
 
+    @Override
     public TableCellEditor doCreateEditor(TableItem item) {
       return new MyCodeFragmentTableCellEditor(myProject);
     }
@@ -124,9 +109,10 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
 
   private static class MyCodeFragmentTableCellRenderer extends CodeFragmentTableCellRenderer {
 
-    public MyCodeFragmentTableCellRenderer(Project project) {
+    MyCodeFragmentTableCellRenderer(Project project) {
       super(project);
     }
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, final boolean hasFocus, int row, int column) {
       JPanel panel = new JPanel();
       final Component component = super.getTableCellRendererComponent(table, ((Pair)value).getFirst(), isSelected, hasFocus, row, column);
@@ -145,13 +131,13 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
     private final Project myProject;
     private final FileType myFileType;
     protected EditorTextField myEditorTextField;
-    private final Set<DocumentListener> myListeners = new HashSet<>();
 
-    public MyCodeFragmentTableCellEditor(Project project) {
+    MyCodeFragmentTableCellEditor(Project project) {
       myProject = project;
       myFileType = PythonFileType.INSTANCE;
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       myCodeFragment = (PsiCodeFragment)((Pair)value).getFirst();
 
@@ -159,9 +145,6 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
       JPanel panel = new JPanel();
       myEditorTextField = createEditorField(myDocument);
       if (myEditorTextField != null) {
-        for (DocumentListener listener : myListeners) {
-          myEditorTextField.addDocumentListener(listener);
-        }
         myEditorTextField.setDocument(myDocument);
         myEditorTextField.setBorder(new LineBorder(table.getSelectionBackground()));
       }
@@ -173,6 +156,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
 
     protected EditorTextField createEditorField(Document document) {
       EditorTextField field = new EditorTextField(document, myProject, myFileType) {
+        @Override
         protected boolean shouldHaveBorder() {
           return false;
         }
@@ -181,6 +165,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
       return field;
     }
 
+    @Override
     public PsiCodeFragment getCellEditorValue() {
       return myCodeFragment;
     }

@@ -35,7 +35,6 @@ import java.util.Arrays;
 
 /**
  * @author anna
- * @since 23-Jan-2008
  */
 public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   public JavaProjectViewDirectoryHelper(Project project, DirectoryIndex index) {
@@ -64,6 +63,11 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
            settings.isFlattenPackages() &&
            (aPackage = JavaDirectoryService.getInstance().getPackage(value)) != null &&
            !aPackage.getQualifiedName().isEmpty();
+  }
+
+  @Override
+  public boolean shouldHideProjectConfigurationFilesDirectory() {
+    return false;
   }
 
   @Nullable

@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,8 +23,8 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
   protected static final String NAME = "Name";
 
   protected ColumnInfo[] columns;
-  protected final List<IdeaPluginDescriptor> view = ContainerUtil.newArrayList();
-  protected final List<IdeaPluginDescriptor> filtered = ContainerUtil.newArrayList();
+  protected final List<IdeaPluginDescriptor> view = new ArrayList<>();
+  protected final List<IdeaPluginDescriptor> filtered = new ArrayList<>();
 
   private RowSorter.SortKey myDefaultSortKey;
   private boolean mySortByStatus;
@@ -111,7 +98,8 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
     fireTableCellUpdated(rowIndex, columnIndex);
   }
 
-  public List<IdeaPluginDescriptorImpl> dependent(IdeaPluginDescriptorImpl plugin) {
+  @NotNull
+  public List<IdeaPluginDescriptorImpl> dependent(@NotNull IdeaPluginDescriptorImpl plugin) {
     List<IdeaPluginDescriptorImpl> list = new ArrayList<>();
     for (IdeaPluginDescriptor any : getAllPlugins()) {
       if (any instanceof IdeaPluginDescriptorImpl) {
@@ -127,7 +115,7 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
     return list;
   }
 
-  public abstract void updatePluginsList(List<IdeaPluginDescriptor> list);
+  public abstract void updatePluginsList(List<? extends IdeaPluginDescriptor> list);
 
   protected void filter(String filter) {
     Set<String> search = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
@@ -200,9 +188,21 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
   }
 
   public List<IdeaPluginDescriptor> getAllPlugins() {
-    List<IdeaPluginDescriptor> list = ContainerUtil.newArrayListWithCapacity(view.size() + filtered.size());
+    List<IdeaPluginDescriptor> list = new ArrayList<>(view.size() + filtered.size());
     list.addAll(view);
     list.addAll(filtered);
     return list;
+  }
+
+  public List<IdeaPluginDescriptor> getAllRepoPlugins() {
+    try {
+      List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
+      if (list != null) {
+        return list;
+      }
+    }
+    catch (IOException ignored) {
+    }
+    return Collections.emptyList();
   }
 }

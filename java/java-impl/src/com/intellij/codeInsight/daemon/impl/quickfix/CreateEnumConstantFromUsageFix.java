@@ -51,7 +51,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
     LOG.assertTrue(targetClass.isEnum());
     final String name = myReferenceExpression.getReferenceName();
     LOG.assertTrue(name != null);
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myReferenceExpression.getProject());
     PsiEnumConstant enumConstant = elementFactory.createEnumConstantFromText(name, null);
     enumConstant = (PsiEnumConstant)targetClass.add(enumConstant);
 
@@ -148,7 +148,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
     final List<PsiClass> classes = getTargetClasses(element);
     if (classes.size() != 1 || !classes.get(0).isEnum()) return false;
     ExpectedTypeInfo[] typeInfos = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
-    PsiType enumType = JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory().createType(classes.get(0));
+    PsiType enumType = JavaPsiFacade.getElementFactory(myReferenceExpression.getProject()).createType(classes.get(0));
     for (final ExpectedTypeInfo typeInfo : typeInfos) {
       if (ExpectedTypeUtil.matches(enumType, typeInfo)) return true;
     }

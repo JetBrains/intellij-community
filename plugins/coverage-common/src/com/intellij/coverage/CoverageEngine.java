@@ -24,19 +24,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
+ * Coverage engine provide coverage support for different languages or coverage runner classes.
+ * E.g. engine for JVM languages, Ruby, Python
+ * <p/>
+ * Each coverage engine may work with several coverage runner. E.g. Java coverage engine supports IDEA/EMMA/Cobertura,
+ * Ruby engine works with RCov
+ *
  * @author Roman.Chernyatchik
- *         <p/>
- *         Coverage engine provide coverage support for different languages or coverage runner classes.
- *         E.g. engine for JVM languages, Ruby, Python
- *         <p/>
- *         Each coverage engine may work with several coverage runner. E.g. Java coverage engine supports IDEA/EMMA/Cobertura,
- *         Ruby engine works with RCov
  */
 public abstract class CoverageEngine {
   public static final ExtensionPointName<CoverageEngine> EP_NAME = ExtensionPointName.create("com.intellij.coverageEngine");
@@ -50,6 +47,31 @@ public abstract class CoverageEngine {
   public abstract boolean isApplicableTo(@Nullable final RunConfigurationBase conf);
 
   public abstract boolean canHavePerTestCoverage(@Nullable final RunConfigurationBase conf);
+
+  /**
+   * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
+   */
+  public Set<String> getTestsForLine(Project project, String classFQName, int lineNumber) {
+    return Collections.emptySet();
+  }
+
+  /**
+   * @return true, if test data was collected
+   */
+  public boolean wasTestDataCollected(Project project) {
+    return false;
+  }
+
+  /**
+   * Extract coverage data by sub set of executed tests
+   * 
+   * @param sanitizedTestNames sanitized qualified method names for which traces should be collected
+   * @param suite              suite to find corresponding traces
+   * @param trace              class - lines map, corresponding to the lines covered by sanitizedTestNames
+   */
+  public void collectTestLines(List<String> sanitizedTestNames, CoverageSuite suite, Map<String, Set<Integer>> trace) {}
+
+  protected void deleteAssociatedTraces(CoverageSuite suite) {}
 
   /**
    * Creates coverage enabled configuration for given RunConfiguration. It is supposed that one run configuration may be associated
@@ -181,7 +203,8 @@ public abstract class CoverageEngine {
    * When output directory is empty we probably should recompile source and then choose suite again
    *
    * @param module
-   * @param chooseSuiteAction @return True if should stop and wait compilation (e.g. for Java). False if we can ignore output (e.g. for Ruby)
+   * @param chooseSuiteAction
+   * @return True if should stop and wait compilation (e.g. for Java). False if we can ignore output (e.g. for Ruby)
    */
   public abstract boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
                                                          @NotNull final Runnable chooseSuiteAction);
@@ -199,15 +222,8 @@ public abstract class CoverageEngine {
                                  @NotNull final PsiFile sourceFile) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(outputFile);
     if (virtualFile != null) {
-      return getQualifiedName(virtualFile, sourceFile);
+      return null;
     }
-    return null;
-  }
-
-  @Deprecated
-  @Nullable
-  public String getQualifiedName(@NotNull final VirtualFile outputFile,
-                                 @NotNull final PsiFile sourceFile) {
     return null;
   }
 
@@ -237,16 +253,8 @@ public abstract class CoverageEngine {
                                                 @NotNull final CoverageSuitesBundle suite) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(outputFile);
     if (virtualFile != null) {
-      return includeUntouchedFileInCoverage(qualifiedName, virtualFile, sourceFile, suite);
+      return false;
     }
-    return false;
-  }
-  
-  @Deprecated
-  public boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
-                                                @NotNull final VirtualFile outputFile,
-                                                @NotNull final PsiFile sourceFile,
-                                                @NotNull final CoverageSuitesBundle suite) {
     return false;
   }
 
@@ -261,15 +269,8 @@ public abstract class CoverageEngine {
                                                        @NotNull final CoverageSuitesBundle suite) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(classFile);
     if (virtualFile != null) {
-      return collectSrcLinesForUntouchedFile(virtualFile, suite);
+      return null;
     }
-    return null;
-  }
-  
-  @Deprecated
-  @Nullable
-  public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final VirtualFile classFile,
-                                                       @NotNull final CoverageSuitesBundle suite) {
     return null;
   }
 

@@ -30,6 +30,7 @@ public class ReplaceClassReference extends FixableUsageInfo {
         this.newClassName = newClassName;
     }
 
+    @Override
     public void fixUsage() throws IncorrectOperationException {
         MutationUtils.replaceReference(newClassName, reference);
     }

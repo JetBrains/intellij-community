@@ -34,8 +34,6 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
-import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +106,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
     clearModifiers(method);
 
-    @NonNls StringBuffer call = new StringBuffer();
+    @NonNls StringBuilder call = new StringBuilder();
 
     PsiModifierList modifierList = null;
 
@@ -160,7 +158,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     call.append(");");
 
     final PsiManager psiManager = method.getManager();
-    PsiStatement stmt = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createStatementFromText(call.toString(), method);
+    PsiStatement stmt = JavaPsiFacade.getElementFactory(psiManager.getProject()).createStatementFromText(call.toString(), method);
     stmt = (PsiStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(stmt);
     method.getBody().add(stmt);
 
@@ -185,7 +183,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
   private void clearMethod(PsiMethod method) throws IncorrectOperationException {
     LOG.assertTrue(!method.isPhysical());
-    PsiCodeBlock codeBlock = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlock();
+    PsiCodeBlock codeBlock = JavaPsiFacade.getElementFactory(method.getProject()).createCodeBlock();
     if (method.getBody() != null) {
       method.getBody().replace(codeBlock);
     }
@@ -260,6 +258,10 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
         if (overridden != null && overridden.getContainingClass() != containingClass) {
           continue;
         }
+      }
+
+      if (MethodSignatureUtil.findMethodBySuperMethod(containingClass, method, false) != null) {
+        continue;
       }
 
       PsiSubstitutor superSubstitutor = superSubstitutors.get(superClass);
@@ -359,7 +361,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
   private static void collectTargetsInClass(PsiElement element,
                                             final PsiClass targetClass,
                                             final PsiClass aClass,
-                                            List<PsiElementClassMember> result) {
+                                            List<? super PsiElementClassMember> result) {
     final PsiField[] fields = aClass.getAllFields();
     PsiResolveHelper helper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (PsiField field : fields) {

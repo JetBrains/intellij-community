@@ -76,16 +76,10 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
         SuspendPolicy suspendPolicy = getSelectedSuspendPolicy();
         ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).setSuspendPolicy(suspendPolicy);
         updateSuspendPolicyFont();
-        if (SuspendPolicy.THREAD == suspendPolicy) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(mySuspendThread, true);
-          });
-        }
-        else {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(mySuspendAll, true);
-          });
-        }
+
+        JRadioButton comp = SuspendPolicy.THREAD == suspendPolicy ? mySuspendThread : mySuspendAll;
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(comp, true));
+
         myMakeDefaultButton.setEnabled(false);
       }
     });

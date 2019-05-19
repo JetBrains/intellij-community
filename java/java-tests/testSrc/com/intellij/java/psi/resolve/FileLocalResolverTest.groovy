@@ -27,11 +27,13 @@ import com.intellij.psi.impl.source.FileLocalResolver
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
  */
+@CompileStatic
 class FileLocalResolverTest extends LightCodeInsightFixtureTestCase {
 
   void "test unknown variable"() {

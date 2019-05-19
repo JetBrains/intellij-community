@@ -1,40 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.util.io.Compressor
 import com.intellij.util.io.DirectoryContentBuilder
 import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.ZipUtil
 import org.junit.Assert.*
-import java.io.BufferedOutputStream
 import java.io.File
 import java.io.IOException
 import java.util.*
-import java.util.zip.ZipOutputStream
 
 /**
  * @author nik
  */
-sealed class DirectoryContentSpecImpl : DirectoryContentSpec {
-}
+sealed class DirectoryContentSpecImpl : DirectoryContentSpec
 
 abstract class DirectorySpecBase : DirectoryContentSpecImpl() {
-  protected val children: LinkedHashMap<String, DirectoryContentSpecImpl> = LinkedHashMap<String, DirectoryContentSpecImpl>()
+  protected val children: LinkedHashMap<String, DirectoryContentSpecImpl> = LinkedHashMap()
 
   fun addChild(name: String, spec: DirectoryContentSpecImpl) {
     if (name in children) {
@@ -77,13 +61,17 @@ class ZipSpec : DirectorySpecBase() {
     val contentDir = FileUtil.createTempDirectory("zip-content", null, false)
     try {
       generateInDirectory(contentDir)
-      ZipOutputStream(BufferedOutputStream(target.outputStream())).use {
-        ZipUtil.addDirToZipRecursively(it, null, contentDir, "", null, null)
-      }
+      Compressor.Zip(target).use { it.addDirectory(contentDir) }
     }
     finally {
       FileUtil.delete(contentDir)
     }
+  }
+
+  override fun generateInTempDir(): File {
+    val target = FileUtil.createTempFile("zip-by-spec", ".zip", true)
+    generate(target)
+    return target
   }
 }
 
@@ -118,11 +106,13 @@ class DirectoryContentBuilderImpl(val result: DirectorySpecBase) : DirectoryCont
 }
 
 fun assertDirectoryContentMatches(file: File, spec: DirectoryContentSpecImpl, relativePath: String) {
+  assertTrue("$file doesn't exist", file.exists())
   when (spec) {
     is DirectorySpec -> {
       assertDirectoryMatches(file, spec, relativePath)
     }
     is ZipSpec -> {
+      assertTrue("$file is not a file", file.isFile)
       val dirForExtracted = FileUtil.createTempDirectory("extracted-${file.name}", null, false)
       ZipUtil.extract(file, dirForExtracted, null)
       assertDirectoryMatches(dirForExtracted, spec, relativePath)

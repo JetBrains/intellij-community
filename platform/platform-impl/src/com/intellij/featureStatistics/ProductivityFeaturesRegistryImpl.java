@@ -1,26 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +13,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 
 public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
@@ -54,19 +37,20 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   private void reloadFromXml() {
-    boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
     try {
-      readFromXml("file:///ProductivityFeaturesRegistry.xml");
+      readFromXml("/ProductivityFeaturesRegistry.xml");
     }
     catch (FileNotFoundException e) {
-      if (!testMode) LOG.error(e);
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(e);
+      }
     }
     catch (Throwable e) {
       LOG.error(e);
     }
 
     try {
-      readFromXml("file:///IdeSpecificFeatures.xml");
+      readFromXml("/IdeSpecificFeatures.xml");
     }
     catch (FileNotFoundException ignore) {
     }
@@ -75,26 +59,32 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
     }
   }
 
-  private void readFromXml(String path) throws JDOMException, IOException {
-    Document document = JDOMUtil.loadResourceDocument(new URL(path));
-    Element root = document.getRootElement();
-    readGroups(root);
+  private void readFromXml(@NotNull String path) throws JDOMException, IOException {
+    readFromXml(path, ProductivityFeaturesRegistryImpl.class);
+  }
+
+  private void readFromXml(@NotNull String path, @NotNull Class<?> clazz) throws JDOMException, IOException {
+    Element root = JDOMUtil.load(clazz, path);
+    for (Element groupElement : root.getChildren(TAG_GROUP)) {
+      readGroup(groupElement);
+    }
     readFilters(root);
   }
 
   private void lazyLoadFromPluginsFeaturesProviders() {
-    if (myAdditionalFeaturesLoaded) return;
-    loadFeaturesFromProviders(ApplicationManager.getApplication().getComponents(ProductivityFeaturesProvider.class));
-    loadFeaturesFromProviders(Extensions.getExtensions(ProductivityFeaturesProvider.EP_NAME));
+    if (myAdditionalFeaturesLoaded) {
+      return;
+    }
+
     myAdditionalFeaturesLoaded = true;
+    loadFeaturesFromProviders(ProductivityFeaturesProvider.EP_NAME.getExtensionList());
   }
 
-  private void loadFeaturesFromProviders(ProductivityFeaturesProvider[] providers) {
+  private void loadFeaturesFromProviders(@NotNull List<ProductivityFeaturesProvider> providers) {
     for (ProductivityFeaturesProvider provider : providers) {
-
       for (String xmlUrl : provider.getXmlFilesUrls()) {
         try {
-          readFromXml(xmlUrl);
+          readFromXml(xmlUrl, provider.getClass());
         }
         catch (Exception e) {
           LOG.error("Error while reading " + xmlUrl + " from " + provider + ": " + e.getMessage());
@@ -127,14 +117,12 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   private void readFilters(Element element) {
-    List filters = element.getChildren(TAG_FILTER);
-    for (Object filter1 : filters) {
-      Element filterElement = (Element)filter1;
+    for (Element filterElement : element.getChildren(TAG_FILTER)) {
       String className = filterElement.getAttributeValue(CLASS_ATTR);
       try {
         Class klass = Class.forName(className);
         if (!ApplicabilityFilter.class.isAssignableFrom(klass)) {
-          LOG.error("filter class must implement com.intellij.featureSatistics.ApplicabilityFilter");
+          LOG.error("filter class must implement com.intellij.featureStatistics.ApplicabilityFilter");
           continue;
         }
 
@@ -147,14 +135,6 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
     }
   }
 
-  private void readGroups(Element element) {
-    List groups = element.getChildren(TAG_GROUP);
-    for (Object group : groups) {
-      Element groupElement = (Element)group;
-      readGroup(groupElement);
-    }
-  }
-
   private void readGroup(Element groupElement) {
     GroupDescriptor groupDescriptor = new GroupDescriptor();
     groupDescriptor.readExternal(groupElement);
@@ -164,9 +144,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   private void readFeatures(Element groupElement, GroupDescriptor groupDescriptor) {
-    List features = groupElement.getChildren(TAG_FEATURE);
-    for (Object feature : features) {
-      Element featureElement = (Element)feature;
+    for (Element featureElement : groupElement.getChildren(TAG_FEATURE)) {
       FeatureDescriptor featureDescriptor = new FeatureDescriptor(groupDescriptor);
       featureDescriptor.readExternal(featureElement);
       if (!TODO_HTML_MARKER.equals(featureDescriptor.getTipFileName())) {
@@ -175,12 +153,14 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
     }
   }
 
+  @Override
   @NotNull
   public Set<String> getFeatureIds() {
     lazyLoadFromPluginsFeaturesProviders();
     return myFeatures.keySet();
   }
 
+  @Override
   public FeatureDescriptor getFeatureDescriptor(@NotNull String id) {
     lazyLoadFromPluginsFeaturesProviders();
     return getFeatureDescriptorEx(id);
@@ -193,11 +173,13 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
     return myFeatures.get(id);
   }
 
+  @Override
   public GroupDescriptor getGroupDescriptor(@NotNull String id) {
     lazyLoadFromPluginsFeaturesProviders();
     return myGroups.get(id);
   }
 
+  @Override
   @NotNull
   public ApplicabilityFilter[] getMatchingFilters(@NotNull String featureId) {
     lazyLoadFromPluginsFeaturesProviders();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -27,34 +13,34 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.newImpl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBCachingScalableIcon;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
-import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<T>> implements DeferredIcon, RetrievableIcon {
+public class DeferredIconImpl<T> extends JBCachingScalableIcon<DeferredIconImpl<T>> implements DeferredIcon, RetrievableIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.DeferredIconImpl");
   private static final int MIN_AUTO_UPDATE_MILLIS = 950;
   private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
   @NotNull
   private final Icon myDelegateIcon;
   private volatile Icon myScaledDelegateIcon;
-  private Function<T, Icon> myEvaluator;
+  private Function<? super T, ? extends Icon> myEvaluator;
   private volatile boolean myIsScheduled;
   private T myParam;
   private static final Icon EMPTY_ICON = JBUI.scale(EmptyIcon.create(16));
@@ -64,11 +50,9 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
   private long myLastCalcTime;
   private long myLastTimeSpent;
 
-  private static final Executor ourIconsCalculatingExecutor = SequentialTaskExecutor
-    .createSequentialApplicationPoolExecutor("OurIconsCalculating Pool");
+  private static final Executor ourIconsCalculatingExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("OurIconsCalculating Pool");
 
   private final IconListener<T> myEvalListener;
-  private static final TransferToEDTQueue<Runnable> ourLaterInvocator = TransferToEDTQueue.createRunnableMerger("Deferred icon later invocator");
 
   private DeferredIconImpl(@NotNull DeferredIconImpl<T> icon) {
     super(icon);
@@ -87,16 +71,17 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
 
   @NotNull
   @Override
-  protected DeferredIconImpl<T> copy() {
+  public DeferredIconImpl<T> copy() {
     return new DeferredIconImpl<>(this);
   }
 
   @NotNull
   @Override
-  public Icon scale(float scale) {
-    if (getScale() != scale && myDelegateIcon instanceof ScalableIcon) {
-      myScaledDelegateIcon = ((ScalableIcon)myDelegateIcon).scale(scale);
-      super.scale(scale);
+  public DeferredIconImpl<T> scale(float scale) {
+    if (getScale() != scale) {
+      DeferredIconImpl<T> icon = super.scale(scale);
+      icon.myScaledDelegateIcon = IconUtil.scale(icon.myDelegateIcon, null, scale);
+      return icon;
     }
     return this;
   }
@@ -105,15 +90,15 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
     private static final boolean CHECK_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<T, Icon> evaluator, @NotNull IconListener<T> listener, boolean autoUpdatable) {
+  DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<? super T, ? extends Icon> evaluator, @NotNull IconListener<T> listener, boolean autoUpdatable) {
     this(baseIcon, param, true, evaluator, listener, autoUpdatable);
   }
 
-  public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<T, Icon> evaluator) {
+  public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<? super T, ? extends Icon> evaluator) {
     this(baseIcon, param, needReadAction, evaluator, null, false);
   }
 
-  private DeferredIconImpl(Icon baseIcon, T param, boolean needReadAction, @NotNull Function<T, Icon> evaluator, @Nullable IconListener<T> listener, boolean autoUpdatable) {
+  private DeferredIconImpl(Icon baseIcon, T param, boolean needReadAction, @NotNull Function<? super T, ? extends Icon> evaluator, @Nullable IconListener<T> listener, boolean autoUpdatable) {
     myParam = param;
     myDelegateIcon = nonNull(baseIcon);
     myScaledDelegateIcon = myDelegateIcon;
@@ -187,7 +172,7 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
       final boolean shouldRevalidate =
         Registry.is("ide.tree.deferred.icon.invalidates.cache") && myScaledDelegateIcon.getIconWidth() != oldWidth;
 
-      ourLaterInvocator.offer(() -> {
+      EdtExecutorService.getInstance().execute(() -> {
         setDone(result);
         if (equalIcons(result, myDelegateIcon)) return;
 
@@ -205,10 +190,7 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
           // revalidate will not work: JTree caches size of nodes
           if (actualTarget instanceof JTree) {
             final TreeUI ui = ((JTree)actualTarget).getUI();
-            if (ui instanceof BasicTreeUI) {
-              // this call is "fake" and only need to reset tree layout cache
-              ((BasicTreeUI)ui).setLeftChildIndent(UIUtil.getTreeLeftChildIndent());
-            }
+            TreeUtil.invalidateCacheAndRepaint(ui);
           }
         }
 

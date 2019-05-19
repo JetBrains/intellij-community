@@ -2,10 +2,8 @@
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author egor

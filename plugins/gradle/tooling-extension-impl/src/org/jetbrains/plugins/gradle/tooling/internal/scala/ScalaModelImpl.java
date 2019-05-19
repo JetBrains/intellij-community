@@ -23,7 +23,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/31/14
  */
 public class ScalaModelImpl implements ScalaModel {
   private Set<File> scalaClasspath;

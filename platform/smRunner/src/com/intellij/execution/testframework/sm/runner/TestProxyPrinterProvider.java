@@ -54,11 +54,11 @@ public final class TestProxyPrinterProvider {
       contentType -> ConsoleViewContentType.ERROR_OUTPUT == contentType;
     private static final String NL = "\n";
 
-    private final Condition<ConsoleViewContentType> myContentTypeCondition;
+    private final Condition<? super ConsoleViewContentType> myContentTypeCondition;
     private final Filter myFilter;
 
-    public HyperlinkPrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView,
-                            @NotNull Condition<ConsoleViewContentType> contentTypeCondition,
+    HyperlinkPrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView,
+                            @NotNull Condition<? super ConsoleViewContentType> contentTypeCondition,
                             @NotNull Filter filter) {
       super(testsOutputConsoleView, testsOutputConsoleView.getProperties(), null);
       myContentTypeCondition = contentTypeCondition;

@@ -35,20 +35,25 @@ public class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
     myProcessedElementsHeader = StringUtil.capitalize(RefactoringBundle.message("0.to.change.signature", UsageViewUtil.getType(method)));
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[] {myMethod};
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return myProcessedElementsHeader;
   }
 
+  @NotNull
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed",
                                      UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

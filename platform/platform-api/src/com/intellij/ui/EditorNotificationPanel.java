@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -48,6 +49,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -132,21 +134,29 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   protected void executeAction(final String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
-    final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN,
+    final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(),
                                                                  DataManager.getInstance().getDataContext(this));
     action.beforeActionPerformedUpdate(event);
     action.update(event);
 
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
+      ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+      actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
       action.actionPerformed(event);
+      actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);
     }
+  }
+
+  @NotNull
+  protected String getActionPlace() {
+    return ActionPlaces.UNKNOWN;
   }
 
   @Nullable
   @Override
   public IntentionActionWithOptions getIntentionAction() {
     MyIntentionAction action = new MyIntentionAction();
-    return action.getOptions().isEmpty() ? null : action;
+    return action.myOptions.isEmpty() ? null : action;
   }
 
   @Override
@@ -171,15 +181,18 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @NotNull
     @Override
     public List<IntentionAction> getOptions() {
-      return myOptions;
+      return myOptions.isEmpty() ? Collections.emptyList() : myOptions.subList(1, myOptions.size());
     }
 
     @Nls
     @NotNull
     @Override
     public String getText() {
+      if (!myOptions.isEmpty()) {
+        return myOptions.get(0).getText();
+      }
       String text = myLabel.getText();
-      return StringUtil.isEmpty(text) ? EditorBundle.message("editor.notification.default.action.name") 
+      return StringUtil.isEmpty(text) ? EditorBundle.message("editor.notification.default.action.name")
                                       : StringUtil.shortenTextWithEllipsis(text, 50, 0);
     }
 

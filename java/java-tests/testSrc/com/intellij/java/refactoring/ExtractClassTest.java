@@ -17,35 +17,25 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.extractclass.ExtractClassProcessor;
 import junit.framework.Assert;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.TreeSet;
 
-public class ExtractClassTest extends MultiFileTestCase {
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/extractClass/";
-  }
-
+public class ExtractClassTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/extractClass/";
   }
 
   private void doTestMethod() {
@@ -63,8 +53,8 @@ public class ExtractClassTest extends MultiFileTestCase {
   private void doTestMethod(final String methodName,
                             final String conflicts,
                             final String qualifiedName) {
-    doTest((rootDir, rootAfter) -> {
-      PsiClass aClass = myJavaFacade.findClass(qualifiedName, GlobalSearchScope.projectScope(myProject));
+    doTest(() -> {
+      PsiClass aClass = myFixture.findClass(qualifiedName);
 
       assertNotNull("Class Test not found", aClass);
 
@@ -88,13 +78,7 @@ public class ExtractClassTest extends MultiFileTestCase {
   }
   
   public void testIncrement() {
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doTestField(null, false);
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doTestField(null, false));
   }
 
   public void testVarargs() {
@@ -137,6 +121,10 @@ public class ExtractClassTest extends MultiFileTestCase {
     doTestMethod();
   }
 
+  public void testTypeParameters() {
+    doTestMethod();
+  }
+
   public void testStaticImports() {
     doTestMethod("foo", null, "foo.Test");
   }
@@ -162,8 +150,8 @@ public class ExtractClassTest extends MultiFileTestCase {
   }
 
   private void doTestFieldAndMethod(final String methodName) {
-    doTest((rootDir, rootAfter) -> {
-      PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+    doTest(() -> {
+      PsiClass aClass = myFixture.findClass("Test");
 
       assertNotNull("Class Test not found", aClass);
 
@@ -182,8 +170,8 @@ public class ExtractClassTest extends MultiFileTestCase {
   }
 
   private void doTestField(final String conflicts, final boolean generateGettersSetters) {
-    doTest((rootDir, rootAfter) -> {
-      PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+    doTest(() -> {
+      PsiClass aClass = myFixture.findClass("Test");
 
       assertNotNull("Class Test not found", aClass);
 
@@ -197,8 +185,8 @@ public class ExtractClassTest extends MultiFileTestCase {
   }
 
   public void testInnerClass() {
-    doTest((rootDir, rootAfter) -> {
-      PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+    doTest(() -> {
+      PsiClass aClass = myFixture.findClass("Test");
 
       assertNotNull("Class Test not found", aClass);
 
@@ -225,11 +213,8 @@ public class ExtractClassTest extends MultiFileTestCase {
                              boolean inner) {
     try {
       ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), StringUtil.getPackageName(aClass.getQualifiedName()), null,
-                                                                  "Extracted", null, generateGettersSetters, Collections.emptyList());
-      processor.setExtractInnerClass(inner);
+                                                                  "Extracted", null, generateGettersSetters, Collections.emptyList(), inner);
       processor.run();
-      LocalFileSystem.getInstance().refresh(false);
-      FileDocumentManager.getInstance().saveAllDocuments();
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       if (conflicts != null) {
@@ -264,8 +249,8 @@ public class ExtractClassTest extends MultiFileTestCase {
   }
 
   public void testPublicFieldDelegation() {
-    doTest((rootDir, rootAfter) -> {
-      PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+    doTest(() -> {
+      PsiClass aClass = myFixture.findClass("Test");
 
       assertNotNull("Class Test not found", aClass);
 
@@ -274,14 +259,12 @@ public class ExtractClassTest extends MultiFileTestCase {
 
       ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, new ArrayList<>(), new ArrayList<>(), "", "Extracted");
       processor.run();
-      LocalFileSystem.getInstance().refresh(false);
-      FileDocumentManager.getInstance().saveAllDocuments();
     });
   }
 
   private void doTestInnerClass() {
-    doTest((rootDir, rootAfter) -> {
-      PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+    doTest(() -> {
+      PsiClass aClass = myFixture.findClass("Test");
 
       assertNotNull("Class Test not found", aClass);
 
@@ -289,8 +272,6 @@ public class ExtractClassTest extends MultiFileTestCase {
       classes.add(aClass.findInnerClassByName("Inner", false));
       ExtractClassProcessor processor = new ExtractClassProcessor(aClass, new ArrayList<>(), new ArrayList<>(), classes, "", "Extracted");
       processor.run();
-      LocalFileSystem.getInstance().refresh(false);
-      FileDocumentManager.getInstance().saveAllDocuments();
     });
   }
 
@@ -327,8 +308,8 @@ public class ExtractClassTest extends MultiFileTestCase {
   }
 
   public void testPublicVisibility() {
-    doTest((rootDir, rootAfter) -> {
-      PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+    doTest(() -> {
+      PsiClass aClass = myFixture.findClass("Test");
 
       assertNotNull("Class Test not found", aClass);
 
@@ -339,10 +320,8 @@ public class ExtractClassTest extends MultiFileTestCase {
       fields.add(aClass.findFieldByName("myT", false));
 
       final ExtractClassProcessor processor =
-        new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), "", null, "Extracted", PsiModifier.PUBLIC, false, Collections.emptyList());
+        new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), "", null, "Extracted", PsiModifier.PUBLIC, false, Collections.emptyList(), false);
       processor.run();
-      LocalFileSystem.getInstance().refresh(false);
-      FileDocumentManager.getInstance().saveAllDocuments();
     });
   }
 }

@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -27,9 +12,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author traff
@@ -39,13 +22,13 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   @NotNull
   private List<PathMapping> myPathMappings;
 
-  public PathMappingSettings(@Nullable final List<PathMapping> pathMappings) {
+  public PathMappingSettings(@Nullable final List<? extends PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
   @NotNull
-  private static List<PathMapping> create(@Nullable final List<PathMapping> mappings) {
-    List<PathMapping> result = ContainerUtil.newArrayList();
+  private static List<PathMapping> create(@Nullable final List<? extends PathMapping> mappings) {
+    List<PathMapping> result = new ArrayList<>();
     if (mappings != null) {
       for (PathMapping m : mappings) {
         if (m != null && !isAnyEmpty(m.getLocalRoot(), m.getRemoteRoot())) {
@@ -57,7 +40,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   }
 
   public PathMappingSettings() {
-    myPathMappings = ContainerUtil.newArrayList();
+    myPathMappings = new ArrayList<>();
   }
 
   @NotNull
@@ -68,7 +51,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   @NotNull
   private static String normLocal(@NotNull String path) {
     if (SystemInfo.isWindows) {
-      path = path.toLowerCase();
+      path = StringUtil.toLowerCase(path);
     }
 
     return norm(path);
@@ -77,15 +60,6 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   @Override
   public boolean isEmpty() {
     return myPathMappings.isEmpty();
-  }
-
-  /**
-   * @deprecated use {@code !isEmpty()} instead
-   * @see #isEmpty()
-   */
-  @Deprecated
-  public boolean isUseMapping() {
-    return !isEmpty();
   }
 
   public static class BestMappingSelector {
@@ -119,7 +93,10 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return remotePath != null ? remotePath : localPath;
   }
 
-  public void add(@NotNull PathMapping mapping) {
+  public void add(@Nullable PathMapping mapping) {
+    if (mapping == null) {
+      return;
+    }
     if (isAnyEmpty(mapping.getLocalRoot(), mapping.getRemoteRoot())) {
       return;
     }
@@ -155,7 +132,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return myPathMappings;
   }
 
-  public void setPathMappings(@Nullable final List<PathMapping> pathMappings) {
+  public void setPathMappings(@Nullable final List<? extends PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
@@ -202,7 +179,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     myPathMappings.addAll(settings.getPathMappings());
   }
 
-  public void addAll(@NotNull List<PathMapping> mappings) {
+  public void addAll(@NotNull List<? extends PathMapping> mappings) {
     myPathMappings.addAll(mappings);
   }
 
@@ -283,7 +260,12 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
       }
 
       String localPrefix = normLocal(myLocalRoot);
-      return !localPrefix.isEmpty() && normLocal(path).startsWith(localPrefix);
+      if (localPrefix.isEmpty()) {
+        return false;
+      }
+      final String localPath = normLocal(path);
+      final int prefixLength = localPrefix.length();
+      return localPath.startsWith(localPrefix) && (localPath.length() == prefixLength || localPath.charAt(prefixLength) == '/');
     }
 
     public String mapToRemote(@NotNull String path) {
@@ -328,8 +310,8 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
 
       PathMapping mapping = (PathMapping)o;
 
-      if (myLocalRoot != null ? !myLocalRoot.equals(mapping.myLocalRoot) : mapping.myLocalRoot != null) return false;
-      if (myRemoteRoot != null ? !myRemoteRoot.equals(mapping.myRemoteRoot) : mapping.myRemoteRoot != null) return false;
+      if (!Objects.equals(myLocalRoot, mapping.myLocalRoot)) return false;
+      if (!Objects.equals(myRemoteRoot, mapping.myRemoteRoot)) return false;
 
       return true;
     }

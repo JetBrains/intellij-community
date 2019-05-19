@@ -124,7 +124,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     }
 
 
-    final Entry<K, V> e = new Entry<K, V>(key, value);
+    final Entry<K, V> e = new Entry<>(key, value);
 
     e.hashNext = table[index];
 
@@ -275,7 +275,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     private Entry<K, V> hashNext;
 
 
-    public Entry(final K key, final V value) {
+    Entry(final K key, final V value) {
 
       this.key = key;
 

@@ -28,6 +28,7 @@ public class GrBitwiseExpressionImpl extends GrBinaryExpressionImpl {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Bitwise expression";
   }

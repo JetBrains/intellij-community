@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -29,7 +15,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -47,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class BaseRefactoringAction extends AnAction {
+public abstract class BaseRefactoringAction extends AnAction implements UpdateInBackground {
   private final Condition<Language> myLanguageCondition = this::isAvailableForLanguage;
 
   protected abstract boolean isAvailableInEditorOnly();
@@ -57,6 +42,24 @@ public abstract class BaseRefactoringAction extends AnAction {
   @Override
   public boolean startInTransaction() {
     return true;
+  }
+
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
+                                                        @NotNull Editor editor,
+                                                        @NotNull PsiFile file,
+                                                        @NotNull DataContext context,
+                                                        @NotNull String place) {
+    if (ActionPlaces.isPopupPlace(place)) {
+      final RefactoringActionHandler handler = getHandler(context);
+      if (handler instanceof ContextAwareActionHandler) {
+        ContextAwareActionHandler contextAwareActionHandler = (ContextAwareActionHandler)handler;
+        if (!contextAwareActionHandler.isAvailableForQuickList(editor, file, context)) {
+          return false;
+        }
+      }
+    }
+
+    return isAvailableOnElementInEditorAndFile(element, editor, file, context);
   }
 
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
@@ -135,15 +138,14 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  protected boolean isEnabledOnDataContext(DataContext dataContext) {
+  protected boolean isEnabledOnDataContext(@NotNull DataContext dataContext) {
     return false;
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setVisible(true);
-    presentation.setEnabled(true);
+    presentation.setEnabledAndVisible(true);
     DataContext dataContext = e.getDataContext();
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || isHidden()) {
@@ -154,7 +156,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file != null) {
-      if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
+      if (file instanceof PsiCompiledElement && disableOnCompiledElement() || !isAvailableForFile(file)) {
         hideAction(e);
         return;
       }
@@ -170,28 +172,19 @@ public abstract class BaseRefactoringAction extends AnAction {
       if (!isEnabled) {
         disableAction(e);
       }
+      else {
+        updateActionText(e);
+      }
     }
     else {
-      PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
-      Language[] languages = e.getData(LangDataKeys.CONTEXT_LANGUAGES);
-      if (element == null || !isAvailableForLanguage(element.getLanguage())) {
-        if (file == null) {
-          hideAction(e);
-          return;
-        }
-        element = getElementAtCaret(editor, file);
-      }
-
-      if (element == null || element instanceof SyntheticElement || languages == null) {
-        hideAction(e);
-        return;
-      }
-
-      boolean isVisible = ContainerUtil.find(languages, myLanguageCondition) != null;
-      if (isVisible) {
-        boolean isEnabled = file != null && isAvailableOnElementInEditorAndFile(element, editor, file, dataContext);
+      PsiElement element = findRefactoringTargetInEditor(dataContext);
+      if (element != null) {
+        boolean isEnabled = file != null && isAvailableOnElementInEditorAndFile(element, editor, file, dataContext, e.getPlace());
         if (!isEnabled) {
           disableAction(e);
+        }
+        else {
+          updateActionText(e);
         }
       }
       else {
@@ -200,7 +193,45 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  private static void hideAction(AnActionEvent e) {
+  protected PsiElement findRefactoringTargetInEditor(DataContext dataContext) {
+    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+    PsiFile file = dataContext.getData(CommonDataKeys.PSI_FILE);
+    PsiElement element = dataContext.getData(CommonDataKeys.PSI_ELEMENT);
+    Language[] languages = dataContext.getData(LangDataKeys.CONTEXT_LANGUAGES);
+    if (element == null || !isAvailableForLanguage(element.getLanguage())) {
+      if (file == null || editor == null) {
+        return null;
+      }
+      element = getElementAtCaret(editor, file);
+    }
+
+    if (element == null || element instanceof SyntheticElement || languages == null) {
+      return null;
+    }
+
+    if (ContainerUtil.find(languages, myLanguageCondition) == null) {
+      return null;
+    }
+    return element;
+  }
+
+  private void updateActionText(AnActionEvent e) {
+    String actionText = getActionName(e.getDataContext());
+    if (actionText != null) {
+      e.getPresentation().setText(actionText);
+    }
+  }
+
+  @Nullable
+  protected String getActionName(@NotNull DataContext dataContext) {
+    return null;
+  }
+
+  protected boolean disableOnCompiledElement() {
+    return true;
+  }
+
+  private static void hideAction(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(false);
     disableAction(e);
   }
@@ -209,7 +240,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     return false;
   }
 
-  public static PsiElement getElementAtCaret(final Editor editor, final PsiFile file) {
+  public static PsiElement getElementAtCaret(@NotNull final Editor editor, final PsiFile file) {
     final int offset = fixCaretOffset(editor);
     PsiElement element = file.findElementAt(offset);
     if (element == null && offset == file.getTextLength()) {
@@ -222,7 +253,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     return element;
   }
 
-  private static int fixCaretOffset(final Editor editor) {
+  private static int fixCaretOffset(@NotNull final Editor editor) {
     final int caret = editor.getCaretModel().getOffset();
     if (editor.getSelectionModel().hasSelection()) {
       if (caret == editor.getSelectionModel().getSelectionEnd()) {
@@ -233,12 +264,12 @@ public abstract class BaseRefactoringAction extends AnAction {
     return caret;
   }
 
-  private static void disableAction(AnActionEvent e) {
+  private static void disableAction(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(false);
   }
 
   protected boolean isAvailableForLanguage(Language language) {
-    return language.isKindOf(StdFileTypes.JAVA.getLanguage());
+    return true;
   }
 
   protected boolean isAvailableForFile(PsiFile file) {

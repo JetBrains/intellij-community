@@ -16,8 +16,6 @@ public class RedundantCompareCallInspectionTest extends LightQuickFixParameteriz
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/redundantCompareCall";

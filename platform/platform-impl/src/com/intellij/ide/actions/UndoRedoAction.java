@@ -6,12 +6,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,18 +23,32 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 public abstract class UndoRedoAction extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(UndoRedoAction.class);
+  public static final Key<Boolean> IGNORE_SWING_UNDO_MANAGER = new Key<>("IGNORE_SWING_UNDO_MANAGER");
+
+  private boolean myActionInProgress;
+
   public UndoRedoAction() {
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
-    perform(editor, undoManager);
+
+    myActionInProgress = true;
+    try {
+      perform(editor, undoManager);
+    }
+    finally {
+      myActionInProgress = false;
+    }
   }
 
-  public void update(AnActionEvent event) {
+  @Override
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
@@ -50,20 +65,26 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     presentation.setDescription(pair.second);
   }
 
-  private static UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
+  private UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
     Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-    Editor e = dataContext.getData(CommonDataKeys.EDITOR);
-    if (component instanceof JTextComponent && (e == null || component != e.getContentComponent())) {
+    if (component instanceof JTextComponent && !UIUtil.isClientPropertyTrue(component, IGNORE_SWING_UNDO_MANAGER)) {
       return SwingUndoManagerWrapper.fromContext(dataContext);
     }
+    JRootPane rootPane = null;
+    JBPopup popup = null;
     if (editor == null) {
-      JRootPane rootPane = UIUtil.getRootPane(component);
-      JBPopup popup = rootPane != null ? (JBPopup)rootPane.getClientProperty(JBPopup.KEY) : null;
+      rootPane = UIUtil.getRootPane(component);
+      popup = rootPane != null ? (JBPopup)rootPane.getClientProperty(JBPopup.KEY) : null;
       boolean modalPopup = popup != null && popup.isModalContext();
       boolean modalContext = Boolean.TRUE.equals(PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext));
       if (modalPopup || modalContext) {
         return SwingUndoManagerWrapper.fromContext(dataContext);
       }
+    }
+    if (myActionInProgress) {
+      LOG.error("Recursive undo invocation attempt, component: " + component + ", fileEditor: " + editor +
+                ", rootPane: " + rootPane + ", popup: " + popup);
+      return null;
     }
 
     Project project = getProject(editor, dataContext);
@@ -96,7 +117,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
       return swingUndoManager != null ? new SwingUndoManagerWrapper(swingUndoManager) : null;
     }
 
-    public SwingUndoManagerWrapper(javax.swing.undo.UndoManager swingUndoManager) {
+    SwingUndoManagerWrapper(javax.swing.undo.UndoManager swingUndoManager) {
       mySwingUndoManager = swingUndoManager;
     }
 
@@ -151,7 +172,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     }
 
     @NotNull
-    private Pair<String, String> getUndoOrRedoActionNameAndDescription(boolean undo) {
+    private static Pair<String, String> getUndoOrRedoActionNameAndDescription(boolean undo) {
       String command = undo ? "undo" : "redo";
       return Pair.create(
         ActionsBundle.message("action." + command + ".text", "").trim(),

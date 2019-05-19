@@ -47,7 +47,7 @@ public class FindUsagesAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
@@ -80,13 +80,13 @@ public class FindUsagesAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     FindUsagesInFileAction.updateFindUsagesAction(event);
   }
 
   static void chooseAmbiguousTargetAndPerform(@NotNull final Project project,
                                               final Editor editor,
-                                              @NotNull PsiElementProcessor<PsiElement> processor) {
+                                              @NotNull PsiElementProcessor<? super PsiElement> processor) {
     if (editor == null) {
       Messages.showMessageDialog(project, FindBundle.message("find.no.usages.at.cursor.error"), CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());

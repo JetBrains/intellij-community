@@ -84,7 +84,10 @@ abstract class SourceOperation extends Operation {
     }
     if (name.equals("stream") && args.length == 0 &&
         InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-      return new ForEachSource(call.getMethodExpression().getQualifierExpression());
+      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+      if (qualifier != null) {
+        return new ForEachSource(qualifier);
+      }
     }
     if (name.equals("stream") && args.length == 1 &&
         CommonClassNames.JAVA_UTIL_ARRAYS.equals(className)) {
@@ -109,26 +112,24 @@ abstract class SourceOperation extends Operation {
 
   static class ForEachSource extends SourceOperation {
     private final boolean myEntrySet;
-    private @Nullable PsiExpression myQualifier;
+    private @NotNull PsiExpression myQualifier;
 
-    ForEachSource(@Nullable PsiExpression qualifier) {
+    ForEachSource(@NotNull PsiExpression qualifier) {
       this(qualifier, false);
     }
 
-    ForEachSource(@Nullable PsiExpression qualifier, boolean entrySet) {
+    ForEachSource(@NotNull PsiExpression qualifier, boolean entrySet) {
       myQualifier = qualifier;
       myEntrySet = entrySet;
     }
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      if(myQualifier != null) {
-        myQualifier = replaceVarReference(myQualifier, oldName, newName, context);
-      }
+      myQualifier = replaceVarReference(myQualifier, oldName, newName, context);
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myQualifier);
     }
 
@@ -147,9 +148,7 @@ abstract class SourceOperation extends Operation {
 
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      PsiExpression iterationParameter = myQualifier == null ? ExpressionUtils
-        .getQualifierOrThis(((PsiMethodCallExpression)context.createExpression("stream()")).getMethodExpression()) : myQualifier;
-      String iterationParameterText = iterationParameter.getText() + (myEntrySet ? ".entrySet()" : "");
+      String iterationParameterText = myQualifier.getText() + (myEntrySet ? ".entrySet()" : "");
       return context.getLoopLabel() + "for(" + outVar.getDeclaration() + ": " + iterationParameterText + ") {" + code + "}\n";
     }
   }
@@ -167,7 +166,7 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myCall.getArgumentList());
     }
 
@@ -218,7 +217,7 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myFn.registerReusedElements(consumer);
       if(myLimit != null) {
         consumer.accept(myLimit);
@@ -256,7 +255,7 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myInitializer);
       myFn.registerReusedElements(consumer);
     }
@@ -293,7 +292,7 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myOrigin);
       consumer.accept(myBound);
     }
@@ -340,7 +339,7 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myOrigin);
       consumer.accept(myBound);
       consumer.accept(myArray);
@@ -371,7 +370,7 @@ abstract class SourceOperation extends Operation {
     private final String myElementType;
     private PsiMethodCallExpression myCall;
 
-    public StreamIteratorSource(PsiMethodCallExpression call, PsiType type) {
+    StreamIteratorSource(PsiMethodCallExpression call, PsiType type) {
       myCall = call;
       myElementType = type.getCanonicalText();
     }
@@ -382,7 +381,7 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myCall);
     }
 

@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
 
@@ -48,7 +47,6 @@ public class ModuleChunkClasspath extends Path {
    * @param generateRuntimeClasspath if true, runtime classpath is being generated. Otherwise a compile time classpath is constructed
    * @param generateTestClasspath    if true, a test classpath is generated.
    */
-  @SuppressWarnings({"unchecked"})
   public ModuleChunkClasspath(final ModuleChunk chunk,
                               final GenerationOptions genOptions,
                               final boolean generateRuntimeClasspath,
@@ -251,7 +249,7 @@ public class ModuleChunkClasspath extends Path {
      *
      * @param value primary value of the element
      */
-    public ClasspathItem(String value) {
+    ClasspathItem(String value) {
       myValue = value;
     }
 
@@ -276,11 +274,12 @@ public class ModuleChunkClasspath extends Path {
      * @param value     primary value of the element
      * @param generator a generator to use
      */
-    public GeneratorItem(String value, final Generator generator) {
+    GeneratorItem(String value, final Generator generator) {
       super(value);
       myGenerator = generator;
     }
 
+    @Override
     public Generator toGenerator() {
       return myGenerator;
     }
@@ -295,7 +294,7 @@ public class ModuleChunkClasspath extends Path {
      *
      * @param value a referenced location
      */
-    public PathElementItem(String value) {
+    PathElementItem(String value) {
       super(value);
     }
 
@@ -331,7 +330,7 @@ public class ModuleChunkClasspath extends Path {
      *
      * @param value an indentifier of referenced classpath
      */
-    public PathRefItem(String value) {
+    PathRefItem(String value) {
       super(value);
     }
 

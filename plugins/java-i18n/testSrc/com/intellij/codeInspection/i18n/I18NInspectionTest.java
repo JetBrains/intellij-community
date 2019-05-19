@@ -7,17 +7,17 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-/**
- * @author lesya
- */
-public class I18NInspectionTest extends InspectionTestCase {
+import static com.intellij.testFramework.LightCodeInsightTestCase.getJavaFacade;
+
+public class I18NInspectionTest extends LightCodeInsightFixtureTestCase {
+
+  I18nInspection myTool = new I18nInspection();
+  
   private void doTest() {
-    doTest(new I18nInspection());
-  }
-  private void doTest(I18nInspection tool) {
-    doTest("i18n/" + getTestName(true), tool);
+    myFixture.enableInspections(myTool);
+    myFixture.testHighlighting("i18n/" + getTestName(false) + ".java");
   }
 
   public void testHardCodedStringLiteralAsParameter() { doTest(); }
@@ -26,6 +26,7 @@ public class I18NInspectionTest extends InspectionTestCase {
   public void testParameterInheritsNonNlsAnnotationFromSuper() { doTest(); }
   public void testLocalVariables() { doTest(); }
   public void testFields() { doTest(); }
+  public void testInAnnotationArguments() { doTest(); }
   public void testAnonymousClassConstructorParameter() { doTest(); }
   public void testStringBufferNonNls() { doTest(); }
   public void testEnum() {
@@ -43,14 +44,14 @@ public class I18NInspectionTest extends InspectionTestCase {
   public void testVarargNonNlsParameter() { doTest(); }
   public void testInitializerInAnonymousClass() { doTest(); }
   public void testNonNlsArray() { doTest(); }
+  public void testNonNlsEquals() { doTest(); }
   public void testParameterInNewAnonymousClass() { doTest(); }
   public void testConstructorCallOfNonNlsVariable() { doTest(); }
   public void testSwitchOnNonNlsString() { doTest(); }
   public void testNonNlsComment() {
-    I18nInspection inspection = new I18nInspection();
-    inspection.nonNlsCommentPattern = "MYNON-NLS";
-    inspection.cacheNonNlsCommentPattern();
-    doTest(inspection);
+    myTool.nonNlsCommentPattern = "MYNON-NLS";
+    myTool.cacheNonNlsCommentPattern();
+    doTest();
   }
   public void testAnnotationArgument() { doTest(); }
 

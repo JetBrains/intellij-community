@@ -15,11 +15,14 @@
  */
 package com.intellij.compiler.actions;
 
+import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -64,14 +67,22 @@ public class BuildArtifactAction extends DumbAwareAction {
     super("Build Artifacts...", "Select and build artifacts configured in the project", null);
   }
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(project != null && !ArtifactUtil.getArtifactWithOutputPaths(project).isEmpty());
+    boolean enabled = project != null && !ArtifactUtil.getArtifactWithOutputPaths(project).isEmpty();
+    if (IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages().contains(StdFileTypes.JAVA.getLanguage())
+        && ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+      //building artifacts is a valuable functionality for Java IDEs, let's not hide 'Build Artifacts' item from the main menu
+      presentation.setEnabled(enabled);
+    }
+    else {
+      presentation.setEnabledAndVisible(enabled);
+    }
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     if (project == null) return;
 
@@ -118,7 +129,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     popup.showCenteredInCurrentWindow(project);
   }
 
-  private static void doBuild(@NotNull Project project, final @NotNull List<ArtifactPopupItem> items, boolean rebuild) {
+  private static void doBuild(@NotNull Project project, final @NotNull List<? extends ArtifactPopupItem> items, boolean rebuild) {
     final Artifact[] artifacts = getArtifacts(items, project);
     if (rebuild) {
       ProjectTaskManager.getInstance(project).rebuild(artifacts);
@@ -128,12 +139,12 @@ public class BuildArtifactAction extends DumbAwareAction {
     }
   }
 
-  private static Artifact[] getArtifacts(final List<ArtifactPopupItem> items, final Project project) {
+  private static Artifact[] getArtifacts(final List<? extends ArtifactPopupItem> items, final Project project) {
     Set<Artifact> artifacts = new LinkedHashSet<>();
     for (ArtifactPopupItem item : items) {
       artifacts.addAll(item.getArtifacts(project));
     }
-    return ContainerUtil.toArray(artifacts, new Artifact[artifacts.size()]);
+    return artifacts.toArray(new Artifact[0]);
   }
 
   private static class BuildArtifactItem extends ArtifactActionItem {
@@ -295,7 +306,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     private final Project myProject;
     private final ArtifactAwareProjectSettingsService mySettingsService;
 
-    public ChooseArtifactStep(List<ArtifactPopupItem> artifacts,
+    ChooseArtifactStep(List<ArtifactPopupItem> artifacts,
                               Artifact first,
                               Project project, final ArtifactAwareProjectSettingsService settingsService) {
       super("Build Artifact", artifacts);
@@ -321,7 +332,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     }
 
     @Override
-    public boolean hasSubstep(List<ArtifactPopupItem> selectedValues) {
+    public boolean hasSubstep(List<? extends ArtifactPopupItem> selectedValues) {
       return true;
     }
 

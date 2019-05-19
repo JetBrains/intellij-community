@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
@@ -20,14 +6,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.tabs.JBTabsPosition;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsUtil;
-import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
@@ -171,11 +152,6 @@ public class TabLabel extends JPanel implements Accessible {
   private SimpleColoredComponent createLabel(final JBTabsImpl tabs) {
     SimpleColoredComponent label = new SimpleColoredComponent() {
       @Override
-      protected boolean shouldDrawMacShadow() {
-        return SystemInfo.isMac || UIUtil.isUnderDarcula();
-      }
-
-      @Override
       protected boolean shouldDrawDimmed() {
         return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
       }
@@ -213,6 +189,13 @@ public class TabLabel extends JPanel implements Accessible {
           g.setClip(oldClip);
         }
       }
+
+      @Override
+      protected Color getActiveTextColor(Color attributesColor) {
+        return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null) ?
+               JBUI.CurrentTheme.EditorTabs.underlinedTabForeground() : super.getActiveTextColor(attributesColor);
+      }
+
     };
     label.setOpaque(false);
     label.setBorder(null);
@@ -226,13 +209,17 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton()) {
+    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton() && hasIcons()) {
       if (!UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
         insets.left = 3;
       }
       else {
         insets.right = 3;
       }
+    }
+
+    if (myTabs.getPosition() == JBTabsPosition.top) {
+      insets.top += getNonSelectedOffset();
     }
     return insets;
   }
@@ -287,7 +274,7 @@ public class TabLabel extends JPanel implements Accessible {
     }
   }
 
-  public void doTranslate(PairConsumer<Integer, Integer> consumer) {
+  public void doTranslate(PairConsumer<? super Integer, ? super Integer> consumer) {
     final JBTabsPosition pos = myTabs.getTabsPosition();
 
     int dX = 0;
@@ -327,6 +314,12 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   private void doPaint(final Graphics g) {
+    if (myTabs.getPosition() == JBTabsPosition.top) {
+      super.paint(g);
+      return;
+    }
+
+
     doTranslate((x, y) -> g.translate(x, y));
 
     final Composite oldComposite = ((Graphics2D)g).getComposite();
@@ -352,8 +345,9 @@ public class TabLabel extends JPanel implements Accessible {
 
   @Override
   public Dimension getPreferredSize() {
-    final Dimension size = super.getPreferredSize();
-    size.height = TabsUtil.getTabsHeight();
+    Dimension size = super.getPreferredSize();
+    size.height += TabsUtil.TAB_VERTICAL_PADDING.get();
+
     if (myActionPanel != null && !myActionPanel.isVisible()) {
       final Dimension actionPanelSize = myActionPanel.getPreferredSize();
       size.width += actionPanelSize.width;
@@ -363,7 +357,7 @@ public class TabLabel extends JPanel implements Accessible {
     switch (pos) {
       case top:
       case bottom:
-        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - 1;
+        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - JBUI.scale(1);
         break;
       case left:
       case right:
@@ -390,7 +384,7 @@ public class TabLabel extends JPanel implements Accessible {
     }
 
     JBTabsImpl tabs =
-      JBTabsImpl.NAVIGATION_ACTIONS_KEY.getData(DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()));
+      (JBTabsImpl)JBTabsEx.NAVIGATION_ACTIONS_KEY.getData(DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()));
     if (tabs == myTabs && myTabs.myAddNavigationGroup) {
       toShow.addAll(myTabs.myNavigationActions);
     }
@@ -509,13 +503,7 @@ public class TabLabel extends JPanel implements Accessible {
 
     if (group == null) return;
 
-    myActionPanel = new ActionPanel(myTabs, myInfo, new Pass<MouseEvent>() {
-      @Override
-      public void pass(final MouseEvent event) {
-        final MouseEvent me = SwingUtilities.convertMouseEvent(event.getComponent(), event, TabLabel.this);
-        processMouseEvent(me);
-      }
-    });
+    myActionPanel = new ActionPanel(myTabs, myInfo, e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)));
 
     toggleShowActions(false);
 

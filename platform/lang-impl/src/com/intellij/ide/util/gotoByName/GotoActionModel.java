@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -35,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,11 +37,10 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,14 +48,16 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
   private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
@@ -82,10 +70,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  private final MultiMap<AnAction, String> myActionGroups = MultiMap.create();
+  private final Map<AnAction, GroupMapping> myActionGroups = new HashMap<>();
 
   private final NotNullLazyValue<Map<String, String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
-    Map<String, String> map = ContainerUtil.newTroveMap();
+    Map<String, String> map = new THashMap<>();
     for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
       if (configurable instanceof SearchableConfigurable) {
         map.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
@@ -106,14 +94,21 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     myEditor = editor;
     myModality = modalityState;
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
-    assert mainMenu != null;
-    collectActions(mainMenu, "");
+    ActionGroup keymapOthers = (ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup");
+    assert mainMenu != null && keymapOthers != null;
+    collectActions(myActionGroups, mainMenu, emptyList(), false);
+
+    Map<AnAction, GroupMapping> keymapActionGroups = new HashMap<>();
+    collectActions(keymapActionGroups, keymapOthers, emptyList(), true);
+    // Let menu groups have priority over keymap (and do not introduce ambiguity)
+    keymapActionGroups.forEach(myActionGroups::putIfAbsent);
   }
 
   @NotNull
   Map<String, ApplyIntentionAction> getAvailableIntentions() {
     Map<String, ApplyIntentionAction> map = new TreeMap<>();
-    if (myProject != null && !myProject.isDisposed() && myEditor != null && !myEditor.isDisposed()) {
+    if (myProject != null && !myProject.isDisposed() && !DumbService.isDumb(myProject) &&
+        myEditor != null && !myEditor.isDisposed()) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
       ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(myEditor, file);
       if (children != null) {
@@ -136,16 +131,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return IdeBundle.message("checkbox.disabled.included");
   }
 
-  @Override
-  public char getCheckBoxMnemonic() {
-    return 'd';
-  }
 
+  @NotNull
   @Override
   public String getNotInMessage() {
     return IdeBundle.message("label.no.enabled.actions.found");
   }
 
+  @NotNull
   @Override
   public String getNotFoundMessage() {
     return IdeBundle.message("label.no.actions.found");
@@ -160,11 +153,12 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   public void saveInitialCheckBoxState(boolean state) {
   }
 
-  public static class MatchedValue implements Comparable<MatchedValue> {
-    @NotNull public final Comparable value;
+  public static class MatchedValue {
+    @NotNull public final Object value;
     @NotNull final String pattern;
 
-    public MatchedValue(@NotNull Comparable value, @NotNull String pattern) {
+    public MatchedValue(@NotNull Object value, @NotNull String pattern) {
+      assert value instanceof OptionDescription || value instanceof ActionWrapper;
       this.value = value;
       this.pattern = pattern;
     }
@@ -173,8 +167,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @VisibleForTesting
     public String getValueText() {
       if (value instanceof OptionDescription) return ((OptionDescription)value).getHit();
-      if (!(value instanceof ActionWrapper)) return null;
-      return ((ActionWrapper)value).getAction().getTemplatePresentation().getText();
+      if (value instanceof ActionWrapper) return ((ActionWrapper)value).getAction().getTemplatePresentation().getText();
+      return null;
     }
 
     @Nullable
@@ -199,48 +193,48 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return 0;
     }
 
-    @Override
-    public int compareTo(@NotNull MatchedValue o) {
+    public int compareWeights(@NotNull MatchedValue o) {
       if (o == this) return 0;
       int diff = o.getMatchingDegree() - getMatchingDegree();
       if (diff != 0) return diff;
 
-      boolean edt = ApplicationManager.getApplication().isDispatchThread();
+      diff = getTypeWeight(o.value) - getTypeWeight(value);
+      if (diff != 0) return diff;
 
       if (value instanceof ActionWrapper && o.value instanceof ActionWrapper) {
-        if (edt || ((ActionWrapper)value).hasPresentation() && ((ActionWrapper)o.value).hasPresentation()) {
-          boolean p1Enable = ((ActionWrapper)value).isAvailable();
-          boolean p2enable = ((ActionWrapper)o.value).isAvailable();
-          if (p1Enable && !p2enable) return -1;
-          if (!p1Enable && p2enable) return 1;
-        }
-        //noinspection unchecked
-        int compared = value.compareTo(o.value);
+        ActionWrapper value1 = (ActionWrapper)value;
+        ActionWrapper value2 = (ActionWrapper)o.value;
+        int compared = value1.compareWeights(value2);
         if (compared != 0) return compared;
       }
-      
-      if (value instanceof ActionWrapper && o.value instanceof BooleanOptionDescription) {
-        return edt && ((ActionWrapper)value).isAvailable() ? -1 : 1;
-      }
-      
-      if (o.value instanceof ActionWrapper && value instanceof BooleanOptionDescription) {
-        return edt && ((ActionWrapper)o.value).isAvailable() ? 1 : -1;
-      }
-      
-      if (value instanceof BooleanOptionDescription && !(o.value instanceof BooleanOptionDescription) && o.value instanceof OptionDescription) return -1;
-      if (o.value instanceof BooleanOptionDescription && !(value instanceof BooleanOptionDescription) && value instanceof OptionDescription) return 1;
-
-      if (value instanceof OptionDescription && !(o.value instanceof OptionDescription)) return 1;
-      if (o.value instanceof OptionDescription && !(value instanceof OptionDescription)) return -1;
 
       diff = StringUtil.notNullize(getValueText()).length() - StringUtil.notNullize(o.getValueText()).length();
       if (diff != 0) return diff;
-      
-      //noinspection unchecked
-      diff = value.compareTo(o.value);
-      if (diff != 0) return diff;
-      
-      return o.hashCode() - hashCode(); 
+
+      if (value instanceof OptionDescription && o.value instanceof OptionDescription) {
+        OptionDescription value1 = (OptionDescription)value;
+        OptionDescription value2 = (OptionDescription)o.value;
+        diff = value1.compareTo(value2);
+        if (diff != 0) return diff;
+      }
+
+      return o.hashCode() - hashCode();
+    }
+
+    private static int getTypeWeight(@NotNull Object value) {
+      if (value instanceof ActionWrapper) {
+        ActionWrapper actionWrapper = (ActionWrapper)value;
+        if ((ApplicationManager.getApplication().isDispatchThread() || actionWrapper.hasPresentation()) &&
+            actionWrapper.isAvailable()) {
+          return 0;
+        }
+        return 2;
+      }
+      if (value instanceof OptionDescription) {
+        if (value instanceof BooleanOptionDescription) return 1;
+        return 3;
+      }
+      throw new IllegalArgumentException(value.getClass() + " - " + value.toString());
     }
 
     @Override
@@ -258,6 +252,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
   }
 
+  @NotNull
   @Override
   public ListCellRenderer getListCellRenderer() {
     return new GotoActionListCellRenderer(this::getGroupName);
@@ -272,14 +267,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
     if (icon == null) return new JLabel(layeredIcon);
-    
+
     int width = icon.getIconWidth();
     int height = icon.getIconHeight();
     int emptyIconWidth = EMPTY_ICON.getIconWidth();
     int emptyIconHeight = EMPTY_ICON.getIconHeight();
     if (width <= emptyIconWidth && height <= emptyIconHeight) {
-      layeredIcon.setIcon(disabled && IconLoader.isGoodSize(icon) ? IconLoader.getDisabledIcon(icon) : icon, 1, 
-                          (emptyIconWidth - width) / 2, 
+      layeredIcon.setIcon(disabled && IconLoader.isGoodSize(icon) ? IconLoader.getDisabledIcon(icon) : icon, 1,
+                          (emptyIconWidth - width) / 2,
                           (emptyIconHeight - height) / 2);
     }
 
@@ -290,7 +285,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   public int compare(@NotNull Object o1, @NotNull Object o2) {
     if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
     if (ChooseByNameBase.EXTRA_ELEM.equals(o2)) return -1;
-    return ((MatchedValue)o1).compareTo((MatchedValue)o2);
+    return ((MatchedValue)o1).compareWeights((MatchedValue)o2);
   }
 
   @NotNull
@@ -316,7 +311,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Override
   @NotNull
-  public Object[] getElementsByName(String id, boolean checkBoxState, String pattern) {
+  public Object[] getElementsByName(@NotNull String id, boolean checkBoxState, @NotNull String pattern) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
@@ -334,45 +329,34 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return myConfigurablesNames.getValue();
   }
 
-  private void collectActions(@NotNull ActionGroup group, @NotNull String path) {
+  private void collectActions(@NotNull Map<AnAction, GroupMapping> actionGroups,
+                              @NotNull ActionGroup group,
+                              @NotNull List<ActionGroup> path,
+                              boolean showNonPopupGroups) {
     AnAction[] actions = group.getChildren(null);
 
-    if (!groupHasMeaningfulChildren(actions)) {
-      myActionGroups.putValue(group, path);
+    boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
+    if (!hasMeaningfulChildren) {
+      GroupMapping mapping = actionGroups.computeIfAbsent(group, (key) -> new GroupMapping(showNonPopupGroups));
+      mapping.addPath(path);
     }
 
+    List<ActionGroup> newPath = ContainerUtil.append(path, group);
     for (AnAction action : actions) {
       if (action == null || action instanceof Separator) continue;
       if (action instanceof ActionGroup) {
-        ActionGroup actionGroup = (ActionGroup)action;
-        String groupName = getGroupName(actionGroup.getTemplatePresentation().getText());
-        String childPath = StringUtil.isEmpty(groupName) || !actionGroup.isPopup() ? path : 
-                           path.isEmpty() ? groupName : 
-                           path + " | " + groupName;
-        collectActions(actionGroup, childPath);
+        collectActions(actionGroups, (ActionGroup)action, newPath, showNonPopupGroups);
       }
       else {
-        myActionGroups.putValue(action, path);
+        GroupMapping mapping = actionGroups.computeIfAbsent(action, (key) -> new GroupMapping(showNonPopupGroups));
+        mapping.addPath(newPath);
       }
     }
   }
 
   @Nullable
-  private static String getGroupName(@Nullable String groupName) {
-    if (groupName != null) {
-      Matcher matcher = INNER_GROUP_WITH_IDS.matcher(groupName);
-      if (matcher.matches()) return matcher.group(1);
-    }
-    return groupName;  
-  }
-
-  private boolean groupHasMeaningfulChildren(AnAction[] children) {
-    return Arrays.stream(children).anyMatch(action -> myActionManager.getId(action) != null);
-  }
-
-  @Nullable
-  String getAnyGroupPath(@NotNull AnAction action) {
-    return ContainerUtil.getFirstItem(myActionGroups.get(action));
+  GroupMapping getGroupMapping(@NotNull AnAction action) {
+    return myActionGroups.get(action);
   }
 
   @Override
@@ -412,12 +396,15 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     if (text == null) {
       return MatchMode.NONE;
     }
-    for (String groupName : myActionGroups.get(anAction)) {
-      if (matcher.matches(groupName + " " + text)) {
-        return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
-      }
-      if (matcher.matches(text + " " + groupName)) {
-        return MatchMode.GROUP;
+    GroupMapping groupMapping = myActionGroups.get(anAction);
+    if (groupMapping != null) {
+      for (String groupName: groupMapping.getAllGroupNames()) {
+        if (matcher.matches(groupName + " " + text)) {
+          return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
+        }
+        if (matcher.matches(text + " " + groupName)) {
+          return MatchMode.GROUP;
+        }
       }
     }
 
@@ -440,7 +427,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @NotNull
   public SortedSet<Object> sortItems(@NotNull Set<Object> elements) {
-    TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
+    TreeSet<Object> objects = new TreeSet<>(this);
     objects.addAll(elements);
     return objects;
   }
@@ -479,18 +466,129 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return true;
   }
 
-  public static class ActionWrapper implements Comparable<ActionWrapper> {
+  public static class GroupMapping implements Comparable<GroupMapping> {
+    private final boolean myShowNonPopupGroups;
+    private final List<List<ActionGroup>> myPaths = new ArrayList<>();
+
+    @Nullable private String myBestGroupName;
+    private boolean myBestNameComputed;
+
+    public GroupMapping() {
+      this(false);
+    }
+
+    public GroupMapping(boolean showNonPopupGroups) {
+      myShowNonPopupGroups = showNonPopupGroups;
+    }
+
+    @NotNull
+    public static GroupMapping createFromText(String text) {
+      GroupMapping mapping = new GroupMapping();
+      mapping.addPath(singletonList(new DefaultActionGroup(text, false)));
+      return mapping;
+    }
+
+    private void addPath(@NotNull List<ActionGroup> path) {
+      myPaths.add(path);
+    }
+
+
+    @Override
+    public int compareTo(@NotNull GroupMapping o) {
+      return Comparing.compare(getFirstGroupName(), o.getFirstGroupName());
+    }
+
+    @Nullable
+    public String getBestGroupName() {
+      if (myBestNameComputed) return myBestGroupName;
+      return getFirstGroupName();
+    }
+
+    @Nullable
+    private String getFirstGroupName() {
+      List<ActionGroup> path = ContainerUtil.getFirstItem(myPaths);
+      return path != null ? getPathName(path) : null;
+    }
+
+    private void updateBeforeShow(@NotNull DataContext context) {
+      if (myBestNameComputed) return;
+      myBestNameComputed = true;
+
+      for (List<ActionGroup> path : myPaths) {
+        String name = getActualPathName(path, context);
+        if (name != null) {
+          myBestGroupName = name;
+          return;
+        }
+      }
+    }
+
+    @NotNull
+    public List<String> getAllGroupNames() {
+      return ContainerUtil.map(myPaths, path -> getPathName(path));
+    }
+
+    @Nullable
+    private String getPathName(@NotNull List<? extends ActionGroup> path) {
+      String name = "";
+      for (ActionGroup group : path) {
+        name = appendGroupName(name, group, group.getTemplatePresentation());
+      }
+      return StringUtil.nullize(name);
+    }
+
+    @Nullable
+    private String getActualPathName(@NotNull List<? extends ActionGroup> path, @NotNull DataContext context) {
+      String name = "";
+      for (ActionGroup group : path) {
+        Presentation presentation = updateActionBeforeShow(group, context).getPresentation();
+        if (!presentation.isVisible()) return null;
+        name = appendGroupName(name, group, presentation);
+      }
+      return StringUtil.nullize(name);
+    }
+
+    @NotNull
+    private String appendGroupName(@NotNull String prefix, @NotNull ActionGroup group, @NotNull Presentation presentation) {
+      if (group.isPopup() || myShowNonPopupGroups) {
+        String groupName = getActionGroupName(presentation);
+        if (!StringUtil.isEmptyOrSpaces(groupName)) {
+          return prefix.isEmpty()
+                 ? groupName
+                 : prefix + " | " + groupName;
+        }
+      }
+      return prefix;
+    }
+
+    @Nullable
+    private static String getActionGroupName(@NotNull Presentation presentation) {
+      String text = presentation.getText();
+      if (text == null) return null;
+
+      Matcher matcher = INNER_GROUP_WITH_IDS.matcher(text);
+      if (matcher.matches()) return matcher.group(1);
+
+      return text;
+    }
+  }
+
+  public static class ActionWrapper {
     @NotNull private final AnAction myAction;
     @NotNull private final MatchMode myMode;
-    @Nullable  private final String myGroupName;
+    @Nullable private final GroupMapping myGroupMapping;
     private final DataContext myDataContext;
     private final GotoActionModel myModel;
     private volatile Presentation myPresentation;
 
-    public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, @NotNull MatchMode mode, DataContext dataContext, GotoActionModel model) {
+    public ActionWrapper(@NotNull AnAction action,
+                         @Nullable GroupMapping groupMapping,
+                         @NotNull MatchMode mode,
+                         DataContext dataContext,
+                         GotoActionModel model) {
       myAction = action;
       myMode = mode;
-      myGroupName = groupName;
+      myGroupMapping = groupMapping;
       myDataContext = dataContext;
       myModel = model;
     }
@@ -505,8 +603,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return myMode;
     }
 
-    @Override
-    public int compareTo(@NotNull ActionWrapper o) {
+    public int compareWeights(@NotNull ActionWrapper o) {
       int compared = myMode.compareTo(o.getMode());
       if (compared != 0) return compared;
       Presentation myPresentation = myAction.getTemplatePresentation();
@@ -517,7 +614,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (byText != 0) return byText;
       int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
       if (byTextLength != 0) return byTextLength;
-      int byGroup = Comparing.compare(myGroupName, o.myGroupName);
+      int byGroup = Comparing.compare(myGroupMapping, o.myGroupMapping);
       if (byGroup != 0) return byGroup;
       int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
       if (byDesc != 0) return byDesc;
@@ -535,7 +632,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @NotNull
     public Presentation getPresentation() {
       if (myPresentation != null) return myPresentation;
-      Runnable r = () -> myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+      Runnable r = () -> {
+        myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+        if (myGroupMapping != null) myGroupMapping.updateBeforeShow(myDataContext);
+      };
       if (ApplicationManager.getApplication().isDispatchThread()) {
         r.run();
       }
@@ -552,17 +652,19 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
     @Nullable
     public String getGroupName() {
-      if (myAction instanceof ActionGroup && Comparing.equal(myAction.getTemplatePresentation().getText(), myGroupName)) return null;
-      return myGroupName;
+      if (myGroupMapping == null) return null;
+      String groupName = myGroupMapping.getBestGroupName();
+      if (myAction instanceof ActionGroup && Comparing.equal(myAction.getTemplatePresentation().getText(), groupName)) return null;
+      return groupName;
     }
-    
+
     public boolean isGroupAction() {
       return myAction instanceof ActionGroup;
     }
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof ActionWrapper && compareTo((ActionWrapper)obj) == 0;
+      return obj instanceof ActionWrapper && myAction.equals(((ActionWrapper)obj).myAction);
     }
 
     @Override
@@ -578,10 +680,16 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   public static class GotoActionListCellRenderer extends DefaultListCellRenderer {
-    private final Function<OptionDescription, String> myGroupNamer;
+    private final Function<? super OptionDescription, String> myGroupNamer;
+    private final boolean myUseListFont;
 
-    public GotoActionListCellRenderer(Function<OptionDescription, String> groupNamer) {
+    public GotoActionListCellRenderer(Function<? super OptionDescription, String> groupNamer) {
+      this(groupNamer, false);
+    }
+
+    public GotoActionListCellRenderer(Function<? super OptionDescription, String> groupNamer, boolean useListFont) {
       myGroupNamer = groupNamer;
+      myUseListFont = useListFont;
     }
 
     @NotNull
@@ -597,18 +705,22 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       panel.setBackground(bg);
 
       SimpleColoredComponent nameComponent = new SimpleColoredComponent();
+      if (myUseListFont) {
+        nameComponent.setFont(list.getFont());
+      }
       nameComponent.setBackground(bg);
       panel.add(nameComponent, BorderLayout.CENTER);
-      
+
       if (matchedValue instanceof String) { //...
-        nameComponent.append((String)matchedValue, new SimpleTextAttributes(STYLE_PLAIN, defaultActionForeground(isSelected, null)));
         if (showIcon) {
           panel.add(new JBLabel(EMPTY_ICON), BorderLayout.WEST);
         }
+        String str = cutName((String)matchedValue, null, list, panel, nameComponent);
+        nameComponent.append(str, new SimpleTextAttributes(STYLE_PLAIN, defaultActionForeground(isSelected, null)));
         return panel;
       }
 
-      Color groupFg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getLabelDisabledForeground();
+      Color groupFg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor();
 
       Object value = ((MatchedValue) matchedValue).value;
       String pattern = ((MatchedValue)matchedValue).pattern;
@@ -626,21 +738,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         if (disabled) {
           groupFg = UIUtil.getLabelDisabledForeground();
         }
-        
+
         if (showIcon) {
           Icon icon = presentation.getIcon();
           panel.add(createIconLabel(icon, disabled), BorderLayout.WEST);
-        }
-        appendWithColoredMatches(nameComponent, getName(presentation.getText(), groupName, toggle), pattern, fg, isSelected);
-        panel.setToolTipText(presentation.getDescription());
-
-        Shortcut[] shortcuts = getActiveKeymapShortcuts(ActionManager.getInstance().getId(anAction)).getShortcuts();
-        String shortcutText = KeymapUtil.getPreferredShortcutText(
-          shortcuts);
-        if (StringUtil.isNotEmpty(shortcutText)) {
-          nameComponent.append(" " + shortcutText,
-                               new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD,
-                                                        UIUtil.isUnderDarcula() ? groupFg : ColorUtil.shift(groupFg, 1.3)));
         }
 
         if (toggle) {
@@ -657,6 +758,18 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
             panel.add(groupLabel, BorderLayout.EAST);
           }
         }
+
+        panel.setToolTipText(presentation.getDescription());
+        Shortcut[] shortcuts = getActiveKeymapShortcuts(ActionManager.getInstance().getId(anAction)).getShortcuts();
+        String shortcutText = KeymapUtil.getPreferredShortcutText(shortcuts);
+        String name = getName(presentation.getText(), groupName, toggle);
+        name = cutName(name, shortcutText, list, panel, nameComponent);
+
+        appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
+        if (StringUtil.isNotEmpty(shortcutText)) {
+          nameComponent.append(" " + shortcutText,
+                   new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD, groupFg));
+        }
       }
       else if (value instanceof OptionDescription) {
         if (!isSelected && !(value instanceof BooleanOptionDescription)) {
@@ -668,14 +781,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         if (hit == null) {
           hit = ((OptionDescription)value).getOption();
         }
-        hit = StringUtil.unescapeXml(hit);
+        hit = StringUtil.unescapeXmlEntities(hit);
         hit = hit.replace("  ", " "); // avoid extra spaces from mnemonics and xml conversion
         String fullHit = hit;
-        hit = StringUtil.first(hit, 45, true);
-
         Color fg = UIUtil.getListForeground(isSelected);
-
-        appendWithColoredMatches(nameComponent, hit.trim(), pattern, fg, isSelected);
 
         if (showIcon) {
           panel.add(new JLabel(EMPTY_ICON), BorderLayout.WEST);
@@ -693,8 +802,58 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
           settingsLabel.setBorder(eastBorder);
           panel.add(settingsLabel, BorderLayout.EAST);
         }
+
+        String name = cutName(fullHit, null, list, panel, nameComponent);
+        appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
       }
       return panel;
+    }
+
+    private static String cutName(String name, String shortcutText, JList list, JPanel panel, SimpleColoredComponent nameComponent) {
+      if (!list.isShowing() || list.getWidth() <= 0) {
+        return StringUtil.first(name, 60, true); //fallback to previous behaviour
+      }
+      int freeSpace = calcFreeSpace(list, panel, nameComponent, shortcutText);
+
+      if (freeSpace <= 0) {
+        return name;
+      }
+
+      FontMetrics fm = nameComponent.getFontMetrics(nameComponent.getFont());
+      int strWidth = fm.stringWidth(name);
+      if (strWidth <= freeSpace) {
+        return name;
+      }
+
+      int cutSymbolIndex  = (int)((((double) freeSpace - fm.stringWidth("...")) / strWidth) * name.length());
+      cutSymbolIndex = Integer.max(1, cutSymbolIndex);
+      name = name.substring(0, cutSymbolIndex);
+      while (fm.stringWidth(name + "...") > freeSpace && name.length() > 1) {
+        name = name.substring(0, name.length() - 1);
+      }
+
+      return name.trim() + "...";
+    }
+
+    private static int calcFreeSpace(JList list, JPanel panel, SimpleColoredComponent nameComponent, String shortcutText) {
+      BorderLayout layout = (BorderLayout)panel.getLayout();
+      Component eastComponent = layout.getLayoutComponent(BorderLayout.EAST);
+      Component westComponent = layout.getLayoutComponent(BorderLayout.WEST);
+      int freeSpace = list.getWidth()
+        - (list.getInsets().right + list.getInsets().left)
+        - (panel.getInsets().right + panel.getInsets().left)
+        - (eastComponent == null ? 0 : eastComponent.getPreferredSize().width)
+        - (westComponent == null ? 0 : westComponent.getPreferredSize().width)
+        - (nameComponent.getInsets().right + nameComponent.getInsets().left)
+        - (nameComponent.getIpad().right + nameComponent.getIpad().left)
+        - nameComponent.getIconTextGap();
+
+      if (StringUtil.isNotEmpty(shortcutText)) {
+        FontMetrics fm = nameComponent.getFontMetrics(nameComponent.getFont().deriveFont(Font.BOLD));
+        freeSpace -= fm.stringWidth(" " + shortcutText);
+      }
+
+      return freeSpace;
     }
 
     private static void addOnOffButton(@NotNull JPanel panel, boolean selected) {
@@ -707,7 +866,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @NotNull
     private static String getName(@Nullable String text, @Nullable String groupName, boolean toggle) {
       return toggle && StringUtil.isNotEmpty(groupName)
-             ? StringUtil.isNotEmpty(text) ? groupName + ": " + text 
+             ? StringUtil.isNotEmpty(text) ? groupName + ": " + text
                                            : groupName : StringUtil.notNullize(text);
     }
 
@@ -718,7 +877,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
                                                  boolean selected) {
       SimpleTextAttributes plain = new SimpleTextAttributes(STYLE_PLAIN, fg);
       SimpleTextAttributes highlighted = new SimpleTextAttributes(null, fg, null, STYLE_SEARCH_MATCH);
-      List<TextRange> fragments = ContainerUtil.newArrayList();
+      List<TextRange> fragments = new ArrayList<>();
       if (selected) {
         int matchStart = StringUtil.indexOfIgnoreCase(name, pattern, 0);
         if (matchStart >= 0) {

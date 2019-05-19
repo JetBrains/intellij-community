@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -37,7 +23,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
@@ -46,28 +31,27 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Disposer
-import com.intellij.psi.*
-import com.intellij.psi.statistics.StatisticsManager
-import com.intellij.psi.statistics.impl.StatisticsManagerImpl
+import com.intellij.psi.NavigatablePsiElement
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import java.awt.event.KeyEvent
-
 /**
  * @author peter
  */
 class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
-
   void testNewItemsOnLongerPrefix() {
     myFixture.configureByText("a.java", """
       class Foo {
@@ -531,7 +515,7 @@ class Foo {
   }
 
   void "test vertical arrows in semi-focused lookup"() {
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
     UISettings.getInstance()setSortLookupElementsLexicographically(true)
 
     String toType = "fo"
@@ -653,11 +637,9 @@ public interface Test {
   private def registerContributor(final Class contributor, LoadingOrder order = LoadingOrder.LAST) {
     registerCompletionContributor(contributor, myFixture.testRootDisposable, order)
   }
-  static def registerCompletionContributor(final Class contributor, Disposable parentDisposable, LoadingOrder order) {
-    def ep = Extensions.rootArea.getExtensionPoint("com.intellij.completion.contributor")
-    def bean = new CompletionContributorEP(language: 'JAVA', implementationClass: contributor.name)
-    ep.registerExtension(bean, order)
-    Disposer.register(parentDisposable, { ep.unregisterExtension(bean) } as Disposable)
+
+  static def registerCompletionContributor(Class contributor, Disposable parentDisposable, LoadingOrder order) {
+    CompletionContributor.EP.getPoint(null).registerExtension(new CompletionContributorEP(language: 'JAVA', implementationClass: contributor.name), order, parentDisposable)
   }
 
   void testLeftRightMovements() {
@@ -991,7 +973,7 @@ class Foo {
         myFixture.configureByText("$a1 $a2 .java", src)
         myFixture.editor.document.addDocumentListener(new DocumentListener() {
           @Override
-          void documentChanged(DocumentEvent e) {
+          void documentChanged(@NotNull DocumentEvent e) {
             if (e.newFragment.toString().contains("a")) {
               fail(e.toString())
             }
@@ -1087,7 +1069,7 @@ class Foo {
   }
 
   void testCompletionWhenLiveTemplateAreNotSufficient() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable())
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable())
     myFixture.configureByText("a.java", """
 class Foo {
     {
@@ -1172,7 +1154,7 @@ class Foo {
     myFixture.configureByText 'a.java', 'class Foo <caret>'
     type 'ext'
 
-    CompletionAutoPopupHandler.ourTestingAutopopup = false
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false)
     edt {
       myFixture.completeBasic()
     }
@@ -1184,7 +1166,7 @@ class Foo {
     myFixture.configureByText 'a.java', 'class Foo {<caret>}'
     type 'pr'
 
-    CompletionAutoPopupHandler.ourTestingAutopopup = false
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false)
     edt {
       myFixture.completeBasic()
     }
@@ -1235,7 +1217,7 @@ public class Test {
     JavaCodeContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
     ((TemplateImpl)template).templateContext.setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
-    
+
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
     myFixture.configureByText("a.java", """
 public class Test {
@@ -1373,7 +1355,7 @@ class Foo {{
   }
 
   void "test two non-imported classes when space does not select first autopopup item"() {
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
 
     myFixture.addClass("package foo; public class Abcdefg {}")
     myFixture.addClass("package bar; public class Abcdefg {}")
@@ -1420,7 +1402,7 @@ class Foo extends Abcdefg <caret>'''
   }
 
   void testSoutvTemplate() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable())
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable())
     myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
     type 'soutv\tgetcl.'
     myFixture.checkResult '''\
@@ -1456,7 +1438,7 @@ class Foo {{
   }
 
   void testPackageQualifier() {
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
 
     myFixture.addClass("package com.too; public class Util {}")
     myFixture.configureByText 'a.java', 'class Foo { void foo(Object command) { <caret> }}'
@@ -1499,12 +1481,12 @@ class Foo {
   @Override
   protected void setUp() {
     super.setUp()
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = true
   }
 
   @Override
   protected void tearDown() {
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     UISettings.getInstance()setSortLookupElementsLexicographically(false)
 
@@ -1530,18 +1512,6 @@ class Foo {
     assert lookup
     type '\b'
     assert !lookup
-  }
-
-  void testReplaceTypedPrefixPart() {
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable())
-    myFixture.configureByText 'a.java', 'class Foo{ { <caret> }}'
-    for (i in 0..StatisticsManager.OBLIVION_THRESHOLD) {
-      type 'System.out.printl\n\n'
-    }
-    type 'System.out.pr'
-    assert lookup.currentItem.lookupString == 'println'
-    type '\n2'
-    assert myFixture.editor.document.text.contains('.println();2')
   }
 
   void testQuickBackspaceEnter() {
@@ -1607,7 +1577,7 @@ class ListConfigKey {
 
   void testPreselectMostRelevantInTheMiddleAlpha() {
     UISettings.getInstance().setSortLookupElementsLexicographically(true)
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
 
     myFixture.configureByText 'a.java', '''
 class Foo {
@@ -1667,7 +1637,7 @@ class Foo {
   }
 
   void "test no name autopopup in live template"() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable())
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable())
     myFixture.configureByText 'a.java', '''class F {
   String nameContainingIdentifier;
 <caret>
@@ -1694,7 +1664,7 @@ class Cls {
   }
   void mySout() {}
 }
-""" 
+"""
     type('sout')
     myFixture.assertPreferredCompletionItems 0, 'sout', 'mySout'
   }
@@ -1723,7 +1693,7 @@ class Cls {
   }
   void mySout() {}
 }
-""" 
+"""
     type('sout')
     assert lookup
     assert 'sout' in myFixture.lookupElementStrings
@@ -1751,7 +1721,7 @@ class Cls {
       ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
-    
+
     myFixture.configureByText 'a.java', '''
 class Foo {
  int tplMn;
@@ -1801,7 +1771,7 @@ ita<caret>
 """
     type 'r'
     assert lookup == null
-    
+
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
     type '\br'
     assert lookup
@@ -1840,18 +1810,6 @@ ita<caret>
     myFixture.configureByText 'a.java', 'class Foo {{ int a42; a<caret> }}'
     type '4'
     assert lookup
-  }
-
-  void "test don't close lookup when starting a new line"() {
-    myFixture.configureByText 'a.java', 'class Foo {{ "abc"<caret> }}'
-    type '.'
-    assert lookup
-    edt {
-      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_START_NEW_LINE)
-      assert lookup
-      assert lookup.lookupStart == myFixture.editor.caretModel.offset
-      assert myFixture.editor.document.text.contains('\n')
-    }
   }
 
 }

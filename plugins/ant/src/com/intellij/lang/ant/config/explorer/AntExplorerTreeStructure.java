@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -44,23 +30,23 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return name1.compareToIgnoreCase(name2);
   };
 
-  public AntExplorerTreeStructure(final Project project) {
+  AntExplorerTreeStructure(final Project project) {
     myProject = project;
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(final Object element) {
+  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
     return true;
   }
 
   @Override
-  public boolean isAlwaysLeaf(Object element) {
+  public boolean isAlwaysLeaf(@NotNull Object element) {
     return element != myRoot && !(element instanceof AntBuildFile);
   }
 
   @Override
   @NotNull
-  public AntNodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public AntNodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     if (element == myRoot) {
       return new RootNodeDescriptor(myProject, parentDescriptor);
     }
@@ -81,8 +67,9 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return null;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(Object element) {
+  public Object[] getChildElements(@NotNull Object element) {
     final AntConfiguration configuration = AntConfiguration.getInstance(myProject);
     if (element == myRoot) {
       if (!configuration.isInitialized()) {
@@ -111,7 +98,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
 
   @Override
   @Nullable
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     if (element instanceof AntBuildTarget) {
       if (element instanceof MetaTarget) {
         return ((MetaTarget)element).getBuildFile();
@@ -142,6 +129,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return asyncCommitDocuments(myProject);
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRoot;
@@ -152,13 +140,8 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   private final class RootNodeDescriptor extends AntNodeDescriptor {
-    public RootNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
+    RootNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
       super(project, parentDescriptor);
-    }
-
-    @Override
-    public boolean isAutoExpand() {
-      return true;
     }
 
     @Override
@@ -174,7 +157,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   private static final class TextInfoNodeDescriptor extends AntNodeDescriptor {
-    public TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String text) {
+    TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String text) {
       super(project, parentDescriptor);
       myName = text;
       myColor = JBColor.blue;
@@ -187,11 +170,6 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
 
     @Override
     public boolean update() {
-      return true;
-    }
-
-    @Override
-    public boolean isAutoExpand() {
       return true;
     }
   }

@@ -45,15 +45,15 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected SpecificFilesViewDialog(@NotNull Project project,
                                     @NotNull String title,
                                     @NotNull DataKey<Stream<VirtualFile>> shownDataKey,
-                                    @NotNull List<VirtualFile> initDataFiles) {
+                                    @NotNull List<? extends VirtualFile> initDataFiles) {
     super(project, true);
     setTitle(title);
     myProject = project;
     final Runnable closer = () -> this.close(0);
-    myView = new ChangesListView(project) {
+    myView = new ChangesListView(project, false) {
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (shownDataKey.is(dataId)) {
           return getSelectedVirtualFiles(null);
         }
@@ -95,7 +95,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     return new Action[]{getOKAction()};
   }
 
-  private void initData(@NotNull final List<VirtualFile> files) {
+  private void initData(@NotNull final List<? extends VirtualFile> files) {
     final TreeState state = TreeState.createOn(myView, (ChangesBrowserNode)myView.getModel().getRoot());
 
     DefaultTreeModel model = TreeModelBuilder.buildFromVirtualFiles(myProject, myView.getGrouping(), files);
@@ -148,19 +148,23 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   }
 
   private class Expander implements TreeExpander {
+    @Override
     public void expandAll() {
       TreeUtil.expandAll(myView);
     }
 
+    @Override
     public boolean canExpand() {
       return !myView.getGroupingSupport().isNone();
     }
 
+    @Override
     public void collapseAll() {
       TreeUtil.collapseAll(myView, 1);
       TreeUtil.expand(myView, 0);
     }
 
+    @Override
     public boolean canCollapse() {
       return !myView.getGroupingSupport().isNone();
     }

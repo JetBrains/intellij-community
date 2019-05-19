@@ -19,10 +19,11 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UDeclaration;
+import org.jetbrains.uast.UElement;
 
 /**
  * @author max
@@ -49,9 +50,15 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
           message = InspectionsBundle.message("inspection.same.return.value.problem.descriptor2", "<code>" + returnValue + "</code>");
         }
 
-        final PsiModifierListOwner element = refMethod.getElement();
-        if (element != null) {
-          return new ProblemDescriptor[] {manager.createProblemDescriptor(element.getNavigationElement(), message, false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+        final UDeclaration decl = refMethod.getUastElement();
+        if (decl != null) {
+          UElement anchor = decl.getUastAnchor();
+          if (anchor != null) {
+            PsiElement psiAnchor = anchor.getSourcePsi();
+            if (psiAnchor != null) {
+              return new ProblemDescriptor[] {manager.createProblemDescriptor(psiAnchor, message, false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+            }
+          }
         }
       }
     }
@@ -68,12 +75,9 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
         if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
-                @Override
-                public boolean process(PsiMethod derivedMethod) {
-                  processor.ignoreElement(refMethod);
-                  return false;
-                }
+              globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+                processor.ignoreElement(refMethod);
+                return false;
               });
             }
           });

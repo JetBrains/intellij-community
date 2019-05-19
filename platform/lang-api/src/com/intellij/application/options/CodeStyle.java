@@ -1,14 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
+import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.TestOnly;
 /**
  * Utility class for miscellaneous code style settings retrieving methods.
  */
+@SuppressWarnings("unused") // Contains API methods which may be used externally
 public class CodeStyle {
 
   private CodeStyle() {
@@ -54,19 +57,30 @@ public class CodeStyle {
   }
 
   /**
-   * Returns root code style settings for the given PSI file. For configurable language settings use {@link #getLanguageSettings(PsiFile)} or
-   * {@link #getLanguageSettings(PsiFile, Language)}.
+   * Returns root {@link CodeStyleSettings} for the given PSI file. In some cases the returned instance may be of
+   * {@link TransientCodeStyleSettings} class if the original (project) settings are modified for specific PSI file by
+   * {@link CodeStyleSettingsModifier} extensions. In these cases the returned instance may change upon the next call if some of
+   * {@link TransientCodeStyleSettings} dependencies become outdated.
+   * <p>
+   * A shorter way to get language-specific settings it to use one of the methods {@link #getLanguageSettings(PsiFile)}
+   * or {@link #getLanguageSettings(PsiFile, Language)}.
+   *
    * @param file The file to get code style settings for.
    * @return The current root code style settings associated with the file or default settings if the file is invalid.
    */
   @NotNull
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
-    if (file.isValid()) {
-      Project project = file.getProject();
-      //noinspection deprecation
-      return CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+    for (FileCodeStyleProvider provider : FileCodeStyleProvider.EP_NAME.getIterable()) {
+      CodeStyleSettings fileSettings = provider.getSettings(file);
+      if (fileSettings != null) {
+        return fileSettings;
+      }
     }
-    return getDefaultSettings();
+
+    if (!file.isPhysical()) {
+      return getSettings(file.getProject());
+    }
+    return CodeStyleCachingUtil.getCachedCodeStyle(file);
   }
 
 
@@ -151,14 +165,21 @@ public class CodeStyle {
     return rootSettings.getIndentOptionsByFile(file);
   }
 
+
   /**
-   * Explicitly retrieves indent options by file type.
-   * @param file The file to get indent options for.
-   * @return The indent options associated with the file type.
+   * Returns indent options by virtual file's type. If {@code null} is given instead of the virtual file or the type of the virtual
+   * file doesn't have it's own configuration, returns other indent options configured via "Other File Types" section in Settings.
+   * <p>
+   * <b>Note:</b> This method is faster then {@link #getIndentOptions(PsiFile)} but it doesn't take into account possible configurations
+   * overwriting the default, for example EditorConfig.
+   *
+   * @param project The current project.
+   * @param file    The virtual file to get indent options for or {@code null} if the file is unknown.
+   * @return The indent options for the given project and file.
    */
   @NotNull
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptionsByFileType(@NotNull PsiFile file) {
-    return getSettings(file).getIndentOptions(file.getFileType());
+  public static CommonCodeStyleSettings.IndentOptions getIndentOptionsByFileType(@NotNull Project project, @Nullable VirtualFile file) {
+    return file != null ? getSettings(project).getIndentOptions(file.getFileType()) : getSettings(project).getIndentOptions();
   }
 
   /**
@@ -193,12 +214,11 @@ public class CodeStyle {
    * The method is supposed to be used in test's {@code setUp()} method. In production code use
    * {@link #doWithTemporarySettings(Project, CodeStyleSettings, Runnable)}.
    *
-   * @param project The project.
+   * @param project The project or {@code null} for default settings.
    * @param settings The settings to use temporarily with the project.
    */
   @TestOnly
-  public static void setTemporarySettings(@NotNull Project project, @NotNull CodeStyleSettings settings) {
-    //noinspection deprecation
+  public static void setTemporarySettings(@Nullable Project project, @NotNull CodeStyleSettings settings) {
     CodeStyleSettingsManager.getInstance(project).setTemporarySettings(settings);
   }
 
@@ -210,18 +230,12 @@ public class CodeStyle {
    * The method is supposed to be used in test's {@code tearDown()} method. In production code use
    * {@link #doWithTemporarySettings(Project, CodeStyleSettings, Runnable)}.
    *
-   * @param project The project to drop temporary settings for.
+   * @param project The project to drop temporary settings for or {@code null} for default settings.
    * @see #setTemporarySettings(Project, CodeStyleSettings)
    */
   @TestOnly
-  public static void dropTemporarySettings(@NotNull Project project) {
-    if (project.isDefault()) {
-      return;
-    }
-    ProjectCodeStyleSettingsManager manager = ServiceManager.getServiceIfCreated(project, ProjectCodeStyleSettingsManager.class);
-    if (manager != null) {
-      manager.dropTemporarySettings();
-    }
+  public static void dropTemporarySettings(@Nullable Project project) {
+    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
   }
 
   /**
@@ -232,16 +246,22 @@ public class CodeStyle {
    * @param tempSettings  The temporary code style settings.
    * @param runnable      The runnable to execute with the temporary settings.
    */
-  @SuppressWarnings("TestOnlyProblems")
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings tempSettings,
                                              @NotNull Runnable runnable) {
+    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
+    CodeStyleSettings tempSettingsBefore = settingsManager.getTemporarySettings();
     try {
-      setTemporarySettings(project, tempSettings);
+      settingsManager.setTemporarySettings(tempSettings);
       runnable.run();
     }
     finally {
-      dropTemporarySettings(project);
+      if (tempSettingsBefore != null) {
+        settingsManager.setTemporarySettings(tempSettingsBefore);
+      }
+      else {
+        settingsManager.dropTemporarySettings();
+      }
     }
   }
 
@@ -251,7 +271,6 @@ public class CodeStyle {
    *         are used.
    */
   public static boolean usesOwnSettings(@NotNull Project project) {
-    //noinspection deprecation
     return CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS;
   }
 
@@ -282,9 +301,23 @@ public class CodeStyle {
    * @param settings  The settings to use with the project.
    */
   public static void setMainProjectSettings(@NotNull Project project, @NotNull CodeStyleSettings settings) {
-    @SuppressWarnings("deprecation")
     CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(project);
     codeStyleSettingsManager.setMainProjectCodeStyle(settings);
     codeStyleSettingsManager.USE_PER_PROJECT_SETTINGS = true;
   }
+
+  /**
+   * Checks if the file can be formatted according to code style settings. If formatting is disabled, all related operations including
+   * optimize imports and rearrange code should be blocked (cause no changes).
+   *
+   * @param file The PSI file to check.
+   * @return True if the file is formattable, false otherwise.
+   */
+  public static boolean isFormattingEnabled(@NotNull PsiFile file) {
+    return !getSettings(file).getExcludedFiles().contains(file);
+  }
+
+
+
+
 }

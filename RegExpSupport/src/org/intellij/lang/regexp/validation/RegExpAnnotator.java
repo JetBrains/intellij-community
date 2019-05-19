@@ -219,8 +219,19 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     if (category == null) {
       return;
     }
-    if(!myLanguageHosts.isValidCategory(category.getPsi(), category.getText())) {
+    if (!myLanguageHosts.supportsPropertySyntax(property)) {
+      myHolder.createErrorAnnotation(property, "Property escape sequences are not supported in this regex dialect"); 
+      return;
+    }
+    String propertyName = category.getText();
+    if(!myLanguageHosts.isValidCategory(category.getPsi(), propertyName)) {
       final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");
+      a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      return;
+    }
+    ASTNode valueNode = property.getValueNode();
+    if (valueNode != null && !myLanguageHosts.isValidPropertyValue(category.getPsi(), propertyName, valueNode.getText())) {
+      final Annotation a = myHolder.createErrorAnnotation(valueNode, "Unknown property value");
       a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
     }
   }
@@ -468,8 +479,8 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
 
     @Override
-    public void visitRegExpClass(RegExpClass expClass) {
-      super.visitRegExpClass(expClass);
+    public void visitRegExpClass(RegExpClass regExpClass) {
+      super.visitRegExpClass(regExpClass);
       myLength++;
     }
 

@@ -24,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Provides authentication information to the {@link git4idea.commands.GitHttpAuthenticator} on attempt to connect an HTTP remote.
  * Useful for reusing Github credentials stored in the settings to connect the github remote (IDEA-87530).
- *
- * @author Kirill Likhodedov
+ * <p>
+ * {@link AuthData} with null password will be ignored
  */
 public interface GitHttpAuthDataProvider {
 
@@ -47,7 +47,7 @@ public interface GitHttpAuthDataProvider {
     return null;
   }
 
-  default void forgetPassword(@NotNull String url, @NotNull AuthData authData) {
+  default void forgetPassword(@NotNull Project project, @NotNull String url, @NotNull AuthData authData) {
     //noinspection deprecation
     forgetPassword(url);
   }

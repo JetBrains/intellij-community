@@ -21,6 +21,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class StringConcatPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();

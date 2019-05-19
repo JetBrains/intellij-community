@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.docking.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -30,9 +30,8 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
@@ -47,8 +46,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 @State(name = "DockManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 
@@ -111,7 +110,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   @Override
   public Set<DockContainer> getContainers() {
-    return Collections.unmodifiableSet(ContainerUtil.newHashSet(myContainers));
+    return Collections.unmodifiableSet(new HashSet<>(myContainers));
   }
 
   @Override
@@ -196,7 +195,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private class MyDragSession implements DragSession {
 
-    private final JWindow myWindow;
+    private final JDialog myWindow;
 
     private Image myDragImage;
     private final Image myDefaultDragImage;
@@ -208,7 +207,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     private final JLabel myImageContainer;
 
     private MyDragSession(MouseEvent me, @NotNull DockableContent content) {
-      myWindow = new JWindow();
+      myWindow = new JDialog(WindowManager.getInstance().getFrame(myProject));
+      myWindow.setUndecorated(true);
       myContent = content;
 
       Image previewImage = content.getPreviewImage();

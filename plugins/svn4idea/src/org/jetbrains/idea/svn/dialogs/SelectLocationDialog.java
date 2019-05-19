@@ -112,6 +112,7 @@ public class SelectLocationDialog extends DialogWrapper {
     return HELP_ID;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "svn.repositoryBrowser";
   }
@@ -135,6 +136,7 @@ public class SelectLocationDialog extends DialogWrapper {
     return result.get();
   }
 
+  @Override
   protected void init() {
     super.init();
     if (myAllowActions) {
@@ -153,6 +155,7 @@ public class SelectLocationDialog extends DialogWrapper {
     Disposer.dispose(myRepositoryBrowser);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
@@ -195,14 +198,17 @@ public class SelectLocationDialog extends DialogWrapper {
       browserPanel.add(myDstText, gc);
 
       myDstText.getDocument().addDocumentListener(new DocumentListener() {
+        @Override
         public void insertUpdate(DocumentEvent e) {
           getOKAction().setEnabled(isOKActionEnabled());
         }
 
+        @Override
         public void removeUpdate(DocumentEvent e) {
           getOKAction().setEnabled(isOKActionEnabled());
         }
 
+        @Override
         public void changedUpdate(DocumentEvent e) {
           getOKAction().setEnabled(isOKActionEnabled());
         }
@@ -232,14 +238,17 @@ public class SelectLocationDialog extends DialogWrapper {
     return ActionManager.getInstance().createActionToolbar(RepositoryBrowserDialog.PLACE_TOOLBAR, group, true).getComponent();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return (JComponent)myRepositoryBrowser.getPreferredFocusedComponent();
   }
 
+  @Override
   public boolean shouldCloseOnCross() {
     return true;
   }
 
+  @Override
   public boolean isOKActionEnabled() {
     boolean ok = myRepositoryBrowser.getSelectedURL() != null;
     if (ok && myDstText != null) {

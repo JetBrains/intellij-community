@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/14/13 12:49 PM
  */
 public interface ExternalSystemConfigurableAware {
 

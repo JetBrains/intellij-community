@@ -16,11 +16,11 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorCopyPasteHelper;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +43,9 @@ public class BasePasteHandler extends EditorWriteActionHandler {
     try {
       super.doExecute(editor, caret, dataContext);
     }
+    catch (EditorCopyPasteHelper.TooLargeContentException e) {
+      contentLengthLimitExceededMessage(e.getContentLength());
+    }
     finally {
       myTransferable = null;
     }
@@ -60,4 +63,14 @@ public class BasePasteHandler extends EditorWriteActionHandler {
     return EditorModificationUtil.getContentsToPasteToEditor(producer);
   }
 
+  public static boolean isContentTooLarge(int contentLength) {
+    return contentLength > FileUtilRt.LARGE_FOR_CONTENT_LOADING;
+  }
+
+  public static void contentLengthLimitExceededMessage(int contentLength) {
+    Messages.showErrorDialog(EditorBundle.message("content.to.paste.too.large.message",
+                                                  StringUtil.formatFileSize(contentLength),
+                                                  StringUtil.formatFileSize(FileUtilRt.LARGE_FOR_CONTENT_LOADING)),
+                             EditorBundle.message("content.to.paste.too.large.title"));
+  }
 }

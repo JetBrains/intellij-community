@@ -40,18 +40,21 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
       int bw = 1;
       Object op = spinner.getClientProperty("JComponent.outline");
 
-      if (op != null) {
+      if (c.isEnabled() && op != null) {
         DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, DarculaSpinnerBorder.isFocused(c));
         bw = 2;
-      } else if (c.isEnabled()) {
+      }
+      else if (c.isEnabled()) {
         boolean hover = spinner.getClientProperty(WinIntelliJSpinnerUI.HOVER_PROPERTY) == Boolean.TRUE;
         if (DarculaSpinnerBorder.isFocused(c)) {
           g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
-        } else {
+        }
+        else {
           g2.setColor(UIManager.getColor(hover ? "TextField.hoverBorderColor" : "TextField.borderColor"));
         }
         JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH));
-      } else {
+      }
+      else {
         g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
         JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH));
@@ -65,8 +68,8 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
       border.append(innerRect, false);
 
       g2.fill(border);
-
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }

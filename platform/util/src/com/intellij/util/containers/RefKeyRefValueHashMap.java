@@ -22,7 +22,7 @@ import java.util.*;
 
 abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   private final RefHashMap<K, ValueReference<K,V>> myMap;
-  private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+  private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
   RefKeyRefValueHashMap(@NotNull RefHashMap<K, ValueReference<K, V>> weakKeyMap) {
     myMap = weakKeyMap;
@@ -34,7 +34,7 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
 
     V get();
   }
-  protected V dereference(ValueReference<K, V> reference) {
+  protected V dereference(ValueReference<K, ? extends V> reference) {
     return reference == null ? null : reference.get();
   }
 
@@ -78,7 +78,7 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public void putAll(@NotNull Map<? extends K, ? extends V> t) {
-    throw new RuntimeException("method not implemented");
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -116,7 +116,7 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   @NotNull
   @Override
   public Collection<V> values() {
-    List<V> result = new ArrayList<V>();
+    List<V> result = new ArrayList<>();
     final Collection<ValueReference<K, V>> refs = myMap.values();
     for (ValueReference<K, V> ref : refs) {
       final V value = ref.get();
@@ -130,6 +130,6 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    throw new RuntimeException("method not implemented");
+    throw new UnsupportedOperationException();
   }
 }

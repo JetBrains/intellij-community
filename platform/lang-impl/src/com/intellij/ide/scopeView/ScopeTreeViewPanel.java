@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
@@ -78,8 +77,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
@@ -114,16 +113,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private final FileStatusListener myFileStatusListener = new FileStatusListener() {
     @Override
     public void fileStatusesChanged() {
-      final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myTree);
-      for (TreePath treePath : treePaths) {
-        final Object component = treePath.getLastPathComponent();
-        if (component instanceof PackageDependenciesNode) {
-          ((PackageDependenciesNode)component).updateColor();
-          for (int i = 0; i< ((PackageDependenciesNode)component).getChildCount(); i++) {
-            ((PackageDependenciesNode)((PackageDependenciesNode)component).getChildAt(i)).updateColor();
-          }
-        }
-      }
+      TreeUtil.visitVisibleRows(myTree,
+                                path -> TreeUtil.getLastUserObject(PackageDependenciesNode.class, path),
+                                node -> node.updateColor());
     }
 
     @Override
@@ -202,9 +194,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         if (node != null) {
           TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
           if (requestFocus) {
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
           }
         }
       }
@@ -238,13 +228,12 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myTree.setCellRenderer(new MyTreeCellRenderer());
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(myTree);
     TreeUtil.installActions(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     new TreeSpeedSearch(myTree);
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, this);
     myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myTree, myProject);
-    final ScopeTreeStructureExpander[] extensions = Extensions.getExtensions(ScopeTreeStructureExpander.EP_NAME, myProject);
+    final ScopeTreeStructureExpander[] extensions = ScopeTreeStructureExpander.EP_NAME.getExtensions(myProject);
     for (ScopeTreeStructureExpander expander : extensions) {
       myTree.addTreeWillExpandListener(expander);
     }
@@ -305,7 +294,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     settings.UI_SHOW_MODULE_GROUPS = !projectView.isFlattenModules(ScopeViewPane.ID);
     myBuilder = new FileTreeModelBuilder(myProject, new Marker() {
       @Override
-      public boolean isMarked(VirtualFile file) {
+      public boolean isMarked(@NotNull VirtualFile file) {
         return packageSet != null && (packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(file, myProject, holder) : packageSet.contains(PackageSetBase.getPsiFile(file, myProject), holder));
       }
     }, settings);
@@ -333,7 +322,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null) {
@@ -738,7 +727,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   private class MyModuleRootListener implements ModuleRootListener {
     @Override
-    public void rootsChanged(ModuleRootEvent event) {
+    public void rootsChanged(@NotNull ModuleRootEvent event) {
       myUpdateQueue.cancelAllUpdates();
       myUpdateQueue.queue(new Update("RootsChanged") {
         @Override
@@ -871,7 +860,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   private void queueUpdate(final VirtualFile fileToRefresh,
-                           final Function<PsiFile, DefaultMutableTreeNode> rootToReloadGetter, final String scopeName) {
+                           final Function<? super PsiFile, ? extends DefaultMutableTreeNode> rootToReloadGetter, final String scopeName) {
     if (myProject.isDisposed()) return;
     AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
     if (pane == null || !ScopeViewPane.ID.equals(pane.getId()) ||
@@ -947,7 +936,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       }
     }
 
-    private void collectFiles(Collection<Change> changes, Set<VirtualFile> files) {
+    private void collectFiles(Collection<? extends Change> changes, Set<? super VirtualFile> files) {
       ChangesUtil.getAfterRevisionsFiles(changes.stream()).forEach(files::add);
     }
   }

@@ -42,11 +42,13 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
     myProject = project;
   }
 
+  @Override
   @NotNull
   public FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
     return annotate(file, null);
   }
 
+  @Override
   @NotNull
   public FileAnnotation annotate(@NotNull VirtualFile file, VcsFileRevision revision) throws VcsException {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, VcsUtil.getFilePath(file.getPath()));

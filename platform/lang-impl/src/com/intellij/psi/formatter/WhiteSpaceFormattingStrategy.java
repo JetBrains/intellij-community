@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
  * 'white space symbols' if necessary.
  *
  * @author Denis Zhdanov
- * @since Sep 20, 2010 5:05:08 PM
  */
 public interface WhiteSpaceFormattingStrategy {
 

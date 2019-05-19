@@ -35,7 +35,7 @@ import java.util.List;
 
 public class SynchronizeCurrentFileAction extends AnAction implements DumbAware {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     List<VirtualFile> files = getFiles(e).take(2).toList();
     Project project = e.getProject();
     if (project == null || files.isEmpty()) {
@@ -48,7 +48,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
   }
 
   @NotNull
-  private static String getMessage(@NotNull Project project, @NotNull List<VirtualFile> files) {
+  private static String getMessage(@NotNull Project project, @NotNull List<? extends VirtualFile> files) {
     VirtualFile single = files.size() == 1 ? files.get(0) : null;
     return single != null ?
            IdeBundle.message("action.synchronize.file", VfsPresentationUtil.getPresentableNameForAction(project, single)) :
@@ -56,7 +56,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     List<VirtualFile> files = getFiles(e).toList();
     if (project == null || files.isEmpty()) return;
@@ -72,7 +72,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
     RefreshQueue.getInstance().refresh(true, true, () -> postRefresh(project, files), files);
   }
 
-  private static void postRefresh(Project project, List<VirtualFile> files) {
+  private static void postRefresh(Project project, List<? extends VirtualFile> files) {
     VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     for (VirtualFile f : files) {
       if (f.isDirectory()) {
@@ -90,7 +90,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
   }
 
   @NotNull
-  private static JBIterable<VirtualFile> getFiles(AnActionEvent e) {
+  private static JBIterable<VirtualFile> getFiles(@NotNull AnActionEvent e) {
     return JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
       .filter(o -> o.isInLocalFileSystem());
   }

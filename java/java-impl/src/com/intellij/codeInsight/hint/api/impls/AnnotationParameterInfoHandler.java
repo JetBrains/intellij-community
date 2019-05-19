@@ -36,11 +36,6 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
   }
 
   @Override
-  public Object[] getParametersForDocumentation(final PsiAnnotationMethod p, final ParameterInfoContext context) {
-    return new Object[] {p};
-  }
-
-  @Override
   public boolean couldShowInLookup() {
     return false;
   }
@@ -97,16 +92,6 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
       offset1 = CharArrayUtil.shiftBackward(chars, offset1 - 1, " \t");
     }
     context.setHighlightedParameter(findAnnotationMethod(context.getFile(), offset1));
-  }
-
-  @Override
-  public String getParameterCloseChars() {
-    return ParameterInfoUtils.DEFAULT_PARAMETER_CLOSE_CHARS;
-  }
-
-  @Override
-  public boolean tracksParameterIndex() {
-    return true;
   }
 
   @Override

@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.task.impl;
 
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -23,35 +11,35 @@ import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
-import static com.intellij.util.containers.ContainerUtil.list;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.groupingBy;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
  */
 public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.task.ProjectTaskManager");
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
+  private final ProjectTaskListener myEventPublisher;
 
   public ProjectTaskManagerImpl(@NotNull Project project) {
     super(project);
+    myEventPublisher = project.getMessageBus().syncPublisher(ProjectTaskListener.TOPIC);
   }
 
   @Override
@@ -66,12 +54,12 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   @Override
   public void compile(@NotNull VirtualFile[] files, @Nullable ProjectTaskNotification callback) {
-    List<ModuleFilesBuildTask> buildTasks = stream(files)
-      .collect(groupingBy(
-        file -> ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(file, false)))
-      .entrySet().stream()
-      .map(entry -> new ModuleFilesBuildTaskImpl(entry.getKey(), false, entry.getValue()))
-      .collect(Collectors.toList());
+    List<ModuleFilesBuildTask> buildTasks = map(stream(files)
+                                                  .collect(groupingBy(
+                                                    file -> ProjectFileIndex.SERVICE.getInstance(myProject)
+                                                      .getModuleForFile(file, false)))
+                                                  .entrySet(), entry -> new ModuleFilesBuildTaskImpl(entry.getKey(), false,
+                                                                                                     entry.getValue()));
 
     run(new ProjectTaskList(buildTasks), callback);
   }
@@ -116,7 +104,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
                                             boolean includeRuntimeDependencies) {
     return modules.length == 1
            ? new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)
-           : new ProjectTaskList(map(list(modules), module ->
+           : new ProjectTaskList(map(Arrays.asList(modules), module ->
              new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)));
   }
 
@@ -124,7 +112,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
   public ProjectTask createBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... buildableElements) {
     return buildableElements.length == 1
            ? new ProjectModelBuildTaskImpl<>(buildableElements[0], isIncrementalBuild)
-           : new ProjectTaskList(map(list(buildableElements),
+           : new ProjectTaskList(map(Arrays.asList(buildableElements),
                                      buildableElement -> new ProjectModelBuildTaskImpl<>(buildableElement, isIncrementalBuild)));
   }
 
@@ -140,7 +128,15 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
       Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
         groupingBy(aTask -> stream(getTaskRunners())
-          .filter(runner -> runner.canRun(aTask))
+          .filter(runner -> {
+            try {
+              return runner.canRun(myProject, aTask);
+            }
+            catch (Exception e) {
+              LOG.error("Broken project task runner: " + runner.getClass().getName(), e);
+            }
+            return false;
+          })
           .findFirst()
           .orElse(myDummyTaskRunner))
       );
@@ -150,38 +146,23 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     };
     visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
 
+    myEventPublisher.started(context);
     if (toRun.isEmpty()) {
-      sendSuccessNotify(callback);
+      sendSuccessNotify(new ListenerNotificator(context, callback));
       return;
     }
 
-    AtomicInteger inProgressCounter = new AtomicInteger(toRun.size());
-    AtomicInteger errorsCounter = new AtomicInteger();
-    AtomicInteger warningsCounter = new AtomicInteger();
-    AtomicBoolean abortedFlag = new AtomicBoolean(false);
-    ProjectTaskNotification chunkStatusNotification = callback == null ? null : new ProjectTaskNotification() {
-      @Override
-      public void finished(@NotNull ProjectTaskResult executionResult) {
-        int inProgress = inProgressCounter.decrementAndGet();
-        int allErrors = errorsCounter.addAndGet(executionResult.getErrors());
-        int allWarnings = warningsCounter.addAndGet(executionResult.getWarnings());
-        if (executionResult.isAborted()) {
-          abortedFlag.set(true);
-        }
-        if (inProgress == 0) {
-          callback.finished(new ProjectTaskResult(abortedFlag.get(), allErrors, allWarnings));
-        }
-      }
-    };
-
-    toRun.forEach(pair -> {
+    ProjectTaskResultsAggregator callbacksCollector =
+      new ProjectTaskResultsAggregator(new ListenerNotificator(context, callback), toRun.size());
+    for (Pair<ProjectTaskRunner, Collection<? extends ProjectTask>> pair : toRun) {
+      callback = new ProjectTaskRunnerNotification(pair.second, callbacksCollector);
       if (pair.second.isEmpty()) {
-        sendSuccessNotify(chunkStatusNotification);
+        sendSuccessNotify(callback);
       }
       else {
-        pair.first.run(myProject, context, chunkStatusNotification, pair.second);
+        pair.first.run(myProject, context, callback, pair.second);
       }
-    });
+    }
   }
 
   private static void sendSuccessNotify(@Nullable ProjectTaskNotification notification) {
@@ -191,7 +172,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   private static void visitTasks(@NotNull Collection<? extends ProjectTask> tasks,
-                                 @NotNull Consumer<Collection<? extends ProjectTask>> consumer) {
+                                 @NotNull Consumer<? super Collection<? extends ProjectTask>> consumer) {
     for (ProjectTask child : tasks) {
       Collection<? extends ProjectTask> taskDependencies;
       if (child instanceof AbstractProjectTask) {
@@ -226,12 +207,98 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
                     @NotNull ProjectTaskContext context,
                     @Nullable ProjectTaskNotification callback,
                     @NotNull Collection<? extends ProjectTask> tasks) {
-
+      sendSuccessNotify(callback);
     }
 
     @Override
     public boolean canRun(@NotNull ProjectTask projectTask) {
-      return false;
+      return true;
+    }
+  }
+
+  private class ListenerNotificator implements ProjectTaskNotification {
+    @Nullable private final ProjectTaskNotification myDelegate;
+    @NotNull private final ProjectTaskContext myContext;
+
+    private ListenerNotificator(@NotNull ProjectTaskContext context, @Nullable ProjectTaskNotification delegate) {
+      myContext = context;
+      myDelegate = delegate;
+    }
+
+    @Override
+    public void finished(@NotNull ProjectTaskResult executionResult) {
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        if (!myProject.isDisposed()) {
+          myEventPublisher.finished(myContext, executionResult);
+        }
+        if (myDelegate != null) {
+          myDelegate.finished(executionResult);
+        }
+      }, ModalityState.defaultModalityState());
+    }
+  }
+
+  private static class ProjectTaskRunnerNotification implements ProjectTaskNotification {
+    private final ProjectTaskResultsAggregator myAggregator;
+    private final Collection<? extends ProjectTask> myTasks;
+
+    private ProjectTaskRunnerNotification(@NotNull Collection<? extends ProjectTask> tasks,
+                                          @NotNull ProjectTaskResultsAggregator aggregator) {
+      myTasks = tasks;
+      myAggregator = aggregator;
+    }
+
+    @Override
+    public void finished(@NotNull ProjectTaskResult result) {
+      if (result.getTasksState().isEmpty()) {
+        final boolean aborted = result.isAborted();
+        final int errors = result.getErrors();
+        ProjectTaskState state = new ProjectTaskState() {
+          @Override
+          public boolean isSkipped() {
+            return aborted;
+          }
+
+          @Override
+          public boolean isFailed() {
+            return errors > 0;
+          }
+        };
+        Map<ProjectTask, ProjectTaskState> tasksState = StreamEx.of(myTasks).toMap(Function.identity(), task -> state);
+        result = new ProjectTaskResult(aborted, errors, result.getWarnings(), tasksState);
+      }
+      myAggregator.add(result);
+    }
+  }
+
+  private static class ProjectTaskResultsAggregator {
+    private final ProjectTaskNotification myDelegate;
+    private final AtomicInteger myProgressCounter;
+    private final AtomicInteger myErrorsCounter;
+    private final AtomicInteger myWarningsCounter;
+    private final AtomicBoolean myAbortedFlag;
+    private final Map<ProjectTask, ProjectTaskState> myTasksState = ContainerUtil.newConcurrentMap();
+
+    private ProjectTaskResultsAggregator(@NotNull ProjectTaskNotification delegate, int expectedResults) {
+      myDelegate = delegate;
+      myProgressCounter = new AtomicInteger(expectedResults);
+      myErrorsCounter = new AtomicInteger();
+      myWarningsCounter = new AtomicInteger();
+      myAbortedFlag = new AtomicBoolean(false);
+    }
+
+    public void add(@NotNull ProjectTaskResult executionResult) {
+      int inProgress = myProgressCounter.decrementAndGet();
+      int allErrors = myErrorsCounter.addAndGet(executionResult.getErrors());
+      int allWarnings = myWarningsCounter.addAndGet(executionResult.getWarnings());
+      myTasksState.putAll(executionResult.getTasksState());
+      if (executionResult.isAborted()) {
+        myAbortedFlag.set(true);
+      }
+      if (inProgress <= 0) {
+        ProjectTaskResult result = new ProjectTaskResult(myAbortedFlag.get(), allErrors, allWarnings, myTasksState);
+        myDelegate.finished(result);
+      }
     }
   }
 }

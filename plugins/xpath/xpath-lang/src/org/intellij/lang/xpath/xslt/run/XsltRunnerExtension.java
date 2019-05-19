@@ -23,7 +23,6 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,7 @@ import java.util.List;
 public abstract class XsltRunnerExtension {
     public static final ExtensionPointName<XsltRunnerExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("XPathView.xsltRunnerExtension");
 
-    
+
     public abstract ProcessListener createProcessListener(Project project, UserDataHolder extensionData);
 
     /**
@@ -49,8 +48,8 @@ public abstract class XsltRunnerExtension {
 
     @NotNull
     public static List<XsltRunnerExtension> getExtensions(XsltRunConfiguration config, boolean debugger) {
-        final XsltRunnerExtension[] extensions = Extensions.getExtensions(EXTENSION_POINT_NAME);
-        final ArrayList<XsltRunnerExtension> list = new ArrayList<>(extensions.length);
+      final List<XsltRunnerExtension> extensions = EXTENSION_POINT_NAME.getExtensionList();
+        final ArrayList<XsltRunnerExtension> list = new ArrayList<>(extensions.size());
         for (XsltRunnerExtension extension : extensions) {
             if (extension.supports(config, debugger)) {
                 list.add(extension);

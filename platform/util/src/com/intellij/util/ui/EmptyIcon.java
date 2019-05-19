@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.ui;
 
@@ -28,7 +14,7 @@ import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
 
 /**
  * @author max
@@ -37,11 +23,13 @@ import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
  *
  * @see ColorIcon
  */
-public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
-  private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<Pair<Integer, Boolean>, EmptyIcon>();
+// public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
+public class EmptyIcon extends JBUI.CachingScalableJBIcon<JBUI.CachingScalableJBIcon> { // backward compatible version
+  private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<>();
 
-  public static final Icon ICON_16 = JBUI.scale(create(16));
   public static final Icon ICON_18 = JBUI.scale(create(18));
+  public static final Icon ICON_16 = JBUI.scale(create(16));
+  public static final Icon ICON_13 = JBUI.scale(create(13));
   public static final Icon ICON_8 = JBUI.scale(create(8));
   public static final Icon ICON_0 = JBUI.scale(create(0));
 
@@ -61,7 +49,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   /**
    * Creates an icon of the provided size.
    *
-   * Use {@link JBUI#scale(JBUI.JBIcon)} to meet HiDPI.
+   * Use {@link JBUI#scale(JBScalableIcon)} to meet HiDPI.
    */
   public static EmptyIcon create(int size) {
     return create(size, size);
@@ -70,7 +58,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   /**
    * Creates an icon of the provided size.
    *
-   * Use {@link JBUI#scale(JBUI.JBIcon)} to meet HiDPI.
+   * Use {@link JBUI#scale(JBScalableIcon)} to meet HiDPI.
    */
   public static EmptyIcon create(int width, int height) {
     return create(width, height, true);
@@ -86,6 +74,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   /**
    * @deprecated use {@linkplain #create(int)} for caching.
    */
+  @Deprecated
   public EmptyIcon(int size) {
     this(size, size);
   }
@@ -93,6 +82,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   /**
    * @deprecated use {@linkplain #create(int, int)} for caching.
    */
+  @Deprecated
   public EmptyIcon(int width, int height) {
     this(width, height, false);
   }
@@ -112,7 +102,13 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
   @NotNull
   @Override
-  protected EmptyIcon copy() {
+  public /*EmptyIcon*/ JBUI.CachingScalableJBIcon scale(float scale) { // backward compatible version
+    return super.scale(scale);
+  }
+
+  @NotNull
+  @Override
+  public EmptyIcon copy() {
     return new EmptyIcon(this);
   }
 
@@ -186,7 +182,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
     @NotNull
     @Override
-    protected EmptyIconUIResource copy() {
+    public EmptyIconUIResource copy() {
       return new EmptyIconUIResource(this);
     }
   }

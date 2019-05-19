@@ -20,22 +20,28 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
 import com.intellij.diff.tools.util.text.FineMergeLineFragment;
 import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.tools.util.text.SimpleThreesideTextDiffProvider;
 import com.intellij.diff.util.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,16 +61,23 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<>(myTextDiffProvider.getToolbarActions());
+    List<AnAction> group = new ArrayList<>();
+
+    DefaultActionGroup diffGroup = new DefaultActionGroup("Compare Contents", true);
+    diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
+    diffGroup.add(Separator.create("Compare Contents"));
+    diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_LEFT, false));
+    diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_RIGHT, false));
+    diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, false));
+    group.add(diffGroup);
+    group.add(Separator.getInstance());
+
+    group.addAll(myTextDiffProvider.getToolbarActions());
+
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyToggleAutoScrollAction());
     group.add(new MyEditorReadOnlyLockAction());
     group.add(myEditorSettingsAction);
-
-    group.add(Separator.getInstance());
-    group.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_LEFT, false));
-    group.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_RIGHT, false));
-    group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, false));
 
     group.add(Separator.getInstance());
     group.addAll(super.createToolbarActions());
@@ -102,14 +115,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     try {
       indicator.checkCanceled();
 
-      List<CharSequence> sequences = ContainerUtil.map(getContents(), content -> {
-        return content.getDocument().getImmutableCharSequence();
-      });
+      List<CharSequence> sequences = ContainerUtil.map(getContents(), content -> content.getDocument().getImmutableCharSequence());
 
       List<FineMergeLineFragment> lineFragments = myTextDiffProvider.compare(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                              indicator);
+      FoldingModelSupport.Data foldingState = myFoldingModel.createState(lineFragments, getFoldingModelSettings());
 
-      return apply(lineFragments);
+      return apply(lineFragments, foldingState);
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
@@ -146,7 +158,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   @NotNull
-  private Runnable apply(@NotNull final List<FineMergeLineFragment> fragments) {
+  private Runnable apply(@NotNull final List<FineMergeLineFragment> fragments, @Nullable FoldingModelSupport.Data foldingState) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
       clearDiffPresentation();
@@ -161,7 +173,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
         onChangeAdded(change);
       }
 
-      myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
+      myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
 
       myInitialScrollHelper.onRediff();
 
@@ -260,7 +272,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   private class MyDividerPaintable implements DiffDividerDrawUtil.DividerPaintable {
     @NotNull private final Side mySide;
 
-    public MyDividerPaintable(@NotNull Side side) {
+    MyDividerPaintable(@NotNull Side side) {
       mySide = side;
     }
 

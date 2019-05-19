@@ -7,12 +7,14 @@ public class VersionCommand extends AbstractCommand {
 
   private final String myVersion;
   private final String myPycharmOS;
+  private final long myResponseTimeout;
   private String myRemoteVersion = null;
 
-  public VersionCommand(final RemoteDebugger debugger, final String version, String pycharmOS) {
+  public VersionCommand(final RemoteDebugger debugger, final String version, String pycharmOS, long responseTimeout) {
     super(debugger, VERSION);
     myVersion = version;
     myPycharmOS = pycharmOS;
+    myResponseTimeout = responseTimeout;
   }
 
   @Override
@@ -23,6 +25,11 @@ public class VersionCommand extends AbstractCommand {
   @Override
   public boolean isResponseExpected() {
     return true;
+  }
+
+  @Override
+  protected long getResponseTimeout() {
+    return myResponseTimeout;
   }
 
   @Override

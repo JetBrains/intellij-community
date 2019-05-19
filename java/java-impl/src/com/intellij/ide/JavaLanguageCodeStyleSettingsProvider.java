@@ -15,9 +15,8 @@
  */
 package com.intellij.ide;
 
-import com.intellij.application.options.CodeStyle;
-import com.intellij.application.options.IndentOptionsEditor;
-import com.intellij.application.options.JavaIndentOptionsEditor;
+import com.intellij.application.options.*;
+import com.intellij.application.options.codeStyle.properties.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -30,6 +29,11 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.application.options.JavaDocFormattingPanel.*;
 
@@ -37,6 +41,27 @@ import static com.intellij.application.options.JavaDocFormattingPanel.*;
  * @author rvishnyakov
  */
 public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+  @NotNull
+  @Override
+  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
+    return new CodeStyleAbstractConfigurable(settings, modelSettings, "Java") {
+      @Override
+      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+        return new JavaCodeStyleMainPanel(getCurrentSettings(), settings);
+      }
+      @Override
+      public String getHelpTopic() {
+        return "reference.settingsdialog.codestyle.java";
+      }
+    };
+  }
+
+  @Nullable
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new JavaCodeStyleSettings(settings);
+  }
+
   @NotNull
   @Override
   public Language getLanguage() {
@@ -71,13 +96,17 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_PARAMETERS;
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER", ApplicationBundle.message("checkbox.spaces.before.opening.angle.bracket"), groupName);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS", "Around type bounds", groupName);
+
+      groupName = CodeStyleSettingsCustomizable.SPACES_OTHER;
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_COLON_IN_FOREACH", ApplicationBundle.message(
+        "checkbox.spaces.before.colon.in.foreach"), groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_INSIDE_ONE_LINE_ENUM_BRACES", ApplicationBundle.message(
+        "checkbox.spaces.inside.one.line.enum"), groupName);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN",
                                    "WRAP_ON_TYPING",
                                    "KEEP_CONTROL_STATEMENT_IN_ONE_LINE",
-                                   "LINE_COMMENT_AT_FIRST_COLUMN",
-                                   "BLOCK_COMMENT_AT_FIRST_COLUMN",
                                    "KEEP_LINE_BREAKS",
                                    "KEEP_FIRST_COLUMN_COMMENT",
                                    "CALL_PARAMETERS_WRAP",
@@ -160,6 +189,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "SPECIAL_ELSE_IF_TREATMENT",
                                    "ENUM_CONSTANTS_WRAP",
                                    "ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
+                                   "ALIGN_CONSECUTIVE_ASSIGNMENTS",
                                    "ALIGN_SUBSEQUENT_SIMPLE_METHODS",
                                    "WRAP_FIRST_METHOD_IN_CALL_CHAIN");
 
@@ -182,7 +212,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER", ApplicationBundle.message("editbox.blanklines.around.initializer"), CodeStyleSettingsCustomizable.BLANK_LINES);
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
-      consumer.showStandardOptions("LINE_COMMENT_ADD_SPACE");
+      consumer.showAllStandardOptions();
     }
     else if (settingsType == SettingsType.LANGUAGE_SPECIFIC) {
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_PARAM_COMMENTS",
@@ -240,6 +270,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_INDENT_ON_CONTINUATION",
                                 ApplicationBundle.message("checkbox.param.indent.on.continuation"),
                                 OTHER_GROUP);
+
+
     }
     else {
       consumer.showAllStandardOptions();
@@ -255,12 +287,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     return file;
   }
 
-  @Override
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings settings = new CommonCodeStyleSettings(JavaLanguage.INSTANCE);
-    settings.initIndentOptions();
-    return settings;
-  }
 
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
@@ -270,29 +296,93 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   @NotNull
-  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
-    if (file.isValid()) {
-      return new DocCommentSettings() {
-        private final JavaCodeStyleSettings mySettings =
-          CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class);
+  public DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
+    return new DocCommentSettings() {
+      private final JavaCodeStyleSettings mySettings =
+        rootSettings.getCustomSettings(JavaCodeStyleSettings.class);
 
-        @Override
-        public boolean isDocFormattingEnabled() {
-          return mySettings.ENABLE_JAVADOC_FORMATTING;
-        }
+      @Override
+      public boolean isDocFormattingEnabled() {
+        return mySettings.ENABLE_JAVADOC_FORMATTING;
+      }
 
-        @Override
-        public void setDocFormattingEnabled(boolean formattingEnabled) {
-          mySettings.ENABLE_JAVADOC_FORMATTING = formattingEnabled;
-        }
+      @Override
+      public void setDocFormattingEnabled(boolean formattingEnabled) {
+        mySettings.ENABLE_JAVADOC_FORMATTING = formattingEnabled;
+      }
 
-        @Override
-        public boolean isLeadingAsteriskEnabled() {
-          return mySettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
-        }
-      };
+      @Override
+      public boolean isLeadingAsteriskEnabled() {
+        return mySettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
+      }
+
+      @Override
+      public boolean isRemoveEmptyTags() {
+        return mySettings.JD_KEEP_EMPTY_EXCEPTION || mySettings.JD_KEEP_EMPTY_PARAMETER || mySettings.JD_KEEP_EMPTY_RETURN;
+      }
+
+      @Override
+      public void setRemoveEmptyTags(boolean removeEmptyTags) {
+        mySettings.JD_KEEP_EMPTY_RETURN = !removeEmptyTags;
+        mySettings.JD_KEEP_EMPTY_PARAMETER = !removeEmptyTags;
+        mySettings.JD_KEEP_EMPTY_EXCEPTION = !removeEmptyTags;
+      }
+    };
+
+  }
+
+  @Nullable
+  @Override
+  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+    if (PackageEntryTable.class.isAssignableFrom(field.getType())) {
+      return new JavaPackageEntryTableAccessor(codeStyleObject, field);
     }
-    return super.getDocCommentSettings(file);
+    return super.getAccessor(codeStyleObject, field);
+  }
+
+  @Override
+  public List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
+    if (codeStyleObject instanceof JavaCodeStyleSettings) {
+      return Collections.singletonList(new RepeatAnnotationsAccessor((JavaCodeStyleSettings)codeStyleObject));
+    }
+    return super.getAdditionalAccessors(codeStyleObject);
+  }
+
+  private static class RepeatAnnotationsAccessor extends CodeStylePropertyAccessor<List<String>> {
+
+    private final JavaCodeStyleSettings mySettings;
+
+    RepeatAnnotationsAccessor(@NotNull JavaCodeStyleSettings settings) {
+      mySettings = settings;
+    }
+
+    @Override
+    public boolean set(@NotNull List<String> extVal) {
+      mySettings.setRepeatAnnotations(extVal);
+      return true;
+    }
+
+    @Override
+    @Nullable
+    public List<String> get() {
+      return mySettings.getRepeatAnnotations();
+    }
+
+    @Override
+    protected List<String> parseString(@NotNull String string) {
+      return CodeStylePropertiesUtil.getValueList(string);
+    }
+
+    @Nullable
+    @Override
+    protected String valueToString(@NotNull List<String> value) {
+      return CodeStylePropertiesUtil.toCommaSeparatedString(value);
+    }
+
+    @Override
+    public String getPropertyName() {
+      return "repeat_annotations";
+    }
   }
 
   private static final String GENERAL_CODE_SAMPLE =
@@ -464,9 +554,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    while (x < 50000) x++;\n" +
     "    do x++; while (x < 10000);\n" +
     "    switch (a) {\n" +
-    "    case 0:\n" +
-    "      doCase0();\n" +
-    "      break;\n" +
+    "    case 0: case 1:\ndoCase0(); break;\ncase 2: case 3: return;" +
     "    default:\n" +
     "      doDefault();\n" +
     "    }\n" +

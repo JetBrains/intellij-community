@@ -1,17 +1,15 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.GroupBasedTestClassFilter;
 import com.intellij.PatternListTestClassFilter;
 import com.intellij.TestClassesFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -139,7 +137,7 @@ public class TestClassesFilterTest {
   }
 
   private static InputStreamReader getReader(String filterText) {
-    return new InputStreamReader(new ByteArrayInputStream(filterText.getBytes(CharsetToolkit.UTF8_CHARSET)));
+    return new InputStreamReader(new ByteArrayInputStream(filterText.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
   }
 
   private static void checkForAllExcludedDefinedGroup(TestClassesFilter classesFilter) {

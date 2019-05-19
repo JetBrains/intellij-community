@@ -20,7 +20,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
@@ -204,11 +207,12 @@ public class PsiTypesUtil {
       }
       else {
         PsiElement parent = call.getContext();
-        while (parent != null && condition.value(parent.getNode().getElementType())) {
+        while (parent != null && condition.value(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parent).getElementType() 
+                                                                                       : parent.getNode().getElementType())) {
           parent = parent.getContext();
         }
         if (parent != null) {
-          qualifierType = JavaPsiFacade.getInstance(project).getElementFactory().createType((PsiClass)parent);
+          qualifierType = JavaPsiFacade.getElementFactory(project).createType((PsiClass)parent);
         }
       }
       return createJavaLangClassType(methodExpression, qualifierType, true);
@@ -257,7 +261,8 @@ public class PsiTypesUtil {
     }
     else if (parent instanceof PsiAssignmentExpression) {
       if (PsiUtil.checkSameExpression(element, ((PsiAssignmentExpression)parent).getRExpression())) {
-        return ((PsiAssignmentExpression)parent).getLExpression().getType();
+        PsiType type = ((PsiAssignmentExpression)parent).getLExpression().getType();
+        return !PsiType.NULL.equals(type) ? type : null;
       }
     }
     else if (parent instanceof PsiReturnStatement) {
@@ -270,7 +275,7 @@ public class PsiTypesUtil {
       }
     }
     else if (PsiUtil.isCondition(element, parent)) {
-      return PsiType.BOOLEAN.getBoxedType(parent);
+      return PsiType.BOOLEAN;
     } 
     else if (parent instanceof PsiArrayInitializerExpression) {
       final PsiElement gParent = parent.getParent();
@@ -321,11 +326,19 @@ public class PsiTypesUtil {
   }
 
   /**
-   * @param context in which type should be checked
-   * @return false if type is null or has no explicit canonical type representation (e. g. intersection type)
+   *  Not compliant to specification, use {@link PsiTypesUtil#isDenotableType(PsiType, PsiElement)} instead
    */
+  @Deprecated
+  public static boolean isDenotableType(@Nullable PsiType type) {
+    return !(type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType);
+  }
+
+    /**
+     * @param context in which type should be checked
+     * @return false if type is null or has no explicit canonical type representation (e. g. intersection type)
+     */
   public static boolean isDenotableType(@Nullable PsiType type, @NotNull PsiElement context) {
-    if (type == null) return false;
+    if (type == null || type instanceof PsiWildcardType) return false;
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.getProject());
     try {
       PsiType typeAfterReplacement = elementFactory.createTypeElementFromText(type.getCanonicalText(), context).getType();
@@ -430,6 +443,46 @@ public class PsiTypesUtil {
       newType = newType.createArrayType();
     }
     return newType;
+  }
+
+  /**
+   * @return null if type can't be explicitly specified
+   */
+  @Nullable
+  public static PsiTypeElement replaceWithExplicitType(PsiTypeElement typeElement) {
+    PsiType type = typeElement.getType();
+    if (!isDenotableType(type, typeElement)) {
+      return null;
+    }
+    Project project = typeElement.getProject();
+    PsiTypeElement typeElementByExplicitType = JavaPsiFacade.getElementFactory(project).createTypeElement(type);
+    PsiElement explicitTypeElement = typeElement.replace(typeElementByExplicitType);
+    explicitTypeElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(explicitTypeElement);
+    return (PsiTypeElement)CodeStyleManager.getInstance(project).reformat(explicitTypeElement);
+  }
+
+  public static PsiType getTypeByMethod(@NotNull PsiElement context,
+                                        PsiExpressionList argumentList,
+                                        PsiElement parentMethod,
+                                        boolean varargs,
+                                        PsiSubstitutor substitutor,
+                                        boolean inferParent) {
+    if (parentMethod instanceof PsiMethod) {
+      final PsiParameter[] parameters = ((PsiMethod)parentMethod).getParameterList().getParameters();
+      if (parameters.length == 0) return null;
+      final PsiExpression[] args = argumentList.getExpressions();
+      if (!((PsiMethod)parentMethod).isVarArgs() && parameters.length != args.length && !inferParent) return null;
+      PsiElement arg = context;
+      while (arg.getParent() instanceof PsiParenthesizedExpression) {
+        arg = arg.getParent();
+      }
+      final int i = ArrayUtilRt.find(args, arg);
+      if (i < 0) return null;
+      final PsiType parameterType = substitutor != null ? substitutor.substitute(getParameterType(parameters, i, varargs)) : null;
+      final boolean isRaw = substitutor != null && PsiUtil.isRawSubstitutor((PsiMethod)parentMethod, substitutor);
+      return isRaw ? TypeConversionUtil.erasure(parameterType) : parameterType;
+    }
+    return null;
   }
 
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {

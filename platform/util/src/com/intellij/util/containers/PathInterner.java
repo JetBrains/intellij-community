@@ -41,13 +41,13 @@ public class PathInterner {
       return Arrays.equals(o1, o2);
     }
   };
-  private final OpenTHashSet<SubstringWrapper> myInternMap = new OpenTHashSet<SubstringWrapper>();
+  private final OpenTHashSet<SubstringWrapper> myInternMap = new OpenTHashSet<>();
 
   @Nullable
   protected SubstringWrapper[] internParts(String path, boolean forAddition) {
     int start = 0;
     boolean asBytes = forAddition && IOUtil.isAscii(path);
-    List<SubstringWrapper> key = new ArrayList<SubstringWrapper>();
+    List<SubstringWrapper> key = new ArrayList<>();
     SubstringWrapper flyweightKey = new SubstringWrapper();
     while (start < path.length()) {
       flyweightKey.findSubStringUntilNextSeparator(path, start);
@@ -87,7 +87,6 @@ public class PathInterner {
       int oldLen = sb.length();
       sb.setLength(oldLen + len);
       byte[] bytes = (byte[]) encodedString;
-      //noinspection ForLoopReplaceableByForEach
       for (int i = 0, len = bytes.length; i < len; i++) {
         sb.setCharAt(oldLen + i, (char)bytes[i]);
       }
@@ -165,9 +164,9 @@ public class PathInterner {
   }
 
   public static class PathEnumerator {
-    private final TObjectIntHashMap<SubstringWrapper[]> mySeqToIdx = new TObjectIntHashMap<SubstringWrapper[]>(
+    private final TObjectIntHashMap<SubstringWrapper[]> mySeqToIdx = new TObjectIntHashMap<>(
       PathInterner.HASHING_STRATEGY);
-    private final List<SubstringWrapper[]> myIdxToSeq = new ArrayList<SubstringWrapper[]>();
+    private final List<SubstringWrapper[]> myIdxToSeq = new ArrayList<>();
     private final PathInterner myInterner = new PathInterner();
 
     public PathEnumerator() {
@@ -175,7 +174,7 @@ public class PathInterner {
     }
 
     public List<String> getAllPaths() {
-      ArrayList<String> result = new ArrayList<String>(myIdxToSeq.size() - 1);
+      ArrayList<String> result = new ArrayList<>(myIdxToSeq.size() - 1);
       for (SubstringWrapper[] wrappers : myIdxToSeq) {
         if (wrappers != null) {
           result.add(PathInterner.restorePath(wrappers));
@@ -213,7 +212,7 @@ public class PathInterner {
   }
 
   public static class PathMap<T> {
-    private final THashMap<SubstringWrapper[], T> myMap = new THashMap<SubstringWrapper[], T>(PathInterner.HASHING_STRATEGY);
+    private final THashMap<SubstringWrapper[], T> myMap = new THashMap<>(PathInterner.HASHING_STRATEGY);
     private final PathInterner myInterner = new PathInterner();
 
     @Nullable

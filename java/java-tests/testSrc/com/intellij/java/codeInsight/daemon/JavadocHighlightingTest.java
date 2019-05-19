@@ -66,6 +66,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testSee5() { doTest(); }
   public void testSee6() { doTest(); }
   public void testLinkToItself() { doTest(); }
+  public void testLinkToMethodNoParams() { doTest(); }
   public void testSeeConstants() { doTest(); }
   public void testSeeNonRefs() { doTest(); }
   public void testReturn0() { doTest(); }
@@ -91,6 +92,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testPackageInfo4() { doTest("packageInfo/p4/package-info.java"); }
   public void testJava18Tags() { doTest(); }
   public void testJava19Tags() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
+  public void testJava12Tags() { setLanguageLevel(LanguageLevel.JDK_12); doTest(); }
   public void testModuleInfoTags() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("moduleInfo/m1/module-info.java"); }
   public void testDeprecatedModule() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("moduleInfo/m2/module-info.java"); }
   public void testUnknownInlineTag() { doTest(); }
@@ -127,7 +129,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
         "http://example.com/ABC-1123", "http://example.com/ABC-2", "http://example.com/ABC-22", "http://example.com/ABC-11");
       List<WebReference> refs = PlatformTestUtil.collectWebReferences(myFile);
       assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
-      assertEquals(expected, refs.stream().map(WebReference::getUrl).collect(Collectors.toList()));
+      assertEquals(expected, ContainerUtil.map(refs, WebReference::getUrl));
     }
     finally {
       navigationConfiguration.setLinks(oldLinks);

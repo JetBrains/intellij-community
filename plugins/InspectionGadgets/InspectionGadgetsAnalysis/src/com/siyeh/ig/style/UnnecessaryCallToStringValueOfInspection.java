@@ -15,13 +15,18 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -102,18 +107,19 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.call.to.string.valueof.quickfix", replacementText);
+      return CommonQuickFixBundle.message("fix.replace.with.x", replacementText);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify";
+      return CommonQuickFixBundle.message("fix.simplify");
     }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)descriptor.getPsiElement();
+      final PsiMethodCallExpression call = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+      if (call == null) return;
       PsiExpression arg = tryUnwrapRedundantConversion(call);
       if (arg == null) return;
       CommentTracker tracker = new CommentTracker();
@@ -146,7 +152,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, "java.lang.Throwable");
     if (ExpressionUtils.isConversionToStringNecessary(call, throwable)) {
       if (!TypeUtils.isJavaLangString(argumentType) ||
-          NullnessUtil.getExpressionNullness(argument, true) != Nullness.NOT_NULL) {
+          NullabilityUtil.getExpressionNullability(argument, true) != Nullability.NOT_NULL) {
         return null;
       }
     }

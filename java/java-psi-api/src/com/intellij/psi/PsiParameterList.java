@@ -44,7 +44,6 @@ public interface PsiParameterList extends PsiElement {
 
   /**
    * @return true if this parameter list has no parameters (excluding type annotation receiver).
-   * @since 2018.1
    */
   default boolean isEmpty() {
     return getParametersCount() == 0;

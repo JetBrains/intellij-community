@@ -1,5 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.ToolExtensionPoints
@@ -13,12 +12,12 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-
 /**
  * @author peter
  */
 abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
 
+  @NotNull
   JavaCodeInsightTestFixture getFixture() {
     myFixture
   }
@@ -27,7 +26,7 @@ abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
   void setUp() throws Exception {
     super.setUp()
     // avoid PSI/document/model changes are not allowed during highlighting
-    Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL, null);
+    Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensionList()
   }
 
   @Override
@@ -38,7 +37,7 @@ abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_2_1
+    return GroovyProjectDescriptors.GROOVY_2_1
   }
 
   /**
@@ -143,6 +142,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
 
 package junit.framework;
 
+@SuppressWarnings({"Contract", "MethodOverridesStaticMethodOfSuperclass", "RedundantThrows"}) 
 public abstract class TestCase extends junit.framework.Assert implements junit.framework.Test {
     private java.lang.String fName;
 
@@ -251,13 +251,14 @@ public abstract class TestCase extends junit.framework.Assert implements junit.f
 ''')
   }
 
+  @CompileStatic
   static void assertType(@Nullable String expected, @Nullable PsiType actual) {
     if (expected == null) {
-      assertNull(actual)
+      assert actual == null
       return
     }
 
-    assertNotNull(actual)
+    assert actual != null
     if (actual instanceof PsiIntersectionType) {
       assertEquals(expected, genIntersectionTypeText(actual))
     }
@@ -279,7 +280,7 @@ public abstract class TestCase extends junit.framework.Assert implements junit.f
 
 
   @CompileStatic
-  protected String getTestName() {
+  String getTestName() {
     return (getTestName(true) - 'test').split(' ')*.capitalize().join('').uncapitalize()
   }
 }

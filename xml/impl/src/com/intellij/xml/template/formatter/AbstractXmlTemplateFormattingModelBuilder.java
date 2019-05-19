@@ -106,7 +106,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
   public FormattingModel createTemplateFormattingModel(PsiFile file,
                                                        CodeStyleSettings settings,
                                                        XmlFormattingPolicy xmlFormattingPolicy,
-                                                       List<PsiElement> elements,
+                                                       List<? extends PsiElement> elements,
                                                        Indent indent) {
     try {
       return createTemplateFormattingModelInternal(file, settings, xmlFormattingPolicy, elements, indent);
@@ -128,7 +128,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
   private FormattingModel createTemplateFormattingModelInternal(@NotNull PsiFile file,
                                                                 CodeStyleSettings settings,
                                                                 XmlFormattingPolicy xmlFormattingPolicy,
-                                                                List<PsiElement> elements,
+                                                                List<? extends PsiElement> elements,
                                                                 Indent indent) throws FragmentedTemplateException {
     if (elements.size() == 0) return null;
     List<Block> templateBlocks = new ArrayList<>();

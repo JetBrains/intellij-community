@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -111,12 +112,12 @@ public class UpDownHandler {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myMover.move(myDirection);
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final LookupEx lookup;
       if (myInput instanceof EditorTextField) {
         lookup = LookupManager.getActiveLookup(((EditorTextField)myInput).getEditor());

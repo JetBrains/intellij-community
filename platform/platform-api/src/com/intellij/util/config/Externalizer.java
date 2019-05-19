@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.config;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
@@ -45,7 +31,6 @@ public interface Externalizer<T> {
   Externalizer<Storage> STORAGE = new StorageExternalizer();
 
   abstract class BaseExternalizer<T> implements Externalizer<T> {
-
     @Override
     public void writeValue(Element dataElement, T value) {
       dataElement.setAttribute(VALUE_ATTRIBUTE, value.toString());
@@ -62,10 +47,13 @@ public interface Externalizer<T> {
 
   void writeValue(Element dataElement, T value);
 
-  class FactoryBased<T extends JDOMExternalizable> implements Externalizer<T> {
-    private final Factory<T> myFactory;
+  interface SkippableValue {
+  }
 
-    public FactoryBased(Factory<T> factory) {
+  class FactoryBased<T extends JDOMExternalizable> implements Externalizer<T> {
+    private final Factory<? extends T> myFactory;
+
+    public FactoryBased(@NotNull Factory<? extends T> factory) {
       myFactory = factory;
     }
 
@@ -78,15 +66,10 @@ public interface Externalizer<T> {
 
     @Override
     public void writeValue(Element dataElement, T value) {
-      try {
-        value.writeExternal(dataElement);
-      }
-      catch (WriteExternalException e) {
-        throw new RuntimeException(e);
-      }
+      value.writeExternal(dataElement);
     }
 
-    public static <T extends JDOMExternalizable> FactoryBased<T> create(Factory<T> factory) {
+    static <T extends JDOMExternalizable> FactoryBased<T> create(@NotNull Factory<? extends T> factory) {
       return new FactoryBased<>(factory);
     }
   }

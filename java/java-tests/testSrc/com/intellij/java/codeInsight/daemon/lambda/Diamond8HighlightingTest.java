@@ -29,6 +29,10 @@ public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testConstructorAccessibility() {
+    doTest();
+  }
+
   public void testOuterClass() {
     doTest();
   }
@@ -98,6 +102,10 @@ public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testDetectStaticFactoryForTopLevelCall() {
+    doTest();
+  }
+
+  public void testOverloadedConstructorsUnresolvedWithoutDiamonds() {
     doTest();
   }
 

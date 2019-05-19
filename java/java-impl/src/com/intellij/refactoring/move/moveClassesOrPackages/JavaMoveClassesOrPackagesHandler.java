@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.WriteAction;
@@ -71,18 +72,36 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
   }
 
   @Override
-  public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
+  public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     for (PsiElement element : elements) {
       if (!isPackageOrDirectory(element) && invalid4Move(element)) return false;
     }
-    return targetContainer == null || super.canMove(elements, targetContainer);
+    if (isReferenceInAnonymousClass(reference)) return false;
+    return targetContainer == null || super.canMove(elements, targetContainer, reference);
+  }
+
+  @Nullable
+  @Override
+  public String getActionName(@NotNull PsiElement[] elements) {
+    int classCount = 0, directoryCount = 0;
+    for (PsiElement element : elements) {
+      if (element instanceof PsiClass) classCount++;
+      else if (element instanceof PsiDirectory || element instanceof PsiPackage) directoryCount++;
+    }
+    if (directoryCount == 0) {
+      return classCount == 1 ? "Move Class..." : "Move Classes...";
+    }
+    if (classCount == 0) {
+      return directoryCount == 1 ? "Move Package or Directory..." : "Move Packages or Directories...";
+    }
+    return "Move Classes and Packages...";
   }
 
   public static boolean invalid4Move(PsiElement element) {
     PsiFile parentFile;
     if (element instanceof PsiClassOwner) {
       final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
-      if (classes.length == 0) return true;
+      if (classes.length == 0 && !PackageUtil.isPackageInfoFile(element)) return true;
       for (PsiClass aClass : classes) {
         if (aClass instanceof PsiSyntheticClass) return true;
       }
@@ -108,10 +127,12 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     return areAllClasses && psiElement instanceof PsiClass;
   }
 
+  @Override
   public PsiElement[] adjustForMove(final Project project, final PsiElement[] sourceElements, final PsiElement targetElement) {
     return MoveClassesOrPackagesImpl.adjustForMove(project,sourceElements, targetElement);
   }
 
+  @Override
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
     final PsiDirectory[] directories = new PsiDirectory[elements.length];
     final String prompt = getPromptToMoveDirectoryLibrariesSafe(elements);
@@ -355,11 +376,11 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
      private final PsiDirectory[] myDirectories;
      private final boolean myRearrangePackagesEnabled;
 
-     public SelectMoveOrRearrangePackageDialog(Project project, PsiDirectory[] directories) {
+     SelectMoveOrRearrangePackageDialog(Project project, PsiDirectory[] directories) {
        this(project, directories, true);
      }
 
-     public SelectMoveOrRearrangePackageDialog(Project project, PsiDirectory[] directories, boolean rearrangePackagesEnabled) {
+     SelectMoveOrRearrangePackageDialog(Project project, PsiDirectory[] directories, boolean rearrangePackagesEnabled) {
        super(project, true);
        myDirectories = directories;
        myRearrangePackagesEnabled = rearrangePackagesEnabled;
@@ -367,19 +388,23 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
        init();
      }
 
+     @Override
      protected JComponent createNorthPanel() {
        return new JLabel(RefactoringBundle.message("what.would.you.like.to.do"));
      }
 
+     @Override
      public JComponent getPreferredFocusedComponent() {
        return myRbMovePackage;
      }
 
+     @Override
      protected String getDimensionServiceKey() {
        return "#com.intellij.refactoring.move.MoveHandler.SelectRefactoringDialog";
      }
 
 
+     @Override
      protected JComponent createCenterPanel() {
        JPanel panel = new JPanel(new BorderLayout());
 
@@ -455,6 +480,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
    }
 
 
+  @Override
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if (isPackageOrDirectory(element)) return false;

@@ -49,7 +49,6 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
     XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
 
     if (nsDescriptor instanceof Validator) {
-      //noinspection unchecked
       MyHost host = new MyHost();
       ((Validator<XmlDocument>)nsDescriptor).validate(document, host);
       return host;
@@ -76,11 +75,6 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
 
   static class MyHost implements Validator.ValidationHost {
     private final List<Trinity<PsiElement, String, ErrorType>> messages = new ArrayList<>();
-
-    @Override
-    public void addMessage(PsiElement context, String message, int type) {
-      throw new UnsupportedOperationException();
-    }
 
     @Override
     public void addMessage(PsiElement context, String message, @NotNull ErrorType type) {

@@ -25,7 +25,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/10/2015
  */
 public interface EarConfiguration extends Serializable {
   List<? extends EarModel> getEarModels();

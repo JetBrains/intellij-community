@@ -37,7 +37,7 @@ class HgCommandAuthenticator {
   //todo replace silent mode and/or force authorization
   private final boolean mySilentMode;
 
-  public HgCommandAuthenticator(boolean forceAuthorization, boolean silent) {
+  HgCommandAuthenticator(boolean forceAuthorization, boolean silent) {
     myForceAuthorization = forceAuthorization;
     mySilentMode = silent;
   }
@@ -72,7 +72,7 @@ class HgCommandAuthenticator {
     private final boolean myForceAuthorization;
     private final boolean mySilent;
 
-    public GetPasswordRunnable(Project project,
+    GetPasswordRunnable(Project project,
                                @NotNull String proposedLogin,
                                @NotNull String uri,
                                @NotNull String path,

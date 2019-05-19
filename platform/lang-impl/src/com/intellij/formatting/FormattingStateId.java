@@ -16,6 +16,7 @@
 package com.intellij.formatting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,12 +27,11 @@ import java.util.Set;
  * Enumerates formatting processing states.
  * 
  * @author Denis Zhdanov
- * @since 2/10/11 2:50 PM
  */
 public enum FormattingStateId {
 
   /**
-   * Corresponds to {@link InitialInfoBuilder#buildFrom(Block, int, CompositeBlockWrapper, WrapImpl, Block, boolean)}.
+   * Corresponds to {@link InitialInfoBuilder#buildFrom(Block, int, CompositeBlockWrapper, WrapImpl, Block)}.
    * <p/>
    * I.e. the first thing formatter does retrieval of all {@link Block code blocks} from target {@link FormattingModel model}
    * and wrapping them in order to be able to store information about modified white spaces. That processing may trigger
@@ -59,7 +59,7 @@ public enum FormattingStateId {
 
   FormattingStateId(double weight) {
     myWeight = weight;
-    myDescription = CodeInsightBundle.message("progress.reformat.stage." + toString().replace('_', '.').toLowerCase());
+    myDescription = CodeInsightBundle.message("progress.reformat.stage." + StringUtil.toLowerCase(toString().replace('_', '.')));
   }
 
   /**

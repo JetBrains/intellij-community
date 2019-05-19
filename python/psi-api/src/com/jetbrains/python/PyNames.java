@@ -17,13 +17,12 @@ package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -50,7 +49,7 @@ public class PyNames {
   /**
    * Any string type
    */
-  public static final List<String> TYPE_STRING_TYPES = Collections.unmodifiableList(Arrays.asList(TYPE_UNICODE, TYPE_STR));
+  public static final List<String> TYPE_STRING_TYPES = ContainerUtil.immutableList(TYPE_UNICODE, TYPE_STR);
   /**
    * date type
    */
@@ -102,7 +101,6 @@ public class PyNames {
 
   public static final String TYPES_FUNCTION_TYPE = "types.FunctionType";
   public static final String TYPES_METHOD_TYPE = "types.UnboundMethodType";
-  public static final String TYPES_INSTANCE_TYPE = "types.InstanceType";
 
   public static final String FUTURE_MODULE = "__future__";
   public static final String UNICODE_LITERALS = "unicode_literals";
@@ -210,6 +208,8 @@ public class PyNames {
   public static final String ABSTRACTMETHOD = "abstractmethod";
   public static final String ABSTRACTPROPERTY = "abstractproperty";
   public static final String ABC_META_CLASS = "ABCMeta";
+  public static final String ABC = "abc.ABC";
+  public static final String ABC_META = "abc.ABCMeta";
 
   public static final String TUPLE = "tuple";
   public static final String SET = "set";
@@ -619,6 +619,7 @@ public class PyNames {
   }
 
   public static boolean isRightOperatorName(@Nullable String name) {
+    if ("__rshift__".equals(name)) return false;
     return name != null && (name.matches("__r[a-z]+__") || CONTAINS.equals(name));
   }
 

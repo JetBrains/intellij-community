@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -16,16 +16,18 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.MemoryDumpHelper;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -34,6 +36,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -123,8 +126,8 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     //noinspection UnusedAssignment
     document = null;
 
-    long start = System.currentTimeMillis();
-    while (myDocumentManager.getCachedDocument(file) != null && System.currentTimeMillis() < start + 10000) {
+    TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
+    while (myDocumentManager.getCachedDocument(file) != null && !t.timedOut()) {
       System.gc();
     }
 
@@ -155,7 +158,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
     assertEquals(1, unsavedDocuments.length);
     assertSame(document, unsavedDocuments[0]);
-    assertEquals("test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("test", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
   }
 
   public void testGetUnsavedDocuments_afterSaveAllDocuments() throws Exception {
@@ -208,7 +211,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
       final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
       assertEquals(1, unsavedDocuments.length);
       assertSame(document, unsavedDocuments[0]);
-      assertEquals("test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+      assertEquals("test", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
     }
     finally {
       ApplicationManager.getApplication().runWriteAction(() -> myDocumentManager.dropAllUnsavedDocuments());
@@ -225,8 +228,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     //noinspection UnusedAssignment
     document = null;
 
-    System.gc();
-    System.gc();
+    GCUtil.tryGcSoftlyReachableObjects();
 
     document = myDocumentManager.getDocument(file);
     assertEquals(idCode, System.identityHashCode(document));
@@ -238,17 +240,14 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     assertNotNull(file.toString(), document);
     WriteCommandAction.runWriteCommandAction(myProject, () -> ObjectUtils.assertNotNull(myDocumentManager.getDocument(file)).insertString(0, "xxx"));
 
-    int idCode = System.identityHashCode(document);
     //noinspection UnusedAssignment
     document = null;
 
     myDocumentManager.saveAllDocuments();
 
-    System.gc();
-    System.gc();
+    GCWatcher.tracking(myDocumentManager.getDocument(file)).tryGc();
 
-    document = myDocumentManager.getDocument(file);
-    assertTrue(idCode != System.identityHashCode(document));
+    assertNull(myDocumentManager.getCachedDocument(file));
   }
 
   public void testSaveDocument_DocumentWasNotChanged() throws Exception {
@@ -271,7 +270,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     myDocumentManager.saveDocument(document);
     assertTrue(stamp != file.getModificationStamp());
     assertEquals(document.getModificationStamp(), file.getModificationStamp());
-    assertEquals("xxx test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("xxx test", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
   }
 
   public void testSaveAllDocuments_DocumentWasChanged() throws Exception {
@@ -283,7 +282,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     myDocumentManager.saveAllDocuments();
     Assert.assertNotEquals(stamp, file.getModificationStamp());
-    assertEquals("xxx test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("xxx test", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
   }
 
   public void testGetFile() throws Exception {
@@ -307,7 +306,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "xxx "));
 
     myDocumentManager.saveAllDocuments();
-    assertEquals("xxx test\rtest", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("xxx test\rtest", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
   }
 
   public void testContentChanged_noDocument() throws Exception {
@@ -318,7 +317,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
   private VirtualFile createFile(String name, String content) throws IOException {
     File file = createTempFile(name, content);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(virtualFile);
     return virtualFile;
   }
@@ -338,7 +337,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
   public void testContentChanged_ignoreEventsFromSelf() throws Exception {
     final VirtualFile file = createFile("test.txt", "test\rtest");
     Document document = myDocumentManager.getDocument(file);
-    setBinaryContent(file, "xxx".getBytes(CharsetToolkit.UTF8_CHARSET), -1, -1, myDocumentManager);
+    setBinaryContent(file, "xxx".getBytes(StandardCharsets.UTF_8), -1, -1, myDocumentManager);
 
     assertNotNull(file.toString(), document);
     assertEquals("test\ntest", document.getText());
@@ -397,7 +396,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     myReloadFromDisk = Boolean.FALSE;
     long oldDocumentStamp = document.getModificationStamp();
 
-    setBinaryContent(file, "xxx".getBytes(CharsetToolkit.UTF8_CHARSET));
+    setBinaryContent(file, "xxx".getBytes(StandardCharsets.UTF_8));
     UIUtil.dispatchAllInvocationEvents();
 
     assertEquals("old test", document.getText());
@@ -450,7 +449,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     assertEquals(0, myDocumentManager.getUnsavedDocuments().length);
   }
 
-  public void testContentChanged_doNotReloadChangedDocumentOnSave() throws Exception {
+  public void testContentChanged_doNotReloadChangedDocumentOnSave() {
     final MockVirtualFile file =
     new MockVirtualFile("test.txt", "test") {
       @Override
@@ -474,7 +473,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     assertEquals("old test", document.getText());
     assertEquals(file.getModificationStamp(), document.getModificationStamp());
-    assertEquals("old test", new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET));
+    assertEquals("old test", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
     assertEquals(documentStamp, document.getModificationStamp());
   }
 
@@ -534,7 +533,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     renameFile(file, "test.wtf");
     Document afterRename = documentManager.getDocument(file);
-    assertTrue(afterRename + " != " + original, afterRename == original);
+    assertSame(afterRename + " != " + original, afterRename, original);
   }
 
   public void testFileTypeChangeDocumentDetach() throws Exception {
@@ -601,12 +600,12 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     AtomicBoolean expectUnsaved = new AtomicBoolean(true);
     DocumentListener listener = new DocumentListener() {
       @Override
-      public void beforeDocumentChange(DocumentEvent e) {
+      public void beforeDocumentChange(@NotNull DocumentEvent e) {
         assertFalse(manager.isDocumentUnsaved(document));
       }
 
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         invoked.incrementAndGet();
         assertEquals(expectUnsaved.get(), manager.isDocumentUnsaved(document));
       }
@@ -623,7 +622,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
     FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), "something");
     file.refresh(false, false);
-    
+
     assertEquals("something", document.getText());
     assertFalse(manager.isDocumentUnsaved(document));
     assertEquals(4, invoked.get());
@@ -636,7 +635,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     }
 
     for (int iteration = 0; iteration < 10; iteration++) {
-      GCUtil.tryGcSoftlyReachableObjects();
+      GCWatcher.tracking(ContainerUtil.mapNotNull(physicalFiles, f -> FileDocumentManager.getInstance().getCachedDocument(f))).tryGc();
 
       checkDocumentFiles(physicalFiles);
       checkDocumentFiles(createNonPhysicalFiles());

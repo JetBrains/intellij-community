@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListen
 
 /**
  * @author Denis Zhdanov
- * @since 8/8/13 5:11 PM
  */
 public interface TestExternalSystemSettingsListener extends ExternalSystemSettingsListener<TestExternalProjectSettings> {
 }

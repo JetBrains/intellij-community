@@ -48,13 +48,21 @@ public class PySpellCheckerTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  public void testFStringExpression() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  public void testRawFString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   // PY-20987
-  public void testGluedStringNodesAfterFirstWithPrefix() {
+  public void testEscapesInRawAndNormalGluedStringElements() {
     doTest();
   }
 
   // PY-20987
-  public void testGluedStringNodesAfterFirstRawWithBackslashes() {
+  public void testGluedStringNodesAfterFirstWithPrefix() {
     doTest();
   }
 

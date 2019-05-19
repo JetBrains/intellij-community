@@ -86,11 +86,17 @@ public final class ProjectDescriptor {
     myTargetsState = targetsState;
   }
 
+  /**
+   * @deprecated not used after file traversal rewrite to NIO
+   */
   @NotNull
   public FSCache getFSCache() {
-    return myFSCache;
+    return FSCache.NO_CACHE;
   }
 
+  /**
+   * @deprecated not used after file traversal rewrite to NIO
+   */
   public void setFSCache(FSCache cache) {
     myFSCache = cache == null? FSCache.NO_CACHE : cache;
   }

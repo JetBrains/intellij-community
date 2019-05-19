@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -67,6 +53,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -110,11 +97,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * Configure test from data file. Data file is usual java, xml or whatever file that needs to be tested except it
    * has &lt;caret&gt; marker where caret should be placed when file is loaded in editor and &lt;selection&gt;&lt;/selection&gt;
    * denoting selection bounds.
-   * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * @param relativePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    */
-  protected void configureByFile(@TestDataFile @NonNls @NotNull String filePath) {
+  protected void configureByFile(@TestDataFile @NonNls @NotNull String relativePath) {
     try {
-      String fullPath = getTestDataPath() + filePath;
+      String fullPath = getTestDataPath() + relativePath;
       final File ioFile = new File(fullPath);
       checkCaseSensitiveFS(fullPath, ioFile);
       String fileText = FileUtilRt.loadFile(ioFile, CharsetToolkit.UTF8, true);
@@ -220,8 +207,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @NotNull
   private static Document setupFileEditorAndDocument(@NotNull String fileName, @NotNull String fileText) throws IOException {
-    EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
-    EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
+    EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, StandardCharsets.UTF_8);
     PostprocessReformattingAspect.getInstance(ourProject).doPostponedFormatting();
     deleteVFile();
 
@@ -287,6 +274,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       myFile = null;
       myVFile = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -311,7 +301,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String expectedFilePath, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
 
-    getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     if (ignoreTrailingSpaces) {
       final Editor editor = myEditor;
       TrailingSpacesStripper.strip(editor.getDocument(), false, true);
@@ -328,10 +318,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     String fileText;
     try {
      checkCaseSensitiveFS(fullPath, ioFile);
-      fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8_CHARSET);
+      fileText = FileUtil.loadFile(ioFile, StandardCharsets.UTF_8);
     }
     catch (IOException e) {
-      LOG.error(e);
       throw new RuntimeException(e);
     }
     checkResultByText(message, StringUtil.convertLineSeparators(fileText), ignoreTrailingSpaces, getTestDataPath() + "/" + expectedFilePath);
@@ -569,15 +558,15 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void cutToLineEnd() {
     executeAction("EditorCutLineEnd");
   }
-  
+
   protected static void deleteToLineStart() {
     executeAction("EditorDeleteToLineStart");
   }
-  
+
   protected static void deleteToLineEnd() {
     executeAction("EditorDeleteToLineEnd");
   }
-  
+
   protected static void killToWordStart() {
     executeAction("EditorKillToWordStart");
   }

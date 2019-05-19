@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -52,6 +53,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
   protected static CvsActionVisibility.Condition FILES_HAVE_PARENT_UNDER_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesHaveParentUnderCvs(getAllSelectedFiles(context));
       }
@@ -59,6 +61,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
   protected final static CvsActionVisibility.Condition FILES_ARENT_UNDER_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesArentUnderCvs(getAllSelectedFiles(context));
       }
@@ -66,6 +69,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
   public static final CvsActionVisibility.Condition FILES_ARE_UNDER_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesAreUnderCvs(getAllSelectedFiles(context));
       }
@@ -73,6 +77,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
   public static final CvsActionVisibility.Condition FILES_EXIST_IN_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesExistInCvs(getAllSelectedFiles(context));
       }
@@ -80,17 +85,17 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
   public static final CvsActionVisibility.Condition FILES_ARE_NOT_DELETED =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesAreNotDeleted(getAllSelectedFiles(context));
       }
     };
 
   public static final CvsActionVisibility.Condition FILES_ARE_CHANGED = new CvsActionVisibility.Condition() {
+    @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
-      if (selectedFiles == null) return false;
-      for (int i = 0; i < selectedFiles.length; i++) {
-        VirtualFile selectedFile = selectedFiles[i];
+      for (VirtualFile selectedFile : selectedFiles) {
         if (CvsStatusProvider.getStatus(selectedFile) == FileStatus.NOT_CHANGED) {
           return documentIsModified(selectedFile);
         }
@@ -100,9 +105,9 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
   };
 
   public static final CvsActionVisibility.Condition FILES_ARE_NOT_IGNORED = new CvsActionVisibility.Condition() {
+    @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
-      if (selectedFiles == null) return false;
       final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
       for (VirtualFile selectedFile : selectedFiles) {
         if (entriesManager.fileIsIgnored(selectedFile)) return false;
@@ -112,9 +117,9 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
   };
 
   public static final CvsActionVisibility.Condition FILES_ARE_LOCALLY_ADDED = new CvsActionVisibility.Condition() {
+    @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
-      if (selectedFiles == null) return false;
       for (VirtualFile selectedFile : selectedFiles) {
         if (!CvsUtil.fileIsLocallyAdded(selectedFile)) return false;
       }
@@ -124,7 +129,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
 
   private static boolean documentIsModified(final VirtualFile file) {
-    final boolean[] result = new boolean[]{false};
+    final boolean[] result = {false};
     ApplicationManager.getApplication().runReadAction(() -> {
       result[0] = FileDocumentManager.getInstance().isFileModified(file);
     });
@@ -143,7 +148,8 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
   }
 
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     getVisibility().applyToEvent(e);
   }
 

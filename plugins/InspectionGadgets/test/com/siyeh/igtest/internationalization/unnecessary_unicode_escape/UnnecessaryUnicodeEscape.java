@@ -8,6 +8,12 @@ class UnnecessaryUnicodeEscape {
 
   String t = "<warning descr="Unicode escape sequence '\u0020' can be replaced with ' '">\u0020</warning>";
   String u = "\u200B\u200E\u00A0\u200F";
+
+  String str1 = "<warning descr="Unicode escape sequence '\u0061' can be replaced with 'a'">\u0061</warning>";
+  String str2 = "\\u0061"; // Backslash followed by the characters "u0061"
+  String str3 = "\\<warning descr="Unicode escape sequence '\u0061' can be replaced with 'a'">\u0061</warning>"; // Backslash followed by escape sequence
+  String str4 = <error descr="Illegal escape character in string literal">"\u004"</error>; // Too short to be a Unicode escape sequence
+  String str5 = <error descr="Illegal escape character in string literal">"\u004g"</error>; // Invalid hex character
 }
 @SuppressWarnings("UnnecessaryUnicodeEscape")
 class Suppress {

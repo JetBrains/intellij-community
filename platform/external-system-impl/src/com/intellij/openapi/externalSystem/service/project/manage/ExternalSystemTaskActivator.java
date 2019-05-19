@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.RunManager;
@@ -41,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -52,7 +37,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/2014
  */
 public class ExternalSystemTaskActivator {
   private static final Logger LOG = Logger.getInstance(ExternalSystemTaskActivator.class);
@@ -85,7 +69,7 @@ public class ExternalSystemTaskActivator {
       }
 
       @Override
-      public boolean execute(CompileContext context) {
+      public boolean execute(@NotNull CompileContext context) {
         return doExecuteCompileTasks(myBefore, context);
       }
     }
@@ -118,7 +102,7 @@ public class ExternalSystemTaskActivator {
       () -> ContainerUtil.mapNotNull(context.getCompileScope().getAffectedModules(),
                                      module -> ExternalSystemApiUtil.getExternalProjectPath(module)));
 
-    final Collection<Phase> phases = ContainerUtil.newArrayList();
+    final Collection<Phase> phases = new ArrayList<>();
     if (myBefore) {
       if(context.isRebuild()) {
         phases.add(Phase.BEFORE_REBUILD);
@@ -131,7 +115,7 @@ public class ExternalSystemTaskActivator {
         phases.add(Phase.AFTER_REBUILD);
       }
     }
-    return runTasks(modules, ArrayUtil.toObjectArray(phases, Phase.class));
+    return runTasks(modules, phases.toArray(new Phase[0]));
   }
 
   public boolean runTasks(@NotNull String modulePath, @NotNull Phase... phases) {
@@ -145,7 +129,6 @@ public class ExternalSystemTaskActivator {
     final Queue<Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>> tasksQueue =
       new LinkedList<>();
 
-    //noinspection MismatchedQueryAndUpdateOfCollection
     Map<ProjectSystemId, Map<String, RunnerAndConfigurationSettings>> lazyConfigurationsMap =
       FactoryMap.create(key -> {
         final AbstractExternalSystemTaskConfigurationType configurationType =
@@ -160,7 +143,7 @@ public class ExternalSystemTaskActivator {
     for (final ExternalProjectsStateProvider.TasksActivation activation : stateProvider.getAllTasksActivation()) {
       final boolean hashPath = modules.contains(activation.projectPath);
 
-      final Set<String> tasks = ContainerUtil.newLinkedHashSet();
+      final Set<String> tasks = new LinkedHashSet<>();
       for (Phase phase : phases) {
         List<String> activationTasks = activation.state.getTasks(phase);
         if (hashPath || (phase.isSyncPhase() && !activationTasks.isEmpty() &&  isShareSameRootPath(modules, activation))) {
@@ -272,7 +255,7 @@ public class ExternalSystemTaskActivator {
     return taskActivationState.getTasks(phase).contains(taskData.getName());
   }
 
-  public void addTasks(@NotNull Collection<TaskData> tasks, @NotNull final Phase phase) {
+  public void addTasks(@NotNull Collection<? extends TaskData> tasks, @NotNull final Phase phase) {
     if (tasks.isEmpty()) {
       return;
     }
@@ -281,7 +264,7 @@ public class ExternalSystemTaskActivator {
     fireTasksChanged();
   }
 
-  public void addTasks(@NotNull Collection<TaskActivationEntry> entries) {
+  public void addTasks(@NotNull Collection<? extends TaskActivationEntry> entries) {
     if (entries.isEmpty()) {
       return;
     }
@@ -295,14 +278,14 @@ public class ExternalSystemTaskActivator {
     fireTasksChanged();
   }
 
-  public void removeTasks(@NotNull Collection<TaskData> tasks, @NotNull final Phase phase) {
+  public void removeTasks(@NotNull Collection<? extends TaskData> tasks, @NotNull final Phase phase) {
     if (tasks.isEmpty()) {
       return;
     }
     removeTasks(ContainerUtil.map(tasks, data -> new TaskActivationEntry(data.getOwner(), phase, data.getLinkedExternalProjectPath(), data.getName())));
   }
 
-  public void removeTasks(@NotNull Collection<TaskActivationEntry> entries) {
+  public void removeTasks(@NotNull Collection<? extends TaskActivationEntry> entries) {
     if (entries.isEmpty()) {
       return;
     }
@@ -324,7 +307,7 @@ public class ExternalSystemTaskActivator {
   }
 
 
-  public void moveTasks(@NotNull Collection<TaskActivationEntry> entries, int increment) {
+  public void moveTasks(@NotNull Collection<? extends TaskActivationEntry> entries, int increment) {
     LOG.assertTrue(increment == -1 || increment == 1);
 
     final ExternalProjectsStateProvider stateProvider = ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider();
@@ -348,7 +331,7 @@ public class ExternalSystemTaskActivator {
 
     final ExternalProjectsStateProvider stateProvider = ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider();
     final Map<String, TaskActivationState> activationMap = stateProvider.getProjectsTasksActivationMap(systemId);
-    final List<String> currentPaths = ContainerUtil.newArrayList(activationMap.keySet());
+    final List<String> currentPaths = new ArrayList<>(activationMap.keySet());
     if (pathsGroup != null) {
       currentPaths.retainAll(pathsGroup);
     }
@@ -361,7 +344,7 @@ public class ExternalSystemTaskActivator {
       }
     }
 
-    Map<String, TaskActivationState> rearrangedMap = ContainerUtil.newLinkedHashMap();
+    Map<String, TaskActivationState> rearrangedMap = new LinkedHashMap<>();
     for (String path : currentPaths) {
       rearrangedMap.put(path, activationMap.get(path));
       activationMap.remove(path);

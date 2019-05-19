@@ -5,7 +5,6 @@ import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.messages.ExceptionMessage;
 
 import java.net.URL;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -24,8 +23,7 @@ public class GrapeRunner {
     }
     catch (MultipleCompilationErrorsException e) {
       List errors = e.getErrorCollector().getErrors();
-      for (Iterator iterator = errors.iterator(); iterator.hasNext();) {
-        Object o = iterator.next();
+      for (Object o : errors) {
         if (o instanceof ExceptionMessage) {
           Exception cause = ((ExceptionMessage)o).getCause();
           String message = cause.getMessage();
@@ -44,8 +42,8 @@ public class GrapeRunner {
     }
 
     URL[] urls = shell.getClassLoader().getURLs();
-    for (int i = 0; i < urls.length; i++) {
-      System.out.println(URL_PREFIX + urls[i]);
+    for (URL url : urls) {
+      System.out.println(URL_PREFIX + url);
     }
   }
 

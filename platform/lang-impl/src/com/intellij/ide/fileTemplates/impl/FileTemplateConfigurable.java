@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -30,7 +15,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -51,7 +35,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -225,13 +208,13 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
     editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         onTextChanged();
       }
     }, ((EditorImpl)editor).getDisposable());
 
     ((EditorEx)editor).setHighlighter(createHighlighter());
-    
+
     JPanel topPanel = new JPanel(new BorderLayout());
     JPanel southPanel = new JPanel(new HorizontalLayout(40));
     southPanel.add(myAdjustBox);
@@ -397,40 +380,16 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     if (fileType == null) {
       fileType = FileTypes.PLAIN_TEXT;
     }
-    
+
     SyntaxHighlighter originalHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, null, null);
     if (originalHighlighter == null) {
       originalHighlighter = new PlainSyntaxHighlighter();
     }
-    
+
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    LayeredLexerEditorHighlighter highlighter = new LayeredLexerEditorHighlighter(new TemplateHighlighter(), scheme);
+    LayeredLexerEditorHighlighter highlighter = new LayeredLexerEditorHighlighter(new FileTemplateHighlighter(), scheme);
     highlighter.registerLayer(FileTemplateTokenType.TEXT, new LayerDescriptor(originalHighlighter, ""));
     return highlighter;
-  }
-
-  private static class TemplateHighlighter extends SyntaxHighlighterBase {
-    private final Lexer myLexer;
-
-    public TemplateHighlighter() {
-      myLexer = createDefaultLexer();
-    }
-
-    @NotNull
-    @Override
-    public Lexer getHighlightingLexer() {
-      return myLexer;
-    }
-
-    @Override
-    @NotNull
-    public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-      if (tokenType == FileTemplateTokenType.MACRO || tokenType == FileTemplateTokenType.DIRECTIVE) {
-        return pack(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);
-      }
-
-      return EMPTY;
-    }
   }
 
   @NotNull

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -23,7 +9,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.sorters.SortByStatusAction;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -57,13 +42,14 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.event.TableModelListener;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
@@ -73,9 +59,8 @@ import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
@@ -88,12 +73,11 @@ public abstract class PluginManagerMain implements Disposable {
 
   public static final Logger LOG = Logger.getInstance(PluginManagerMain.class);
 
-  @NonNls private static final String TEXT_SUFFIX = "</body></html>";
+  private static final String TEXT_SUFFIX = "</body></html>";
+  private static final String HTML_PREFIX = "<a href=\"";
+  private static final String HTML_SUFFIX = "</a>";
 
-  @NonNls private static final String HTML_PREFIX = "<a href=\"";
-  @NonNls private static final String HTML_SUFFIX = "</a>";
-
-  private boolean requireShutdown = false;
+  private boolean requireShutdown;
 
   private JPanel myToolbarPanel;
   private JPanel main;
@@ -109,20 +93,14 @@ public abstract class PluginManagerMain implements Disposable {
   private JBScrollPane myDescriptionScrollPane;
 
 
-  protected PluginTableModel pluginsModel;
+  PluginTableModel pluginsModel;
   protected PluginTable pluginTable;
 
   private ActionToolbar myActionToolbar;
 
   protected final MyPluginsFilter myFilter = new MyPluginsFilter();
-  protected PluginManagerUISettings myUISettings;
-  private boolean myDisposed = false;
-  private boolean myBusy = false;
-
-  public PluginManagerMain(
-    PluginManagerUISettings uiSettings) {
-    myUISettings = uiSettings;
-  }
+  private boolean myDisposed;
+  private boolean myBusy;
 
   public static boolean isDevelopedByJetBrains(@NotNull IdeaPluginDescriptor plugin) {
     return isDevelopedByJetBrains(plugin.getVendor());
@@ -165,7 +143,7 @@ public abstract class PluginManagerMain implements Disposable {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Color bg = UIUtil.getTableBackground(false);
+        Color bg = UIUtil.getTableBackground(false, true);
         ((Graphics2D)g).setPaint(new GradientPaint(0, 0, ColorUtil.shift(bg, 1.4), 0, getHeight(), ColorUtil.shift(bg, 0.9)));
         g.fillRect(0,0, getWidth(), getHeight());
       }
@@ -174,7 +152,7 @@ public abstract class PluginManagerMain implements Disposable {
     JLabel mySortLabel = new JLabel();
     mySortLabel.setForeground(UIUtil.getLabelDisabledForeground());
     mySortLabel.setBorder(JBUI.Borders.empty(1, 1, 1, 5));
-    mySortLabel.setIcon(AllIcons.General.SplitDown);
+    mySortLabel.setIcon(AllIcons.General.ArrowDown);
     mySortLabel.setHorizontalTextPosition(SwingConstants.LEADING);
     header.add(mySortLabel, BorderLayout.EAST);
     myTablePanel.add(header, BorderLayout.NORTH);
@@ -192,25 +170,22 @@ public abstract class PluginManagerMain implements Disposable {
         return true;
       }
     }.installOn(mySortLabel);
-    TableModelListener modelListener = new TableModelListener() {
-      @Override
-      public void tableChanged(TableModelEvent e) {
-        String text = "Sort by:";
-        if (pluginsModel.isSortByStatus()) {
-          text += " status,";
-        }
-        if (pluginsModel.isSortByRating()) {
-          text += " rating,";
-        }
-        if (pluginsModel.isSortByDownloads()) {
-          text += " downloads,";
-        }
-        if (pluginsModel.isSortByUpdated()) {
-          text += " updated,";
-        }
-        text += " name";
-        mySortLabel.setText(text);
+    TableModelListener modelListener = __ -> {
+      String text = "Sort by:";
+      if (pluginsModel.isSortByStatus()) {
+        text += " status,";
       }
+      if (pluginsModel.isSortByRating()) {
+        text += " rating,";
+      }
+      if (pluginsModel.isSortByDownloads()) {
+        text += " downloads,";
+      }
+      if (pluginsModel.isSortByUpdated()) {
+        text += " updated,";
+      }
+      text += " name";
+      mySortLabel.setText(text);
     };
     pluginTable.getModel().addTableModelListener(modelListener);
     modelListener.tableChanged(null);
@@ -268,12 +243,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   protected void installTableActions() {
-    pluginTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        refresh();
-      }
-    });
+    pluginTable.getSelectionModel().addListSelectionListener(__ -> refresh());
 
     PopupHandler.installUnknownPopupHandler(pluginTable, getActionGroup(false), ActionManager.getInstance());
 
@@ -290,23 +260,25 @@ public abstract class PluginManagerMain implements Disposable {
     parent.repaint();
   }
 
-  public void setRequireShutdown(boolean val) {
+  void setRequireShutdown(boolean val) {
     requireShutdown |= val;
   }
 
-  public List<IdeaPluginDescriptorImpl> getDependentList(IdeaPluginDescriptorImpl pluginDescriptor) {
+  @NotNull
+  List<IdeaPluginDescriptorImpl> getDependentList(IdeaPluginDescriptorImpl pluginDescriptor) {
     return pluginsModel.dependent(pluginDescriptor);
   }
 
-  protected void modifyPluginsList(List<IdeaPluginDescriptor> list) {
+  void modifyPluginsList(@NotNull List<? extends IdeaPluginDescriptor> list) {
     IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
     pluginsModel.updatePluginsList(list);
-    pluginsModel.filter(myFilter.getFilter().toLowerCase());
+    pluginsModel.filter(StringUtil.toLowerCase(myFilter.getFilter()));
     if (selected != null) {
       select(selected);
     }
   }
 
+  @NotNull
   protected abstract ActionGroup getActionGroup(boolean inToolbar);
 
   protected abstract PluginManagerMain getAvailable();
@@ -319,21 +291,21 @@ public abstract class PluginManagerMain implements Disposable {
   protected boolean acceptHost(String host) {
     return true;
   }
-  
+
   /**
    * Start a new thread which downloads new list of plugins from the site in
    * the background and updates a list of plugins in the table.
    */
-  protected void loadPluginsFromHostInBackground() {
+  private void loadPluginsFromHostInBackground() {
     setDownloadStatus(true);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<IdeaPluginDescriptor> list = ContainerUtil.newArrayList();
-      Map<String, String> errors = ContainerUtil.newLinkedHashMap();
+      List<IdeaPluginDescriptor> list = new ArrayList<>();
+      Map<String, String> errors = new LinkedHashMap<>();
       ProgressIndicator indicator = new EmptyProgressIndicator();
 
       List<String> hosts = RepositoryHelper.getPluginHosts();
-      Set<PluginId> unique = ContainerUtil.newHashSet();
+      Set<PluginId> unique = new HashSet<>();
       for (String host : hosts) {
         try {
           if (host == null || acceptHost(host)) {
@@ -374,7 +346,8 @@ public abstract class PluginManagerMain implements Disposable {
                                              StringUtil.join(errors.keySet(), ", "),
                                              StringUtil.join(errors.values(), ",\n"));
           String title = IdeBundle.message("title.plugins");
-          String ok = CommonBundle.message("button.retry"), cancel = CommonBundle.getCancelButtonText();
+          String ok = CommonBundle.message("button.retry");
+          String cancel = CommonBundle.getCancelButtonText();
           if (Messages.showOkCancelDialog(message, title, ok, cancel, Messages.getErrorIcon()) == Messages.OK) {
             loadPluginsFromHostInBackground();
           }
@@ -383,14 +356,14 @@ public abstract class PluginManagerMain implements Disposable {
     });
   }
 
-  protected abstract void propagateUpdates(List<IdeaPluginDescriptor> list);
+  protected abstract void propagateUpdates(List<? extends IdeaPluginDescriptor> list);
 
-  protected void setDownloadStatus(boolean status) {
+  private void setDownloadStatus(boolean status) {
     pluginTable.setPaintBusy(status);
     myBusy = status;
   }
 
-  protected void loadAvailablePlugins() {
+  void loadAvailablePlugins() {
     try {
       //  If we already have a file with downloaded plugins from the last time,
       //  then read it, load into the list and start the updating process.
@@ -411,19 +384,20 @@ public abstract class PluginManagerMain implements Disposable {
   /**
    * @deprecated use {@link #downloadPlugins(List, List, Runnable, PluginEnabler, Runnable)} instead
    */
+  @Deprecated
   public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<PluginId> allPlugins,
+                                        List<? extends PluginId> allPlugins,
                                         Runnable onSuccess,
                                         @Nullable Runnable cleanup) throws IOException {
     return downloadPlugins(plugins,
-                           allPlugins.stream().map(p -> new PluginNode(p, p.getIdString(), "-1")).collect(Collectors.toList()),
+                           ContainerUtil.map(allPlugins, p -> new PluginNode(p, p.getIdString(), "-1")),
                            onSuccess,
                            new PluginEnabler.HEADLESS(),
                            cleanup);
   }
 
   public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<IdeaPluginDescriptor> allPlugins,
+                                        List<? extends IdeaPluginDescriptor> allPlugins,
                                         Runnable onSuccess,
                                         PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
@@ -457,7 +431,7 @@ public abstract class PluginManagerMain implements Disposable {
     return result[0];
   }
 
-  public boolean isRequireShutdown() {
+  boolean isRequireShutdown() {
     return requireShutdown;
   }
 
@@ -539,8 +513,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public boolean isModified() {
-    if (requireShutdown) return true;
-    return false;
+    return requireShutdown;
   }
 
   public String apply() {
@@ -576,7 +549,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   private static class MySpeedSearchBar extends SpeedSearchBase<PluginTable> {
-    public MySpeedSearchBar(PluginTable cmp) {
+    MySpeedSearchBar(PluginTable cmp) {
       super(cmp);
     }
 
@@ -617,7 +590,7 @@ public abstract class PluginManagerMain implements Disposable {
     pluginTable.select(descriptors);
   }
 
-  protected static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
+  public static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
     if (StringUtil.isEmpty(filter)) return true;
     if (StringUtil.containsIgnoreCase(descriptor.getName(), filter) || isAccepted(search, filter, descriptor.getName())) return true;
     if (isAccepted(search, filter, descriptor.getDescription())) return true;
@@ -625,9 +598,9 @@ public abstract class PluginManagerMain implements Disposable {
     return category != null && (StringUtil.containsIgnoreCase(category, filter) || isAccepted(search, filter, category));
   }
 
-  private static boolean isAccepted(@NotNull Set<String> search, @NotNull String filter, @Nullable String description) {
+  public static boolean isAccepted(@NotNull Set<String> search, @NotNull String filter, @Nullable String description) {
     if (StringUtil.isEmpty(description)) return false;
-    if (filter.length() <= 2) return false; 
+    if (filter.length() <= 2) return false;
     Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWords(description);
     if (words.contains(filter)) return true;
     if (search.isEmpty()) return false;
@@ -637,7 +610,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler,
-                                                                 List<PluginNode> list) {
+                                                                 List<? extends PluginNode> list) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
     Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (PluginNode node : list) {
@@ -682,7 +655,7 @@ public abstract class PluginManagerMain implements Disposable {
       int result;
       if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
         result =
-          Messages.showYesNoCancelDialog(XmlStringUtil.wrapInHtml(message), CommonBundle.getWarningTitle(), "Enable all",
+          Messages.showYesNoCancelDialog(XmlStringUtil.wrapInHtml(message), "Dependent Plugins Found", "Enable all",
                                          "Enable updated plugin" + (disabled.size() > 1 ? "s" : ""), CommonBundle.getCancelButtonText(),
                                          Messages.getQuestionIcon());
         if (result == Messages.CANCEL) return false;
@@ -693,11 +666,11 @@ public abstract class PluginManagerMain implements Disposable {
           message += "updated plugin" + (disabled.size() > 1 ? "s" : "");
         }
         else {
-          //noinspection SpellCheckingInspection
-          message += "plugin dependenc" + (disabledDependants.size() > 1 ? "ies" : "y");
+          message += "plugin " +
+                     StringUtil.pluralize("dependency", disabledDependants.size());
         }
         message += "?";
-        result = Messages.showYesNoDialog(XmlStringUtil.wrapInHtml(message), CommonBundle.getWarningTitle(), Messages.getQuestionIcon());
+        result = Messages.showYesNoDialog(XmlStringUtil.wrapInHtml(message), "Dependent Plugins Found", Messages.getQuestionIcon());
         if (result == Messages.NO) return false;
       }
 
@@ -714,21 +687,21 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public interface PluginEnabler {
-    void enablePlugins(Set<IdeaPluginDescriptor> disabled);
-    void disablePlugins(Set<IdeaPluginDescriptor> disabled);
+    void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled);
+    void disablePlugins(Set<? extends IdeaPluginDescriptor> disabled);
 
     boolean isDisabled(PluginId pluginId);
 
     class HEADLESS implements PluginEnabler {
       @Override
-      public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
+      public void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
         for (IdeaPluginDescriptor descriptor : disabled) {
           PluginManagerCore.enablePlugin(descriptor.getPluginId().getIdString());
         }
       }
 
       @Override
-      public void disablePlugins(Set<IdeaPluginDescriptor> disabled) {
+      public void disablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
         for (IdeaPluginDescriptor descriptor : disabled) {
           PluginManagerCore.disablePlugin(descriptor.getPluginId().getIdString());
         }
@@ -739,8 +712,8 @@ public abstract class PluginManagerMain implements Disposable {
         return isDisabled(pluginId.getIdString());
       }
 
-      public boolean isDisabled(String pluginId) {
-        return PluginManagerCore.getDisabledPlugins().contains(pluginId);
+      public boolean isDisabled(@NotNull String pluginId) {
+        return PluginManagerCore.isDisabled(pluginId);
       }
     }
 
@@ -753,12 +726,12 @@ public abstract class PluginManagerMain implements Disposable {
       }
 
       @Override
-      public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
+      public void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
         pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[0]), true);
       }
 
       @Override
-      public void disablePlugins(Set<IdeaPluginDescriptor> disabled) {
+      public void disablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
         pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[0]), false);
       }
 
@@ -774,12 +747,9 @@ public abstract class PluginManagerMain implements Disposable {
     String title = IdeBundle.message("update.notifications.title");
     String action = IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
     String message = IdeBundle.message("ide.restart.required.notification", action, ApplicationNamesInfo.getInstance().getFullProductName());
-    NotificationListener listener = new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        notification.expire();
-        app.restart(true);
-      }
+    NotificationListener listener = (notification, __) -> {
+      notification.expire();
+      app.restart(true);
     };
     UpdateChecker.NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener).notify(project);
   }
@@ -809,15 +779,15 @@ public abstract class PluginManagerMain implements Disposable {
     return true;
   }
 
-  public class MyPluginsFilter extends FilterComponent {
-    public MyPluginsFilter() {
+  class MyPluginsFilter extends FilterComponent {
+    MyPluginsFilter() {
       super("PLUGIN_FILTER", 5);
     }
 
     @Override
     public void filter() {
       getPluginTable().putClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY, getFilter());
-      pluginsModel.filter(getFilter().toLowerCase());
+      pluginsModel.filter(StringUtil.toLowerCase(getFilter()));
       TableUtil.ensureSelectionExists(getPluginTable());
     }
   }
@@ -828,13 +798,13 @@ public abstract class PluginManagerMain implements Disposable {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       loadAvailablePlugins();
       myFilter.setFilter("");
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!myBusy);
     }
   }

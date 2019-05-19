@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -41,7 +42,8 @@ abstract class HgAbstractFilesAction extends DumbAwareAction {
   protected abstract void batchPerform(Project project, final HgVcs activeVcs,
     List<VirtualFile> files, DataContext context);
 
-  public final void actionPerformed(AnActionEvent event) {
+  @Override
+  public final void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
 
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -59,6 +61,7 @@ abstract class HgAbstractFilesAction extends DumbAwareAction {
 
     final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
     List<VcsException> exceptions = helper.runTransactionRunnable(vcs, new TransactionRunnable() {
+      @Override
       public void run(List<VcsException> exceptions) {
         try {
           execute(project, vcs, files, dataContext);
@@ -71,7 +74,8 @@ abstract class HgAbstractFilesAction extends DumbAwareAction {
     helper.showErrors(exceptions, vcs.getName());
   }
 
-  public final void update(AnActionEvent e) {
+  @Override
+  public final void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     Presentation presentation = e.getPresentation();

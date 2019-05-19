@@ -19,14 +19,16 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -48,9 +50,9 @@ public class CompileScopeUtil {
     setBaseScopeForExternalBuild(scope, resourceScopes);
   }
 
-  public static void addScopesForModules(Collection<Module> modules,
+  public static void addScopesForModules(Collection<? extends Module> modules,
                                          Collection<String> unloadedModules,
-                                         List<TargetTypeBuildScope> scopes,
+                                         List<? super TargetTypeBuildScope> scopes,
                                          boolean forceBuild) {
     if (!modules.isEmpty() || !unloadedModules.isEmpty()) {
       for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
@@ -125,7 +127,7 @@ public class CompileScopeUtil {
     }
     final CompileScope scope = context.getCompileScope();
     if (shouldFetchFiles(scope)) {
-      return Arrays.stream(scope.getFiles(null, true)).map(VirtualFile::getPath).collect(Collectors.toList());
+      return ContainerUtil.map(scope.getFiles(null, true), VirtualFile::getPath);
     }
     return Collections.emptyList();
   }
@@ -139,5 +141,17 @@ public class CompileScopeUtil {
       }
     }
     return scope instanceof OneProjectItemCompileScope || scope instanceof FileSetCompileScope;
+  }
+
+  public static TargetTypeBuildScope createScopeForArtifacts(Collection<? extends Artifact> artifacts,
+                                                             boolean forceBuild) {
+    TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder()
+                                                               .setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId())
+                                                               .setForceBuild(
+                                                                 forceBuild);
+    for (Artifact artifact : artifacts) {
+      builder.addTargetId(artifact.getName());
+    }
+    return builder.build();
   }
 }

@@ -87,7 +87,7 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
     private final int myHorizontalStrut;
     private final Icon myRightIcon;
 
-    public MergedIcon(@NotNull Icon leftIcon, int horizontalStrut, @NotNull Icon rightIcon) {
+    MergedIcon(@NotNull Icon leftIcon, int horizontalStrut, @NotNull Icon rightIcon) {
       myLeftIcon = leftIcon;
       myHorizontalStrut = horizontalStrut;
       myRightIcon = rightIcon;

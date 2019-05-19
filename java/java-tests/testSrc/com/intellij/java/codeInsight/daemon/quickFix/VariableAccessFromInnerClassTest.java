@@ -21,10 +21,6 @@ import com.intellij.pom.java.LanguageLevel;
 
 public class VariableAccessFromInnerClassTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() {
-    doAllTests();
-  }
-  
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/mustBeFinal";

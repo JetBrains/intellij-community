@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -42,7 +42,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
   @Override
-  public void buildStarted(UUID sessionId) {
+  public void buildStarted(@NotNull UUID sessionId) {
   }
 
   @Override
@@ -91,7 +91,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     final boolean isRemoved = task.getIsFieldRemoved();
     boolean canceled = false;
     final Ref<Boolean> isSuccess = Ref.create(Boolean.TRUE);
-    final Set<String> affectedPaths = Collections.synchronizedSet(new HashSet<String>()); // PsiSearchHelper runs multiple threads
+    final Set<String> affectedPaths = Collections.synchronizedSet(new HashSet<>()); // PsiSearchHelper runs multiple threads
     final long searchStart = System.currentTimeMillis();
     try {
       if (myConstantSearchTime > CONSTANT_SEARCH_TIME_LIMIT) {
@@ -229,7 +229,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
 
-  private boolean performRemovedConstantSearch(@Nullable final PsiClass aClass, String fieldName, int fieldAccessFlags, final Set<String> affectedPaths) {
+  private boolean performRemovedConstantSearch(@Nullable final PsiClass aClass, String fieldName, int fieldAccessFlags, final Set<? super String> affectedPaths) {
     final PsiSearchHelper psiSearchHelper = PsiSearchHelper.getInstance(myProject);
 
     final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
@@ -286,7 +286,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     return searchScope;
   }
 
-  private static boolean processIdentifiers(PsiSearchHelper helper, @NotNull final PsiElementProcessor<PsiIdentifier> processor, @NotNull final String identifier, @NotNull SearchScope searchScope, short searchContext) {
+  private static boolean processIdentifiers(PsiSearchHelper helper, @NotNull final PsiElementProcessor<? super PsiIdentifier> processor, @NotNull final String identifier, @NotNull SearchScope searchScope, short searchContext) {
     TextOccurenceProcessor processor1 =
       (element, offsetInElement) -> !(element instanceof PsiIdentifier) || processor.execute((PsiIdentifier)element);
     SearchScope javaScope = searchScope instanceof GlobalSearchScope
@@ -297,7 +297,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
 
   private boolean affectDirectUsages(final PsiField psiField,
                                   final boolean ignoreAccessScope,
-                                  final Set<String> affectedPaths) throws ProcessCanceledException {
+                                  final Set<? super String> affectedPaths) throws ProcessCanceledException {
     return ReadAction.compute(() -> {
       if (psiField.isValid()) {
         final PsiFile fieldContainingFile = psiField.getContainingFile();

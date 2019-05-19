@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -29,7 +15,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -38,8 +23,16 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
+import static com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents;
+import static com.intellij.util.ui.UIUtil.pump;
 
 public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnnotationLocalChangesListener {
+  private static final Logger LOG = getInstance(VcsAnnotationLocalChangesListenerImpl.class);
+
   private final ZipperUpdater myUpdater;
   private final MessageBusConnection myConnection;
 
@@ -58,7 +51,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   public VcsAnnotationLocalChangesListenerImpl(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
     myLock = new Object();
     myUpdateStuff = createUpdateStuff();
-    myUpdater = new ZipperUpdater(ApplicationManager.getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, project);
+    myUpdater = new ZipperUpdater(getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, project);
     myConnection = project.getMessageBus().connect();
     myLocalFileSystem = LocalFileSystem.getInstance();
     VcsAnnotationRefresher handler = createHandler();
@@ -74,8 +67,13 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
   @TestOnly
   public void calmDown() {
-    while (!myUpdater.isEmpty()) {
-      TimeoutUtil.sleep(1);
+    myUpdater.waitForAllExecuted(10, TimeUnit.SECONDS);
+    // wait for FileAnnotation.close()/reload() to be called - see invalidateAnnotations()
+    if (getApplication().isDispatchThread()) {
+      dispatchAllInvocationEvents();
+    }
+    else {
+      pump();
     }
   }
 
@@ -102,7 +100,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     };
   }
 
-  private void checkByDirtyScope(Set<String> removed, Map<String, VcsRevisionNumber> refresh, Set<VirtualFile> files) {
+  private void checkByDirtyScope(Set<String> removed, Map<String, VcsRevisionNumber> refresh, Set<? extends VirtualFile> files) {
     for (String path : removed) {
       refreshForPath(path, null);
     }
@@ -132,11 +130,8 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
         final VcsRevisionNumber number = fromDiffProvider(key);
         if (number == null) continue;
         final Collection<FileAnnotation> fileAnnotations = entry.getValue();
-        for (FileAnnotation annotation : fileAnnotations) {
-          if (annotation.isBaseRevisionChanged(number)) {
-            annotation.close();
-          }
-        }
+        List<FileAnnotation> copy = ContainerUtil.filter(fileAnnotations, it -> it.isBaseRevisionChanged(number));
+        invalidateAnnotations(copy, false);
       }
     }
   }
@@ -154,7 +149,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private void processFile(VcsRevisionNumber number, VirtualFile vf) {
     final Collection<FileAnnotation> annotations;
     synchronized (myLock) {
-      annotations = ContainerUtil.newArrayList(myFileAnnotationMap.get(vf));
+      annotations = new ArrayList<>(myFileAnnotationMap.get(vf));
     }
     if (! annotations.isEmpty()) {
       if (number == null) {
@@ -162,11 +157,9 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       }
       if (number == null) return;
 
-      for (FileAnnotation annotation : annotations) {
-        if (annotation.isBaseRevisionChanged(number)) {
-          annotation.close();
-        }
-      }
+      VcsRevisionNumber finalNumber = number;
+      List<FileAnnotation> copy = ContainerUtil.filter(annotations, it -> it.isBaseRevisionChanged(finalNumber));
+      invalidateAnnotations(copy, false);
     }
   }
 
@@ -181,18 +174,28 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
   private void closeForVcs(final Set<VcsKey> refresh) {
     if (refresh.isEmpty()) return;
-    final Set<FileAnnotation> copy = new HashSet<>();
     synchronized (myLock) {
-      for (FileAnnotation annotation : myFileAnnotationMap.values()) {
-        final VcsKey key = annotation.getVcsKey();
-        if (key != null && refresh.contains(key)) {
-          copy.add(annotation);
+      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> it.getVcsKey() != null && refresh.contains(it.getVcsKey()));
+      invalidateAnnotations(copy, false);
+    }
+  }
+
+  private static void invalidateAnnotations(@NotNull Collection<? extends FileAnnotation> annotations, boolean reload) {
+    getApplication().invokeLater(() -> {
+      for (FileAnnotation annotation: annotations) {
+        try {
+          if (reload) {
+            annotation.reload(null);
+          }
+          else {
+            annotation.close();
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
-    }
-    for (FileAnnotation annotation : copy) {
-      annotation.close();
-    }
+    });
   }
 
   // annotations for already committed revisions should not register with this method - they are not subject to refresh
@@ -213,6 +216,14 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       if (annotations.isEmpty()) {
         myFileAnnotationMap.remove(file);
       }
+    }
+  }
+
+  @Override
+  public void reloadAnnotationsForVcs(@NotNull VcsKey key) {
+    synchronized (myLock) {
+      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> key.equals(it.getVcsKey()));
+      invalidateAnnotations(copy, true);
     }
   }
 

@@ -92,6 +92,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   public void updateRequest(final boolean force, boolean useCache, @Nullable final ScrollToPolicy scrollToChangePolicy) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) return;
+    myQueue.abort();
 
     final T requestProvider = getCurrentRequestProvider();
     if (requestProvider == null) {
@@ -113,11 +114,13 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
           applyRequest(request, force, scrollToChangePolicy);
         };
       },
-      () -> {
-        applyRequest(new LoadingDiffRequest(getRequestName(requestProvider)), force, scrollToChangePolicy);
-      },
-      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+      () -> applyRequest(new LoadingDiffRequest(getRequestName(requestProvider)), force, scrollToChangePolicy),
+      getFastLoadingTimeMillis()
     );
+  }
+
+  protected int getFastLoadingTimeMillis() {
+    return ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
   }
 
   @Nullable
@@ -170,7 +173,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myRequestCache.remove(myProducer);
       updateRequest(true);
     }

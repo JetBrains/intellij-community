@@ -21,7 +21,6 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -34,17 +33,15 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 
 /**
@@ -52,41 +49,29 @@ import static com.intellij.util.containers.UtilKt.getIfSingle;
  */
 public abstract class DvcsCompareWithBranchAction<T extends Repository> extends DumbAwareAction {
 
-  private static final Logger LOG = Logger.getInstance(DvcsCompareWithBranchAction.class.getName());
-
   @Override
-  public void actionPerformed(@NotNull AnActionEvent event) {
-    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = getAffectedFile(event);
-    T repository = ObjectUtils.assertNotNull(getRepositoryManager(project).getRepositoryForFile(file));
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VirtualFile file = assertNotNull(getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)));
+
+    T repository = assertNotNull(getRepositoryManager(project).getRepositoryForFile(file));
     assert !repository.isFresh();
-    String currentBranchName = repository.getCurrentBranchName();
-    String presentableRevisionName = currentBranchName;
-    if (currentBranchName == null) {
-      String currentRevision = ObjectUtils.assertNotNull(repository.getCurrentRevision());
-      presentableRevisionName = DvcsUtil.getShortHash(currentRevision);
-    }
+    String presentableRevisionName = chooseNotNull(repository.getCurrentBranchName(),
+                                                   DvcsUtil.getShortHash(assertNotNull(repository.getCurrentRevision())));
     List<String> branchNames = getBranchNamesExceptCurrent(repository);
 
-    JBList list = new JBList(branchNames);
     JBPopupFactory.getInstance()
-      .createListPopupBuilder(list)
-      .setTitle("Select branch to compare")
-      .setItemChoosenCallback(new OnBranchChooseRunnable(project, file, presentableRevisionName, list))
+      .createPopupChooserBuilder(branchNames)
+      .setTitle("Select Branch to Compare")
+      .setItemChosenCallback(selected -> showDiffWithBranchUnderModalProgress(project, file, presentableRevisionName, selected))
       .setAutoselectOnMouseMove(true)
-      .setNamerForFiltering(o -> o.toString())
+      .setNamerForFiltering(o -> o)
       .createPopup()
       .showCenteredInCurrentWindow(project);
   }
 
   @NotNull
   protected abstract List<String> getBranchNamesExceptCurrent(@NotNull T repository);
-
-  private static VirtualFile getAffectedFile(@NotNull AnActionEvent event) {
-    final VirtualFile[] vFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    assert vFiles != null && vFiles.length == 1 && vFiles[0] != null : "Illegal virtual files selected: " + Arrays.toString(vFiles);
-    return vFiles[0];
-  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -110,30 +95,6 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
   @NotNull
   protected abstract Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file,
                                                        @NotNull String branchToCompare) throws VcsException;
-
-  private class OnBranchChooseRunnable implements Runnable {
-    private final Project myProject;
-    private final VirtualFile myFile;
-    private final String myHead;
-    private final JList myList;
-
-    private OnBranchChooseRunnable(@NotNull Project project, @NotNull VirtualFile file, @NotNull String head, @NotNull JList list) {
-      myProject = project;
-      myFile = file;
-      myHead = head;
-      myList = list;
-    }
-
-    @Override
-    public void run() {
-      Object selectedValue = myList.getSelectedValue();
-      if (selectedValue == null) {
-        LOG.error("Selected value is unexpectedly null");
-        return;
-      }
-      showDiffWithBranchUnderModalProgress(myProject, myFile, myHead, selectedValue.toString());
-    }
-  }
 
   private void showDiffWithBranchUnderModalProgress(@NotNull final Project project,
                                                     @NotNull final VirtualFile file,

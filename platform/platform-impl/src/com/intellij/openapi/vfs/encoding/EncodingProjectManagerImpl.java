@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.Disposable;
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @State(name = "Encoding", storages = @Storage("encodings.xml"))
@@ -196,7 +197,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   @NotNull
   static Set<Charset> widelyKnownCharsets() {
     Set<Charset> result = new HashSet<>();
-    result.add(CharsetToolkit.UTF8_CHARSET);
+    result.add(StandardCharsets.UTF_8);
     result.add(CharsetToolkit.getDefaultSystemCharset());
     result.add(CharsetToolkit.UTF_16_CHARSET);
     result.add(CharsetToolkit.forName("ISO-8859-1"));
@@ -303,7 +304,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     };
   }
 
-  private boolean processSubFiles(@Nullable("null means all in the project") VirtualFile file, @NotNull final Processor<VirtualFile> processor) {
+  private boolean processSubFiles(@Nullable("null means all in the project") VirtualFile file, @NotNull final Processor<? super VirtualFile> processor) {
     if (file == null) {
       for (VirtualFile virtualFile : ProjectRootManager.getInstance(myProject).getContentRoots()) {
         if (!processSubFiles(virtualFile, processor)) return false;
@@ -440,7 +441,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       return name;
     }
   }
-  void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
+
+  public void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
     myBOMForNewUTF8Files = option;
   }
 

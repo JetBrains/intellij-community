@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -20,7 +6,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -42,7 +27,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   private final boolean highlightErrorElements;
   private final boolean runAnnotators;
 
-  public DefaultHighlightVisitorBasedInspection(boolean highlightErrorElements, boolean runAnnotators) {
+  protected DefaultHighlightVisitorBasedInspection(boolean highlightErrorElements, boolean runAnnotators) {
     this.highlightErrorElements = highlightErrorElements;
     this.runAnnotators = runAnnotators;
   }
@@ -97,8 +82,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull final GlobalInspectionContext globalContext,
                         @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    for (Pair<PsiFile, HighlightInfo> pair : runGeneralHighlighting(originalFile, highlightErrorElements, runAnnotators,
-                                                                    problemsHolder.isOnTheFly())) {
+    for (Pair<PsiFile, HighlightInfo> pair : runGeneralHighlighting(originalFile, highlightErrorElements, runAnnotators)) {
       PsiFile file = pair.first;
       HighlightInfo info = pair.second;
       TextRange range = new TextRange(info.startOffset, info.endOffset);
@@ -111,8 +95,6 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
       if (element == null) {
         element = file;
       }
-
-      if (SuppressionUtil.inspectionResultSuppressed(element, this)) continue;
 
       GlobalInspectionUtil.createProblem(
         element,
@@ -127,12 +109,13 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     }
   }
 
+  @NotNull
   public static List<Pair<PsiFile,HighlightInfo>> runGeneralHighlighting(PsiFile file,
-                                            final boolean highlightErrorElements,
-                                            final boolean runAnnotators, boolean isOnTheFly) {
-    MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators, isOnTheFly);
+                                            boolean highlightErrorElements,
+                                            boolean runAnnotators) {
+    MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators);
     file.accept(visitor);
-    return new ArrayList<>(visitor.result);
+    return visitor.result;
   }
 
   @Nls
@@ -147,7 +130,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     private final boolean runAnnotators;
     private final List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<>();
 
-    public MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators, boolean isOnTheFly) {
+    MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators) {
       this.highlightErrorElements = highlightErrorElements;
       this.runAnnotators = runAnnotators;
     }
@@ -172,8 +155,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
           gpass.setHighlightVisitorProducer(() -> {
             gpass.incVisitorUsageCount(1);
 
-            HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true,
-                                                                          ServiceManager.getService(project, CachedAnnotators.class));
+            HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true);
             return new HighlightVisitor[]{visitor};
           });
         }

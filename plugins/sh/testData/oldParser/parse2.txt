@@ -1,0 +1,19 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement($)('$')
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('a')
+            PsiElement())(')')

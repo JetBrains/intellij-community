@@ -16,12 +16,9 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 
-/**
- * @author max
- */
 public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
 
   public void testSCR6067() {
@@ -74,22 +71,22 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   }
 
   public void testSuppress() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-    doTest();
+    doTest5();
   }
 
   public void testSuppress1() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-    doTest();
+    doTest5();
   }
 
   public void testSuppress2() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-    doTest();
+    doTest5();
   }
 
   public void testChainOfSuppressions() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    doTest5();
+  }
+
+  public void testSuppressByNoinspectionTag() {
     doTest();
   }
 
@@ -124,14 +121,25 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     }
   }
 
+  public void testAccessibleFromEntryPoint() {
+    EntryPointsManagerBase.ClassPattern pattern = new EntryPointsManagerBase.ClassPattern();
+    pattern.pattern = "Foo";
+    pattern.method = "entry";
+    EntryPointsManagerBase.getInstance(getProject()).getPatterns().add(pattern);
+    try {
+      doTest();
+    }
+    finally {
+      EntryPointsManagerBase.getInstance(getProject()).getPatterns().clear();
+    }
+  }
+
   public void testAnnotationInterface() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-    doTest();
+    doTest5();
   }
 
   public void testUnusedEnum() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-    doTest();
+    doTest5();
   }
 
   public void testJunitEntryPoint() {
@@ -186,8 +194,11 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testClassLiteralRef2() {
+    doTest();
+  }
+
   public void testFunctionalExpressions() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
     doTest();
   }
 
@@ -205,5 +216,49 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
 
   public void testReferenceFromGroovy() {
     doTest();
+  }
+
+  public void testStaticMethodReferenceFromGroovy() {
+    doTest();
+  }
+
+  public void testStaticFieldReferenceFromExternalGroovy() {
+    doTest();
+  }
+
+  public void testFieldReferenceFromExternalGroovy() {
+    doTest();
+  }
+
+  public void testStaticImport() {
+    doTest();
+  }
+
+  public void testInstanceOf() {
+    doTest();
+  }
+
+  public void testReferenceParameterList() {
+    doTest();
+  }
+
+  public void testEnumConstructor() {
+    doTest();
+  }
+
+  public void testTypeParameterUsed() {
+    doTest();
+  }
+
+  public void testMethodCallQualifiedWithSuper() {
+    doTest();
+  }
+
+  public void testMethodParametersIfMethodReferenceUsed() {
+    doTest();
+  }
+
+  private void doTest5() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_5, () -> doTest());
   }
 }

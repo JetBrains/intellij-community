@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -6,14 +6,16 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.RemoteFilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
@@ -32,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -122,7 +125,7 @@ public abstract class GitHandler {
     myCommandLine = new GeneralCommandLine()
       .withWorkDirectory(directory)
       .withExePath(myPathToExecutable)
-      .withCharset(CharsetToolkit.UTF8_CHARSET);
+      .withCharset(StandardCharsets.UTF_8);
 
     for (String parameter : getConfigParameters(project, configParameters)) {
       myCommandLine.addParameters("-c", parameter);
@@ -130,16 +133,19 @@ public abstract class GitHandler {
     myCommandLine.addParameter(command.name());
 
     myStdoutSuppressed = true;
-    mySilent = myCommand.lockingPolicy() == GitCommand.LockingPolicy.READ;
+    mySilent = myCommand.lockingPolicy() != GitCommand.LockingPolicy.WRITE;
   }
 
   @NotNull
-  static List<String> getConfigParameters(@Nullable Project project, @NotNull List<String> requestedConfigParameters) {
+  private static List<String> getConfigParameters(@Nullable Project project, @NotNull List<String> requestedConfigParameters) {
     if (project == null || !GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(project)) {
       return Collections.emptyList();
     }
 
     List<String> toPass = new ArrayList<>();
+    boolean shouldResetCredentialHelper = Registry.is("git.reset.credential.helper") &&
+                                          GitVersionSpecialty.CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY.existsIn(project);
+    if (shouldResetCredentialHelper) toPass.add("credential.helper=");
     toPass.add("core.quotepath=false");
     toPass.add("log.showSignature=false");
     toPass.addAll(requestedConfigParameters);
@@ -184,22 +190,22 @@ public abstract class GitHandler {
    *
    * @param listener a listener
    */
-  protected void addListener(ProcessEventListener listener) {
+  protected void addListener(@NotNull ProcessEventListener listener) {
     myListeners.addListener(listener);
   }
 
-  /***
+  /**
    * Execute process with lower priority
-   *
-   * @param isLowPriority whether to use lower or normal priority
    */
-  public void setWithLowPriority(boolean isLowPriority) {
-    if (isLowPriority) {
-      ExecUtil.setupLowPriorityExecution(myCommandLine, myPathToExecutable);
-    }
-    else {
-      myCommandLine.setExePath(myPathToExecutable);
-    }
+  public void withLowPriority() {
+    ExecUtil.setupLowPriorityExecution(myCommandLine);
+  }
+
+  /**
+   * Detach git process from IDE TTY session
+   */
+  public void withNoTty() {
+    ExecUtil.setupNoTtyExecution(myCommandLine);
   }
 
   /**
@@ -207,7 +213,6 @@ public abstract class GitHandler {
    *
    * @param parameters a parameters to add
    */
-  @SuppressWarnings({"WeakerAccess"})
   public void addParameters(@NonNls @NotNull String... parameters) {
     addParameters(Arrays.asList(parameters));
   }
@@ -237,7 +242,7 @@ public abstract class GitHandler {
   }
 
   private boolean isCmd() {
-    return myCommandLine.getExePath().toLowerCase().endsWith("cmd");
+    return StringUtil.toLowerCase(myCommandLine.getExePath()).endsWith("cmd");
   }
 
   /**
@@ -256,7 +261,6 @@ public abstract class GitHandler {
    * @param filePaths a parameters to add
    * @throws IllegalArgumentException if some path is not under root.
    */
-  @SuppressWarnings({"WeakerAccess"})
   public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
@@ -275,7 +279,6 @@ public abstract class GitHandler {
    * @param files a parameters to add
    * @throws IllegalArgumentException if some path is not under root.
    */
-  @SuppressWarnings({"WeakerAccess"})
   public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
     checkNotStarted();
     for (VirtualFile file : files) {
@@ -343,7 +346,6 @@ public abstract class GitHandler {
    *
    * @param charset a character set
    */
-  @SuppressWarnings({"SameParameterValue"})
   public void setCharset(@NotNull Charset charset) {
     myCommandLine.setCharset(charset);
   }
@@ -494,9 +496,12 @@ public abstract class GitHandler {
       myProcess = startProcess();
       startHandlingStreams();
     }
+    catch (ProcessCanceledException pce) {
+      throw pce;
+    }
     catch (Throwable t) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error(t); // will surely happen if called during unit test disposal, because the working dir is simply removed then
+        LOG.warn(t); // will surely happen if called during unit test disposal, because the working dir is simply removed then
       }
       myListeners.getMulticaster().startFailed(t);
     }
@@ -534,13 +539,13 @@ public abstract class GitHandler {
   @Deprecated
   private Integer myExitCode; // exit code or null if exit code is not yet available
   @Deprecated
-  private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
+  private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<>());
   @Deprecated
-  private final int LAST_OUTPUT_SIZE = 5;
+  private static final int LAST_OUTPUT_SIZE = 5;
   @Deprecated
   private boolean myProgressParameterAllowed = false;
   @Deprecated
-  private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
+  private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<>());
 
   /**
    * Adds "--progress" parameter. Usable for long operations, such as clone or fetch.

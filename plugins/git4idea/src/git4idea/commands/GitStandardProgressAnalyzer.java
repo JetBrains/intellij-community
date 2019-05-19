@@ -37,7 +37,7 @@ public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
 
   public static GitLineHandlerListener createListener(@NotNull final ProgressIndicator indicator) {
     final GitStandardProgressAnalyzer progressAnalyzer = new GitStandardProgressAnalyzer();
-    return new GitLineHandlerAdapter() {
+    return new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         final double fraction = progressAnalyzer.analyzeProgress(line);

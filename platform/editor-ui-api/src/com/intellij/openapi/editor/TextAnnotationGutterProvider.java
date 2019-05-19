@@ -53,8 +53,6 @@ public interface TextAnnotationGutterProvider {
   /**
    * Returns the background color for the text
    *
-   * @since 9.0.2
-   *
    * @param line the line for which the background color is requested.
    * @param editor the editor in which the text will be drawn.
    * @return the text to draw, or null if no text should be drawn.

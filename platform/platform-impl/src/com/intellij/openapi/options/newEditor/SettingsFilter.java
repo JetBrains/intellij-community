@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.search.ConfigurableHit;
@@ -22,7 +8,6 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
@@ -35,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 import java.util.Set;
 
 public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
@@ -44,7 +30,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   boolean myDocumentWasChanged;
 
   private final SearchTextField mySearch;
-  private final ConfigurableGroup[] myGroups;
+  private final List<ConfigurableGroup> myGroups;
 
   private final SearchableOptionsRegistrar myRegistrar = SearchableOptionsRegistrar.getInstance();
   private Set<Configurable> myFiltered;
@@ -53,13 +39,13 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   private boolean myUpdateRejected;
   private Configurable myLastSelected;
 
-  SettingsFilter(Project project, ConfigurableGroup[] groups, SearchTextField search) {
+  SettingsFilter(Project project, List<ConfigurableGroup> groups, SearchTextField search) {
     myProject = project;
     myGroups = groups;
     mySearch = search;
     mySearch.addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent event) {
+      protected void textChanged(@NotNull DocumentEvent event) {
         update(event.getType(), true, false);
         // request focus if needed on changing the filter text
         IdeFocusManager manager = IdeFocusManager.findInstanceByComponent(mySearch);
@@ -134,7 +120,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     return myHits != null && myHits.getNameHits().contains(configurable);
   }
 
-  ActionCallback update(String text, boolean adjustSelection, boolean now) {
+  void update(String text, boolean adjustSelection, boolean now) {
     try {
       myUpdateRejected = true;
       mySearch.setText(text);
@@ -142,12 +128,12 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     finally {
       myUpdateRejected = false;
     }
-    return update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
+    update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
   }
 
-  private ActionCallback update(@NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
+  private void update(@NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
     if (myUpdateRejected) {
-      return ActionCallback.REJECTED;
+      return;
     }
     String text = getFilterText();
     if (text.isEmpty()) {
@@ -193,12 +179,11 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
       myLastSelected = current;
     }
     SimpleNode node = !adjustSelection ? null : findNode(candidate);
-    ActionCallback callback = fireUpdate(node, adjustSelection, now);
+    fireUpdate(node, adjustSelection, now);
     myDocumentWasChanged = true;
-    return callback;
   }
 
-  private static Configurable findConfigurable(Set<Configurable> configurables, Set<Configurable> hits) {
+  private static Configurable findConfigurable(Set<? extends Configurable> configurables, Set<? extends Configurable> hits) {
     Configurable candidate = null;
     for (Configurable configurable : configurables) {
       if (hits != null && hits.contains(configurable)) {

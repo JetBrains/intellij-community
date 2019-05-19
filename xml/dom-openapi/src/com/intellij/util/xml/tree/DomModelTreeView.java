@@ -50,7 +50,6 @@ import java.awt.*;
 
 public class DomModelTreeView extends Wrapper implements DataProvider, Disposable {
   public static final DataKey<DomModelTreeView> DATA_KEY = DataKey.create("DOM_MODEL_TREE_VIEW_KEY");
-  @Deprecated @NonNls public static String DOM_MODEL_TREE_VIEW_KEY = DATA_KEY.getName();
   @NonNls public static String DOM_MODEL_TREE_VIEW_POPUP = "DOM_MODEL_TREE_VIEW_POPUP";
 
   private final SimpleTree myTree;
@@ -73,7 +72,9 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    myBuilder = new AbstractTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE, false);
+    myBuilder = new AbstractTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE, false) {
+      // unique class to simplify search through the logs
+    };
     Disposer.register(this, myBuilder);
 
     myBuilder.setNodeDescriptorComparator(null);
@@ -186,7 +187,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
   @Override
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }

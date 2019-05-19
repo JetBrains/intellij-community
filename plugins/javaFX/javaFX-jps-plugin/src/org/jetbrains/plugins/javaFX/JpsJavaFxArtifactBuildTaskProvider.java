@@ -71,7 +71,7 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     private final JpsJavaFxArtifactProperties myProps;
     private final JpsArtifact myArtifact;
 
-    public JavaFxJarDeployTask(JpsJavaFxArtifactProperties props, JpsArtifact artifact) {
+    JavaFxJarDeployTask(JpsJavaFxArtifactProperties props, JpsArtifact artifact) {
       myProps = props;
       myArtifact = artifact;
     }
@@ -100,7 +100,7 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     private final CompileContext myCompileContext;
     private final JpsArtifact myArtifact;
 
-    public JpsJavaFxPackager(JpsJavaFxArtifactProperties properties, CompileContext compileContext, JpsArtifact artifact) {
+    JpsJavaFxPackager(JpsJavaFxArtifactProperties properties, CompileContext compileContext, JpsArtifact artifact) {
       myArtifact = artifact;
       myProperties = properties;
       myCompileContext = compileContext;

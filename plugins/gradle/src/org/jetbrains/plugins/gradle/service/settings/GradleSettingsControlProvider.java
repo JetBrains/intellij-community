@@ -25,7 +25,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/24/2015
  */
 public abstract class GradleSettingsControlProvider {
 
@@ -56,18 +55,18 @@ public abstract class GradleSettingsControlProvider {
 
       @Override
       public GradleSystemSettingsControlBuilder getSystemSettingsControlBuilder(@NotNull GradleSettings initialSettings) {
-        return new IdeaGradleSystemSettingsControlBuilder(initialSettings);
+        return new IdeaGradleSystemSettingsControlBuilder(initialSettings).
+          // always use external storage for project files
+          dropStoreExternallyCheckBox();
       }
 
       @Override
       public GradleProjectSettingsControlBuilder getProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
         return new IdeaGradleProjectSettingsControlBuilder(initialSettings)
-          // always use qualified module names
-          .dropModulesGroupingOptionPanel()
-          // always use external storage for project files
-          .dropStoreExternallyCheckBox()
           // hide java-specific option
           .dropResolveModulePerSourceSetCheckBox()
+          .dropDelegateBuildCombobox()
+          .dropTestRunnerCombobox()
           // hide this confusing option
           .dropCustomizableWrapperButton()
           // Hide bundled distribution option for a while

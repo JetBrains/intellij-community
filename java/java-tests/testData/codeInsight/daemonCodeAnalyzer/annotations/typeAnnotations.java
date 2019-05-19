@@ -49,6 +49,7 @@ class Outer {
     static class StaticInner {
       void test() {
         @TA StaticInner v1;
+        StaticMiddle.@TA StaticInner @TA [] @TA [] va;
         <error descr="Static member qualifying type may not be annotated">@TA</error> StaticMiddle.@TA StaticInner v2;
         <error descr="Static member qualifying type may not be annotated">@TA</error> Outer.<error descr="Static member qualifying type may not be annotated">@TA</error> StaticMiddle.@TA StaticInner v3;
         List<Outer.<error descr="Static member qualifying type may not be annotated">@TA</error> StaticMiddle.@TA StaticInner> l1;

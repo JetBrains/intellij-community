@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -22,23 +8,16 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 public class DirtBuilder implements DirtBuilderReader {
-  private final VcsGuess myGuess;
-  private final FileTypeManager myFileTypeManager;
+  private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
-  private final MultiMap<AbstractVcs, FilePath> myFiles;
-  private final MultiMap<AbstractVcs, FilePath> myDirs;
-  private boolean myEverythingDirty;
+  private final MultiMap<AbstractVcs, FilePath> myFiles = MultiMap.createSet();
+  private final MultiMap<AbstractVcs, FilePath> myDirs = MultiMap.createSet();
+  private boolean myEverythingDirty = false;
 
-  public DirtBuilder(final VcsGuess guess) {
-    myGuess = guess;
-    myDirs = MultiMap.createSet();
-    myFiles = MultiMap.createSet();
-    myEverythingDirty = false;
-    myFileTypeManager = FileTypeManager.getInstance();
+  public DirtBuilder() {
   }
 
-  public DirtBuilder(final DirtBuilder builder) {
-    this(builder.myGuess);
+  public DirtBuilder(@NotNull DirtBuilder builder) {
     myDirs.putAllValues(builder.myDirs);
     myFiles.putAllValues(builder.myFiles);
     myEverythingDirty = builder.myEverythingDirty;
@@ -64,20 +43,24 @@ public class DirtBuilder implements DirtBuilderReader {
     myDirs.putValue(vcs, dir);
   }
 
+  @Override
   public boolean isEverythingDirty() {
     return myEverythingDirty;
   }
 
+  @Override
   @NotNull
   public MultiMap<AbstractVcs, FilePath> getFilesForVcs() {
     return myFiles;
   }
 
+  @Override
   @NotNull
   public MultiMap<AbstractVcs, FilePath> getDirsForVcs() {
     return myDirs;
   }
 
+  @Override
   public boolean isEmpty() {
     return myFiles.isEmpty() && myDirs.isEmpty();
   }

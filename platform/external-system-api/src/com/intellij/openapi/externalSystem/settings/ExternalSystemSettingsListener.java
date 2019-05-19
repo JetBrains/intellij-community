@@ -26,7 +26,6 @@ import java.util.Set;
  * Implementations of this interface are not obliged to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/3/13 4:13 PM
  * @param <S>  target project setting type
  */
 public interface ExternalSystemSettingsListener<S extends ExternalProjectSettings> {

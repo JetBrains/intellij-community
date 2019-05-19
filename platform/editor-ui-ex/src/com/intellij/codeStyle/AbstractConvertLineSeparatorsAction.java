@@ -15,6 +15,7 @@
  */
 package com.intellij.codeStyle;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,10 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +54,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
@@ -77,7 +75,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
@@ -106,17 +104,13 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
   }
 
   public static boolean shouldProcess(@NotNull VirtualFile file, @NotNull Project project) {
-    if (file.isDirectory()
-        || !file.isWritable()
-        || FileTypeRegistry.getInstance().isFileIgnored(file)
-        || file.getFileType().isBinary()
-        || file.equals(project.getProjectFile())
-        || file.equals(project.getWorkspaceFile()))
-    {
-      return false;
-    }
-    Module module = FileIndexFacade.getInstance(project).getModuleForFile(file);
-    return module == null || !ModuleUtilCore.isModuleFile(module, file);
+    return !(file.isDirectory()
+             || !file.isWritable()
+             || file instanceof VirtualFileWindow
+             || FileTypeRegistry.getInstance().isFileIgnored(file)
+             || file.getFileType().isBinary()
+             || file.equals(project.getProjectFile())
+             || file.equals(project.getWorkspaceFile()));
   }
 
   public static void changeLineSeparators(@NotNull final Project project,

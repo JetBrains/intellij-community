@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options
 
 import com.intellij.configurationStore.CURRENT_NAME_CONVERTER
@@ -6,6 +6,7 @@ import com.intellij.configurationStore.SchemeNameToFileName
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jdom.Parent
 import java.nio.file.Path
@@ -23,7 +24,7 @@ abstract class SchemeManagerFactory {
     fun getInstance(): SchemeManagerFactory = ServiceManager.getService(SchemeManagerFactory::class.java)!!
 
     @JvmStatic
-    fun getInstance(project: Project): SchemeManagerFactory = ServiceManager.getService(project, SchemeManagerFactory::class.java)!!
+    fun getInstance(project: Project) = project.service<SchemeManagerFactory>()
   }
 
   /**
@@ -62,9 +63,6 @@ abstract class SchemeProcessor<SCHEME, in MUTABLE_SCHEME: SCHEME> {
    * Element will not be modified, it is safe to return non-cloned instance.
    */
   abstract fun writeScheme(scheme: MUTABLE_SCHEME): Parent?
-
-  open fun initScheme(scheme: MUTABLE_SCHEME) {
-  }
 
   /**
    * Called on external scheme add or change file events.

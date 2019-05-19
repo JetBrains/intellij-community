@@ -37,7 +37,7 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
   private final Map<String, CompiledClass> myClasses = new THashMap<>();
   private final Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new THashMap<>();
 
-  public ChunkBuildOutputConsumerImpl(CompileContext context) {
+  ChunkBuildOutputConsumerImpl(CompileContext context) {
     myContext = context;
   }
 

@@ -54,7 +54,7 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
     private InitializerBuilderStrategyHandler(@NotNull TransformationContext context) {
       myContext = context;
       myContainingClass = context.getCodeClass();
-      myElementFactory = PsiElementFactory.SERVICE.getInstance(myContainingClass.getProject());
+      myElementFactory = PsiElementFactory.getInstance(myContainingClass.getProject());
     }
 
     public void doProcess() {
@@ -184,7 +184,7 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
 
   private static class InitializerTypeParameter extends LightTypeParameterBuilder {
 
-    public InitializerTypeParameter(PsiTypeParameterListOwner owner, int index) {
+    InitializerTypeParameter(PsiTypeParameterListOwner owner, int index) {
       super("T" + index, owner, index);
     }
   }

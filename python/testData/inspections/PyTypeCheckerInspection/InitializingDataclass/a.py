@@ -101,3 +101,12 @@ E1(<warning descr="Expected type 'int', got 'bytes' instead">b"1"</warning>, "1"
 
 E1(1, "1", b"1", 1)
 E1(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>, <warning descr="Expected type 'str', got 'bytes' instead">b"1"</warning>, <warning descr="Expected type 'bytes', got 'str' instead">"1"</warning>, <warning descr="Expected type 'int', got 'str' instead">"1"</warning>)
+
+
+@dataclasses.dataclass
+class F1:
+    foo = "bar"  # <- has no type annotation, so doesn't count.
+    baz: str
+
+F1("1")
+F1(<warning descr="Expected type 'str', got 'int' instead">1</warning>)

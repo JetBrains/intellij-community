@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.task;
 
 /**
  * @author Vladislav.Soroka
- * @since 6/19/2014
  */
 public class TaskCallbackAdapter implements TaskCallback {
   @Override

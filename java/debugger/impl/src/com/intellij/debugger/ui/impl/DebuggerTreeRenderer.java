@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -50,6 +36,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private static final SimpleTextAttributes SPECIAL_NODE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, new JBColor(Color.lightGray, Gray._130));
   private static final SimpleTextAttributes OBJECT_ID_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, new JBColor(Color.lightGray, Gray._130));
 
+  @Override
   public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     final DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl) value;
 
@@ -135,7 +122,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeIcon = AllIcons.Debugger.Db_primitive;
     }
     else if (valueDescriptor instanceof WatchItemDescriptor) {
-      nodeIcon = AllIcons.Debugger.Watch;
+      nodeIcon = AllIcons.Debugger.Db_watch;
     }
     else {
       nodeIcon = AllIcons.Debugger.Value;
@@ -145,17 +132,17 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       EnumerationChildrenRenderer enumerationChildrenRenderer =
         EnumerationChildrenRenderer.getCurrent(((UserExpressionDescriptorImpl)valueDescriptor).getParentDescriptor());
       if (enumerationChildrenRenderer != null && enumerationChildrenRenderer.isAppendDefaultChildren()) {
-        nodeIcon = AllIcons.Debugger.Watch;
+        nodeIcon = AllIcons.Debugger.Db_watch;
       }
     }
 
     // if watches in variables enabled, always use watch icon
-    if (valueDescriptor instanceof WatchItemDescriptor && nodeIcon != AllIcons.Debugger.Watch) {
+    if (valueDescriptor instanceof WatchItemDescriptor && nodeIcon != AllIcons.Debugger.Db_watch) {
       XDebugSession session = XDebuggerManager.getInstance(valueDescriptor.getProject()).getCurrentSession();
       if (session != null) {
         XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
         if (tab != null && tab.isWatchesInVariables()) {
-          nodeIcon = AllIcons.Debugger.Watch;
+          nodeIcon = AllIcons.Debugger.Db_watch;
         }
       }
     }

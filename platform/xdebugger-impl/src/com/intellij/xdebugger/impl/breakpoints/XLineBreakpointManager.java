@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -23,17 +23,18 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -61,11 +62,11 @@ public class XLineBreakpointManager {
   private final BidirectionalMap<XLineBreakpointImpl, String> myBreakpoints = new BidirectionalMap<>();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
-  private final XDependentBreakpointManager myDependentBreakpointManager;
 
-  public XLineBreakpointManager(@NotNull Project project, final XDependentBreakpointManager dependentBreakpointManager) {
+  public XLineBreakpointManager(@NotNull Project project) {
     myProject = project;
-    myDependentBreakpointManager = dependentBreakpointManager;
+
+    MessageBusConnection busConnection = project.getMessageBus().connect();
 
     if (!myProject.isDefault()) {
       EditorEventMulticaster editorEventMulticaster = EditorFactory.getInstance().getEventMulticaster();
@@ -73,10 +74,8 @@ public class XLineBreakpointManager {
       editorEventMulticaster.addEditorMouseListener(new MyEditorMouseListener(), project);
       editorEventMulticaster.addEditorMouseMotionListener(new MyEditorMouseMotionListener(), project);
 
-      final MyDependentBreakpointListener myDependentBreakpointListener = new MyDependentBreakpointListener();
-      myDependentBreakpointManager.addListener(myDependentBreakpointListener);
-      Disposer.register(project, () -> myDependentBreakpointManager.removeListener(myDependentBreakpointListener));
-      VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileUrlChangeAdapter() {
+      busConnection.subscribe(XDependentBreakpointListener.TOPIC, new MyDependentBreakpointListener());
+      busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileUrlChangeAdapter() {
         @Override
         protected void fileUrlChanged(String oldUrl, String newUrl) {
           breakpoints().forEach(breakpoint -> {
@@ -92,12 +91,12 @@ public class XLineBreakpointManager {
           List<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(event.getFile().getUrl());
           removeBreakpoints(breakpoints != null ? new ArrayList<>(breakpoints) : null); // safe copy
         }
-      }, project);
+      }));
     }
     myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project);
 
     // Update breakpoints colors if global color schema was changed
-    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new MyEditorColorsListener());
+    busConnection.subscribe(EditorColorsManager.TOPIC, new MyEditorColorsListener());
   }
 
   void updateBreakpointsUI() {
@@ -122,7 +121,7 @@ public class XLineBreakpointManager {
     if (file != null) {
       Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(file.getUrl());
       if (breakpoints != null) {
-        return breakpoints;
+        return new ArrayList<>(breakpoints);
       }
     }
     return Collections.emptyList();
@@ -195,7 +194,7 @@ public class XLineBreakpointManager {
 
   private class MyDocumentListener implements DocumentListener {
     @Override
-    public void documentChanged(final DocumentEvent e) {
+    public void documentChanged(@NotNull final DocumentEvent e) {
       final Document document = e.getDocument();
       Collection<XLineBreakpointImpl> breakpoints = getDocumentBreakpoints(document);
       if (!breakpoints.isEmpty()) {
@@ -211,27 +210,27 @@ public class XLineBreakpointManager {
 
   private boolean myDragDetected = false;
 
-  private class MyEditorMouseMotionListener extends EditorMouseMotionAdapter {
+  private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
     @Override
-    public void mouseDragged(EditorMouseEvent e) {
+    public void mouseDragged(@NotNull EditorMouseEvent e) {
       myDragDetected = true;
     }
   }
 
-  private class MyEditorMouseListener extends EditorMouseAdapter {
+  private class MyEditorMouseListener implements EditorMouseListener {
     @Override
-    public void mousePressed(EditorMouseEvent e) {
+    public void mousePressed(@NotNull EditorMouseEvent e) {
       myDragDetected = false;
     }
 
     @Override
-    public void mouseClicked(final EditorMouseEvent e) {
+    public void mouseClicked(@NotNull final EditorMouseEvent e) {
       final Editor editor = e.getEditor();
       final MouseEvent mouseEvent = e.getMouseEvent();
       if (mouseEvent.isPopupTrigger()
           || mouseEvent.isMetaDown() || mouseEvent.isControlDown()
           || mouseEvent.getButton() != MouseEvent.BUTTON1
-          || MarkupEditorFilterFactory.createIsDiffFilter().avaliableIn(editor)
+          || DiffUtil.isDiffEditor(editor)
           || !isInsideGutter(e, editor)
           || ConsoleViewUtil.isConsoleViewEditor(editor)
           || !isFromMyProject(editor)
@@ -295,7 +294,7 @@ public class XLineBreakpointManager {
 
   private class MyDependentBreakpointListener implements XDependentBreakpointListener {
     @Override
-    public void dependencySet(final XBreakpoint<?> slave, final XBreakpoint<?> master) {
+    public void dependencySet(@NotNull final XBreakpoint<?> slave, @NotNull final XBreakpoint<?> master) {
       queueBreakpointUpdate(slave);
     }
 

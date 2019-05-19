@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,11 +156,13 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     }
   }
 
+  @Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
     ModuleType type = getModuleType();
     return type == null ? null : type.modifyProjectTypeStep(settingsStep, this);
   }
 
+  @NotNull
   protected List<WizardInputField> getAdditionalFields() {
     return Collections.emptyList();
   }
@@ -258,7 +261,8 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     myDispatcher.getMulticaster().moduleCreated(module);
   }
 
-  public abstract void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException;
+  public void setupRootModel(@NotNull ModifiableRootModel modifiableRootModel) throws ConfigurationException {
+  }
 
   public abstract ModuleType getModuleType();
 
@@ -330,18 +334,22 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return null;
   }
 
+  @Override
   public Icon getNodeIcon() {
     return getModuleType().getNodeIcon(false);
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String getDescription() {
     return getModuleType().getDescription();
   }
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getPresentableName() {
     return getModuleTypeName();
   }
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   protected String getModuleTypeName() {
     String name = getModuleType().getName();
     return StringUtil.trimEnd(name, " Module");

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.dnd.LinuxDragAndDropSupport;
@@ -12,12 +12,12 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -28,6 +28,7 @@ import java.awt.dnd.InvalidDnDOperationException;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -48,16 +49,19 @@ public class PsiCopyPasteManager {
     myCopyPasteManager = (CopyPasteManagerEx) copyPasteManager;
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
-        if (myRecentData != null && myRecentData.getProject() == project) {
+      public void projectClosing(@NotNull Project project) {
+        if (myRecentData != null && (!myRecentData.isValid() || myRecentData.getProject() == project)) {
           myRecentData = null;
         }
 
         Transferable[] contents = myCopyPasteManager.getAllContents();
         for (int i = contents.length - 1; i >= 0; i--) {
           Transferable t = contents[i];
-          if (t instanceof MyTransferable && ((MyTransferable)t).myDataProxy.getProject() == project) {
-            myCopyPasteManager.removeContent(t);
+          if (t instanceof MyTransferable) {
+            MyData myData = ((MyTransferable)t).myDataProxy;
+            if (!myData.isValid() || myData.getProject() == project) {
+              myCopyPasteManager.removeContent(t);
+            }
           }
         }
       }
@@ -182,6 +186,10 @@ public class PsiCopyPasteManager {
       return myIsCopied;
     }
 
+    public boolean isValid() {
+      return myElements.length > 0 && myElements[0].isValid();
+    }
+
     @Nullable
     public Project getProject() {
       if (myElements == null || myElements.length == 0) {
@@ -238,10 +246,10 @@ public class PsiCopyPasteManager {
         final List<File> files = getDataAsFileList();
         if (files == null) return null;
         final String string = (myDataProxy.isCopied() ? "copy\n" : "cut\n") + LinuxDragAndDropSupport.toUriList(files);
-        return new ByteArrayInputStream(string.getBytes(CharsetToolkit.UTF8_CHARSET));
+        return new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8));
       }
       else if (flavor.equals(LinuxDragAndDropSupport.kdeCutMarkFlavor) && !myDataProxy.isCopied()) {
-        return new ByteArrayInputStream("1".getBytes(CharsetToolkit.UTF8_CHARSET));
+        return new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8));
       }
       throw new UnsupportedFlavorException(flavor);
     }

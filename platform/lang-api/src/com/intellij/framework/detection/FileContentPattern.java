@@ -101,7 +101,6 @@ public class FileContentPattern extends ObjectPattern<FileContent, FileContentPa
 
   @NotNull
   private static XmlFileHeader parseHeaderWithException(FileContent fileContent) throws IOException {
-    //noinspection IOResourceOpenedButNotSafelyClosed
     return NanoXmlUtil.parseHeaderWithException(CharArrayUtil.readerFromCharSequence(fileContent.getContentAsText()));
   }
 

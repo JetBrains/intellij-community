@@ -1,25 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.model.SymbolReference;
+import com.intellij.model.SymbolResolveResult;
+import com.intellij.model.SymbolService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * A reference to a PSI element. For example, the variable name used in an expression.
@@ -34,7 +27,8 @@ import org.jetbrains.annotations.Nullable;
  * @see PsiReferenceBase
  * @see PsiReferenceContributor
  */
-public interface PsiReference {
+public interface PsiReference extends SymbolReference {
+
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
 
   ArrayFactory<PsiReference> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiReference[count];
@@ -50,6 +44,14 @@ public interface PsiReference {
   /**
    * Returns the part of the underlying element which serves as a reference, or the complete
    * text range of the element if the entire element is a reference.
+   * <p/>
+   * Sample: PsiElement representing a fully qualified name with multiple dedicated PsiReferences, each bound
+   * to the range it resolves to (skipping the '.' separator).
+   * <pre>
+   * PsiElement text: qualified.LongName
+   * PsiReferences:   [Ref1---]X[Ref2--]
+   * </pre>
+   * where {@code Ref1} would resolve to a "namespace" and {@code Ref2} to an "element".
    *
    * @return Relative range in element
    */
@@ -62,7 +64,8 @@ public interface PsiReference {
    * @return the target element, or null if it was not possible to resolve the reference to a valid target.
    * @see PsiPolyVariantReference#multiResolve(boolean)
    */
-  @Nullable PsiElement resolve();
+  @Nullable
+  PsiElement resolve();
 
   /**
    * Returns the name of the reference target element which does not depend on import statements
@@ -82,7 +85,7 @@ public interface PsiReference {
    * @return the new underlying element of the reference.
    * @throws IncorrectOperationException if the rename cannot be handled for some reason.
    */
-  PsiElement handleElementRename(String newElementName) throws IncorrectOperationException;
+  PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException;
 
   /**
    * Changes the reference so that it starts to point to the specified element. This is called,
@@ -101,20 +104,23 @@ public interface PsiReference {
    * @param element the element to check target for.
    * @return true if the reference targets that element, false otherwise.
    */
-  boolean isReferenceTo(PsiElement element);
+  boolean isReferenceTo(@NotNull PsiElement element);
 
   /**
-   * Returns the array of String, {@link PsiElement} and/or {@link LookupElement}
+   * Returns the array of String, {@link PsiElement} and/or {@link com.intellij.codeInsight.lookup.LookupElement}
    * instances representing all identifiers that are visible at the location of the reference. The contents
    * of the returned array is used to build the lookup list for basic code completion. (The list
    * of visible identifiers may not be filtered by the completion prefix string - the
    * filtering is performed later by IDEA core.)
+   * <p>
+   * This method is default since 2018.3.
    *
    * @return the array of available identifiers.
    */
-  @SuppressWarnings("JavadocReference")
   @NotNull
-  Object[] getVariants();
+  default Object[] getVariants() {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
 
   /**
    * Returns false if the underlying element is guaranteed to be a reference, or true
@@ -125,4 +131,11 @@ public interface PsiReference {
    * @return true if the reference is soft, false otherwise.
    */
   boolean isSoft();
+
+  @NotNull
+  @Override
+  default Collection<? extends SymbolResolveResult> resolveReference() {
+    PsiElement resolved = resolve();
+    return resolved == null ? Collections.emptyList() : Collections.singletonList(SymbolService.resolveResult(resolved));
+  }
 }

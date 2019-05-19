@@ -52,10 +52,10 @@ public interface TypeParameterInfo {
                @NotNull @NonNls String defaultValue,
                @NotNull @NonNls String boundValue) throws IncorrectOperationException {
       this(name,
-           JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createTypeFromText(defaultValue, aClass.getLBrace()),
+           JavaPsiFacade.getElementFactory(aClass.getProject()).createTypeFromText(defaultValue, aClass.getLBrace()),
            boundValue.isEmpty()
            ? null
-           : JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createTypeFromText(boundValue, aClass.getLBrace()));
+           : JavaPsiFacade.getElementFactory(aClass.getProject()).createTypeFromText(boundValue, aClass.getLBrace()));
     }
 
     public void setNewName(String newName) {

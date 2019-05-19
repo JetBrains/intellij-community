@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -26,24 +13,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NameUtil {
-  private static final Function<String,String> LOWERCASE_MAPPING = new Function<String, String>() {
-    @Override
-    public String fun(final String s) {
-      return s.toLowerCase();
-    }
-  };
   private static final int MAX_LENGTH = 40;
 
   private NameUtil() {}
 
   @NotNull
   public static List<String> nameToWordsLowerCase(@NotNull String name){
-    return ContainerUtil.map(nameToWords(name), LOWERCASE_MAPPING);
+    return ContainerUtil.map(nameToWords(name), StringUtil::toLowerCase);
   }
 
   @NotNull
   public static String[] nameToWords(@NotNull String name){
-    List<String> array = new ArrayList<String>();
+    List<String> array = new ArrayList<>();
     int index = 0;
 
     while(index < name.length()){
@@ -241,7 +222,7 @@ public class NameUtil {
   @NotNull
   public static String[] splitNameIntoWords(@NotNull String name) {
     final String[] underlineDelimited = name.split("_");
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (String word : underlineDelimited) {
       addAllWords(word, result);
     }
@@ -255,7 +236,7 @@ public class NameUtil {
                                                   boolean upperCaseStyle,
                                                   boolean preferLongerNames,
                                                   boolean isArray) {
-    ArrayList<String> answer = new ArrayList<String>();
+    ArrayList<String> answer = new ArrayList<>();
     String[] words = nameToWords(name);
 
     for (int step = 0; step < words.length; step++) {
@@ -292,7 +273,7 @@ public class NameUtil {
     }
     else {
       if (prefix.isEmpty() || StringUtil.endsWithChar(prefix, '_')) {
-        startWord = startWord.toLowerCase();
+        startWord = StringUtil.toLowerCase(startWord);
       }
       else {
         startWord = Character.toUpperCase(c) + startWord.substring(1);
@@ -311,7 +292,7 @@ public class NameUtil {
       }
       else {
         if (prevWord.charAt(prevWord.length() - 1) == '_') {
-          word = word.toLowerCase();
+          word = StringUtil.toLowerCase(word);
         }
 
         if (skip_) {
@@ -361,7 +342,7 @@ public class NameUtil {
     return i;
   }
 
-  private static void addAllWords(@NotNull String text, @NotNull List<String> result) {
+  private static void addAllWords(@NotNull String text, @NotNull List<? super String> result) {
     int start = 0;
     while (start < text.length()) {
       int next = nextWord(text, start);
@@ -402,13 +383,6 @@ public class NameUtil {
     boolean matches(@NotNull String name);
   }
 
-  @Deprecated
-  @NotNull
-  public static com.intellij.util.text.Matcher buildCompletionMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, options);
-  }
-
   @NotNull
   public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, 
                                                             boolean allowToUpper, boolean allowToLower) {
@@ -418,7 +392,6 @@ public class NameUtil {
     return buildMatcher(pattern, options);
   }
 
-  @SuppressWarnings("UnusedParameters")
   @Deprecated
   @NotNull
   public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
@@ -430,6 +403,7 @@ public class NameUtil {
     private final String pattern;
     private String separators = "";
     private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
+    private boolean typoTolerant = Registry.is("ide.completion.typo.tolerance");
 
     public MatcherBuilder(String pattern) {
       this.pattern = pattern;
@@ -445,8 +419,14 @@ public class NameUtil {
       return this;
     }
 
+    public MatcherBuilder typoTolerant() {
+      this.typoTolerant = true;
+      return this;
+    }
+
     public MinusculeMatcher build() {
-      return new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      return typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
+                          : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
     }
   }
 
@@ -460,18 +440,21 @@ public class NameUtil {
     return buildMatcher(pattern).withCaseSensitivity(options).build();
   }
 
-  @NotNull
-  public static String capitalizeAndUnderscore(@NotNull String name) {
-    return splitWords(name, '_', new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return StringUtil.toUpperCase(s);
-      }
-    });
+  public static MinusculeMatcher buildMatcherWithFallback(@NotNull String pattern,
+                                                          @NotNull String fallbackPattern,
+                                                          @NotNull MatchingCaseSensitivity options) {
+    return pattern.equals(fallbackPattern) ?
+           buildMatcher(pattern, options) :
+           new MatcherWithFallback(buildMatcher(pattern, options), buildMatcher(fallbackPattern, options));
   }
 
   @NotNull
-  public static String splitWords(@NotNull String text, char separator, @NotNull Function<String, String> transformWord) {
+  public static String capitalizeAndUnderscore(@NotNull String name) {
+    return splitWords(name, '_', StringUtil::toUpperCase);
+  }
+
+  @NotNull
+  public static String splitWords(@NotNull String text, char separator, @NotNull Function<? super String, String> transformWord) {
     final String[] words = nameToWords(text);
     boolean insertSeparator = false;
     final StringBuilder buf = new StringBuilder();

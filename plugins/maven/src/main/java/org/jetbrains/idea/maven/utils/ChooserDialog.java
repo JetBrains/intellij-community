@@ -43,11 +43,13 @@ public class ChooserDialog<T> extends DialogWrapper {
     init();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return ScrollPaneFactory.createScrollPane(myChooser);
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JTextPane description = new JTextPane();
 

@@ -36,8 +36,8 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_WITH_GROOVY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      AbstractJavaFXTestCase.addJavaFxJarAsLibrary(module, model);
-      PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
+      AbstractJavaFXTestCase.addJavaFxJarAsLibrary(model);
+      PsiTestUtil.addLibrary(model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
       super.configureModule(module, model, contentEntry);
     }
   };
@@ -159,15 +159,8 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
                                            final String inputName,
                                            final String defaultVisibility,
                                            final String extension) {
-    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
-    String savedVisibility = settings.VISIBILITY;
-    try {
-      settings.VISIBILITY = defaultVisibility;
-      doTest(actionName, inputName, getTestName(false), extension);
-    }
-    finally {
-      settings.VISIBILITY = savedVisibility;
-    }
+    JavaCodeStyleSettings.getInstance(getProject()).VISIBILITY = defaultVisibility;
+    doTest(actionName, inputName, getTestName(false), extension);
   }
 
   private void doTest(final String actionName, final String extension) {

@@ -13,13 +13,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.QualifiedName;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author traff
@@ -36,15 +37,14 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
 
+    final Project project = element.getProject();
+    if (getSettings(project).shown) {
+      return;
+    }
+
     if (element instanceof PyFile) {
 
       final PyFile pyFile = (PyFile)element;
-      final Project project = element.getProject();
-
-      if (getSettings(project).shown) {
-        return;
-      }
-
       final VirtualFile vFile = pyFile.getVirtualFile();
       if (vFile != null && FileIndexFacade.getInstance(project).isInLibraryClasses(vFile)) {
         return;
@@ -54,17 +54,22 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
         showInspectionAdvertisement(project, "code cells in the editor", "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "codecells");
       }
 
-      if (containsImport(pyFile, "django")) {
+      if (PyPsiUtils.containsImport(pyFile, "django")) {
         showInspectionAdvertisement(project, "the Django Framework", "https://www.jetbrains.com/pycharm/features/web_development.html#django","django");
       }
 
-      if (containsImport(pyFile, "flask")) {
+      if (PyPsiUtils.containsImport(pyFile, "flask")) {
         showInspectionAdvertisement(project, "the Flask Framework", null,"flask");
       }
 
-      if (containsImport(pyFile, "pyramid")) {
+      if (PyPsiUtils.containsImport(pyFile, "pyramid")) {
         showInspectionAdvertisement(project, "the Pyramid Framework", null,"pyramid");
       }
+    }
+
+    if (isJupyterFile(element)) {
+      showInspectionAdvertisement(element.getProject(), "Jupyter notebook",
+                                  "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "jupyter");
     }
   }
 
@@ -83,6 +88,15 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
                               });
   }
 
+  private static boolean isJupyterFile(@NotNull PsiElement element) {
+    if (!(element instanceof PsiFile)) {
+      return false;
+    }
+    final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+    return virtualFile != null &&
+           Objects.equals(virtualFile.getExtension(), "ipynb");
+  }
+
   private static void showSingletonNotification(@NotNull Project project,
                                                 @NotNull String title,
                                                 @NotNull String htmlContent,
@@ -97,22 +111,6 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
         notification.expire();
       }
     }).notify(project);
-  }
-
-  private static boolean containsImport(@NotNull PyFile file, String pkg) {
-    for (PyFromImportStatement importStatement : file.getFromImports()) {
-      final QualifiedName name = importStatement.getImportSourceQName();
-      if (name != null && name.toString().toLowerCase().contains(pkg)) {
-        return true;
-      }
-    }
-    for (PyImportElement importElement : file.getImportTargets()) {
-      final QualifiedName name = importElement.getImportedQName();
-      if (name != null && name.toString().toLowerCase().contains(pkg)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @NotNull

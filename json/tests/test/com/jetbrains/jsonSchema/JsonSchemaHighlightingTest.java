@@ -1,34 +1,46 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.AreaPicoContainer;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.json.JsonLanguage;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
+import com.intellij.util.containers.Predicate;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Irina.Chernushina on 9/21/2015.
  */
-public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
+public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting";
+  }
+
+  @Override
+  protected String getTestFileName() {
+    return "config.json";
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspectionProfile() {
+    return new JsonSchemaComplianceInspection();
+  }
+
+  @Override
+  protected Predicate<VirtualFile> getAvailabilityPredicate() {
+    return file -> file.getFileType() instanceof LanguageFileType && ((LanguageFileType)file.getFileType()).getLanguage().isKindOf(
+      JsonLanguage.INSTANCE);
   }
 
   public void testNumberMultipleWrong() throws Exception {
@@ -49,16 +61,14 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
            "}}}", "{ \"prop\": 14}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testEnum() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"enum\": [1,2,3,\"18\"]}}}";
-    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: [1, 2, 3, \\\"18\\\"]\">18</warning>}");
+    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: 1, 2, 3, \\\"18\\\"\">18</warning>}");
     doTest(schema, "{\"prop\": 2}");
     doTest(schema, "{\"prop\": \"18\"}");
-    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: [1, 2, 3, \\\"18\\\"]\">\"2\"</warning>}");
+    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: 1, 2, 3, \\\"18\\\"\">\"2\"</warning>}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testSimpleString() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"type\": \"string\", \"minLength\": 2, \"maxLength\": 3}}}";
     doTest(schema, "{\"prop\": <warning descr=\"String is shorter than 2\">\"s\"</warning>}");
@@ -76,7 +86,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                                    "}");
     doTest(schema, "{\"prop\": [101, 102]}");
     doTest(schema, "{\"prop\": [<warning descr=\"Less than a minimum 18\">16</warning>]}");
-    doTest(schema, "{\"prop\": [<warning descr=\"Type is not allowed. Expected: number.\">\"test\"</warning>]}");
+    doTest(schema, "{\"prop\": [<warning descr=\"Incompatible types.\n Required: number. Actual: string.\">\"test\"</warning>]}");
   }
 
   public void testTopLevelArray() throws Exception {
@@ -96,7 +106,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                             "    \"type\": \"object\", \"properties\": {\"a\": {\"type\": \"number\"}}" +
                                             "  }\n" +
                                             "}";
-    doTest(schema, "[{\"a\": <warning descr=\"Type is not allowed. Expected: number.\">true</warning>}]");
+    doTest(schema, "[{\"a\": <warning descr=\"Incompatible types.\n Required: number. Actual: boolean.\">true</warning>}]");
     doTest(schema, "[{\"a\": 18}]");
   }
 
@@ -107,7 +117,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                                    "    \"type\": \"number\", \"minimum\": 18" +
                                                    "  }, {\"type\" : \"string\"}]\n" +
                                                    "}");
-    doTest(schema, "{\"prop\": [101, <warning descr=\"Type is not allowed. Expected: string.\">102</warning>]}");
+    doTest(schema, "{\"prop\": [101, <warning descr=\"Incompatible types.\n Required: string. Actual: integer.\">102</warning>]}");
     doTest(schema, "{\"prop\": [101, \"102\"]}");
     doTest(schema, "{\"prop\": [101, \"102\", \"additional\"]}");
 
@@ -164,8 +174,8 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                             "\"office\": {\"$ref\": \"#/definitions/address\"}" +
                                             "}}";
     doTest(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": 11}}");
-    doTest(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": <warning descr=\"Type is not allowed. Expected: integer.\">\"unknown\"</warning>}," +
-                   "\"office\": {\"street\": <warning descr=\"Type is not allowed. Expected: string.\">5</warning>}}");
+    doTest(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": <warning descr=\"Incompatible types.\n Required: integer. Actual: string.\">\"unknown\"</warning>}," +
+                   "\"office\": {\"street\": <warning descr=\"Incompatible types.\n Required: string. Actual: integer.\">5</warning>}}");
   }
 
   public void testAdditionalPropertiesAllowed() throws Exception {
@@ -182,7 +192,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   public void testAdditionalPropertiesSchema() throws Exception {
     @Language("JSON") final String schema = "{\"type\": \"object\", \"properties\": {\"a\": {}}," +
                                             "\"additionalProperties\": {\"type\": \"string\"}}";
-    doTest(schema, "{\"a\" : 18, \"b\": \"wall\", \"c\": <warning descr=\"Type is not allowed. Expected: string.\">11</warning>}");
+    doTest(schema, "{\"a\" : 18, \"b\": \"wall\", \"c\": <warning descr=\"Incompatible types.\n Required: string. Actual: integer.\">11</warning>}");
   }
 
   public void testMinMaxProperties() throws Exception {
@@ -192,7 +202,6 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(schema, "<warning descr=\"Number of properties is greater than 2\">{\"a\": 1, \"b\": 22, \"c\": 33}</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\"}");
@@ -200,10 +209,9 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     @Language("JSON") final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTest(schema, "{\"prop\": \"abc\"}");
     doTest(schema, "{\"prop\": true}");
-    doTest(schema, "{\"prop\": <warning descr=\"Type is not allowed. Expected one of: boolean, string.\">11</warning>}");
+    doTest(schema, "{\"prop\": <warning descr=\"Incompatible types.\n Required one of: boolean, string. Actual: integer.\">11</warning>}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOfForTwoMatches() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
@@ -214,7 +222,6 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(schema, "{\"prop\": <warning descr=\"Validates to more than one variant\">\"a\"</warning>}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOfSelectError() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\",\n" +
@@ -225,10 +232,9 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     @Language("JSON") final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTest(schema, "{\"prop\": \"off\"}");
     doTest(schema, "{\"prop\": 12}");
-    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: [\\\"off\\\", \\\"warn\\\", \\\"error\\\"]\">\"wrong\"</warning>}");
+    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: \\\"off\\\", \\\"warn\\\", \\\"error\\\"\">\"wrong\"</warning>}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testAnyOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
@@ -237,16 +243,16 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(schema, "{\"prop\": \"b\"}");
     doTest(schema, "{\"prop\": \"c\"}");
     doTest(schema, "{\"prop\": \"a\"}");
+    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: \\\"a\\\", \\\"b\\\", \\\"c\\\"\">\"d\"</warning>}");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testAllOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"integer\", \"multipleOf\": 2}");
     subSchemas.add("{\"enum\": [1,2,3]}");
     @Language("JSON") final String schema = schema("{\"allOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTest(schema, "{\"prop\": <warning descr=\"Is not multiple of 2\">1</warning>}");
-    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: [1, 2, 3]\">4</warning>}");
+    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: 1, 2, 3\">4</warning>}");
     doTest(schema, "{\"prop\": 2}");
   }
 
@@ -273,15 +279,15 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   public void testInnerObjectPropValueInArray() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"type\": \"array\", \"items\": {\"enum\": [1,2,3]}}}}";
     doTest(schema, "{\"prop\": [1,3]}");
-    doTest(schema, "{\"prop\": [<warning descr=\"Value should be one of: [1, 2, 3]\">\"out\"</warning>]}");
+    doTest(schema, "{\"prop\": [<warning descr=\"Value should be one of: 1, 2, 3\">\"out\"</warning>]}");
   }
 
   public void testAllOfProperties() throws Exception {
     @Language("JSON") final String schema = "{\"allOf\": [{\"type\": \"object\", \"properties\": {\"first\": {}}}," +
                                                                                 " {\"properties\": {\"second\": {\"enum\": [33,44]}}}], \"additionalProperties\": false}";
-    doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: [33, 44]\">null</warning>}");
+    doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: 33, 44\">null</warning>}");
     doTest(schema, "{\"first\": {}, \"second\": 44, <warning descr=\"Property 'other' is not allowed\">\"other\": 15</warning>}");
-    doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: [33, 44]\">12</warning>}");
+    doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: 33, 44\">12</warning>}");
   }
 
   public void testWithWaySelection() throws Exception {
@@ -363,10 +369,10 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                             "}";
     doTest(schema, "{\n" +
                    "  \"Abezjana\": 2,\n" +
-                   "  \"Auto\": <warning descr=\"Type is not allowed. Expected: number.\">\"no\"</warning>,\n" +
-                   "  \"BAe\": <warning descr=\"Type is not allowed. Expected: boolean.\">22</warning>,\n" +
-                   "  \"Boloto\": <warning descr=\"Type is not allowed. Expected: boolean.\">2</warning>,\n" +
-                   "  \"Cyan\": <warning descr=\"Value should be one of: [\\\"test\\\", \\\"em\\\"]\">\"me\"</warning>\n" +
+                   "  \"Auto\": <warning descr=\"Incompatible types.\n Required: number. Actual: string.\">\"no\"</warning>,\n" +
+                   "  \"BAe\": <warning descr=\"Incompatible types.\n Required: boolean. Actual: integer.\">22</warning>,\n" +
+                   "  \"Boloto\": <warning descr=\"Incompatible types.\n Required: boolean. Actual: integer.\">2</warning>,\n" +
+                   "  \"Cyan\": <warning descr=\"Value should be one of: \\\"test\\\", \\\"em\\\"\">\"me\"</warning>\n" +
                    "}");
   }
 
@@ -384,10 +390,10 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                             "  }\n" +
                                             "}";
     doTest(schema, "{\n" +
-                   "  \"p1\": <warning descr=\"Type is not allowed. Expected: string.\">1</warning>,\n" +
+                   "  \"p1\": <warning descr=\"Incompatible types.\n Required: string. Actual: integer.\">1</warning>,\n" +
                    "  \"p2\": \"3\",\n" +
                    "  \"a2\": \"auto!\",\n" +
-                   "  \"a1\": <warning descr=\"Value should be one of: [\\\"auto!\\\"]\">\"moto!\"</warning>\n" +
+                   "  \"a1\": <warning descr=\"Value should be one of: \\\"auto!\\\"\">\"moto!\"</warning>\n" +
                    "}");
   }
 
@@ -448,10 +454,17 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                             "  }\n" +
                                             "}";
     doTest(schema, "{\n" +
-                   "  \"size\": <warning descr=\"Number of properties is greater than 3\">{\n" +
-                   "    \"a\": <warning descr=\"Type is not allowed. Expected: boolean.\">1</warning>," +
+                   "  \"size\": {\n" +
+                   "    \"a\": <warning descr=\"Incompatible types.\n Required: boolean. Actual: integer.\">1</warning>," +
                    " \"b\":3, \"c\": 4, " +
-                   "\"a\": <warning descr=\"Type is not allowed. Expected: boolean.\">5</warning>\n" +
+                   "\"a\": <warning descr=\"Incompatible types.\n Required: boolean. Actual: integer.\">5</warning>\n" +
+                   "  }\n" +
+                   "}");
+    doTest(schema, "{\n" +
+                   "  \"size\": <warning descr=\"Number of properties is greater than 3\">{\n" +
+                   "    \"a\": true," +
+                   " \"b\":3, \"c\": 4, " +
+                   "\"a\": false\n" +
                    "  }</warning>\n" +
                    "}");
   }
@@ -644,36 +657,6 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     return "{\"type\": \"object\", \"properties\": {\"prop\": " + s + "}}";
   }
 
-  private void doTest(@Language("JSON") @NotNull final String schema, @NotNull final String text) throws Exception {
-    enableInspectionTool(new JsonSchemaComplianceInspection());
-
-    final PsiFile file = createFile(myModule, "config.json", text);
-
-    registerProvider(getProject(), schema);
-    Disposer.register(getTestRootDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        JsonSchemaTestServiceImpl.setProvider(null);
-      }
-    });
-    configureByFile(file.getVirtualFile());
-    doTest(file.getVirtualFile(), true, false);
-  }
-
-  public void registerProvider(Project project, @NotNull String schema) throws IOException {
-    File dir = createTempDir("json_schema_test", true);
-    File child = new File(dir, "schema.json");
-    //noinspection ResultOfMethodCallIgnored
-    child.createNewFile();
-    FileUtil.writeToFile(child, schema);
-    VirtualFile schemaFile = getVirtualFile(child);
-    JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(schemaFile));
-    AreaPicoContainer container = Extensions.getArea(project).getPicoContainer();
-    String key = JsonSchemaService.class.getName();
-    container.unregisterComponent(key);
-    container.registerComponentImplementation(key, JsonSchemaTestServiceImpl.class);
-  }
-
   public void testExclusiveMinMaxV6() throws Exception {
     @Language("JSON") String exclusiveMinSchema = "{\"properties\": {\"prop\": {\"exclusiveMinimum\": 3}}}";
     doTest(exclusiveMinSchema, "{\"prop\": <warning>2</warning>}");
@@ -807,5 +790,376 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(schema, "[<warning>\"1\"</warning>, <warning>2</warning>]");
     doTest(schema, "[<warning>\"1\"</warning>, \"2\"]");
     doTest(schema, "[1, \"2\"]");
+  }
+
+  public void testOneOfInsideAllOf() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"foo\": {\n" +
+                                      "      \"allOf\": [\n" +
+                                      "        {\n" +
+                                      "          \"type\": \"object\"\n" +
+                                      "        }, {\n" +
+                                      "          \"oneOf\": [\n" +
+                                      "            {\n" +
+                                      "              \"type\": \"object\",\n" +
+                                      "              \"properties\": {\n" +
+                                      "                \"provider\": {\n" +
+                                      "                  \"enum\": [\"script\"]\n" +
+                                      "                },\n" +
+                                      "                \"foo21\": {}\n" +
+                                      "              }\n" +
+                                      "            },\n" +
+                                      "            {\n" +
+                                      "              \"type\": \"object\",\n" +
+                                      "              \"properties\": {\n" +
+                                      "                \"provider\": {\n" +
+                                      "                  \"enum\": [\"npm\"]\n" +
+                                      "                },\n" +
+                                      "                \"foo11\": {}\n" +
+                                      "              }\n" +
+                                      "            }\n" +
+                                      "          ]\n" +
+                                      "        }\n" +
+                                      "      ]\n" +
+                                      "    }\n" +
+                                      "  }\n" +
+                                      "}";
+
+    doTest(schema, "{\n" +
+                   "  \"foo\": {\n" +
+                   "    \"provider\": \"npm\"\n" +
+                   "  }\n" +
+                   "}");
+
+    doTest(schema, "{\n" +
+                   "  \"foo\": {\n" +
+                   "    \"provider\": \"script\"\n" +
+                   "  }\n" +
+                   "}");
+
+    doTest(schema, "{\n" +
+                   "  \"foo\": {\n" +
+                   "    \"provider\": <warning>\"etwasanderes\"</warning>\n" +
+                   "  }\n" +
+                   "}");
+  }
+
+  public void testOneOfBestChoiceSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/oneOfBestChoiceSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "  \"results\": [\n" +
+                       "    <warning descr=\"Missing required properties 'dateOfBirth', 'name'\">{\n" +
+                       "      \"type\": \"person\"\n" +
+                       "    }</warning>\n" +
+                       "  ]\n" +
+                       "}");
+  }
+
+  public void testAnyOfBestChoiceSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/anyOfBestChoiceSchema.json"));
+    doTest(schemaText, "[\n" +
+                       "  {\n" +
+                       "    \"directory\": \"/test\",\n" +
+                       "    \"arguments\": [\n" +
+                       "      \"a\"\n" +
+                       "    ],\n" +
+                       "    \"file\": <warning>\"\"</warning>\n" +
+                       "  }\n" +
+                       "] ");
+  }
+
+  public void testComplexOneOfSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/complexOneOfSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "    \"indentation\": \"tab\"\n" +
+                       "  }");
+    doTest(schemaText, "{\n" +
+                       "    \"indentation\": <warning>\"ttab\"</warning>\n" +
+                       "  }");
+  }
+
+  public void testEnumCasing() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"type\": \"object\",\n" +
+                                      "\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"name\": { \"type\": \"string\", \"enum\": [\"aa\", \"bb\"] }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\n" +
+                   "  \"name\": \"aa\"\n" +
+                   "}");
+    doTest(schema, "{\n" +
+                   "  \"name\": <warning>\"aA\"</warning>\n" +
+                   "}");
+  }
+
+  public void testEnumArrayValue() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"foo\": {\n" +
+                                      "      \"enum\": [ [{\"x\": 5}, [true], \"q\"] ]\n" +
+                                      "    }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\"foo\": <warning>5</warning>}");
+    doTest(schema, "{\"foo\": <warning>[ ]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}, true]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}, [true]]</warning>}");
+    doTest(schema, "{\"foo\": [  { \"x\"   :   5 }  ,  [ true ]  , \"q\"  ]}");
+  }
+
+  public void testEnumObjectValue() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"foo\": {\n" +
+                                      "      \"enum\": [ {\"x\": 5} ]\n" +
+                                      "    }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\"foo\": <warning>{}</warning>}");
+    doTest(schema, "{\"foo\": <warning>{\"x\": 4}</warning>}");
+    doTest(schema, "{\"foo\": <warning>{\"x\": true}</warning>}");
+    doTest(schema, "{\"foo\": { \r  \"x\"  : \t  5 \n  }}");
+  }
+
+  public void testIntersectingHighlightingRanges() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/avroSchema.json"));
+    doTest(schemaText, "<warning descr=\"Missing required property 'items'\">{\n" +
+                       "  \"type\": \"array\"\n" +
+                       "}</warning>");
+    doTest(schemaText, "{\n" +
+                       "  \"type\": <warning descr=\"Value should be one of: \\\"record\\\", \\\"enum\\\", \\\"array\\\", \\\"map\\\", \\\"fixed\\\"\">\"array2\"</warning>\n" +
+                       "}");
+  }
+
+  public void testMissingMultipleAltPropertySets() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/avroSchema.json"));
+    doTest(schemaText, "<warning descr=\"One of the following property sets is required: properties 'type' = record, 'fields', 'name', or properties 'type' = enum, 'name', 'symbols', or properties 'type' = array, 'items', or properties 'type' = map, 'values', or properties 'type' = fixed, 'name', 'size'\">{\n" +
+                       "  \n" +
+                       "}</warning>");
+  }
+
+  public void testValidateEnumVsPattern() throws Exception {
+    doTest("{\n" +
+           "  \"oneOf\": [\n" +
+           "        {\n" +
+           "            \"properties\": {\n" +
+           "                \"type\": {\n" +
+           "                    \"enum\": [\"library\"],\n" +
+           "                    \"pattern\": \".*\"\n" +
+           "                }\n" +
+           "            },\n" +
+           "            \"required\": [\"type\", \"name\", \"description\"]\n" +
+           "        },\n" +
+           "        {\n" +
+           "            \"properties\": {\n" +
+           "                \"type\": {\n" +
+           "                    \"not\": {\n" +
+           "                        \"enum\": [\"library\"]\n" +
+           "                    }\n" +
+           "                }\n" +
+           "            }\n" +
+           "        }\n" +
+           "    ]\n" +
+           "}", "{\n" +
+                "  \"type\": \"project\",\n" +
+                "  \"name\": \"asd\",\n" +
+                "  \"description\": \"asdasdqwdqw\"\n" +
+                "}");
+  }
+
+  public void testJsonPointerEscapes() throws Exception {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"q~q/q\": {\n" +
+           "      \"type\": \"string\"\n" +
+           "    },\n" +
+           "    \"a\": {\n" +
+           "      \"$ref\": \"#/properties/q~0q~1q\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"a\": <warning>1</warning>\n" +
+                "}");
+  }
+
+  public void testOneOfMultipleBranches() throws Exception {
+    doTest("{\n" +
+           "\t\"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
+           "\n" +
+           "\t\"type\": \"object\",\n" +
+           "\t\"oneOf\": [\n" +
+           "\t\t{\n" +
+           "\t\t\t\"properties\": {\n" +
+           "\t\t\t\t\"startTime\": {\n" +
+           "\t\t\t\t\t\"type\": \"string\"\n" +
+           "\t\t\t\t}\n" +
+           "\t\t\t}\n" +
+           "\t\t},\n" +
+           "\t\t{\n" +
+           "\t\t\t\"properties\": {\n" +
+           "\t\t\t\t\"startTime\": {\n" +
+           "\t\t\t\t\t\"type\": \"number\"\n" +
+           "\t\t\t\t}\n" +
+           "\t\t\t}\n" +
+           "\t\t}\n" +
+           "\t]\n" +
+           "}", "{\n" +
+                "  \"startTime\": <warning descr=\"Incompatible types.\n Required one of: number, string. Actual: null.\">null</warning>\n" +
+                "}");
+  }
+
+  public void testReferenceById() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"a\": {\n" +
+           "      \"$id\": \"#aa\",\n" +
+           "      \"type\": \"object\"\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"patternProperties\": {\n" +
+           "    \"aa\": {\n" +
+           "      \"type\": \"object\"\n" +
+           "    },\n" +
+           "    \"bb\": {\n" +
+           "      \"$ref\": \"#aa\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"aa\": {\n" +
+                "    \"type\": \"string\"\n" +
+                "  },\n" +
+                "  \"bb\": <warning>578</warning>\n" +
+                "}\n" +
+                "\n");
+  }
+
+  public void testComplicatedConditions() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/complicatedConditions_schema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/complicatedConditions.json"));
+    doTest(schemaText, inputText);
+  }
+
+  public void testExoticProps() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/exoticPropsSchema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/exoticProps.json"));
+    doTest(schemaText, inputText);
+  }
+
+  public void testLargeInt() throws Exception {
+    // currently we limit it by Java Long range, should be sufficient as per RFC 7159
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"integer\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"x\": 9223372036854775807\n" +
+                "}");
+  }
+
+  public void testMultipleIfThenElse() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/multipleIfThenElseSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"1600 Pennsylvania Avenue NW\",\n" +
+                       "  \"country\": \"United States of America\",\n" +
+                       "  \"postal_code\": \"20500\"\n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"1600 Pennsylvania Avenue NW\",\n" +
+                       "  \"country\": \"Netherlands\",\n" +
+                       "  \"postal_code\": <warning descr=\"String is violating the pattern: '[0-9]{4} [A-Z]{2}'\">\"20500\"</warning>\n" +
+                       "}");
+  }
+
+  public void testDeprecation() throws Exception {
+    doTest("{\"properties\": {\n" +
+           "    \"myPropertyXxx\": {\n" +
+           "      \"deprecationMessage\": \"Baz\",\n" +
+           "      \"description\": \"Foo bar\"\n" +
+           "    }\n" +
+           "  }}", "{ <weak_warning descr=\"Property 'myPropertyXxx' is deprecated: Baz\">\"myPropertyXxx\"</weak_warning>: \"a\" }");
+  }
+
+  public void testIfThenElseFlat() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/ifThenElseFlatSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"24 Sussex Drive\",\n" +
+                       "  \"country\": \"Canada\",\n" +
+                       "  \"postal_code\": \"K1M 1M4\" \n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"24 Sussex Drive\",\n" +
+                       "  \"country\": \"Canada\",\n" +
+                       "  \"postal_code\": <warning descr=\"String is violating the pattern: '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'\">\"1K1M1M4\"</warning> \n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"24 Madison Cube Garden NYC\",\n" +
+                       "  \"country\": \"United States of America\",\n" +
+                       "  \"postal_code\": \"11222-1111-1111\"\n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"24 Madison Cube Garden NYC\",\n" +
+                       "  \"country\": \"United States of America\",\n" +
+                       "  \"postal_code\": <warning descr=\"String is violating the pattern: '[0-9]{5}(-[0-9]{4})?'\">\"1-1111-1111\"</warning>\n" +
+                       "}");
+  }
+
+  public void testProhibitAdditionalPropsAlternateBranches() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/prohibitedAlternateBranchesSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "  \"subject\": {\n" +
+                       "    \"discriminator\": \"first\",\n" +
+                       "    \"first\": false,\n" +
+                       "    <warning descr=\"Property 'second' is not allowed\">\"second\": false</warning>\n" +
+                       "  }\n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"subject\": {\n" +
+                       "    \"discriminator\": \"second\",\n" +
+                       "    <warning descr=\"Property 'first' is not allowed\">\"first\": false</warning>,\n" +
+                       "    \"second\": false\n" +
+                       "  }\n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"subject\": {\n" +
+                       "    \"discriminator\": \"second\",\n" +
+                       "    \"second\": false\n" +
+                       "  }\n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"subject\": {\n" +
+                       "    \"discriminator\": \"first\",\n" +
+                       "    \"first\": false\n" +
+                       "  }\n" +
+                       "}");
+  }
+
+  public void testPropertyNamesRef() throws Exception {
+    doTest("{\n" +
+           "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
+           "  \"definitions\": {\n" +
+           "    \"Ref\": {\n" +
+           "      \"enum\": [\"a\", \"b\", \"c\"]\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"patternProperties\": {\n" +
+           "    \".*\": {\n" +
+           "      \"propertyNames\": {\n" +
+           "        \"$ref\": \"#/definitions/Ref\"\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"Name\": {\n" +
+                "    <warning>\"d\"</warning>: \"a\"\n" +
+                "  }\n" +
+                "}");
   }
 }

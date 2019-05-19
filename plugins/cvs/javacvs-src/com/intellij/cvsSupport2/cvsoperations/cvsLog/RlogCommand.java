@@ -41,13 +41,14 @@ public class RlogCommand extends AbstractCommand {
   private String myDateTo;
   private String myDateFrom;
   private boolean mySuppressEmptyHeaders = true;
-  
+
   private String myBranchName = null;
   private boolean myLogDefaultBranch = false;
   private String[] myRevisions = null;
 
   // Implemented ============================================================
 
+  @Override
   public final boolean execute(IRequestProcessor requestProcessor,
                                IEventSender eventSender,
                                ICvsListenerRegistry listenerRegistry,
@@ -64,7 +65,7 @@ public class RlogCommand extends AbstractCommand {
     if (revisionFilter != null) {
       requests.addArgumentRequest("-r" + revisionFilter);
     } else if (myBranchName != null) {
-      requests.addArgumentRequest("-r" + myBranchName);          
+      requests.addArgumentRequest("-r" + myBranchName);
     }
 
     requests.addArgumentRequest(myLogDefaultBranch, "-b");
@@ -125,6 +126,7 @@ public class RlogCommand extends AbstractCommand {
   }
 
 
+  @Override
   public final String getCvsCommandLine() {
     //noinspection HardCodedStringLiteral
     final StringBuffer cvsCommandLine = new StringBuffer("rlog ");
@@ -133,6 +135,7 @@ public class RlogCommand extends AbstractCommand {
     return cvsCommandLine.toString();
   }
 
+  @Override
   public final void resetCvsCommand() {
     super.resetCvsCommand();
     setRecursive(true);
@@ -166,6 +169,7 @@ public class RlogCommand extends AbstractCommand {
 
   // Utils ==================================================================
 
+  @Override
   protected final void addModifiedRequest(FileObject fileObject, Entry entry, Requests requests, IClientEnvironment clientEnvironment) {
     requests.addIsModifiedRequest(fileObject);
   }

@@ -384,7 +384,8 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   }
 
   private static TypeElement asTypeElement(TypeMirror typeMirror, Types typeUtility) {
-    if (typeMirror instanceof PrimitiveType) {
+    // in jdk6 the line above isn't equivalent to <code>typeMirror instanceof PrimitiveType</code>
+    if (typeMirror.getKind().isPrimitive()) {
       return typeUtility.boxedClass((PrimitiveType)typeMirror);
     }
     Element element = typeUtility.asElement(typeMirror);
@@ -392,11 +393,11 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   }
 
   private static boolean isToStringImplicitCall(TypeElement strElement, TypeElement element, JavacReferenceCollectorListener.ReferenceCollector collector) {
-    TypeElement stringEthalone = collector.getNameTable().getStringElement();
-    return strElement == stringEthalone && element != stringEthalone;
+    TypeElement string = collector.getNameTable().getStringElement();
+    return strElement == string && element != string;
   }
 
-  private static void visitTypeHierarchy(TypeElement element, Set<TypeElement> collector, Types typeUtility) {
+  private static void visitTypeHierarchy(TypeElement element, Set<? super TypeElement> collector, Types typeUtility) {
     if (collector.add(element)) {
       TypeMirror superclass = element.getSuperclass();
       Element superClass = typeUtility.asElement(superclass);

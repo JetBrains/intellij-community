@@ -20,6 +20,9 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 public class BackgroundableActionLock {
   @NotNull private final Project myProject;
   @NotNull private final Object[] myKeys;
@@ -68,5 +71,22 @@ public class BackgroundableActionLock {
   @NotNull
   private static ProjectLevelVcsManagerImpl getManager(@NotNull Project project) {
     return (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    BackgroundableActionLock lock = (BackgroundableActionLock)o;
+    return myProject.equals(lock.myProject) &&
+           Arrays.equals(myKeys, lock.myKeys);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hash(myProject);
+    result = 31 * result + Arrays.hashCode(myKeys);
+    return result;
   }
 }

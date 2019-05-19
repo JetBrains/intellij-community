@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <problems>
   <problem>
-    <file>testSimple.iml</file>
+    <file>light_idea_test_case</file>
     <problem_class>Unused library</problem_class>
     <description>Unused library 'JUnit'</description>
   </problem>

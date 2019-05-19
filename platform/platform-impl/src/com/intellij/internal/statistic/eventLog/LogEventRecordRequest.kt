@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.eventLog
 
 import com.google.gson.JsonSyntaxException
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.diagnostic.Logger
 import java.io.BufferedReader
 import java.io.File
@@ -11,30 +10,36 @@ import java.io.FileReader
 import java.io.IOException
 import java.util.*
 
-class LogEventRecordRequest(val product : String, val user: String, val records: List<LogEventRecord>) {
+class LogEventRecordRequest(val recorder: String, val product : String, val device: String, val records: List<LogEventRecord>, val internal: Boolean) {
 
   companion object {
     private const val RECORD_SIZE = 1000 * 1000 // 1000KB
     private val LOG = Logger.getInstance(LogEventRecordRequest::class.java)
 
-    fun create(file: File): LogEventRecordRequest? {
-      return create(file, ApplicationInfo.getInstance().build.productCode, PermanentInstallationID.get(), RECORD_SIZE)
+    fun create(file: File, recorder: String, filter: LogEventFilter, internal: Boolean): LogEventRecordRequest? {
+      try {
+        return create(file, recorder, ApplicationInfo.getInstance().build.productCode, EventLogConfiguration.deviceId, RECORD_SIZE, filter, internal)
+      }
+      catch (e: Exception) {
+        LOG.warn("Failed reading event log file", e)
+        return null
+      }
     }
 
-    fun create(file: File, product: String, user: String, maxRecordSize: Int): LogEventRecordRequest? {
+    fun create(file: File, recorder: String, product: String, user: String, maxRecordSize: Int, filter: LogEventFilter, internal: Boolean): LogEventRecordRequest? {
       try {
         val records = ArrayList<LogEventRecord>()
         BufferedReader(FileReader(file.path)).use { reader ->
           val sizeEstimator = LogEventRecordSizeEstimator(product, user)
           var events = ArrayList<LogEvent>()
-          var line = fillNextBatch(reader, reader.readLine(), events, sizeEstimator, maxRecordSize)
+          var line = fillNextBatch(reader, reader.readLine(), events, sizeEstimator, maxRecordSize, filter)
           while (!events.isEmpty()) {
             records.add(LogEventRecord(events))
             events = ArrayList()
-            line = fillNextBatch(reader, line, events, sizeEstimator, maxRecordSize)
+            line = fillNextBatch(reader, line, events, sizeEstimator, maxRecordSize, filter)
           }
         }
-        return LogEventRecordRequest(product, user, records)
+        return LogEventRecordRequest(recorder, product, user, records, internal)
       }
       catch (e: JsonSyntaxException) {
         LOG.warn(e)
@@ -49,12 +54,16 @@ class LogEventRecordRequest(val product : String, val user: String, val records:
                               firstLine: String?,
                               events: MutableList<LogEvent>,
                               estimator: LogEventRecordSizeEstimator,
-                              maxRecordSize: Int) : String? {
+                              maxRecordSize: Int,
+                              filter: LogEventFilter) : String? {
       var recordSize = 0
       var line = firstLine
       while (line != null && recordSize + estimator.estimate(line) < maxRecordSize) {
-        recordSize += estimator.estimate(line)
-        events.add(LogEventSerializer.fromString(line))
+        val event = LogEventSerializer.fromString(line)
+        if (event != null && filter.accepts(event)) {
+          recordSize += estimator.estimate(line)
+          events.add(event)
+        }
         line = reader.readLine()
       }
       return line
@@ -67,16 +76,20 @@ class LogEventRecordRequest(val product : String, val user: String, val records:
 
     other as LogEventRecordRequest
 
+    if (recorder != other.recorder) return false
     if (product != other.product) return false
-    if (user != other.user) return false
+    if (device != other.device) return false
+    if (internal != other.internal) return false
     if (records != other.records) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = product.hashCode()
-    result = 31 * result + user.hashCode()
+    var result = recorder.hashCode()
+    result = 31 * result + product.hashCode()
+    result = 31 * result + device.hashCode()
+    result = 31 * result + internal.hashCode()
     result = 31 * result + records.hashCode()
     return result
   }

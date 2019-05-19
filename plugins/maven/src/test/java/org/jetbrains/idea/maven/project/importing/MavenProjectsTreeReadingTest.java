@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -626,7 +627,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     try {
       myTree.addListener(new MavenProjectsTree.Listener() {
         @Override
-        public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+        public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                     NativeMavenProjectHolder nativeMavenProject) {
           nativeProject.add(nativeMavenProject);
         }
@@ -676,7 +677,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       final NativeMavenProjectHolder[] nativeProject = new NativeMavenProjectHolder[1];
       myTree.addListener(new MavenProjectsTree.Listener() {
         @Override
-        public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+        public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                     NativeMavenProjectHolder nativeMavenProject) {
           nativeProject[0] = nativeMavenProject;
         }
@@ -1949,7 +1950,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   }
 
   public void testCollectingProfilesFromParentsAfterResolve() throws Exception {
-    MavenServerManager.getInstance().setUseMaven2(true);
+    MavenServerManager.getInstance().setUseMaven2();
 
     createModulePom("parent1",
                     "<groupId>test</groupId>" +
@@ -2240,7 +2241,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     String log = "";
 
     @Override
-    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+    public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
       append(MavenUtil.collectFirsts(updated), "updated:");
       append(deleted, "deleted:");
     }
@@ -2255,18 +2256,18 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     }
 
     @Override
-    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                 NativeMavenProjectHolder nativeMavenProject) {
       log += "resolved: " + projectWithChanges.first.getMavenId().getArtifactId() + " ";
     }
 
     @Override
-    public void pluginsResolved(MavenProject project) {
+    public void pluginsResolved(@NotNull MavenProject project) {
       log += "plugins: " + project.getMavenId().getArtifactId() + " ";
     }
 
     @Override
-    public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+    public void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
       log += "folders: " + projectWithChanges.first.getMavenId().getArtifactId() + " ";
     }
   }

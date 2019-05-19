@@ -42,7 +42,7 @@ public class InheritConstructorContributor implements AstTransformationSupport {
       for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
         String name = StringUtil.notNullize(parameter.getName());
         PsiType type = superClassSubstitutor.substitute(parameter.getType());
-        inheritedConstructor.addParameter(name, type, false);
+        inheritedConstructor.addParameter(name, type);
       }
       context.addMethod(inheritedConstructor);
     }

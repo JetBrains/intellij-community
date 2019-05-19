@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 
 /**
- * @deprecated use nothing or {@link ALWAYS_BACKGROUND} instead
+ * @deprecated use nothing or {@link PerformInBackgroundOption#ALWAYS_BACKGROUND} instead
  */
 @Deprecated
 public class BackgroundFromStartOption implements PerformInBackgroundOption {

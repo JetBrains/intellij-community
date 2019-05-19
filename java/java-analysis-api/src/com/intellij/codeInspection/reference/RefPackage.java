@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
  * A node in the reference graph corresponding to a Java package.
  *
  * @author anna
- * @since 6.0
  * @see RefJavaManager#getPackage
  */
 public interface RefPackage extends RefEntity {

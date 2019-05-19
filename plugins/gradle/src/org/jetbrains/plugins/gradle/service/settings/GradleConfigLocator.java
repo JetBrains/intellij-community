@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -5,13 +6,13 @@ import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfig
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.GradleConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,9 +20,8 @@ import java.util.List;
  * ({@link GradleConnector#forProjectDirectory(File)}).
  * <p/>
  * That's why we need to provide special code which maps that directory to exact config file.
- * 
+ *
  * @author Denis Zhdanov
- * @since 7/16/13 3:43 PM
  */
 public class GradleConfigLocator implements ExternalSystemConfigLocator {
 
@@ -42,13 +42,19 @@ public class GradleConfigLocator implements ExternalSystemConfigLocator {
     if (result != null) {
       return result;
     }
-    
+    result = configPath.findChild(GradleConstants.KOTLIN_DSL_SCRIPT_NAME);
+    if (result != null) {
+      return result;
+    }
+
     for (VirtualFile child : configPath.getChildren()) {
       String name = child.getName();
-      if (!name.endsWith(GradleConstants.EXTENSION)) {
+      if (!name.endsWith(GradleConstants.EXTENSION) || !name.endsWith(GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)) {
         continue;
       }
-      if (!GradleConstants.SETTINGS_FILE_NAME.equals(name) && !child.isDirectory()) {
+      if (!GradleConstants.SETTINGS_FILE_NAME.equals(name) &&
+          !GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME.equals(name) &&
+          !child.isDirectory()) {
         return child;
       }
     }
@@ -58,7 +64,7 @@ public class GradleConfigLocator implements ExternalSystemConfigLocator {
   @NotNull
   @Override
   public List<VirtualFile> findAll(@NotNull ExternalProjectSettings externalProjectSettings) {
-    List<VirtualFile> list = ContainerUtil.newArrayList();
+    List<VirtualFile> list = new ArrayList<>();
     for (String path : externalProjectSettings.getModules()) {
       VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
       if (vFile != null) {

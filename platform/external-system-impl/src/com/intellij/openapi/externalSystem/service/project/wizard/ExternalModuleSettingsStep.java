@@ -30,7 +30,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 6/26/13 1:38 PM
  */
 public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> extends ModuleWizardStep {
 
@@ -61,7 +60,7 @@ public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> exten
     if (result == null) {
       result = new PaintAwarePanel();
       myControl.fillUi(result, 0);
-      myControl.reset(true);
+      myControl.reset(true, null);
       ExternalSystemUiUtil.fillBottom(result);
       myComponent = result;
     }
@@ -89,7 +88,7 @@ public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> exten
     if (contentPath != null) {
       myControl.getInitialSettings().setExternalProjectPath(contentPath);
     }
-    myControl.reset(true, myContext);
+    myControl.reset(true, myContext, null);
   }
 
   @Override

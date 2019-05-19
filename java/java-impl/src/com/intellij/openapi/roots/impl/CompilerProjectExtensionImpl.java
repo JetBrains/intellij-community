@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -23,59 +8,54 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.WatchedRootsProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import java.util.HashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
-  @NonNls private static final String OUTPUT_TAG = "output";
-  @NonNls private static final String URL = "url";
+  private static final String OUTPUT_TAG = "output";
+  private static final String URL = "url";
 
   private VirtualFilePointer myCompilerOutput;
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
   private final Project myProject;
 
-  public CompilerProjectExtensionImpl(final Project project) {
+  public CompilerProjectExtensionImpl(@NotNull Project project) {
     myProject = project;
   }
 
-  private void readExternal(final Element element) {
-    final Element outputPathChild = element.getChild(OUTPUT_TAG);
-    if (outputPathChild != null) {
-      String outputPath = outputPathChild.getAttributeValue(URL);
-      myCompilerOutput = VirtualFilePointerManager.getInstance().create(outputPath, myProject, null);
+  private void readExternal(Element element) {
+    Element pathElement = element.getChild(OUTPUT_TAG);
+    if (pathElement != null) {
+      String outputPath = pathElement.getAttributeValue(URL);
+      myCompilerOutput = outputPath != null ? VirtualFilePointerManager.getInstance().create(outputPath, myProject, null) : null;
     }
   }
 
-  private void writeExternal(final Element element) {
+  private void writeExternal(Element element) {
     if (myCompilerOutput != null) {
-      final Element pathElement = new Element(OUTPUT_TAG);
+      Element pathElement = new Element(OUTPUT_TAG);
       pathElement.setAttribute(URL, myCompilerOutput.getUrl());
       element.addContent(pathElement);
     }
   }
 
   @Override
-  @Nullable
   public VirtualFile getCompilerOutput() {
-    if (myCompilerOutput == null) return null;
-    return myCompilerOutput.getFile();
+    return myCompilerOutput != null ? myCompilerOutput.getFile() : null;
   }
 
   @Override
-  @Nullable
   public String getCompilerOutputUrl() {
-    if (myCompilerOutput == null) return null;
-    return myCompilerOutput.getUrl();
+    return myCompilerOutput != null ? myCompilerOutput.getUrl() : null;
   }
 
   @Override
@@ -97,37 +77,43 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   }
 
   @NotNull
-  private Set<String> getRootsToWatch() {
-    final Set<String> rootsToWatch = new HashSet<>();
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      final String compilerOutputPath = ProjectRootManagerImpl.extractLocalPath(CompilerModuleExtension.getInstance(module).getCompilerOutputUrl());
-      if (compilerOutputPath.length() > 0) {
-        rootsToWatch.add(compilerOutputPath);
+  private static Set<String> getRootsToWatch(Project project) {
+    Set<String> rootsToWatch = new HashSet<>();
+
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+      if (extension == null) continue;
+
+      String outputUrl = extension.getCompilerOutputUrl();
+      if (!StringUtil.isEmpty(outputUrl)) {
+        rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(outputUrl));
       }
-      final String compilerOutputPathForTests =
-        ProjectRootManagerImpl.extractLocalPath(CompilerModuleExtension.getInstance(module).getCompilerOutputUrlForTests());
-      if (compilerOutputPathForTests.length() > 0) {
-        rootsToWatch.add(compilerOutputPathForTests);
+
+      String testOutputUrl = extension.getCompilerOutputUrlForTests();
+      if (!StringUtil.isEmpty(testOutputUrl)) {
+        rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(testOutputUrl));
       }
     }
 
-    if (myCompilerOutput != null) {
-      final String url = myCompilerOutput.getUrl();
-      rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(url));
+    CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
+    if (extension != null) {
+      String compilerOutputUrl = extension.getCompilerOutputUrl();
+      if (compilerOutputUrl != null) {
+        rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(compilerOutputUrl));
+      }
     }
+
     return rootsToWatch;
   }
 
-  private static CompilerProjectExtensionImpl getImpl(final Project project) {
+  private static CompilerProjectExtensionImpl getImpl(Project project) {
     return (CompilerProjectExtensionImpl)CompilerProjectExtension.getInstance(project);
   }
 
   public static class MyProjectExtension extends ProjectExtension {
     private final Project myProject;
 
-    public MyProjectExtension(final Project project) {
-
+    public MyProjectExtension(Project project) {
       myProject = project;
     }
 
@@ -145,14 +131,14 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   public static class MyWatchedRootsProvider implements WatchedRootsProvider {
     private final Project myProject;
 
-    public MyWatchedRootsProvider(final Project project) {
+    public MyWatchedRootsProvider(Project project) {
       myProject = project;
     }
 
     @Override
     @NotNull
     public Set<String> getRootsToWatch() {
-      return getImpl(myProject).getRootsToWatch();
+      return CompilerProjectExtensionImpl.getRootsToWatch(myProject);
     }
   }
 }

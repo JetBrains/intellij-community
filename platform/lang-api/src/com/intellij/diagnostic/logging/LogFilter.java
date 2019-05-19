@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -87,7 +88,7 @@ public class LogFilter implements JDOMExternalizable {
       }
 
       if (image != null){
-        return IconLoader.getIcon(image);
+        return new JBImageIcon(image);
       }
     }
     //return IconLoader.getIcon("/ant/filter.png");

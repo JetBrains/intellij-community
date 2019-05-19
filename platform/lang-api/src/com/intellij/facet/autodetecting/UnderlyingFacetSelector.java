@@ -26,6 +26,7 @@ import java.util.Collection;
  *
  * @author nik
  */
+@Deprecated
 public abstract class UnderlyingFacetSelector<T, U extends FacetConfiguration> {
 
   @Nullable
