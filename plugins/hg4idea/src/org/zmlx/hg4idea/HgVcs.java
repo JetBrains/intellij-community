@@ -129,7 +129,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     updateEnvironment = new HgUpdateEnvironment(project);
     committedChangesProvider = new HgCommittedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
-    myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
+    myCommitAndPushExecutor = new HgCommitAndPushExecutor();
     myMqNewExecutor = new HgMQNewExecutor(checkinEnvironment);
     myCloseBranchExecutor = new HgCloseBranchExecutor(checkinEnvironment);
   }

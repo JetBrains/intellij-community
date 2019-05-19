@@ -23,6 +23,8 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import java.util.*
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 
 private val LOG = logger<AbstractCommitWorkflow>()
 
@@ -30,12 +32,15 @@ internal fun CommitOptions.saveState() = allOptions.forEach { it.saveState() }
 internal fun CommitOptions.restoreState() = allOptions.forEach { it.restoreState() }
 internal fun CommitOptions.refresh() = allOptions.forEach { it.refresh() }
 
+private class CommitProperty<T>(private val key: Key<T>, private val defaultValue: T) : ReadWriteProperty<CommitContext, T> {
+  override fun getValue(thisRef: CommitContext, property: KProperty<*>): T = thisRef.getUserData(key) ?: defaultValue
+  override fun setValue(thisRef: CommitContext, property: KProperty<*>, value: T) = thisRef.putUserData(key, value)
+}
+
+fun commitProperty(key: Key<Boolean>): ReadWriteProperty<CommitContext, Boolean> = CommitProperty(key, false)
+
 private val IS_AMEND_COMMIT_MODE_KEY = Key.create<Boolean>("Vcs.Commit.IsAmendCommitMode")
-var CommitContext.isAmendCommitMode: Boolean
-  get() = getUserData(IS_AMEND_COMMIT_MODE_KEY) == true
-  set(value) {
-    putUserData(IS_AMEND_COMMIT_MODE_KEY, value)
-  }
+var CommitContext.isAmendCommitMode: Boolean by commitProperty(IS_AMEND_COMMIT_MODE_KEY)
 
 interface CommitWorkflowListener : EventListener {
   fun vcsesChanged()
