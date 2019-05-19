@@ -98,16 +98,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     myBigRepositoriesList = VcsLogBigRepositoriesList.getInstance();
     myIndexCollector = VcsLogIndexCollector.getInstance(myProject);
 
-    myIndexers = new HashMap<>();
-    myRoots = new LinkedHashSet<>();
-    for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
-      VirtualFile root = entry.getKey();
-      VcsLogProvider provider = entry.getValue();
-      if (VcsLogProperties.get(provider, VcsLogProperties.SUPPORTS_INDEXING) && provider instanceof VcsIndexableLogProvider) {
-        myIndexers.put(root, ((VcsIndexableLogProvider)provider).getIndexer());
-        myRoots.add(root);
-      }
-    }
+    myIndexers = getAvailableIndexers(providers);
+    myRoots = new LinkedHashSet<>(myIndexers.keySet());
 
     VcsUserRegistry userRegistry = ServiceManager.getService(myProject, VcsUserRegistry.class);
 
@@ -305,6 +297,24 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
   @Override
   public void dispose() {
+  }
+
+  @NotNull
+  private static Map<VirtualFile, VcsLogIndexer> getAvailableIndexers(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    Map<VirtualFile, VcsLogIndexer> indexers = new LinkedHashMap<>();
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
+      VirtualFile root = entry.getKey();
+      VcsLogProvider provider = entry.getValue();
+      if (VcsLogProperties.get(provider, VcsLogProperties.SUPPORTS_INDEXING) && provider instanceof VcsIndexableLogProvider) {
+        indexers.put(root, ((VcsIndexableLogProvider)provider).getIndexer());
+      }
+    }
+    return indexers;
+  }
+
+  @NotNull
+  public static Set<VirtualFile> getRootsForIndexing(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    return getAvailableIndexers(providers).keySet();
   }
 
   static class IndexStorage implements Disposable {
@@ -662,11 +672,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                                                  NotificationType.INFORMATION, null);
       notification.addAction(NotificationAction.createSimple("Resume", () -> {
         myIndexCollector.reportResumeClick();
-        if (myBigRepositoriesList.isBig(myRoot)) {
-          LOG.info("Resuming indexing " + myRoot.getName());
-          myBigRepositoriesList.removeRepository(myRoot);
-          scheduleIndex(false);
-        }
+        LOG.info("Resuming indexing for " + myRoot.getName());
+        if (myBigRepositoriesList.removeRepository(myRoot)) scheduleIndex(false);
         notification.expire();
       }));
       notification.setContextHelpAction(new DumbAwareAction("Why is it helpful?",
