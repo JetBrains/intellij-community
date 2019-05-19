@@ -15,6 +15,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -121,5 +122,10 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
 
   public PsiFile createLightFile(String fileName, Language language, String text) {
     return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, language, text, false, true);
+  }
+
+  @NotNull
+  protected Module getModule() {
+    return myFixture.getModule();
   }
 }
