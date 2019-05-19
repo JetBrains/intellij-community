@@ -9,6 +9,7 @@ import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -20,6 +21,7 @@ import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import git4idea.DialogManager;
+import git4idea.config.GitVcsApplicationSettings;
 import git4idea.remote.GitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
 import git4idea.remote.GitRepositoryHostingService;
@@ -53,6 +55,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final GitAuthenticationMode myAuthenticationMode;
 
   @Nullable private ProviderAndData myProviderAndData = null;
+
+  private boolean myCredentialHelperShouldBeUsed = false;
 
   GitHttpGuiAuthenticator(@NotNull Project project,
                           @NotNull Collection<String> urls,
@@ -136,8 +140,17 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
         myAuthenticationGate.cancel();
         return new ProviderAndData(new CancelledProvider(unifiedUrl), "", "");
       }
+      catch (CredentialHelperShouldBeUsedException e) {
+        myAuthenticationGate.cancel();
+        myCredentialHelperShouldBeUsed = true;
+        return null;
+      }
     });
   }
+
+  static class CredentialHelperShouldBeUsedException extends RuntimeException implements ControlFlowException {
+  }
+
 
   @NotNull
   private List<AuthDataProvider> getProviders(@NotNull String unifiedUrl) {
@@ -175,6 +188,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   @Override
   public boolean wasCancelled() {
+    if (myCredentialHelperShouldBeUsed) {
+      return false;
+    }
     return myProviderAndData != null && myProviderAndData.getProvider() instanceof CancelledProvider;
   }
 
@@ -329,6 +345,11 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       LOG.debug("Showed dialog:" + (dialog.isOK() ? "OK" : "Cancel"));
       if (!dialog.isOK()) {
         myCancelled = true;
+        if (dialog.getExitCode() == GitHttpLoginDialog.USE_CREDENTIAL_HELPER_CODE) {
+          LOG.debug("Credential helper is enabled");
+          GitVcsApplicationSettings.getInstance().setUseCredentialHelper(true);
+          throw new CredentialHelperShouldBeUsedException();
+        }
         throw new ProcessCanceledException();
       }
       myPasswordSafeDelegate.setRememberPassword(dialog.getRememberPassword());
