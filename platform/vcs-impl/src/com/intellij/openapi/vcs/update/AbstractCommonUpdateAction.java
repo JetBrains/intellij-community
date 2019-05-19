@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcs.ViewUpdateInfoNotification;
@@ -513,41 +512,42 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
 
       final boolean updateSuccess = !someSessionWasCancelled && myGroupedExceptions.isEmpty();
 
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
-        if (myProject.isDisposed()) {
-          StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
-          return;
-        }
+      if (myProject.isDisposed()) {
+        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+        return;
+      }
 
-        if (!myGroupedExceptions.isEmpty()) {
-          if (continueChainFinal) {
-            gatherContextInterruptedMessages();
-          }
-          AbstractVcsHelper.getInstance(myProject).showErrors(myGroupedExceptions, VcsBundle.message("message.title.vcs.update.errors",
-                                                                                                     getTemplatePresentation().getText()));
+      if (!myGroupedExceptions.isEmpty()) {
+        if (continueChainFinal) {
+          gatherContextInterruptedMessages();
         }
-        else if (someSessionWasCancelled) {
-          ProgressManager.progress(VcsBundle.message("progress.text.updating.canceled"));
+        AbstractVcsHelper.getInstance(myProject).showErrors(myGroupedExceptions, VcsBundle.message("message.title.vcs.update.errors",
+                                                                                                   getTemplatePresentation().getText()));
+      }
+      else if (someSessionWasCancelled) {
+        ProgressManager.progress(VcsBundle.message("progress.text.updating.canceled"));
+      }
+      else {
+        ProgressManager.progress(VcsBundle.message("progress.text.updating.done"));
+      }
+
+      final boolean noMerged = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty();
+      if (myUpdatedFiles.isEmpty() && myGroupedExceptions.isEmpty()) {
+        NotificationType type;
+        String content;
+        if (someSessionWasCancelled) {
+          content = VcsBundle.message("progress.text.updating.canceled");
+          type = NotificationType.WARNING;
         }
         else {
-          ProgressManager.progress(VcsBundle.message("progress.text.updating.done"));
+          content = getAllFilesAreUpToDateMessage(myRoots);
+          type = NotificationType.INFORMATION;
         }
+        VcsNotifier.getInstance(myProject).notify(STANDARD_NOTIFICATION.createNotification(content, type));
+      }
+      else if (!myUpdatedFiles.isEmpty()) {
 
-        final boolean noMerged = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty();
-        if (myUpdatedFiles.isEmpty() && myGroupedExceptions.isEmpty()) {
-          NotificationType type;
-          String content;
-          if (someSessionWasCancelled) {
-            content = VcsBundle.message("progress.text.updating.canceled");
-            type = NotificationType.WARNING;
-          }
-          else {
-            content = getAllFilesAreUpToDateMessage(myRoots);
-            type = NotificationType.INFORMATION;
-          }
-          VcsNotifier.getInstance(myProject).notify(STANDARD_NOTIFICATION.createNotification(content, type));
-        }
-        else if (!myUpdatedFiles.isEmpty()) {
+
           final UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
           final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
           cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
@@ -557,19 +557,19 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
           VcsNotifier.getInstance(myProject).notify(notification);
         }
 
-        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
 
-        if (continueChainFinal && updateSuccess) {
-          if (!noMerged) {
-            showContextInterruptedError();
-          }
-          else {
-            // trigger next update; for CVS when updating from several branches simultaneously
-            reset();
-            ProgressManager.getInstance().run(this);
-          }
+      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+
+      if (continueChainFinal && updateSuccess) {
+        if (!noMerged) {
+          showContextInterruptedError();
         }
-      }, null, myProject);
+        else {
+          // trigger next update; for CVS when updating from several branches simultaneously
+          reset();
+          ProgressManager.getInstance().run(this);
+        }
+      }
     }
 
 
