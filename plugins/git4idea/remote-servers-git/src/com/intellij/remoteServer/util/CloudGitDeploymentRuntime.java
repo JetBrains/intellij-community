@@ -72,7 +72,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
       @NotNull
       @Override
-      public CommitSession createCommitSession() {
+      public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
         return CommitSession.VCS_COMMIT;
       }
     },
@@ -87,7 +87,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
       @NotNull
       @Override
-      public CommitSession createCommitSession() {
+      public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
         return NO_COMMIT;
       }
 

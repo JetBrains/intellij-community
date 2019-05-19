@@ -24,6 +24,18 @@ public interface CommitExecutor {
     return false;
   }
 
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @NotNull
-  CommitSession createCommitSession();
+  default CommitSession createCommitSession() {
+    throw new AbstractMethodError();
+  }
+
+  @SuppressWarnings("deprecation")
+  @NotNull
+  default CommitSession createCommitSession(@NotNull CommitContext commitContext) {
+    CommitSession commitSession = createCommitSession();
+    if (commitSession instanceof CommitSessionContextAware) ((CommitSessionContextAware)commitSession).setContext(commitContext);
+    return commitSession;
+  }
 }

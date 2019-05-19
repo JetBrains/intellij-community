@@ -11,10 +11,10 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
+import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
 
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
 private fun String.fixUnderscoreMnemonic() = replace('_', '&')
@@ -83,7 +83,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun getExecutor(executorId: String): CommitExecutor? = null
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean = false
   override fun execute(executor: CommitExecutor) {
-    val session = executor.createCommitSession()
+    val session = executor.createCommitSession(commitContext)
 
     if (session === CommitSession.VCS_COMMIT) {
       executeDefault(executor)
@@ -114,7 +114,6 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     if (!saveCommitOptions()) return
     saveCommitMessage(true)
 
-    (session as? CommitSessionContextAware)?.setContext(commitContext)
     refreshChanges {
       updateWorkflow()
       doExecuteCustom(executor, session)
