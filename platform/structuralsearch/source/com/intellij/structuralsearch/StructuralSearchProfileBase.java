@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
  * @author Eugene.Kudelevsky
  */
 public abstract class StructuralSearchProfileBase extends StructuralSearchProfile {
-  private static final String DELIMETER_CHARS = ",;.[]{}():";
+  private static final String DELIMITER_CHARS = ",;.[]{}():";
   protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
 
   @Override
@@ -57,8 +57,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         if (DuplocatorUtil.isIgnoredNode(element)) {
           return;
         }
-        CompiledPattern pattern = globalVisitor.getContext().getPattern();
-        MatchingHandler handler = pattern.getHandler(element);
+        final CompiledPattern pattern = globalVisitor.getContext().getPattern();
+        final MatchingHandler handler = pattern.getHandler(element);
 
         if (!(handler instanceof SubstitutionHandler) &&
             !(handler instanceof TopLevelMatchingHandler) &&
@@ -73,7 +73,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         depth matching won't be done!;
          */
         if (handler instanceof LightTopLevelMatchingHandler) {
-          MatchingHandler delegate = ((LightTopLevelMatchingHandler)handler).getDelegate();
+          final MatchingHandler delegate = ((LightTopLevelMatchingHandler)handler).getDelegate();
           if (!(delegate instanceof SubstitutionHandler)) {
             pattern.setHandler(element, new LightTopLevelMatchingHandler(new SkippingHandler(delegate)));
           }
@@ -90,9 +90,9 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       public boolean continueMatching(PsiElement start) {
         Language language = start.getLanguage();
 
-        PsiFile file = start.getContainingFile();
+        final PsiFile file = start.getContainingFile();
         if (file != null) {
-          Language fileLanguage = file.getLanguage();
+          final Language fileLanguage = file.getLanguage();
           if (fileLanguage.isKindOf(language)) {
             // dialect
             language = fileLanguage;
@@ -121,9 +121,9 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return element -> DuplocatorUtil.isIgnoredNode(element);
   }
 
-  public static boolean containsOnlyDelimeters(String s) {
+  private static boolean containsOnlyDelimiters(String s) {
     for (int i = 0, n = s.length(); i < n; i++) {
-      if (DELIMETER_CHARS.indexOf(s.charAt(i)) < 0) {
+      if (DELIMITER_CHARS.indexOf(s.charAt(i)) < 0) {
         return false;
       }
     }
@@ -218,7 +218,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return PATTERN_PLACEHOLDER;
   }
 
-  private static boolean canBePatternVariable(PsiElement element) {
+  static boolean canBePatternVariable(PsiElement element) {
     // can be leaf element! (ex. var a = 1 <-> var $a$ = 1)
     if (element instanceof LeafElement) {
       return true;
@@ -245,13 +245,13 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return false;
   }
 
-  private static boolean canBePatternVariableValue(PsiElement element) {
+  static boolean canBePatternVariableValue(PsiElement element) {
     // can be leaf element! (ex. var a = 1 <-> var $a$ = 1)
-    return !containsOnlyDelimeters(element.getText());
+    return !containsOnlyDelimiters(element.getText());
   }
 
   @Override
-  public boolean canBeVarDelimeter(@NotNull PsiElement element) {
+  public boolean canBeVarDelimiter(@NotNull PsiElement element) {
     final ASTNode node = element.getNode();
     return node != null && getVariableDelimiters().contains(node.getElementType());
   }
@@ -267,7 +267,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
                                           Language language,
                                           String extension,
                                           boolean physical) {
-    int offset = context.indexOf(PATTERN_PLACEHOLDER);
+    final int offset = context.indexOf(PATTERN_PLACEHOLDER);
 
     final int patternLength = pattern.length();
     final String patternInContext = context.replace(PATTERN_PLACEHOLDER, pattern);
@@ -325,7 +325,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
     private Pattern[] mySubstitutionPatterns;
 
-    private MyCompilingVisitor(GlobalCompilingVisitor globalVisitor, PsiElement topElement) {
+    MyCompilingVisitor(GlobalCompilingVisitor globalVisitor, PsiElement topElement) {
       myGlobalVisitor = globalVisitor;
       myTopElement = topElement;
     }
@@ -340,7 +340,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     }
 
     private void doVisitElement(PsiElement element) {
-      CompiledPattern pattern = myGlobalVisitor.getContext().getPattern();
+      final CompiledPattern pattern = myGlobalVisitor.getContext().getPattern();
 
       if (myGlobalVisitor.getCodeBlockLevel() == 0) {
         initTopLevelElement(element);
@@ -365,13 +365,12 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       super.visitElement(element);
 
       if (myGlobalVisitor.getContext().getSearchHelper().doOptimizing() && element instanceof LeafElement) {
-        ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
+        final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
         if (parserDefinition != null) {
-          String text = element.getText();
+          final String text = element.getText();
 
           // todo: support variables inside comments
-          boolean flag = true;
-          if (StringUtil.isJavaIdentifier(text) && flag) {
+          if (StringUtil.isJavaIdentifier(text)) {
             myGlobalVisitor.processTokenizedName(text, true, GlobalCompilingVisitor.OccurenceKind.CODE);
           }
         }
@@ -379,7 +378,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     }
 
     private void visitLiteral(PsiElement literal) {
-      String value = literal.getText();
+      final String value = literal.getText();
 
       if (StringUtil.isQuotedString(value)) {
         if (mySubstitutionPatterns == null) {
@@ -388,7 +387,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         }
 
         for (Pattern substitutionPattern : mySubstitutionPatterns) {
-          @Nullable MatchingHandler handler =
+          @Nullable final MatchingHandler handler =
             myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL, substitutionPattern);
 
           if (handler != null) {
@@ -410,9 +409,9 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     }
 
     private void initTopLevelElement(PsiElement element) {
-      CompiledPattern pattern = myGlobalVisitor.getContext().getPattern();
+      final CompiledPattern pattern = myGlobalVisitor.getContext().getPattern();
 
-      PsiElement newElement = SkippingHandler.skipNodeIfNeccessary(element);
+      final PsiElement newElement = SkippingHandler.skipNodeIfNeccessary(element);
 
       if (element != newElement && newElement != null) {
         // way to support partial matching (ex. if ($condition$) )
@@ -431,7 +430,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
           else {
             el.accept(this);
 
-            MatchingHandler matchingHandler = pattern.getHandler(el);
+            final MatchingHandler matchingHandler = pattern.getHandler(el);
             pattern.setHandler(el, element == myTopElement ? new TopLevelMatchingHandler(matchingHandler) :
                                    new LightTopLevelMatchingHandler(matchingHandler));
 
@@ -454,7 +453,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   private class MyMatchingVisitor extends PsiElementVisitor {
     private final GlobalMatchingVisitor myGlobalVisitor;
 
-    private MyMatchingVisitor(GlobalMatchingVisitor globalVisitor) {
+    MyMatchingVisitor(GlobalMatchingVisitor globalVisitor) {
       myGlobalVisitor = globalVisitor;
     }
 
@@ -509,21 +508,20 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         myGlobalVisitor.setResult(true);
       }
       else {
-        PsiElement patternChild = element.getFirstChild();
-        PsiElement matchedChild = myGlobalVisitor.getElement().getFirstChild();
+        final PsiElement patternChild = element.getFirstChild();
+        final PsiElement matchedChild = myGlobalVisitor.getElement().getFirstChild();
 
-        FilteringNodeIterator patternIterator = new SsrFilteringNodeIterator(patternChild);
-        FilteringNodeIterator matchedIterator = new SsrFilteringNodeIterator(matchedChild);
+        final FilteringNodeIterator patternIterator = new SsrFilteringNodeIterator(patternChild);
+        final FilteringNodeIterator matchedIterator = new SsrFilteringNodeIterator(matchedChild);
 
-        boolean matched = myGlobalVisitor.matchSequentially(patternIterator, matchedIterator);
+        final boolean matched = myGlobalVisitor.matchSequentially(patternIterator, matchedIterator);
         myGlobalVisitor.setResult(matched);
       }
     }
 
     private void visitLiteral(PsiElement literal) {
       final PsiElement l2 = myGlobalVisitor.getElement();
-
-      MatchingHandler handler = (MatchingHandler)literal.getUserData(CompiledPattern.HANDLER_KEY);
+      final MatchingHandler handler = (MatchingHandler)literal.getUserData(CompiledPattern.HANDLER_KEY);
 
       if (handler instanceof SubstitutionHandler) {
         int offset = 0;

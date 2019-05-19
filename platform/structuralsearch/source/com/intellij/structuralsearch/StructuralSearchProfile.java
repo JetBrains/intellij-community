@@ -119,12 +119,12 @@ public abstract class StructuralSearchProfile {
   }
 
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
-    String fileType = StringUtil.toLowerCase(options.getMatchOptions().getFileType().getName());
+    final String fileType = StringUtil.toLowerCase(options.getMatchOptions().getFileType().getName());
     throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
   }
 
   // only for nodes not filtered by lexical-nodes filter; they can be by default
-  public boolean canBeVarDelimeter(@NotNull PsiElement element) {
+  public boolean canBeVarDelimiter(@NotNull PsiElement element) {
     return false;
   }
 
@@ -185,7 +185,7 @@ public abstract class StructuralSearchProfile {
       boolean removeSemicolon = false;
       if (match.hasChildren() && !match.isScopeMatch()) {
         // compound matches
-        StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder();
 
         for (final MatchResult matchResult : match.getChildren()) {
           final PsiElement currentElement = matchResult.getMatch();
@@ -256,7 +256,7 @@ public abstract class StructuralSearchProfile {
    * Override this method to influence which UI controls are shown when editing the constraints of the specified variable.
    *
    * @param constraintName  the name of the constraint controls for which applicability is considered.
-   *  See {@link com.intellij.structuralsearch.plugin.ui.UIUtil} for predefined constraint names
+   * See {@link UIUtil} for predefined constraint names
    * @param variableNode  the psi element corresponding to the current variable
    * @param completePattern  true, if the current variableNode encompasses the complete pattern. The variableNode can also be null in this case.
    * @param target  true, if the current variableNode is the target of the search
