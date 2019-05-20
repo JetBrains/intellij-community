@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 
 public class SensitiveDataValidator {
+  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator");
   private static final ConcurrentMap<String, SensitiveDataValidator> instances = ContainerUtil.newConcurrentMap();
 
   private final Semaphore mySemaphore;
@@ -143,10 +145,23 @@ public class SensitiveDataValidator {
   }
 
   protected String getWhiteListContent() {
-    String content = FUStatisticsWhiteListGroupsService.loadWhiteListFromServer(mySettingsService);
-    if (StringUtil.isNotEmpty(content)) {
-      if (shouldUpdateCache(content)) myWhitelistPersistence.cacheWhiteList(content);
-      return content;
+    final long lastModified = FUStatisticsWhiteListGroupsService.lastModifiedWhitelist(mySettingsService);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+        "Loading whitelist, last modified cached=" + myWhitelistPersistence.getLastModified() +
+        ", last modified on the server=" + lastModified
+      );
+    }
+
+    if (lastModified <= 0 || lastModified > myWhitelistPersistence.getLastModified()) {
+      final String content = FUStatisticsWhiteListGroupsService.loadWhiteListFromServer(mySettingsService);
+      if (StringUtil.isNotEmpty(content)) {
+        myWhitelistPersistence.cacheWhiteList(content, lastModified);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Update local whitelist, last modified cached=" + myWhitelistPersistence.getLastModified());
+        }
+        return content;
+      }
     }
     return myWhitelistPersistence.getCachedWhiteList();
   }

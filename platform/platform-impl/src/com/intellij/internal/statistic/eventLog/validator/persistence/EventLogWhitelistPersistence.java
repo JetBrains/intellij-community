@@ -45,10 +45,11 @@ public class EventLogWhitelistPersistence {
     return getFileInWhiteListCacheDirectory(WHITE_LIST_DATA_FILE);
   }
 
-  public void cacheWhiteList(@NotNull String gsonWhiteListContent) {
+  public void cacheWhiteList(@NotNull String gsonWhiteListContent, long lastModified) {
     File file = getWhiteListFile();
     try {
       FileUtil.writeToFile(file, gsonWhiteListContent);
+      EventLogWhitelistSettingsPersistence.getInstance().setLastModified(myRecorderId, lastModified);
     } catch (IOException e) {
       LOG.error(e);
     }
@@ -79,5 +80,9 @@ public class EventLogWhitelistPersistence {
 
   private String builtinWhiteListPath() {
     return "resources/" + FUS_WHITELIST_PATH + "/" + myRecorderId + "/" + WHITE_LIST_DATA_FILE;
+  }
+
+  public long getLastModified() {
+    return EventLogWhitelistSettingsPersistence.getInstance().getLastModified(myRecorderId);
   }
 }

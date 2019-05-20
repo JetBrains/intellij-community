@@ -58,6 +58,10 @@ public class FUStatisticsWhiteListGroupsService {
     return getFUSWhiteListContent(settingsService.getWhiteListProductUrl());
   }
 
+  public static long lastModifiedWhitelist(@NotNull EventLogExternalSettingsService settingsService) {
+    return lastModifiedWhitelist(settingsService.getWhiteListProductUrl());
+  }
+
   @Nullable
   private static String getFUSWhiteListContent(@Nullable String serviceUrl) {
     if (StringUtil.isEmptyOrSpaces(serviceUrl)) return null;
@@ -72,6 +76,20 @@ public class FUStatisticsWhiteListGroupsService {
       LOG.info(e);
     }
     return content;
+  }
+
+  private static long lastModifiedWhitelist(@Nullable String serviceUrl) {
+    try {
+      if (!StringUtil.isEmptyOrSpaces(serviceUrl)) {
+        return HttpRequests.head(serviceUrl).
+          productNameAsUserAgent().
+          connect(r -> r.getConnection().getLastModified());
+      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    return 0;
   }
 
   @Nullable
