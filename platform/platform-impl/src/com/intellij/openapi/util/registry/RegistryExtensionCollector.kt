@@ -20,12 +20,12 @@ class RegistryKeyBean : PluginAware {
   @JvmField @Attribute("restartRequired") val restartRequired: Boolean = false
 
   @Transient
-  var pluginDescriptor: PluginDescriptor? = null
+  var descriptor: PluginDescriptor? = null
     private set
 
   @Transient
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor?) {
-    this.pluginDescriptor = pluginDescriptor
+    this.descriptor = pluginDescriptor
   }
 
   companion object {
@@ -36,7 +36,7 @@ class RegistryKeyBean : PluginAware {
 class RegistryExtensionCollector {
   init {
     for (extension in RegistryKeyBean.EP_NAME.extensionList) {
-      val contributedByThirdParty = extension.pluginDescriptor?.let { !getPluginInfoById(it.pluginId).isSafeToReport() } ?: false
+      val contributedByThirdParty = extension.descriptor?.let { !getPluginInfoById(it.pluginId).isSafeToReport() } ?: false
       Registry.addKey(extension.key, extension.description.unescapeString(), extension.defaultValue, extension.restartRequired,
                       contributedByThirdParty)
     }
