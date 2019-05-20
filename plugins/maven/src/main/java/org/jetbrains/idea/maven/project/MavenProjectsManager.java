@@ -170,7 +170,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     if (!isNormalProject()) return;
 
     StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
