@@ -106,18 +106,19 @@ public class TrackingRunner extends StandardDataFlowRunner {
     return states;
   }
 
-  public static List<CauseItem> findProblemCause(boolean unknownAreNullables,
-                                                 boolean ignoreAssertions,
-                                                 PsiExpression expression,
-                                                 DfaProblemType type) {
+  @Nullable
+  public static CauseItem findProblemCause(boolean unknownAreNullables,
+                                           boolean ignoreAssertions,
+                                           PsiExpression expression,
+                                           DfaProblemType type) {
     PsiElement body = DfaUtil.getDataflowContext(expression);
-    if (body == null) return Collections.emptyList();
+    if (body == null) return null;
     TrackingRunner runner = new TrackingRunner(unknownAreNullables, body, expression);
-    if (!analyze(ignoreAssertions, expression, body, runner)) return Collections.emptyList();
-    return ContainerUtil.createMaybeSingletonList(runner.findProblemCause(expression, type));
+    if (!runner.analyze(ignoreAssertions, expression, body)) return null;
+    return runner.findProblemCause(expression, type);
   }
 
-  private static boolean analyze(boolean ignoreAssertions, PsiExpression expression, PsiElement body, TrackingRunner runner) {
+  private boolean analyze(boolean ignoreAssertions, PsiExpression expression, PsiElement body) {
     List<DfaMemoryState> endOfInitializerStates = new ArrayList<>();
     StandardInstructionVisitor visitor = new StandardInstructionVisitor(true) {
       @Override
@@ -130,7 +131,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
         return super.visitEndOfInitializer(instruction, runner, state);
       }
     };
-    RunnerResult result = runner.analyzeMethodRecursively(body, visitor, ignoreAssertions);
+    RunnerResult result = analyzeMethodRecursively(body, visitor, ignoreAssertions);
     if (result != RunnerResult.OK) return false;
     if (body instanceof PsiClass) {
       PsiMethod ctor = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
@@ -141,12 +142,12 @@ public class TrackingRunner extends StandardDataFlowRunner {
           PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(ctor);
           if (JavaPsiConstructorUtil.isChainedConstructorCall(call) ||
               (call == null && hasImplicitImpureSuperCall((PsiClass)body, ctor))) {
-            initialStates = Collections.singletonList(runner.createMemoryState());
+            initialStates = Collections.singletonList(createMemoryState());
           }
           else {
             initialStates = StreamEx.of(endOfInitializerStates).map(DfaMemoryState::createCopy).toList();
           }
-          return runner.analyzeBlockRecursively(ctorBody, initialStates, visitor, false) == RunnerResult.OK;
+          return analyzeBlockRecursively(ctorBody, initialStates, visitor, false) == RunnerResult.OK;
         }
       }
     }
