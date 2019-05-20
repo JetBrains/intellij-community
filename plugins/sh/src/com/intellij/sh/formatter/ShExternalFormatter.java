@@ -76,7 +76,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
         }));
       notification.addAction(NotificationAction.createSimple("No, thanks", () -> {
         notification.expire();
-        shSettings.SHFMT_PATH = ShSettings.NOT_AVAILABLE_PATH;
+        shSettings.SHFMT_PATH = ShSettings.I_DO_MIND;
       }));
       Notifications.Bus.notify(notification);
       return;
