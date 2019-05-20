@@ -9,27 +9,34 @@ import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.util.Objects;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<FieldReflectionAccessor.FieldDescriptor> {
+public class FieldReflectionAccessor implements ItemToReplaceDescriptor {
   private static final Logger LOG = Logger.getInstance(FieldReflectionAccessor.class);
 
-  public FieldReflectionAccessor(@NotNull PsiClass psiClass,
-                                 @NotNull PsiElementFactory elementFactory) {
-    super(psiClass, elementFactory);
+  private final PsiField myField;
+  private final PsiReferenceExpression myExpression;
+
+  private FieldReflectionAccessor(@NotNull PsiField field, @NotNull PsiReferenceExpression expression) {
+    myField = field;
+    myExpression = expression;
   }
 
   @Nullable
-  @Override
-  protected FieldDescriptor createDescriptor(@NotNull PsiReferenceExpression expression) {
+  public static ItemToReplaceDescriptor createIfInaccessible(@NotNull PsiClass outerClass, @NotNull PsiReferenceExpression expression) {
     final PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiField) {
       final PsiField field = (PsiField)resolved;
-      if (!Objects.equals(field.getContainingClass(), getOuterClass()) && needReplace(field, expression)) {
-        return new FieldDescriptor(field, expression);
+      PsiClass containingClass = field.getContainingClass();
+
+
+      if (!Objects.equals(containingClass, outerClass) && needReplace(field, expression)) {
+        Array.getLength(new int[3]);
+        return new FieldReflectionAccessor(field, expression);
       }
     }
 
@@ -37,32 +44,34 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
   }
 
   @Override
-  protected void grantAccess(@NotNull FieldDescriptor descriptor) {
-    PsiElement parent = descriptor.expression.getParent();
+  public void replace(@NotNull PsiClass outerClass,
+                      @NotNull PsiElementFactory elementFactory,
+                      @NotNull PsiMethodCallExpression callExpression) {
+    PsiElement parent = myExpression.getParent();
     if (parent instanceof PsiAssignmentExpression &&
-        Objects.equals(descriptor.expression, ((PsiAssignmentExpression)parent).getLExpression())) {
-      grantUpdateAccess((PsiAssignmentExpression)parent, descriptor);
+        Objects.equals(myExpression, ((PsiAssignmentExpression)parent).getLExpression())) {
+      grantUpdateAccess((PsiAssignmentExpression)parent, outerClass, elementFactory);
     }
     else {
-      grantReadAccess(descriptor);
+      grantReadAccess(outerClass, elementFactory);
     }
   }
 
-  private void grantReadAccess(@NotNull FieldDescriptor descriptor) {
-    PsiClass outerClass = getOuterClass();
-    PsiMethod newMethod = createPsiMethod(descriptor, FieldAccessType.GET);
+  private void grantReadAccess(@NotNull PsiClass outerClass, @NotNull PsiElementFactory elementFactory) {
+    PsiMethod newMethod = createPsiMethod(FieldAccessType.GET, outerClass, elementFactory);
     if (newMethod == null) return;
 
     outerClass.add(newMethod);
 
-    String qualifier = qualify(descriptor);
+    String qualifier = qualify();
     String methodCall = newMethod.getName() + "(" + (qualifier == null ? "null" : qualifier) + ", null)";
-    descriptor.expression.replace(getElementFactory().createExpressionFromText(methodCall, descriptor.expression));
+    myExpression.replace(elementFactory.createExpressionFromText(methodCall, myExpression));
   }
 
-  private void grantUpdateAccess(@NotNull PsiAssignmentExpression assignmentExpression, @NotNull FieldDescriptor descriptor) {
-    PsiClass outerClass = getOuterClass();
-    PsiMethod newMethod = createPsiMethod(descriptor, FieldAccessType.SET);
+  private void grantUpdateAccess(@NotNull PsiAssignmentExpression assignmentExpression,
+                                 @NotNull PsiClass outerClass,
+                                 @NotNull PsiElementFactory elementFactory) {
+    PsiMethod newMethod = createPsiMethod(FieldAccessType.SET, outerClass, elementFactory);
     if (newMethod == null) return;
 
     outerClass.add(newMethod);
@@ -73,20 +82,19 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     }
 
     String newValue = rightExpression.getText();
-    String qualifier = qualify(descriptor);
+    String qualifier = qualify();
     String args = (qualifier == null ? "null" : qualifier) + ", " + newValue;
     String methodCallExpression = newMethod.getName() + "(" + args + ")";
 
-    PsiExpression newMethodCallExpression = getElementFactory().createExpressionFromText(methodCallExpression, descriptor.expression);
+    PsiExpression newMethodCallExpression = elementFactory.createExpressionFromText(methodCallExpression, myExpression);
     assignmentExpression.replace(newMethodCallExpression);
   }
 
   @Nullable
-  private PsiMethod createPsiMethod(@NotNull FieldDescriptor descriptor, FieldAccessType accessType) {
-    PsiClass outerClass = getOuterClass();
-    PsiClass containingClass = descriptor.field.getContainingClass();
+  private PsiMethod createPsiMethod(FieldAccessType accessType, PsiClass outerClass, PsiElementFactory elementFactory) {
+    PsiClass containingClass = myField.getContainingClass();
     String className = containingClass == null ? null : ClassUtil.getJVMClassName(containingClass);
-    String fieldName = descriptor.field.getName();
+    String fieldName = myField.getName();
     if (className == null || fieldName == null) {
       LOG.warn("Code is incomplete. Class name or field name not found");
       return null;
@@ -95,7 +103,7 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     String methodName = PsiReflectionAccessUtil.getUniqueMethodName(outerClass, "accessToField" + StringUtil.capitalize(fieldName));
     ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(methodName);
     if (FieldAccessType.GET.equals(accessType)) {
-      String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.expression, resolveFieldType(descriptor));
+      String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(myExpression, resolveFieldType());
       if (returnType == null) {
         LOG.warn("Could not resolve field type");
         return null;
@@ -112,7 +120,7 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
                  .addParameter("java.lang.Object", "object")
                  .addParameter("java.lang.Object", "value");
 
-    return methodBuilder.build(getElementFactory(), outerClass);
+    return methodBuilder.build(elementFactory, outerClass);
   }
 
   private static boolean needReplace(@NotNull PsiField field, @NotNull PsiReferenceExpression expression) {
@@ -121,17 +129,17 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
   }
 
   @NotNull
-  private static PsiType resolveFieldType(@NotNull FieldDescriptor descriptor) {
-    PsiType rawType = descriptor.field.getType();
-    return descriptor.expression.advancedResolve(false).getSubstitutor().substitute(rawType);
+  private PsiType resolveFieldType() {
+    PsiType rawType = myField.getType();
+    return myExpression.advancedResolve(false).getSubstitutor().substitute(rawType);
   }
 
   @Nullable
-  private static String qualify(@NotNull FieldDescriptor descriptor) {
-    String qualifier = PsiReflectionAccessUtil.extractQualifier(descriptor.expression);
+  private String qualify() {
+    String qualifier = PsiReflectionAccessUtil.extractQualifier(myExpression);
     if (qualifier == null) {
-      if (!descriptor.field.hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass containingClass = descriptor.field.getContainingClass();
+      if (!myField.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = myField.getContainingClass();
         if (containingClass != null) {
           qualifier = containingClass.getQualifiedName() + ".this";
         }
@@ -139,15 +147,5 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     }
 
     return qualifier;
-  }
-
-  public static class FieldDescriptor implements ItemToReplaceDescriptor {
-    public final PsiField field;
-    public final PsiReferenceExpression expression;
-
-    public FieldDescriptor(@NotNull PsiField field, @NotNull PsiReferenceExpression expression) {
-      this.field = field;
-      this.expression = expression;
-    }
   }
 }

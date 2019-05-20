@@ -18,7 +18,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
-import com.intellij.refactoring.extractMethodObject.reflect.CompositeReflectionAccessor;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageInfo;
@@ -275,19 +274,16 @@ public class ExtractLightMethodObjectHandler {
     PsiClass generatedClass = extractMethodObjectProcessor.getInnerClass();
     if (useReflection && methods.length == 1) {
       final PsiMethod method = methods[0];
-      LOG.info("Use reflection to evaluate inaccessible members");
-      if (Registry.is("debugger.compiling.evaluator.extract.generated.class")) {
-        PsiMethodCallExpression callExpression = findCallExpression(copy, method);
-        if (callExpression == null) {
-          LOG.error("Could not find invocation of generated method");
-        }
-        else {
-          generatedClass = ExtractGeneratedClassUtil.extractGeneratedClass(callExpression, generatedClass, elementFactory, anchor);
+      PsiMethodCallExpression callExpression = findCallExpression(copy, method);
+      if (callExpression != null) {
+        LOG.info("Use reflection to evaluate inaccessible members");
+        new ReflectionAccessorToEverything(generatedClass, elementFactory).grantAccessThroughReflection(callExpression);
+        if (Registry.is("debugger.compiling.evaluator.extract.generated.class")) {
+          generatedClass = ExtractGeneratedClassUtil.extractGeneratedClass(generatedClass, elementFactory, anchor);
         }
       }
       else {
-        CompositeReflectionAccessor.createAccessorToEverything(inner, elementFactory)
-          .accessThroughReflection(method);
+        LOG.warn("Generated method call expression not found");
       }
     }
 

@@ -17,12 +17,10 @@ class ExtractGeneratedClassUtil {
   private static final String GENERATED_CLASS_PACKAGE = "idea.debugger.rt";
   private static final Logger LOG = Logger.getInstance(ExtractGeneratedClassUtil.class);
 
-  static PsiClass extractGeneratedClass(@NotNull PsiMethodCallExpression generatedMethodCall,
-                                        @NotNull PsiClass generatedInnerClass,
+  static PsiClass extractGeneratedClass(@NotNull PsiClass generatedInnerClass,
                                         @NotNull PsiElementFactory elementFactory,
                                         @NotNull PsiElement anchor) {
     Project project = generatedInnerClass.getProject();
-    ReflectionAccessorToEverything.grantAccessThroughReflection(generatedInnerClass, generatedMethodCall, elementFactory);
 
     PsiClass extractedClass = elementFactory.createClass("GeneratedEvaluationClass");
 

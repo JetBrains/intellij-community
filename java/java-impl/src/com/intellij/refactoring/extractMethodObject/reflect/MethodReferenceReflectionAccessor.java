@@ -4,38 +4,31 @@ package com.intellij.refactoring.extractMethodObject.reflect;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
-import com.intellij.refactoring.extractMethodObject.reflect.ConstructorReflectionAccessor.ConstructorDescriptor;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.refactoring.extractMethodObject.reflect.ConstructorReflectionAccessor.ConstructorDescriptor.createIfInaccessible;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class MethodReferenceReflectionAccessor
-  extends ReferenceReflectionAccessorBase<MethodReferenceReflectionAccessor.MethodReferenceDescriptor> {
+public class MethodReferenceReflectionAccessor implements ItemToReplaceDescriptor {
   private static final Logger LOG = Logger.getInstance(MethodReferenceReflectionAccessor.class);
 
-  private final MethodReflectionAccessor myMethodAccessor;
-  private final ConstructorReflectionAccessor myConstructorReflectionAccessor;
-  public MethodReferenceReflectionAccessor(@NotNull PsiClass psiClass,
-                                           @NotNull PsiElementFactory elementFactory) {
-    super(psiClass, elementFactory);
-    myMethodAccessor = new MethodReflectionAccessor(psiClass, elementFactory);
-    myConstructorReflectionAccessor = new ConstructorReflectionAccessor(psiClass, elementFactory);
+  private final PsiMethodReferenceExpression myExpression;
+
+  public MethodReferenceReflectionAccessor(@NotNull PsiMethodReferenceExpression expression) {
+    myExpression = expression;
   }
 
   @Nullable
-  @Override
-  protected MethodReferenceDescriptor createDescriptor(@NotNull PsiReferenceExpression expression) {
+  public static MethodReferenceReflectionAccessor createIfInaccessible(@NotNull PsiReferenceExpression expression) {
     if (expression instanceof PsiMethodReferenceExpression) {
       PsiElement resolvedElement = expression.resolve();
       if (resolvedElement instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)resolvedElement;
         if (!PsiReflectionAccessUtil.isAccessibleMember(method)) {
-          return new MethodReferenceDescriptor(method, (PsiMethodReferenceExpression)expression);
+          return new MethodReferenceReflectionAccessor((PsiMethodReferenceExpression)expression);
         }
       }
     }
@@ -44,27 +37,30 @@ public class MethodReferenceReflectionAccessor
   }
 
   @Override
-  protected void grantAccess(@NotNull MethodReferenceDescriptor descriptor) {
-    PsiLambdaExpression lambda = LambdaRefactoringUtil.convertMethodReferenceToLambda(descriptor.expression, false, true);
+  public void replace(@NotNull PsiClass outerClass,
+                      @NotNull PsiElementFactory elementFactory,
+                      @NotNull PsiMethodCallExpression callExpression) {
+    PsiLambdaExpression lambda = LambdaRefactoringUtil.convertMethodReferenceToLambda(myExpression, false, true);
     PsiElement lambdaBody = lambda == null ? null : lambda.getBody();
     if (lambdaBody != null) {
       if (lambdaBody instanceof PsiNewExpression) {
-        ConstructorDescriptor constructorDescriptor = createIfInaccessible((PsiNewExpression)lambdaBody);
+        ConstructorReflectionAccessor constructorDescriptor =
+          ConstructorReflectionAccessor.createIfInaccessible((PsiNewExpression)lambdaBody);
         if (constructorDescriptor != null) {
-          myConstructorReflectionAccessor.grantAccess(constructorDescriptor);
+          constructorDescriptor.replace(outerClass, elementFactory, callExpression);
         }
         else {
-          LOG.warn("Inaccessible constructor not found. Method reference: " + descriptor.expression.getText());
+          LOG.warn("Inaccessible constructor not found. Method reference: " + myExpression.getText());
         }
       }
       else if (lambdaBody instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression callExpression = (PsiMethodCallExpression)lambdaBody;
-        PsiMethod method = callExpression.resolveMethod();
-        if (method != null) {
-          myMethodAccessor.grantAccess(new MethodReflectionAccessor.MethodCallDescriptor(callExpression, method));
+        PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)lambdaBody;
+        MethodReflectionAccessor accessor = MethodReflectionAccessor.createIfInaccessible(outerClass, methodCallExpression);
+        if (accessor != null) {
+          accessor.replace(outerClass, elementFactory, callExpression);
         }
         else {
-          LOG.warn("Could not resolve method from expression: " + callExpression.getText());
+          LOG.warn("Could not resolve method from expression: " + methodCallExpression.getText());
         }
       }
       else {
@@ -72,17 +68,7 @@ public class MethodReferenceReflectionAccessor
       }
     }
     else {
-      LOG.warn("Could not replace method reference with lambda: " + descriptor.expression.getText());
-    }
-  }
-
-  public static class MethodReferenceDescriptor implements ItemToReplaceDescriptor {
-    public final PsiMethod method;
-    public final PsiMethodReferenceExpression expression;
-
-    public MethodReferenceDescriptor(@NotNull PsiMethod method, @NotNull PsiMethodReferenceExpression expression) {
-      this.method = method;
-      this.expression = expression;
+      LOG.warn("Could not replace method reference with lambda: " + myExpression.getText());
     }
   }
 }
