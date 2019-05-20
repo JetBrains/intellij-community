@@ -419,7 +419,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       synchronized (this) {
         // in tests which simulate project opening, post-startup activities could have been run already.
         // Then we should act as if the project was initialized
-        boolean initialized = myProject.isInitialized() || myProject.isDefault() || application.isUnitTestMode() && myPostStartupActivitiesPassed;
+        boolean initialized = myProject.isInitialized() || myProject.isDefault() || (myPostStartupActivitiesPassed && application.isUnitTestMode());
         if (!initialized) {
           registerPostStartupActivity(action);
           return;
