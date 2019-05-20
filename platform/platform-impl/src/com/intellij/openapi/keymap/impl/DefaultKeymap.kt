@@ -100,9 +100,16 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
     val name = keymap.name
     // Netbeans keymap is no longer for version 6.5, but we need to keep the id
     return when (name) {
+      KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP, KeymapManager.DEFAULT_IDEA_KEYMAP -> "Default"
+      KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic"
       "NetBeans 6.5" -> "NetBeans"
-      KeymapManager.DEFAULT_IDEA_KEYMAP -> "Default"
-      else -> name
+      else -> {
+        val newName = name.removeSuffix(" (Mac OS X)")
+        when {
+          newName === name -> name
+          else -> "$newName (macOS)"
+        }
+      }
     }
   }
 }

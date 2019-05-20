@@ -12,40 +12,28 @@ public class GenericKeymapManager extends DefaultKeymap {
     super(providers);
   }
 
+  @SuppressWarnings("unused")
   public GenericKeymapManager() {
   }
 
   @NotNull
   @Override
   public String getDefaultKeymapName() {
-    if (SystemInfo.isMac) {
-      return KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP;
-    }
-    else if (SystemInfo.isXWindow) {
-      return KeymapManager.X_WINDOW_KEYMAP;
-    }
-    else {
-      return KeymapManager.DEFAULT_IDEA_KEYMAP;
-    }
+    return SystemInfo.isMac ? KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP : super.getDefaultKeymapName();
   }
 
   @NotNull
   @Override
   public String getKeymapPresentableName(@NotNull KeymapImpl keymap) {
-    final String name = keymap.getName();
-
+    String name = keymap.getName();
     if (getDefaultKeymapName().equals(name)) {
       return "Default";
     }
-
-    if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name)) {
+    else if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name)) {
       return "IntelliJ IDEA Classic" + (SystemInfo.isMac ? " (Windows)" : "");
     }
-
-    if ("Mac OS X".equals(name)) {
-      return "IntelliJ IDEA Classic (OS X)";
+    else {
+      return super.getKeymapPresentableName(keymap);
     }
-
-    return super.getKeymapPresentableName(keymap);
   }
 }
