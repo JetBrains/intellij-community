@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -391,6 +392,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void testCRPrintCR() throws Exception {
     for (int i=0;i<25;i++) {
       myConsole.print("\r"+i, ConsoleViewContentType.NORMAL_OUTPUT);
+      //noinspection BusyWait
       Thread.sleep(100);
     }
     myConsole.flushDeferredText();
@@ -398,6 +400,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals("24", myConsole.getText());
   }
 
+  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public void testInputFilter() {
     Disposer.dispose(myConsole); // have to re-init extensions
     List<Pair<String, ConsoleViewContentType>> registered = new ArrayList<>();
@@ -412,7 +415,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     StringBuilder expectedText = new StringBuilder();
     List<Pair<String, ConsoleViewContentType>> expectedRegisteredTokens = new ArrayList<>();
     for (int i=0;i<25;i++) {
-      String chunk = i + "";
+      String chunk = String.valueOf(i);
       myConsole.print(chunk, ConsoleViewContentType.USER_INPUT);
       expectedText.append("+!" + i + "-!");
       expectedRegisteredTokens.add(Pair.create(chunk, ConsoleViewContentType.USER_INPUT));
@@ -538,11 +541,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   private List<RangeHighlighter> getAllRangeHighlighters() {
     MarkupModel model = DocumentMarkupModel.forDocument(myConsole.getEditor().getDocument(), getProject(), true);
     RangeHighlighter[] highlighters = model.getAllHighlighters();
-    Arrays.sort(highlighters, (r1, r2) -> {
-      int startOffsetDiff = r1.getStartOffset() - r2.getStartOffset();
-      if (startOffsetDiff != 0) return startOffsetDiff;
-      return r1.getEndOffset() - r2.getEndOffset();
-    });
+    Arrays.sort(highlighters, Comparator.comparingInt(RangeMarker::getStartOffset).thenComparingInt(RangeMarker::getEndOffset));
     return Arrays.asList(highlighters);
   }
 
