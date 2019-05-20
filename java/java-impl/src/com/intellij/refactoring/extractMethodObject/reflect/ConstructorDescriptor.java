@@ -13,33 +13,33 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Vitaliy.Bibaev
  */
-public class ConstructorReflectionAccessor implements ItemToReplaceDescriptor {
-  private static final Logger LOG = Logger.getInstance(ConstructorReflectionAccessor.class);
+public class ConstructorDescriptor implements ItemToReplaceDescriptor {
+  private static final Logger LOG = Logger.getInstance(ConstructorDescriptor.class);
   private final PsiNewExpression myNewExpression;
   private final PsiClass myPsiClass;
 
   // null if and only if default constructor is used
   @Nullable private final PsiMethod myConstructor;
-  private  ConstructorReflectionAccessor(@NotNull PsiNewExpression expression, @Nullable PsiMethod constructor, @NotNull PsiClass psiClass) {
+  private ConstructorDescriptor(@NotNull PsiNewExpression expression, @Nullable PsiMethod constructor, @NotNull PsiClass psiClass) {
     myNewExpression = expression;
     this.myConstructor = constructor;
     this.myPsiClass = psiClass;
   }
 
   @Nullable
-  public static ConstructorReflectionAccessor createIfInaccessible(@NotNull PsiNewExpression expression) {
+  public static ConstructorDescriptor createIfInaccessible(@NotNull PsiNewExpression expression) {
     PsiMethod constructor = expression.resolveConstructor();
     if (constructor != null) {
       PsiClass containingClass = constructor.getContainingClass();
       if (containingClass != null && !PsiReflectionAccessUtil.isAccessibleMember(constructor)) {
-        return new ConstructorReflectionAccessor(expression, constructor, containingClass);
+        return new ConstructorDescriptor(expression, constructor, containingClass);
       }
     }
     else {
       PsiJavaCodeReferenceElement classReference = expression.getClassReference();
       PsiElement referent = classReference != null ? classReference.resolve() : null;
       if (referent instanceof PsiClass && !PsiReflectionAccessUtil.isAccessible((PsiClass)referent)) {
-        return new ConstructorReflectionAccessor(expression, null, (PsiClass)referent);
+        return new ConstructorDescriptor(expression, null, (PsiClass)referent);
       }
     }
 

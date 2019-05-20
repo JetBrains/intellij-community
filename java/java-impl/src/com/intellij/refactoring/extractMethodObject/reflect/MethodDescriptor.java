@@ -15,21 +15,21 @@ import java.util.Objects;
 /**
  * @author Vitaliy.Bibaev
  */
-public class MethodReflectionAccessor implements ItemToReplaceDescriptor {
-  private static final Logger LOG = Logger.getInstance(MethodReflectionAccessor.class);
+public class MethodDescriptor implements ItemToReplaceDescriptor {
+  private static final Logger LOG = Logger.getInstance(MethodDescriptor.class);
 
   private final PsiMethodCallExpression myCallExpression;
   private final PsiMethod myMethod;
 
-  public MethodReflectionAccessor(@NotNull PsiMethodCallExpression expression, @NotNull PsiMethod method) {
+  public MethodDescriptor(@NotNull PsiMethodCallExpression expression, @NotNull PsiMethod method) {
     myCallExpression = expression;
     myMethod = method;
   }
 
-  public static MethodReflectionAccessor createIfInaccessible(@NotNull PsiClass outerClass, @NotNull PsiMethodCallExpression expression) {
+  public static MethodDescriptor createIfInaccessible(@NotNull PsiClass outerClass, @NotNull PsiMethodCallExpression expression) {
     PsiMethod method = expression.resolveMethod();
     if (method != null && !Objects.equals(method.getContainingClass(), outerClass)) {
-      return needReplace(method, expression) ? new MethodReflectionAccessor(expression, method) : null;
+      return needReplace(method, expression) ? new MethodDescriptor(expression, method) : null;
     }
 
     return null;

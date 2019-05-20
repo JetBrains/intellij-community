@@ -1,27 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.refactoring.extractMethodObject;
+package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.psi.*;
-import com.intellij.refactoring.extractMethodObject.reflect.ConstructorReflectionAccessor;
-import com.intellij.refactoring.extractMethodObject.reflect.FieldReflectionAccessor;
-import com.intellij.refactoring.extractMethodObject.reflect.MethodReferenceReflectionAccessor;
-import com.intellij.refactoring.extractMethodObject.reflect.MethodReflectionAccessor;
+import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-class ReflectionAccessorToEverything {
+public class ReflectionAccessorToEverything {
   private final PsiClass myOuterClass;
   private final PsiElementFactory myElementFactory;
 
-  ReflectionAccessorToEverything(@NotNull PsiClass generatedInnerClass, @NotNull PsiElementFactory elementFactory) {
+  public ReflectionAccessorToEverything(@NotNull PsiClass generatedInnerClass, @NotNull PsiElementFactory elementFactory) {
     myOuterClass = generatedInnerClass;
     myElementFactory = elementFactory;
   }
 
-  void grantAccessThroughReflection(@NotNull PsiMethodCallExpression generatedMethodCall) {
+  public void grantAccessThroughReflection(@NotNull PsiMethodCallExpression generatedMethodCall) {
     MyInaccessibleItemsVisitor inaccessibleItemsVisitor = new MyInaccessibleItemsVisitor();
     myOuterClass.accept(inaccessibleItemsVisitor);
 
@@ -35,8 +32,8 @@ class ReflectionAccessorToEverything {
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      addIfNotNull(FieldReflectionAccessor.createIfInaccessible(myOuterClass, expression));
-      addIfNotNull(MethodReferenceReflectionAccessor.createIfInaccessible(expression));
+      addIfNotNull(FieldDescriptor.createIfInaccessible(myOuterClass, expression));
+      addIfNotNull(MethodReferenceDescriptor.createIfInaccessible(expression));
     }
 
     @Override
@@ -45,13 +42,13 @@ class ReflectionAccessorToEverything {
       PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
       // TODO: check if anonymous class is accessible
       if (anonymousClass != null || expression.getArrayInitializer() != null) return;
-      addIfNotNull(ConstructorReflectionAccessor.createIfInaccessible(expression));
+      addIfNotNull(ConstructorDescriptor.createIfInaccessible(expression));
     }
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      addIfNotNull(MethodReflectionAccessor.createIfInaccessible(myOuterClass, expression));
+      addIfNotNull(MethodDescriptor.createIfInaccessible(myOuterClass, expression));
     }
 
     private void addIfNotNull(@Nullable ItemToReplaceDescriptor descriptor) {

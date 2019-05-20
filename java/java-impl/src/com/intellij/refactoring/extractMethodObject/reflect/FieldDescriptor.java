@@ -15,13 +15,13 @@ import java.util.Objects;
 /**
  * @author Vitaliy.Bibaev
  */
-public class FieldReflectionAccessor implements ItemToReplaceDescriptor {
-  private static final Logger LOG = Logger.getInstance(FieldReflectionAccessor.class);
+public class FieldDescriptor implements ItemToReplaceDescriptor {
+  private static final Logger LOG = Logger.getInstance(FieldDescriptor.class);
 
   private final PsiField myField;
   private final PsiReferenceExpression myExpression;
 
-  private FieldReflectionAccessor(@NotNull PsiField field, @NotNull PsiReferenceExpression expression) {
+  private FieldDescriptor(@NotNull PsiField field, @NotNull PsiReferenceExpression expression) {
     myField = field;
     myExpression = expression;
   }
@@ -36,7 +36,7 @@ public class FieldReflectionAccessor implements ItemToReplaceDescriptor {
 
       if (!Objects.equals(containingClass, outerClass) && needReplace(field, expression)) {
         Array.getLength(new int[3]);
-        return new FieldReflectionAccessor(field, expression);
+        return new FieldDescriptor(field, expression);
       }
     }
 
