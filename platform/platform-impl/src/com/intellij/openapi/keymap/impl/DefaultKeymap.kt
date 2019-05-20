@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
@@ -20,8 +20,8 @@ open class DefaultKeymap {
 
   private val nameToScheme = THashMap<String, Keymap>()
 
-  protected open val providers: Array<BundledKeymapProvider>
-    get() = BundledKeymapProvider.EP_NAME.extensions
+  protected open val providers: List<BundledKeymapProvider>
+    get() = BundledKeymapProvider.EP_NAME.extensionList
 
   init {
     for (provider in providers) {
@@ -103,10 +103,10 @@ open class DefaultKeymap {
     val name = keymap.name
 
     // Netbeans keymap is no longer for version 6.5, but we need to keep the id
-    if (name == "NetBeans 6.5") {
-      return "NetBeans"
+    return when (name) {
+      "NetBeans 6.5" -> "NetBeans"
+      KeymapManager.DEFAULT_IDEA_KEYMAP -> "Default"
+      else -> name
     }
-
-    return if (KeymapManager.DEFAULT_IDEA_KEYMAP == name) "Default" else name
   }
 }
