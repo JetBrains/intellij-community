@@ -57,11 +57,18 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myDirectoryTextField.addActionListener(
       new MyBrowseFolderListener("Select Directory", "Select directory to map to a VCS", myDirectoryTextField, project,
                                  createSingleFolderDescriptor()));
-    setMapping(VcsDirectoryMapping.createDefault(""));
+    setMapping(suggestDefaultMapping(project));
     initProjectMessage();
     setTitle(title);
     init();
     myVCSComboBox.addActionListener(e -> updateVcsConfigurable());
+  }
+
+  @NotNull
+  private static VcsDirectoryMapping suggestDefaultMapping(@NotNull Project project) {
+    String basePath = project.getBasePath();
+    if (basePath == null) return VcsDirectoryMapping.createDefault("");
+    return new VcsDirectoryMapping(basePath, "");
   }
 
   @Override
