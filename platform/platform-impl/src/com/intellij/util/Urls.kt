@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.diagnostic.Logger
@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.URLUtil
 import gnu.trove.TObjectHashingStrategy
+import java.net.MalformedURLException
 import java.net.URI
 import java.net.URISyntaxException
 import java.util.regex.Pattern
@@ -66,11 +67,7 @@ object Urls {
   fun newLocalFileUrl(file: VirtualFile): Url = LocalFileUrl(file.path)
 
   @JvmStatic
-  fun newFromEncoded(url: String): Url {
-    val result = parseEncoded(url)
-    LOG.assertTrue(result != null, url)
-    return result!!
-  }
+  fun newFromEncoded(url: String): Url = parseEncoded(url) ?: throw MalformedURLException("Malformed URL: ${url}")
 
   @JvmStatic
   fun parseEncoded(url: String): Url? = parse(url, false)
