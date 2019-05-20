@@ -6,28 +6,29 @@ import com.intellij.openapi.rd.paint2DLine
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
-import com.intellij.ui.tabs.TabTheme
+import com.intellij.ui.tabs.newImpl.themes.DefaultTabTheme
+import com.intellij.ui.tabs.newImpl.themes.TabTheme
 import com.jetbrains.rd.swing.fillRect
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 
-open class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
+open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTabPainter {
 
   override fun getBackgroundColor(): Color = theme.background ?: theme.borderColor
 
   override fun fillBackground(g: Graphics2D, rect: Rectangle) {
     theme.background?.let{
-      g.fill2DRect(rect, theme.background)
+      g.fill2DRect(rect, it)
     }
   }
 
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, hovered: Boolean) {
     tabColor?.let {
-      g.fill2DRect(rect, tabColor)
-      theme.inactiveColoredFileBackground?.let {
-        g.fill2DRect(rect, it)
+      g.fill2DRect(rect, it)
+      theme.inactiveColoredFileBackground?.let { inactive ->
+        g.fill2DRect(rect, inactive)
       }
     }
 
@@ -41,7 +42,7 @@ open class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter
     val color = tabColor ?: theme.underlinedTabBackground
 
     color?.let {
-      g.fill2DRect(rect, color)
+      g.fill2DRect(rect, it)
     }
 
     if(hovered) {

@@ -705,10 +705,21 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color underlinedTabForeground() {
+        return JBColor.namedColor("DefaultTabs.underlinedTabForeground", UIUtil.getLabelForeground());
+      }
+
+      @NotNull
       public static Color hoverColor() {
         return JBColor.namedColor("DefaultTabs.hoverColor",
                                   new JBColor(0xD9D9D9,
                                               0x2E3133));
+      }
+    }
+
+    public static class DebuggerTabs {
+      public static int underlineHeight() {
+        return getInt("DebuggerTabs.underlineHeight", scale(2));
       }
     }
 
@@ -719,7 +730,7 @@ public class JBUI {
       }
 
       public static int underlineHeight() {
-        return getInt("EditorTabs.underlineHeight", scale(3));
+        return getInt("EditorTabs.underlineHeight", DefaultTabs.underlineHeight());
       }
 
       @NotNull
@@ -762,12 +773,16 @@ public class JBUI {
 
       @NotNull
       public static Color underlinedTabForeground() {
-        return JBColor.namedColor("EditorTabs.underlinedTabForeground", UIUtil.getLabelForeground());
+        return JBColor.namedColor("EditorTabs.underlinedTabForeground", DefaultTabs.underlinedTabForeground());
       }
 
     }
 
     public static class ToolWindow {
+      @NotNull
+      public static Color underlinedTabForeground() {
+        return JBColor.namedColor("EditorTabs.underlinedTabForeground", DefaultTabs.underlinedTabForeground());
+      }
 
       @NotNull
       public static Color tabSelectedBackground() {
@@ -847,7 +862,7 @@ public class JBUI {
       }
 
       public static int underlineHeight() {
-        return getInt("ToolWindow.HeaderTab.underlineHeight", scale(3));
+        return getInt("ToolWindow.HeaderTab.underlineHeight", DefaultTabs.underlineHeight());
       }
 
 
@@ -886,6 +901,8 @@ public class JBUI {
         return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ArrowDown)
                        : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ArrowDown);
       }
+
+
     }
 
     public static class Label {
