@@ -54,9 +54,10 @@ public class IdeaFreezeReporter {
             !ContainerUtil.isEmpty(myStacktraceCommonPart) &&
             !DebugAttachDetector.isAttached()) {
           int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
+          int step = myCurrentDumps.size() / size;
           Attachment[] attachments = new Attachment[size];
           for (int i = 0; i < size; i++) {
-            Attachment attachment = new Attachment("dump-" + i + ".txt", myCurrentDumps.get(i).getRawDump());
+            Attachment attachment = new Attachment("dump-" + i + ".txt", myCurrentDumps.get(i*step).getRawDump());
             attachment.setIncluded(true);
             attachments[i] = attachment;
           }
