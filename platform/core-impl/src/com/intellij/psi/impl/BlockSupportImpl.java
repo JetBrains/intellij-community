@@ -141,7 +141,8 @@ public class BlockSupportImpl extends BlockSupport {
       if (elementType instanceof IReparseableElementType || elementType instanceof IReparseableLeafElementType) {
         final TextRange textRange = node.getTextRange();
 
-        if (textRange.getLength() + lengthShift > 0 && !TreeUtil.containsOuterLanguageElements(node)) {
+        if (textRange.getLength() + lengthShift > 0 &&
+            (baseLanguage.isKindOf(elementType.getLanguage()) || !TreeUtil.containsOuterLanguageElements(node))) {
           final int start = textRange.getStartOffset();
           final int end = start + textRange.getLength() + lengthShift;
           if (end > newFileText.length()) {
