@@ -5,6 +5,10 @@ import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiWildcardType
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraphBuilder
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.determineDependencies
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -29,8 +33,8 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
   fun runInferenceProcess() {
     driver.setUpNewTypeParameters()
     setUpParametersSignature()
-    val registry = setUpRegistry()
-    inferTypeParameters(registry)
+    val graph = setUpGraph()
+    inferTypeParameters(graph)
   }
 
   private fun setUpParametersSignature() {
@@ -42,57 +46,49 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
   }
 
 
-  private fun setUpRegistry(): InferenceUnitRegistry {
+  private fun setUpGraph(): InferenceUnitGraph {
     val inferenceSession = GroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method,
                                                   propagateVariablesToNestedSessions = true)
     driver.collectInnerMethodCalls(inferenceSession)
     driver.constantTypes.forEach { getInferenceVariable(inferenceSession, it).instantiation = it }
     inferenceSession.run { repeatInferencePhases(); infer() }
     val inferenceVariables = method.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }
-    return InferenceUnitRegistry().apply {
-      setUpUnits(inferenceVariables, inferenceSession)
-      driver.constantTypes.forEach { searchUnit(it)?.constant = true }
-      driver.flexibleTypes.forEach { searchUnit(it)?.flexible = true }
-      driver.forbiddingTypes.mapNotNull { searchUnit(it) }
-        .filter { it.typeInstantiation == PsiType.getJavaLangObject(method.manager, method.resolveScope) }
-        .forEach { it.forbidInstantiation = true }
-    }
+    return InferenceUnitGraphBuilder.createGraphFromInferenceVariables(inferenceVariables, inferenceSession, driver.flexibleTypes.toSet(),
+                                                                       driver.constantTypes.toSet(),
+                                                                       driver.forbiddingTypes.toSet())
   }
 
-  private fun inferTypeParameters(registry: InferenceUnitRegistry) {
-    val graph = InferenceUnitGraph(registry)
-    val representativeSubstitutor = collectRepresentativeSubstitutor(graph, registry)
+  private fun inferTypeParameters(initialGraph: InferenceUnitGraph) {
+    val inferredGraph = determineDependencies(initialGraph)
     var resultSubstitutor = PsiSubstitutor.EMPTY
-    for (unit in graph.getRepresentatives().filter { !it.constant }) {
-      val preferableType = getPreferableType(graph, unit, representativeSubstitutor, resultSubstitutor)
-      graph.getEqualUnits(unit).forEach { resultSubstitutor = resultSubstitutor.put(it.initialTypeParameter, preferableType) }
+    for (unit in inferredGraph.units) {
+      val preferableType = getPreferableType(unit, resultSubstitutor)
+      resultSubstitutor = resultSubstitutor.put(unit.core.initialTypeParameter, preferableType)
     }
     driver.acceptFinalSubstitutor(resultSubstitutor)
   }
 
-  private fun getPreferableType(graph: InferenceUnitGraph,
-                                unit: InferenceUnit,
-                                representativeSubstitutor: PsiSubstitutor,
+  private fun getPreferableType(unit: InferenceUnitNode,
                                 resultSubstitutor: PsiSubstitutor): PsiType {
-    val equalTypeParameters = graph.getEqualUnits(unit).filter { it.typeInstantiation == PsiType.NULL }
-    val mayBeDirectlyInstantiated = equalTypeParameters.isEmpty() && !unit.forbidInstantiation &&
+    val mayBeDirectlyInstantiated = !unit.forbidInstantiation &&
                                     when {
-                                      unit.flexible -> (unit.typeInstantiation !is PsiIntersectionType)
+                                      unit.core.flexible -> (unit.typeInstantiation !is PsiIntersectionType)
                                       else -> unit.subtypes.size <= 1
                                     }
     when {
       mayBeDirectlyInstantiated -> {
         val instantiation = when {
-          unit.flexible || unit.subtypes.size != 0 -> unit.typeInstantiation
-          unit.typeInstantiation == unit.type -> PsiWildcardType.createUnbounded(method.manager)
+          unit.core.flexible || unit.subtypes.isNotEmpty() || unit.direct -> unit.typeInstantiation
+          unit.typeInstantiation == unit.type || unit.typeInstantiation.equalsToText("java.lang.Object") -> PsiWildcardType.createUnbounded(
+            method.manager)
           else -> PsiWildcardType.createExtends(method.manager, unit.typeInstantiation)
         }
-        return resultSubstitutor.substitute(representativeSubstitutor.substitute(instantiation))
+        return resultSubstitutor.substitute(instantiation)
       }
       else -> {
-        val parent = unit.unitInstantiation
+        val parent = unit.parent
         val advice = parent?.type ?: unit.typeInstantiation
-        val newTypeParam = driver.createBoundedTypeParameterElement(unit.initialTypeParameter.name!!, representativeSubstitutor,
+        val newTypeParam = driver.createBoundedTypeParameterElement(unit.core.initialTypeParameter.name!!,
                                                                     resultSubstitutor,
                                                                     advice)
         return newTypeParam.type()

@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
@@ -30,27 +30,15 @@ class NameGenerator {
     }
 }
 
-typealias InferenceGraphNode = InferenceVariablesOrder.InferenceGraphNode<InferenceUnit>
+typealias InferenceGraphNode = InferenceVariablesOrder.InferenceGraphNode<InferenceUnitNode>
 
 fun getInferenceVariable(session: GroovyInferenceSession, variableType: PsiType): InferenceVariable {
   return session.getInferenceVariable(session.substituteWithInferenceVariables(variableType))
 }
 
-fun collectRepresentativeSubstitutor(graph: InferenceUnitGraph,
-                                     registry: InferenceUnitRegistry): PsiSubstitutor {
-  var representativeSubstitutor = PsiSubstitutor.EMPTY
-  registry.getUnits().forEach {
-    representativeSubstitutor = representativeSubstitutor.put(it.initialTypeParameter,
-                                                              graph.getRepresentative(it).type)
-  }
-  return representativeSubstitutor
-}
-
 fun Iterable<PsiType>.flattenIntersections(): Iterable<PsiType> {
   return this.flatMap { if (it is PsiIntersectionType) it.conjuncts.asIterable() else listOf(it) }
 }
-
-fun InferenceVariable.upperBounds() = getBounds(InferenceBound.UPPER)
 
 fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superTypes: Array<out PsiClassType>): PsiTypeParameter {
   val builder = StringBuilder()
@@ -76,4 +64,13 @@ fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superTypes: 
 
 fun isClosureType(type: PsiType?) : Boolean {
   return (type as? PsiClassType)?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
+}
+
+fun PsiSubstitutor.recursiveSubstitute(type: PsiType) : PsiType {
+  val substituted = substitute(type)
+  if (substituted == type) {
+    return type
+  } else {
+    return recursiveSubstitute(substituted)
+  }
 }

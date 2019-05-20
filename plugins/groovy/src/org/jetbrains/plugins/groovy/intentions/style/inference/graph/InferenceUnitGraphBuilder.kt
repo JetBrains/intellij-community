@@ -1,0 +1,156 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.groovy.intentions.style.inference.graph
+
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeVisitor
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
+import com.intellij.util.containers.BidirectionalMap
+import org.jetbrains.plugins.groovy.intentions.style.inference.flattenIntersections
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+
+class InferenceUnitGraphBuilder {
+
+  private val relations: MutableList<Relation> = mutableListOf()
+  private val registered: MutableSet<InferenceUnit> = mutableSetOf()
+  private val fixedUnits: MutableSet<InferenceUnit> = mutableSetOf()
+  private val fixedInstantiations: MutableMap<InferenceUnit, PsiType> = mutableMapOf()
+  private val directUnits: MutableSet<InferenceUnit> = mutableSetOf()
+
+  companion object {
+    fun createGraphFromInferenceVariables(variables: List<InferenceVariable>,
+                                          session: GroovyInferenceSession,
+                                          flexibleTypes: Collection<PsiType> = emptySet(),
+                                          constantTypes: Collection<PsiType> = emptySet(),
+                                          forbiddingTypes: Collection<PsiType> = emptySet()): InferenceUnitGraph {
+      val map = BidirectionalMap<InferenceUnit, InferenceVariable>()
+      val builder = InferenceUnitGraphBuilder()
+      for (variable in variables) {
+        val typeParameter = variable.parameter.type()
+        val validType = when {
+          variable.parameter.extendsList.referencedTypes.size > 1 -> PsiIntersectionType.createIntersection(
+            variable.parameter.extendsList.referencedTypes.toList())
+          else -> variable.parameter.extendsList.referencedTypes.firstOrNull() ?: variable.instantiation
+        }
+        val core = InferenceUnit(variable.parameter,
+                                 typeParameter in flexibleTypes,
+                                 typeParameter in constantTypes)
+        builder.register(core)
+        builder.setType(core, validType)
+        if (typeParameter in forbiddingTypes && variable.instantiation.equalsToText("java.lang.Object")) {
+          builder.forbidInstantiation(core)
+        }
+        map[core] = variable
+      }
+      val entries = map.entries.sortedBy { (unit, _) -> unit.toString() }
+      for ((unit, variable) in entries) {
+        deepConnect(session, map, (variable.getBounds(InferenceBound.UPPER) + variable.getBounds(InferenceBound.EQ))
+        ) { builder.add(it, unit, RelationType.SUPER) }
+        deepConnect(session, map, (variable.getBounds(InferenceBound.LOWER) + variable.getBounds(InferenceBound.EQ))
+        ) { builder.add(it, unit, RelationType.SUB) }
+      }
+      return builder.build()
+    }
+
+    private fun deepConnect(session: GroovyInferenceSession,
+                            map: BidirectionalMap<InferenceUnit, InferenceVariable>,
+                            typeList: List<PsiType>,
+                            relationHandler: (InferenceUnit) -> Unit) {
+
+      val boundVisitor = object : PsiTypeVisitor<PsiType>() {
+        override fun visitClassType(classType: PsiClassType?): PsiType? {
+          classType ?: return classType
+          classType.parameters.forEach { it.accept(this) }
+          return super.visitClassType(classType)
+        }
+
+        override fun visitIntersectionType(intersectionType: PsiIntersectionType?): PsiType? {
+          intersectionType ?: return intersectionType
+          intersectionType.conjuncts.forEach { it.accept(this) }
+          return super.visitIntersectionType(intersectionType)
+        }
+      }
+      for (type in typeList.flattenIntersections()) {
+        val dependentVariable = session.getInferenceVariable(type)
+        if (dependentVariable != null) {
+          relationHandler(map.getKeysByValue(dependentVariable)!!.first())
+        }
+        else {
+          type.accept(boundVisitor)
+        }
+      }
+    }
+  }
+
+  fun add(left: InferenceUnit, right: InferenceUnit, type: RelationType): InferenceUnitGraphBuilder {
+    relations.add(Relation(left, right, type))
+    relations.add(Relation(right, left, type.complement()))
+    return this
+  }
+
+  fun register(unit: InferenceUnit): InferenceUnitGraphBuilder {
+    registered.add(unit)
+    return this
+  }
+
+  fun register(unitNode: InferenceUnitNode): InferenceUnitGraphBuilder {
+    register(unitNode.core)
+    if (unitNode.direct) {
+      setDirect(unitNode.core)
+    }
+    if (unitNode.forbidInstantiation) {
+      forbidInstantiation(unitNode.core)
+    }
+    setType(unitNode.core, unitNode.typeInstantiation)
+    return this
+  }
+
+  fun forbidInstantiation(parameter: InferenceUnit): InferenceUnitGraphBuilder {
+    fixedUnits.add(parameter)
+    return this
+  }
+
+  fun setDirect(unit: InferenceUnit): InferenceUnitGraphBuilder {
+    directUnits.add(unit)
+    return this
+  }
+
+  fun setType(parameter: InferenceUnit, type: PsiType): InferenceUnitGraphBuilder {
+    fixedInstantiations[parameter] = type
+    return this
+  }
+
+
+  fun build(): InferenceUnitGraph {
+    val inferenceNodes = ArrayList<InferenceUnitNode>()
+    val superTypesMap: MutableList<MutableSet<() -> InferenceUnitNode>> = mutableListOf()
+    val subTypesMap: MutableList<MutableSet<() -> InferenceUnitNode>> = mutableListOf()
+    //todo: bug with order
+    val registeredUnits =
+      (relations.flatMap { listOf(it.left, it.right) } + registered).toSet().toList().sortedBy { it.initialTypeParameter.name }
+    repeat(registeredUnits.size) {
+      superTypesMap.add(mutableSetOf())
+      subTypesMap.add(mutableSetOf())
+    }
+    val unitIndexMap : Map<InferenceUnit, Int> = registeredUnits.zip(registeredUnits.indices).toMap()
+    for ((left, right, type) in relations) {
+      when (type) {
+        RelationType.SUPER -> subTypesMap[unitIndexMap.getValue(left)].add { inferenceNodes[unitIndexMap.getValue(right)] }
+        RelationType.SUB -> superTypesMap[unitIndexMap.getValue(left)].add { inferenceNodes[unitIndexMap.getValue(right)] }
+      }
+    }
+    for (index in registeredUnits.indices) {
+      val unit = registeredUnits[index]
+      inferenceNodes.add(InferenceUnitNode(unit, superTypesMap[index], subTypesMap[index],
+                                           fixedInstantiations[unit]
+                                           ?: PsiType.NULL,
+                                           unit in fixedUnits,
+                                           unit in directUnits))
+    }
+    return InferenceUnitGraph(inferenceNodes)
+  }
+
+}

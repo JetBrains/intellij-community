@@ -239,7 +239,7 @@ class InferenceDriverImpl(private val method: GrMethod) : InferenceDriver {
       ParametrizedClosure.ensureImports(elementFactory, method.containingFile as GroovyFile)
     }
     targetParameters.forEach { param ->
-      param.setType(resultSubstitutor.substitute(param.type))
+      param.setType(resultSubstitutor.recursiveSubstitute(param.type))
       when {
         isClosureType(param.type) -> {
           closureParameters[param]!!.run {
@@ -268,8 +268,8 @@ class InferenceDriverImpl(private val method: GrMethod) : InferenceDriver {
         if (resolveElement is PsiTypeParameter) {
           if (resolveElement.text !in necessaryTypeParameters.map { it.text }) {
             necessaryTypeParameters.add(resolveElement)
+            resolveElement.extendsList.referencedTypes.forEach { it.accept(this) }
           }
-          resolveElement.extendsList.referencedTypes.forEach { it.accept(this) }
         }
         classType.parameters.forEach { it.accept(this) }
         return super.visitClassType(classType)
@@ -299,13 +299,12 @@ class InferenceDriverImpl(private val method: GrMethod) : InferenceDriver {
 
 
   override fun createBoundedTypeParameterElement(name: String,
-                                                 representativeSubstitutor: PsiSubstitutor,
                                                  resultSubstitutor: PsiSubstitutor,
                                                  advice: PsiType?): PsiTypeParameter {
     val mappedSupertypes = when (advice) {
-      is PsiClassType -> arrayOf(resultSubstitutor.substitute(representativeSubstitutor.substitute(advice)) as PsiClassType)
+      is PsiClassType -> arrayOf(resultSubstitutor.substitute(advice) as PsiClassType)
       is PsiIntersectionType -> PsiIntersectionType.flatten(advice.conjuncts, mutableSetOf()).map {
-        resultSubstitutor.substitute(representativeSubstitutor.substitute(it)) as PsiClassType
+        resultSubstitutor.substitute(it) as PsiClassType
       }.toTypedArray()
       else -> emptyArray()
     }
