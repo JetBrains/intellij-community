@@ -21,6 +21,7 @@ import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import git4idea.DialogManager;
+import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.remote.GitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
@@ -29,6 +30,7 @@ import git4idea.remote.InteractiveGitHttpAuthDataProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 
@@ -51,6 +53,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   @NotNull private final Project myProject;
   @Nullable private final String myPresetUrl; //taken from GitHandler, used if git does not provide url
+  @NotNull private final File myWorkingDirectory;
   @NotNull private final GitAuthenticationGate myAuthenticationGate;
   @NotNull private final GitAuthenticationMode myAuthenticationMode;
 
@@ -60,10 +63,12 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   GitHttpGuiAuthenticator(@NotNull Project project,
                           @NotNull Collection<String> urls,
+                          @NotNull File workingDirectory,
                           @NotNull GitAuthenticationGate authenticationGate,
                           @NotNull GitAuthenticationMode authenticationMode) {
     myProject = project;
     myPresetUrl = findFirstHttpUrl(urls);
+    myWorkingDirectory = workingDirectory;
     myAuthenticationGate = authenticationGate;
     myAuthenticationMode = authenticationMode;
   }
@@ -157,7 +162,10 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     List<AuthDataProvider> delegates = new ArrayList<>();
     PasswordSafeProvider passwordSafeProvider =
       new PasswordSafeProvider(unifiedUrl, GitRememberedInputs.getInstance(), PasswordSafe.getInstance());
-    DialogProvider dialogProvider = new DialogProvider(unifiedUrl, myProject, passwordSafeProvider);
+
+    boolean showActionForGitHelper =  GitConfigUtil.isCredentialHelperUsed(myProject, myWorkingDirectory);
+
+    DialogProvider dialogProvider = new DialogProvider(unifiedUrl, myProject, passwordSafeProvider, showActionForGitHelper);
 
     if (myAuthenticationMode != GitAuthenticationMode.NONE) {
       delegates.add(passwordSafeProvider);
@@ -292,13 +300,18 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   private static class DialogProvider extends AuthDataProvider {
     @NotNull private final Project myProject;
     @NotNull private final PasswordSafeProvider myPasswordSafeDelegate;
+    private final boolean showActionForGitHelper;
     private boolean myCancelled;
     private boolean myDataForSession = false;
 
-    protected DialogProvider(@NotNull String url, @NotNull Project project, @NotNull PasswordSafeProvider passwordSafeDelegate) {
+    protected DialogProvider(@NotNull String url,
+                             @NotNull Project project,
+                             @NotNull PasswordSafeProvider passwordSafeDelegate,
+                             boolean showActionForGitHelper) {
       super(url);
       myProject = project;
       myPasswordSafeDelegate = passwordSafeDelegate;
+      this.showActionForGitHelper = showActionForGitHelper;
     }
 
     @NotNull
@@ -374,7 +387,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       Ref<GitHttpLoginDialog> dialogRef = Ref.create();
       ApplicationManager.getApplication().invokeAndWait(() -> {
         GitHttpLoginDialog dialog =
-          new GitHttpLoginDialog(myProject, url, myPasswordSafeDelegate.isRememberPasswordByDefault(), username, editableUsername);
+          new GitHttpLoginDialog(myProject, url, myPasswordSafeDelegate.isRememberPasswordByDefault(), username, editableUsername,
+                                 showActionForGitHelper);
         dialog.setInteractiveDataProviders(interactiveProviders);
         dialogRef.set(dialog);
         DialogManager.show(dialog);

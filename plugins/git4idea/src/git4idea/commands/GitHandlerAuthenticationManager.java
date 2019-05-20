@@ -62,6 +62,12 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
       else if (Registry.is("git.ssh.native.override.ssh.askpass")) {
         manager.prepareNativeSshAuth();
       }
+      boolean useCredentialHelper = GitVcsApplicationSettings.getInstance().isUseCredentialHelper();
+      boolean shouldResetCredentialHelper = !useCredentialHelper &&
+                                            GitVersionSpecialty.CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY.existsIn(project);
+      if (shouldResetCredentialHelper) {
+        handler.overwriteConfig("credential.helper=");
+      }
     });
     return manager;
   }
@@ -79,6 +85,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
     GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject,
                                                                          myHandler.getUrls(),
+                                                                         myHandler.getWorkingDirectory(),
                                                                          authenticationGate,
                                                                          myHandler.getIgnoreAuthenticationMode());
     myHttpHandler = service.registerHandler(httpAuthenticator);

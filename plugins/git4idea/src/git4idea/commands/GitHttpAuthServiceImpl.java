@@ -18,16 +18,18 @@ package git4idea.commands;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.Collection;
 
 class GitHttpAuthServiceImpl extends GitHttpAuthService {
 
   @Override
   @NotNull
-  public GitHttpAuthenticator createAuthenticator(@NotNull Project project,
-                                                  @NotNull Collection<String> urls,
-                                                  @NotNull GitAuthenticationGate authenticationGate,
-                                                  @NotNull GitAuthenticationMode authenticationMode) {
-    return new GitHttpGuiAuthenticator(project, urls, authenticationGate, authenticationMode);
+  public GitHttpGuiAuthenticator createAuthenticator(@NotNull Project project,
+                                                     @NotNull Collection<String> urls,
+                                                     @NotNull File workingDirectory,
+                                                     @NotNull GitAuthenticationGate authenticationGate,
+                                                     @NotNull GitAuthenticationMode authenticationMode) {
+    return new GitHttpGuiAuthenticator(project, urls, workingDirectory, authenticationGate, authenticationMode);
   }
 }
