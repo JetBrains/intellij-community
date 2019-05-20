@@ -89,10 +89,10 @@ Includes the following features:</p>
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" />
     <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.MarkdownLanguageCodeStyleSettingsProvider"/>
     <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
-    <highlightErrorFilter implementation="org.intellij.plugins.markdown.injection.MarkdownCodeFenceIntention$CodeFenceHighlightErrorFilter"/>
+    <highlightErrorFilter implementation="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeFenceHighlightErrorFilter"/>
 
     <intentionAction>
-      <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceIntention</className>
+      <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
       <category>Markdown</category>
     </intentionAction>
   </extensions>

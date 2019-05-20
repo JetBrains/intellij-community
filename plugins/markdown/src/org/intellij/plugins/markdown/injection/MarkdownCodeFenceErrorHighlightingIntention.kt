@@ -11,21 +11,28 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 
-class MarkdownCodeFenceIntention() : IntentionAction {
+class MarkdownCodeFenceErrorHighlightingIntention() : IntentionAction {
   init {
     val settingsListener = object : MarkdownApplicationSettings.SettingsChangedListener {
       override fun settingsChanged(settings: MarkdownApplicationSettings) =
-        ProjectManager.getInstance().openProjects.forEach { DaemonCodeAnalyzerImpl.getInstance(it).restart() }
+        ProjectManager.getInstance().openProjects.forEach { project ->
+          FileEditorManager.getInstance(project).openFiles
+            .filter { file -> file.fileType == MarkdownFileType.INSTANCE }
+            .mapNotNull { file -> PsiManager.getInstance(project).findFile(file) }
+            .forEach { DaemonCodeAnalyzerImpl.getInstance(project).restart(it) }
+        }
     }
 
     ApplicationManager.getApplication().messageBus.connect().subscribe<MarkdownApplicationSettings.SettingsChangedListener>(
