@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.intellij.build.impl
+package org.jetbrains.intellij.build.fus
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -15,8 +15,6 @@ import org.jetbrains.intellij.build.BuildContext
 @CompileStatic
 class StatisticsRecorderBundledWhiteListProvider {
   private final BuildContext context
-  private final String recorderId = 'FUS'
-  private final String providerUri = "https://resources.jetbrains.com/storage/fus/config/$recorderId/lion-v3-assistant.xml"
   private final String whiteListJson = 'white-list.json'
 
   StatisticsRecorderBundledWhiteListProvider(BuildContext context) {
@@ -25,6 +23,7 @@ class StatisticsRecorderBundledWhiteListProvider {
 
   File downloadWhiteList() {
     def dir = new File(context.paths.temp, 'whitelists')
+    def recorderId = context.proprietaryBuildTools.featureUsageStatisticsProperties.recorderId
     def list = new File(dir, "resources/event-log-whitelist/$recorderId/$whiteListJson")
     if (!list.parentFile.mkdirs() || !list.createNewFile()) {
       throw new IOException("Unable to create $list")
@@ -45,6 +44,7 @@ class StatisticsRecorderBundledWhiteListProvider {
 
   @CompileDynamic
   private String whiteListServiceUri() {
+    def providerUri = context.proprietaryBuildTools.featureUsageStatisticsProperties.whiteListProviderUri
     new XmlSlurper().parse(providerUri).'@white-list-service'.toString()
   }
 }

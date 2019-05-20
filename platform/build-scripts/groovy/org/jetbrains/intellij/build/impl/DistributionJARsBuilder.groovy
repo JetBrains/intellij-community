@@ -9,6 +9,7 @@ import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledWhiteListProvider
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -338,7 +339,9 @@ class DistributionJARsBuilder {
       def patchedKeyMapDir = createKeyMapWithAltClickReassignedToMultipleCarets()
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
-    layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', bundledWhiteListProvider.downloadWhiteList().absolutePath)
+    if (buildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
+      layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', bundledWhiteListProvider.downloadWhiteList().absolutePath)
+    }
 
     buildContext.messages.block("Build platform JARs in lib directory") {
       buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
