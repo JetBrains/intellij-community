@@ -52,6 +52,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private JButton myUpdateButton;
   private JButton myEnableDisableButton;
   private JBOptionButton myEnableDisableUninstallButton;
+  private JButton myUninstallButton;
   private JComponent myErrorComponent;
   private JTextField myVersion;
   private JLabel myVersionSize;
@@ -191,6 +192,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
     };
     myNameAndButtons.addButtonComponent(myEnableDisableUninstallButton = new MyOptionButton(enableDisableAction, uninstallAction));
 
+    myUninstallButton = new JButton("Uninstall");
+    myUninstallButton.addActionListener(e -> doUninstall());
+    ColorButton.setWidth72(myUninstallButton);
+    myNameAndButtons.addButtonComponent(myUninstallButton);
+
     for (Component component : myNameAndButtons.getButtonComponents()) {
       component.setBackground(PluginManagerConfigurableNew.MAIN_BG_COLOR);
     }
@@ -301,7 +307,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       setEmptyState(multiSelection);
     }
     else {
-      myPlugin = component.getPluginDescriptor();
+      myPlugin = component.myPlugin;
       myUpdateDescriptor = ((NewListPluginComponent)component).myUpdateDescriptor;
       showPlugin();
       select(0, true);
@@ -334,6 +340,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myUpdateButton.setVisible(false);
       myEnableDisableButton.setVisible(false);
       myEnableDisableUninstallButton.setVisible(false);
+      myUninstallButton.setVisible(false);
     }
     else {
       myInstallButton.setVisible(false);
@@ -350,20 +357,24 @@ public class PluginDetailsPageComponent extends MultiPanel {
         myUpdateButton.setVisible(false);
         myEnableDisableButton.setVisible(false);
         myEnableDisableUninstallButton.setVisible(false);
+        myUninstallButton.setVisible(false);
       }
       else {
         myRestartButton.setVisible(false);
 
-        myUpdateButton.setVisible(myUpdateDescriptor != null);
-
         boolean bundled = myPlugin.isBundled();
         String title = myPluginModel.getEnabledTitle(myPlugin);
+        boolean errors = myPluginModel.hasErrors(myPlugin);
 
-        myEnableDisableButton.setVisible(bundled);
+        myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
+
+        myEnableDisableButton.setVisible(bundled && !errors);
         myEnableDisableButton.setText(title);
 
-        myEnableDisableUninstallButton.setVisible(!bundled);
+        myEnableDisableUninstallButton.setVisible(!bundled && !errors);
         myEnableDisableUninstallButton.setText(title);
+
+        myUninstallButton.setVisible(!bundled && errors);
       }
 
       updateEnableForNameAndIcon();
@@ -510,13 +521,16 @@ public class PluginDetailsPageComponent extends MultiPanel {
     updateEnableForNameAndIcon();
     updateErrors();
 
+    boolean bundled = myPlugin.isBundled();
+    boolean errors = myPluginModel.hasErrors(myPlugin);
     String title = myPluginModel.getEnabledTitle(myPlugin);
-    if (myEnableDisableButton != null) {
-      myEnableDisableButton.setText(title);
-    }
-    if (myEnableDisableUninstallButton != null) {
-      myEnableDisableUninstallButton.setText(title);
-    }
+
+    myEnableDisableButton.setText(title);
+    myEnableDisableUninstallButton.setText(title);
+    myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
+    myEnableDisableButton.setVisible(bundled && !errors);
+    myEnableDisableUninstallButton.setVisible(!bundled && !errors);
+    myUninstallButton.setVisible(!bundled && errors);
 
     fullRepaint();
   }
@@ -532,6 +546,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myUpdateButton.setVisible(false);
     myEnableDisableButton.setVisible(false);
     myEnableDisableUninstallButton.setVisible(false);
+    myUninstallButton.setVisible(false);
     myRestartButton.setVisible(true);
   }
 
