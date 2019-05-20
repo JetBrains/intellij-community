@@ -48,7 +48,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   @Override
   public final CandidateInfo resolveConflict(@NotNull final List<CandidateInfo> conflicts){
-    if (MethodCandidateInfo.isOverloadCheck(myArgumentsList)) {
+    if (myArgumentsList instanceof PsiExpressionList && MethodCandidateInfo.isOverloadCheck(myArgumentsList)) {
       LOG.error("Recursive conflict resolution for:" + myArgumentsList.getParent() + "; " +
                 "file=" + myArgumentsList.getContainingFile());
     }
