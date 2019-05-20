@@ -39,14 +39,14 @@ class DistributionJARsBuilder {
   private final PlatformLayout platform
   private final File patchedApplicationInfo
   private final LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish
-  private final WhiteListService whiteListService
+  private final StatisticsRecorderBundledWhiteListProvider bundledWhiteListProvider
 
   DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo,
                           LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish = [:]) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
     this.pluginsToPublish = pluginsToPublish
-    this.whiteListService = new WhiteListService(buildContext)
+    this.bundledWhiteListProvider = new StatisticsRecorderBundledWhiteListProvider(buildContext)
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
       include(name: "**/*Messages.properties")
@@ -338,7 +338,7 @@ class DistributionJARsBuilder {
       def patchedKeyMapDir = createKeyMapWithAltClickReassignedToMultipleCarets()
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
-    layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', whiteListService.whiteList().absolutePath)
+    layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', bundledWhiteListProvider.downloadWhiteList().absolutePath)
 
     buildContext.messages.block("Build platform JARs in lib directory") {
       buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])

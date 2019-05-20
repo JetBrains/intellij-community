@@ -9,18 +9,21 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.util.EntityUtils
 import org.jetbrains.intellij.build.BuildContext
 
+/**
+ * Download a default version of feature usage statistics white list to be bundled with IDE.
+ */
 @CompileStatic
-class WhiteListService {
+class StatisticsRecorderBundledWhiteListProvider {
   private final BuildContext context
   private final String recorderId = 'FUS'
   private final String providerUri = "https://resources.jetbrains.com/storage/fus/config/$recorderId/lion-v3-assistant.xml"
   private final String whiteListJson = 'white-list.json'
 
-  WhiteListService(BuildContext context) {
+  StatisticsRecorderBundledWhiteListProvider(BuildContext context) {
     this.context = context
   }
 
-  File whiteList() {
+  File downloadWhiteList() {
     def dir = new File(context.paths.temp, 'whitelists')
     def list = new File(dir, "resources/event-log-whitelist/$recorderId/$whiteListJson")
     if (!list.parentFile.mkdirs() || !list.createNewFile()) {
@@ -30,7 +33,7 @@ class WhiteListService {
       def name = context.applicationInfo.productCode + '.json'
       it.endsWith('/') ? "$it$name" : "$it/$name"
     }, list)
-    dir
+    return dir
   }
 
   private static void download(String uri, File file) {
