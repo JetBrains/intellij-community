@@ -61,9 +61,9 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
 
   @NotNull
   private static String getTargetOperator(@NotNull ConditionalModel model) {
-    if (PsiType.BOOLEAN.equals(model.myType)) {
-      PsiLiteralExpression thenLiteral = ExpressionUtils.getLiteral(model.myThenExpression);
-      PsiLiteralExpression elseLiteral = ExpressionUtils.getLiteral(model.myElseExpression);
+    if (PsiType.BOOLEAN.equals(model.getType())) {
+      PsiLiteralExpression thenLiteral = ExpressionUtils.getLiteral(model.getThenExpression());
+      PsiLiteralExpression elseLiteral = ExpressionUtils.getLiteral(model.getElseExpression());
       Boolean thenValue = thenLiteral == null ? null : tryCast(thenLiteral.getValue(), Boolean.class);
       Boolean elseValue = elseLiteral == null ? null : tryCast(elseLiteral.getValue(), Boolean.class);
       if (thenValue != null && elseValue != null) {
@@ -79,15 +79,16 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
   }
 
   private static String buildExpressionText(@NotNull ConditionalModel model, CommentTracker ct) {
-    PsiExpression condition = ParenthesesUtils.stripParentheses(model.myCondition);
-    PsiExpression thenValue = ParenthesesUtils.stripParentheses(model.myThenExpression);
-    PsiExpression elseValue = ParenthesesUtils.stripParentheses(model.myElseExpression);
+    PsiExpression condition = ParenthesesUtils.stripParentheses(model.getCondition());
+    if (condition == null) return null;
+    PsiExpression thenValue = ParenthesesUtils.stripParentheses(model.getThenExpression());
+    PsiExpression elseValue = ParenthesesUtils.stripParentheses(model.getElseExpression());
 
-    thenValue = expandDiamondsWhenNeeded(thenValue, model.myType);
-    elseValue = expandDiamondsWhenNeeded(elseValue, model.myType);
+    thenValue = expandDiamondsWhenNeeded(thenValue, model.getType());
+    elseValue = expandDiamondsWhenNeeded(elseValue, model.getType());
     if (thenValue == null || elseValue == null) return null;
 
-    if (PsiType.BOOLEAN.equals(model.myType)) {
+    if (PsiType.BOOLEAN.equals(model.getType())) {
       PsiLiteralExpression thenLiteral = ExpressionUtils.getLiteral(thenValue);
       PsiLiteralExpression elseLiteral = ExpressionUtils.getLiteral(elseValue);
       Boolean thenBoolean = thenLiteral == null ? null : tryCast(thenLiteral.getValue(), Boolean.class);
@@ -119,7 +120,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
     if (thenType instanceof PsiPrimitiveType &&
         !PsiType.NULL.equals(thenType) &&
         !(elseType instanceof PsiPrimitiveType) &&
-        !(model.myType instanceof PsiPrimitiveType)) {
+        !(model.getType() instanceof PsiPrimitiveType)) {
       // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
       final PsiPrimitiveType primitiveType = (PsiPrimitiveType)thenType;
       conditional.append(primitiveType.getBoxedTypeName());
@@ -129,7 +130,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
     else if (elseType instanceof PsiPrimitiveType &&
              !PsiType.NULL.equals(elseType) &&
              !(thenType instanceof PsiPrimitiveType) &&
-             !(model.myType instanceof PsiPrimitiveType)) {
+             !(model.getType() instanceof PsiPrimitiveType)) {
       // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
       conditional.append(ct.text(thenValue, ParenthesesUtils.CONDITIONAL_PRECEDENCE));
       conditional.append(':');
@@ -237,11 +238,11 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
       CommentTracker commentTracker = new CommentTracker();
       String conditional = buildExpressionText(model, commentTracker);
       if (conditional == null) return;
-      commentTracker.replace(model.myThenExpression, conditional);
-      if (!PsiTreeUtil.isAncestor(ifStatement, model.myElseBranch, true)) {
-        commentTracker.delete(model.myElseBranch);
+      commentTracker.replace(model.getThenExpression(), conditional);
+      if (!PsiTreeUtil.isAncestor(ifStatement, model.getElseBranch(), true)) {
+        commentTracker.delete(model.getElseBranch());
       }
-      PsiElement result = commentTracker.replaceAndRestoreComments(ifStatement, model.myThenBranch);
+      PsiElement result = commentTracker.replaceAndRestoreComments(ifStatement, model.getThenBranch());
       tryJoinDeclaration(result);
     }
   }
