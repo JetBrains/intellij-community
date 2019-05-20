@@ -1179,8 +1179,8 @@
     </group>
 
     <group id="ServiceViewTreeToolbar">
-      <action id="ExtractServiceAction" class="com.intellij.execution.services.ExtractServiceAction"
-              text="Extract" icon="AllIcons.Actions.Forward"/>
+      <action id="ServiceView.ShowInNewTab" class="com.intellij.execution.services.ShowInNewTabAction"
+              text="Show in New Tab" icon="AllIcons.Actions.OpenNewTab"/>
       <group id="ServiceViewTreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
@@ -1191,6 +1191,7 @@
     <group id="ServiceViewNodePopup">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup"/>
       <separator/>
+      <reference id="ServiceView.ShowInNewTab"/>
     </group>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
