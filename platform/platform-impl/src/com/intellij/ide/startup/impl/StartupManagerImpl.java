@@ -65,7 +65,6 @@ public class StartupManagerImpl extends StartupManagerEx {
   private boolean myPostStartupActivitiesPassed;
 
   private volatile boolean myPreStartupActivitiesPassed;
-  private volatile boolean myStartupActivitiesRunning;
   private volatile boolean myStartupActivitiesPassed;
 
   private final Project myProject;
@@ -132,13 +131,11 @@ public class StartupManagerImpl extends StartupManagerEx {
         // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
         synchronized (this) {
           myPreStartupActivitiesPassed = true;
-          myStartupActivitiesRunning = true;
         }
 
         runActivities(myStartupActivities, Phases.PROJECT_STARTUP);
 
         synchronized (this) {
-          myStartupActivitiesRunning = false;
           myStartupActivitiesPassed = true;
         }
       }
@@ -162,9 +159,7 @@ public class StartupManagerImpl extends StartupManagerEx {
         runActivity(uiFreezeWarned, extension);
       }
       else {
-        dumbService.runWhenSmart(() -> {
-          runActivity(uiFreezeWarned, extension);
-        });
+        dumbService.runWhenSmart(() -> runActivity(uiFreezeWarned, extension));
       }
     }
     activity.end();
