@@ -674,7 +674,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         myIndexCollector.reportResumeClick();
         LOG.info("Resuming indexing for " + myRoot.getName());
         if (myBigRepositoriesList.removeRepository(myRoot)) scheduleIndex(false);
-        notification.expire();
       }));
       notification.setContextHelpAction(new DumbAwareAction("Why is it helpful?",
                                                             "Indexing speeds up search and other operations in " +
@@ -685,6 +684,15 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         public void actionPerformed(@NotNull AnActionEvent e) {
         }
       });
+      Disposable disposable = Disposer.newDisposable();
+      Disposer.register(VcsLogPersistentIndex.this, disposable);
+      myBigRepositoriesList.addListener(() -> {
+        if (!myBigRepositoriesList.isBig(myRoot)) {
+          notification.expire();
+          Disposer.dispose(disposable);
+        }
+      }, disposable);
+      notification.whenExpired(() -> Disposer.dispose(disposable));
       // if our bg thread is cancelled, calling VcsNotifier.getInstance in it will throw PCE
       // so using invokeLater here
       ApplicationManager.getApplication().invokeLater(() -> VcsNotifier.getInstance(myProject).notify(notification));
