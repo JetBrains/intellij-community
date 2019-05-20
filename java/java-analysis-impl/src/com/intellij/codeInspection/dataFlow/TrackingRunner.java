@@ -823,26 +823,31 @@ public class TrackingRunner extends StandardDataFlowRunner {
     }
     PsiExpression expression = change.getExpression();
     if (expression != null) {
+      Collection<DfaRelationValue> relations = Collections.emptyList();
       if (expression instanceof PsiBinaryExpression) {
-        DfaRelationValue rel = fromBinaryExpression(change, (PsiBinaryExpression)expression);
+        DfaRelationValue rel = getBinaryExpressionRelation(change, (PsiBinaryExpression)expression);
         if (rel != null) {
           if (isSameRelation(rel, value, relation)) {
             return new CauseItem(new CustomDfaProblemType("condition '" + condition + "' was checked before"), expression);
           }
-          List<DfaRelationValue> chain = findDeductionChain(change, Collections.singletonList(rel), value, relation);
-          if (!chain.isEmpty()) {
-            CauseItem[] result = new CauseItem[0];
-            for (DfaRelationValue deduced : chain) {
-              CauseItem[] cause =
-                findRelationCause(deduced.getRelation(), change, deduced.getLeftOperand(), change, deduced.getRightOperand());
-              result = ArrayUtil.mergeArrays(result, cause);
-            }
-            if (result.length > 1) {
-              CauseItem item = new CauseItem(new CustomDfaProblemType("condition '" + condition + "' was deduced"), (PsiElement)null);
-              item.addChildren(result);
-              return item;
-            }
-          }
+          relations = Collections.singleton(rel);
+        }
+      }
+      if (expression instanceof PsiCallExpression) {
+        relations = getCallRelations((PsiCallExpression)expression);
+      }
+      List<DfaRelationValue> chain = findDeductionChain(change, relations, value, relation);
+      if (!chain.isEmpty()) {
+        CauseItem[] result = new CauseItem[0];
+        for (DfaRelationValue deduced : chain) {
+          CauseItem[] cause =
+            findRelationCause(deduced.getRelation(), change, deduced.getLeftOperand(), change, deduced.getRightOperand());
+          result = ArrayUtil.mergeArrays(result, cause);
+        }
+        if (result.length > 1) {
+          CauseItem item = new CauseItem(new CustomDfaProblemType("condition '" + condition + "' was deduced"), (PsiElement)null);
+          item.addChildren(result);
+          return item;
         }
       }
       return new CauseItem(new CustomDfaProblemType("result of '" + condition + "' is known from #ref"), expression);
@@ -851,16 +856,19 @@ public class TrackingRunner extends StandardDataFlowRunner {
   }
 
   private List<DfaRelationValue> findDeductionChain(MemoryStateChange change,
-                                                    List<DfaRelationValue> knownRelations,
+                                                    Collection<DfaRelationValue> knownRelations,
                                                     DfaVariableValue value,
                                                     Relation relation) {
     for (DfaRelationValue rel : knownRelations) {
+      if (isSameRelation(rel, value, relation)) {
+        continue;
+      }
       for (Map.Entry<DfaVariableValue, TrackingDfaMemoryState.Change> entry : change.myChanges.entrySet()) {
         DfaVariableValue actualVar = entry.getKey();
         for (Relation actualRelation : entry.getValue().myAddedRelations) {
           if (isSameRelation(rel, actualVar, actualRelation)) {
             DfaValue left;
-            DfaValue right = actualRelation.myCounterpart;
+            DfaValue right;
             RelationType type;
             if (actualRelation.myRelationType == RelationType.EQ ||
                 (relation.myRelationType != RelationType.NE && relation.myRelationType == actualRelation.myRelationType)) {
@@ -873,11 +881,20 @@ public class TrackingRunner extends StandardDataFlowRunner {
               continue;
             }
             if (actualVar == value) {
-              left = relation.myCounterpart;
-              type = Objects.requireNonNull(type.getFlipped());
+              left = actualRelation.myCounterpart;
+              right = relation.myCounterpart;
             }
             else if (actualVar == relation.myCounterpart) {
               left = value;
+              right = actualRelation.myCounterpart;
+            }
+            else if (actualRelation.myCounterpart == relation.myCounterpart) {
+              left = value;
+              right = actualVar;
+            }
+            else if (actualRelation.myCounterpart == value) {
+              left = actualVar;
+              right = relation.myCounterpart;
             }
             else {
               continue;
@@ -910,7 +927,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
   }
 
   @Nullable
-  private DfaRelationValue fromBinaryExpression(MemoryStateChange change, PsiBinaryExpression binOp) {
+  private DfaRelationValue getBinaryExpressionRelation(MemoryStateChange change, PsiBinaryExpression binOp) {
     PsiExpression lOperand = binOp.getLOperand();
     PsiExpression rOperand = binOp.getROperand();
     MemoryStateChange leftPos = change.findExpressionPush(lOperand);
@@ -924,6 +941,18 @@ public class TrackingRunner extends StandardDataFlowRunner {
       }
     }
     return null;
+  }
+
+  private Collection<DfaRelationValue> getCallRelations(PsiCallExpression callExpression) {
+    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(callExpression);
+    Set<DfaRelationValue> results = new LinkedHashSet<>();
+    for (MethodContract contract : contracts) {
+      for (ContractValue condition : contract.getConditions()) {
+        DfaValue rel = condition.fromCall(getFactory(), callExpression);
+        ContainerUtil.addIfNotNull(results, ObjectUtils.tryCast(rel, DfaRelationValue.class));
+      }
+    }
+    return results;
   }
 
   private CauseItem findNullabilityCause(MemoryStateChange factUse, DfaNullability nullability) {

@@ -55,8 +55,9 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
     assertTrue("Selected element is not an expression: " + selectedText, element instanceof PsiExpression);
     PsiExpression expression = (PsiExpression)element;
     TrackingRunner.DfaProblemType problemType = getProblemType(selectedText, expression);
-    List<TrackingRunner.CauseItem> items = TrackingRunner.findProblemCause(true, false, expression, problemType);
-    String dump = StreamEx.of(items).map(item -> item.dump(getEditor().getDocument())).joining("\n----\n");
+    TrackingRunner.CauseItem item = TrackingRunner.findProblemCause(true, false, expression, problemType);
+    assertNotNull(item);
+    String dump = item.dump(getEditor().getDocument());
     PsiComment firstComment = PsiTreeUtil.findChildOfType(file, PsiComment.class);
     if (firstComment == null) {
       fail("Comment not found");
@@ -175,4 +176,5 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testConstructorSimple() { doTest(); }
   public void testConstructorDependOnInitializer() { doTest(); }
   public void testBasedOnPreviousRelation() { doTest(); }
+  public void testBasedOnPreviousRelationContracts() { doTest(); }
 }
