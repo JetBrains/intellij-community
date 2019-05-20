@@ -30,6 +30,18 @@ public class ReflectionAccessorToEverything {
     private final List<ItemToReplaceDescriptor> myReplaceDescriptors = new ArrayList<>();
 
     @Override
+    public void visitParameter(PsiParameter parameter) {
+      super.visitParameter(parameter);
+      addIfNotNull(ParameterDescriptor.createIfInaccessible(parameter));
+    }
+
+    @Override
+    public void visitField(PsiField field) {
+      super.visitField(field);
+      addIfNotNull(FieldDeclarationDescriptor.createIfInaccessible(field));
+    }
+
+    @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       addIfNotNull(FieldDescriptor.createIfInaccessible(myOuterClass, expression));

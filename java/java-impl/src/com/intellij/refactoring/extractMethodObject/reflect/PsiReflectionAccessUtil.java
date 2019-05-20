@@ -63,10 +63,7 @@ class PsiReflectionAccessUtil {
     String expectedType = tryGetWeakestAccessibleExpectedType(expression);
     if (expectedType != null) return expectedType;
 
-    PsiType nearestAccessibleBaseType = nearestAccessedType(type);
-    if (nearestAccessibleBaseType != null) return nearestAccessibleBaseType.getCanonicalText();
-
-    return nearestAccessibleBaseClass(PsiTypesUtil.getPsiClass(type));
+    return type != null ? nearestAccessibleType(type).getCanonicalText() : null;
   }
 
   @Nullable
@@ -74,7 +71,7 @@ class PsiReflectionAccessUtil {
     String expectedType = tryGetWeakestAccessibleExpectedType(expression);
     if (expectedType != null) return expectedType;
 
-    return nearestAccessibleBaseClass(psiClass);
+    return nearestAccessibleBaseClassName(psiClass);
   }
 
   @Nullable
@@ -83,7 +80,7 @@ class PsiReflectionAccessUtil {
     PsiType realType = expression.getType();
     if (expectedType != null && realType != null) {
       for (PsiType type: getAllAssignableSupertypes(realType, expectedType)) {
-        if (isAccessible(type)) {
+        if (isAccessibleType(type)) {
           return type.getCanonicalText();
         }
       }
@@ -130,18 +127,18 @@ class PsiReflectionAccessUtil {
     return name;
   }
 
-  private static boolean isAccessible(@NotNull PsiType type) {
+  public static boolean isAccessibleType(@NotNull PsiType type) {
     if (type instanceof PsiArrayType) {
-      return isAccessible(type.getDeepComponentType());
+      return isAccessibleType(type.getDeepComponentType());
     }
 
     return TypeConversionUtil.isPrimitiveAndNotNull(type) || isAccessible(PsiTypesUtil.getPsiClass(type));
   }
 
-  @Nullable
-  private static PsiType nearestAccessedType(@Nullable PsiType type) {
-    while (type != null && !isAccessible(type)) {
-      type = ArrayUtil.getFirstElement(type.getSuperTypes());
+  @NotNull
+  public static PsiType nearestAccessibleType(@NotNull PsiType type) {
+    while (!isAccessibleType(type)) {
+      type = type.getSuperTypes()[0];
     }
 
     return type;
@@ -149,7 +146,7 @@ class PsiReflectionAccessUtil {
 
   @Contract("null -> null")
   @Nullable
-  private static String nearestAccessibleBaseClass(@Nullable PsiClass psiClass) {
+  private static String nearestAccessibleBaseClassName(@Nullable PsiClass psiClass) {
     while (psiClass != null && !psiClass.hasModifierProperty(PsiModifier.PUBLIC)) {
       psiClass = psiClass.getSuperClass();
     }
