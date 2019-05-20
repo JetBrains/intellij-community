@@ -209,13 +209,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
           Logger.getInstance(UpdateInstaller.class).warn(e);
 
           String title = IdeBundle.message("updates.error.connection.title");
-          String message = IdeBundle.message("update.downloading.patch.error", e.getMessage());
-          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, new NotificationListener.Adapter() {
-            @Override
-            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-              openDownloadPage();
-            }
-          }).notify(null);
+          String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl());
+          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER).notify(null);
 
           return;
         }
@@ -253,10 +248,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     application.invokeLater(() -> application.exit(true, true, true, command));
   }
 
-  private void openDownloadPage() {
+  private String downloadUrl() {
     String url = myNewBuild.getDownloadUrl();
-    assert !StringUtil.isEmptyOrSpaces(url) : "channel:" + myUpdatedChannel.getId() + " build:" + myNewBuild.getNumber();
-    BrowserUtil.browse(augmentUrl(url));
+    if (url == null) url = myNewBuild.getBlogPost();
+    if (url == null) url = myUpdatedChannel.getUrl();
+    if (url == null) url = "https://www.jetbrains.com";
+    return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url);
   }
 
   private static void showPatchInstructions(String[] command) {
@@ -292,7 +289,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       if (myInfo.isDownload()) {
         IdeUpdateUsageTriggerCollector.trigger( "dialog.download.clicked");
       }
-      BrowserUtil.browse(augmentUrl(myInfo.getUrl()));
+      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(myInfo.getUrl()));
     }
   }
 
@@ -313,11 +310,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       String message = myNewBuild.getMessage();
       if (StringUtil.isEmptyOrSpaces(message)) {
-        String url = myNewBuild.getDownloadUrl();
-        if (url == null) url = myNewBuild.getBlogPost();
-        if (url == null) url = myUpdatedChannel.getUrl();
-        if (url == null) url = "https://www.jetbrains.com";
-        message = IdeBundle.message("updates.new.version.available", appNames.getFullProductName(), augmentUrl(url));
+        String url = downloadUrl();
+        message = IdeBundle.message("updates.new.version.available", appNames.getFullProductName(), url);
       }
       configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
 
@@ -364,9 +358,5 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   private static String formatVersion(String versionString, BuildNumber build) {
     return IdeBundle.message("updates.version.info", versionString, build.asStringWithoutProductCode());
-  }
-
-  private static String augmentUrl(String url) {
-    return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url);
   }
 }
