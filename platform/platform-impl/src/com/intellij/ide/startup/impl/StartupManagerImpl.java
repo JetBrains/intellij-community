@@ -157,7 +157,6 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
       else {
         dumbService.runWhenSmart(() -> {
-          ProgressManager.checkCanceled();
           runActivity(uiFreezeWarned, extension);
         });
       }
