@@ -289,7 +289,10 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     }
 
     for (PsiElement each : SyntaxTraverser.psiApi().parents(atCaret).skip(1)) {
-      if (each instanceof PsiMember || each instanceof PsiAnnotation || each instanceof PsiImportStatementBase || each instanceof PsiPackageStatement) {
+      if (each instanceof PsiMember ||
+          each instanceof PsiImportStatementBase ||
+          each instanceof PsiPackageStatement ||
+          each instanceof PsiAnnotation && PsiTreeUtil.hasErrorElements(each)) {
         return each;
       }
       if (each instanceof PsiCodeBlock || each instanceof PsiComment) {

@@ -178,6 +178,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testDefaultMethodBody() { doTest(); }
   public void testStaticInterfaceMethodBody() { doTest(); }
   public void testPrivateInterfaceMethodBody() { doTest(); }
+  public void testAddMethodBodyFromInsideAnnotation() { doTest(); }
   public void testArrayInitializerRBracket() { doTest(); }
   public void testArrayInitializerRBrace() { doTest(); }
   public void testArrayInitializerSeveralLines() { doTest(); }
