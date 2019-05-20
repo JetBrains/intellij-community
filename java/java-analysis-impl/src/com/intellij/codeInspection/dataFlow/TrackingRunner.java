@@ -823,20 +823,104 @@ public class TrackingRunner extends StandardDataFlowRunner {
     PsiExpression expression = change.getExpression();
     if (expression != null) {
       if (expression instanceof PsiBinaryExpression) {
-        PsiExpression lOperand = ((PsiBinaryExpression)expression).getLOperand();
-        PsiExpression rOperand = ((PsiBinaryExpression)expression).getROperand();
-        MemoryStateChange leftPos = change.findExpressionPush(lOperand);
-        MemoryStateChange rightPos = change.findExpressionPush(rOperand);
-        if (leftPos != null && rightPos != null) {
-          DfaValue leftValue = leftPos.myTopOfStack;
-          DfaValue rightValue = rightPos.myTopOfStack;
-          if (leftValue == value && rightValue == relation.myCounterpart ||
-              rightValue == value && leftValue == relation.myCounterpart) {
+        DfaRelationValue rel = fromBinaryExpression(change, (PsiBinaryExpression)expression);
+        if (rel != null) {
+          if (isSameRelation(rel, value, relation)) {
             return new CauseItem(new CustomDfaProblemType("condition '" + condition + "' was checked before"), expression);
+          }
+          List<DfaRelationValue> chain = findDeductionChain(change, Collections.singletonList(rel), value, relation);
+          if (!chain.isEmpty()) {
+            CauseItem[] result = new CauseItem[0];
+            for (DfaRelationValue deduced : chain) {
+              CauseItem[] cause =
+                findRelationCause(deduced.getRelation(), change, deduced.getLeftOperand(), change, deduced.getRightOperand());
+              result = ArrayUtil.mergeArrays(result, cause);
+            }
+            if (result.length > 1) {
+              CauseItem item = new CauseItem(new CustomDfaProblemType("condition '" + condition + "' was deduced"), (PsiElement)null);
+              item.addChildren(result);
+              return item;
+            }
           }
         }
       }
       return new CauseItem(new CustomDfaProblemType("result of '" + condition + "' is known from #ref"), expression);
+    }
+    return null;
+  }
+
+  private List<DfaRelationValue> findDeductionChain(MemoryStateChange change,
+                                                    List<DfaRelationValue> knownRelations,
+                                                    DfaVariableValue value,
+                                                    Relation relation) {
+    for (DfaRelationValue rel : knownRelations) {
+      for (Map.Entry<DfaVariableValue, TrackingDfaMemoryState.Change> entry : change.myChanges.entrySet()) {
+        DfaVariableValue actualVar = entry.getKey();
+        for (Relation actualRelation : entry.getValue().myAddedRelations) {
+          if (isSameRelation(rel, actualVar, actualRelation)) {
+            DfaValue left;
+            DfaValue right = actualRelation.myCounterpart;
+            RelationType type;
+            if (actualRelation.myRelationType == RelationType.EQ ||
+                (relation.myRelationType != RelationType.NE && relation.myRelationType == actualRelation.myRelationType)) {
+              type = relation.myRelationType;
+            }
+            else if (relation.myRelationType == RelationType.EQ) {
+              type = actualRelation.myRelationType;
+            }
+            else {
+              continue;
+            }
+            if (actualVar == value) {
+              left = relation.myCounterpart;
+              type = Objects.requireNonNull(type.getFlipped());
+            }
+            else if (actualVar == relation.myCounterpart) {
+              left = value;
+            }
+            else {
+              continue;
+            }
+            return Arrays.asList(getFactory().getRelationFactory().createRelation(left, type, right),
+                                 getFactory().getRelationFactory()
+                                   .createRelation(actualVar, actualRelation.myRelationType, actualRelation.myCounterpart));
+          }
+        }
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  private static boolean isSameRelation(DfaRelationValue dfaRel, DfaVariableValue var, Relation relation) {
+    DfaValue counterpart;
+    RelationType type;
+    if (dfaRel.getLeftOperand() == var) {
+      type = dfaRel.getRelation();
+      counterpart = dfaRel.getRightOperand();
+    }
+    else if (dfaRel.getRightOperand() == var) {
+      type = dfaRel.getRelation().getFlipped();
+      counterpart = dfaRel.getLeftOperand();
+    }
+    else {
+      return false;
+    }
+    return counterpart == relation.myCounterpart && type != null;
+  }
+
+  @Nullable
+  private DfaRelationValue fromBinaryExpression(MemoryStateChange change, PsiBinaryExpression binOp) {
+    PsiExpression lOperand = binOp.getLOperand();
+    PsiExpression rOperand = binOp.getROperand();
+    MemoryStateChange leftPos = change.findExpressionPush(lOperand);
+    MemoryStateChange rightPos = change.findExpressionPush(rOperand);
+    if (leftPos != null && rightPos != null) {
+      DfaValue leftValue = leftPos.myTopOfStack;
+      DfaValue rightValue = rightPos.myTopOfStack;
+      RelationType type = RelationType.fromElementType(binOp.getOperationTokenType());
+      if (type != null) {
+        return getFactory().getRelationFactory().createRelation(leftValue, type, rightValue);
+      }
     }
     return null;
   }
