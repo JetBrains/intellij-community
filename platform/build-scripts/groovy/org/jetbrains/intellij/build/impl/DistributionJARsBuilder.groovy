@@ -107,7 +107,7 @@ class DistributionJARsBuilder {
         withModule(it, "platform-api.jar")
       }
       getPlatformImplModules(productLayout).each {
-        withModule(it, productLayout.platformImplementationJarName)
+        withModule(it, "platform-impl.jar")
       }
       getProductApiModules(productLayout).each {
         withModule(it, "openapi.jar")
@@ -338,6 +338,7 @@ class DistributionJARsBuilder {
       def patchedKeyMapDir = createKeyMapWithAltClickReassignedToMultipleCarets()
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
+    layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', whiteListService.whiteList().absolutePath)
 
     buildContext.messages.block("Build platform JARs in lib directory") {
       buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
@@ -601,11 +602,6 @@ class DistributionJARsBuilder {
           def modules = it.value
           def jarPath = it.key
           jar(jarPath, true) {
-            if (this.whiteListService.shouldIncludeWhiteList(jarPath)) {
-              dir(this.whiteListService.includeInto) {
-                ant.fileset(file: this.whiteListService.whiteList().absolutePath)
-              }
-            }
             modules.each { moduleName ->
               modulePatches([moduleName]) {
                 if (layout.localizableResourcesJarName(moduleName) != null) {

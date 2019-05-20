@@ -70,7 +70,9 @@ public class EventLogWhitelistPersistence {
   private void initBuiltinWhiteList(File file) throws IOException {
     try (InputStream stream = getClass().getClassLoader().getResourceAsStream(builtinWhiteListPath())) {
       if (stream == null) return;
-      if (!file.mkdirs()) throw new IOException("Unable to create " + file.getAbsolutePath());
+      if (!file.getParentFile().mkdirs()) {
+        throw new IOException("Unable to create " + file.getParentFile().getAbsolutePath());
+      }
       Files.copy(stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
   }
