@@ -52,7 +52,7 @@ class ProprietaryBuildTools {
   ArtifactsServer artifactsServer
 
   /**
-   * Describes a feature usage statistics related properties
+   * Properties required to bundle a default version of feature usage statistics white list into IDE
    */
   FeatureUsageStatisticsProperties featureUsageStatisticsProperties
 }

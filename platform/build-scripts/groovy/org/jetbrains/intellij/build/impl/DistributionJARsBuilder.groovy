@@ -40,14 +40,12 @@ class DistributionJARsBuilder {
   private final PlatformLayout platform
   private final File patchedApplicationInfo
   private final LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish
-  private final StatisticsRecorderBundledWhiteListProvider bundledWhiteListProvider
 
   DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo,
                           LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish = [:]) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
     this.pluginsToPublish = pluginsToPublish
-    this.bundledWhiteListProvider = new StatisticsRecorderBundledWhiteListProvider(buildContext)
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
       include(name: "**/*Messages.properties")
@@ -340,7 +338,8 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
     if (buildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
-      layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', bundledWhiteListProvider.downloadWhiteList().absolutePath)
+      def whiteList = StatisticsRecorderBundledWhiteListProvider.downloadWhiteList(buildContext)
+      layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', whiteList.absolutePath)
     }
 
     buildContext.messages.block("Build platform JARs in lib directory") {

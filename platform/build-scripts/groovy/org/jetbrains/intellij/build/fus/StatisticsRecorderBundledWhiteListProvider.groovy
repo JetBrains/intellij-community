@@ -14,21 +14,16 @@ import org.jetbrains.intellij.build.BuildContext
  */
 @CompileStatic
 class StatisticsRecorderBundledWhiteListProvider {
-  private final BuildContext context
-  private final String whiteListJson = 'white-list.json'
+  private static final String WHITE_LIST_JSON = 'white-list.json'
 
-  StatisticsRecorderBundledWhiteListProvider(BuildContext context) {
-    this.context = context
-  }
-
-  File downloadWhiteList() {
+  static File downloadWhiteList(BuildContext context) {
     def dir = new File(context.paths.temp, 'whitelists')
     def recorderId = context.proprietaryBuildTools.featureUsageStatisticsProperties.recorderId
-    def list = new File(dir, "resources/event-log-whitelist/$recorderId/$whiteListJson")
+    def list = new File(dir, "resources/event-log-whitelist/$recorderId/$WHITE_LIST_JSON")
     if (!list.parentFile.mkdirs() || !list.createNewFile()) {
       throw new IOException("Unable to create $list")
     }
-    download(whiteListServiceUri().with {
+    download(whiteListServiceUri(context).with {
       def name = context.applicationInfo.productCode + '.json'
       it.endsWith('/') ? "$it$name" : "$it/$name"
     }, list)
@@ -43,7 +38,7 @@ class StatisticsRecorderBundledWhiteListProvider {
   }
 
   @CompileDynamic
-  private String whiteListServiceUri() {
+  private static String whiteListServiceUri(BuildContext context) {
     def providerUri = context.proprietaryBuildTools.featureUsageStatisticsProperties.whiteListProviderUri
     new XmlSlurper().parse(providerUri).'@white-list-service'.toString()
   }

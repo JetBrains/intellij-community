@@ -7,13 +7,6 @@ import groovy.transform.Immutable
 @CompileStatic
 @Immutable
 class FeatureUsageStatisticsProperties {
-  /**
-   * Statistic recorder id
-   */
   final String recorderId
-
-  /**
-   * White list provider uri
-   */
   final String whiteListProviderUri
 }
