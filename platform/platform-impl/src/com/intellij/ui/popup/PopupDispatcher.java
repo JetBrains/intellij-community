@@ -78,7 +78,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     SwingUtilities.convertPointToScreen(point, mouseEvent.getComponent());
 
     while (true) {
-      if (!eachParent.isDisposed() || !eachParent.getContent().isShowing()) {
+      if (eachParent.isDisposed() || !eachParent.getContent().isShowing()) {
         getActiveRoot().cancel();
         return false;
       }
