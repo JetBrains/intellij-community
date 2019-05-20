@@ -120,6 +120,9 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
         return Collections.singletonList(module);
       }
       else {
+        if (!projectBuilder.validate(project, project)) {
+          return Collections.emptyList();
+        }
         return projectBuilder.commit(project);
       }
     }
