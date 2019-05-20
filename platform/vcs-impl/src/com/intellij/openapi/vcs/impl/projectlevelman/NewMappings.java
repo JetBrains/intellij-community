@@ -293,6 +293,8 @@ public class NewMappings implements Disposable {
                                                         @NotNull Collection<VirtualFile> projectRoots,
                                                         @NotNull Set<VirtualFile> mappedDirs) {
     try {
+      if (vcs.needsLegacyDefaultMappings()) return projectRoots;
+
       DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
       VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
 

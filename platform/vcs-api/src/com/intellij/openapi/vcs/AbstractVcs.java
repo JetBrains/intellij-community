@@ -22,10 +22,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -426,6 +423,11 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
     @NotNull
     List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result);
+  }
+
+  @ApiStatus.Internal
+  public boolean needsLegacyDefaultMappings() {
+    return false;
   }
 
   /**
