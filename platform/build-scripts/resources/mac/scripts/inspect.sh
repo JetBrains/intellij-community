@@ -1,9 +1,7 @@
 #!/bin/sh
-#
 # ------------------------------------------------------
 # @@product_full@@ offline inspection script.
 # ------------------------------------------------------
-#
 
 export DEFAULT_PROJECT_PATH="$(pwd)"
 
