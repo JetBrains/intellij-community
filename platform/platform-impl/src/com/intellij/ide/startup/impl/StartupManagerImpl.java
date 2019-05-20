@@ -113,11 +113,6 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   @Override
-  public boolean startupActivityRunning() {
-    return myStartupActivitiesRunning;
-  }
-
-  @Override
   public boolean startupActivityPassed() {
     return myStartupActivitiesPassed;
   }

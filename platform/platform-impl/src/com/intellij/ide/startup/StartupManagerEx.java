@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 
 public abstract class StartupManagerEx extends StartupManager {
-  public abstract boolean startupActivityRunning();
   public abstract boolean startupActivityPassed();
 
   public abstract boolean postStartupActivityPassed();
