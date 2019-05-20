@@ -82,8 +82,8 @@ class HgIgnoredFileContentProvider(private val project: Project) : IgnoredFileCo
     }.map { ignoredBean ->
       when (ignoredBean.type) {
         IgnoreSettingsType.MASK -> ignoredBean.mask!!
-        IgnoreSettingsType.UNDER_DIR -> FileUtil.getRelativePath(ignoreFileRoot.path, ignoredBean.path!!, '/')!!
-        IgnoreSettingsType.FILE -> FileUtil.getRelativePath(ignoreFileRoot.path, ignoredBean.path!!, '/')!!
+        IgnoreSettingsType.UNDER_DIR -> buildIgnoreEntryContent(ignoreFileRoot, ignoredBean)
+        IgnoreSettingsType.FILE -> buildIgnoreEntryContent(ignoreFileRoot, ignoredBean)
       }
     }
   }
@@ -115,6 +115,9 @@ class HgIgnoredFileContentProvider(private val project: Project) : IgnoredFileCo
 
   override fun buildIgnoreGroupDescription(ignoredFileProvider: IgnoredFileProvider) =
     prependCommentHashCharacterIfNeeded(ignoredFileProvider.ignoredGroupDescription)
+
+  override fun buildIgnoreEntryContent(ignoreFileRoot: VirtualFile, ignoredFileDescriptor: IgnoredFileDescriptor) =
+    FileUtil.getRelativePath(ignoreFileRoot.path, ignoredFileDescriptor.path!!, '/') ?: ""
 
   private fun prependCommentHashCharacterIfNeeded(description: String): String =
     if (description.startsWith("#")) description else "# $description"
