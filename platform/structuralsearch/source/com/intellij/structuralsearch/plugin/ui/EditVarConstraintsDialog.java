@@ -15,10 +15,7 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -101,7 +98,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private final Project myProject;
 
-  EditVarConstraintsDialog(final Project project, Configuration configuration, List<String> _variables, final FileType fileType) {
+  EditVarConstraintsDialog(Project project, Configuration configuration, List<String> _variables, LanguageFileType fileType) {
     super(project, true);
     myProject = project;
     variables = _variables;

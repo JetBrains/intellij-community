@@ -3,7 +3,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +25,7 @@ public class MatchOptions implements JDOMExternalizable {
   private boolean looseMatching;
   private boolean recursiveSearch;
   private boolean caseSensitiveMatch;
-  private FileType myFileType;
+  private LanguageFileType myFileType;
   private Language myDialect;
   private SearchScope scope;
   private Scopes.Type scopeType;
@@ -194,7 +194,7 @@ public class MatchOptions implements JDOMExternalizable {
 
   @Override
   public void readExternal(Element element) {
-    pattern = StringUtil.notNullize(element.getAttribute(TEXT_ATTRIBUTE_NAME).getValue());
+    pattern = StringUtil.notNullize(element.getAttributeValue(TEXT_ATTRIBUTE_NAME));
 
     Attribute attr = element.getAttribute(LOOSE_MATCHING_ATTRIBUTE_NAME);
     if (attr != null) {
@@ -245,9 +245,9 @@ public class MatchOptions implements JDOMExternalizable {
     }
   }
 
-  private static FileType getFileTypeByName(String value) {
+  private static LanguageFileType getFileTypeByName(String value) {
     if (value != null) {
-      for (FileType type : StructuralSearchUtil.getSuitableFileTypes()) {
+      for (LanguageFileType type : StructuralSearchUtil.getSuitableFileTypes()) {
         if (value.equals(type.getName())) {
           return type;
         }
@@ -289,18 +289,21 @@ public class MatchOptions implements JDOMExternalizable {
     return result;
   }
 
-  public void setFileType(FileType fileType) {
+  public void setFileType(LanguageFileType fileType) {
     myFileType = fileType;
   }
 
-  public FileType getFileType() {
+  public LanguageFileType getFileType() {
     if (myFileType == null) {
-      myFileType =  StructuralSearchUtil.getDefaultFileType();
+      myFileType = StructuralSearchUtil.getDefaultFileType();
     }
     return myFileType;
   }
 
   public Language getDialect() {
+    if (myDialect == null) {
+      return getFileType().getLanguage();
+    }
     return myDialect;
   }
 

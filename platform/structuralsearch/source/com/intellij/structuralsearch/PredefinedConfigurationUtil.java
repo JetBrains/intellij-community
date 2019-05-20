@@ -1,7 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
@@ -13,7 +13,7 @@ public class PredefinedConfigurationUtil {
     return createSearchTemplateInfo(name, criteria, category, StdFileTypes.JAVA);
   }
 
-  public static Configuration createSearchTemplateInfo(String name, @NonNls String criteria, String category, FileType fileType) {
+  public static Configuration createSearchTemplateInfo(String name, @NonNls String criteria, String category, LanguageFileType fileType) {
     final SearchConfiguration config = new SearchConfiguration(name, category);
     config.setPredefined(true);
     final MatchOptions options = config.getMatchOptions();

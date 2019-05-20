@@ -9,7 +9,6 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -90,7 +89,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       text = ((PsiNamedElement)element).getName();
     }
     else if (element instanceof PsiAnnotation) {
-      PsiJavaCodeReferenceElement referenceElement = ((PsiAnnotation)element).getNameReferenceElement();
+      final PsiJavaCodeReferenceElement referenceElement = ((PsiAnnotation)element).getNameReferenceElement();
       text = referenceElement == null ? null : referenceElement.getQualifiedName();
     }
     else if (element instanceof PsiNameValuePair) {
@@ -103,7 +102,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
       if (StringUtil.endsWithChar(text, ';')) text = text.substring(0, text.length() - 1);
       else if (element instanceof PsiExpressionStatement) {
-        int i = text.indexOf(';');
+        final int i = text.indexOf(';');
         if (i != -1) text = text.substring(0, i);
       }
     }
@@ -287,9 +286,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @Override
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
-                                        @NotNull FileType fileType,
+                                        @NotNull LanguageFileType fileType,
                                         @Nullable Language language,
-                                        String contextName, @Nullable String extension,
+                                        String contextName,
                                         @NotNull Project project,
                                         boolean physical) {
     if (physical) {
@@ -312,7 +311,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (shouldTryExpressionPattern(result)) {
         try {
           final PsiElement[] expressionPattern =
-            createPatternTree(text, PatternTreeContext.Expression, fileType, language, contextName, extension, project, false);
+            createPatternTree(text, PatternTreeContext.Expression, fileType, language, contextName, project, false);
           if (expressionPattern.length == 1) {
             return expressionPattern;
           }
@@ -320,7 +319,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
       else if (shouldTryClassPattern(result)) {
         final PsiElement[] classPattern =
-          createPatternTree(text, PatternTreeContext.Class, fileType, language, contextName, extension, project, false);
+          createPatternTree(text, PatternTreeContext.Class, fileType, language, contextName, project, false);
         if (classPattern.length <= result.size()) {
           return classPattern;
         }
@@ -476,11 +475,13 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @Override
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
     final MatchOptions matchOptions = options.getMatchOptions();
-    final FileType fileType = matchOptions.getFileType();
-    final PsiElement[] statements = createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.Block, fileType, project, false);
+    final LanguageFileType fileType = matchOptions.getFileType();
+    final PsiElement[] statements =
+      createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.Block, fileType, null, null, project, false);
     final boolean searchIsExpression = statements.length == 1 && statements[0].getLastChild() instanceof PsiErrorElement;
 
-    final PsiElement[] statements2 = createPatternTree(options.getReplacement(), PatternTreeContext.Block, fileType, project, false);
+    final PsiElement[] statements2 =
+      createPatternTree(options.getReplacement(), PatternTreeContext.Block, fileType, null, null, project, false);
     final boolean replaceIsExpression = statements2.length == 1 && statements2[0].getLastChild() instanceof PsiErrorElement;
 
     final ValidatingVisitor visitor = new ValidatingVisitor();
@@ -605,8 +606,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           if (StructuralSearchUtil.isTypedVariable(type)) {
             type = Replacer.stripTypedVariableDecoration(type);
           }
-          ParameterInfo nameInfo = builder.findParameterization(name);
-          ParameterInfo typeInfo = builder.findParameterization(type);
+          final ParameterInfo nameInfo = builder.findParameterization(name);
+          final ParameterInfo typeInfo = builder.findParameterization(type);
 
           final PsiElement scope = parameter.getDeclarationScope();
           if (nameInfo != null && typeInfo != null && !(scope instanceof PsiCatchSection) && !(scope instanceof PsiForeachStatement)) {
@@ -922,7 +923,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (grandParent instanceof PsiForStatement) return true;
     }
     if (grandParent instanceof PsiExpressionList) {
-      PsiElement label = grandParent.getParent();
+      final PsiElement label = grandParent.getParent();
       if (label instanceof PsiSwitchLabelStatementBase) {
         return ((PsiSwitchLabelStatementBase)label).getEnclosingSwitchStatement() != null;
       }
@@ -1022,7 +1023,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static boolean isCompleteStatement(PsiExpressionStatement element) {
-    PsiElement parent = element.getParent();
+    final PsiElement parent = element.getParent();
     if (parent instanceof PsiForStatement && ((PsiForStatement)parent).getUpdate() == element) {
       return true;
     }

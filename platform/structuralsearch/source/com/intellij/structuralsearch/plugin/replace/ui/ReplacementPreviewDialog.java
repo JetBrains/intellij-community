@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -11,8 +12,8 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Segment;
@@ -34,7 +35,7 @@ import java.awt.*;
  * Navigates through the search results
  */
 public final class ReplacementPreviewDialog extends DialogWrapper {
-  private final FileType myFileType;
+  private final LanguageFileType myFileType;
   private Editor replacement;
 
   private final Project project;
@@ -50,7 +51,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     this.project = project;
     final PsiElement element = info.getElement();
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-    myFileType = virtualFile != null ? virtualFile.getFileType() : FileTypes.PLAIN_TEXT;
+    myFileType = virtualFile != null ? (LanguageFileType)virtualFile.getFileType() : FileTypes.PLAIN_TEXT;
     init();
 
     Segment range = info.getSegment();

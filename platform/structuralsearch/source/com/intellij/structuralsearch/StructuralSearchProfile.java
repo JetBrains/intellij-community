@@ -59,14 +59,12 @@ public abstract class StructuralSearchProfile {
   @NotNull
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
-                                        @NotNull FileType fileType,
+                                        @NotNull LanguageFileType fileType,
                                         @Nullable Language language,
                                         @Nullable String contextName,
-                                        @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
-    final String ext = extension != null ? extension : fileType.getDefaultExtension();
-    final String name = "__dummy." + ext;
+    final String name = "__dummy." + fileType.getDefaultExtension();
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
 
     final PsiFile file = language == null
@@ -76,13 +74,25 @@ public abstract class StructuralSearchProfile {
     return file != null ? file.getChildren() : PsiElement.EMPTY_ARRAY;
   }
 
+  /**
+   * @deprecated Use
+   * {@link StructuralSearchProfile#createPatternTree(String, PatternTreeContext, LanguageFileType, Language, String, Project, boolean)}
+   * instead.
+   */
+  @Deprecated
   @NotNull
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
+                                        @Nullable Language language,
+                                        @Nullable String contextName,
+                                        @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
-    return createPatternTree(text, context, fileType, null, null, null, project, physical);
+    if (!(fileType instanceof LanguageFileType)) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+    return createPatternTree(text, context, (LanguageFileType)fileType, language, contextName, project, physical);
   }
 
   @Nullable
@@ -106,7 +116,7 @@ public abstract class StructuralSearchProfile {
   }
 
   @Nullable
-  public FileType detectFileType(@NotNull PsiElement context) {
+  public LanguageFileType detectFileType(@NotNull PsiElement context) {
     return null;
   }
 

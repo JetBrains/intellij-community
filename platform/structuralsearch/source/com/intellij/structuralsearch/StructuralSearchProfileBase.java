@@ -11,7 +11,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -185,19 +184,64 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   @Override
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
-                                        @NotNull FileType fileType,
+                                        @NotNull LanguageFileType fileType,
                                         @Nullable Language language,
                                         @Nullable String contextName,
-                                        @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
     if (context == PatternTreeContext.Block) {
       final String strContext = getContext(text, language, contextName);
-      return strContext != null ?
-             parsePattern(project, strContext, text, fileType, language, extension, physical) :
-             PsiElement.EMPTY_ARRAY;
+      if (strContext == null) {
+        return PsiElement.EMPTY_ARRAY;
+      }
+      final int offset = strContext.indexOf(PATTERN_PLACEHOLDER);
+
+      final int patternLength = text.length();
+      final String patternInContext = strContext.replace(PATTERN_PLACEHOLDER, text);
+
+      final String name = "__dummy." + fileType.getDefaultExtension();
+      final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+
+      final PsiFile file = language == null
+                           ? factory.createFileFromText(name, fileType, patternInContext, LocalTimeCounter.currentTime(), physical, true)
+                           : factory.createFileFromText(name, language, patternInContext, physical, true);
+      if (file == null) {
+        return PsiElement.EMPTY_ARRAY;
+      }
+
+      final List<PsiElement> result = new ArrayList<>();
+
+      PsiElement element = file.findElementAt(offset);
+      if (element == null) {
+        return PsiElement.EMPTY_ARRAY;
+      }
+
+      PsiElement topElement = element;
+      element = element.getParent();
+
+      while (element != null) {
+        if (element.getTextRange().getStartOffset() == offset && element.getTextLength() <= patternLength) {
+          topElement = element;
+        }
+        element = element.getParent();
+      }
+
+      if (topElement instanceof PsiFile) {
+        return topElement.getChildren();
+      }
+
+      final int endOffset = offset + patternLength;
+      result.add(topElement);
+      topElement = topElement.getNextSibling();
+
+      while (topElement != null && topElement.getTextRange().getEndOffset() <= endOffset) {
+        result.add(topElement);
+        topElement = topElement.getNextSibling();
+      }
+
+      return result.toArray(PsiElement.EMPTY_ARRAY);
     }
-    return super.createPatternTree(text, context, fileType, language, contextName, extension, project, physical);
+    return super.createPatternTree(text, context, fileType, language, contextName, project, physical);
   }
 
   @Override
@@ -258,62 +302,6 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
   protected TokenSet getVariableDelimiters() {
     return TokenSet.EMPTY;
-  }
-
-  public static PsiElement[] parsePattern(Project project,
-                                          String context,
-                                          String pattern,
-                                          FileType fileType,
-                                          Language language,
-                                          String extension,
-                                          boolean physical) {
-    final int offset = context.indexOf(PATTERN_PLACEHOLDER);
-
-    final int patternLength = pattern.length();
-    final String patternInContext = context.replace(PATTERN_PLACEHOLDER, pattern);
-
-    final String ext = extension != null ? extension : fileType.getDefaultExtension();
-    final String name = "__dummy." + ext;
-    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-
-    final PsiFile file = language == null
-                         ? factory.createFileFromText(name, fileType, patternInContext, LocalTimeCounter.currentTime(), physical, true)
-                         : factory.createFileFromText(name, language, patternInContext, physical, true);
-    if (file == null) {
-      return PsiElement.EMPTY_ARRAY;
-    }
-
-    final List<PsiElement> result = new ArrayList<>();
-
-    PsiElement element = file.findElementAt(offset);
-    if (element == null) {
-      return PsiElement.EMPTY_ARRAY;
-    }
-
-    PsiElement topElement = element;
-    element = element.getParent();
-
-    while (element != null) {
-      if (element.getTextRange().getStartOffset() == offset && element.getTextLength() <= patternLength) {
-        topElement = element;
-      }
-      element = element.getParent();
-    }
-
-    if (topElement instanceof PsiFile) {
-      return topElement.getChildren();
-    }
-
-    final int endOffset = offset + patternLength;
-    result.add(topElement);
-    topElement = topElement.getNextSibling();
-
-    while (topElement != null && topElement.getTextRange().getEndOffset() <= endOffset) {
-      result.add(topElement);
-      topElement = topElement.getNextSibling();
-    }
-
-    return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   // todo: support expression patterns

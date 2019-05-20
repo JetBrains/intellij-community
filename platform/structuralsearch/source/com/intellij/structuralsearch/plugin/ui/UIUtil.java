@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -116,7 +117,7 @@ public class UIUtil {
   }
 
   public static JComponent createOptionLine(JComponent... options) {
-    JPanel tmp = new JPanel();
+    final JPanel tmp = new JPanel();
 
     tmp.setLayout(new BoxLayout(tmp, BoxLayout.X_AXIS));
     for (int i = 0; i < options.length; i++) {
@@ -263,7 +264,7 @@ public class UIUtil {
     return fileType;
   }
 
-  public static FileType detectFileType(@NotNull SearchContext searchContext) {
+  public static LanguageFileType detectFileType(@NotNull SearchContext searchContext) {
     final PsiFile file = searchContext.getFile();
     PsiElement context = file;
 
@@ -282,7 +283,7 @@ public class UIUtil {
       final Language language = context.getLanguage();
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
       if (profile != null) {
-        final FileType fileType = profile.detectFileType(context);
+        final LanguageFileType fileType = profile.detectFileType(context);
         return fileType != null ? fileType : language.getAssociatedFileType();
       }
     }
@@ -290,7 +291,7 @@ public class UIUtil {
   }
 
   @NotNull
-  public static Document createDocument(@NotNull Project project, @NotNull FileType fileType, Language dialect, @NotNull String text,
+  public static Document createDocument(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
                                         @NotNull StructuralSearchProfile profile) {
     PsiFile codeFragment = profile.createCodeFragment(project, text, null);
     if (codeFragment == null) {
@@ -307,7 +308,7 @@ public class UIUtil {
   }
 
   @NotNull
-  public static Editor createEditor(@NotNull Project project, @NotNull FileType fileType, Language dialect, @NotNull String text,
+  public static Editor createEditor(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
                                     @NotNull StructuralSearchProfile profile) {
     PsiFile codeFragment = profile.createCodeFragment(project, text, null);
     if (codeFragment == null) {
@@ -328,7 +329,7 @@ public class UIUtil {
     return editor;
   }
 
-  private static PsiFile createFileFragment(@NotNull Project project, @NotNull FileType fileType, Language dialect, @NotNull String text) {
+  private static PsiFile createFileFragment(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text) {
     final String name = "__dummy." + fileType.getDefaultExtension();
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
 
