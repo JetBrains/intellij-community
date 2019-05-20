@@ -523,7 +523,7 @@
     <completion.contributor language="Properties" implementationClass="org.jetbrains.plugins.groovy.dgm.DGMCompletionContributor"/>
 
     <completion.confidence language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionConfidence"
-                           id="groovyAdvanced" order="after groovyNameIdentifier"/>
+                           id="groovyAdvanced"/>
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments"
                            id="groovyComments"/>
     <cantBeStatic implementation="org.jetbrains.plugins.groovy.codeInspection.declaration.GrCategoryMethodsCantBeStaticExtension"/>
@@ -593,8 +593,7 @@
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyTypeCastSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyDocParamsSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyArgListSelectioner"/>
-    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyGStringSelectioner"
-                                order="before wordSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyGStringSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyParameterListSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyElseSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyWordSelectionHandler"/>
