@@ -3,7 +3,7 @@ package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
@@ -13,15 +13,12 @@ import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.DefaultKeymap")
+private val LOG = logger<DefaultKeymap>()
 
-open class DefaultKeymap {
+open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymapProvider> = BundledKeymapProvider.EP_NAME.extensionList) {
   private val myKeymaps = ArrayList<Keymap>()
 
   private val nameToScheme = THashMap<String, Keymap>()
-
-  protected open val providers: List<BundledKeymapProvider>
-    get() = BundledKeymapProvider.EP_NAME.extensionList
 
   init {
     for (provider in providers) {
@@ -85,8 +82,8 @@ open class DefaultKeymap {
     nameToScheme.put(keymapName, keymap)
   }
 
-  val keymaps: Array<Keymap>
-    get() = myKeymaps.toTypedArray()
+  val keymaps: List<Keymap>
+    get() = myKeymaps.toList()
 
   internal fun findScheme(name: String) = nameToScheme.get(name)
 
@@ -101,7 +98,6 @@ open class DefaultKeymap {
 
   open fun getKeymapPresentableName(keymap: KeymapImpl): String {
     val name = keymap.name
-
     // Netbeans keymap is no longer for version 6.5, but we need to keep the id
     return when (name) {
       "NetBeans 6.5" -> "NetBeans"
