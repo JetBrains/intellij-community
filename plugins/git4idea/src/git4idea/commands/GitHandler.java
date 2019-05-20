@@ -24,7 +24,6 @@ import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutableManager;
-import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -142,10 +141,6 @@ public abstract class GitHandler {
     }
 
     List<String> toPass = new ArrayList<>();
-    boolean useCredentialHelper = GitVcsApplicationSettings.getInstance().isUseCredentialHelper();
-    boolean shouldResetCredentialHelper = !useCredentialHelper &&
-                                          GitVersionSpecialty.CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY.existsIn(project);
-    if (shouldResetCredentialHelper) toPass.add("credential.helper=");
     toPass.add("core.quotepath=false");
     toPass.add("log.showSignature=false");
     toPass.addAll(requestedConfigParameters);
