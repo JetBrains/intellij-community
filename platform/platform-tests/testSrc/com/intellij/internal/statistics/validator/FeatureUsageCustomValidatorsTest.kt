@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.validator
 
+import com.intellij.featureStatistics.FeatureUsageTrackerImpl
 import com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
@@ -57,5 +58,29 @@ class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
     finally {
       Disposer.dispose(disposable)
     }
+  }
+
+  @Test
+  fun `test validate welcome productivity feature`() {
+    val validator = FeatureUsageTrackerImpl.ProductivityUtilValidator()
+    doValidateEventId(validator, "features.welcome", FeatureUsageData())
+  }
+
+  @Test
+  fun `test validate third party productivity feature`() {
+    val validator = FeatureUsageTrackerImpl.ProductivityUtilValidator()
+    doValidateEventId(validator, "third.party", FeatureUsageData())
+  }
+
+  @Test
+  fun `test validate productivity feature by id`() {
+    val validator = FeatureUsageTrackerImpl.ProductivityUtilValidator()
+    doValidateEventId(validator, "navigation.popup.camelprefix", FeatureUsageData())
+  }
+
+  @Test
+  fun `test reject unknown productivity feature`() {
+    val validator = FeatureUsageTrackerImpl.ProductivityUtilValidator()
+    doRejectEventId(validator, "unknown.feature.id", FeatureUsageData())
   }
 }
