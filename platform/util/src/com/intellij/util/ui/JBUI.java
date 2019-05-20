@@ -683,7 +683,7 @@ public class JBUI {
 
       @NotNull
       public static Color borderColor() {
-        return JBColor.namedColor("DefaultTabs.borderColor", ToolWindow.headerBorderBackground());
+        return JBColor.namedColor("DefaultTabs.borderColor", UIUtil.CONTRAST_BORDER_COLOR);
       }
 
       @NotNull
@@ -819,7 +819,7 @@ public class JBUI {
 
       @NotNull
       public static Color headerBorderBackground() {
-        return JBColor.namedColor("ToolWindow.Header.borderColor", JBColor.namedColor("ToolWindow.header.border.background", 0xC9C9C9));
+        return JBColor.namedColor("ToolWindow.Header.borderColor", DefaultTabs.borderColor());
       }
 
       @NotNull
