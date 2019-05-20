@@ -12,10 +12,10 @@ import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
+import com.intellij.util.ArrayUtil
 import com.intellij.util.AuthData
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.rd.util.insert
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -27,7 +27,8 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
                                                    private val url: String,
                                                    rememberPassword: Boolean = true,
                                                    username: String? = null,
-                                                   editableUsername: Boolean = true) : DialogWrapper(project, true) {
+                                                   editableUsername: Boolean = true,
+                                                   private val showActionForCredHelper: Boolean = false) : DialogWrapper(project, true) {
   private val usernameField = JBTextField(username).apply { isEditable = editableUsername }
   private val passwordField = JBPasswordField()
   private val rememberCheckbox = JBCheckBox(CommonBundle.message("checkbox.remember.password"), rememberPassword)
@@ -58,11 +59,14 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
   }
 
   override fun createActions(): Array<Action> {
-    return super.createActions().insert(createUsingCredHelperAction(), 0)
+    if (showActionForCredHelper) {
+      return ArrayUtil.prepend(createUsingCredHelperAction(), super.createActions())
+    }
+    return super.createActions()
   }
 
   private fun createUsingCredHelperAction(): AbstractAction {
-    return object : AbstractAction("I'm using credential helper") {
+    return object : AbstractAction("I'm Using Credential Helper") {
       override fun actionPerformed(e: ActionEvent?) {
         close(USE_CREDENTIAL_HELPER_CODE, false)
       }
