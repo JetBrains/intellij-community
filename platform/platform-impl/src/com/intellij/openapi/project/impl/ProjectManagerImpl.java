@@ -289,7 +289,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @NotNull
-  private static ProjectEx doCreateProject(@Nullable String projectName, @NotNull String filePath) {
+  protected ProjectEx doCreateProject(@Nullable String projectName, @NotNull String filePath) {
     return new ProjectImpl(FileUtilRt.toSystemIndependentName(filePath), projectName);
   }
 
@@ -384,6 +384,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     Runnable process = () -> {
       assertInTransaction();
 
+      beforeProjectOpened(project);
+
       TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
 
       StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
@@ -418,6 +420,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     return true;
+  }
+
+  protected void beforeProjectOpened(Project project) {
   }
 
   private static void assertInTransaction() {
@@ -753,7 +758,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     LOG.assertTrue(removed);
   }
 
-  private void fireProjectOpened(@NotNull Project project) {
+  protected void fireProjectOpened(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectOpened");
     }
