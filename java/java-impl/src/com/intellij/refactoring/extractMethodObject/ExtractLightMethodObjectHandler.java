@@ -268,17 +268,48 @@ public class ExtractLightMethodObjectHandler {
 
     boolean useReflection = javaVersion == null || javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9) ||
                             Registry.is("debugger.compiling.evaluator.reflection.access.with.java8");
+    PsiClass generatedClass = extractMethodObjectProcessor.getInnerClass();
     if (useReflection && methods.length == 1) {
       final PsiMethod method = methods[0];
       LOG.info("Use reflection to evaluate inaccessible members");
-      CompositeReflectionAccessor.createAccessorToEverything(inner, elementFactory)
-                                 .accessThroughReflection(method);
+      if (Registry.is("debugger.compiling.evaluator.extract.generated.class")) {
+        PsiMethodCallExpression callExpression = findCallExpression(copy, method);
+        if (callExpression == null) {
+          LOG.error("Could not find invocation of generated method");
+        }
+        else {
+          generatedClass = ExtractGeneratedClassUtil.extractGeneratedClass(callExpression, generatedClass, elementFactory, anchor);
+        }
+      }
+      else {
+        CompositeReflectionAccessor.createAccessorToEverything(inner, elementFactory)
+          .accessThroughReflection(method);
+      }
     }
 
     final String generatedCall = copy.getText().substring(startOffset, outStatement.getTextOffset());
     return new ExtractedData(generatedCall,
-                             (PsiClass)CodeStyleManager.getInstance(project).reformat(extractMethodObjectProcessor.getInnerClass()),
+                             (PsiClass)CodeStyleManager.getInstance(project).reformat(generatedClass),
                              originalAnchor, useMagicAccessor);
+  }
+
+  @Nullable
+  private static PsiMethodCallExpression findCallExpression(@NotNull PsiFile copy, @NotNull PsiMethod method) {
+    PsiMethodCallExpression[] result = new PsiMethodCallExpression[1];
+    copy.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        if (method.equals(expression.resolveMethod())) {
+          if (result[0] != null) {
+            LOG.error("To many generated method invocations found");
+          }
+          else {
+            result[0] = expression;
+          }
+        }
+      }
+    });
+    return result[0];
   }
 
   @Nullable
