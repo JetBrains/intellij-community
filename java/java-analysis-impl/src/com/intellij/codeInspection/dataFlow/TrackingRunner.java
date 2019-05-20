@@ -850,7 +850,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
           return item;
         }
       }
-      return new CauseItem(new CustomDfaProblemType("result of '" + condition + "' is known from #ref"), expression);
+      return new CauseItem(new CustomDfaProblemType("it's known that '" + condition + "' from #ref"), expression);
     }
     return null;
   }
