@@ -634,8 +634,11 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       if (time >= Math.max(limit, 1L) * 60 * 1000 && !myBigRepositoriesList.isBig(myRoot)) {
         LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));
         myBigRepositoriesList.addRepository(myRoot);
+        myIndexingLimit.get(myRoot).compareAndSet(limit,
+                                                  Math.max(limit + getIndexingLimit(),
+                                                           (int)((time / (getIndexingLimit() * 60000) + 1) * getIndexingLimit())));
         indicator.cancel();
-        showIndexingNotification(time, limit);
+        showIndexingNotification(limit);
       }
     }
 
@@ -648,7 +651,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       return "IndexingRequest of " + myCommits.size() + " commits in " + myRoot.getName() + (myFull ? " (full)" : "");
     }
 
-    private void showIndexingNotification(long timeMillis, int limitMinutes) {
+    private void showIndexingNotification(int limitMinutes) {
       myIndexCollector.reportIndexingTooLongNotification();
       AbstractVcs vcs = VcsUtil.findVcsByKey(myProject, myIndexers.get(myRoot).getSupportedVcs());
       String vcsName = vcs != null ? vcs.getDisplayName() : "Vcs";
@@ -661,10 +664,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         myIndexCollector.reportResumeClick();
         if (myBigRepositoriesList.isBig(myRoot)) {
           LOG.info("Resuming indexing " + myRoot.getName());
-          myIndexingLimit.get(myRoot).updateAndGet(l -> {
-            return Math.max(l + getIndexingLimit(),
-                            (int)((timeMillis / (getIndexingLimit() * 60000) + 1) * getIndexingLimit()));
-          });
           myBigRepositoriesList.removeRepository(myRoot);
           scheduleIndex(false);
         }
