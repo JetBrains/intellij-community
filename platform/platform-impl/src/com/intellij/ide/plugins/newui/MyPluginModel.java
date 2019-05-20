@@ -161,7 +161,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     List<PluginNode> pluginsToInstall = ContainerUtil.newArrayList(pluginNode);
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
-    needRestart = true;
 
     installPlugin(pluginsToInstall, getAllRepoPlugins(), this, prepareToInstall(descriptor, updateDescriptor));
   }
@@ -308,6 +307,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     info.indicator.cancel();
 
+    if (success) {
+      needRestart = true;
+    }
     if (!success && showErrors) {
       Messages.showErrorDialog("Plugin " + descriptor.getName() + " download or installing failed",
                                IdeBundle.message("action.download.and.install.plugin"));
