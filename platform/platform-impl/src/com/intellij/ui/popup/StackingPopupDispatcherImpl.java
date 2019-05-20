@@ -179,7 +179,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   @Override
   @Nullable
   public Component getComponent() {
-    return myStack.isEmpty() ? null : myStack.peek().getContent();
+    return myStack.isEmpty() || myStack.peek().isDisposed() ? null : myStack.peek().getContent();
   }
 
   @NotNull

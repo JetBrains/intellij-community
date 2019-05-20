@@ -435,7 +435,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         }
       }
       final JComponent container = getContent();
-      assert container != null : "container == null";
 
       int y = point.y;
       if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {

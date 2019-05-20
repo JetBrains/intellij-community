@@ -144,6 +144,7 @@ public abstract class JBPopupFactory {
     List<JBPopup> popups = getChildPopups(parent);
     for (JBPopup each : popups) {
       if (each.isFocused()) return each;
+      if (each.isDisposed()) continue;
       JBPopup childFocusedPopup = getChildFocusedPopup(each.getContent());
       if (childFocusedPopup != null) {
         return childFocusedPopup;

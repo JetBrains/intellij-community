@@ -654,8 +654,7 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     private Container getPopupFocusAncestor() {
-      JComponent content = myPopup.getContent();
-      return content == null ? null : content.getFocusCycleRootAncestor();
+      return myPopup.isDisposed() ? null : myPopup.getContent().getFocusCycleRootAncestor();
     }
 
     @NotNull
