@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 
+@SuppressWarnings("HtmlDeprecatedAttribute")
 public class JavaTypeProviderTest extends LightCodeInsightTestCase {
   public void testRangeHint() {
     doTest("  void test(int x) {\n" +
@@ -90,6 +91,56 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>int[]</td></tr>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Length:</td><td>1</td></tr>" +
+           "</table>");
+  }
+  
+  public void testBooleanValue() {
+    doTest("void test(int x) {\n" +
+           "  if(x > 5 && <selection>x < 0</selection>) {}\n" +
+           "}", "boolean", 
+           "<table>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>boolean</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Value:</td><td>false</td></tr>" +
+           "</table>");
+  }
+  
+  public void testStringValue() {
+    doTest("void test(String x) {\n" +
+           "  if(x.equals(\"foo\") || x.equals(\"bar\")) {\n" +
+           "    <selection>x</selection>\n" +
+           "  }\n" +
+           "}", "String", 
+           "<table>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>String</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Value (one of):</td><td>\"bar\", \"foo\"</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Length:</td><td>3</td></tr>" +
+           "</table>");
+  }
+  
+  public void testNotValue() {
+    doTest("void test(String x) {\n" +
+           "  if(x.equals(\"foo\") || x.equals(\"bar\")) {} else {\n" +
+           "    <selection>x</selection>\n" +
+           "  }\n" +
+           "}", "String", 
+           "<table>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>String</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Not equal to:</td><td>\"bar\", \"foo\"</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
+           "</table>");
+  }
+  
+  public void testNotValueEnum() {
+    doTest("enum X {A, B}" +
+           "void test(X x) {\n" +
+           "  if(x == X.A) {} else {\n" +
+           "    <selection>x</selection>\n" +
+           "  }\n" +
+           "}", "X", 
+           "<table>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>X</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Not equal to:</td><td>X.A</td></tr>" +
            "</table>");
   }
 
