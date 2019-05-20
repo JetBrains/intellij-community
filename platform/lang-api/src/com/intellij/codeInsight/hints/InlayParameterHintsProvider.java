@@ -26,10 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @deprecated because it relies on global state and can't specify presentation other than text. Use NewParameterHintsProvider instead.
- */
-@Deprecated
 public interface InlayParameterHintsProvider {
 
   /**
