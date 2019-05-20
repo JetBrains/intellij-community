@@ -421,7 +421,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   private static void assertInTransaction() {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && TransactionGuard.getInstance().getContextTransaction() == null) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() &&
+        ApplicationManager.getApplication().isInternal() &&
+        TransactionGuard.getInstance().getContextTransaction() == null) {
       LOG.error("Project opening should be done in a transaction",
                 new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
     }
