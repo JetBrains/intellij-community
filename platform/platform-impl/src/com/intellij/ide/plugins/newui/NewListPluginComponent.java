@@ -256,7 +256,9 @@ public class NewListPluginComponent extends CellPluginComponent {
     if (myUpdateButton != null) {
       myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
     }
-    myEnableDisableButton.setVisible(!errors);
+    if (myEnableDisableButton != null) {
+      myEnableDisableButton.setVisible(!errors);
+    }
 
     if (errors) {
       boolean addListeners = myErrorComponent == null && myEventHandler != null;
