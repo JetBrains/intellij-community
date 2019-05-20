@@ -9,6 +9,7 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
@@ -23,29 +24,9 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
   init {
     for (provider in providers) {
       for (fileName in provider.keymapFileNames) {
-        // backward compatibility (no external usages of BundledKeymapProvider, but maybe it is not published to plugin manager)
-        val key = when (fileName) {
-          "Keymap_Default.xml" -> "\$default.xml"
-          "Keymap_Mac.xml" -> "Mac OS X 10.5+.xml"
-          "Keymap_MacClassic.xml" -> "Mac OS X.xml"
-          "Keymap_GNOME.xml" -> "Default for GNOME.xml"
-          "Keymap_KDE.xml" -> "Default for KDE.xml"
-          "Keymap_XWin.xml" -> "Default for XWin.xml"
-          "Keymap_EclipseMac.xml" -> "Eclipse (Mac OS X).xml"
-          "Keymap_Eclipse.xml" -> "Eclipse.xml"
-          "Keymap_Emacs.xml" -> "Emacs.xml"
-          "JBuilderKeymap.xml" -> "JBuilder.xml"
-          "Keymap_Netbeans.xml" -> "NetBeans 6.5.xml"
-          "Keymap_ReSharper_OSX.xml" -> "ReSharper OSX.xml"
-          "Keymap_ReSharper.xml" -> "ReSharper.xml"
-          "RM_TextMateKeymap.xml" -> "TextMate.xml"
-          "Keymap_Xcode.xml" -> "Xcode.xml"
-          else -> fileName
-        }
-
         LOG.runAndLogException {
           loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {
-            override fun read() = provider.load(key) { JDOMUtil.load(it) }
+            override fun read() = provider.load(fileName) { JDOMUtil.load(it) }
 
             override fun updateDigest(scheme: KeymapImpl) {
             }
@@ -89,7 +70,7 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
 
   open val defaultKeymapName: String
     get() = when {
-      SystemInfo.isMac -> KeymapManager.MAC_OS_X_KEYMAP
+      SystemInfo.isMac -> KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP
       SystemInfo.isGNOME -> KeymapManager.GNOME_KEYMAP
       SystemInfo.isKDE -> KeymapManager.KDE_KEYMAP
       SystemInfo.isXWindow -> KeymapManager.X_WINDOW_KEYMAP
@@ -100,8 +81,9 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
     val name = keymap.name
     // Netbeans keymap is no longer for version 6.5, but we need to keep the id
     return when (name) {
-      KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP, KeymapManager.DEFAULT_IDEA_KEYMAP -> "Default"
-      KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic"
+      KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> if (SystemInfoRt.isMac) "Default" else "macOS"
+      KeymapManager.DEFAULT_IDEA_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfoRt.isWindows) "" else " (Windows)")
+      KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfoRt.isMac) "" else " (macOS)")
       "NetBeans 6.5" -> "NetBeans"
       else -> {
         val newName = name.removeSuffix(" (Mac OS X)")
