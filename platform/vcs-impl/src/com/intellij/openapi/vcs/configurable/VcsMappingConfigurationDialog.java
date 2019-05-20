@@ -58,6 +58,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
       new MyBrowseFolderListener("Select Directory", "Select directory to map to a VCS", myDirectoryTextField, project,
                                  createSingleFolderDescriptor()));
     myMappingCopy = VcsDirectoryMapping.createDefault("");
+    initProjectMessage();
     setTitle(title);
     init();
     myVCSComboBox.addActionListener(e -> updateVcsConfigurable());
@@ -77,8 +78,6 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myVCSComboBox.setSelectedItem(myVcses.get(mapping.getVcs()));
     updateVcsConfigurable();
     myDirectoryTextField.setEnabled(myDirectoryRadioButton.isSelected());
-
-    initProjectMessage();
   }
 
   @NotNull
@@ -135,7 +134,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myDirectoryRadioButton.setSelected(true);
   }
 
-  public void initProjectMessage() {
+  private void initProjectMessage() {
     myProjectButtonComment.setText(wrapInHtml(DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage()));
   }
 

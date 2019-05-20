@@ -393,8 +393,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private void addMapping() {
     VcsMappingConfigurationDialog dlg = new VcsMappingConfigurationDialog(myProject, VcsBundle.message("directory.mapping.add.title"));
-    // due to wonderful UI designer bug
-    dlg.initProjectMessage();
     if (dlg.showAndGet()) {
       addMapping(dlg.getMapping());
     }
