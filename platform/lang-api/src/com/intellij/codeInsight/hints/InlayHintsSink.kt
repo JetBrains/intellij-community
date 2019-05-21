@@ -5,10 +5,16 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 
 interface InlayHintsSink {
   /**
-   * Adds inlay to underlying editor.
+   * Adds inline element to underlying editor.
    * Note, that only one presentation with the given key may be at the same offset.
+   * @see [com.intellij.openapi.editor.InlayModel.addInlineElement]
    */
   fun addInlineElement(offset: Int, relatesToPrecedingText: Boolean, presentation: InlayPresentation)
 
+  /**
+   * Adds block element to underlying editor.
+   * Note, that only one presentation with the given key may be at the same offset.
+   * @see [com.intellij.openapi.editor.InlayModel.addBlockElement]
+   */
   fun addBlockElement(offset: Int, relatesToPrecedingText: Boolean, showAbove: Boolean, priority: Int, presentation: InlayPresentation)
 }
