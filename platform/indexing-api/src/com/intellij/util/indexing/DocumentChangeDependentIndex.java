@@ -6,9 +6,9 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * Marker interface of index that use document changes to update it's data. These indices shouldn't depend on PSI-related stuff.
  *
- * Note, every {@link FileBasedIndexExtension} with {@link FileBasedIndexExtension#dependsOnFileContent()} returns false is treated as document changes dependent.
+ * Note, every {@link FileBasedIndexExtension} where {@link FileBasedIndexExtension#dependsOnFileContent()} returns false is treated as document change dependent.
  */
 @ApiStatus.Experimental
-public interface DocumentChangesDependentIndex {
+public interface DocumentChangeDependentIndex {
 
 }

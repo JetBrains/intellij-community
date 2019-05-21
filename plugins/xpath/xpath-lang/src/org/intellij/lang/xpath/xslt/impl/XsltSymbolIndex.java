@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolIndex.Kind> implements DocumentChangesDependentIndex {
+public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolIndex.Kind> implements DocumentChangeDependentIndex {
   @NonNls
   public static final ID<String, Kind> NAME = ID.create("XsltSymbolIndex");
 
