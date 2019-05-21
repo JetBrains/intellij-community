@@ -29,11 +29,15 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
     final Set<String> facets = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
-        final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(facet.getClass());
-        facets.add(info.isDevelopedByJetBrains() ? facet.getType().getStringId() : "third.party");
+        facets.add(facet.getType().getStringId());
       }
     }
     return ContainerUtil.map2Set(facets, facet -> new UsageDescriptor(facet, 1));
+  }
+
+  @Override
+  public int getVersion() {
+    return 2;
   }
 
   @NotNull
@@ -52,14 +56,17 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
     @NotNull
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if ("third.party".equals(data)) return ValidationResultType.ACCEPTED;
+      if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
       final FacetType facet = findFacetById(data);
       if (facet == null) {
         return ValidationResultType.REJECTED;
       }
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(facet.getClass());
-      return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+      if (StringUtil.equals(data, context.eventId)) {
+        context.setPluginInfo(info);
+      }
+      return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
 
     @Nullable

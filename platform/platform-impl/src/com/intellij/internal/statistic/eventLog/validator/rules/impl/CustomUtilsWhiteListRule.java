@@ -27,6 +27,10 @@ public abstract class CustomUtilsWhiteListRule extends PerformanceCareRule imple
     return ValidationResultType.REJECTED;
   }
 
+  protected static boolean isThirdPartyValue(@NotNull String data) {
+    return ValidationResultType.THIRD_PARTY.getDescription().equals(data);
+  }
+
   protected static boolean isPluginDevelopedByJB(@NotNull String plugin) {
     final PluginId pluginId = PluginId.findId(plugin);
     return pluginId != null && PluginInfoDetectorKt.getPluginInfoById(pluginId).isDevelopedByJetBrains();

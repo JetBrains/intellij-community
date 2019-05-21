@@ -20,7 +20,7 @@ public class ClassNameRuleValidator extends CustomUtilsWhiteListRule {
   @NotNull
   @Override
   protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-    if (ValidationResultType.THIRD_PARTY.getDescription().equals(data)) return ValidationResultType.ACCEPTED;
+    if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(data);
     if (StringUtil.equals(context.eventId, data)) {

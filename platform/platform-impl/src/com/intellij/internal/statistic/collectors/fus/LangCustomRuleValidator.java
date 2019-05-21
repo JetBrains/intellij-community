@@ -18,10 +18,13 @@ public class LangCustomRuleValidator extends CustomUtilsWhiteListRule {
   @NotNull
   @Override
   protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-    if (data.equals("third.party")) return ValidationResultType.ACCEPTED;
+    if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
     final Language language = Language.findLanguageByID(data);
-    return language != null && PluginInfoDetectorKt.getPluginInfo(language.getClass()).isSafeToReport() ?
-           ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+    if (language == null) {
+      return ValidationResultType.REJECTED;
+    }
+    return PluginInfoDetectorKt.getPluginInfo(language.getClass()).isSafeToReport() ?
+           ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
   }
 }
