@@ -1575,8 +1575,6 @@ public class AllIcons {
   /** 128x128 */ public static final Icon Icon_128 = IconLoader.getIcon("/icon_128.png");
   /** 32x32 */ public static final Icon Icon_CE = IconLoader.getIcon("/icon_CE.png");
   /** 128x128 */ public static final Icon Icon_CE_128 = IconLoader.getIcon("/icon_CE_128.png");
-  /** 256x256 */ public static final Icon Icon_CE_256 = IconLoader.getIcon("/icon_CE_256.png");
-  /** 512x512 */ public static final Icon Icon_CE_512 = IconLoader.getIcon("/icon_CE_512.png");
   /** 64x64 */ public static final Icon Icon_CE_64 = IconLoader.getIcon("/icon_CE_64.png");
   /** 16x16 */ public static final Icon Icon_CEsmall = IconLoader.getIcon("/icon_CEsmall.png");
   /** 16x16 */ public static final Icon Icon_small = IconLoader.getIcon("/icon_small.png");
