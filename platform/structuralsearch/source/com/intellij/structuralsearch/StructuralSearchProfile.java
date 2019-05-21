@@ -110,11 +110,6 @@ public abstract class StructuralSearchProfile {
   @NotNull
   public abstract Class<? extends TemplateContextType> getTemplateContextTypeClass();
 
-  public final TemplateContextType getTemplateContextType() {
-    final Class<? extends TemplateContextType> clazz = getTemplateContextTypeClass();
-    return ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz);
-  }
-
   @Nullable
   public LanguageFileType detectFileType(@NotNull PsiElement context) {
     return null;

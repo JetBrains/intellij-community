@@ -36,6 +36,7 @@ import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,10 +152,6 @@ public class UIUtil {
     else {
       StructuralReplaceAction.triggerAction(config, context);
     }
-  }
-
-  public static void updateHighlighter(Editor editor, StructuralSearchProfile profile) {
-    TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
   }
 
   public static MatchVariableConstraint getOrAddVariableConstraint(String varName, Configuration configuration) {
@@ -314,7 +311,7 @@ public class UIUtil {
       final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
       assert doc != null : "code fragment element should be physical";
       DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
-      return createEditor(doc, project, true, true, profile.getTemplateContextType());
+      return createEditor(doc, project, true, true, getTemplateContextType(profile));
     }
 
     final EditorFactory factory = EditorFactory.getInstance();
@@ -331,5 +328,10 @@ public class UIUtil {
     return dialect == null
            ? factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), true, true)
            : factory.createFileFromText(name, dialect, text, true, true);
+  }
+
+  public static TemplateContextType getTemplateContextType(StructuralSearchProfile profile) {
+    final Class<? extends TemplateContextType> clazz = profile.getTemplateContextTypeClass();
+    return ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz);
   }
 }

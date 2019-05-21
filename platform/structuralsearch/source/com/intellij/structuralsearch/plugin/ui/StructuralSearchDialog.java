@@ -190,7 +190,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         editor.setVerticalScrollbarVisible(true);
         final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
         assert profile != null;
-        TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
+        TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
         SubstitutionShortInfoHandler.install(editor, variableName -> {
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
           if (isFilterPanelVisible()) {

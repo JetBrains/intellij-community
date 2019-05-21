@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -58,7 +59,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
     if (profile != null) {
-      UIUtil.updateHighlighter(replacement, profile);
+      TemplateEditorUtil.setHighlighter(replacement, UIUtil.getTemplateContextType(profile));
     }
   }
 
