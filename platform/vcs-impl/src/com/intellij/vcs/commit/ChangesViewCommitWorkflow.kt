@@ -46,14 +46,15 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
     committer.runCommit("Commit Changes", false)
   }
 
-  // TODO Looks like CommitContext should also be cleared
   private class ResultHandler(private val workflow: ChangesViewCommitWorkflow) : CommitResultHandler {
-    override fun onSuccess(commitMessage: String) = clearCommitOptions()
-    override fun onFailure() = clearCommitOptions()
+    override fun onSuccess(commitMessage: String) = resetState()
+    override fun onFailure() = resetState()
 
-    private fun clearCommitOptions() = runInEdt {
+    private fun resetState() = runInEdt {
       workflow.clearCommitOptions()
       workflow.areCommitOptionsCreated = false
+
+      workflow.clearCommitContext()
     }
   }
 }

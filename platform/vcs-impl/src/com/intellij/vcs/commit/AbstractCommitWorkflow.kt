@@ -52,7 +52,8 @@ interface CommitWorkflowListener : EventListener {
 abstract class AbstractCommitWorkflow(val project: Project) {
   protected val eventDispatcher = EventDispatcher.create(CommitWorkflowListener::class.java)
 
-  val commitContext: CommitContext = CommitContext()
+  var commitContext: CommitContext = CommitContext()
+    private set
 
   abstract val isDefaultCommitEnabled: Boolean
 
@@ -91,6 +92,10 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   internal fun initCommitOptions(options: CommitOptions) {
     clearCommitOptions()
     _commitOptions.add(options)
+  }
+
+  internal fun clearCommitContext() {
+    commitContext = CommitContext()
   }
 
   fun addListener(listener: CommitWorkflowListener, parent: Disposable) = eventDispatcher.addListener(listener, parent)
