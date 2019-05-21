@@ -416,9 +416,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public PsiCodeFragment createCodeFragment(Project project, String text, PsiElement context) {
-    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
-    return factory.createCodeBlockCodeFragment(text, context, true);
+  public PsiCodeFragment createCodeFragment(Project project, String text) {
+    return JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(text, null, true);
   }
 
   @Override

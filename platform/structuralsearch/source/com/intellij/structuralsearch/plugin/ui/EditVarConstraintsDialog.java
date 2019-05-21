@@ -567,14 +567,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   Editor createEditor(final Project project, final String text, final String fileName) {
-    Language groovy = Language.findLanguageByID("Groovy");
+    final Language groovy = Language.findLanguageByID("Groovy");
     Document doc = null;
     final FileType fileType = getFileType(fileName);
     if (groovy != null) {
       // there is no right way to create a code fragment for generic language, so we use this hole since we need extend resolve scope
       for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
         if (profile.isMyLanguage(groovy)) {
-          PsiCodeFragment fragment = Objects.requireNonNull(profile.createCodeFragment(project, text, null));
+          final PsiCodeFragment fragment = Objects.requireNonNull(profile.createCodeFragment(project, text));
           fragment.forceResolveScope(new StructuralSearchScriptScope(myProject));
           doc = PsiDocumentManager.getInstance(project).getDocument(fragment);
           break;

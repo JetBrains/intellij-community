@@ -285,7 +285,7 @@ public class UIUtil {
   @NotNull
   public static Document createDocument(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
                                         @NotNull StructuralSearchProfile profile) {
-    PsiFile codeFragment = profile.createCodeFragment(project, text, null);
+    PsiFile codeFragment = profile.createCodeFragment(project, text);
     if (codeFragment == null) {
       codeFragment = createFileFragment(project, fileType, dialect, text);
     }
@@ -302,7 +302,7 @@ public class UIUtil {
   @NotNull
   public static Editor createEditor(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
                                     @NotNull StructuralSearchProfile profile) {
-    PsiFile codeFragment = profile.createCodeFragment(project, text, null);
+    PsiFile codeFragment = profile.createCodeFragment(project, text);
     if (codeFragment == null) {
       codeFragment = createFileFragment(project, fileType, dialect, text);
     }
