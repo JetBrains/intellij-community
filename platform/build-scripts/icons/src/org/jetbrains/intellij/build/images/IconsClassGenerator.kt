@@ -428,11 +428,11 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       }
     }
 
-    return if (Character.isJavaIdentifierStart(sb.first())) {
-      sb.toString()
+    if (Character.isJavaIdentifierStart(sb.first())) {
+      return sb.toString()
     }
     else {
-      "_$sb"
+      return "_" + sb.toString()
     }
   }
 

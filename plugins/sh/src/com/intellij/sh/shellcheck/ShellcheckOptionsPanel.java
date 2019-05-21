@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.util.Set;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 public class ShellcheckOptionsPanel {
@@ -33,12 +33,10 @@ public class ShellcheckOptionsPanel {
   private TextFieldWithBrowseButton myShellcheckSelector;
   private MultipleCheckboxOptionsPanel myInspectionsCheckboxPanel;
   private final BiConsumer<String, Boolean> myInspectionsChangeListener;
-  private final Set<String> myDisabledInspections;
   private final Project myProject;
 
-  ShellcheckOptionsPanel(Set<String> disabledInspections, BiConsumer<String, Boolean> inspectionsChangeListener) {
+  ShellcheckOptionsPanel(List<String> disabledInspections, BiConsumer<String, Boolean> inspectionsChangeListener) {
     myInspectionsChangeListener = inspectionsChangeListener;
-    myDisabledInspections = disabledInspections;
     myProject = ProjectUtil.guessCurrentProject(getPanel());
 
     myShellcheckSelector.addBrowseFolderListener(BROWSE_SHELLCHECK_TITLE, "", myProject, FileChooserDescriptorFactory.createSingleFileDescriptor());
@@ -55,7 +53,13 @@ public class ShellcheckOptionsPanel {
     myShellcheckSelector.setText(shellcheckPath);
     myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
 
-    ShShellcheckUtil.shellCheckCodes.forEach((key, value) -> myInspectionsCheckboxPanel.addCheckbox(key + " " + value, key));
+    disabledInspections.forEach(setting -> {
+      String value = ShShellcheckUtil.shellCheckCodes.get(setting);
+      if (value != null) {
+        myInspectionsCheckboxPanel.addCheckbox(setting + " " + value, setting);
+      }
+    });
+
     myWarningLabel.setIcon(AllIcons.General.Warning);
   }
 
@@ -71,7 +75,7 @@ public class ShellcheckOptionsPanel {
     myInspectionsCheckboxPanel = new MultipleCheckboxOptionsPanel(new OptionAccessor() {
       @Override
       public boolean getOption(String optionName) {
-        return myDisabledInspections.contains(optionName);
+        return true;
       }
 
       @Override

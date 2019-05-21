@@ -5,6 +5,7 @@ import com.intellij.util.ConcurrencyUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.awt.*;
 import java.lang.ref.Reference;

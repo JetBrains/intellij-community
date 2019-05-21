@@ -99,26 +99,6 @@ public final class EndUserAgreement {
     return loadContent(docName, EndUserAgreement.class.getResourceAsStream(getBundledResourcePath(docName)));
   }
 
-  public static boolean updateCachedContentToLatestBundledVersion() {
-    try {
-      final String docName = getDocumentName();
-      final File cacheFile = getDocumentContentFile(docName);
-      if (cacheFile.exists()) {
-        final Document cached = loadContent(docName, new FileInputStream(cacheFile));
-        if (!cached.getVersion().isUnknown()) {
-          final Document bundled = loadContent(docName, EndUserAgreement.class.getResourceAsStream(getBundledResourcePath(docName)));
-          if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
-            update(docName, bundled.getText());
-            return true;
-          }
-        }
-      }
-    }
-    catch (Throwable ignored) {
-    }
-    return false;
-  }
-
   public static void update(String docName, String text) {
     try {
       FileUtil.writeToFile(getDocumentContentFile(docName), text);

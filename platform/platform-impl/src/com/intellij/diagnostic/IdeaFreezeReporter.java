@@ -30,32 +30,23 @@ public class IdeaFreezeReporter {
     app.getMessageBus().connect().subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
       final List<ThreadDump> myCurrentDumps = new ArrayList<>();
       List<StackTraceElement> myStacktraceCommonPart = null;
-      volatile boolean myFreezeActive = false;
-
-      @Override
-      public void uiFreezeStarted() {
-        myFreezeActive = true;
-      }
 
       @Override
       public void dumpedThreads(@NotNull File toFile, @NotNull ThreadDump dump) {
-        if (myFreezeActive) {
-          myCurrentDumps.add(dump);
-          StackTraceElement[] edtStack = dump.getEDTStackTrace();
-          if (edtStack != null) {
-            if (myStacktraceCommonPart == null) {
-              myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
-            }
-            else {
-              myStacktraceCommonPart = PerformanceWatcher.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
-            }
+        myCurrentDumps.add(dump);
+        StackTraceElement[] edtStack = dump.getEDTStackTrace();
+        if (edtStack != null) {
+          if (myStacktraceCommonPart == null) {
+            myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+          }
+          else {
+            myStacktraceCommonPart = PerformanceWatcher.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
           }
         }
       }
 
       @Override
       public void uiFreezeFinished(int lengthInSeconds) {
-        myFreezeActive = false;
         if (Registry.is("performance.watcher.freeze.report") &&
             lengthInSeconds > FREEZE_THRESHOLD &&
             // check that we have at least half of the dumps required
