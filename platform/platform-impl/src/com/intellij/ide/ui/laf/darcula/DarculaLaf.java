@@ -301,27 +301,21 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         }
       }
 
-      Map<Object, Object> modifiedValues = new HashMap<>();
-
       for (Object key : defaults.keySet()) {
         if (key instanceof String && ((String)key).contains(".")) {
           final String s = (String)key;
           final String darculaKey = s.substring(s.lastIndexOf('.') + 1);
           if (darculaGlobalSettings.containsKey(darculaKey)) {
-            modifiedValues.put(key, darculaGlobalSettings.get(darculaKey));
+            UIManager.getDefaults().remove(key); // MultiUIDefaults misses correct property merging
+            defaults.put(key, darculaGlobalSettings.get(darculaKey));
           }
         }
       }
 
       for (String key : properties.stringPropertyNames()) {
-        final String value = properties.getProperty(key);
-        modifiedValues.put(key, parseValue(key, value));
-      }
-
-      modifiedValues.forEach((key, value) -> {
         UIManager.getDefaults().remove(key); // MultiUIDefaults misses correct property merging
-        defaults.put(key, value);
-      });
+        defaults.put(key, parseValue(key, properties.getProperty(key)));
+      }
     }
     catch (IOException e) {
       log(e);
