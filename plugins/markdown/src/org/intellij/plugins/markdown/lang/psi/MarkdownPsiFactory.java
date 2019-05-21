@@ -42,9 +42,6 @@ public enum MarkdownPsiFactory {
     if (elementType == MarkdownElementTypes.CODE_BLOCK) {
       return new MarkdownCodeBlockImpl(node);
     }
-    if (elementType == MarkdownElementTypes.HTML_BLOCK) {
-      return new MarkdownHtmlBlockImpl(node);
-    }
     if (elementType == MarkdownElementTypes.TABLE) {
       return new MarkdownTableImpl(node);
     }
