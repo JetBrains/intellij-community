@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -45,6 +45,8 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -507,12 +509,16 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new CreatePropertyFromUsageFix(call);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreateConstructorFromSuperFix(@NotNull PsiMethodCallExpression call) {
     return new CreateConstructorFromSuperFix(call);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreateConstructorFromThisFix(@NotNull PsiMethodCallExpression call) {
@@ -522,13 +528,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public List<IntentionAction> createCreateConstructorFromCallExpressionFixes(@NotNull PsiMethodCallExpression call) {
-    if (JvmElementActionFactories.useInterlaguageActions()) {
-      return CreateConstructorFromUsage.generateConstructorActions(call);
-    }
-    return Arrays.asList(
-      createCreateConstructorFromSuperFix(call),
-      createCreateConstructorFromThisFix(call)
-    );
+    return CreateConstructorFromUsage.generateConstructorActions(call);
   }
 
   @NotNull

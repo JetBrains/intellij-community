@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -13,6 +13,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -303,9 +304,19 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createCreatePropertyFromUsageFix(@NotNull PsiMethodCallExpression call);
 
+  /**
+   * @deprecated use {@link #createCreateConstructorFromCallExpressionFixes}
+   */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   public abstract IntentionAction createCreateConstructorFromSuperFix(@NotNull PsiMethodCallExpression call);
 
+  /**
+   * @deprecated use {@link #createCreateConstructorFromCallExpressionFixes}
+   */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   public abstract IntentionAction createCreateConstructorFromThisFix(@NotNull PsiMethodCallExpression call);
 
