@@ -39,7 +39,7 @@ open class SingleChangeListCommitWorkflow(
   project: Project,
   val initiallyIncluded: Collection<*>,
   val initialChangeList: LocalChangeList? = null,
-  val executors: List<CommitExecutor> = emptyList(),
+  executors: List<CommitExecutor> = emptyList(),
   final override val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
   val vcsToCommit: AbstractVcs<*>? = null,
   affectedVcses: Set<AbstractVcs<*>> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
@@ -50,9 +50,11 @@ open class SingleChangeListCommitWorkflow(
 
   init {
     updateVcses(affectedVcses)
+    initCommitExecutors(executors)
   }
 
-  val isPartialCommitEnabled: Boolean = vcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || executors.any { it.supportsPartialCommit() })
+  val isPartialCommitEnabled: Boolean =
+    vcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || commitExecutors.any { it.supportsPartialCommit() })
 
   val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
 
