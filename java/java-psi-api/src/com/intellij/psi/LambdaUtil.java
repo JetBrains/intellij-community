@@ -728,10 +728,11 @@ public class LambdaUtil {
                                                     PsiLambdaExpression.class,
                                                     PsiConditionalExpression.class,
                                                     PsiSwitchExpression.class,
+                                                    PsiAssignmentExpression.class,
                                                     PsiCodeBlock.class,
                                                     PsiCall.class);
     while (true) {
-      if (parent instanceof PsiCall) {
+      if (parent instanceof PsiCall || parent instanceof PsiAssignmentExpression) {
         break;
       }
 
@@ -775,7 +776,7 @@ public class LambdaUtil {
 
       top = psiCall;
       if (top instanceof PsiExpression && PsiPolyExpressionUtil.isPolyExpression((PsiExpression)top)) {
-        parent = PsiTreeUtil.getParentOfType(parent.getParent(), PsiExpressionList.class, PsiLambdaExpression.class, PsiCodeBlock.class);
+        parent = PsiTreeUtil.getParentOfType(parent.getParent(), PsiExpressionList.class, PsiLambdaExpression.class, PsiAssignmentExpression.class, PsiCodeBlock.class);
       }
       else {
         break;
