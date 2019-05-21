@@ -16,6 +16,8 @@ import java.awt.Rectangle
 
 open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTabPainter {
 
+  override fun getTabTheme(): TabTheme = theme
+
   override fun getBackgroundColor(): Color = theme.background ?: theme.borderColor
 
   override fun fillBackground(g: Graphics2D, rect: Rectangle) {

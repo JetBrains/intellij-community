@@ -688,7 +688,7 @@ public class JBUI {
 
       @NotNull
       public static Color background() {
-        return JBColor.namedColor("DefaultTabs.background", ToolWindow.headerBackground());
+        return JBColor.namedColor("DefaultTabs.background", new JBColor(0xECECEC, 0x3C3F41));
       }
 
       @NotNull

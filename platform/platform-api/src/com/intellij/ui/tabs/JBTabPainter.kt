@@ -4,6 +4,7 @@ package com.intellij.ui.tabs
 import com.intellij.ui.tabs.newImpl.JBDefaultTabPainter
 import com.intellij.ui.tabs.newImpl.JBEditorTabPainter
 import com.intellij.ui.tabs.newImpl.themes.DebuggerTabTheme
+import com.intellij.ui.tabs.newImpl.themes.TabTheme
 import com.intellij.ui.tabs.newImpl.themes.ToolWindowTabTheme
 import java.awt.Color
 import java.awt.Graphics2D
@@ -21,6 +22,8 @@ interface JBTabPainter {
     @JvmStatic
     val DEBUGGER: JBTabPainter = JBDefaultTabPainter(DebuggerTabTheme())
   }
+
+  fun getTabTheme(): TabTheme
 
   fun getBackgroundColor(): Color
 

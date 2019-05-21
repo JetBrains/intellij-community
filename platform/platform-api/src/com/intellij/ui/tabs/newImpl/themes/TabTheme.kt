@@ -12,6 +12,7 @@ interface TabTheme {
   val hoverBackground: Color
   val inactiveColoredFileBackground: Color?
   val underlinedTabBackground: Color?
+  val underlinedTabForeground: Color?
   val underlineHeight: Int
 }
 
@@ -23,6 +24,7 @@ open class DefaultTabTheme : TabTheme {
   override val hoverBackground: Color get() = JBUI.CurrentTheme.DefaultTabs.hoverBackground()
   override val inactiveColoredFileBackground: Color? get() = null
   override val underlinedTabBackground: Color? get() = null
+  override val underlinedTabForeground: Color? get() = JBUI.CurrentTheme.DefaultTabs.underlinedTabForeground()
   override val underlineHeight: Int get()= JBUI.CurrentTheme.DefaultTabs.underlineHeight()
 }
 
@@ -41,6 +43,8 @@ class EditorTabTheme : TabTheme {
     get() = JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground()
   override val underlinedTabBackground: Color?
     get() = JBUI.CurrentTheme.EditorTabs.underlinedTabBackground()
+  override val underlinedTabForeground: Color?
+    get() = JBUI.CurrentTheme.EditorTabs.underlinedTabForeground()
   override val underlineHeight: Int
     get() = JBUI.CurrentTheme.EditorTabs.underlineHeight()
 }
