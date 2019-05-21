@@ -26,10 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ReorderingUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -240,11 +237,11 @@ class VariableExtractor {
       throw new IncorrectOperationException("Unexpected empty type pointer");
     }
 
-    PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+    PsiDeclarationStatement probe = JavaPsiFacade.getElementFactory(expression.getProject())
+      .createVariableDeclarationStatement("x", TypeUtils.getObjectType(expression), null, expression);
     Project project = expression.getProject();
-    NullabilityAnnotationInfo nullabilityAnnotationInfo = containingClass != null 
-        ? NullableNotNullManager.getInstance(project).findExplicitNullability(containingClass) 
-        : null;
+    NullabilityAnnotationInfo nullabilityAnnotationInfo = 
+      NullableNotNullManager.getInstance(project).findExplicitNullability((PsiLocalVariable)probe.getDeclaredElements()[0]);
 
     final PsiAnnotation[] annotations = type.getAnnotations();
     return type.annotate(new TypeAnnotationProvider() {
