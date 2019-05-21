@@ -926,6 +926,7 @@
                      displayName="Nested 'synchronized' statement"
                      groupKey="inspection.threading"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyNestedSynchronizedStatementInspection"/>
+    <!--suppress PluginXmlCapitalization -->
     <localInspection language="Groovy" groupPath="Groovy"
                      displayName="Call to Thread.stop(), Thread.suspend(), or Thread.resume()"
                      groupKey="inspection.threading"
@@ -1302,6 +1303,7 @@
 
 
     <group id="GroovyGenerateGroup1">
+      <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.tostring.GroovyGenerateToStringAction"
               class="org.jetbrains.plugins.groovy.actions.generate.tostring.GroovyGenerateToStringAction"
               text="to_String()" description="Generate toString() method"/>
@@ -1317,12 +1319,15 @@
       <action id="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
               class="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction"
               text="Getter and Setter" description="Generates getter"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.equals.GroovyGenerateEqualsAction"
               class="org.jetbrains.plugins.groovy.actions.generate.equals.GroovyGenerateEqualsAction"
               text="equals() and hashCode()" description="Action generates equals and hashCode now"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"
               class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGenerateMethodMissingAction"
               text="methodMissing()" description="Action generates propertyMissing()"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
               class="org.jetbrains.plugins.groovy.actions.generate.missing.GroovyGeneratePropertyMissingAction"
               text="propertyMissing()" description="Action generates propertyMissing()"/>
