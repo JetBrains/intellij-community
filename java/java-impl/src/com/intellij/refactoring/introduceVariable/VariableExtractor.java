@@ -33,10 +33,7 @@ import com.siyeh.ig.psiutils.ReorderingUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Performs actual write action (see {@link #extractVariable()}) which introduces new variable and replaces all occurrences.
@@ -286,8 +283,8 @@ class VariableExtractor {
         expr = (PsiExpression)anchor;
       }
     }
-    PsiExpression firstOccurrence = StreamEx.of(occurrences).append(expr)
-      .minBy(e -> e.getTextRange().getStartOffset()).orElse(null);
+    Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).append(expr).toSet();
+    PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
     if (anchor instanceof PsiWhileStatement) {
       PsiExpression condition = ((PsiWhileStatement)anchor).getCondition();
       if (condition != null) {
@@ -305,9 +302,14 @@ class VariableExtractor {
     if (firstOccurrence != null && ControlFlowUtils.canExtractStatement(firstOccurrence) && 
         !PsiUtil.isAccessedForWriting(firstOccurrence)) {
       PsiExpression ancestorCandidate = ExpressionUtils.getTopLevelExpression(firstOccurrence);
-      if (PsiTreeUtil.isAncestor(anchor, ancestorCandidate, false) &&
-          ReorderingUtils.canExtract(ancestorCandidate, firstOccurrence) == ThreeState.NO) {
-        return firstOccurrence;
+      if (PsiTreeUtil.isAncestor(anchor, ancestorCandidate, false)) {
+        PsiElement statement = RefactoringUtil.getParentStatement(ancestorCandidate, false);
+        if (allOccurrences.stream().allMatch(occurrence ->
+                                               PsiTreeUtil.isAncestor(statement, occurrence, false) &&
+                                               (!PsiTreeUtil.isAncestor(ancestorCandidate, occurrence, false) ||
+                                                ReorderingUtils.canExtract(ancestorCandidate, occurrence) == ThreeState.NO))) {
+          return firstOccurrence;
+        }
       }
     }
     if (anchor instanceof PsiTryStatement && firstOccurrence != null) {
