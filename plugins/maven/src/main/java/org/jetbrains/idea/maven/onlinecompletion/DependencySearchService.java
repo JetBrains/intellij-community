@@ -76,16 +76,16 @@ public class DependencySearchService {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       ProgressManager.checkCanceled();
       Promise<Void> promise = myPackageSearchService
-        .suggestPrefix(groupId, artifactId, parameters, d -> rewriteTypeIfPresentInLocalCache(d, consumer));
+        .suggestPrefix(groupId, artifactId, parameters, d -> rewriteTypeIfPresentInLocalCache(d, collectingConsumer));
 
       completeProcess(collectingConsumer, returnPromise, promise);
     });
     return returnPromise;
   }
 
-  private void completeProcess(CollectingConsumer collectingConsumer,
-                               Promise<Void> remotePromise,
-                               Promise<Void> promise) {
+  private static void completeProcess(CollectingConsumer collectingConsumer,
+                                      Promise<Void> remotePromise,
+                                      Promise<Void> promise) {
     promise.onProcessed(v -> collectingConsumer.consumeLocalOnly())
       .processed(remotePromise);
   }
@@ -100,14 +100,17 @@ public class DependencySearchService {
   }
 
   @NotNull
-  private Promise<Void> createPromiseWithStatisticHandlers(SearchParameters parameters, String prefix) {
+  private static Promise<Void> createPromiseWithStatisticHandlers(SearchParameters parameters, String prefix) {
     final Promise<Void> remotePromise = new AsyncPromise<>();
     final long timeStart = System.currentTimeMillis();
-    remotePromise.onError(e -> {
-      MavenDependencySearchStatisticsCollector.notifyError(prefix, parameters, System.currentTimeMillis() - timeStart, e);
-    }).onSuccess(v -> {
-      MavenDependencySearchStatisticsCollector.notifySuccess(prefix, parameters, System.currentTimeMillis() - timeStart);
-    });
+    remotePromise
+      .onError(e ->
+                 MavenDependencySearchStatisticsCollector
+                   .notifyError(prefix, parameters, System.currentTimeMillis() - timeStart, e)
+      ).onSuccess(v ->
+                    MavenDependencySearchStatisticsCollector
+                      .notifySuccess(prefix, parameters, System.currentTimeMillis() - timeStart)
+    );
     return remotePromise;
   }
 
@@ -162,8 +165,11 @@ public class DependencySearchService {
   private static List<MavenRepositoryArtifactInfo> convertLocalItemsToArtifactInfo(List<MavenDependencyCompletionItem> items) {
     Map<Pair<String, String>, List<MavenDependencyCompletionItem>> collect =
       items.stream().collect(Collectors.groupingBy(i -> new Pair<>(i.getGroupId(), i.getArtifactId())));
-    return ContainerUtil.map(collect.entrySet(), e -> new MavenRepositoryArtifactInfo(e.getKey().first, e.getKey().second, e.getValue()
-      .toArray(new MavenDependencyCompletionItem[0])));
+    List<MavenRepositoryArtifactInfo> map =
+      ContainerUtil.map(collect.entrySet(), e -> new MavenRepositoryArtifactInfo(e.getKey().first, e.getKey().second, e.getValue()
+        .toArray(new MavenDependencyCompletionItem[0])));
+    Collections.sort(map, Comparator.comparing(d -> d.getVersion(), VersionComparatorUtil.COMPARATOR.reversed()));
+    return map;
   }
 
   private static class CollectingConsumer implements Consumer<MavenRepositoryArtifactInfo> {

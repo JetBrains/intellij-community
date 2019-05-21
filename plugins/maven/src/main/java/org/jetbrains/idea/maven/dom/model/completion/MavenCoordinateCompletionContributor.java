@@ -58,6 +58,7 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
         return;
       }
 
+      result = amendResultSet(result);
       ConcurrentLinkedDeque<MavenRepositoryArtifactInfo> cld = new ConcurrentLinkedDeque<>();
       Promise<Void> promise = find(
         MavenProjectIndicesManager.getInstance(placeChecker.getProject()).getDependencySearchService(),
