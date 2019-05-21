@@ -50,26 +50,29 @@ public class FieldDescriptor implements ItemToReplaceDescriptor {
     PsiElement parent = myExpression.getParent();
     if (parent instanceof PsiAssignmentExpression &&
         Objects.equals(myExpression, ((PsiAssignmentExpression)parent).getLExpression())) {
-      grantUpdateAccess((PsiAssignmentExpression)parent, outerClass, elementFactory);
+      grantUpdateAccess((PsiAssignmentExpression)parent, outerClass, callExpression, elementFactory);
     }
     else {
-      grantReadAccess(outerClass, elementFactory);
+      grantReadAccess(outerClass, callExpression, elementFactory);
     }
   }
 
-  private void grantReadAccess(@NotNull PsiClass outerClass, @NotNull PsiElementFactory elementFactory) {
+  private void grantReadAccess(@NotNull PsiClass outerClass,
+                               @NotNull PsiMethodCallExpression generatedCall,
+                               @NotNull PsiElementFactory elementFactory) {
     PsiMethod newMethod = createPsiMethod(FieldAccessType.GET, outerClass, elementFactory);
     if (newMethod == null) return;
 
     outerClass.add(newMethod);
 
-    String qualifier = qualify();
-    String methodCall = newMethod.getName() + "(" + (qualifier == null ? "null" : qualifier) + ", null)";
+    String object = MemberQualifierUtil.findObjectExpression(myExpression, myField, outerClass, generatedCall, elementFactory);
+    String methodCall = newMethod.getName() + "(" + (object == null ? "null" : object) + ", null)";
     myExpression.replace(elementFactory.createExpressionFromText(methodCall, myExpression));
   }
 
   private void grantUpdateAccess(@NotNull PsiAssignmentExpression assignmentExpression,
                                  @NotNull PsiClass outerClass,
+                                 @NotNull PsiMethodCallExpression generatedCall,
                                  @NotNull PsiElementFactory elementFactory) {
     PsiMethod newMethod = createPsiMethod(FieldAccessType.SET, outerClass, elementFactory);
     if (newMethod == null) return;
@@ -82,8 +85,8 @@ public class FieldDescriptor implements ItemToReplaceDescriptor {
     }
 
     String newValue = rightExpression.getText();
-    String qualifier = qualify();
-    String args = (qualifier == null ? "null" : qualifier) + ", " + newValue;
+    String objectForReference = MemberQualifierUtil.findObjectExpression(myExpression, myField, outerClass, generatedCall, elementFactory);
+    String args = (objectForReference == null ? "null" : objectForReference) + ", " + newValue;
     String methodCallExpression = newMethod.getName() + "(" + args + ")";
 
     PsiExpression newMethodCallExpression = elementFactory.createExpressionFromText(methodCallExpression, myExpression);
@@ -132,20 +135,5 @@ public class FieldDescriptor implements ItemToReplaceDescriptor {
   private PsiType resolveFieldType() {
     PsiType rawType = myField.getType();
     return myExpression.advancedResolve(false).getSubstitutor().substitute(rawType);
-  }
-
-  @Nullable
-  private String qualify() {
-    String qualifier = PsiReflectionAccessUtil.extractQualifier(myExpression);
-    if (qualifier == null) {
-      if (!myField.hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass containingClass = myField.getContainingClass();
-        if (containingClass != null) {
-          qualifier = containingClass.getQualifiedName() + ".this";
-        }
-      }
-    }
-
-    return qualifier;
   }
 }

@@ -63,10 +63,11 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
       .build(elementFactory, outerClass);
 
     outerClass.add(newMethod);
-    String qualifier = qualify();
+    String objectToCallOn = MemberQualifierUtil
+      .findObjectExpression(myCallExpression.getMethodExpression(), myMethod, outerClass, callExpression, elementFactory);
     String args = StreamEx.of(myCallExpression.getArgumentList().getExpressions())
       .map(x -> x.getText())
-      .prepend(qualifier == null ? "null" : qualifier)
+      .prepend(objectToCallOn == null ? "null" : objectToCallOn)
       .joining(", ", "(", ")");
     String newMethodCallExpression = newMethod.getName() + args;
 
@@ -82,20 +83,5 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
   private PsiType resolveMethodReturnType() {
     PsiSubstitutor substitutor = myCallExpression.resolveMethodGenerics().getSubstitutor();
     return substitutor.substitute(myMethod.getReturnType());
-  }
-
-  @Nullable
-  private String qualify() {
-    String qualifier = PsiReflectionAccessUtil.extractQualifier(myCallExpression.getMethodExpression());
-    if (qualifier == null) {
-      if (!myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass containingClass = myMethod.getContainingClass();
-        if (containingClass != null) {
-          qualifier = containingClass.getQualifiedName() + ".this";
-        }
-      }
-    }
-
-    return qualifier;
   }
 }
