@@ -48,6 +48,10 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    if (context instanceof PsiJavaToken && ((PsiJavaToken)context).getTokenType().equals(JavaTokenType.STRING_LITERAL)) {
+      // Do not suggest inside String literals as it could be confusing if literal is interpreted as the reference
+      return false;
+    }
     return JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(JavaPostfixTemplatesUtils.getTopmostExpression(context));
   }
 
