@@ -64,6 +64,12 @@ public abstract class GitHandler {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   protected boolean mySilent; // if true, the command execution is not logged in version control view
 
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  private boolean myWithLowPriority;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  private boolean myWithNoTty;
+
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
 
@@ -193,14 +199,14 @@ public abstract class GitHandler {
    * Execute process with lower priority
    */
   public void withLowPriority() {
-    ExecUtil.setupLowPriorityExecution(myCommandLine);
+    myWithLowPriority = true;
   }
 
   /**
    * Detach git process from IDE TTY session
    */
   public void withNoTty() {
-    ExecUtil.setupNoTtyExecution(myCommandLine);
+    myWithNoTty = true;
   }
 
   /**
@@ -475,6 +481,9 @@ public abstract class GitHandler {
     checkNotStarted();
 
     try {
+      if (myWithLowPriority) ExecUtil.setupLowPriorityExecution(myCommandLine);
+      if (myWithNoTty) ExecUtil.setupNoTtyExecution(myCommandLine);
+
       myStartTime = System.currentTimeMillis();
       String logDirectoryPath = myProject != null
                                 ? GitImplBase.stringifyWorkingDir(myProject.getBasePath(), myCommandLine.getWorkDirectory())
