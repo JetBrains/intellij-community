@@ -131,8 +131,10 @@ class CommunityLibraryLicenses {
                        url: "http://joel-costigliola.github.io/assertj/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Automaton", libraryName: "automaton", version: "1.12-1", license: "BSD",
                        url: "http://www.brics.dk/automaton/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php"),
-    new LibraryLicense(name: "batik", libraryName: "batik", version: "1.9.1", license: "Apache 2.0",
+
+    new LibraryLicense(name: "batik", libraryName: "batik-transcoder", version: "1.11", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/batik/"),
+
     new LibraryLicense(name: "bouncy-castle", version: "1.59", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "bouncy-castle-provider", version: "1.59", license: "MIT License", url: "http://bouncycastle.org",
