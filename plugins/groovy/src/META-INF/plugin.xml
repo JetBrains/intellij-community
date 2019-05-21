@@ -1305,15 +1305,6 @@
       <categoryKey>intention.category.closures</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.closure.EachToForIntention</className>
     </intentionAction>
-    <!--
-    todo make this work
-    <intentionAction>
-      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
-      <categoryKey>intention.category.closures</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.closure.ConvertClosureArgToItIntention</className>
-    </intentionAction>
-    -->
-
 
     <!-- comments -->
     <intentionAction>
@@ -1321,14 +1312,6 @@
       <categoryKey>intention.category.comments</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.comments.ChangeToCStyleCommentIntention</className>
     </intentionAction>
-    <!--
-    todo make this work
-    <intentionAction>
-      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
-      <categoryKey>intention.category.comments</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.comments.ChangeToEndOfLineCommentIntention</className>
-    </intentionAction>
-    -->
 
     <!-- conversions -->
     <intentionAction>
