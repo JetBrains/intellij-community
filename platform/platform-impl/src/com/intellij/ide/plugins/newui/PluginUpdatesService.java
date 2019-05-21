@@ -26,6 +26,7 @@ public class PluginUpdatesService {
   private static Collection<PluginDownloader> myCache;
   private static boolean myPrepared;
   private static boolean myPreparing;
+  private static boolean myReset;
 
   private Consumer<Integer> myTreeCallback;
   private Consumer<Integer> myTabCallback;
@@ -117,13 +118,21 @@ public class PluginUpdatesService {
 
   public void recalculateUpdates() {
     checkAccess();
-    assert !myPreparing;
 
     for (PluginUpdatesService service : SERVICES) {
       service.runAllCallbacks(0);
     }
 
-    calculateUpdates();
+    if (myPreparing) {
+      resetUpdates();
+    }
+    else {
+      calculateUpdates();
+    }
+  }
+
+  private static void resetUpdates() {
+    myReset = true;
   }
 
   public void dispose() {
@@ -178,6 +187,13 @@ public class PluginUpdatesService {
         checkAccess();
 
         myPreparing = false;
+
+        if (myReset) {
+          myReset = false;
+          calculateUpdates();
+          return;
+        }
+
         myPrepared = true;
         myCache = updates;
 
