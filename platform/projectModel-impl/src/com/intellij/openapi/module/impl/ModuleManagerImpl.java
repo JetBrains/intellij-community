@@ -80,6 +80,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   private Set<ModulePath> myModulePathsToLoad;
   private final Set<ModulePath> myFailedModulePaths = new THashSet<>();
   private final Map<String, UnloadedModuleDescriptionImpl> myUnloadedModules = new LinkedHashMap<>();
+  private boolean myModulesLoaded;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -264,6 +265,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     myFailedModulePaths.clear();
 
     if (myModulePathsToLoad == null || myModulePathsToLoad.isEmpty()) {
+      myModulesLoaded = true;
       return;
     }
 
@@ -347,6 +349,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     progressIndicator.checkCanceled();
 
+    myModulesLoaded = true;
+
     Application app = ApplicationManager.getApplication();
     if (app.isInternal() || app.isEAP() || ApplicationInfo.getInstance().getBuild().isSnapshot()) {
       Map<String, Module> track = new THashMap<>();
@@ -372,6 +376,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   public int getModulePathsCount() { return myModulePathsToLoad == null ? 0 : myModulePathsToLoad.size(); }
+
+  public boolean areModulesLoaded() {
+    return myModulesLoaded;
+  }
 
   private double myProgressStep;
 
