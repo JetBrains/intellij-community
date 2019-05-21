@@ -34,6 +34,12 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
     return SuppressQuickFix.EMPTY_ARRAY;
   }
 
+  @NotNull
+  @Override
+  public String getShortName() {
+    return SHORT_NAME;
+  }
+
   @Override
   public void readSettings(@NotNull Element node) {
     String inspectionSettings = JDOMExternalizerUtil.readCustomField(node, SHELLCHECK_SETTINGS_TAG);
