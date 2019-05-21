@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +31,13 @@ class PsiReflectionAccessUtil {
 
     // currently, we use dummy psi class "_Array_" to represent arrays which is an inner of package-private _Dummy_ class.
     if (PsiUtil.isArrayClass(psiClass)) return true;
+    PsiFile containingFile = psiClass.getContainingFile();
+    if (containingFile instanceof PsiJavaFile) {
+      if (((PsiJavaFile)containingFile).getPackageName().isEmpty()) {
+        // consider classes in the default package as inaccessible
+        return false;
+      }
+    }
     while (psiClass != null) {
       if (!psiClass.hasModifierProperty(PsiModifier.PUBLIC)) {
         return false;
