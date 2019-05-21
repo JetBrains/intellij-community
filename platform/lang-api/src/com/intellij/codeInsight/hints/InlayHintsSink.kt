@@ -2,20 +2,6 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
-import com.intellij.codeInsight.hints.presentation.PresentationListener
-import com.intellij.codeInsight.hints.presentation.PresentationRenderer
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorCustomElementRenderer
-import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.InlayModel
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
-import com.intellij.psi.PsiElement
-import com.intellij.util.DocumentUtil
-import com.intellij.util.SmartList
-import gnu.trove.TIntObjectHashMap
-import java.awt.Dimension
-import java.awt.Rectangle
 
 interface InlayHintsSink {
   /**
