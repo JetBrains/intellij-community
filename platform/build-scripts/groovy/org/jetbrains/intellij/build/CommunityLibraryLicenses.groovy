@@ -106,8 +106,10 @@ class CommunityLibraryLicenses {
                        url: "http://commons.apache.org/proper/commons-compress/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Apache Commons Discovery", libraryName: "commons-discovery", version: "0.4", license: "Apache 2.0",
                        url: "http://jakarta.apache.org/commons/discovery/", licenseUrl: "http://www.apache.org/licenses/"),
+
     new LibraryLicense(name: "Apache Commons HTTPClient", libraryName: "http-client-3.1", version: "3.1&nbsp; (with patch by JetBrains)",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpclient-3.x"),
+
     new LibraryLicense(name: "Apache Commons Imaging (JetBrains's fork)", libraryName: "commons-imaging", version: "1.0-RC",
                        license: "Apache 2.0", url: "https://github.com/JetBrains/intellij-deps-commons-imaging"),
     new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io", version: "2.6", license: "Apache 2.0",
@@ -218,10 +220,12 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://ant.apache.org/license.html"),
     new LibraryLicense(name: "hamcrest", version: "1.3", license: "BSD", url: "http://hamcrest.org/",
                        licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
-    new LibraryLicense(name: "HttpComponents HttpClient", libraryName: "http-client", version: "4.5.5", license: "Apache 2.0",
+
+    new LibraryLicense(name: "HttpComponents HttpClient", libraryName: "http-client", version: "4.5.8", license: "Apache 2.0",
                        url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
     new LibraryLicense(name: "HttpComponents HttpClient Fluent API", libraryName: "fluent-hc", version: "4.5.2",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
+
     new LibraryLicense(name: "ImageIO", libraryName: "imageio-tiff", version: "3.4.1", license: "BSD",
                        url: "https://github.com/haraldk/TwelveMonkeys", licenseUrl: "https://github.com/haraldk/TwelveMonkeys#license"),
     new LibraryLicense(name: "imgscalr", libraryName: "imgscalr", version: "4.2", license: "Apache 2.0",
@@ -388,10 +392,12 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.opensource.org/licenses/zlib-license.html"),
     new LibraryLicense(name: "nekohtml", libraryName: "nekohtml", version: "1.9.14", license: "Apache 2.0",
                        url: "http://nekohtml.sourceforge.net/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0.txt"),
-    new LibraryLicense(name: "netty-codec-http", libraryName: "netty-codec-http", version: "4.1.34", license: "Apache 2.0",
+
+    new LibraryLicense(name: "netty-codec-http", libraryName: "netty-codec-http", version: "4.1.36", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "netty-handler-proxy", libraryName: "netty-handler-proxy", version: "4.1.34", license: "Apache 2.0",
+    new LibraryLicense(name: "netty-handler-proxy", libraryName: "netty-handler-proxy", version: "4.1.36", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+
     new LibraryLicense(name: "nosyncbuilder-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", version: "2.5.1", license: "Apache 2.0", url: "http://objenesis.org/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
