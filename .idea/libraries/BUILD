@@ -982,17 +982,17 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api-impldep/4.10.3:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api/4.10.3:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-launcher/4.10.3:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-wrapper/4.10.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api-impldep/5.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api/5.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-launcher/5.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-wrapper/5.2.1:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api-impldep/4.10.3:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api/4.10.3:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-launcher/4.10.3:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-wrapper/4.10.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api-impldep/5.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api/5.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-launcher/5.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-wrapper/5.2.1:jar",
     ],
 )
 
