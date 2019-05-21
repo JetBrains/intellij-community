@@ -16,8 +16,10 @@ class TabsHeightController {
     private var lifetimeDefinition: LifetimeDefinition? = null
     private var lastValue = TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding())
 
+    private val toolWindowHeightProperty = Property(lastValue)
+
     @JvmStatic
-    val toolWindowHeight = Property(lastValue)
+    val toolWindowHeight get() = toolWindowHeightProperty.value
 
     @JvmStatic
     fun registerHeight(comp: JComponent, height: Int) {
@@ -30,7 +32,7 @@ class TabsHeightController {
             value?.let {
               lastValue = it
             }
-            toolWindowHeight.set(value ?: lastValue)
+            toolWindowHeightProperty.set(value ?: lastValue)
           }
         }
       }

@@ -354,7 +354,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     Dimension size = super.getPreferredSize();
     if (JBTabsFactory.getUseNewTabs()) {
       TabsHeightController.registerHeight(this, size.height);
-      return new Dimension(size.width, TabsHeightController.getToolWindowHeight().getValue());
+      return new Dimension(size.width, TabsHeightController.getToolWindowHeight());
     }
     return size;
   }
