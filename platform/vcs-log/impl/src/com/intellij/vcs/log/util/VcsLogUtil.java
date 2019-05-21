@@ -286,7 +286,12 @@ public class VcsLogUtil {
 
   @Nullable
   public static Collection<FilePath> getAffectedPaths(@NotNull VcsLogUi logUi) {
-    VcsLogStructureFilter structureFilter = logUi.getDataPack().getFilters().get(VcsLogFilterCollection.STRUCTURE_FILTER);
+    return getAffectedPaths(logUi.getDataPack());
+  }
+
+  @Nullable
+  public static Collection<FilePath> getAffectedPaths(@NotNull VcsLogDataPack dataPack) {
+    VcsLogStructureFilter structureFilter = dataPack.getFilters().get(VcsLogFilterCollection.STRUCTURE_FILTER);
     if (structureFilter != null) {
       return structureFilter.getFiles();
     }
