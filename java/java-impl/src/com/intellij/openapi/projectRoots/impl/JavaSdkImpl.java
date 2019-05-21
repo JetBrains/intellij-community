@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
@@ -304,6 +305,13 @@ public class JavaSdkImpl extends JavaSdk {
       String annotationsJarPath = FileUtil.toSystemIndependentName(new File(javaPluginClassesRoot.getParentFile(), "jdkAnnotations.jar").getAbsolutePath());
       root = VirtualFileManager.getInstance().findFileByUrl("jar://" + annotationsJarPath + "!/");
       pathsChecked.add(annotationsJarPath);
+    }
+    else {
+      File projectRoot = JBIterable.generate(javaPluginClassesRoot, File::getParentFile).get(4);
+      File root1 = new File(projectRoot, "community/java/jdkAnnotations");
+      File root2 = new File(projectRoot, "java/jdkAnnotations");
+      root = root1.exists() && root1.isDirectory() ? LocalFileSystem.getInstance().findFileByIoFile(root1) :
+      root2.exists() && root2.isDirectory() ? LocalFileSystem.getInstance().findFileByIoFile(root2) : null;
     }
     if (root == null) {
       String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
