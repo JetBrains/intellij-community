@@ -27,24 +27,22 @@ import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Navigates through the search results
- */
 public final class ReplacementPreviewDialog extends DialogWrapper {
   private final LanguageFileType myFileType;
   private Editor replacement;
 
   private final Project project;
-  private RangeHighlighter hilighter;
+  private RangeHighlighter myHighlighter;
   private Editor editor;
 
 
-  public ReplacementPreviewDialog(final Project project, UsageInfo info, String replacementString) {
-    super(project,true);
+  public ReplacementPreviewDialog(@NotNull Project project, @NotNull UsageInfo info, String replacementString) {
+    super(project, true);
 
     setTitle(SSRBundle.message("structural.replace.preview.dialog.title"));
     setOKButtonText(SSRBundle.message("replace.preview.oktext"));
@@ -55,7 +53,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     init();
 
     Segment range = info.getSegment();
-    hilight(virtualFile, range.getStartOffset(), range.getEndOffset());
+    highlight(virtualFile, range.getStartOffset(), range.getEndOffset());
     UIUtil.setContent(replacement, replacementString);
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
@@ -64,14 +62,14 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     }
   }
 
-  private void hilight(VirtualFile file,int start, int end) {
-    removeHilighter();
+  private void highlight(VirtualFile file, int start, int end) {
+    removeHighlighter();
 
     editor = FileEditorManager.getInstance(project).openTextEditor(
       new OpenFileDescriptor(project, file),
       false
     );
-    hilighter = editor.getMarkupModel().addRangeHighlighter(
+    myHighlighter = editor.getMarkupModel().addRangeHighlighter(
       start,
       end,
       HighlighterLayer.SELECTION - 100,
@@ -80,10 +78,10 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     );
   }
 
-  private void removeHilighter() {
-    if (hilighter!=null && hilighter.isValid()) {
-      hilighter.dispose();
-      hilighter = null;
+  private void removeHighlighter() {
+    if (myHighlighter != null && myHighlighter.isValid()) {
+      myHighlighter.dispose();
+      myHighlighter = null;
       editor = null;
     }
   }
@@ -95,7 +93,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JComponent centerPanel = new JPanel( new BorderLayout() );
+    final JComponent centerPanel = new JPanel(new BorderLayout() );
 
     PsiFile file = null;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
@@ -106,7 +104,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     if (file != null) {
       final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       replacement = UIUtil.createEditor(document, project, true, null);
-      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file,false);
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
     } else {
       final EditorFactory factory = EditorFactory.getInstance();
       final Document document = factory.createDocument("");
@@ -128,7 +126,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     }
 
     EditorFactory.getInstance().releaseEditor(replacement);
-    removeHilighter();
+    removeHighlighter();
 
     super.dispose();
   }
