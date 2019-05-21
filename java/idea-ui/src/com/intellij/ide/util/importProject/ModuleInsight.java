@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public abstract class ModuleInsight {
   private final Map<File, Set<String>> mySourceRootToReferencedPackagesMap = new HashMap<>();
   private final Map<File, Set<String>> mySourceRootToPackagesMap = new HashMap<>();
   private final Map<File, Set<String>> myJarToPackagesMap = new HashMap<>();
-  private final StringInterner myInterner = new StringInterner();
+  private final Interner<String> myInterner = new StringInterner();
 
   private List<ModuleDescriptor> myModules;
   private List<LibraryDescriptor> myLibraries;

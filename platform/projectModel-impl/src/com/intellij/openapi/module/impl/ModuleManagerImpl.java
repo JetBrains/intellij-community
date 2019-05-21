@@ -36,6 +36,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.*;
 import com.intellij.util.messages.MessageBus;
@@ -128,7 +129,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   private static class ModuleGroupInterner {
-    private final StringInterner groups = new StringInterner();
+    private final Interner<String> groups = new StringInterner();
     private final Map<String[], String[]> paths = new THashMap<>(new TObjectHashingStrategy<String[]>() {
       @Override
       public int computeHashCode(String[] object) {

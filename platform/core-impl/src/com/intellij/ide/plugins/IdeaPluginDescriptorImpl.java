@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.BeanBinding;
@@ -241,7 +242,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     // only for CoreApplicationEnvironment
     if (stringInterner == null) {
-      stringInterner = new Interner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
+      stringInterner = new HashSetInterner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
     }
 
     MultiMap<String, Element> extensions = myExtensions;
