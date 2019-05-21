@@ -1258,8 +1258,6 @@ class PyDB(object):
         if enable_tracing_from_start:
             pydevd_tracing.SetTrace(self.trace_dispatch)
 
-        PyDBCommandThread(self).start()
-
         if show_tracing_warning or show_frame_eval_warning:
             cmd = self.cmd_factory.make_show_warning_message("cython")
             self.writer.add_command(cmd)
