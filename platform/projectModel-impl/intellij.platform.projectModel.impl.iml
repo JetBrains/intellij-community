@@ -15,6 +15,6 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.util.concurrency" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" exported="" />
   </component>
 </module>

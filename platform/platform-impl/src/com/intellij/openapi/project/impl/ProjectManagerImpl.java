@@ -57,6 +57,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
@@ -381,9 +382,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-    Runnable process = () -> {
-      assertInTransaction();
+    AtomicBoolean success = new AtomicBoolean(true);
 
+    Runnable doLoad = () -> success.set(loadProjectUnderProgress(project, () -> {
       beforeProjectOpened(project);
 
       TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
@@ -408,9 +409,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           }
         }
       }, ModalityState.NON_MODAL);
-    };
+    }));
 
-    if (!loadProjectUnderProgress(project, process)) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      TransactionGuard.getInstance().submitTransactionAndWait(doLoad);
+    } else {
+      assertInTransaction();
+      doLoad.run();
+    }
+
+    if (!success.get()) {
       GuiUtils.invokeLaterIfNeeded(() -> {
         closeProject(project, false, false, false, true);
         WriteAction.run(() -> Disposer.dispose(project));
@@ -435,8 +443,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   private static boolean loadProjectUnderProgress(@NotNull Project project, @NotNull Runnable performLoading) {
-    assertInTransaction();
-
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (!ApplicationManager.getApplication().isDispatchThread() && indicator != null) {
       indicator.setText("Preparing workspace...");

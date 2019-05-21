@@ -61,7 +61,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
 
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final VcsLog myLog;
   @NotNull private final VcsLogClassicFilterUi myFilterUi;
 
@@ -79,28 +78,27 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final VcsLogChangeProcessor myPreviewDiff;
 
   public MainFrame(@NotNull VcsLogData logData,
-                   @NotNull VcsLogUiImpl ui,
+                   @NotNull VcsLogUiImpl logUi,
                    @NotNull MainVcsLogUiProperties uiProperties,
                    @NotNull VcsLog log,
                    @NotNull VisiblePack initialDataPack,
                    @Nullable VcsLogFilterCollection filters) {
     // collect info
     myLogData = logData;
-    myUi = ui;
     myLog = log;
     myUiProperties = uiProperties;
 
-    myFilterUi = new VcsLogClassicFilterUi(ui, logData, myUiProperties, initialDataPack, filters);
+    myFilterUi = new VcsLogClassicFilterUi(logUi, logData, myUiProperties, initialDataPack, filters);
 
     // initialize components
-    myGraphTable = new MyVcsLogGraphTable(ui, logData, initialDataPack);
+    myGraphTable = new MyVcsLogGraphTable(logUi, logData, initialDataPack);
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
     myGraphTable.setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
-    myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this) {
+    myDetailsPanel = new DetailsPanel(logData, logUi.getColorManager(), this) {
       @Override
       protected void navigate(@NotNull CommitId commit) {
-        myUi.jumpToCommit(commit.getHash(), commit.getRoot());
+        logUi.jumpToCommit(commit.getHash(), commit.getRoot());
       }
     };
 
@@ -129,7 +127,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.TOP),
-                                                      myLogData, ui.getId(), this), BorderLayout.CENTER);
+                                                      myLogData, logUi.getId(), this), BorderLayout.CENTER);
 
     myDetailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.7f);
     myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
@@ -147,7 +145,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     setLayout(new BorderLayout());
     add(myPreviewDiffSplitter);
 
-    Disposer.register(ui, this);
+    Disposer.register(logUi, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
@@ -163,7 +161,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
-    myChangesBrowser.setAffectedPaths(VcsLogUtil.getAffectedPaths(myUi));
+    myChangesBrowser.setAffectedPaths(VcsLogUtil.getAffectedPaths(dataPack));
   }
 
   @NotNull
@@ -251,7 +249,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     else if (VcsLogInternalDataKeys.LOG_DIFF_HANDLER.is(dataId)) {
       Collection<VirtualFile> roots = getSelectedRoots();
       if (roots.size() != 1) return null;
-      return myUi.getLogData().getLogProvider(notNull(getFirstItem(roots))).getDiffHandler();
+      return myLogData.getLogProvider(notNull(getFirstItem(roots))).getDiffHandler();
     }
     else if (ShowPreviewEditorAction.DATA_KEY.is(dataId)) {
       return new ShowPreviewEditorAction.DiffPreviewProvider() {
@@ -267,7 +265,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         @NotNull
         @Override
         public Object getOwner() {
-          return myUi;
+          return MainFrame.this;
         }
       };
     }
@@ -276,9 +274,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @NotNull
   private Collection<VirtualFile> getSelectedRoots() {
-    if (myUi.getLogData().getRoots().size() == 1) return myUi.getLogData().getRoots();
+    Collection<VirtualFile> roots = myLogData.getRoots();
+    if (roots.size() == 1) return roots;
     int[] selectedRows = myGraphTable.getSelectedRows();
-    if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return VcsLogUtil.getVisibleRoots(myUi);
+    if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) {
+      return VcsLogUtil.getAllVisibleRoots(roots, myFilterUi.getFilters());
+    }
     return ContainerUtil.map2Set(Ints.asList(selectedRows), row -> myGraphTable.getModel().getRoot(row));
   }
 
