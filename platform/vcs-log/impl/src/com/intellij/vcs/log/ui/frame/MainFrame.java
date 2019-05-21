@@ -48,8 +48,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -232,12 +234,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public Object getData(@NotNull @NonNls String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       return myChangesBrowser.getDirectChanges().toArray(new Change[0]);
-    }
-    else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-      List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
-      if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      if (VcsLogUtil.getMaxSize(details) > VcsLogUtil.getShownChangesLimit()) return null;
-      return ContainerUtil.map2Array(details, CommittedChangeListForRevision.class, VcsLogUtil::createCommittedChangeList);
     }
     else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
       return myUiProperties;
