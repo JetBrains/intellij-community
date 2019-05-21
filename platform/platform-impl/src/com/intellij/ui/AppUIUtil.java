@@ -97,7 +97,8 @@ public class AppUIUtil {
       ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 32, fallback));
 
       if (SystemInfo.isWindows) {
-        ContainerUtil.addIfNotNull(images, ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
+        @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
+        ContainerUtil.addIfNotNull(images, loadApplicationIcon(appInfo.getSmallApplicationSvgIconUrl(), ctx, 16, fallbackSmallIconUrl));
       }
 
       for (int i = 0; i < images.size(); i++) {
