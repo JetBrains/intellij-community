@@ -319,7 +319,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       }
 
       modifiedValues.forEach((key, value) -> {
-        defaults.remove(key); // MultiUIDefaults misses proper put implementation
+        UIManager.getDefaults().remove(key); // MultiUIDefaults misses correct property merging
         defaults.put(key, value);
       });
     }
