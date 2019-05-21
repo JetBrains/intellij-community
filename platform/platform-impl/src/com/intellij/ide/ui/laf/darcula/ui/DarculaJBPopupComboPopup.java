@@ -8,24 +8,27 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -34,7 +37,7 @@ import java.util.ArrayList;
 @ApiStatus.Experimental
 public class DarculaJBPopupComboPopup<T> implements ComboPopup,
                                                     ItemListener, MouseListener, MouseMotionListener, MouseWheelListener,
-                                                    PropertyChangeListener, Serializable {
+                                                    PropertyChangeListener {
 
   public static final String CLIENT_PROP = "ComboBox.jbPopup";
 
@@ -43,11 +46,42 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
   private ListPopupImpl myPopup;
   private boolean myJustClosedViaClick;
 
+  private final ComponentListener windowComponentListener = new ComponentAdapter() {
+    @Override
+    public void componentMoved(ComponentEvent e) {
+      hide();
+    }
+  };
+
+  private final AncestorListener ancestorListener = new AncestorListenerAdapter() {
+    @Override
+    public void ancestorAdded(AncestorEvent event) {
+      Window w = UIUtil.getWindow(event.getComponent());
+      if (w != null) {
+        w.addComponentListener(windowComponentListener);
+      }
+    }
+
+    @Override
+    public void ancestorRemoved(AncestorEvent event) {
+      Window w = UIUtil.getWindow(event.getComponent());
+      if (w != null) {
+        w.removeComponentListener(windowComponentListener);
+      }
+    }
+  };
+
   public DarculaJBPopupComboPopup(@NotNull JComboBox<T> comboBox) {
     myComboBox = comboBox;
     myProxyList.setModel(comboBox.getModel());
     myComboBox.addPropertyChangeListener(this);
     myComboBox.addItemListener(this);
+
+    Window w = UIUtil.getWindow(myComboBox);
+    if (w != null) {
+      w.addComponentListener(windowComponentListener);
+    }
+    myComboBox.addAncestorListener(ancestorListener);
   }
 
   @Override
@@ -195,6 +229,13 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
   public void uninstallingUI() {
     myComboBox.removePropertyChangeListener(this);
     myComboBox.removeItemListener(this);
+
+    Window w = UIUtil.getWindow(myComboBox);
+    if (w != null) {
+      w.removeComponentListener(windowComponentListener);
+    }
+
+    myComboBox.removeAncestorListener(ancestorListener);
   }
 
   @Override
