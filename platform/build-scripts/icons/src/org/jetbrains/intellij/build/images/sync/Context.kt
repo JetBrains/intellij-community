@@ -86,16 +86,16 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
                                  ?.filter { it.isNotBlank() }
                                  ?.mapTo(mutableSetOf(), String::trim) ?: mutableSetOf<String>()
 
-    fun File.isDir() = exists() && isDirectory && !list().isNullOrEmpty()
-
     devRepoDir = findDirectoryIgnoringCase(System.getProperty(devRepoArg)) ?: {
       log("WARNING: $devRepoArg not found")
       File(System.getProperty("user.dir"))
     }()
-    val iconsRepoPath = System.getProperty(iconsRepoPathArg) ?: ""
-    iconsRepoDir = System.getProperty(iconsRepoArg)?.let { "$it/$iconsRepoPath" }?.let { path ->
-      findDirectoryIgnoringCase(path)?.takeIf(File::isDir)
-    } ?: cloneIconsRepoToTempDir()
+    val iconsRepoRelativePath = System.getProperty(iconsRepoPathArg) ?: ""
+    val iconsRepoRootDir = findDirectoryIgnoringCase(System.getProperty(iconsRepoArg)) ?: cloneIconsRepoToTempDir()
+    iconsRepoDir = iconsRepoRootDir.resolve(iconsRepoRelativePath)
+    if (!iconsRepoDir.isDirectory) {
+      doFail("Cannot find $iconsRepoRelativePath under $iconsRepoRootDir")
+    }
     iconsRepoName = System.getProperty(iconsRepoNameArg) ?: "icons repo"
     devRepoName = System.getProperty(devRepoNameArg) ?: "dev repo"
     skipDirsPattern = System.getProperty(patternArg)
