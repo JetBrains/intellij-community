@@ -22,6 +22,15 @@
     Among other things, in `VmOptionsGenerator.groovy` this causes the `isEAP`
     conditional to disable assertions.
 
+ 1. Replace `dev` with the appropriate release designator in
+    ../buildSrc/base/version.properties:
+
+    ```
+    baseVersion = 24.4.0-rc01
+    buildVersion = 1.4.0-rc01
+                         ~~~~
+    ```
+
 --------------------------------------------------------------------------------
 When a new dev branch (like studio-3.1-dev) is created, update studio-master-dev:
 
@@ -41,6 +50,14 @@ When a new dev branch (like studio-3.1-dev) is created, update studio-master-dev
     ```
     !define VERSION_MAJOR 3
     !define VERSION_MINOR 2
+    ```
+
+ 1. Update the version numbers in ../buildSrc/base/version.properties:
+
+    ```
+    baseVersion = 26.2.0-dev
+    buildVersion = 3.2.0-dev
+                  ~~~~
     ```
 
  1. Add an entry for the new version in [Kotlin compatibility metadata](https://dl.google.com/android/studio/plugins/compatibility.xml)
