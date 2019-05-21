@@ -349,20 +349,19 @@ class Foo {
   }
 
   void testJavaOtherContext() throws IOException {
-    def manager = (TemplateManagerImpl)TemplateManager.getInstance(project)
     def stmtContext = TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Statement)
 
     configureFromFileText("a.java", "class Foo {{ iter<caret>  }}")
 
     TemplateImpl template = TemplateSettings.instance.getTemplate("iter", "iterations")
-    assert (template in manager.findMatchingTemplates(myFixture.file, editor, Lookup.REPLACE_SELECT_CHAR, TemplateSettings.instance)?.keySet())
+    assert (template in templateManager.findMatchingTemplates(myFixture.file, editor, Lookup.REPLACE_SELECT_CHAR, TemplateSettings.instance)?.keySet())
 
     assert template.templateContext.getOwnValue(stmtContext)
     assert !template.templateContext.getOwnValue(stmtContext.baseContextType)
     template.templateContext.setEnabled(stmtContext, false)
     template.templateContext.setEnabled(stmtContext.baseContextType, true)
     try {
-      assert !(template in manager.findMatchingTemplates(myFixture.file, editor, Lookup.REPLACE_SELECT_CHAR, TemplateSettings.instance)?.keySet())
+      assert !(template in templateManager.findMatchingTemplates(myFixture.file, editor, Lookup.REPLACE_SELECT_CHAR, TemplateSettings.instance)?.keySet())
     } finally {
       template.templateContext.setEnabled(stmtContext, true)
       template.templateContext.setEnabled(stmtContext.baseContextType, false)
@@ -956,7 +955,6 @@ class Foo {
   }
 
   void "test finish template on moving caret by completion insert handler"() {
-    TemplateManagerImpl templateManager = TemplateManager.getInstance(project) as TemplateManagerImpl
     myFixture.configureByText('a.html', '<selection><p></p></selection>')
     def template = TemplateSettings.instance.getTemplate("T", "HTML/XML")
     myFixture.testAction(new InvokeTemplateAction(template, myFixture.editor, myFixture.project, new HashSet()))
@@ -981,10 +979,10 @@ class Foo {
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
     assert !myFixture.editor.selectionModel.hasSelection()
-    assert TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+    assert templateManager.getActiveTemplate(myFixture.editor)
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
-    assert !TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+    assert !templateManager.getActiveTemplate(myFixture.editor)
 
     myFixture.checkResult """
 class Foo {
@@ -1009,10 +1007,10 @@ class Foo {
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
     assert !myFixture.lookup
-    assert TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+    assert templateManager.getActiveTemplate(myFixture.editor)
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
-    assert !TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+    assert !templateManager.getActiveTemplate(myFixture.editor)
 
     myFixture.checkResult """
 class Foo {
@@ -1042,10 +1040,10 @@ class Foo {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
     assert !myFixture.editor.selectionModel.hasSelection()
     assert !myFixture.lookup
-    assert TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+    assert templateManager.getActiveTemplate(myFixture.editor)
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
-    assert !TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+    assert !templateManager.getActiveTemplate(myFixture.editor)
 
     myFixture.checkResult """
 class Foo {
@@ -1072,7 +1070,7 @@ class Foo {
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
     assert !myFixture.lookup
-    assert !TemplateManager.getInstance(project).getActiveTemplate(myFixture.editor)
+    assert !templateManager.getActiveTemplate(myFixture.editor)
 
     myFixture.checkResult """
 class Foo {
