@@ -93,6 +93,10 @@ public class DependencySearchService {
   private void searchLocal(SearchParameters parameters,
                            MavenDependencyCompletionItem localSearchItem,
                            CollectingConsumer collectingConsumer) {
+    if (!parameters.getShowForLocal()) {
+      collectingConsumer.setLocalData(Collections.emptyList());
+      return;
+    }
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<MavenDependencyCompletionItem> versions = getOfflineData(localSearchItem, parameters);
       collectingConsumer.setLocalData(convertLocalItemsToArtifactInfo(versions));
@@ -185,6 +189,9 @@ public class DependencySearchService {
     }
 
     public void consumeLocalOnly() {
+      if(!myParameters.getShowForLocal()){
+        return;
+      }
       new WaitFor((int)myParameters.getMillisToWait()) {
         @Override
         protected boolean condition() {

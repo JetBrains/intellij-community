@@ -58,6 +58,7 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
       }
 
       result = amendResultSet(result);
+      SearchParameters searchParameters = createSearchParameters(parameters);
       ConcurrentLinkedDeque<MavenRepositoryArtifactInfo> cld = new ConcurrentLinkedDeque<>();
       Promise<Void> promise = find(
         MavenProjectIndicesManager.getInstance(placeChecker.getProject()).getDependencySearchService(),
@@ -74,6 +75,13 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
       }
       fillAfter(result, groupId, artifactId);
     }
+  }
+
+  protected SearchParameters createSearchParameters(CompletionParameters parameters) {
+    if (parameters.getInvocationCount() > 1) {
+      return SearchParameters.FULL;
+    }
+    return SearchParameters.DEFAULT;
   }
 
   protected Promise<Void> find(DependencySearchService service, String groupId,
@@ -103,18 +111,8 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
 
   @NotNull
   protected CompletionResultSet amendResultSet(@NotNull CompletionResultSet result) {
-    return result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
-      new LookupElementWeigher("localOnBottomSorter") {
-        @Override
-        public Comparable weigh(@NotNull LookupElement element) {
-          Object object = element.getObject();
-          if (!(object instanceof MavenRepositoryArtifactInfo)) {
-            return null;
-          }
-          MavenRepositoryArtifactInfo info = (MavenRepositoryArtifactInfo)object;
-          return !info.isOnlyLocal();
-        }
-      }));
+    result.restartCompletionOnAnyPrefixChange();
+    return result;
   }
 
   private @NotNull
