@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.utils.PluginInfo
+import com.intellij.internal.statistic.utils.addPluginInfoTo
 import com.intellij.internal.statistic.utils.getPluginType
 import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.lang.Language
@@ -84,10 +85,7 @@ class FeatureUsageData {
   }
 
   fun addPluginInfo(info: PluginInfo): FeatureUsageData {
-    data["plugin_type"] = info.type.name
-    if (info.type.isSafeToReport() && info.id != null && StringUtil.isNotEmpty(info.id)) {
-      data["plugin"] = info.id
-    }
+    addPluginInfoTo(info, data)
     return this
   }
 

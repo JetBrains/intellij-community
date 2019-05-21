@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
+import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginInfoTo;
 
 public class SensitiveDataValidator {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator");
@@ -72,6 +73,10 @@ public class SensitiveDataValidator {
 
       ValidationResultType resultType = validateEventData(context, whiteListRule, key, entryValue);
       validatedData.put(key, resultType == ACCEPTED ? entryValue : resultType.getDescription());
+    }
+
+    if (context.pluginInfo != null && !(validatedData.containsKey("plugin") || validatedData.containsKey("plugin_type"))) {
+      addPluginInfoTo(context.pluginInfo, validatedData);
     }
     return validatedData;
   }
