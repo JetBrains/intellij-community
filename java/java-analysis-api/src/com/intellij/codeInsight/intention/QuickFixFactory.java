@@ -337,6 +337,11 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createReplaceAddAllArrayToCollectionFix(@NotNull PsiMethodCallExpression call);
 
+  /**
+   * @deprecated use {@link #createCreateConstructorFromUsageFixes}
+   */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   public abstract IntentionAction createCreateConstructorFromCallFix(@NotNull PsiConstructorCall call);
 
