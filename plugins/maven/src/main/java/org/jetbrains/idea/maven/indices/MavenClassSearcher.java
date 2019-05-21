@@ -20,8 +20,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
     OfflineSearchService service = MavenProjectIndicesManager.getInstance(project).getOfflineSearchService();
     List<MavenDependencyCompletionItemWithClass> items =
-      service.findClasses(preparePattern(pattern), new SearchParameters(1000, 10000, EnumSet.noneOf(
-        SearchParameters.Flags.class)));
+      service.findClasses(preparePattern(pattern), new SearchParameters(1000, 10000));
     return processResults(items, maxResult);
   }
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.onlinecompletion;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -21,12 +20,7 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletion
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -44,32 +38,25 @@ public class DependencySearchService {
     myOfflineSearchService = offlineSearchService;
   }
 
-  public AsyncPromise<Void> fulltextSearch(String template,
-                                           SearchParameters parameters,
-                                           Consumer<MavenRepositoryArtifactInfo> consumer) {
+  public Promise<Void> fulltextSearch(String template,
+                                      SearchParameters parameters,
+                                      Consumer<MavenRepositoryArtifactInfo> consumer) {
 
-    final Application application = ApplicationManager.getApplication();
-    final AsyncPromise<Void> remotePromise = new AsyncPromise<>();
-    remotePromise.onError(e -> {
-    });
-
-    CollectingConsumer collectingConsumer = new CollectingConsumer(consumer, parameters);
 
     MavenDependencyCompletionItem localSearchItem = new MavenDependencyCompletionItem(template);
-    application.executeOnPooledThread(() -> {
-      List<MavenDependencyCompletionItem> versions = getOfflineData(localSearchItem, parameters);
-      collectingConsumer.setLocalData(convertLocalItemsToArtifactInfo(versions));
-    }); // need to request, if there are local dependencies, which are missing on remote side
+    CollectingConsumer collectingConsumer = new CollectingConsumer(consumer, parameters);
+    final Promise<Void> returnPromise = createPromiseWithStatisticHandlers(parameters, "fulltext");
+    searchLocal(parameters, localSearchItem, collectingConsumer);
 
 
-    application.executeOnPooledThread(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       ProgressManager.checkCanceled();
-      myPackageSearchService.fullTextSearch(template, parameters, d ->
-        rewriteTypeIfPresentInLocalCache(d, collectingConsumer)) //rewriting Type for data, which are present on local drive
-        .onProcessed(v -> collectingConsumer.consumeLocalOnly())
-        .processed(remotePromise);
+      Promise<Void> promise = myPackageSearchService.fullTextSearch(template, parameters, d ->
+        rewriteTypeIfPresentInLocalCache(d, collectingConsumer));//rewriting Type for data, which are present on local drive
+
+      completeProcess(collectingConsumer, returnPromise, promise);
     });
-    return remotePromise;
+    return returnPromise;
   }
 
   public Promise<Void> suggestPrefix(String groupId,
@@ -77,25 +64,49 @@ public class DependencySearchService {
                                      SearchParameters parameters,
                                      Consumer<MavenRepositoryArtifactInfo> consumer) {
 
-    final Application application = ApplicationManager.getApplication();
-    final Promise<Void> remotePromise = new AsyncPromise<>();
-    remotePromise.onError(e -> {
-    });
+
+    MavenDependencyCompletionItem localSearchItem = new MavenDependencyCompletionItem(groupId, artifactId, null);
 
     CollectingConsumer collectingConsumer = new CollectingConsumer(consumer, parameters);
 
-    MavenDependencyCompletionItem localSearchItem = new MavenDependencyCompletionItem(groupId, artifactId, null);
-    application.executeOnPooledThread(() -> {
+    final Promise<Void> returnPromise = createPromiseWithStatisticHandlers(parameters, "suggestPrefix");
+
+    searchLocal(parameters, localSearchItem, collectingConsumer);
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ProgressManager.checkCanceled();
+      Promise<Void> promise = myPackageSearchService
+        .suggestPrefix(groupId, artifactId, parameters, d -> rewriteTypeIfPresentInLocalCache(d, consumer));
+
+      completeProcess(collectingConsumer, returnPromise, promise);
+    });
+    return returnPromise;
+  }
+
+  private void completeProcess(CollectingConsumer collectingConsumer,
+                               Promise<Void> remotePromise,
+                               Promise<Void> promise) {
+    promise.onProcessed(v -> collectingConsumer.consumeLocalOnly())
+      .processed(remotePromise);
+  }
+
+  private void searchLocal(SearchParameters parameters,
+                           MavenDependencyCompletionItem localSearchItem,
+                           CollectingConsumer collectingConsumer) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<MavenDependencyCompletionItem> versions = getOfflineData(localSearchItem, parameters);
       collectingConsumer.setLocalData(convertLocalItemsToArtifactInfo(versions));
-    });
+    }); // need to request, if there are local dependencies, which are missing on remote side
+  }
 
-    application.executeOnPooledThread(() -> {
-      ProgressManager.checkCanceled();
-      myPackageSearchService
-        .suggestPrefix(groupId, artifactId, parameters, d -> rewriteTypeIfPresentInLocalCache(d, consumer))
-        .onProcessed(v -> collectingConsumer.consumeLocalOnly())
-        .processed(remotePromise);
+  @NotNull
+  private Promise<Void> createPromiseWithStatisticHandlers(SearchParameters parameters, String prefix) {
+    final Promise<Void> remotePromise = new AsyncPromise<>();
+    final long timeStart = System.currentTimeMillis();
+    remotePromise.onError(e -> {
+      MavenDependencySearchStatisticsCollector.notifyError(prefix, parameters, System.currentTimeMillis() - timeStart, e);
+    }).onSuccess(v -> {
+      MavenDependencySearchStatisticsCollector.notifySuccess(prefix, parameters, System.currentTimeMillis() - timeStart);
     });
     return remotePromise;
   }

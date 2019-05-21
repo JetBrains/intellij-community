@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
@@ -24,11 +24,11 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
     }
     List<MavenRepositoryArtifactInfo> searchResults = new ArrayList<>();
     DependencySearchService searchService = MavenProjectIndicesManager.getInstance(project).getDependencySearchService();
-    AsyncPromise<Void> asyncPromise = searchService.fulltextSearch(pattern, SearchParameters.DEFAULT, mdci -> searchResults.add(mdci));
+    Promise<Void> asyncPromise = searchService.fulltextSearch(pattern, SearchParameters.DEFAULT, mdci -> searchResults.add(mdci));
     new WaitFor((int)SearchParameters.DEFAULT.getMillisToWait()) {
       @Override
       protected boolean condition() {
-        return asyncPromise.isDone();
+        return asyncPromise.getState() != Promise.State.PENDING;
       }
     };
     return processResults(searchResults);
