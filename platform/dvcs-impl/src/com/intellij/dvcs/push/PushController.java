@@ -9,6 +9,8 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,7 +24,6 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
@@ -295,7 +296,7 @@ public class PushController implements Disposable {
         .getOutgoingCommits(repository, new PushSpec<>(model.getSource(), model.getTarget()), initial);
       result.compareAndSet(null, outgoing);
       try {
-        EdtInvocationManager.getInstance().invokeAndWait(() -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
           OutgoingResult outgoing1 = result.get();
           List<VcsError> errors = outgoing1.getErrors();
           boolean shouldBeSelected;
@@ -340,10 +341,7 @@ public class PushController implements Disposable {
             node.setChecked(false);
           }
           myDialog.updateOkActions();
-        });
-      }
-      catch (InterruptedException e) {
-        // ignore
+        }, ModalityState.stateForComponent(myDialog.getRootPane()));
       }
       catch (Exception e) {
         LOG.error(e);
