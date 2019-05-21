@@ -906,7 +906,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
-  @Nullable
+  @NotNull
   public List<GutterMark> getGutterRenderers(int line) {
     if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
       buildGutterRenderersCache();
@@ -916,10 +916,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (focusModeRange != null) {
       int start = myEditor.offsetToVisualLine(focusModeRange.getStartOffset());
       int end = myEditor.offsetToVisualLine(focusModeRange.getEndOffset());
-      if (line < start || line > end) return null;
+      if (line < start || line > end) return Collections.emptyList();
     }
 
-    return myLineToGutterRenderers.get(line);
+    List<GutterMark> marks = myLineToGutterRenderers.get(line);
+    return marks != null ? marks : Collections.emptyList();
   }
 
   private void processGutterRenderers(@NotNull TIntObjectProcedure<List<GutterMark>> processor) {
@@ -960,9 +961,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void paintIcons(final int firstVisibleLine, final int lastVisibleLine, final Graphics2D g) {
     for (int line = firstVisibleLine; line <= lastVisibleLine; line++) {
       List<GutterMark> renderers = getGutterRenderers(line);
-      if (renderers != null) {
-        paintIconRow(line, renderers, g);
-      }
+      paintIconRow(line, renderers, g);
     }
   }
 
@@ -1064,6 +1063,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   void processIconsRow(int line, @NotNull List<? extends GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
+    if (row.isEmpty()) return;
     int middleCount = 0;
     int middleSize = 0;
     int x = getIconAreaOffset() + 2;
@@ -1616,7 +1616,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       int line = myEditor.yToVisualLine(e.getY());
       List<GutterMark> row = getGutterRenderers(line);
       Balloon.Position ballPosition = Balloon.Position.atRight;
-      if (row != null) {
+      if (!row.isEmpty()) {
         Map<Integer, GutterMark> xPos = new TreeMap<>();
         final int[] currentPos = {0};
         processIconsRow(line, row, (x, y, r) -> {
@@ -1650,7 +1650,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     final Ref<Point> point = new Ref<>(e.getPoint());
     int line = myEditor.yToVisualLine(e.getY());
     List<GutterMark> row = getGutterRenderers(line);
-    if (row == null) return point.get();
     processIconsRow(line, row, (x, y, r) -> {
       if (renderer == r) {
         Icon icon = scaleIcon(r.getIcon());
@@ -2082,7 +2081,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public GutterMark getGutterRenderer(final Point p) {
     int line = myEditor.yToVisualLine(p.y);
     List<GutterMark> renderers = getGutterRenderers(line);
-    if (renderers == null) {
+    if (renderers.isEmpty()) {
       return null;
     }
 
