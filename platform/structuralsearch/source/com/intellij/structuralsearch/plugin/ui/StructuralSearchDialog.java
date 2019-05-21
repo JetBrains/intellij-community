@@ -316,8 +316,9 @@ public class StructuralSearchDialog extends DialogWrapper {
     final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) return;
 
-    WriteCommandAction.writeCommandAction(project, file).run(
-      () -> CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength())));
+    WriteCommandAction.runWriteCommandAction(project, "Adjust line indent", "Structural Search",
+                                             () -> CodeStyleManager.getInstance(project)
+                                               .adjustLineIndent(file, new TextRange(0, document.getTextLength())), file);
   }
 
   private void startSearching() {
@@ -643,7 +644,8 @@ public class StructuralSearchDialog extends DialogWrapper {
     assert psiFile != null;
     final TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
     WriteCommandAction
-      .runWriteCommandAction(getProject(), () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
+      .runWriteCommandAction(getProject(), "Live search template builder", "Structural Search",
+                             () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
   }
 
   @Override
@@ -910,7 +912,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     setSearchTargets(matchOptions);
     myScopePanel.setScopesFromContext();
-    SearchScope scope = matchOptions.getScope();
+    final SearchScope scope = matchOptions.getScope();
     if (scope != null) myScopePanel.setScope(scope);
 
     UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());

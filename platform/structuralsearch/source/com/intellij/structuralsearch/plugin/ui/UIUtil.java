@@ -10,8 +10,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -131,22 +130,18 @@ public class UIUtil {
     return tmp;
   }
 
-  public static void setContent(final Editor editor, String text) {
+  public static void setContent(@NotNull final Editor editor, String text) {
     final String value = text != null ? text : "";
     final Document document = editor.getDocument();
-    CommandProcessor.getInstance().executeCommand(
-      editor.getProject(),
-      () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(0, document.getTextLength(), value)),
-      MODIFY_EDITOR_CONTENT, SS_GROUP);
+    WriteCommandAction.runWriteCommandAction(editor.getProject(), MODIFY_EDITOR_CONTENT, SS_GROUP,
+                                             () -> document.replaceString(0, document.getTextLength(), value));
   }
 
-  public static void setContent(final EditorTextField editor, String text) {
+  public static void setContent(@NotNull EditorTextField editor, String text) {
     final String value = text != null ? text : "";
     final Document document = editor.getDocument();
-    CommandProcessor.getInstance().executeCommand(
-      editor.getProject(),
-      () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(0, document.getTextLength(), value)),
-      MODIFY_EDITOR_CONTENT, SS_GROUP);
+    WriteCommandAction.runWriteCommandAction(editor.getProject(), MODIFY_EDITOR_CONTENT, SS_GROUP,
+                                             () -> document.replaceString(0, document.getTextLength(), value));
   }
 
   public static void invokeAction(Configuration config, SearchContext context) {
