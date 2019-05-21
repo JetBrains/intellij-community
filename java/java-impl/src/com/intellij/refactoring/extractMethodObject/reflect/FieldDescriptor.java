@@ -20,10 +20,17 @@ public class FieldDescriptor implements ItemToReplaceDescriptor {
 
   private final PsiField myField;
   private final PsiReferenceExpression myExpression;
+  private final String myAccessibleType;
 
   private FieldDescriptor(@NotNull PsiField field, @NotNull PsiReferenceExpression expression) {
     myField = field;
     myExpression = expression;
+    String fieldType = PsiReflectionAccessUtil.getAccessibleReturnType(myExpression, resolveFieldType(myField, myExpression));
+    if (fieldType == null) {
+      LOG.warn("Could not resolve field type. java.lang.Object will be used instead");
+      fieldType = "java.lang.Object";
+    }
+    myAccessibleType = fieldType;
   }
 
   @Nullable
@@ -106,13 +113,7 @@ public class FieldDescriptor implements ItemToReplaceDescriptor {
     String methodName = PsiReflectionAccessUtil.getUniqueMethodName(outerClass, "accessToField" + StringUtil.capitalize(fieldName));
     ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(methodName);
     if (FieldAccessType.GET.equals(accessType)) {
-      String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(myExpression, resolveFieldType());
-      if (returnType == null) {
-        LOG.warn("Could not resolve field type");
-        return null;
-      }
-      methodBuilder.accessedField(className, fieldName)
-                   .setReturnType(returnType);
+      methodBuilder.accessedField(className, fieldName).setReturnType(myAccessibleType);
     }
     else {
       methodBuilder.updatedField(className, fieldName)
@@ -132,8 +133,8 @@ public class FieldDescriptor implements ItemToReplaceDescriptor {
   }
 
   @NotNull
-  private PsiType resolveFieldType() {
-    PsiType rawType = myField.getType();
-    return myExpression.advancedResolve(false).getSubstitutor().substitute(rawType);
+  private static PsiType resolveFieldType(@NotNull PsiField field, @NotNull PsiReferenceExpression referenceExpression) {
+    PsiType rawType = field.getType();
+    return referenceExpression.advancedResolve(false).getSubstitutor().substitute(rawType);
   }
 }

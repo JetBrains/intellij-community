@@ -20,10 +20,17 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
 
   private final PsiMethodCallExpression myCallExpression;
   private final PsiMethod myMethod;
+  private final String myAccessibleReturnType;
 
   public MethodDescriptor(@NotNull PsiMethodCallExpression expression, @NotNull PsiMethod method) {
     myCallExpression = expression;
     myMethod = method;
+    String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(myCallExpression, resolveMethodReturnType(expression, method));
+    if (returnType == null) {
+      LOG.warn("Could not resolve method return type. java.lang.Object will be used instead");
+      returnType = "java.lang.Object";
+    }
+    myAccessibleReturnType = returnType;
   }
 
   public static MethodDescriptor createIfInaccessible(@NotNull PsiClass outerClass, @NotNull PsiMethodCallExpression expression) {
@@ -39,14 +46,9 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
   public void replace(@NotNull PsiClass outerClass,
                       @NotNull PsiElementFactory elementFactory,
                       @NotNull PsiMethodCallExpression callExpression) {
-    String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(myCallExpression, resolveMethodReturnType());
     PsiClass containingClass = myMethod.getContainingClass();
     String containingClassName = containingClass == null ? null : ClassUtil.getJVMClassName(containingClass);
     String name = myMethod.getName();
-    if (returnType == null) {
-      LOG.warn("return type of" + myMethod.getName() + " method is null");
-      return;
-    }
 
     if (containingClassName == null) {
       LOG.warn("containing class for method \"" + name + "\" not found");
@@ -59,7 +61,7 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
       .setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
       .addParameter("java.lang.Object", "object")
       .addParameters(myMethod.getParameterList())
-      .setReturnType(returnType)
+      .setReturnType(myAccessibleReturnType)
       .build(elementFactory, outerClass);
 
     outerClass.add(newMethod);
@@ -80,8 +82,8 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
   }
 
   @Nullable
-  private PsiType resolveMethodReturnType() {
-    PsiSubstitutor substitutor = myCallExpression.resolveMethodGenerics().getSubstitutor();
-    return substitutor.substitute(myMethod.getReturnType());
+  private static PsiType resolveMethodReturnType(@NotNull PsiMethodCallExpression callExpression, @NotNull PsiMethod method) {
+    PsiSubstitutor substitutor = callExpression.resolveMethodGenerics().getSubstitutor();
+    return substitutor.substitute(method.getReturnType());
   }
 }
