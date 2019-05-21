@@ -21,12 +21,19 @@ public abstract class CustomUtilsWhiteListRule extends PerformanceCareRule imple
   protected static ValidationResultType acceptWhenReportedByJetbrainsPlugin(@NotNull EventContext context) {
     if ("PLATFORM".equals(context.eventData.get("plugin_type"))) return ValidationResultType.ACCEPTED;
     Object plugin = context.eventData.get("plugin");
-    if (plugin != null) {
-      PluginId pluginId = PluginId.findId(plugin.toString());
-      if (pluginId != null && PluginInfoDetectorKt.getPluginInfoById(pluginId).isDevelopedByJetBrains()) {
-        return ValidationResultType.ACCEPTED;
-      }
+    if (plugin != null && isPluginDevelopedByJB(plugin.toString())) {
+      return ValidationResultType.ACCEPTED;
     }
     return ValidationResultType.REJECTED;
+  }
+
+  protected static boolean isPluginDevelopedByJB(@NotNull String plugin) {
+    final PluginId pluginId = PluginId.findId(plugin);
+    return pluginId != null && PluginInfoDetectorKt.getPluginInfoById(pluginId).isDevelopedByJetBrains();
+  }
+
+  protected static boolean isPluginFromPluginRepository(@NotNull String plugin) {
+    final PluginId pluginId = PluginId.findId(plugin);
+    return pluginId != null && PluginInfoDetectorKt.getPluginInfoById(pluginId).isSafeToReport();
   }
 }
