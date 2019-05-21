@@ -18,17 +18,6 @@ public abstract class PyInspectionExtension {
   public static final ExtensionPointName<PyInspectionExtension> EP_NAME = ExtensionPointName.create("Pythonid.inspectionExtension");
 
   public boolean ignoreUnused(PsiElement local, @NotNull TypeEvalContext evalContext) {
-    @SuppressWarnings("deprecation")
-    final boolean result = ignoreUnused(local);
-    return result;
-  }
-
-  /**
-   * @deprecated  use {@link #ignoreUnused(PsiElement, TypeEvalContext)} instead.
-   * Will be removed in 2019.2
-   */
-  @Deprecated
-  public boolean ignoreUnused(PsiElement local) {
     return false;
   }
 
@@ -45,21 +34,12 @@ public abstract class PyInspectionExtension {
   }
 
   /**
-   * @deprecated Use {@link PyInspectionExtension#ignoreMethodParameters(PyFunction, TypeEvalContext)} instead.
-   * This method will be removed in 2019.2.
-   */
-  @Deprecated
-  public boolean ignoreMethodParameters(@NotNull PyFunction function) {
-    return false;
-  }
-
-  /**
    * @param function function that is inspecting in {@link com.jetbrains.python.inspections.PyMethodParametersInspection}
    * @param context  type evaluation context
    * @return true if the passed function could be ignored
    */
   public boolean ignoreMethodParameters(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    return ignoreMethodParameters(function);
+    return false;
   }
 
   public boolean ignorePackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {
