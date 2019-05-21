@@ -106,12 +106,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
         tmp.deleteRecursively()
       })
       val uri = "ssh://git@github.com/JetBrains/IntelliJIcons.git"
-      val repo = callWithTimer("Cloning $uri into $tmp") { gitClone(uri, tmp) }
-      System.getProperty(iconsRepoArg)?.let {
-        var file: File? = File(it)
-        while (file != null && file.name != repo.name) file = file.parentFile
-        if (file != null) repo.resolve(File(it).toRelativeString(file)) else null
-      }?.let { ignoreCaseInDirName(it.absolutePath) } ?: repo
+      callWithTimer("Cloning $uri into $tmp") { gitClone(uri, tmp) }
     }()
     iconsRepoName = System.getProperty(iconsRepoNameArg) ?: "icons repo"
     devRepoName = System.getProperty(devRepoNameArg) ?: "dev repo"
