@@ -1,10 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.model.completion;
 
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -104,7 +103,18 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
 
   @NotNull
   protected CompletionResultSet amendResultSet(@NotNull CompletionResultSet result) {
-    return result;
+    return result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
+      new LookupElementWeigher("localOnBottomSorter") {
+        @Override
+        public Comparable weigh(@NotNull LookupElement element) {
+          Object object = element.getObject();
+          if (!(object instanceof MavenRepositoryArtifactInfo)) {
+            return null;
+          }
+          MavenRepositoryArtifactInfo info = (MavenRepositoryArtifactInfo)object;
+          return !info.isOnlyLocal();
+        }
+      }));
   }
 
   private @NotNull

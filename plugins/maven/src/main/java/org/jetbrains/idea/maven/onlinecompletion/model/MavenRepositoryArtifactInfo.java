@@ -8,13 +8,23 @@ public class MavenRepositoryArtifactInfo implements MavenCoordinate {
   private final String groupId;
   private final String artifactId;
   private final MavenDependencyCompletionItem[] items;
+  private final boolean myOnlyLocal;
 
   public MavenRepositoryArtifactInfo(String groupId,
                                      String artifactId,
                                      MavenDependencyCompletionItem[] items) {
+    this(false, groupId, artifactId, items);
+  }
+
+  public MavenRepositoryArtifactInfo(boolean onlyLocal,
+                                     String groupId,
+                                     String artifactId,
+                                     MavenDependencyCompletionItem[] items) {
+    myOnlyLocal = onlyLocal;
     this.groupId = groupId;
     this.artifactId = artifactId;
     this.items = items;
+
   }
 
 
@@ -33,6 +43,10 @@ public class MavenRepositoryArtifactInfo implements MavenCoordinate {
       return null;
     }
     return items[0].getVersion();
+  }
+
+  public boolean isOnlyLocal() {
+    return myOnlyLocal;
   }
 
   public MavenDependencyCompletionItem[] getItems() {

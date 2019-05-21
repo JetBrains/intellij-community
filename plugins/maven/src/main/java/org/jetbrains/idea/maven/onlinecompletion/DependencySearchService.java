@@ -166,7 +166,7 @@ public class DependencySearchService {
     Map<Pair<String, String>, List<MavenDependencyCompletionItem>> collect =
       items.stream().collect(Collectors.groupingBy(i -> new Pair<>(i.getGroupId(), i.getArtifactId())));
     List<MavenRepositoryArtifactInfo> map =
-      ContainerUtil.map(collect.entrySet(), e -> new MavenRepositoryArtifactInfo(e.getKey().first, e.getKey().second, e.getValue()
+      ContainerUtil.map(collect.entrySet(), e -> new MavenRepositoryArtifactInfo(true, e.getKey().first, e.getKey().second, e.getValue()
         .toArray(new MavenDependencyCompletionItem[0])));
     Collections.sort(map, Comparator.comparing(d -> d.getVersion(), VersionComparatorUtil.COMPARATOR.reversed()));
     return map;
