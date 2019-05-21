@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.mappings
 
-import com.intellij.openapi.application.PathManager
 import org.jetbrains.intellij.build.images.IconsClassGenerator
 import org.jetbrains.intellij.build.images.ImageCollector
 import org.jetbrains.intellij.build.images.isImage
@@ -88,10 +87,7 @@ private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
   val home = context.devRepoDir
   val homePath =  home.absolutePath
   val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
-  val util = project.modules.find {
-    it.name == "intellij.platform.util"
-  } ?: throw error("Can't load module 'util'")
-  val generator = IconsClassGenerator(home, util)
+  val generator = IconsClassGenerator(home, project.modules.find { it.name == "intellij.platform.util.ui" } ?: throw error("Can't load module 'util'"))
   return protectStdErr {
     project.modules.parallelStream().map { module ->
       val iconsClassInfo = generator.getIconsClassInfo(module) ?: return@map null

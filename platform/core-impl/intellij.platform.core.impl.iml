@@ -11,5 +11,6 @@
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>
