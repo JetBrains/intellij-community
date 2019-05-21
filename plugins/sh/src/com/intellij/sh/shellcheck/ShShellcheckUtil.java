@@ -36,12 +36,12 @@ import java.util.TreeMap;
 
 class ShShellcheckUtil {
   private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
-  private static final String SHELLCHECK = "shellcheck";
-  private static final String SHELLCHECK_VERSION = "0.6.0-1";
-  private static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
-  private static final String SHELLCHECK_URL = "https://jetbrains.bintray.com/" +
-                                               "intellij-third-party-dependencies/" +
-                                               "org/jetbrains/intellij/deps/shellcheck/";
+  static final String SHELLCHECK = "shellcheck";
+  static final String SHELLCHECK_VERSION = "0.6.0-1";
+  static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
+  static final String SHELLCHECK_URL = "https://jetbrains.bintray.com/" +
+                                       "intellij-third-party-dependencies/" +
+                                       "org/jetbrains/intellij/deps/shellcheck/";
   private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
   static void download(@Nullable Project project, @Nullable Runnable onSuccess) {
@@ -133,7 +133,7 @@ class ShShellcheckUtil {
   }
 
   @NotNull
-  private static String decompressShellcheck(@NotNull String tarPath, File directory) throws IOException {
+  static String decompressShellcheck(@NotNull String tarPath, File directory) throws IOException {
     File archive = new File(tarPath);
 
     Decompressor.Tar tar = new Decompressor.Tar(archive);
