@@ -10,8 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.impl.matcher.compiler.StringToConstraintsTransformer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import org.jdom.Attribute;
-import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +40,7 @@ public class MatchOptions implements JDOMExternalizable {
   @NonNls private static final String CONSTRAINT_TAG_NAME = "constraint";
   @NonNls private static final String FILE_TYPE_ATTR_NAME = "type";
   @NonNls private static final String DIALECT_ATTR_NAME = "dialect";
+  @NonNls private static final String PATTERN_CONTEXT_ATTR_NAME = "pattern_context";
   @NonNls private static final String SCOPE_TYPE = "scope_type";
   @NonNls private static final String SCOPE_DESCRIPTOR = "scope_descriptor";
 
@@ -51,8 +50,6 @@ public class MatchOptions implements JDOMExternalizable {
   public MatchOptions() {
     variableConstraints = new LinkedHashMap<>();
     looseMatching = true;
-    myFileType = null;
-    myDialect = null;
     pattern = "";
   }
 
@@ -172,9 +169,11 @@ public class MatchOptions implements JDOMExternalizable {
     if (myFileType != null) {
       element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
     }
-
     if (myDialect != null) {
       element.setAttribute(DIALECT_ATTR_NAME, myDialect.getID());
+    }
+    if (myPatternContext != null) {
+      element.setAttribute(PATTERN_CONTEXT_ATTR_NAME, myPatternContext);
     }
 
     if (scope != null) {
@@ -196,47 +195,18 @@ public class MatchOptions implements JDOMExternalizable {
   public void readExternal(Element element) {
     pattern = StringUtil.notNullize(element.getAttributeValue(TEXT_ATTRIBUTE_NAME));
 
-    Attribute attr = element.getAttribute(LOOSE_MATCHING_ATTRIBUTE_NAME);
-    if (attr != null) {
-      try {
-        looseMatching = attr.getBooleanValue();
-      } catch (DataConversionException ignored) {}
-    } else {
-      looseMatching = true; // default is loose
-    }
+    looseMatching = MatchVariableConstraint.getBooleanValue(element, LOOSE_MATCHING_ATTRIBUTE_NAME, true);
 
-    attr = element.getAttribute(RECURSIVE_ATTRIBUTE_NAME);
-    if (attr != null) {
-      try {
-        recursiveSearch = attr.getBooleanValue();
-      } catch(DataConversionException ignored) {}
-    }
+    recursiveSearch = MatchVariableConstraint.getBooleanValue(element, RECURSIVE_ATTRIBUTE_NAME, false);
+    caseSensitiveMatch = MatchVariableConstraint.getBooleanValue(element, CASESENSITIVE_ATTRIBUTE_NAME, false);
 
-    attr = element.getAttribute(CASESENSITIVE_ATTRIBUTE_NAME);
-    if (attr!=null) {
-      try {
-        caseSensitiveMatch = attr.getBooleanValue();
-      } catch(DataConversionException ignored) {}
-    }
+    myFileType = getFileTypeByName(element.getAttributeValue(FILE_TYPE_ATTR_NAME));
+    myDialect = Language.findLanguageByID(element.getAttributeValue(DIALECT_ATTR_NAME));
+    myPatternContext = element.getAttributeValue(PATTERN_CONTEXT_ATTR_NAME);
 
-    attr = element.getAttribute(FILE_TYPE_ATTR_NAME);
-    if (attr!=null) {
-      myFileType = getFileTypeByName(attr.getValue());
-    }
-
-    attr = element.getAttribute(DIALECT_ATTR_NAME);
-    if (attr != null) {
-      myDialect = Language.findLanguageByID(attr.getValue());
-    }
-
-    attr = element.getAttribute(SCOPE_TYPE);
-    if (attr != null) {
-      scopeType = Scopes.Type.valueOf(attr.getValue());
-    }
-    attr = element.getAttribute(SCOPE_DESCRIPTOR);
-    if (attr != null) {
-      scopeDescriptor = attr.getValue();
-    }
+    final String value = element.getAttributeValue(SCOPE_TYPE);
+    scopeType = (value == null) ? null : Scopes.Type.valueOf(value);
+    scopeDescriptor = element.getAttributeValue(SCOPE_DESCRIPTOR);
 
     for (final Element element1 : element.getChildren(CONSTRAINT_TAG_NAME)) {
       final MatchVariableConstraint constraint = new MatchVariableConstraint();
@@ -276,7 +246,7 @@ public class MatchOptions implements JDOMExternalizable {
     return true;
   }
 
-  public int hashCode() {
+public int hashCode() {
     int result = (looseMatching ? 1 : 0);
     result = 29 * result + (recursiveSearch ? 1 : 0);
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
@@ -286,6 +256,7 @@ public class MatchOptions implements JDOMExternalizable {
       result = 29 * result + scope.hashCode();
     if (myFileType != null) result = 29 * result + myFileType.hashCode();
     if (myDialect != null) result = 29 * result + myDialect.hashCode();
+    if (myPatternContext != null) result = 29 * result + myPatternContext.hashCode();
     return result;
   }
 
@@ -293,6 +264,7 @@ public class MatchOptions implements JDOMExternalizable {
     myFileType = fileType;
   }
 
+  @NotNull
   public LanguageFileType getFileType() {
     if (myFileType == null) {
       myFileType = StructuralSearchUtil.getDefaultFileType();
@@ -300,6 +272,7 @@ public class MatchOptions implements JDOMExternalizable {
     return myFileType;
   }
 
+  @NotNull
   public Language getDialect() {
     if (myDialect == null) {
       return getFileType().getLanguage();
