@@ -47,7 +47,7 @@ public class ShTestSuite {
       TestSuite suite = new TestSuite("Parser");
       suite.addTestSuite(ShParserTest.class);
       suite.addTestSuite(ShOldParserTest.class);
-      //suite.addTestSuite(ShShebangParserUtilTest.class);
+      suite.addTestSuite(ShShebangParserUtilTest.class);
       return suite;
     }
   }
