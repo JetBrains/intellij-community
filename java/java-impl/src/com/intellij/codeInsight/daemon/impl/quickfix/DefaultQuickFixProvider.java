@@ -89,13 +89,9 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
   @NotNull
   private static Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
-    final Collection<IntentionAction> result = new ArrayList<>();
-
-    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
-    final VariableKind kind = getKind(styleManager, refExpr);
-
-    result.addAll(CreateFieldFromUsage.generateActions(refExpr));
+    final Collection<IntentionAction> result = new ArrayList<>(CreateFieldFromUsage.generateActions(refExpr));
     if (!refExpr.isQualified()) {
+      final VariableKind kind = getKind(refExpr);
       IntentionAction createLocalFix = new CreateLocalFromUsageFix(refExpr);
       result.add(kind == VariableKind.LOCAL_VARIABLE ? PriorityIntentionActionWrapper.highPriority(createLocalFix) : createLocalFix);
       IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);
@@ -105,7 +101,8 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
   }
 
   @Nullable
-  private static VariableKind getKind(@NotNull JavaCodeStyleManager styleManager, @NotNull PsiReferenceExpression refExpr) {
+  private static VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
     final String reference = refExpr.getText();
 
     if (StringUtil.isUpperCase(reference)) {
