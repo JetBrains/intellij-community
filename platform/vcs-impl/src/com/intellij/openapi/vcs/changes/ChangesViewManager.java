@@ -226,6 +226,15 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       public List<AnAction> getActions(boolean originalProvider) {
         return changesToolbar.getActions();
       }
+
+      @Nullable
+      @Override
+      public Object getData(@NotNull String dataId) {
+        Object data = super.getData(dataId);
+        if (data != null) return data;
+        // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
+        return myCommitPanel != null ? myCommitPanel.getDataFromProviders(dataId) : null;
+      }
     };
     myProgressLabel = simplePanel();
     panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
