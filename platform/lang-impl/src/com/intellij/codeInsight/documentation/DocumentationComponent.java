@@ -1496,6 +1496,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   @Override
   public void dispose() {
+    myEditorPane.getCaret().setVisible(false); // Caret, if blinking, has to be deactivated.
     myBackStack.clear();
     myForwardStack.clear();
     myKeyboardActions.clear();
