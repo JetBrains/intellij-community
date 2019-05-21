@@ -28,7 +28,6 @@ import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIter
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,7 +184,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
                                         @NotNull LanguageFileType fileType,
-                                        @Nullable Language language,
+                                        @NotNull Language language,
                                         @Nullable String contextName,
                                         @NotNull Project project,
                                         boolean physical) {
@@ -200,11 +199,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       final String patternInContext = strContext.replace(PATTERN_PLACEHOLDER, text);
 
       final String name = "__dummy." + fileType.getDefaultExtension();
-      final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-
-      final PsiFile file = language == null
-                           ? factory.createFileFromText(name, fileType, patternInContext, LocalTimeCounter.currentTime(), physical, true)
-                           : factory.createFileFromText(name, language, patternInContext, physical, true);
+      final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(name, language, patternInContext, physical, true);
       if (file == null) {
         return PsiElement.EMPTY_ARRAY;
       }
@@ -248,7 +243,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   public void checkReplacementPattern(Project project, ReplaceOptions options) {}
 
   @Override
-  public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptionss) {
+  public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
     return new DocumentBasedReplaceHandler(project);
   }
 

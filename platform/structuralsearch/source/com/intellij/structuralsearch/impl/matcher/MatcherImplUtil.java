@@ -24,7 +24,7 @@ public class MatcherImplUtil {
                                                       boolean physical) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(fileType.getLanguage());
     if (profile != null) {
-      return profile.createPatternTree(text, context, fileType, null, null, project, physical);
+      return profile.createPatternTree(text, context, fileType, fileType.getLanguage(), null, project, physical);
     }
     return PsiElement.EMPTY_ARRAY;
   }

@@ -22,8 +22,6 @@ import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
-import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,16 +58,12 @@ public abstract class StructuralSearchProfile {
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
                                         @NotNull LanguageFileType fileType,
-                                        @Nullable Language language,
+                                        @NotNull Language language,
                                         @Nullable String contextName,
                                         @NotNull Project project,
                                         boolean physical) {
     final String name = "__dummy." + fileType.getDefaultExtension();
-    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-
-    final PsiFile file = language == null
-                         ? factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), physical, true)
-                         : factory.createFileFromText(name, language, text, physical, true);
+    final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(name, language, text, physical, true);
 
     return file != null ? file.getChildren() : PsiElement.EMPTY_ARRAY;
   }
@@ -84,7 +78,7 @@ public abstract class StructuralSearchProfile {
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
-                                        @Nullable Language language,
+                                        @NotNull Language language,
                                         @Nullable String contextName,
                                         @Nullable String extension,
                                         @NotNull Project project,

@@ -84,7 +84,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
                                         @NotNull LanguageFileType fileType,
-                                        @Nullable Language language,
+                                        @NotNull Language language,
                                         String contextName,
                                         @NotNull Project project,
                                         boolean physical) {

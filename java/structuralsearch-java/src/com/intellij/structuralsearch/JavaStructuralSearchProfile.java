@@ -287,7 +287,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
                                         @NotNull LanguageFileType fileType,
-                                        @Nullable Language language,
+                                        @NotNull Language language,
                                         String contextName,
                                         @NotNull Project project,
                                         boolean physical) {
@@ -476,12 +476,13 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
     final MatchOptions matchOptions = options.getMatchOptions();
     final LanguageFileType fileType = matchOptions.getFileType();
+    final Language dialect = matchOptions.getDialect();
     final PsiElement[] statements =
-      createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.Block, fileType, null, null, project, false);
+      createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.Block, fileType, dialect, null, project, false);
     final boolean searchIsExpression = statements.length == 1 && statements[0].getLastChild() instanceof PsiErrorElement;
 
     final PsiElement[] statements2 =
-      createPatternTree(options.getReplacement(), PatternTreeContext.Block, fileType, null, null, project, false);
+      createPatternTree(options.getReplacement(), PatternTreeContext.Block, fileType, dialect, null, project, false);
     final boolean replaceIsExpression = statements2.length == 1 && statements2[0].getLastChild() instanceof PsiErrorElement;
 
     final ValidatingVisitor visitor = new ValidatingVisitor();
