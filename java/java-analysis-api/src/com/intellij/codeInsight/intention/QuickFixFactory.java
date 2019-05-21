@@ -292,15 +292,30 @@ public abstract class QuickFixFactory {
     return Collections.emptyList();
   }
 
+  /**
+   * @deprecated use {@link #createCreateMethodFromUsageFixes}
+   */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   public abstract IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodCallExpression call);
 
   @NotNull
   public abstract IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodReferenceExpression methodReferenceExpression);
 
+  /**
+   * @deprecated use {@link #createCreateMethodFromUsageFixes}
+   */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   public abstract IntentionAction createCreateAbstractMethodFromUsageFix(@NotNull PsiMethodCallExpression call);
 
+  /**
+   * @deprecated use {@link #createCreateMethodFromUsageFixes}
+   */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   public abstract IntentionAction createCreatePropertyFromUsageFix(@NotNull PsiMethodCallExpression call);
 
@@ -325,6 +340,11 @@ public abstract class QuickFixFactory {
     return Collections.emptyList();
   }
 
+  /**
+   * @deprecated use {@link #createCreateMethodFromUsageFixes}
+   */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   public abstract IntentionAction createCreateGetterSetterPropertyFromUsageFix(@NotNull PsiMethodCallExpression call);
 

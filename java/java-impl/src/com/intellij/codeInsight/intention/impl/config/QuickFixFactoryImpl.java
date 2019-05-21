@@ -483,6 +483,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return CreateMethodFromUsage.generateActions(call);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodCallExpression call) {
@@ -495,12 +497,16 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new CreateMethodFromMethodReferenceFix(methodReferenceExpression);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreateAbstractMethodFromUsageFix(@NotNull PsiMethodCallExpression call) {
     return new CreateAbstractMethodFromUsageFix(call);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreatePropertyFromUsageFix(@NotNull PsiMethodCallExpression call) {
@@ -529,6 +535,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return CreateConstructorFromUsage.generateConstructorActions(call);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreateGetterSetterPropertyFromUsageFix(@NotNull PsiMethodCallExpression call) {

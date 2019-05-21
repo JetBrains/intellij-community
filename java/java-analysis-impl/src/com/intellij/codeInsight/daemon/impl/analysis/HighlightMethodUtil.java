@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -487,16 +487,8 @@ public class HighlightMethodUtil {
   private static void registerUsageFixes(@NotNull PsiMethodCallExpression methodCall,
                                          @Nullable HighlightInfo highlightInfo,
                                          @NotNull TextRange range) {
-    if (JvmElementActionFactories.useInterlaguageActions()) {
-      for (IntentionAction action : QUICK_FIX_FACTORY.createCreateMethodFromUsageFixes(methodCall)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, range, action);
-      }
-    }
-    else {
-      QuickFixAction.registerQuickFixAction(highlightInfo, range, QUICK_FIX_FACTORY.createCreateMethodFromUsageFix(methodCall));
-      QuickFixAction.registerQuickFixAction(highlightInfo, range, QUICK_FIX_FACTORY.createCreateAbstractMethodFromUsageFix(methodCall));
-      QuickFixAction.registerQuickFixAction(highlightInfo, range, QUICK_FIX_FACTORY.createCreatePropertyFromUsageFix(methodCall));
-      QuickFixAction.registerQuickFixAction(highlightInfo, range, QUICK_FIX_FACTORY.createCreateGetterSetterPropertyFromUsageFix(methodCall));
+    for (IntentionAction action : QUICK_FIX_FACTORY.createCreateMethodFromUsageFixes(methodCall)) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, range, action);
     }
   }
 
