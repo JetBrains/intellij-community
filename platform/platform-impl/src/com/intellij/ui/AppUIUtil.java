@@ -296,6 +296,7 @@ public class AppUIUtil {
 
   public static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log) {
     if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
+      EndUserAgreement.updateCachedContentToLatestBundledVersion();
       EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
       if (!agreement.isAccepted()) {
         try {

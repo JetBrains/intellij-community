@@ -965,23 +965,6 @@ class Foo {
     assertNull(templateManager.getActiveTemplate(myFixture.editor))
   }
 
-  void "test goto next variable when completion insert handler moves toward it"() {
-    myFixture.configureByText('a.java', 'class C { void foo(C c, String s) {}; { <caret> } }')
-
-    Template template = templateManager.createTemplate("empty", "user", 'foo($CS$, "$S$");')
-    template.addVariable("CS", "completeSmart()", '', true)
-    template.addVariable("S", "", '""', true)
-    templateManager.startTemplate(myFixture.editor, template)
-    UIUtil.dispatchAllInvocationEvents()
-
-    assert myFixture.editor.document.text.contains('foo(this, "");')
-    assert state
-
-    myFixture.type("string\n")
-    assert myFixture.editor.document.text.contains('foo(this, "string");')
-    assert !state
-  }
-
   void "test escape with selection"() {
     myFixture.configureByText "a.java", """
 class Foo {
