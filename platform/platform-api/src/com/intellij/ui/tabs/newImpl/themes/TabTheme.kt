@@ -10,10 +10,13 @@ interface TabTheme {
   val underlineColor: Color
   val inactiveUnderlineColor: Color
   val hoverBackground: Color
-  val inactiveColoredFileBackground: Color?
   val underlinedTabBackground: Color?
-  val underlinedTabForeground: Color?
+  val underlinedTabForeground: Color
   val underlineHeight: Int
+
+  val hoverInactiveBackground: Color?
+  val underlinedTabInactiveBackground: Color?
+  val underlinedTabInactiveForeground: Color?
 }
 
 open class DefaultTabTheme : TabTheme {
@@ -22,10 +25,15 @@ open class DefaultTabTheme : TabTheme {
   override val underlineColor: Color get() = JBUI.CurrentTheme.DefaultTabs.underlineColor()
   override val inactiveUnderlineColor: Color get() = JBUI.CurrentTheme.DefaultTabs.inactiveUnderlineColor()
   override val hoverBackground: Color get() = JBUI.CurrentTheme.DefaultTabs.hoverBackground()
-  override val inactiveColoredFileBackground: Color? get() = null
-  override val underlinedTabBackground: Color? get() = null
-  override val underlinedTabForeground: Color? get() = JBUI.CurrentTheme.DefaultTabs.underlinedTabForeground()
+  override val underlinedTabBackground: Color? get() = JBUI.CurrentTheme.DefaultTabs.underlinedTabBackground()
+  override val underlinedTabForeground: Color get() = JBUI.CurrentTheme.DefaultTabs.underlinedTabForeground()
   override val underlineHeight: Int get()= JBUI.CurrentTheme.DefaultTabs.underlineHeight()
+  override val hoverInactiveBackground: Color?
+    get() = hoverBackground
+  override val underlinedTabInactiveBackground: Color?
+    get() = underlinedTabBackground
+  override val underlinedTabInactiveForeground: Color
+    get() = underlinedTabForeground
 }
 
 class EditorTabTheme : TabTheme {
@@ -39,23 +47,48 @@ class EditorTabTheme : TabTheme {
     get() = JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor()
   override val hoverBackground: Color
     get() = JBUI.CurrentTheme.EditorTabs.hoverBackground()
-  override val inactiveColoredFileBackground: Color?
-    get() = JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground()
   override val underlinedTabBackground: Color?
     get() = JBUI.CurrentTheme.EditorTabs.underlinedTabBackground()
-  override val underlinedTabForeground: Color?
+  override val underlinedTabForeground: Color
     get() = JBUI.CurrentTheme.EditorTabs.underlinedTabForeground()
   override val underlineHeight: Int
     get() = JBUI.CurrentTheme.EditorTabs.underlineHeight()
+
+  override val hoverInactiveBackground: Color?
+    get() = hoverBackground
+  override val underlinedTabInactiveBackground: Color?
+    get() = underlinedTabBackground
+  override val underlinedTabInactiveForeground: Color
+    get() = underlinedTabForeground
+
+  val inactiveColoredFileBackground: Color?
+    get() = JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground()
 }
 
 class ToolWindowTabTheme : DefaultTabTheme() {
   override val background: Color?
     get() = null
+  override val borderColor: Color
+    get() = JBUI.CurrentTheme.ToolWindow.borderColor()
+  override val underlineColor: Color
+    get() = JBUI.CurrentTheme.ToolWindow.underlineColor()
+  override val inactiveUnderlineColor: Color
+    get() = JBUI.CurrentTheme.ToolWindow.inactiveUnderlineColor()
+  override val hoverBackground: Color
+    get() = JBUI.CurrentTheme.ToolWindow.hoverBackground()
   override val underlinedTabBackground: Color?
-    get() = null
+    get() = JBUI.CurrentTheme.ToolWindow.underlinedTabBackground()
+  override val underlinedTabForeground: Color
+    get() = JBUI.CurrentTheme.ToolWindow.underlinedTabForeground()
   override val underlineHeight: Int
     get() = JBUI.CurrentTheme.ToolWindow.underlineHeight()
+
+  override val hoverInactiveBackground: Color?
+    get() = JBUI.CurrentTheme.ToolWindow.hoverInactiveBackground()
+  override val underlinedTabInactiveBackground: Color?
+    get() = JBUI.CurrentTheme.ToolWindow.underlinedTabInactiveBackground()
+  override val underlinedTabInactiveForeground: Color
+    get() = JBUI.CurrentTheme.ToolWindow.underlinedTabInactiveForeground()
 }
 
 class DebuggerTabTheme : DefaultTabTheme() {

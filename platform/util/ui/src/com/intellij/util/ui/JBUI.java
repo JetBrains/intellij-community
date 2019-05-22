@@ -698,10 +698,8 @@ public class JBUI {
                                               ColorUtil.withAlpha(Color.BLACK, .35)));
       }
 
-      @NotNull
       public static Color underlinedTabBackground() {
-        return JBColor.namedColor("DefaultTabs.underlinedTabBackground",
-                                  new JBColor(0xFAFAFA, 0x4E5254));
+        return namedColorOrNull("DefaultTabs.underlinedTabBackground");
       }
 
       @NotNull
@@ -738,10 +736,8 @@ public class JBUI {
         return JBColor.namedColor("EditorTabs.inactiveUnderlineColor", DefaultTabs.inactiveUnderlineColor());
       }
 
-      @NotNull
       public static Color underlinedTabBackground() {
-        return JBColor.namedColor("EditorTabs.underlinedTabBackground",
-                                  DefaultTabs.underlinedTabBackground());
+        return namedColorOrNull("EditorTabs.underlinedTabBackground");
       }
 
       @NotNull
@@ -780,9 +776,47 @@ public class JBUI {
 
     public static class ToolWindow {
       @NotNull
-      public static Color underlinedTabForeground() {
-        return JBColor.namedColor("EditorTabs.underlinedTabForeground", DefaultTabs.underlinedTabForeground());
+      public static Color borderColor() {
+        return JBColor.namedColor("ToolWindow.HeaderTab.borderColor", DefaultTabs.borderColor());
       }
+
+      @NotNull
+      public static Color underlinedTabForeground() {
+        return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabForeground", DefaultTabs.underlinedTabForeground());
+      }
+
+      @NotNull
+      public static Color hoverBackground() {
+        return JBColor.namedColor("ToolWindow.HeaderTab.hoverBackground", DefaultTabs.hoverBackground());
+      }
+
+      @NotNull
+      public static Color inactiveUnderlineColor() {
+        return JBColor.namedColor("ToolWindow.HeaderTab.inactiveUnderlineColor", DefaultTabs.inactiveUnderlineColor());
+      }
+
+      @NotNull
+      public static Color underlineColor() {
+        return JBColor.namedColor("ToolWindow.HeaderTab.underlineColor", DefaultTabs.underlineColor());
+      }
+
+      public static Color underlinedTabBackground() {
+        return namedColorOrNull("ToolWindow.HeaderTab.underlinedTabBackground");
+      }
+
+      public static Color hoverInactiveBackground() {
+        return namedColorOrNull("ToolWindow.HeaderTab.hoverInactiveBackground");
+      }
+
+      public static Color underlinedTabInactiveBackground() {
+        return namedColorOrNull("ToolWindow.HeaderTab.underlinedTabInactiveBackground");
+      }
+
+      @NotNull
+      public static Color underlinedTabInactiveForeground() {
+        return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabInactiveForeground", ToolWindow.underlinedTabForeground());
+      }
+
 
       @NotNull
       public static Color tabSelectedBackground() {
@@ -856,11 +890,6 @@ public class JBUI {
         return getBorder("ToolWindow.tabBorder", JBUI.Borders.empty(1));
       }
 
-      @NotNull
-      public static Border tabHeaderBorder() {
-        return getBorder("ToolWindow.HeaderTab.tabHeaderBorder", Borders.empty(1, 0));
-      }
-
       public static int underlineHeight() {
         return getInt("ToolWindow.HeaderTab.underlineHeight", DefaultTabs.underlineHeight());
       }
@@ -901,8 +930,6 @@ public class JBUI {
         return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ArrowDown)
                        : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ArrowDown);
       }
-
-
     }
 
     public static class Label {
@@ -1187,6 +1214,16 @@ public class JBUI {
         return getInt("NewClass.separatorWidth", JBUI.scale(10));
       }
     }
+  }
+
+  public static Color namedColorOrNull(@NotNull final String propertyName) {
+    Color color = UIManager.getColor(propertyName);
+    if (color == null) return null;
+
+    if (UIManager.get(propertyName) == null) {
+      UIManager.put(propertyName, color);
+    }
+    return color;
   }
 
 
