@@ -56,15 +56,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
 
     val file = fileContent.file
 
-    val contentLength =
-      if (file.fileType.isBinary) {
-        -1
-      }
-      else {
-        fileContent.psiFile.textLength
-      }
-
-    return SerializedStubTree(bytes.internalBuffer, bytes.size(), stub, file.length, contentLength)
+    return SerializedStubTree(bytes.internalBuffer, bytes.size(), stub)
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
@@ -130,8 +122,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
           val bytes = BufferExposingByteArrayOutputStream()
           newSerializationManager.serialize(stub, bytes)
 
-          val newStubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), null, value.byteContentLength,
-                                               value.charContentLength)
+          val newStubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), null)
 
           if (storage.containsMapping(key)) {
             if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
@@ -140,8 +131,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
               val bytes2 = BufferExposingByteArrayOutputStream()
               newSerializationManager.serialize(stub, bytes2)
 
-              val newStubTree2 = SerializedStubTree(bytes2.internalBuffer, bytes2.size(), null, value.byteContentLength,
-                                                    value.charContentLength)
+              val newStubTree2 = SerializedStubTree(bytes2.internalBuffer, bytes2.size(), null)
 
               TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
             }
