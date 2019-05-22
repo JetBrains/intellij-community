@@ -256,6 +256,19 @@ public class UnixProcessManager {
   }
 
   @NotNull
+  public static ProcessMachineType getProcessMachineType(int pid) {
+    if (!SystemInfo.isLinux) {
+      throw new IllegalStateException(System.getProperty("os.name") + " is not supported");
+    }
+    try {
+      return readElfMachineType("/proc/" + pid + "/exe");
+    }
+    catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  @NotNull
   public static ProcessMachineType readElfMachineType(@NotNull String path) throws IOException {
     final File file = new File(path);
     return readElfMachineType(file);

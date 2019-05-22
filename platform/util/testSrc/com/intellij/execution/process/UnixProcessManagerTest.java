@@ -2,6 +2,7 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.SystemInfo;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -11,8 +12,18 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 public class UnixProcessManagerTest {
+  @Test
+  public void testGetLinuxProcessMachineType() {
+    assumeTrue("Linux-only test", SystemInfo.isLinux);
+
+    final int currentPid = UnixProcessManager.getCurrentProcessId();
+    final ProcessMachineType machineType = UnixProcessManager.getProcessMachineType(currentPid);
+    assertEquals(SystemInfo.is32Bit ? ProcessMachineType.I386 : ProcessMachineType.AMD64, machineType);
+  }
+
   @Test
   public void testReadPeMachineType32bit() throws Exception {
     doTestReadPeMachineTypeOfBundledBinary("../linux/fsnotifier", ProcessMachineType.I386);
