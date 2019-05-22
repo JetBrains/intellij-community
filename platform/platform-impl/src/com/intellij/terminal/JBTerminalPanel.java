@@ -300,6 +300,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     public boolean dispatch(@NotNull AWTEvent e) {
       if (e instanceof KeyEvent && !skipKeyEvent((KeyEvent)e)) {
         IdeEventQueue.getInstance().flushDelayedKeyEvents();
+        if (SystemInfo.isJavaVersionAtLeast(8, 0, 212)) {
+          // JBTerminalPanel is focused, because TerminalEventDispatcher added in focusGained and removed in focusLost
+          processKeyEvent((KeyEvent)e);
+        }
         dispatchEvent(e);
         return true;
       }
