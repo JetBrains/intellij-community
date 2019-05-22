@@ -16,7 +16,6 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -24,7 +23,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -93,12 +91,16 @@ public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkHighlighting(false, false, false);
   }
 
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
   public void testNestedDiamondsInsideAssignmentInMethodsCall() throws IOException {
-    String path = JavaTestUtil.getJavaTestDataPath() + Diamond8HighlightingTest.BASE_PATH + "/" + getTestName(false) + ".java";
-
-    String text = FileUtil.loadFile(new File(path));
-
-    PsiFile file = myFixture.configureByText("a.java", text);
+    String path = Diamond8HighlightingTest.BASE_PATH + "/" + getTestName(false) + ".java";
+    
+    PsiFile file = myFixture.configureByFile(path);
+    String text = file.getText();
 
     PsiNewExpression newB =
       PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("new B<>"), PsiNewExpression.class, false);
