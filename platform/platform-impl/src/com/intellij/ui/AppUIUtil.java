@@ -408,6 +408,7 @@ public class AppUIUtil {
         bottomPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.CENTER);
         centerPanel.add(JBUI.Borders.emptyTop(8).wrap(bottomPanel), BorderLayout.SOUTH);
         checkBox.addActionListener(e -> setOKActionEnabled(checkBox.isSelected()));
+        centerPanel.setPreferredSize(JBUI.size(500, 450));
         return centerPanel;
       }
 
@@ -441,7 +442,7 @@ public class AppUIUtil {
     };
     dialog.setModal(true);
     dialog.setTitle(title);
-    dialog.setSize(JBUI.scale(550), JBUI.scale(500));
+    dialog.pack();
     dialog.show();
   }
 

@@ -817,9 +817,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         SwingUtilities.invokeLater(() -> {
           myOpened = true;
           final DialogWrapper activeWrapper = getActiveWrapper();
-          for (JComponent c : UIUtil.uiTraverser(e.getWindow()).filter(JComponent.class)) {
+          UIUtil.uiTraverser(e.getWindow()).filter(JComponent.class).consumeEach(c -> {
             GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent());
-          }
+            c.invalidate();
+          });
+
+          e.getComponent().repaint();
+
           if (activeWrapper == null) {
             myFocusedCallback.setRejected();
           }
