@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,10 @@ public class ReflectionAccessorToEverything {
   }
 
   public void grantAccessThroughReflection(@NotNull PsiMethodCallExpression generatedMethodCall) {
+    MyInaccessibleMethodReferencesVisitor methodReferencesVisitor = new MyInaccessibleMethodReferencesVisitor();
+    myOuterClass.accept(methodReferencesVisitor);
+    methodReferencesVisitor.replaceAll();
+
     MyInaccessibleItemsVisitor inaccessibleItemsVisitor = new MyInaccessibleItemsVisitor();
     myOuterClass.accept(inaccessibleItemsVisitor);
 
@@ -45,7 +50,6 @@ public class ReflectionAccessorToEverything {
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       addIfNotNull(FieldDescriptor.createIfInaccessible(myOuterClass, expression));
-      addIfNotNull(MethodReferenceDescriptor.createIfInaccessible(expression));
     }
 
     @Override
@@ -66,6 +70,23 @@ public class ReflectionAccessorToEverything {
     private void addIfNotNull(@Nullable ItemToReplaceDescriptor descriptor) {
       if (descriptor != null) {
         myReplaceDescriptors.add(descriptor);
+      }
+    }
+  }
+
+  private static class MyInaccessibleMethodReferencesVisitor extends JavaRecursiveElementVisitor {
+    private final List<PsiMethodReferenceExpression> myMethodReferencesToReplace = new ArrayList<>();
+
+    @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      if (!PsiReflectionAccessUtil.isAccessibleMethodReference(expression)) {
+        myMethodReferencesToReplace.add(expression);
+      }
+    }
+
+    private void replaceAll() {
+      for (PsiMethodReferenceExpression referenceExpression : myMethodReferencesToReplace) {
+        LambdaRefactoringUtil.convertMethodReferenceToLambda(referenceExpression, false, true);
       }
     }
   }

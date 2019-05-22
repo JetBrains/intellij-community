@@ -49,6 +49,18 @@ class PsiReflectionAccessUtil {
     return true;
   }
 
+  public static boolean isAccessibleMethodReference(@NotNull PsiMethodReferenceExpression methodReference) {
+    PsiElement method = methodReference.resolve();
+    if (!(method instanceof PsiMethod)) {
+      return true; // referent is accessible by default
+    }
+    else {
+      PsiTypeElement qualifierType = methodReference.getQualifierType();
+      boolean qualifierAccessible = qualifierType == null || isAccessibleType(qualifierType.getType());
+      return qualifierAccessible && isAccessibleMember((PsiMember)method);
+    }
+  }
+
   @Nullable
   public static String extractQualifier(@NotNull PsiReferenceExpression referenceExpression) {
     PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
