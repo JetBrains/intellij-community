@@ -87,7 +87,7 @@ private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
   val home = context.devRepoDir
   val homePath =  home.absolutePath
   val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
-  val generator = IconsClassGenerator(home, project.modules.find { it.name == "intellij.platform.util.ui" } ?: throw error("Can't load module 'util'"))
+  val generator = IconsClassGenerator(home, project.modules)
   return protectStdErr {
     project.modules.parallelStream().map { module ->
       val iconsClassInfo = generator.getIconsClassInfo(module) ?: return@map null

@@ -23,7 +23,9 @@ internal data class IconsClassInfo(val customLoad: Boolean,
                                    val className: String,
                                    val outFile: Path)
 
-class IconsClassGenerator(private val projectHome: File, val util: JpsModule, private val writeChangesToDisk: Boolean = true) {
+class IconsClassGenerator(private val projectHome: File, val modules: List<JpsModule>, private val writeChangesToDisk: Boolean = true) {
+  private val util: JpsModule = modules.find { it.name == "intellij.platform.util" } ?: throw IllegalStateException("Can't load module 'util'")
+
   private val processedClasses = AtomicInteger()
   private val processedIcons = AtomicInteger()
   private val processedPhantom = AtomicInteger()
@@ -208,7 +210,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     val answer = StringBuilder()
     answer.append(copyrightComment)
     append(answer, "package ${info.packageName};\n", 0)
-    append(answer, "import com.intellij.openapi.util.IconLoader;", 0)
+    append(answer, "import com.intellij.ui.IconManager;", 0)
     append(answer, "", 0)
     append(answer, "import javax.swing.*;", 0)
     append(answer, "", 0)
@@ -228,14 +230,14 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     answer.append(" class ").append(info.className).append(" {\n")
     if (info.customLoad) {
       append(answer, "private static Icon load(String path) {", 1)
-      append(answer, "return IconLoader.getIcon(path, ${info.className}.class);", 2)
+      append(answer, "return $iconLoaderCode.getIcon(path, ${info.className}.class);", 2)
       append(answer, "}", 1)
       append(answer, "", 0)
 
       val customExternalLoad = images.any { it.deprecation?.replacementContextClazz != null }
       if (customExternalLoad) {
         append(answer, "private static Icon load(String path, Class<?> clazz) {", 1)
-        append(answer, "return IconLoader.getIcon(path, clazz);", 2)
+        append(answer, "return $iconLoaderCode.getIcon(path, clazz);", 2)
         append(answer, "}", 1)
         append(answer, "", 0)
       }
@@ -332,7 +334,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     val deprecation = image.deprecation
 
     if (deprecation?.replacementContextClazz != null) {
-      val method = if (customLoad) "load" else "IconLoader.getIcon"
+      val method = if (customLoad) "load" else "$iconLoaderCode.getIcon"
       append(answer,
              "public static final Icon $iconName = $method(\"${deprecation.replacement}\", ${deprecation.replacementContextClazz}.class);",
              level)
@@ -359,7 +361,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       !image.phantom -> error("Can't get icon size: $imageFile")
       else -> ""
     }
-    val method = if (customLoad) "load" else "IconLoader.getIcon"
+    val method = if (customLoad) "load" else "$iconLoaderCode.getIcon"
     val relativePath = rootPrefix + FileUtilRt.toSystemIndependentName(sourceRootFile.relativize(imageFile).toString())
     append(answer, "${javaDoc}public static final Icon $iconName = $method(\"$relativePath\");", level)
   }
@@ -448,3 +450,5 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
   // legacy ordering
   private val NAME_COMPARATOR: Comparator<String> = compareBy { it.toLowerCase() + "." }
 }
+
+private const val iconLoaderCode = "IconManager.getInstance()"

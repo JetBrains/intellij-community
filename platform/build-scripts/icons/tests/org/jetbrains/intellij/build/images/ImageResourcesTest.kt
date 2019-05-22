@@ -117,7 +117,7 @@ abstract class ImageResourcesTestBase {
     fun collectNonRegeneratedIconClasses(root: TestRoot): List<Array<Any?>> {
       val model = loadProjectModel(root)
       val modules = collectModules(root, model)
-      val checker = MyIconClassFileChecker(File(PathManager.getHomePath()), model.project.modules.find { it.name == "intellij.platform.util.ui" } ?: throw IllegalStateException("Can't load module 'util'"))
+      val checker = MyIconClassFileChecker(File(PathManager.getHomePath()), model.project.modules)
       modules.forEach {
         checker.checkIconClasses(it)
       }
@@ -195,11 +195,11 @@ private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean
   }
 }
 
-private class MyIconClassFileChecker(val projectHome: File, val util: JpsModule) {
+private class MyIconClassFileChecker(val projectHome: File, val modules: List<JpsModule>) {
   val failures = ArrayList<FailedTest>()
 
   fun checkIconClasses(module: JpsModule) {
-    val generator = IconsClassGenerator(projectHome, util, false)
+    val generator = IconsClassGenerator(projectHome, modules, false)
     generator.processModule(module)
 
     generator.getModifiedClasses().forEach { (module, file, details) ->

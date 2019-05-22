@@ -1,9 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IconLayerProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -21,23 +19,22 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.ui.IconDeferrer;
+import com.intellij.ui.CoreIconManager;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
+import java.util.function.Function;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.ElementBase");
 
   public static final int FLAGS_LOCKED = 0x800;
-  private static final NullableFunction<ElementIconRequest,Icon> ICON_COMPUTE = request -> {
+  private static final Function<ElementIconRequest,Icon> ICON_COMPUTE = request -> {
     PsiElement element = request.myPointer.getElement();
     if (element == null) return null;
 
@@ -50,7 +47,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     @NotNull
     @Override
     protected Icon compute() {
-      return EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
+      return IconManager.getInstance().createEmptyIcon(PlatformIcons.PUBLIC_ICON);
     }
   };
 
@@ -89,7 +86,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (baseIcon == null) {
         baseIcon = AstLoadingFilter.disallowTreeLoading(() -> computeBaseIcon(flags));
       }
-      return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, psiElement.getProject(), flags), ICON_COMPUTE);
+      return IconManager.getInstance().createDeferredIcon(baseIcon, new ElementIconRequest(psiElement, psiElement.getProject(), flags), ICON_COMPUTE);
     }
 
     return computeIconNow(psiElement, flags);
@@ -228,32 +225,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   @NotNull
   public static RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
-    List<Icon> layersFromProviders = new SmartList<>();
-    for (IconLayerProvider provider : IconLayerProvider.EP_NAME.getExtensionList()) {
-      final Icon layerIcon = provider.getLayerIcon(instance, BitUtil.isSet(flags, FLAGS_LOCKED));
-      if (layerIcon != null) {
-        layersFromProviders.add(layerIcon);
-      }
-    }
-    if (flags != 0 || !layersFromProviders.isEmpty()) {
-      List<Icon> iconLayers = new SmartList<>();
-      for(IconLayer l: ourIconLayers) {
-        if (BitUtil.isSet(flags, l.flagMask)) {
-          iconLayers.add(l.icon);
-        }
-      }
-      iconLayers.addAll(layersFromProviders);
-      LayeredIcon layeredIcon = new LayeredIcon(1 + iconLayers.size());
-      layeredIcon.setIcon(icon, 0);
-      for (int i = 0; i < iconLayers.size(); i++) {
-        Icon icon1 = iconLayers.get(i);
-        layeredIcon.setIcon(icon1, i+1);
-      }
-      icon = layeredIcon;
-    }
-    RowIcon baseIcon = new RowIcon(2);
-    baseIcon.setIcon(icon, 0);
-    return baseIcon;
+    return (RowIcon)IconManager.getInstance().createLayeredIcon(instance, icon, flags);
   }
 
   public static int transformFlags(PsiElement element, @IconFlags int _flags) {
@@ -263,24 +235,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return flags;
   }
 
-  private static class IconLayer {
-    private final int flagMask;
-    @NotNull
-    private final Icon icon;
-
-    private IconLayer(final int flagMask, @NotNull Icon icon) {
-      BitUtil.assertOneBitMask(flagMask);
-      this.flagMask = flagMask;
-      this.icon = icon;
-    }
-  }
-
-  private static final List<IconLayer> ourIconLayers = ContainerUtil.createLockFreeCopyOnWriteList();
-
   public static void registerIconLayer(int flagMask, @NotNull Icon icon) {
-    for(IconLayer iconLayer: ourIconLayers) {
-      if (iconLayer.flagMask == flagMask) return;
-    }
-    ourIconLayers.add(new IconLayer(flagMask, icon));
+    ((CoreIconManager)IconManager.getInstance()).registerIconLayer(flagMask, icon);
   }
 }

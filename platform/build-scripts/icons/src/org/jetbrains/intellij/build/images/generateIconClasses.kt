@@ -12,7 +12,7 @@ internal fun generateIconsClasses() {
   val home = File(homePath)
   val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
 
-  val generator = IconsClassGenerator(home, project.modules.find { it.name == "intellij.platform.util.ui" } ?: throw IllegalStateException("Can't load module 'util'"))
+  val generator = IconsClassGenerator(home, project.modules)
   project.modules.parallelStream().forEach(generator::processModule)
   generator.printStats()
 

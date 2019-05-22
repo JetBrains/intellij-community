@@ -7,10 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author yole
- */
-public class VirtualFilePresentation {
+public final class VirtualFilePresentation {
   public static Icon getIcon(@NotNull VirtualFile vFile) {
     return IconUtil.getIcon(vFile, 0, null);
   }
