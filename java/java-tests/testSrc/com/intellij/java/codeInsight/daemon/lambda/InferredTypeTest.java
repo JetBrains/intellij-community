@@ -113,8 +113,15 @@ public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
       PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("->"), PsiLambdaExpression.class, false);
 
     assertEquals("B<Double>", newB.getType().getPresentableText());
-    assertEquals(get.getText() + " with qualifier of type " + get.getMethodExpression().getQualifierExpression().getType().getCanonicalText(), 
-                 "Double", get.getType().getPresentableText());
+    String getType = get.getType().getPresentableText();
+    if (!"Double".equals(getType)) {
+      PsiExpression supplier = get.getMethodExpression().getQualifierExpression();
+      PsiType supplierType = supplier.getType();
+      assertEquals(get.getText() +
+                   " with qualifier resolving to " + ((PsiReferenceExpression)supplier).resolve() +
+                   " of type " + (supplierType == null ? null : supplierType.getCanonicalText()),
+                   "Double", getType);
+    }
     assertEquals("C<Double>", newC.getType().getPresentableText());
     assertEquals("Function<Supplier<Double>, Double>", lambda.getFunctionalInterfaceType().getPresentableText());
 
