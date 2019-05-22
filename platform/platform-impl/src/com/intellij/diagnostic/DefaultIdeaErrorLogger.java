@@ -53,10 +53,11 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(t, pluginId);
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
 
-      boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
+      final MemoryKind kind = getOOMErrorKind(event.getThrowable());
+      boolean isOOM = kind != null;
       boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
 
-      LifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed, pluginId, t);
+      LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
 
       return notificationEnabled ||
              showPluginError ||
