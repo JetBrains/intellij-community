@@ -97,7 +97,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     super(session.getProject(), "Debug", session.getSessionName(), GlobalSearchScope.allScope(session.getProject()));
 
     setSession(session, environment, icon);
-    myUi.getOptions().setMinimizeActionEnabled(false);
     myUi.addContent(createFramesContent(), 0, PlaceInGrid.left, false);
 
     if (Registry.is("debugger.new.threads.view")) {
