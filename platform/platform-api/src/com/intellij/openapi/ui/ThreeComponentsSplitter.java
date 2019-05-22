@@ -137,9 +137,16 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       return findChildToFocus(myLastComponent);
     }
 
+    private boolean myReentrantLock = false;
     @Override
     public Component getDefaultComponent(Container aContainer) {
-      return findChildToFocus(myInnerComponent);
+      if (myReentrantLock) return null;
+      try {
+        myReentrantLock = true;
+        return findChildToFocus(myInnerComponent);
+      } finally {
+        myReentrantLock = false;
+      }
     }
 
     Component findChildToFocus (Component component) {
