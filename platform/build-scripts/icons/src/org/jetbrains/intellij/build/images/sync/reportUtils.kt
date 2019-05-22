@@ -76,7 +76,7 @@ private fun withTmpBranch(repos: Collection<File>, master: String, action: (Stri
   }
 }
 
-private fun createReviewForDev(context: Context, user: String, email: String): Review? {
+private fun createReviewForDev(context: Context): Review? {
   if (context.iconsCommitsToSync.isEmpty()) return null
   val repos = context.iconsChanges().map {
     findRepo(context.devRepoRoot.resolve(it))
@@ -87,9 +87,10 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
     context.byDesigners.clear()
     return null
   }
+  val user = triggeredBy() ?: error("Unable to find who triggered the build")
   val master = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
   return withTmpBranch(repos, master) { branch ->
-    val commitsForReview = commitAndPush(branch, user, email, context.iconsCommitsToSync.commitMessage(), repos)
+    val commitsForReview = commitAndPush(branch, user.name, user.email, context.iconsCommitsToSync.commitMessage(), repos)
     val projectId = UPSOURCE_DEV_PROJECT_ID
     if (projectId.isNullOrEmpty()) {
       log("WARNING: unable to create Upsource review for ${context.devRepoName}, just plain old branch review")
@@ -98,7 +99,7 @@ private fun createReviewForDev(context: Context, user: String, email: String): R
     else {
       val review = createReview(projectId, branch, master, commitsForReview)
       try {
-        addReviewer(projectId, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
+        addReviewer(projectId, review, user.email)
         postVerificationResultToReview(review)
         review
       }
@@ -134,18 +135,18 @@ private fun postVerificationResultToReview(review: Review) {
               "Following configurations were run: ${runConfigurations.joinToString()}, see build ${thisBuildReportableLink()}")
 }
 
-private fun createReviewForIcons(context: Context, user: String, email: String): Collection<Review> {
+private fun createReviewForIcons(context: Context): Collection<Review> {
   if (context.devCommitsToSync.isEmpty()) return emptyList()
   val repos = listOf(context.iconsRepo)
   val master = head(context.iconsRepo)
   return context.devCommitsToSync.values.flatten()
-    .groupBy(CommitInfo::committerEmail)
+    .groupBy(CommitInfo::committer)
     .entries.map {
     val (committer, commits) = it
     withTmpBranch(repos, master) { branch ->
       commits.forEach { commit ->
         val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash} by $committer")
-        log("[$committer] syncing ${commit.hash} in ${context.iconsRepoName}")
+        log("$committer syncing ${commit.hash} in ${context.iconsRepoName}")
         syncIconsRepo(context, change)
       }
       if (gitStage(context.iconsRepo).isEmpty()) {
@@ -154,9 +155,10 @@ private fun createReviewForIcons(context: Context, user: String, email: String):
         null
       }
       else {
-        val commitsForReview = commitAndPush(branch, user, email, commits.groupBy(CommitInfo::repo).commitMessage(), repos)
+        val commitsForReview = commitAndPush(branch, committer.name, committer.email,
+                                             commits.groupBy(CommitInfo::repo).commitMessage(), repos)
         val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, master, commitsForReview)
-        addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, committer)
+        addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, committer.email)
         review
       }
     }
@@ -164,49 +166,47 @@ private fun createReviewForIcons(context: Context, user: String, email: String):
 }
 
 internal fun createReviews(context: Context) = callSafely {
-  val (user, email) = System.getProperty("upsource.user.name") to System.getProperty("upsource.user.email")
   context.createdReviews = Stream.of(
-    { createReviewForDev(context, user, email)?.let { listOf(it) } ?: emptyList() },
-    { createReviewForIcons(context, user, email) }
+    { createReviewForDev(context)?.let(::listOf) ?: emptyList() },
+    { createReviewForIcons(context) }
   ).parallel().flatMap { it().stream() }
     .filter(Objects::nonNull)
     .map { it as Review }
     .toList()
 }
 
-internal fun assignInvestigation(context: Context): Investigator? =
-  callSafely {
-    var (investigator, commits) = if (context.iconsSyncRequired()) {
-      context.devCommitsToSync.flatMap { it.value }.maxBy(CommitInfo::timestamp)?.let { latest ->
-        log("Assigning investigation to ${latest.committerEmail} as author of latest change ${latest.hash}")
-        latest.committerEmail
-      } to context.devCommitsToSync
-    }
-    else triggeredBy() to context.iconsCommitsToSync
-    val reviews = mutableListOf<String>()
-    if (commits.isEmpty()) {
-      if (context.commitsAlreadyInReview.isEmpty()) {
-        log("No commits, no investigation")
-        return@callSafely null
-      }
-      context.commitsAlreadyInReview.keys.maxBy(CommitInfo::timestamp)?.let { latest ->
-        val review = context.commitsAlreadyInReview.getValue(latest)
-        log("Assigning investigation to ${latest.committerEmail} as author of latest change ${latest.hash} under review $review")
-        investigator = latest.committerEmail
-        commits = context.commitsAlreadyInReview.keys
-          .filter { context.commitsAlreadyInReview[it] == review }
-          .groupBy(CommitInfo::repo)
-        reviews += review
-      }
-    }
-    if (context.iconsSyncRequired() && context.iconsReviews().isNotEmpty()) {
-      reviews += context.iconsReviews().map(Review::url)
-    }
-    if (context.devReviews().isNotEmpty()) {
-      reviews += context.devReviews().map(Review::url)
-    }
-    assignInvestigation(Investigator(investigator ?: DEFAULT_INVESTIGATOR, commits), context, reviews)
+internal fun assignInvestigation(context: Context): Investigator? = callSafely {
+  var (investigator, commits) = if (context.iconsSyncRequired()) {
+    context.devCommitsToSync.values.flatten().maxBy(CommitInfo::timestamp)?.let { latest ->
+      log("Assigning investigation to ${latest.committer} as author of latest change ${latest.hash}")
+      latest.committer.email
+    } to context.devCommitsToSync
   }
+  else triggeredBy()?.email to context.iconsCommitsToSync
+  val reviews = mutableListOf<String>()
+  if (commits.isEmpty()) {
+    if (context.commitsAlreadyInReview.isEmpty()) {
+      log("No commits, no investigation")
+      return@callSafely null
+    }
+    context.commitsAlreadyInReview.keys.maxBy(CommitInfo::timestamp)?.let { latest ->
+      val review = context.commitsAlreadyInReview.getValue(latest)
+      log("Assigning investigation to ${latest.committer} as author of latest change ${latest.hash} under review $review")
+      investigator = latest.committer.email
+      commits = context.commitsAlreadyInReview.keys
+        .filter { context.commitsAlreadyInReview[it] == review }
+        .groupBy(CommitInfo::repo)
+      reviews += review
+    }
+  }
+  if (context.iconsSyncRequired() && context.iconsReviews().isNotEmpty()) {
+    reviews += context.iconsReviews().map(Review::url)
+  }
+  if (context.devReviews().isNotEmpty()) {
+    reviews += context.devReviews().map(Review::url)
+  }
+  assignInvestigation(Investigator(investigator ?: DEFAULT_INVESTIGATOR, commits), context, reviews)
+}
 
 private fun findCommitsByRepo(context: Context, projectId: String?, root: File, changes: Changes
 ): Map<File, Collection<CommitInfo>> {
@@ -275,15 +275,11 @@ private fun findCommits(context: Context, root: File, changes: Changes) = change
     }
   }.groupBy({ it.first }, { it.second })
 
-private fun commitAndPush(branch: String,
-                          user: String,
-                          email: String,
-                          message: String,
+private fun commitAndPush(branch: String, user: String,
+                          email: String, message: String,
                           repos: Collection<File>) = repos.parallelStream().map {
-  withUser(it, user, email) {
-    execute(it, GIT, "checkout", "-B", branch)
-    commitAndPush(it, branch, message)
-  }
+  execute(it, GIT, "checkout", "-B", branch)
+  commitAndPush(it, branch, message, user, email)
 }.toList()
 
 internal fun sendNotification(investigator: Investigator?, context: Context) {

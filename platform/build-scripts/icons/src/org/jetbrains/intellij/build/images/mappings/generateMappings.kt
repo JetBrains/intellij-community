@@ -23,7 +23,7 @@ private fun generateMappings() {
                      ?.map(String::trim)
                    ?: emptyList()
   val context = Context()
-  val mappings = (loadIdeaGeneratedIcons(context) + loadNonGeneratedIcons(context,"idea")).groupBy {
+  val mappings = (loadIdeaGeneratedIcons(context) + loadNonGeneratedIcons(context, "idea")).groupBy {
     "${it.product}#${it.set}"
   }.toSortedMap().values.flatMap {
     if (it.size > 1) {
@@ -56,13 +56,12 @@ private fun generateMappings() {
   }
   else {
     val branch = System.getProperty("branch") ?: "icons-mappings-update"
-    withUser(repo, "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com") {
-      execute(repo, GIT, "checkout", "-B", branch, "origin/master")
-      path.writeText(json)
-      val jsonFile = path.toRelativeString(repo)
-      stageFiles(listOf(jsonFile), repo)
-      commitAndPush(repo, "refs/heads/$branch", "$jsonFile automatic update")
-    }
+    execute(repo, GIT, "checkout", "-B", branch, "origin/master")
+    path.writeText(json)
+    val jsonFile = path.toRelativeString(repo)
+    stageFiles(listOf(jsonFile), repo)
+    commitAndPush(repo, "refs/heads/$branch", "$jsonFile automatic update",
+                  "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com")
   }
 }
 
@@ -85,7 +84,7 @@ private class Mapping(val product: String, val set: String, val path: String) {
 
 private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
   val home = context.devRepoDir
-  val homePath =  home.absolutePath
+  val homePath = home.absolutePath
   val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
   val generator = IconsClassGenerator(home, project.modules)
   return protectStdErr {

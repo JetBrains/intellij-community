@@ -112,7 +112,7 @@ private fun searchForChangedIconsByDesigners(context: Context) {
   }.sortedBy { it.timestamp }.forEach {
     val commit = it.hash
     val before = context.iconsChanges().size
-    changesFromCommit(context.iconsRepo, commit).forEach { type, files ->
+    changesFromCommit(context.iconsRepo, commit).forEach { (type, files) ->
       context.byDesigners.register(type, asIcons(files))
     }
     if (context.iconsChanges().size == before) {

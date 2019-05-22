@@ -135,8 +135,8 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File, block: (fi
   }
 }
 
-internal fun commitAndPush(repo: File, branch: String, message: String): String {
-  execute(repo, GIT, "commit", "-m", message)
+internal fun commitAndPush(repo: File, branch: String, message: String, user: String, email: String): String {
+  execute(repo, GIT, "commit", "-m", message, "--author=$user <$email>")
   push(repo, "+$branch:$branch")
   return commitInfo(repo)?.hash ?: error("Unable to read last commit")
 }
@@ -279,19 +279,19 @@ internal fun head(repo: File): String {
 }
 
 internal fun commitInfo(repo: File, vararg args: String): CommitInfo? {
-  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%ce/%s", "--date=raw", *args)
+  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%cn/%ce/%s", "--date=raw", *args)
     .splitNotBlank("/")
   // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
-  return if (output.size >= 5) {
+  return if (output.size >= 6) {
     CommitInfo(
       repo = repo,
       hash = output[0],
       timestamp = output[1].splitWithSpace()[0].toLong(),
       parents = output[2].splitWithSpace(),
-      committerEmail = output[3],
-      subject = output.subList(4, output.size)
-        .joinToString(separator = "/")
-        .removeSuffix(System.lineSeparator())
+      committer = Committer(name = output[3], email = output[4]),
+      subject = output.subList(5, output.size)
+      .joinToString(separator = "/")
+      .removeSuffix(System.lineSeparator())
     )
   }
   else null
@@ -301,31 +301,12 @@ internal data class CommitInfo(
   val hash: String,
   val timestamp: Long,
   val subject: String,
+  val committer: Committer,
   val parents: List<String>,
-  val committerEmail: String,
   val repo: File
 )
 
-internal fun <T> withUser(repo: File, user: String, email: String, block: () -> T): T {
-  val (originalUser, originalEmail) = callSafely(printStackTrace = false) {
-    execute(repo, GIT, "config", "user.name").removeSuffix(System.lineSeparator()) to
-      execute(repo, GIT, "config", "user.email").removeSuffix(System.lineSeparator())
-  } ?: "" to ""
-  return try {
-    configureUser(repo, user, email)
-    block()
-  }
-  finally {
-    callSafely {
-      configureUser(repo, originalUser, originalEmail)
-    }
-  }
-}
-
-private fun configureUser(repo: File, user: String, email: String) {
-  execute(repo, GIT, "config", "user.name", user)
-  execute(repo, GIT, "config", "user.email", email)
-}
+internal data class Committer(val name: String, val email: String)
 
 internal fun gitStatus(repo: File, includeUntracked: Boolean = false) =
   execute(repo, GIT, "status", "--short", "--untracked-files=${if (includeUntracked) "all" else "no"}", "--ignored=no")
