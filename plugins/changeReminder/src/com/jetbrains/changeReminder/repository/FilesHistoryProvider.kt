@@ -12,6 +12,15 @@ import com.jetbrains.changeReminder.processCommitsFromHashes
 data class Commit(val id: Int, val time: Long, val author: String, val files: Set<FilePath>)
 
 internal class FilesHistoryProvider(private val project: Project, private val root: VirtualFile, private val dataGetter: IndexDataGetter) {
+  private val filesHistoryCache = HashMap<FilePath, Collection<Int>>()
+
+  private fun updateCache(filesData: Map<FilePath, Collection<Int>>) = filesHistoryCache.putAll(filesData)
+
+  private fun cleanCache(files: Collection<FilePath>) =
+    filesHistoryCache.keys.subtract(files).forEach {
+      filesHistoryCache.remove(it)
+    }
+
   private fun getCommitHashesWithFile(file: FilePath): Collection<Int> {
     val structureFilter = VcsLogFilterObject.fromPaths(setOf(file))
     return dataGetter.filter(listOf(structureFilter))
@@ -40,9 +49,16 @@ internal class FilesHistoryProvider(private val project: Project, private val ro
   }
 
   fun getFilesHistory(files: Collection<FilePath>): Collection<Commit> {
-    val filesData = files.associateWith { getCommitHashesWithFile(it) }
-    val commits = filesData.values.flatten().toSet()
+    cleanCache(files)
 
-    return getCommitsData(commits).values
+    val cachedData = files.mapNotNull { filesHistoryCache[it] }.flatten()
+    val filesData = files
+      .filter { it !in filesHistoryCache }
+      .associateWith { getCommitHashesWithFile(it) }
+    updateCache(filesData)
+    val commits = cachedData.union(filesData.values.flatten())
+    val commitsData = getCommitsData(commits)
+
+    return commitsData.values
   }
 }
