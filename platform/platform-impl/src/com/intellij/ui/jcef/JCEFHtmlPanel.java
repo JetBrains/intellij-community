@@ -109,18 +109,20 @@ public class JCEFHtmlPanel implements Disposable {
     myCefBrowser = ourCefClient.createBrowser("about:blank", false, false);
     ourCefBrowser2Panel.put(myCefBrowser, this);
 
-    // workaround for the UI garbage issue: keep the browser component min until the browser loads html
-    myPanelWrapper.setLayout(null);
-    myCefBrowser.getUIComponent().setSize(1, 1);
-    myPanelWrapper.add(myCefBrowser.getUIComponent()/*, BorderLayout.CENTER*/);
-    myPanelWrapper.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        if (isHtmlLoaded()) {
-          myCefBrowser.getUIComponent().setSize(myPanelWrapper.getSize());
+    if (!SystemInfo.isMac) {
+      // workaround for the UI garbage issue: keep the browser component min until the browser loads html
+      myPanelWrapper.setLayout(null);
+      myCefBrowser.getUIComponent().setSize(1, 1);
+      myPanelWrapper.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          if (isHtmlLoaded()) {
+            myCefBrowser.getUIComponent().setSize(myPanelWrapper.getSize());
+          }
         }
-      }
-    });
+      });
+    }
+    myPanelWrapper.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
   }
 
   public void setBackground(Color background) {
