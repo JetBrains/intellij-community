@@ -10,12 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class PendingTasksRunner {
+class PendingTasksRunner {
   private final List<Runnable> myPendingTasks = new ArrayList<>();
   private final AtomicBoolean myReady = new AtomicBoolean(false);
   private final Alarm myAlarm;
 
-  public PendingTasksRunner(long awaitTimeout, @NotNull Project project) {
+  PendingTasksRunner(long awaitTimeout, @NotNull Project project) {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
     myAlarm.addRequest(() -> setReady(), awaitTimeout);
   }
