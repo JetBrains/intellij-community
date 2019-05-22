@@ -15,8 +15,11 @@ import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
+import com.intellij.vcs.log.history.EMPTY_HISTORY
+import com.intellij.vcs.log.history.FileHistoryBuilder
 import com.intellij.vcs.log.history.FileHistoryData
 import com.intellij.vcs.log.history.removeTrivialMerges
 import com.intellij.vcs.log.impl.HashImpl
@@ -28,6 +31,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromHashes
 import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
 import gnu.trove.TIntHashSet
+import java.util.function.BiConsumer
 import java.util.stream.Collectors
 
 class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvider>,
@@ -139,11 +143,18 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits)
       }
       else {
-        permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits) { controller, permanentGraphInfo ->
-          removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData) { trivialMerges ->
-            LOG.debug("Removed ${trivialMerges.size} trivial merges")
+        val preprocessor: BiConsumer<LinearGraphController, PermanentGraphInfo<Int>>
+        if (fileHistoryData.startPaths.size == 1 && fileHistoryData.startPaths.single().isDirectory) {
+          preprocessor = FileHistoryBuilder(null, fileHistoryData.startPaths.single(), fileHistoryData, EMPTY_HISTORY)
+        }
+        else {
+          preprocessor = BiConsumer { controller, permanentGraphInfo ->
+            removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData) { trivialMerges ->
+              LOG.debug("Removed ${trivialMerges.size} trivial merges")
+            }
           }
         }
+        permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits, preprocessor)
       }
     }
   }

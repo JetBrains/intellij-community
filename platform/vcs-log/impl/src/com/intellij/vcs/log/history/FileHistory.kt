@@ -273,7 +273,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   }
 }
 
-abstract class FileHistoryData(private val startPaths: Collection<FilePath>) {
+abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
   // file -> (commitId -> (parent commitId -> change kind))
   private val affectedCommits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
   internal val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
