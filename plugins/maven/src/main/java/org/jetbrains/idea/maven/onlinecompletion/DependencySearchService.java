@@ -120,9 +120,6 @@ public class DependencySearchService {
 
 
   private List<MavenDependencyCompletionItem> getOfflineData(MavenCoordinate coordinate, SearchParameters params) {
-    if (StringUtil.isEmpty(coordinate.getArtifactId()) && StringUtil.isEmpty(coordinate.getGroupId())) {
-      return Collections.emptyList();
-    }
     if (StringUtil.isNotEmpty(coordinate.getVersion())) {
       return myOfflineSearchService.findAllVersions(coordinate, params);
     }
@@ -131,7 +128,7 @@ public class DependencySearchService {
         .flatMap(md -> myOfflineSearchService.findAllVersions(md, params).stream())
         .collect(Collectors.toList());
     }
-    return myOfflineSearchService.findGroupCandidates(coordinate)
+    return myOfflineSearchService.findGroupCandidates(coordinate, params)
       .stream()
       .flatMap(md -> myOfflineSearchService.findArtifactCandidates(md, params).stream())
       .flatMap(md -> myOfflineSearchService.findAllVersions(md, params).stream())

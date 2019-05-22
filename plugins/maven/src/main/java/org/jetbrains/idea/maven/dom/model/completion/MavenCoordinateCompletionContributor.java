@@ -5,6 +5,8 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,7 +69,8 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
   }
 
   protected SearchParameters createSearchParameters(CompletionParameters parameters) {
-    if (parameters.getInvocationCount() > 1) {
+    if (parameters.getInvocationCount() > 1
+        || ApplicationManager.getApplication().isUnitTestMode()/*to be fixed in future*/) {
       return SearchParameters.FULL;
     }
     return SearchParameters.DEFAULT;
