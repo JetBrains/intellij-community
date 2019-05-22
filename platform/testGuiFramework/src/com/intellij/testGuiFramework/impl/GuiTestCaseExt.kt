@@ -344,6 +344,7 @@ fun GuiTestCase.checkGutterIcons(gutterIcon: GutterFixture.GutterIcon,
       editor {
         step("wait for editor file has been loaded") {
           waitUntilFileIsLoaded()
+          waitAMoment()
           waitUntilErrorAnalysisFinishes()
         }
       }
