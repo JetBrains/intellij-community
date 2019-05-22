@@ -58,6 +58,16 @@ public class LifecycleUsageTriggerCollector {
     FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "project.closed", data);
   }
 
+  public static void onFrameActivated(@Nullable Project project) {
+    final FeatureUsageData data = new FeatureUsageData().addProject(project);
+    FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "frame.activated", data);
+  }
+
+  public static void onFrameDeactivated(@Nullable Project project) {
+    final FeatureUsageData data = new FeatureUsageData().addProject(project);
+    FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "frame.deactivated", data);
+  }
+
   public static void onFreeze(int lengthInSeconds) {
     final FeatureUsageData data =
       new FeatureUsageData().addData("duration_s", lengthInSeconds).addData("duration_grouped", toLengthGroup(lengthInSeconds));
