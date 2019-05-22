@@ -10,15 +10,13 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlin.streams.toList
 
-fun main(args: Array<String>) = try {
+fun main(args: Array<String>) {
   if (args.isNotEmpty()) System.setProperty(Context.iconsCommitHashesToSyncArg, args.joinToString())
   checkIcons()
 }
-catch (e: Throwable) {
-  e.printStackTrace()
-}
 
 internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<String> = Consumer(::println)) {
+  System.setProperty("java.awt.headless", "true")
   logger = loggerImpl
   context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
   context.devRepoRoot = findGitRepoRoot(context.devRepoDir)
