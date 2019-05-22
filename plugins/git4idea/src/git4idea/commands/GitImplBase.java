@@ -121,6 +121,9 @@ abstract class GitImplBase implements Git {
       try {
         version = GitExecutableManager.getInstance().identifyVersion(executablePath);
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Exception e) {
         return handlePreValidationException(handler.project(), e);
       }
