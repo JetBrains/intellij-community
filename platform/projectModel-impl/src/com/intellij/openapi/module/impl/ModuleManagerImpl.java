@@ -45,6 +45,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.FileNotFoundException;
@@ -796,7 +797,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
 
     @Nullable
-    private ModuleEx getModuleByFilePath(@NotNull String filePath) {
+    private ModuleEx getModuleByFilePath(@NotNull @SystemIndependent String filePath) {
       for (Module module : getModules()) {
         if (SystemInfo.isFileSystemCaseSensitive ? module.getModuleFilePath().equals(filePath) : module.getModuleFilePath().equalsIgnoreCase(filePath)) {
           return (ModuleEx)module;
@@ -807,7 +808,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @Override
     @NotNull
-    public Module loadModule(@NotNull String filePath) throws IOException {
+    public Module loadModule(@NotNull @SystemIndependent String filePath) throws IOException {
       assertWritable();
       String resolvedPath = FileUtilRt.toSystemIndependentName(resolveShortWindowsName(filePath));
       try {
