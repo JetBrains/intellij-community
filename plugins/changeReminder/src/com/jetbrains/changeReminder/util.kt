@@ -5,32 +5,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
-import com.jetbrains.changeReminder.predict.PredictedChange
-import com.jetbrains.changeReminder.predict.PredictedFilePath
 import git4idea.GitCommit
 import git4idea.GitVcs
-import git4idea.checkin.GitCheckinEnvironment
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits
 import git4idea.history.GitCommitRequirements.DiffRenameLimit
 import git4idea.history.GitLogUtil
-
-private fun CheckinProjectPanel.gitCheckinOptions(): GitCheckinEnvironment.GitCheckinOptions? {
-  if (this !is CommitChangeListDialog) return null
-  return additionalComponents
-           .filterIsInstance(GitCheckinEnvironment.GitCheckinOptions::class.java)
-           .firstOrNull()
-         ?: return null
-}
-
-fun CheckinProjectPanel.isAmend(): Boolean = commitWorkflowHandler.amendCommitHandler.isAmendCommitMode
-
-fun CheckinProjectPanel.author(): String? = this.gitCheckinOptions()?.author
 
 fun CheckinProjectPanel.getGitRootFiles(project: Project): Map<VirtualFile, Collection<FilePath>> {
   val rootFiles = HashMap<VirtualFile, HashSet<FilePath>>()
@@ -58,15 +41,6 @@ fun processCommitsFromHashes(project: Project, root: VirtualFile, hashes: List<S
 }
 
 fun GitCommit.changedFilePaths(): List<FilePath> = this.changes.mapNotNull { ChangesUtil.getFilePath(it) }
-
-internal fun Collection<FilePath>.toPredictedFiles(changeListManager: ChangeListManager) = this.mapNotNull {
-  val currentChange = changeListManager.getChange(it)
-  when {
-    currentChange != null -> PredictedChange(currentChange)
-    it.virtualFile != null -> PredictedFilePath(it)
-    else -> null
-  }
-}
 
 fun <T> measureSupplierTimeMillis(supplier: () -> T): Pair<Long, T> {
   val startTime = System.currentTimeMillis()
