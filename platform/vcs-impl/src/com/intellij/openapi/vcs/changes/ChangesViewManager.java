@@ -260,10 +260,12 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     group.addSeparator();
     group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
-    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Ignored Files", true);
-    ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
-    ignoreGroup.add(new ToggleShowIgnoredAction());
-    group.add(ignoreGroup);
+    DefaultActionGroup viewOptionsGroup = new DefaultActionGroup("View Options", true);
+    viewOptionsGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
+    viewOptionsGroup.add(new ToggleShowIgnoredAction());
+    viewOptionsGroup.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"));
+
+    group.add(viewOptionsGroup);
     group.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
     group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
     group.addSeparator();
@@ -350,6 +352,9 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         .setUnversioned(unversionedFiles);
       if (myState.myShowIgnored) {
         treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.isIgnoredInUpdateMode());
+      }
+      for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
+        extension.modifyTreeModelBuilder(treeModelBuilder);
       }
       DefaultTreeModel newModel = treeModelBuilder.build();
 
