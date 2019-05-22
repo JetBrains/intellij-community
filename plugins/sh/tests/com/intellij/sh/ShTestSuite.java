@@ -21,7 +21,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 public class ShTestSuite {
-
   public static Test suite() {
     TestSuite testSuite = new TestSuite("All Shell Script tests");
     testSuite.addTest(LexerSuite.suite());
@@ -79,6 +78,4 @@ public class ShTestSuite {
       return suite;
     }
   }
-
-
 }

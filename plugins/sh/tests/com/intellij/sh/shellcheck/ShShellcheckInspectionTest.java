@@ -51,14 +51,14 @@ public class ShShellcheckInspectionTest extends LightCodeInsightFixtureTestCase 
 
   public void testDisableInspection() {
     configFile();
-    ShShellcheckInspection inspection = ShShellcheckInspection.findShShellcheckInspection(myFixture.getFile());
-    assertEmpty(inspection.getDisabledInspections());
+    ShShellcheckInspection inspectionBefore = ShShellcheckInspection.findShShellcheckInspection(myFixture.getFile());
+    assertEmpty(inspectionBefore.getDisabledInspections());
     applyIntentions(DisableInspectionIntention.class);
     checkResult();
 
-    inspection = ShShellcheckInspection.findShShellcheckInspection(myFixture.getFile());
-    assertNotEmpty(inspection.getDisabledInspections());
-    assertSameElements(inspection.getDisabledInspections(), Arrays.asList("SC2034", "SC2046"));
+    ShShellcheckInspection inspectionAfter = ShShellcheckInspection.findShShellcheckInspection(myFixture.getFile());
+    assertNotEmpty(inspectionAfter.getDisabledInspections());
+    assertSameElements(inspectionAfter.getDisabledInspections(), Arrays.asList("SC2034", "SC2046"));
   }
 
   private void doTest(Class<? extends IntentionAction> intentionType) {
