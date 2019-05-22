@@ -12,10 +12,10 @@ import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
 import sun.misc.Signal;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -252,6 +252,35 @@ public class UnixProcessManager {
     }
     else {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported.");
+    }
+  }
+
+  @NotNull
+  public static ProcessMachineType readElfMachineType(@NotNull String path) throws IOException {
+    final File file = new File(path);
+    return readElfMachineType(file);
+  }
+
+  @NotNull
+  public static ProcessMachineType readElfMachineType(@NotNull File file) throws IOException {
+    if (!file.isFile() || !file.canRead()) {
+      throw new IOException("Not a readable file");
+    }
+    final long len = file.length();
+    if (len < 0) throw new IOException("File length reported negative");
+
+    try (FileInputStream stream = new FileInputStream(file)) {
+      final FileChannel channel = stream.getChannel();
+
+      final int ELF_HEADER_LEN = 0x14;
+      final ByteBuffer elfHeader = ByteBuffer.allocate(ELF_HEADER_LEN);
+      if (channel.read(elfHeader) < ELF_HEADER_LEN) throw new IOException("Not a valid ELF executable: ELF header is too short");
+      elfHeader.flip();
+      if (elfHeader.getInt() != 0x7F454C46 /* 0x75 ELF */) throw new IOException("Not a valid ELF executable: missing ELF magic");
+      elfHeader.position(0x12);
+      final short elfMachineType = elfHeader.order(ByteOrder.LITTLE_ENDIAN).getShort();
+
+      return ProcessMachineType.forElfMachineTypeCode(elfMachineType);
     }
   }
 

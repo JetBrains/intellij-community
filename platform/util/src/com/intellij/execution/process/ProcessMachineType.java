@@ -7,20 +7,29 @@ import org.jetbrains.annotations.NotNull;
  * @author eldar
  */
 public enum ProcessMachineType {
-  UNKNOWN(0),
-  I386(0x14c),
-  AMD64(0x8664);
+  UNKNOWN(0, 0),
+  I386(0x14c, 0x03),
+  AMD64(0x8664, 0x3e);
 
   private final short myPeCode;
+  private final short myElfCode;
 
-  ProcessMachineType(int peCode) {
+  ProcessMachineType(int peCode, int elfCode) {
     myPeCode = (short)peCode;
+    myElfCode = (short)elfCode;
   }
 
   @NotNull
   static ProcessMachineType forPeMachineTypeCode(short peCode) {
     for (ProcessMachineType value : values()) {
       if (value.myPeCode == peCode) return value;
+    }
+    return UNKNOWN;
+  }
+
+  static ProcessMachineType forElfMachineTypeCode(short elfCode) {
+    for (ProcessMachineType value : values()) {
+      if (value.myElfCode == elfCode) return value;
     }
     return UNKNOWN;
   }
