@@ -52,6 +52,7 @@ public class MacOSApplicationProvider {
 
   private static class Worker {
     private static final AtomicBoolean ENABLED = new AtomicBoolean(true);
+    @SuppressWarnings({"FieldCanBeLocal", "unused"}) private static Object UPDATE_CALLBACK_REF;
 
     static void initMacApplication() {
       Application application = Application.getApplication();
@@ -106,6 +107,7 @@ public class MacOSApplicationProvider {
           });
         }
       };
+      UPDATE_CALLBACK_REF = impl;  // prevents the callback from being collected
       Foundation.addMethod(checkForUpdatesClass, Foundation.createSelector("checkForUpdates"), impl, "v");
       Foundation.registerObjcClassPair(checkForUpdatesClass);
 
