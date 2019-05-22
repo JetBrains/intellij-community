@@ -41,11 +41,11 @@ public class JCEFHtmlPanel implements Disposable {
     settings.windowless_rendering_enabled = false;
     settings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_ERROR;
     if (SystemInfo.isMac) {
-      String JCEF_FRAMEWORKS_PATH = System.getProperty("java.home") + "/lib/Frameworks";
+      CefApp.startup();
+      String JCEF_FRAMEWORKS_PATH = System.getProperty("java.home") + "/Frameworks";
       CefApp.addAppHandler(new CefAppHandlerAdapter(new String[] {
         "--framework-dir-path=" + JCEF_FRAMEWORKS_PATH + "/Chromium Embedded Framework.framework",
-        "--browser-subprocess-path=" + JCEF_FRAMEWORKS_PATH + "/jcef Helper.app/Contents/MacOS/jcef Helper",
-        "--disable-gpu"
+        "--browser-subprocess-path=" + JCEF_FRAMEWORKS_PATH + "/jcef Helper.app/Contents/MacOS/jcef Helper"
       }) {});
     }
     else if (SystemInfo.isLinux) {
