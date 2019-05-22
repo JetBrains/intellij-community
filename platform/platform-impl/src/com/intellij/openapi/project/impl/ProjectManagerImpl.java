@@ -652,6 +652,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       if (!projectImpl.isTemporarilyDisposed()) {
         projectImpl.setTemporarilyDisposed(true);
         removeFromOpened(project);
+        ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
         return true;
       }
       projectImpl.setTemporarilyDisposed(false);
