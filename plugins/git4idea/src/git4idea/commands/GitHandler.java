@@ -288,6 +288,11 @@ public abstract class GitHandler {
     }
   }
 
+  public void addAbsoluteFile(@NotNull File file) {
+    checkNotStarted();
+    myCommandLine.addParameter(file.getAbsolutePath());
+  }
+
   /**
    * End option parameters and start file paths. The method adds {@code "--"} parameter.
    */

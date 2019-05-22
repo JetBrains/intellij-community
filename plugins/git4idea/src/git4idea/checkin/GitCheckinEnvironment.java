@@ -864,7 +864,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                   @NotNull File messageFile) throws VcsException {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
-    handler.addParameters("-F", messageFile.getAbsolutePath());
+    handler.addParameters("-F");
+    handler.addAbsoluteFile(messageFile);
     if (myNextCommitAmend) {
       handler.addParameters("--amend");
     }
@@ -1004,7 +1005,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return rc;
   }
 
-  private void commit(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files, @NotNull File message)
+  private void commit(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files, @NotNull File messageFile)
     throws VcsException {
     boolean amend = myNextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
@@ -1022,7 +1023,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       if (myNextCommitSkipHook) {
         handler.addParameters("--no-verify");
       }
-      handler.addParameters("--only", "-F", message.getAbsolutePath());
+      handler.addParameters("--only");
+      handler.addParameters("-F");
+      handler.addAbsoluteFile(messageFile);
       if (myNextCommitAuthor != null) {
         handler.addParameters("--author=" + myNextCommitAuthor);
       }
