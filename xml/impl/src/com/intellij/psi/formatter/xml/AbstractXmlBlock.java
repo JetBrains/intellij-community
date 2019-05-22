@@ -152,6 +152,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected Wrap createTagBeginWrapping(final XmlTag tag) {
+    if (!(tag.getParent() instanceof XmlTag) && FormatterUtil.getPreviousNonWhitespaceSibling(tag.getNode()) == null) {
+      return null;
+    }
     return Wrap.createWrap(myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag), true);
   }
 
