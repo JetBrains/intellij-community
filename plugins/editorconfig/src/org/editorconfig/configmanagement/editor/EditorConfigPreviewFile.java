@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,24 +26,22 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
   private final Project  myProject;
   private final String   myOriginalPath;
   private final Document myDocument;
-  private final PsiFile  myPsiFile;
 
   EditorConfigPreviewFile(@NotNull Project project, @NotNull VirtualFile originalFile, @NotNull Document document) {
     super(originalFile.getName());
     myProject = project;
     myOriginalPath = originalFile.getPath();
     myDocument = document;
-    myPsiFile = createPsi(originalFile);
     super.setContent(this, myDocument.getText(), false);
     reformat();
     CodeStyleSettingsManager.getInstance(project).addListener(this);
   }
 
   @NotNull
-  private PsiFile createPsi(@NotNull VirtualFile originalFile) {
+  private PsiFile createPsi(@NotNull FileType fileType) {
     return PsiFileFactory.getInstance(myProject)
       .createFileFromText(
-        "preview", originalFile.getFileType(), myDocument.getText(), LocalTimeCounter.currentTime(), false);
+        "preview", fileType, myDocument.getText(), LocalTimeCounter.currentTime(), false);
   }
 
   @Override
@@ -58,9 +57,10 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
           PsiFile originalPsiFile = resolveOriginalPsi();
           if (originalPsiFile != null) {
             CodeStyleSettings settings = CodeStyle.getSettings(originalPsiFile);
+            PsiFile psiFile = createPsi(originalPsiFile.getFileType());
             CodeStyle.doWithTemporarySettings(
-              myProject, settings, () -> CodeStyleManager.getInstance(myProject).reformatText(myPsiFile, 0, myPsiFile.getTextLength()));
-            myDocument.replaceString(0, myDocument.getTextLength(), myPsiFile.getText());
+              myProject, settings, () -> CodeStyleManager.getInstance(myProject).reformatText(psiFile, 0, psiFile.getTextLength()));
+            myDocument.replaceString(0, myDocument.getTextLength(), psiFile.getText());
           }
         }),
       "reformat", null);
