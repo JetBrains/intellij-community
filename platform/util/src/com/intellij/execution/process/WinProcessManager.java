@@ -8,7 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinBase;
+import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.ptr.IntByReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -99,6 +102,36 @@ public class WinProcessManager {
     } catch(IllegalThreadStateException e) {
       return true;
     }
+  }
+
+  @NotNull
+  public static ProcessMachineType getProcessMachineType(int pid) {
+    final WinNT.HANDLE hProcess = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+    if (hProcess == WinBase.INVALID_HANDLE_VALUE) return ProcessMachineType.UNKNOWN;
+
+    final IntByReference isWow64Ref = new IntByReference(0);
+    try {
+      if (!Kernel32.INSTANCE.IsWow64Process(hProcess, isWow64Ref)) return ProcessMachineType.UNKNOWN;
+    }
+    catch (UnsatisfiedLinkError ignored) {
+    }
+    finally {
+      Kernel32.INSTANCE.CloseHandle(hProcess);
+    }
+    boolean isWow64 = (isWow64Ref.getValue() == 1);
+    return isWow64 ? ProcessMachineType.I386
+                   : getOsArch();
+  }
+
+  @NotNull
+  private static ProcessMachineType getOsArch() {
+    final WinBase.SYSTEM_INFO systemInfo = new WinBase.SYSTEM_INFO();
+    Kernel32.INSTANCE.GetNativeSystemInfo(systemInfo);
+
+    final WinDef.WORD processorArchitecture = systemInfo.processorArchitecture.dwOemID.getLow();
+    if (processorArchitecture.intValue() == 0 /* PROCESSOR_ARCHITECTURE_INTEL */) return ProcessMachineType.I386;
+    if (processorArchitecture.intValue() == 9 /* PROCESSOR_ARCHITECTURE_AMD64 */) return ProcessMachineType.AMD64;
+    return ProcessMachineType.UNKNOWN;
   }
 
   @NotNull
