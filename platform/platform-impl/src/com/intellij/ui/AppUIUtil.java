@@ -33,11 +33,9 @@ import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.SwingHelper;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -90,15 +88,14 @@ public class AppUIUtil {
 
       if (SystemInfo.isUnix) {
         @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
-        ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 128, fallback));
+        ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 128, fallback));
       }
 
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
-      ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 32, fallback));
+      ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 32, fallback));
 
       if (SystemInfo.isWindows) {
-        @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
-        ContainerUtil.addIfNotNull(images, loadApplicationIcon(appInfo.getSmallApplicationSvgIconUrl(), ctx, 16, fallbackSmallIconUrl));
+        ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx));
       }
 
       for (int i = 0; i < images.size(); i++) {
@@ -120,14 +117,22 @@ public class AppUIUtil {
     }
   }
 
-  @Nullable
-  public static Icon loadHiDPIApplicationIcon(@NotNull ScaleContext ctx, int size) {
-    Image image = loadApplicationIcon(ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl(), ctx, size, null);
-    return image != null ? new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx)) : null;
+  @NotNull
+  private static Image loadSmallApplicationIconImage(@NotNull ScaleContext ctx) {
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
+    return loadApplicationIconImage(appInfo.getSmallApplicationSvgIconUrl(), ctx, 16, fallbackSmallIconUrl);
   }
 
+  @NotNull
+  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
+    Image image = loadSmallApplicationIconImage(ctx);
+    return new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx));
+  }
+
+  @Contract("_, _, _, !null -> !null")
   @Nullable
-  private static Image loadApplicationIcon(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
+  private static Image loadApplicationIconImage(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
     if (svgPath != null) {
       try (InputStream stream = AppUIUtil.class.getResourceAsStream(svgPath)) {
         return SVGLoader.load(null, stream, ctx, size, size);

@@ -367,6 +367,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myIconUrl;
   }
 
+  @NotNull
   @Override
   public String getSmallIconUrl() {
     return mySmallIconUrl;
@@ -758,7 +759,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     Element iconElement = getChild(parentNode, ELEMENT_ICON);
     if (iconElement != null) {
       myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
-      mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16);
+      mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16, mySmallIconUrl);
       myBigIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE128, (String)null);
       final String toolWindowIcon = iconElement.getAttributeValue(ATTRIBUTE_SIZE12);
       if (toolWindowIcon != null) {

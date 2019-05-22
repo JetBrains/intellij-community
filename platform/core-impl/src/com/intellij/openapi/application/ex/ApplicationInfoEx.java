@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -35,6 +36,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * @deprecated use {@link #getSmallApplicationSvgIconUrl()} instead
    */
   @Deprecated
+  @NotNull
   public abstract String getSmallIconUrl();
 
   /**
