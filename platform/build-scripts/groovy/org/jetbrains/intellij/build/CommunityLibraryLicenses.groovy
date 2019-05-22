@@ -53,6 +53,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Android DEX library", libraryName: "dexlib2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android draw9patch library", libraryName: "com.android.tools:draw9patch", license: "Apache 2.0",
                        url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android dvlib library", libraryName: "com.android.tools:dvlib", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Gradle model", attachedTo: "intellij.android.core", version: "0.4-SNAPSHOT", license: "Apache 2.0",
                        url: "https://android.googlesource.com/platform/tools/build/+/master/gradle-model/"),
     new LibraryLicense(name: "Android IDE Extensions", libraryName: "android-extensions-ide.jar", license: "Apache 2.0",

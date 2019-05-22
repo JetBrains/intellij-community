@@ -294,7 +294,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
 
-      withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.deployer", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
@@ -338,6 +337,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.lint:lint-api")
       withProjectLibrary("com.android.tools.lint:lint-checks")
       withProjectLibrary("com.android.tools:sdk-common")
+      withProjectLibrary("com.android.tools:dvlib")
       withProjectLibrary("com.android.tools:sdklib")
       withProjectLibrary("com.android.tools:common")
       withProjectLibrary("com.android.tools:repository")
