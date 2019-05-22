@@ -97,7 +97,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId) throws IOException {
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId) {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/test/details";
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
@@ -112,7 +112,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassName, byte frameworkId) throws IOException {
+  public List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassName, byte frameworkId) {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/files/affected/by-test-classes";
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
@@ -262,20 +262,25 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   }
 
   @NotNull
-  private static List<String> executeQuery(@NotNull ThrowableComputable<? extends List<String>, IOException> query, @NotNull Project project) throws IOException {
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      List<String> result = ProgressManager.getInstance().run(
-        new Task.WithResult<List<String>, IOException>(project,
-                                                       "Searching for Affected File Paths...",
-                                                       true) {
-          @Override
-          protected List<String> compute(@NotNull ProgressIndicator indicator) throws IOException {
-            return query.compute();
-          }
-        });
-      return result == null ? Collections.emptyList() : result;
+  private static List<String> executeQuery(@NotNull ThrowableComputable<? extends List<String>, IOException> query, @NotNull Project project) {
+    try {
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+        List<String> result = ProgressManager.getInstance().run(
+          new Task.WithResult<List<String>, IOException>(project,
+                                                         "Searching for Affected File Paths...",
+                                                         true) {
+            @Override
+            protected List<String> compute(@NotNull ProgressIndicator indicator) throws IOException {
+              return query.compute();
+            }
+          });
+        return result == null ? Collections.emptyList() : result;
+      }
+      return query.compute();
     }
-    return query.compute();
+    catch (IOException e) {
+      LOG.error("Can't execute remote query", e);
+      return Collections.emptyList();
+    }
   }
-
 }
