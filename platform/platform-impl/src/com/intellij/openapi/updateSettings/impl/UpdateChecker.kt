@@ -147,10 +147,10 @@ object UpdateChecker {
 
     UpdateSettings.getInstance().saveLastCheckedInfo()
 
-    ApplicationManager.getApplication().invokeLater({
+    ApplicationManager.getApplication().invokeLater {
       showUpdateResult(project, result, updatedPlugins, incompatiblePlugins, externalUpdates, !fromSettings, manualCheck)
       callback?.setDone()
-    }, if (fromSettings) ModalityState.any() else ModalityState.NON_MODAL)
+    }
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
