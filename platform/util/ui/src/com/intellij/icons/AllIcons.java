@@ -1571,13 +1571,6 @@ public class AllIcons {
     public static final Icon Caller = AllIcons.Hierarchy.Supertypes;
 
   }
-  /** 32x32 */ public static final Icon Icon = IconLoader.getIcon("/icon.png");
-  /** 128x128 */ public static final Icon Icon_128 = IconLoader.getIcon("/icon_128.png");
-  /** 32x32 */ public static final Icon Icon_CE = IconLoader.getIcon("/icon_CE.png");
-  /** 128x128 */ public static final Icon Icon_CE_128 = IconLoader.getIcon("/icon_CE_128.png");
-  /** 64x64 */ public static final Icon Icon_CE_64 = IconLoader.getIcon("/icon_CE_64.png");
-  /** 16x16 */ public static final Icon Icon_CEsmall = IconLoader.getIcon("/icon_CEsmall.png");
-  /** 16x16 */ public static final Icon Icon_small = IconLoader.getIcon("/icon_small.png");
 
   public final static class Icons {
 
@@ -3041,4 +3034,27 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Html_id = IconLoader.getIcon("/xml/html_id.svg");
 
   }
+
+  /** @deprecated use ProductIcons.getInstance().getProductIcon() instead */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Icon = IconLoader.getIcon("/icon.png");
+
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Icon_128 = IconLoader.getIcon("/icon_128.png");
+
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Icon_CE = IconLoader.getIcon("/icon_CE.png");
+
+  /** @deprecated use ProductIcons.getInstance().getProductIcon() instead */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Icon_CEsmall = IconLoader.getIcon("/icon_CEsmall.png");
+
+  /** @deprecated use ProductIcons.getInstance().getProductIcon() instead */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Icon_small = IconLoader.getIcon("/icon_small.png");
 }
