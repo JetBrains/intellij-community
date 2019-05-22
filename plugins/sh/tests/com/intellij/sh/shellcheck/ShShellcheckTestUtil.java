@@ -81,7 +81,7 @@ class ShShellcheckTestUtil {
   }
 
   private static String getShellcheckDistributionLink() {
-    String platform = SystemInfoRt.isMac ? "mac" : "linux";
+    String platform = SystemInfoRt.isMac ? "mac" : SystemInfoRt.isWindows ? "windows" : "linux";
     String shellcheckUrl = IS_UNDER_TEAMCITY ? CACHE_SHELLCHECK_URL : SHELLCHECK_URL;
     return shellcheckUrl + SHELLCHECK_VERSION + "/" + platform + SHELLCHECK_ARCHIVE_EXTENSION;
   }

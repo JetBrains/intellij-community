@@ -8,7 +8,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.sh.shellcheck.intention.DisableInspectionIntention;
 import com.intellij.sh.shellcheck.intention.SuppressInspectionIntention;
@@ -23,9 +22,7 @@ public class ShShellcheckInspectionTest extends LightCodeInsightFixtureTestCase 
   public void setUp() throws Exception {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
-    if (!SystemInfoRt.isWindows) {
-      ShShellcheckTestUtil.downloadShellcheck();
-    }
+    ShShellcheckTestUtil.downloadShellcheck();
   }
 
   @Override
@@ -53,8 +50,6 @@ public class ShShellcheckInspectionTest extends LightCodeInsightFixtureTestCase 
   }
 
   public void testDisableInspection() {
-    if (SystemInfoRt.isWindows) return;
-
     configFile();
     ShShellcheckInspection inspectionBefore = ShShellcheckInspection.findShShellcheckInspection(myFixture.getFile());
     assertEmpty(inspectionBefore.getDisabledInspections());
@@ -67,8 +62,6 @@ public class ShShellcheckInspectionTest extends LightCodeInsightFixtureTestCase 
   }
 
   private void doTest(Class<? extends IntentionAction> intentionType) {
-    if (SystemInfoRt.isWindows) return;
-
     configFile();
     applyIntentions(intentionType);
     checkResult();
