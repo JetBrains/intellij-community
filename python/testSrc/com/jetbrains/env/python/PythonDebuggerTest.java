@@ -2077,6 +2077,23 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testDontStopOnSystemExit() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_sys_exit.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForOutput("Process finished with exit code 0");
+      }
+    });
+  }
+
+  @Test
   public void testExecAndSpawnWithBytesArgs() {
 
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);

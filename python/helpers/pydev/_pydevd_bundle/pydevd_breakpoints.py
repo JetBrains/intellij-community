@@ -117,7 +117,7 @@ def stop_on_unhandled_exception(py_db, thread, additional_info, arg):
     if tb is None:  # sometimes it can be None, e.g. with GTK
         return
 
-    if exctype is KeyboardInterrupt:
+    if exctype in (KeyboardInterrupt, SystemExit):
         return
 
     frames = []
