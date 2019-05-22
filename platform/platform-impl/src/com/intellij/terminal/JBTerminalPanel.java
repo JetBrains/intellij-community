@@ -40,8 +40,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.util.List;
 
-public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable,
-                                                              IdeEventQueue.EventDispatcher {
+public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable {
   private static final Logger LOG = Logger.getLogger(JBTerminalPanel.class);
   private static final String[] ACTIONS_TO_SKIP = new String[]{
     "ActivateTerminalToolWindow",
@@ -79,6 +78,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "Switcher"
   };
 
+  private final IdeEventQueue.EventDispatcher myEventDispatcher = new TerminalEventDispatcher();
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final TerminalEscapeKeyListener myEscapeKeyListener;
 
@@ -129,16 +129,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
         }
       }
     }
-  }
-
-  @Override
-  public boolean dispatch(@NotNull AWTEvent e) {
-    if (e instanceof KeyEvent && !skipKeyEvent((KeyEvent)e)) {
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
-      dispatchEvent(e);
-      return true;
-    }
-    return false;
   }
 
   private boolean skipKeyEvent(KeyEvent e) {
@@ -248,7 +238,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   private void installKeyDispatcher() {
     if (mySettingsProvider.overrideIdeShortcuts()) {
       myActionsToSkip = setupActionsToSkip();
-      IdeEventQueue.getInstance().addDispatcher(this, this);
+      IdeEventQueue.getInstance().addDispatcher(myEventDispatcher, this);
     }
     else {
       myActionsToSkip = null;
@@ -271,7 +261,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   public void focusLost(FocusEvent event) {
     if (myActionsToSkip != null) {
       myActionsToSkip = null;
-      IdeEventQueue.getInstance().removeDispatcher(this);
+      IdeEventQueue.getInstance().removeDispatcher(myEventDispatcher);
     }
 
     refreshAfterExecution();
@@ -304,5 +294,16 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       LocalFileSystem.getInstance().refresh(true);
     }
   }
-}
 
+  private class TerminalEventDispatcher implements IdeEventQueue.EventDispatcher {
+    @Override
+    public boolean dispatch(@NotNull AWTEvent e) {
+      if (e instanceof KeyEvent && !skipKeyEvent((KeyEvent)e)) {
+        IdeEventQueue.getInstance().flushDelayedKeyEvents();
+        dispatchEvent(e);
+        return true;
+      }
+      return false;
+    }
+  }
+}
