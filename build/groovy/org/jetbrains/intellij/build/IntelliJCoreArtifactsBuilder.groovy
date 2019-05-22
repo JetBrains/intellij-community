@@ -49,7 +49,7 @@ class IntelliJCoreArtifactsBuilder {
     "intellij.jvm.analysis.impl",
   ]
   private static final List<String> VERSIONED_LIBRARIES = [
-    "ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "lz4-java", "imgscalr", "batik", "xmlgraphics-commons",
+    "ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "lz4-java", "imgscalr", "batik-transcoder", "xmlgraphics-commons",
     "OroMatcher", "jna", "Log4J", "StreamEx", "Java Compatibility"
   ]
   private static final List<String> UNVERSIONED_LIBRARIES = [
