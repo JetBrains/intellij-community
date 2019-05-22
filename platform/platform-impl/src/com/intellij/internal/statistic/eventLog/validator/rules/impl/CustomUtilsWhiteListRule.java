@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class CustomUtilsWhiteListRule extends PerformanceCareRule implements FUSRule {
   public static final ExtensionPointName<CustomUtilsWhiteListRule> EP_NAME =
-    ExtensionPointName.create("com.intellij.statistics.validation.customUtilsWhiteListRule");
+    ExtensionPointName.create("com.intellij.statistics.validation.customUtilWhiteListRule");
 
   public abstract boolean acceptRuleId(@Nullable String ruleId);
 
