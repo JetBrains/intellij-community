@@ -6,16 +6,25 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.beanProperties.BeanProperty;
 import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CommonEditorBeanPropertyRenameHandler extends BeanPropertyRenameHandler {
+public abstract class CommonEditorReferenceBeanPropertyRenameHandler extends BeanPropertyRenameHandler {
+
+  private final Class<? extends PsiReference> acceptableReferenceClass;
+
+  //maybe extract it to a separate EP if there will be too many subclasses just calling this constructor?
+  protected CommonEditorReferenceBeanPropertyRenameHandler(Class<? extends PsiReference> acceptableReference) {
+    this.acceptableReferenceClass = acceptableReference;
+  }
+
+  protected CommonEditorReferenceBeanPropertyRenameHandler() {
+    this.acceptableReferenceClass = PsiReference.class;
+  }
+
   @Override
   @Nullable
   protected BeanProperty getProperty(DataContext context) {
@@ -42,12 +51,26 @@ public abstract class CommonEditorBeanPropertyRenameHandler extends BeanProperty
   }
 
   @Nullable
-  protected abstract BeanProperty getBeanProperty(@NotNull Editor editor, @NotNull PsiFile file);
+  protected BeanProperty getBeanProperty(@NotNull final Editor editor, @NotNull final PsiFile file) {
+    final int offset = editor.getCaretModel().getOffset();
+    final PsiReference reference = file.findReferenceAt(offset);
+    if (reference == null) return null;
+    return getBeanProperty(reference);
+  }
 
   @Nullable
-  protected BeanProperty getBeanProperty(PsiElement psiElement) {
+  protected BeanProperty getBeanProperty(@Nullable PsiElement psiElement) {
     if (psiElement instanceof PsiMethod && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)psiElement)) {
       return BeanProperty.createBeanProperty((PsiMethod)psiElement);
+    }
+    return null;
+  }
+
+  @Nullable
+  protected BeanProperty getBeanProperty(@NotNull PsiReference reference) {
+    if (acceptableReferenceClass.isAssignableFrom(reference.getClass())) {
+      final PsiElement psiElement = reference.resolve();
+      return getBeanProperty(psiElement);
     }
     return null;
   }
