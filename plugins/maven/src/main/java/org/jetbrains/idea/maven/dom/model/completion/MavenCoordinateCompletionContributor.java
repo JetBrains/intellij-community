@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.model.completion;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementWeigher;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,7 +17,6 @@ import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenArtifactInfoInsertionHandler;
@@ -32,14 +32,12 @@ import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIE
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
 import static org.jetbrains.concurrency.Promise.State.PENDING;
 
-public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifactCoordinatesConverter> extends CompletionContributor {
+public abstract class MavenCoordinateCompletionContributor extends CompletionContributor {
 
   private final String myTagId;
-  private final Class<T> myConvertorKlass;
 
-  protected MavenCoordinateCompletionContributor(String id, Class<T> klass) {
+  protected MavenCoordinateCompletionContributor(String id) {
     myTagId = id;
-    myConvertorKlass = klass;
   }
 
   @Override
@@ -49,20 +47,11 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
     if (placeChecker.isCorrectPlace()) {
 
       MavenDomShortArtifactCoordinates coordinates = placeChecker.getCoordinates();
-
-      String groupId = trim(coordinates.getGroupId().getStringValue());
-      String artifactId = trim(coordinates.getArtifactId().getStringValue());
-
-      if (!validate(groupId, artifactId)) {
-        return;
-      }
-
       result = amendResultSet(result);
-      SearchParameters searchParameters = createSearchParameters(parameters);
       ConcurrentLinkedDeque<MavenRepositoryArtifactInfo> cld = new ConcurrentLinkedDeque<>();
       Promise<Void> promise = find(
         MavenProjectIndicesManager.getInstance(placeChecker.getProject()).getDependencySearchService(),
-        groupId, artifactId, SearchParameters.DEFAULT,
+        coordinates, parameters,
         mdci -> cld.add(mdci)
       );
 
@@ -73,7 +62,7 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
           fillResult(result, item);
         }
       }
-      fillAfter(result, groupId, artifactId);
+      fillAfter(result);
     }
   }
 
@@ -84,24 +73,17 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
     return SearchParameters.DEFAULT;
   }
 
-  protected Promise<Void> find(DependencySearchService service, String groupId,
-                               String artifactId,
-                               SearchParameters parameters,
-                               Consumer<MavenRepositoryArtifactInfo> consumer) {
-    if (StringUtil.isEmpty(artifactId)) {
-      return service.fulltextSearch(groupId, parameters, consumer);
-    }
-    if (StringUtil.isEmpty(groupId)) {
-      return service.fulltextSearch(artifactId, parameters, consumer);
-    }
-    return service.suggestPrefix(groupId, artifactId, parameters, consumer);
-  }
+  protected abstract Promise<Void> find(@NotNull DependencySearchService service,
+                                        @NotNull MavenDomShortArtifactCoordinates coordinates,
+                                        @NotNull CompletionParameters parameters,
+                                        @NotNull Consumer<MavenRepositoryArtifactInfo> consumer);
+
 
   protected boolean validate(String groupId, String artifactId) {
     return true;
   }
 
-  protected void fillAfter(CompletionResultSet result, String groupId, String artifactId) {
+  protected void fillAfter(CompletionResultSet result) {
   }
 
   protected void fillResult(@NotNull CompletionResultSet result, MavenRepositoryArtifactInfo item) {
@@ -115,8 +97,8 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
     return result;
   }
 
-  private @NotNull
-  static String trim(@Nullable String value) {
+  @NotNull
+  protected static String trimDummy(@Nullable String value) {
     if (value == null) {
       return "";
     }
@@ -127,7 +109,7 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
     private boolean badPlace;
     private CompletionParameters myParameters;
     private Project myProject;
-    private MavenDomShortArtifactCoordinates myParent;
+    private MavenDomShortArtifactCoordinates domCoordinates;
 
     public PlaceChecker(CompletionParameters parameters) {myParameters = parameters;}
 
@@ -138,7 +120,7 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
     }
 
     MavenDomShortArtifactCoordinates getCoordinates() {
-      return myParent;
+      return domCoordinates;
     }
 
     public PlaceChecker checkPlace() {
@@ -171,21 +153,49 @@ public abstract class MavenCoordinateCompletionContributor<T extends MavenArtifa
 
       myProject = element.getProject();
 
+      switch (myTagId) {
+        case "artifactId":
+        case "groupId":
+        case "version": {
+          checkPlaceForChildrenTags(tag);
+          break;
+        }
+
+        case "dependency":
+        case "plugin": {
+          checkPlaceForParentTags(tag);
+          break;
+        }
+      }
+      return this;
+    }
+
+    private void checkPlaceForChildrenTags(XmlTag tag) {
       DomElement domElement = DomManager.getDomManager(myProject).getDomElement(tag);
 
       if (!(domElement instanceof GenericDomValue)) {
         badPlace = true;
-        return this;
+        return;
       }
 
       DomElement parent = domElement.getParent();
-      if (!(parent instanceof MavenDomShortArtifactCoordinates)) {
-        badPlace = true;
-        return this;
+      if (parent instanceof MavenDomShortArtifactCoordinates) {
+        domCoordinates = (MavenDomShortArtifactCoordinates)parent;
       }
-      myParent = (MavenDomShortArtifactCoordinates)parent;
-      badPlace = !myConvertorKlass.isAssignableFrom(((GenericDomValue)domElement).getConverter().getClass());
-      return this;
+      else {
+        badPlace = true;
+      }
+    }
+
+    private void checkPlaceForParentTags(XmlTag tag) {
+      DomElement domElement = DomManager.getDomManager(myProject).getDomElement(tag);
+
+      if (domElement instanceof MavenDomShortArtifactCoordinates) {
+        domCoordinates = (MavenDomShortArtifactCoordinates)domElement;
+      }
+      else {
+        badPlace = true;
+      }
     }
   }
 }

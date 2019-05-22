@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.model.completion;
 
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.impl.NegatingComparable;
@@ -24,26 +25,41 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.MavenVersionComparable;
-import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesVersionConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
+import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 
-/**
- * @author Sergey Evdokimov
- */
-public class MavenVersionCompletionContributor extends MavenCoordinateCompletionContributor<MavenArtifactCoordinatesVersionConverter> {
+import java.util.function.Consumer;
 
-
+public class MavenVersionCompletionContributor extends MavenCoordinateCompletionContributor {
   public MavenVersionCompletionContributor() {
-    super("version", MavenArtifactCoordinatesVersionConverter.class);
+    super("version");
   }
 
+  @Override
+  protected Promise<Void> find(@NotNull DependencySearchService service,
+                               @NotNull MavenDomShortArtifactCoordinates coordinates,
+                               @NotNull CompletionParameters parameters,
+                               @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
+
+    SearchParameters searchParameters = createSearchParameters(parameters);
+    String groupId = trimDummy(coordinates.getGroupId().getStringValue());
+    String artifactId = trimDummy(coordinates.getArtifactId().getStringValue());
+    return service.suggestPrefix(groupId, artifactId, searchParameters, mrai -> {
+      if (StringUtil.equals(mrai.getArtifactId(), artifactId) && StringUtil.equals(mrai.getGroupId(), groupId)) {
+        consumer.accept(mrai);
+      }
+    });
+  }
 
   @Override
-  protected void fillAfter(CompletionResultSet result, String groupId, String artifactId) {
+  protected void fillAfter(CompletionResultSet result) {
     if (MavenServerManager.getInstance().isUseMaven2()) {
       result.addElement(LookupElementBuilder.create(RepositoryLibraryDescription.ReleaseVersionId).withStrikeoutness(true));
       result.addElement(LookupElementBuilder.create(RepositoryLibraryDescription.LatestVersionId).withStrikeoutness(true));

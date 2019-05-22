@@ -30,11 +30,6 @@ public class PackageSearchService {
   public Promise<Void> fullTextSearch(@NotNull String text,
                                       @NotNull SearchParameters parameters,
                                       @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
-    if (StringUtil.isEmpty(text)) {
-      AsyncPromise<Void> result = new AsyncPromise<>();
-      result.setResult(null);
-      return result;
-    }
     ProgressManager.checkCanceled();
     String url = createUrlFullTextSearch(text);
     return doRequest(parameters, consumer, url);
@@ -45,11 +40,6 @@ public class PackageSearchService {
                                      @NotNull String artifactId,
                                      @NotNull SearchParameters parameters,
                                      @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
-    if (StringUtil.isEmpty(groupId) && StringUtil.isEmpty(artifactId)) {
-      AsyncPromise<Void> result = new AsyncPromise<>();
-      result.setResult(null);
-      return result;
-    }
     ProgressManager.checkCanceled();
     String url = createUrlSuggestPrefix(groupId, artifactId);
     return doRequest(parameters, consumer, url);

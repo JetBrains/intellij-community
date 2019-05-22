@@ -29,11 +29,7 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
-import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependencyManagement;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.indices.IndicesBundle;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchResult;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
@@ -49,6 +45,7 @@ import java.util.List;
 
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER;
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
+import static org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem.Type.PROJECT;
 
 /**
  * @author Sergey Evdokimov
@@ -146,21 +143,14 @@ public class MavenDependencyCompletionUtil {
                            }));
   }
 
-  public static LookupElementBuilder lookupElement(MavenDependencyCompletionItem item) {
-    return lookupElement(item, getLookupString(item));
-  }
-
   public static LookupElementBuilder lookupElement(MavenRepositoryArtifactInfo info) {
-    return LookupElementBuilder.create(info, getLookupString(info.getItems()[0]))
-      .withPresentableText(getPresentableText(info))
-      .withIcon(getIcon(info));
+    LookupElementBuilder elementBuilder = LookupElementBuilder.create(info, getLookupString(info.getItems()[0]))
+      .withPresentableText(getPresentableText(info));
+    if (info.getItems().length == 1) {
+      return elementBuilder.withIcon(getIcon(info.getItems()[0].getType()));
+    }
+    return elementBuilder;
   }
-
-  private static Icon getIcon(MavenRepositoryArtifactInfo info) {
-    return getIcon(
-      Collections.max(ContainerUtil.newArrayList(info.getItems()), Comparator.comparing(i -> i.getType().getWeight())).getType());
-  }
-
   private static String getPresentableText(MavenRepositoryArtifactInfo info) {
     if (info.getItems().length == 1) {
       return getLookupString(info.getItems()[0]);
@@ -172,20 +162,9 @@ public class MavenDependencyCompletionUtil {
 
   @Nullable
   public static Icon getIcon(@Nullable MavenDependencyCompletionItem.Type type) {
-    if (type == null) {
-      return null;
+    if (type == PROJECT) {
+      return AllIcons.Nodes.Module;
     }
-    switch (type) {
-      case REMOTE:
-        return AllIcons.Nodes.PpWeb;
-      case LOCAL:
-        return AllIcons.Nodes.PpLibFolder;
-      case CACHED_ERROR:
-        return AllIcons.Nodes.PpInvalid;
-      case PROJECT:
-        return AllIcons.Nodes.Module;
-    }
-
     return null;
   }
 

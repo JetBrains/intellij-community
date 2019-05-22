@@ -5,13 +5,19 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesGroupIdConverter;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.indices.IndicesBundle;
+import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 
-public class MavenGroupIdCompletionContributor extends MavenCoordinateCompletionContributor<MavenArtifactCoordinatesGroupIdConverter> {
+import java.util.function.Consumer;
+
+public class MavenGroupIdCompletionContributor extends MavenCoordinateCompletionContributor {
 
   public MavenGroupIdCompletionContributor() {
-    super("groupId", MavenArtifactCoordinatesGroupIdConverter.class);
+    super("groupId");
   }
 
   @Nullable
@@ -21,5 +27,16 @@ public class MavenGroupIdCompletionContributor extends MavenCoordinateCompletion
       return IndicesBundle.message("maven.dependency.completion.group.empty");
     }
     return null;
+  }
+
+  @Override
+  protected Promise<Void> find(@NotNull DependencySearchService service,
+                               @NotNull MavenDomShortArtifactCoordinates coordinates,
+                               @NotNull CompletionParameters parameters,
+                               @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
+
+    SearchParameters searchParameters = createSearchParameters(parameters);
+    String groupId = trimDummy(coordinates.getGroupId().getStringValue());
+    return service.fulltextSearch(groupId, searchParameters, consumer);
   }
 }

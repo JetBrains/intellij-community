@@ -45,17 +45,32 @@ public class MavenArtifactInfoInsertionHandler implements InsertHandler<LookupEl
       return;
     }
     context.commitDocument();
-    DomElement domElement = DomManager.getDomManager(context.getProject()).getDomElement(tag.getParentTag());
-    if (!(domElement instanceof MavenDomArtifactCoordinates)) return;
-    MavenDomArtifactCoordinates domCoordinates = (MavenDomArtifactCoordinates)domElement;
-
-
+    MavenDomArtifactCoordinates domCoordinates = getDomCoordinatesFromCurrentTag(context, tag);
+    if (domCoordinates == null) {
+      return;
+    }
     setDependency(context, completionItem, (XmlFile)contextFile, domCoordinates);
   }
 
-  private void setDependency(@NotNull InsertionContext context,
-                             MavenRepositoryArtifactInfo completionItem,
-                             XmlFile contextFile, MavenDomArtifactCoordinates domCoordinates) {
+
+  private static MavenDomArtifactCoordinates getDomCoordinatesFromCurrentTag(@NotNull InsertionContext context, @NotNull XmlTag tag) {
+    DomElement element = DomManager.getDomManager(context.getProject()).getDomElement(tag);
+    //todo: show notification
+    if (element instanceof MavenDomArtifactCoordinates) {
+      tag.getValue().setText("");
+      return (MavenDomArtifactCoordinates)element;
+    }
+    //try parent
+    element = DomManager.getDomManager(context.getProject()).getDomElement(tag.getParentTag());
+    if (element instanceof MavenDomArtifactCoordinates) {
+      return (MavenDomArtifactCoordinates)element;
+    }
+    return null;
+  }
+
+  private static void setDependency(@NotNull InsertionContext context,
+                                    MavenRepositoryArtifactInfo completionItem,
+                                    XmlFile contextFile, MavenDomArtifactCoordinates domCoordinates) {
     if (completionItem.getGroupId() == null) {
       return;
     }
