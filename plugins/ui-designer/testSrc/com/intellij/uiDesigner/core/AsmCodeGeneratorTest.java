@@ -31,6 +31,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
@@ -51,8 +52,8 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -83,6 +84,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     appendPath(cp, DataProvider.class);
     appendPath(cp, BaseState.class);
     appendPath(cp, KDeclarationContainer.class);
+    appendPath(cp, NotNullProducer.class);
     myClassFinder = new MyClassFinder(
       new URL[] {new File(swingPath).toURI().toURL()},
       cp.toArray(new URL[0])
