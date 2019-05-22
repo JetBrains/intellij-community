@@ -47,6 +47,12 @@ public class ReflectionAccessorToEverything {
     }
 
     @Override
+    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+      super.visitDeclarationStatement(statement);
+      addIfNotNull(LocalVariableDeclarationDescriptor.createIfInaccessible(statement));
+    }
+
+    @Override
     public void visitField(PsiField field) {
       super.visitField(field);
       addIfNotNull(FieldDeclarationDescriptor.createIfInaccessible(field));
