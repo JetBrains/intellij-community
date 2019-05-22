@@ -136,7 +136,13 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File, block: (fi
 }
 
 internal fun commitAndPush(repo: File, branch: String, message: String, user: String, email: String): String {
-  execute(repo, GIT, "commit", "-m", message, "--author=$user <$email>")
+  execute(
+    repo, GIT,
+    "-c", "user.name=$user",
+    "-c", "user.email=$email",
+    "commit", "-m", message,
+    "--author=$user <$email>"
+  )
   push(repo, "+$branch:$branch")
   return commitInfo(repo)?.hash ?: error("Unable to read last commit")
 }
