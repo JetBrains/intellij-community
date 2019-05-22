@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ImportTestsFromFileAction extends AbstractImportTestsAction {
   public ImportTestsFromFileAction() {
-    super(null, "Import Tests From File ...", "Import tests from file", null);
+    super(null, "Import Tests from File...", "Import the results of a test execution from an XML file", null);
   }
 
   @Nullable
