@@ -153,7 +153,7 @@ class PsiReflectionAccessUtil {
   @Contract("null -> null")
   @Nullable
   private static String nearestAccessibleBaseClassName(@Nullable PsiClass psiClass) {
-    while (psiClass != null && !psiClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+    while (psiClass != null && !isAccessible(psiClass)) {
       psiClass = psiClass.getSuperClass();
     }
 
