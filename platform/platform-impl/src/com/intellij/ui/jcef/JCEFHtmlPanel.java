@@ -48,6 +48,13 @@ public class JCEFHtmlPanel implements Disposable {
         "--disable-gpu"
       }) {});
     }
+    else if (SystemInfo.isLinux) {
+      CefApp.startup(); // force loading libjcef.so
+      String JCEF_PATH = System.getProperty("java.home") + "/lib";
+      settings.resources_dir_path = JCEF_PATH;
+      settings.locales_dir_path = JCEF_PATH + "/locales";
+      settings.browser_subprocess_path = JCEF_PATH + "/jcef_helper";
+    }
     ourCefApp = CefApp.getInstance(settings);
     ourCefClient = ourCefApp.createClient();
     ourCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {

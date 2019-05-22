@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.settings;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -19,8 +20,8 @@ public final class MarkdownPreviewSettings {
   @Tag("HtmlPanelProviderInfo")
   @Property(surroundWithTag = false)
   @NotNull
-  //private MarkdownHtmlPanelProvider.ProviderInfo myHtmlPanelProviderInfo = new JavaFxHtmlPanelProvider().getProviderInfo();
-  private MarkdownHtmlPanelProvider.ProviderInfo myHtmlPanelProviderInfo = new JCEFHtmlPanelProvider().getProviderInfo();
+  private MarkdownHtmlPanelProvider.ProviderInfo myHtmlPanelProviderInfo =
+    Registry.is("ide.browser.jcef.enabled") ? new JCEFHtmlPanelProvider().getProviderInfo() : new JavaFxHtmlPanelProvider().getProviderInfo();
 
   @Attribute("UseGrayscaleRendering")
   private boolean myUseGrayscaleRendering = true;

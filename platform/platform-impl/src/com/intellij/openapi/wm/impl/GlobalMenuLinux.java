@@ -192,13 +192,18 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       };
 
-      // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
-      try {
-        PlatformImpl.startup(()->ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
-      } catch (Throwable e) {
-        LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
-        final Thread glibMain = new Thread(()->ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished), "GlobalMenuLinux loop");
-        glibMain.start();
+      // JCEF/JBR11 is not compliant with JFX
+      if (!Registry.is("ide.browser.jcef.enabled")) {
+        // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
+        try {
+          PlatformImpl.startup(() -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
+        }
+        catch (Throwable e) {
+          LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
+          final Thread glibMain = new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
+                                             "GlobalMenuLinux loop");
+          glibMain.start();
+        }
       }
 
       // register toggle-swing-menu action (to be able to enable swing menu when system applet is died)
