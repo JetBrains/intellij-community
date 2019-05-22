@@ -108,43 +108,44 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     catch (ignored: NoSuchFileException) {
       null
     }
+
     val newText = generate(module, iconsClassInfo, getCopyrightComment(oldText))
-
-    val oldLines = oldText?.lines() ?: emptyList()
-    val newLines = newText?.lines() ?: emptyList()
-
-    if (newLines.isNotEmpty()) {
-      processedClasses.incrementAndGet()
-
-      if (oldLines != newLines) {
-        if (writeChangesToDisk) {
-          val separator = getSeparators(oldText)
-          Files.createDirectories(outFile.parent)
-          Files.write(outFile, newLines.joinToString(separator = separator.separatorString).toByteArray())
-          println("Updated icons class: ${outFile.fileName}")
-        }
-        else {
-          val sb = StringBuilder()
-          var ch = Diff.buildChanges(oldLines.toTypedArray(), newLines.toTypedArray())
-          while (ch != null) {
-            val deleted = oldLines.subList(ch.line0, ch.line0 + ch.deleted)
-            val inserted = newLines.subList(ch.line1, ch.line1 + ch.inserted)
-
-            if (sb.isNotEmpty()) sb.append("=".repeat(20)).append("\n")
-            deleted.forEach { sb.append("-").append(it).append("\n") }
-            inserted.forEach { sb.append("+").append(it).append("\n") }
-
-            ch = ch.link
-          }
-
-          modifiedClasses.add(ModifiedClass(module, outFile, sb))
-        }
-      }
-    }
-    else {
+    if (newText.isNullOrEmpty()) {
       if (Files.exists(outFile)) {
         obsoleteClasses.add(outFile)
       }
+      return
+    }
+
+    processedClasses.incrementAndGet()
+
+    val newLines = newText.lines()
+    val oldLines = oldText?.lines() ?: emptyList()
+    if (oldLines == newLines) {
+      return
+    }
+
+    if (writeChangesToDisk) {
+      val separator = getSeparators(oldText)
+      Files.createDirectories(outFile.parent)
+      Files.write(outFile, newLines.joinToString(separator = separator.separatorString).toByteArray())
+      println("Updated icons class: ${outFile.fileName}")
+    }
+    else {
+      val sb = StringBuilder()
+      var ch = Diff.buildChanges(oldLines.toTypedArray(), newLines.toTypedArray())
+      while (ch != null) {
+        val deleted = oldLines.subList(ch.line0, ch.line0 + ch.deleted)
+        val inserted = newLines.subList(ch.line1, ch.line1 + ch.inserted)
+
+        if (sb.isNotEmpty()) sb.append("=".repeat(20)).append("\n")
+        deleted.forEach { sb.append("-").append(it).append("\n") }
+        inserted.forEach { sb.append("+").append(it).append("\n") }
+
+        ch = ch.link
+      }
+
+      modifiedClasses.add(ModifiedClass(module, outFile, sb))
     }
   }
 
@@ -190,7 +191,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     return StringUtil.detectSeparators(text) ?: LineSeparator.LF
   }
 
-  private fun generate(module: JpsModule, info: IconsClassInfo, copyrightComment: String): String? {
+  private fun generate(module: JpsModule, info: IconsClassInfo, copyrightComment: String): CharSequence? {
     val imageCollector = ImageCollector(projectHome.toPath(), iconsOnly = true, className = info.className)
 
     val images = imageCollector.collect(module, includePhantom = true)
@@ -200,6 +201,10 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
 
     imageCollector.printUsedIconRobots()
 
+    return writeClass(copyrightComment, info, images)
+  }
+
+  private fun writeClass(copyrightComment: String, info: IconsClassInfo, images: List<ImagePaths>): CharSequence? {
     val answer = StringBuilder()
     answer.append(copyrightComment)
     append(answer, "package ${info.packageName};\n", 0)
@@ -214,7 +219,6 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     append(answer, " * NOTE THIS FILE IS AUTO-GENERATED", 0)
     append(answer, " * DO NOT EDIT IT BY HAND, run \"Generate icon classes\" configuration instead", 0)
     append(answer, " */", 0)
-
 
     answer.append("public")
     // backward compatibility
@@ -243,7 +247,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
 
     answer.append(inners)
     append(answer, "}", 0)
-    return answer.toString()
+    return answer
   }
 
   private fun processIcons(images: List<ImagePaths>, answer: StringBuilder, customLoad: Boolean, depth: Int) {
