@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.process;
 
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -154,6 +155,31 @@ public class OSProcessUtil {
     }
 
     return ourPid;
+  }
+
+  @NotNull
+  public static ProcessMachineType getProcessMachineType(int pid) {
+    if (SystemInfo.isWindows) {
+      return WinProcessManager.getProcessMachineType(pid);
+    }
+    else {
+      return UnixProcessManager.getProcessMachineType(pid);
+    }
+  }
+
+  @NotNull
+  public static ProcessMachineType getExecutableMachineType(@NotNull String path) {
+    try {
+      if (SystemInfo.isWindows) {
+        return WinProcessManager.readPeMachineType(path);
+      }
+      else {
+        return UnixProcessManager.readElfMachineType(path);
+      }
+    }
+    catch (IOException e) {
+      return ProcessMachineType.UNKNOWN;
+    }
   }
 
   /** @deprecated trivial; use {@link #getProcessList()} directly (to be removed in IDEA 2019) */
