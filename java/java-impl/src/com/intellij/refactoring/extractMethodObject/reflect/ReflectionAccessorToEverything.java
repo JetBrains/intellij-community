@@ -41,6 +41,12 @@ public class ReflectionAccessorToEverything {
     }
 
     @Override
+    public void visitThisExpression(PsiThisExpression expression) {
+      super.visitThisExpression(expression);
+      addIfNotNull(ThisReferenceDescriptor.createIfInaccessible(expression));
+    }
+
+    @Override
     public void visitField(PsiField field) {
       super.visitField(field);
       addIfNotNull(FieldDeclarationDescriptor.createIfInaccessible(field));

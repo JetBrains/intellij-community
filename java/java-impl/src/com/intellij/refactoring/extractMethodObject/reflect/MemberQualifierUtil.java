@@ -30,31 +30,41 @@ public class MemberQualifierUtil {
     JavaResolveResult resolveResult = reference.advancedResolve(false);
     PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
     if (resolveScope instanceof PsiClass) {
-      String qualifiedName = ((PsiClass)resolveScope).getQualifiedName();
-      if (qualifiedName == null) {
-        // TODO: handle this case as well
-        LOG.warn("Anonymous and local classes are not supported yet");
-      }
-      else {
-        if (!PsiTreeUtil.isAncestor(outerClass, resolveScope, false)) {
-          PsiType accessibleType = PsiReflectionAccessUtil.nearestAccessibleType(PsiTypesUtil.getClassType((PsiClass)resolveScope));
-          PsiMethod generatedMethod = (PsiMethod)PsiTreeUtil
-            .findFirstParent(reference, x -> x instanceof PsiMethod && "invoke".equals(((PsiMethod)x).getName()));
-          if (generatedMethod == null) {
-            // TODO: provide this generated method somehow outside!
-            LOG.warn("Could not find method 'invoke' in the generated class");
-            return null;
-          }
-          PsiParameterList parameterList = generatedMethod.getParameterList();
-          String referredObjectName = "outerContext" + parameterList.getParametersCount();
-          parameterList.add(elementFactory.createParameter(referredObjectName, accessibleType));
-          generatedCall.getArgumentList()
-            .add(elementFactory.createExpressionFromText(qualifiedName + ".this", null));
-          return referredObjectName;
-        }
-      }
+      return handleThisReference(reference, (PsiClass)resolveScope, outerClass, generatedCall, elementFactory);
     }
 
     return null;
+  }
+
+  @NotNull
+  public static String handleThisReference(@NotNull PsiElement reference,
+                                           @NotNull PsiClass referencedClass,
+                                           @NotNull PsiClass outerClass,
+                                           @NotNull PsiMethodCallExpression generatedCall,
+                                           @NotNull PsiElementFactory elementFactory) {
+    String qualifiedName = (referencedClass).getQualifiedName();
+    if (qualifiedName == null) {
+      // TODO: handle this case as well
+      LOG.warn("Anonymous and local classes are not supported yet");
+    }
+    else {
+      if (!PsiTreeUtil.isAncestor(outerClass, referencedClass, false)) {
+        PsiType accessibleType = PsiReflectionAccessUtil.nearestAccessibleType(PsiTypesUtil.getClassType(referencedClass));
+        PsiMethod generatedMethod = (PsiMethod)PsiTreeUtil
+          .findFirstParent(reference, x -> x instanceof PsiMethod && "invoke".equals(((PsiMethod)x).getName()));
+        if (generatedMethod == null) {
+          // TODO: provide this generated method somehow outside!
+          LOG.warn("Could not find method 'invoke' in the generated class");
+          return "this";
+        }
+        PsiParameterList parameterList = generatedMethod.getParameterList();
+        String referredObjectName = "outerContext" + parameterList.getParametersCount();
+        parameterList.add(elementFactory.createParameter(referredObjectName, accessibleType));
+        generatedCall.getArgumentList().add(elementFactory.createExpressionFromText(qualifiedName + ".this", null));
+        return referredObjectName;
+      }
+    }
+
+    return "this";
   }
 }
