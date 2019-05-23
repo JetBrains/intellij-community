@@ -240,7 +240,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
         selectElement(firstWarning, null);
       }
       else {
-        TreeUtil.selectFirstNode(myTree);
+        TreeUtil.promiseSelectFirst(myTree);
       }
     }
   }

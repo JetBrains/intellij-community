@@ -94,7 +94,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
           myAlreadyDone = true;
           EdtInvocationManager.getInstance().invokeLater(() -> {
             TreeUtil.collapseAll(DiscoveredTestsTree.this, 0);
-            TreeUtil.selectFirstNode(DiscoveredTestsTree.this);
+            TreeUtil.promiseSelectFirst(DiscoveredTestsTree.this);
           });
         }
       }

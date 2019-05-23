@@ -291,10 +291,16 @@ public final class TreeUtil {
     return result;
   }
 
+  /**
+   * Tries to select the first node in the specified tree as soon as possible.
+   *
+   * @param tree a tree, which node should be selected
+   * @return a callback that will be done when first visible node is selected
+   * @see #promiseSelectFirst
+   */
   @NotNull
   public static ActionCallback selectFirstNode(@NotNull JTree tree) {
-    TreePath selectionPath = getFirstNodePath(tree);
-    return selectPath(tree, selectionPath);
+    return Promises.toActionCallback(promiseSelectFirst(tree));
   }
 
   @NotNull
