@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,8 +22,8 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     myItems = items;
   }
 
-  public CollectionListModel(@NotNull final List<? extends T> items) {
-    myItems = new ArrayList<>(items);
+  public CollectionListModel(@NotNull List<? extends T> items) {
+    myItems = ContainerUtilRt.newArrayList(items);
   }
 
   @SafeVarargs
