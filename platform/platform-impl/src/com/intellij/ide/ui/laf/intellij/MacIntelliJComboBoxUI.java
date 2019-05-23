@@ -191,8 +191,10 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
       g2.translate(r.x, r.y);
 
-      Color background = comboBox.isEditable() ? comboBox.getEditor().getEditorComponent().getBackground() :
-                           UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground");
+      boolean editable = comboBox.isEnabled() && editor != null && comboBox.isEditable();
+      Color background = editable ? editor.getBackground() :
+                         comboBox.isBackgroundSet() ? comboBox.getBackground() :
+                         UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground");
       g2.setColor(background);
 
       float arc = comboBox.isEditable() ? 0 : ARC.getFloat();
