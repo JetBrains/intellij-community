@@ -3,12 +3,25 @@ package git4idea.update
 
 import com.intellij.dvcs.DvcsUtil.getShortNames
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.UpdateSession
 import com.intellij.util.containers.MultiMap
 import git4idea.repo.GitRepository
 
-class GitUpdateSession(private val result: Boolean, private val skippedRoots: Map<GitRepository, String>) : UpdateSession {
+/**
+ * Ranges are null if update didn't start yet, in which case there are no new commits to display,
+ * and the error notification is shown from the GitUpdateProcess itself.
+ */
+class GitUpdateSession(private val project: Project,
+                       private val ranges: Map<GitRepository, HashRange>?,
+                       private val result: Boolean,
+                       private val skippedRoots: Map<GitRepository, String>) : UpdateSession {
 
   override fun getExceptions(): List<VcsException> {
     return emptyList()
@@ -42,5 +55,43 @@ class GitUpdateSession(private val result: Boolean, private val skippedRoots: Ma
     val result = MultiMap.create<String, GitRepository>()
     skippedRoots.forEach { (file, s) -> result.putValue(s, file) }
     return result
+  }
+
+  override fun showNotification() {
+    if (ranges != null) {
+      GitUpdateInfoAsLog(project, ranges) { updatedFilesNumber, updatedCommitsNumber, filteredCommitsNumber, viewCommits ->
+        val notification = prepareNotification(updatedFilesNumber, updatedCommitsNumber, filteredCommitsNumber)
+        notification.addAction(NotificationAction.createSimple("View Commits", viewCommits))
+        notification
+      }.buildAndShowNotification()
+    }
+  }
+
+  private fun prepareNotification(updatedFilesNumber: Int, updatedCommitsNumber: Int, filteredCommitsNumber: Int?): Notification {
+    val title: String
+    var content: String?
+    val type: NotificationType
+    val mainMessage = "$updatedFilesNumber ${pluralize("file", updatedFilesNumber)} " +
+                      "updated in $updatedCommitsNumber ${pluralize("commit", updatedCommitsNumber)}"
+    if (isCanceled) {
+      title = "Project Partially Updated"
+      content = mainMessage
+      type = NotificationType.WARNING
+    }
+    else {
+      title = mainMessage
+      content = if (filteredCommitsNumber != null) "$filteredCommitsNumber ${pluralize("commits", filteredCommitsNumber)} matching filters" else ""
+      type = NotificationType.INFORMATION
+    }
+
+    val additionalContent = getAdditionalNotificationContent()
+    if (additionalContent != null) {
+      if (content.isNotEmpty()) {
+        content += "<br/>"
+      }
+      content += additionalContent
+    }
+
+    return VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, type, null)
   }
 }

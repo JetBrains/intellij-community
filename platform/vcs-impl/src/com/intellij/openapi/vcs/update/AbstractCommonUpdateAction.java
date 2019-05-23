@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcs.ViewUpdateInfoNotification;
@@ -531,30 +532,35 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         ProgressManager.progress(VcsBundle.message("progress.text.updating.done"));
       }
 
-      final boolean noMerged = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty();
-      if (myUpdatedFiles.isEmpty() && myGroupedExceptions.isEmpty()) {
-        NotificationType type;
-        String content;
-        if (someSessionWasCancelled) {
-          content = VcsBundle.message("progress.text.updating.canceled");
-          type = NotificationType.WARNING;
+        final boolean noMerged = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty();
+        if (myUpdatedFiles.isEmpty() && myGroupedExceptions.isEmpty()) {
+          NotificationType type;
+          String content;
+          if (someSessionWasCancelled) {
+            content = VcsBundle.message("progress.text.updating.canceled");
+            type = NotificationType.WARNING;
+          }
+          else {
+            content = getAllFilesAreUpToDateMessage(myRoots);
+            type = NotificationType.INFORMATION;
+          }
+          VcsNotifier.getInstance(myProject).notify(STANDARD_NOTIFICATION.createNotification(content, type));
         }
-        else {
-          content = getAllFilesAreUpToDateMessage(myRoots);
-          type = NotificationType.INFORMATION;
-        }
-        VcsNotifier.getInstance(myProject).notify(STANDARD_NOTIFICATION.createNotification(content, type));
-      }
-      else if (!myUpdatedFiles.isEmpty()) {
+        else if (!myUpdatedFiles.isEmpty()) {
 
+          if (myUpdateSessions.size() == 1 && showsCustomNotification(myVcsToVirtualFiles.keySet())) {
+            // multi-vcs projects behave as before: only a compound notification & file tree is shown for them, for the sake of simplicity
+            myUpdateSessions.get(0).showNotification();
+          }
+          else {
+            final UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
+            final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
+            cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
 
-          final UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
-          final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-          cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
-
-          Notification notification = prepareNotification(tree, someSessionWasCancelled, myUpdateSessions);
-          notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View", notification));
-          VcsNotifier.getInstance(myProject).notify(notification);
+            Notification notification = prepareNotification(tree, someSessionWasCancelled, myUpdateSessions);
+            notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View", notification));
+            VcsNotifier.getInstance(myProject).notify(notification);
+          }
         }
 
 
@@ -605,5 +611,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     public void onCancel() {
       onSuccessImpl(true);
     }
+  }
+
+  public static boolean showsCustomNotification(@NotNull Collection<AbstractVcs> vcss) {
+    return ContainerUtil.all(vcss, vcs -> {
+             UpdateEnvironment environment = vcs.getUpdateEnvironment();
+             return environment != null && environment.hasCustomNotification();
+           });
   }
 }
