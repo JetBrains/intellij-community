@@ -75,7 +75,13 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     "ShowSettings",
     "RecentFiles",
-    "Switcher"
+    "Switcher",
+
+    "ResizeToolWindowLeft",
+    "ResizeToolWindowRight",
+    "ResizeToolWindowUp",
+    "ResizeToolWindowDown",
+    "MaximizeToolWindow"
   };
 
   private final TerminalEventDispatcher myEventDispatcher = new TerminalEventDispatcher();
