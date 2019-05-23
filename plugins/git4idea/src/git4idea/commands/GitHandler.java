@@ -472,7 +472,7 @@ public abstract class GitHandler {
   @Deprecated
   private Integer myExitCode; // exit code or null if exit code is not yet available
   @Deprecated
-  private final List<String> myLastOutput = Collections.syncronizedList(new ArrayList<>());
+  private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<>());
   @Deprecated
   private static final int LAST_OUTPUT_SIZE = 5;
   @Deprecated
