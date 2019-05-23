@@ -5,10 +5,6 @@ import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 /**
- * @author knisht
- */
-
-/**
  * An analogue for inference variable.
  *
  * Unit is [direct] if it should be instantiated directly to it's supertype.

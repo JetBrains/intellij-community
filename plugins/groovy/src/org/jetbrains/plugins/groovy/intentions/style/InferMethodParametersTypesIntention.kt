@@ -13,10 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 
 /**
- * @author knisht
- */
-
-/**
  * Intention for deducing method argument types based on method calls and method body
  */
 internal class InferMethodParametersTypesIntention : Intention() {

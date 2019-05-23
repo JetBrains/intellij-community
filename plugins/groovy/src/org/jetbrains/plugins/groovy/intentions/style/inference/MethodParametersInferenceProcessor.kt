@@ -15,10 +15,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
 /**
- * @author knisht
- */
-
-/**
  * Allows to infer method parameters types regarding method calls and inner dependencies between types.
  */
 class MethodParametersInferenceProcessor(private val method: GrMethod, private val driver: InferenceDriver = InferenceDriver(method)) {

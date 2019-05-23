@@ -7,11 +7,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrd
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
 
 /**
- * @author knisht
- */
-
-
-/**
  * Represents graph which is used for determining [InferenceUnitNode] dependencies.
  */
 data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {

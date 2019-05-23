@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 
 
-/**
- * @author knisht
- */
 fun produceTypeParameterName(index: Int): String {
   // todo: fix possible collisions
   val nameRange = 'Z'.toByte() - 'T'.toByte()

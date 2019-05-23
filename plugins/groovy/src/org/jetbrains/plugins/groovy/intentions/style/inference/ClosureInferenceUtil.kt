@@ -9,11 +9,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Expression
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
-/**
- * @author knisht
- */
-
-
 fun setUpClosuresSignature(inferenceSession: GroovyInferenceSession,
                            closureParameter: ParametrizedClosure) {
   val refs = ReferencesSearch.search(closureParameter.parameter, closureParameter.parameter.useScope).findAll()
