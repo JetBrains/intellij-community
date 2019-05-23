@@ -32,7 +32,7 @@ public class PackageServiceConfig {
   private volatile PackageSearchEndpointUrls myPackageSearchEndpointUrls;
 
   public PackageServiceConfig() {
-    if(ApplicationManager.getApplication().isUnitTestMode()){
+    if (ApplicationManager.getApplication().isUnitTestMode() || !Registry.is("maven.packagesearch.enabled")) {
       myPackageSearchEndpointUrls = null;
       return;
     }

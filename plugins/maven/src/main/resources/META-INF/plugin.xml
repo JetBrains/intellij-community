@@ -227,6 +227,9 @@
 
     <registryKey key="maven.spy.events.debug" defaultValue="false"
                  description="Enable Maven spy events to be printed in Build Tool Window console"/>
+
+    <registryKey key="maven.packagesearch.enabled" defaultValue="true"
+                 description="Enable package search dependency via https://package-search.services.jetbrains.com" restartRequired="true"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
