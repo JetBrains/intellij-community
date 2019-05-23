@@ -424,15 +424,6 @@ public class AllIcons {
   public final static class CodeStyle {
     /** 16x16 */ public static final Icon AddNewSectionRule = IconManager.getInstance().getIcon("/codeStyle/AddNewSectionRule.svg");
 
-    public final static class Mac {
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.CodeStyle.AddNewSectionRule */
-      @SuppressWarnings("unused")
-      @Deprecated
-      public static final Icon AddNewSectionRule = AllIcons.CodeStyle.AddNewSectionRule;
-
-    }
-
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
     @SuppressWarnings("unused")
     @Deprecated
@@ -456,22 +447,6 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Property = IconManager.getInstance().getIcon("/css/property.png");
-
-  }
-
-  public final static class Darcula {
-
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon DoubleComboArrow = IconManager.getInstance().getIcon("/darcula/doubleComboArrow.png");
-
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon TreeNodeCollapsed = IconManager.getInstance().getIcon("/darcula/treeNodeCollapsed.png");
-
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon TreeNodeExpanded = IconManager.getInstance().getIcon("/darcula/treeNodeExpanded.png");
 
   }
 
