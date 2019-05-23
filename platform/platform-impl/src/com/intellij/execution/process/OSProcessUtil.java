@@ -2,6 +2,8 @@
 
 package com.intellij.execution.process;
 
+import com.intellij.execution.ExecutableFileFormatUtil;
+import com.intellij.execution.MachineType;
 import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -158,7 +160,7 @@ public class OSProcessUtil {
   }
 
   @NotNull
-  public static ProcessMachineType getProcessMachineType(int pid) {
+  public static MachineType getProcessMachineType(int pid) {
     if (SystemInfo.isWindows) {
       return WinProcessManager.getProcessMachineType(pid);
     }
@@ -171,20 +173,20 @@ public class OSProcessUtil {
   }
 
   @NotNull
-  public static ProcessMachineType getExecutableMachineType(@NotNull String path) {
+  public static MachineType getExecutableMachineType(@NotNull String path) {
     try {
       if (SystemInfo.isWindows) {
-        return WinProcessManager.readPeMachineType(path);
+        return ExecutableFileFormatUtil.readPeMachineType(path);
       }
       else if (SystemInfo.isLinux) {
-        return UnixProcessManager.readElfMachineType(path);
+        return ExecutableFileFormatUtil.readElfMachineType(path);
       }
       else {
         throw new IllegalStateException("getExecutableMachineType() is not implemented for macOS Mach-O executables");
       }
     }
     catch (IOException e) {
-      return ProcessMachineType.UNKNOWN;
+      return MachineType.UNKNOWN;
     }
   }
 

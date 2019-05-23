@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
+import com.intellij.execution.ExecutableFileFormatUtil;
+import com.intellij.execution.MachineType;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
@@ -12,10 +14,10 @@ import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
 import sun.misc.Signal;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -256,45 +258,16 @@ public class UnixProcessManager {
   }
 
   @NotNull
-  public static ProcessMachineType getProcessMachineType(int pid) {
+  public static MachineType getProcessMachineType(int pid) {
     if (!SystemInfo.isLinux) {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported");
     }
     try {
-      return readElfMachineType("/proc/" + pid + "/exe");
+      return ExecutableFileFormatUtil.readElfMachineType("/proc/" + pid + "/exe");
     }
     catch (IOException e) {
       LOG.warn("Couldn't get executable information of process: pid=" + pid, e);
-      return ProcessMachineType.UNKNOWN;
-    }
-  }
-
-  @NotNull
-  public static ProcessMachineType readElfMachineType(@NotNull String path) throws IOException {
-    final File file = new File(path);
-    return readElfMachineType(file);
-  }
-
-  @NotNull
-  public static ProcessMachineType readElfMachineType(@NotNull File file) throws IOException {
-    if (!file.isFile() || !file.canRead()) {
-      throw new IOException("Not a readable file");
-    }
-    final long len = file.length();
-    if (len < 0) throw new IOException("File length reported negative");
-
-    try (FileInputStream stream = new FileInputStream(file)) {
-      final FileChannel channel = stream.getChannel();
-
-      final int ELF_HEADER_LEN = 0x14;
-      final ByteBuffer elfHeader = ByteBuffer.allocate(ELF_HEADER_LEN);
-      if (channel.read(elfHeader) < ELF_HEADER_LEN) throw new IOException("Not a valid ELF executable: ELF header is too short");
-      elfHeader.flip();
-      if (elfHeader.getInt() != 0x7F454C46 /* 0x75 ELF */) throw new IOException("Not a valid ELF executable: missing ELF magic");
-      elfHeader.position(0x12);
-      final short elfMachineType = elfHeader.order(ByteOrder.LITTLE_ENDIAN).getShort();
-
-      return ProcessMachineType.forElfMachineTypeCode(elfMachineType);
+      return MachineType.UNKNOWN;
     }
   }
 
