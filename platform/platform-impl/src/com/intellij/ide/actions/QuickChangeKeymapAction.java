@@ -8,19 +8,29 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public final class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     KeymapManagerImpl manager = (KeymapManagerImpl)KeymapManager.getInstance();
     Keymap current = manager.getActiveKeymap();
-    for (Keymap keymap : manager.getKeymaps(null)) {
+    List<Keymap> list = getUnsortedKeymaps();
+    list.sort(KeymapSchemeManager.KEYMAP_COMPARATOR);
+    for (Keymap keymap : list) {
       addKeymapAction(group, manager, current, keymap);
     }
+  }
+
+  @NotNull
+  private static List<Keymap> getUnsortedKeymaps() {
+    return ((KeymapManagerImpl)KeymapManager.getInstance()).getKeymaps(KeymapSchemeManager.FILTER);
   }
 
   private static void addKeymapAction(@NotNull DefaultActionGroup group, @NotNull KeymapManagerEx manager, @Nullable Keymap current, @NotNull Keymap keymap) {
@@ -34,6 +44,6 @@ public final class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
 
   @Override
   protected boolean isEnabled() {
-    return ((KeymapManagerImpl)KeymapManager.getInstance()).getKeymaps(null).size() > 1;
+    return getUnsortedKeymaps().size() > 1;
   }
 }

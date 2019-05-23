@@ -24,8 +24,9 @@ import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
  *
  * @author Sergey.Malenkov
  */
-final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> implements SchemesModel<KeymapScheme> {
-  private static final Predicate<Keymap> FILTER = keymap -> !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
+public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> implements SchemesModel<KeymapScheme> {
+  public static final Predicate<Keymap> FILTER = keymap -> !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
+
   private final List<KeymapScheme> list = new ArrayList<>();
   private final KeymapSelector selector;
 
@@ -205,8 +206,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
    */
   @NotNull
   private static List<Keymap> getKeymaps() {
-    KeymapManagerImpl manager = (KeymapManagerImpl)KeymapManager.getInstance();
-    return manager.getKeymaps(FILTER);
+    return ((KeymapManagerImpl)KeymapManager.getInstance()).getKeymaps(FILTER);
   }
 
   /**
@@ -250,7 +250,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     return list;
   }
 
-  private static final Comparator<Keymap> KEYMAP_COMPARATOR = (keymap1, keymap2) -> {
+  public static final Comparator<Keymap> KEYMAP_COMPARATOR = (keymap1, keymap2) -> {
     if (keymap1 == keymap2) return 0;
     if (keymap1 == null) return -1;
     if (keymap2 == null) return 1;
