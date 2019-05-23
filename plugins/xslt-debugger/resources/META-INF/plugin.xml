@@ -28,7 +28,4 @@
     <xsltRunnerExtension implementation="org.intellij.plugins.xsltDebugger.XsltDebuggerExtension"/>
   </extensions>
 
-  <!--
-  <helpset file="help.jar" path="/Help.hs"/>
-  -->
 </idea-plugin>
