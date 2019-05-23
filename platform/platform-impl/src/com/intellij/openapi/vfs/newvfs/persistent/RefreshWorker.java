@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.Queue;
@@ -32,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
@@ -332,11 +332,18 @@ public class RefreshWorker {
     return new ChildInfo(ChildInfo.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
-  static class RefreshCancelledException extends RuntimeException { }
+  static class RefreshCancelledException extends RuntimeException {
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+      return this;
+    }
+  }
 
   private void checkCancelled(@NotNull NewVirtualFile stopAt) throws RefreshCancelledException {
-    Function<? super VirtualFile, Boolean> cancellingCondition;
-    if (myCancelled || (cancellingCondition = ourCancellingCondition) != null && cancellingCondition.fun(stopAt)) {
+    if (ourTestListener != null) {
+      ourTestListener.accept(stopAt);
+    }
+    if (myCancelled) {
       if (LOG.isTraceEnabled()) LOG.trace("cancelled at: " + stopAt);
       forceMarkDirty(stopAt);
       while (!myRefreshQueue.isEmpty()) {
@@ -395,12 +402,12 @@ public class RefreshWorker {
     }
   }
 
-  private static Function<? super VirtualFile, Boolean> ourCancellingCondition;
+  private static Consumer<VirtualFile> ourTestListener;
 
   @TestOnly
-  public static void setCancellingCondition(@Nullable Function<? super VirtualFile, Boolean> condition) {
+  public static void setTestListener(@Nullable Consumer<VirtualFile> testListener) {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    LocalFileSystemRefreshWorker.setCancellingCondition(condition);
-    ourCancellingCondition = condition;
+    ourTestListener = testListener;
+    LocalFileSystemRefreshWorker.setTestListener(testListener);
   }
 }
