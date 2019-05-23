@@ -279,7 +279,8 @@ public class ExtractLightMethodObjectHandler {
       if (callExpression != null) {
         LOG.info("Use reflection to evaluate inaccessible members");
         new ReflectionAccessorToEverything(generatedClass, elementFactory).grantAccessThroughReflection(callExpression);
-        if (Registry.is("debugger.compiling.evaluator.extract.generated.class")) {
+        boolean isJdkAtLeast11 = javaVersion == null || javaVersion.isAtLeast(JavaSdkVersion.JDK_11);
+        if (isJdkAtLeast11 || Registry.is("debugger.compiling.evaluator.extract.generated.class")) {
           generatedClass = ExtractGeneratedClassUtil.extractGeneratedClass(generatedClass, elementFactory, anchor);
         }
       }
