@@ -1255,7 +1255,6 @@ public class HighlightMethodUtil {
     if (hasNoBody) {
       if (isExtension) {
         description = JavaErrorMessages.message("extension.method.should.have.a.body");
-        additionalFixes.add(QUICK_FIX_FACTORY.createAddMethodBodyFix(method));
       }
       else if (isInterface) {
         if (isStatic && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
@@ -1264,6 +1263,9 @@ public class HighlightMethodUtil {
         else if (isPrivate && languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
           description = "Private methods in interfaces should have a body";
         }
+      }
+      if (description != null) {
+        additionalFixes.add(QUICK_FIX_FACTORY.createAddMethodBodyFix(method));
       }
     }
     else if (isInterface) {
@@ -1280,6 +1282,7 @@ public class HighlightMethodUtil {
     }
     else if (isExtension) {
       description = JavaErrorMessages.message("extension.method.in.class");
+      additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.DEFAULT, false, false));
     }
     else if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       description = JavaErrorMessages.message("abstract.methods.cannot.have.a.body");
@@ -1292,7 +1295,9 @@ public class HighlightMethodUtil {
     TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
     if (!hasNoBody) {
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteMethodBodyFix(method));
+      if (!isExtension) {
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteMethodBodyFix(method));
+      }
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createPushDownMethodFix());
     }
     if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !isInterface) {
