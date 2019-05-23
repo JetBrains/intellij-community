@@ -106,12 +106,12 @@ final class DummyIconManager implements IconManager {
 
     @Override
     public int getIconWidth() {
-      return 0;
+      return 16;
     }
 
     @Override
     public int getIconHeight() {
-      return 0;
+      return 16;
     }
 
     @Override
