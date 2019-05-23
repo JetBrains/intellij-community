@@ -6,9 +6,8 @@ import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.keymap.impl.KeymapManagerImplKt;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +18,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
-import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
 
 /**
  * This class operates with the KeymapManager.
@@ -239,7 +237,7 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
     Keymap active = selected == null ? null : selected.getOriginal();
     if (!Objects.equals(active, KeymapManager.getInstance().getActiveKeymap())) return true;
 
-    Iterator<Keymap> keymaps = getKeymaps().stream().sorted(getKeymapComparator()).iterator();
+    Iterator<Keymap> keymaps = getKeymaps().stream().sorted(KeymapManagerImplKt.getKeymapComparator()).iterator();
     Iterator<KeymapScheme> schemes = list.iterator();
     while (keymaps.hasNext() && schemes.hasNext()) {
       if (!Objects.equals(keymaps.next(), schemes.next().getCurrent())) return true;
@@ -252,51 +250,10 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
     return list;
   }
 
-  @NotNull
-  public static Comparator<Keymap> getKeymapComparator() {
-    return KEYMAP_COMPARATOR.getValue();
-  }
-
-  private static final NotNullLazyValue<Comparator<Keymap>> KEYMAP_COMPARATOR = NotNullLazyValue.createValue(() -> {
-    String defaultKeymapName = DefaultKeymap.getInstance().getDefaultKeymapName();
-    Comparator<Keymap> comparator = (keymap1, keymap2) -> {
-      if (keymap1 == keymap2) return 0;
-      if (keymap1 == null) return -1;
-      if (keymap2 == null) return 1;
-
-      Keymap parent1 = !keymap1.canModify() ? null : keymap1.getParent();
-      Keymap parent2 = !keymap2.canModify() ? null : keymap2.getParent();
-
-      if (parent1 == null) parent1 = keymap1;
-      if (parent2 == null) parent2 = keymap2;
-
-      if (parent1 == parent2) {
-        if (!keymap1.canModify()) return -1;
-        if (!keymap2.canModify()) return 1;
-
-        return compareByName(keymap1, keymap2, defaultKeymapName);
-      }
-      else {
-        return compareByName(parent1, parent2, defaultKeymapName);
-      }
-    };
-    return comparator;
-  });
-
-  private static int compareByName(@NotNull Keymap keymap1, @NotNull Keymap keymap2, @NotNull String defaultKeymapName) {
-    if (keymap1.getName().equals(defaultKeymapName)) {
-      return -1;
-    }
-    if (keymap2.getName().equals(defaultKeymapName)) {
-      return 1;
-    }
-    return naturalCompare(keymap1.getPresentableName(), keymap2.getPresentableName());
-  }
-
   private static final Comparator<KeymapScheme> SCHEME_COMPARATOR = (scheme1, scheme2) -> {
     if (scheme1 == scheme2) return 0;
     if (scheme1 == null) return -1;
     if (scheme2 == null) return 1;
-    return getKeymapComparator().compare(scheme1.getCurrent(), scheme2.getCurrent());
+    return KeymapManagerImplKt.getKeymapComparator().compare(scheme1.getCurrent(), scheme2.getCurrent());
   };
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.keymap.impl.KeymapManagerImplKt;
 import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -22,7 +23,7 @@ public final class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
     KeymapManagerImpl manager = (KeymapManagerImpl)KeymapManager.getInstance();
     Keymap current = manager.getActiveKeymap();
     List<Keymap> list = getUnsortedKeymaps();
-    list.sort(KeymapSchemeManager.getKeymapComparator());
+    list.sort(KeymapManagerImplKt.getKeymapComparator());
     for (Keymap keymap : list) {
       addKeymapAction(group, manager, current, keymap);
     }
