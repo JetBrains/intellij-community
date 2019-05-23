@@ -346,7 +346,7 @@ public class NewListPluginComponent extends CellPluginComponent {
 
   @Override
   public void updateEnabledState() {
-    if (!myUninstalled) {
+    if (!myUninstalled && myEnableDisableButton != null) {
       myEnableDisableButton.setSelected(isEnabledState());
     }
     updateErrors();
