@@ -44,9 +44,9 @@ buildPlugin {
         if (buildSettings.isCIRun()){
             def buildNumber = buildSettings.buildNumber
 
-            new File("$projectDir/build/distributions/update.xml").write("""<!-- Plugin repository URL: "http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:(id:Circlet_IdeaCircletIntegration),tag:release/artifacts/content/update.xml?redirectSupported=false" -->
+            new File("$projectDir/build/distributions/update.xml").write("""<!-- Plugin repository URL: "http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:(id:Circlet_IdeaCircletIntegration),tag:release/artifacts/content/update.xml" -->
 <plugins>
-    <plugin id="com.jetbrains.circlet" url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:(id:Circlet_IdeaCircletIntegration),number:${buildNumber}/artifacts/content/app-idea-${buildNumber}.zip?redirectSupported=false" version="$buildNumber">
+    <plugin id="com.jetbrains.circlet" url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:(id:Circlet_IdeaCircletIntegration),number:${buildNumber}/artifacts/content/app-idea-${buildNumber}.zip" version="$buildNumber">
         <name>Circlet Integration</name>
         <description>Circlet Integration plugin</description>
     </plugin>
