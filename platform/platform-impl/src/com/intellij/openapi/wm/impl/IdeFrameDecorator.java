@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,8 +87,7 @@ public abstract class IdeFrameDecorator implements Disposable {
     @Override
     public boolean isInFullScreen() {
       if (myFrame == null) return false;
-      Object value = myFrame.getRootPane().getClientProperty(WindowManagerImpl.FULL_SCREEN);
-      if (value instanceof Boolean && (boolean)value) return true;
+      if (UIUtil.isWindowClientPropertyTrue(myFrame, WindowManagerImpl.FULL_SCREEN)) return true;
 
       // [tav] todo: should we keep this logic for backward compatible behaviour?
       Rectangle frameBounds = myFrame.getBounds();
