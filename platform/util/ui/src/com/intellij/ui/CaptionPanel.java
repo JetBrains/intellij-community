@@ -12,9 +12,6 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-/**
- * @author max
- */
 public class CaptionPanel extends JPanel {
 
   public static final Color CNT_ACTIVE_COLOR = new JBColor(Gray._202, Gray._55);
