@@ -388,6 +388,38 @@ class FileHistoryTest {
       6()
     }
   }
+
+  @Test
+  fun renamedDirectoryHack() {
+    val directory = LocalFilePath("community/platform", true)
+    val directoryBeforeRename = LocalFilePath("platform", true)
+
+    val fileNamesData = FileNamesDataBuilder(directory)
+      .addChange(directory, 0, listOf(MODIFIED), listOf(1))
+      .addChange(directoryBeforeRename, 1, listOf(MODIFIED), listOf(2)) // unrelated modification
+      .addChange(directory, 2, listOf(ADDED, ADDED), listOf(3, 4))
+      .addChange(directoryBeforeRename, 2, listOf(REMOVED, REMOVED), listOf(3, 4))
+      .addRename(3, 2, directoryBeforeRename, directory)
+      .addChange(directoryBeforeRename, 5, listOf(MODIFIED), listOf(7))
+      .addChange(directoryBeforeRename, 6, listOf(MODIFIED), listOf(8)) // unrelated modification
+      .build()
+
+    graph {
+      0(1)
+      1(2)
+      2(3, 4)
+      3(5)
+      4(6)
+      5(7)
+      6(8)
+      7()
+      8()
+    }.assert(0, directory, fileNamesData) {
+      0(2.dot)
+      2(5.dot)
+      5()
+    }
+  }
 }
 
 private class FileNamesDataBuilder(private val path: FilePath) {
