@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
- * Handler utilities that allow running handlers with progress indicators
  * @deprecated use {@link GitImpl}
  */
 @Deprecated
@@ -24,43 +23,7 @@ public class GitHandlerUtil {
   private GitHandlerUtil() {
   }
 
-  /**
-   * Execute simple process synchronously with progress
-   *
-   * @param handler        a handler
-   * @param operationTitle an operation title shown in progress dialog
-   * @param operationName  an operation name shown in failure dialog
-   * @return A stdout content or null if there was error (exit code != 0 or exception during start).
-   */
-  @Nullable
-  public static String doSynchronously(final GitSimpleHandler handler, final String operationTitle, @NonNls final String operationName) {
-    handler.addListener(new GitHandlerListenerBase(handler, operationName) {
-      @Override
-      protected String getErrorText() {
-        String text = handler.getStderr();
-        if (text.length() == 0) {
-          text = handler.getStdout();
-        }
-        return text;
-      }
-    });
-    final ProgressManager manager = ProgressManager.getInstance();
-    manager.runProcessWithProgressSynchronously(() -> runInCurrentThread(handler, manager.getProgressIndicator(), true,
-                                                                     operationTitle), operationTitle, false, handler.project());
-    if (!handler.isStarted() || handler.getExitCode() != 0) {
-      return null;
-    }
-    return handler.getStdout();
-  }
-
-  /**
-   * Execute simple process synchronously with progress
-   *
-   * @param handler        a handler
-   * @param operationTitle an operation title shown in progress dialog
-   * @param operationName  an operation name shown in failure dialog
-   * @return An exit code
-   */
+  @Deprecated
   public static int doSynchronously(final GitLineHandler handler, final String operationTitle, @NonNls final String operationName) {
     final ProgressManager manager = ProgressManager.getInstance();
     manager.run(new Task.Modal(handler.project(), operationTitle, true) {
@@ -76,15 +39,7 @@ public class GitHandlerUtil {
     return handler.getExitCode();
   }
 
-
-  /**
-   * Run handler in the current thread
-   *
-   * @param handler              a handler to run
-   * @param indicator            a progress manager
-   * @param setIndeterminateFlag if true handler is configured as indeterminate
-   * @param operationName
-   */
+  @Deprecated
   public static void runInCurrentThread(final GitHandler handler,
                                         final ProgressIndicator indicator,
                                         final boolean setIndeterminateFlag,
@@ -100,12 +55,7 @@ public class GitHandlerUtil {
     });
   }
 
-  /**
-   * Run handler in the current thread
-   *
-   * @param handler         a handler to run
-   * @param postStartAction an action that is executed
-   */
+  @Deprecated
   public static void runInCurrentThread(final GitHandler handler, @Nullable final Runnable postStartAction) {
     handler.runInCurrentThread(postStartAction);
   }
@@ -273,6 +223,4 @@ public class GitHandlerUtil {
     }
     return false;
   }
-
-
 }
