@@ -389,7 +389,6 @@ public class ShowAffectedTestsAction extends AnAction {
                                            @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
                                            @NotNull List<Couple<String>> classesAndMethods,
                                            @NotNull List<String> filePaths) {
-    if (DumbService.isDumb(project)) return;
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
       byte frameworkId =
