@@ -22,7 +22,7 @@ public final class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
     KeymapManagerImpl manager = (KeymapManagerImpl)KeymapManager.getInstance();
     Keymap current = manager.getActiveKeymap();
     List<Keymap> list = getUnsortedKeymaps();
-    list.sort(KeymapSchemeManager.KEYMAP_COMPARATOR);
+    list.sort(KeymapSchemeManager.getKeymapComparator());
     for (Keymap keymap : list) {
       addKeymapAction(group, manager, current, keymap);
     }
