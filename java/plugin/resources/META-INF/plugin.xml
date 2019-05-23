@@ -1,5 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" use-idea-classloader="true">
-  <!-- we need to use the platform classloader to make the plugin compatible with CLion until IDEA-209728 is fixed,
+  <!-- we need to use the platform classloader to make the plugin compatible with CLion until IDEA-187832 is fixed,
        see cidr-external-system/resources/META-INF/plugin.xml for details -->
   <id>com.intellij.java</id>
   <name>Java</name>
