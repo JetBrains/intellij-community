@@ -277,8 +277,10 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JAXB (JSR 222) Reference Implementation", libraryName: "jaxb-runtime", version: "2.3.1",
                        url: "https://github.com/javaee/jaxb-v2",
                        license: "CDDL 1.1 / GPL 2.0 + Classpath", licenseUrl: "https://oss.oracle.com/licenses/CDDL+GPL-1.1"),
-    new LibraryLicense(name: "Jaxen", version: "", license: "modified Apache", url: "https://github.com/jaxen-xpath/jaxen",
+
+    new LibraryLicense(name: "Jaxen", version: "1.2.0", license: "modified Apache", url: "https://github.com/jaxen-xpath/jaxen",
                        licenseUrl: "https://github.com/jaxen-xpath/jaxen/blob/master/LICENSE.txt"),
+
     new LibraryLicense(name: "JBcrypt", libraryName: "trilead-ssh2", version: "1.0.0", license: "ISC License",
                        licenseUrl: "https://github.com/jeremyh/jBCrypt/blob/master/LICENSE", url: "https://github.com/jeremyh/jBCrypt"),
     new LibraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License",
