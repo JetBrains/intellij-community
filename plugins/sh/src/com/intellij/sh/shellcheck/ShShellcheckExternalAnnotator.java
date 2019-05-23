@@ -83,6 +83,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<PsiFile, Sh
       return null;
     }
     catch (IOException | ExecutionException | InterruptedException e) {
+      e.printStackTrace(System.err);
       // todo: add notification
       return null;
     }
