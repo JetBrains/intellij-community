@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh;
 
+import com.intellij.sh.actions.ShBaseGenerateActionsTest;
 import com.intellij.sh.completion.ShCompletionTest;
 import com.intellij.sh.completion.ShFileCompletionTest;
 import com.intellij.sh.completion.ShKeywordCompletionTest;
@@ -59,6 +60,7 @@ public class ShTestSuite {
       suite.addTestSuite(ShKeywordCompletionTest.class);
       suite.addTestSuite(ShArrayLiveTemplateTest.class);
       suite.addTestSuite(ShLiveTemplateTest.class);
+      suite.addTestSuite(ShBaseGenerateActionsTest.class);
       return suite;
     }
   }
