@@ -472,7 +472,7 @@ public abstract class GitHandler {
     }
   }
 
-  void start() {
+  private void start() {
     checkNotStarted();
 
     try {
