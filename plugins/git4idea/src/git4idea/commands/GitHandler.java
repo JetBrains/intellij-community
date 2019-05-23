@@ -314,7 +314,7 @@ public abstract class GitHandler {
   /**
    * @return true if process is started
    */
-  final synchronized boolean isStarted() {
+  private synchronized boolean isStarted() {
     return myProcess != null;
   }
 
@@ -579,7 +579,7 @@ public abstract class GitHandler {
   @Deprecated
   public synchronized int getExitCode() {
     if (myExitCode == null) {
-      throw new IllegalStateException("Exit code is not yet available");
+      return -1;
     }
     return myExitCode.intValue();
   }

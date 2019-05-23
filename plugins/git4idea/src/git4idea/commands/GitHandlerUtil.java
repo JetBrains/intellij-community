@@ -31,9 +31,6 @@ public class GitHandlerUtil {
         runInCurrentThread(handler, indicator, true, operationTitle);
       }
     });
-    if (!handler.isStarted()) {
-      return -1;
-    }
     return handler.getExitCode();
   }
 
