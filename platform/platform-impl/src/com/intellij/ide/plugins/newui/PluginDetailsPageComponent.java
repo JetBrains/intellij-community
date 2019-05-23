@@ -426,7 +426,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
                                                                   URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
     }
 
-    String description = getDescriptionAndChangeNotes();
+    String description = getDescription();
     if (description != null) {
       myDescriptionComponent.setText(XmlStringUtil.wrapInHtml(description));
       if (myDescriptionComponent.getCaret() != null) {
@@ -551,19 +551,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   @Nullable
-  private String getDescriptionAndChangeNotes() {
-    StringBuilder result = new StringBuilder();
-
+  private String getDescription() {
     String description = myPlugin.getDescription();
-    if (!StringUtil.isEmptyOrSpaces(description)) {
-      result.append(description);
-    }
-
-    String notes = myPlugin.getChangeNotes();
-    if (!StringUtil.isEmptyOrSpaces(notes)) {
-      result.append("<h4>Change Notes</h4>").append(notes);
-    }
-
-    return result.length() > 0 ? result.toString() : null;
+    return StringUtil.isEmptyOrSpaces(description) ? null : description;
   }
 }
