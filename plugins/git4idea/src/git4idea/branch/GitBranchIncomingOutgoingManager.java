@@ -329,8 +329,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   private GitLineHandler createLsRemoteHandler(@NotNull GitRepository repository,
                                                @NotNull GitRemote remote,
                                                @NotNull List<String> params, @NotNull GitAuthenticationMode authenticationMode) {
-    GitLineHandler h = new GitLineHandler(myProject, repository.getRoot(), GitCommand.LS_REMOTE,
-                                          authenticationMode == NONE ? singletonList("credential.helper=") : emptyList());
+    GitLineHandler h = new GitLineHandler(myProject, repository.getRoot(), GitCommand.LS_REMOTE);
     h.setIgnoreAuthenticationMode(authenticationMode);
     h.addParameters(params);
     h.setUrls(remote.getUrls());
