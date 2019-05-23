@@ -2,7 +2,7 @@
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.keymap.Keymap
@@ -42,12 +42,11 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
   companion object {
     @JvmStatic
     val instance: DefaultKeymap
-      get() = ServiceManager.getService(DefaultKeymap::class.java)
+      get() = service()
 
     @JvmStatic
     fun matchesPlatform(keymap: Keymap): Boolean {
-      val name = keymap.name
-      return when (name) {
+      return when (keymap.name) {
         KeymapManager.DEFAULT_IDEA_KEYMAP -> SystemInfo.isWindows
         KeymapManager.MAC_OS_X_KEYMAP, KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> SystemInfo.isMac
         KeymapManager.X_WINDOW_KEYMAP, KeymapManager.GNOME_KEYMAP, KeymapManager.KDE_KEYMAP -> SystemInfo.isXWindow
@@ -78,9 +77,8 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
     }
 
   open fun getKeymapPresentableName(keymap: KeymapImpl): String {
-    val name = keymap.name
     // Netbeans keymap is no longer for version 6.5, but we need to keep the id
-    return when (name) {
+    return when (val name = keymap.name) {
       KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> if (SystemInfoRt.isMac) "Default" else "macOS"
       KeymapManager.DEFAULT_IDEA_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfoRt.isWindows) "" else " (Windows)")
       KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfoRt.isMac) "" else " (macOS)")
