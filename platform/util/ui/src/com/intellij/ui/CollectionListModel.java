@@ -23,12 +23,12 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
   }
 
   public CollectionListModel(@NotNull List<? extends T> items) {
-    myItems = ContainerUtilRt.newArrayList(items);
+    myItems = new ArrayList<>(items);
   }
 
   @SafeVarargs
   public CollectionListModel(@NotNull T... items) {
-    myItems = Arrays.asList(items);
+    myItems = ContainerUtilRt.newArrayList(items);
   }
 
   @NotNull
