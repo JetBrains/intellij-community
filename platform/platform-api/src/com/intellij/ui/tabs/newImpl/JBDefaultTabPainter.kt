@@ -38,7 +38,7 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
   }
 
   override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
-    val color = tabColor ?: if(active) theme.underlinedTabBackground else theme.underlinedTabInactiveBackground
+    val color = (tabColor ?: if(active) theme.underlinedTabBackground else theme.underlinedTabInactiveBackground) ?: theme.background
 
     color?.let {
       g.fill2DRect(rect, it)
