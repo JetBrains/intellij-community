@@ -76,7 +76,7 @@ class ShShellcheckTestUtil {
       }
     }
     catch (IOException e) {
-      LOG.warn("Can't download shellcheck", e);
+      LOG.error("Can't download shellcheck", e);
     }
   }
 
