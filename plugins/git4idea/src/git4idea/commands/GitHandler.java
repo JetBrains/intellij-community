@@ -197,7 +197,6 @@ public abstract class GitHandler {
   }
 
   public void addParameters(@NotNull List<String> parameters) {
-    checkNotStarted();
     for (String parameter : parameters) {
       myCommandLine.addParameter(escapeParameterIfNeeded(parameter));
     }
@@ -224,7 +223,6 @@ public abstract class GitHandler {
   }
 
   public void addRelativePaths(@NotNull Collection<FilePath> filePaths) {
-    checkNotStarted();
     for (FilePath path : filePaths) {
       if (path instanceof RemoteFilePath) {
         myCommandLine.addParameter(path.getPath());
@@ -236,14 +234,12 @@ public abstract class GitHandler {
   }
 
   public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
-    checkNotStarted();
     for (VirtualFile file : files) {
       myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), file));
     }
   }
 
   public void addAbsoluteFile(@NotNull File file) {
-    checkNotStarted();
     myCommandLine.addParameter(file.getAbsolutePath());
   }
 
@@ -252,12 +248,6 @@ public abstract class GitHandler {
    */
   public void endOptions() {
     myCommandLine.addParameter("--");
-  }
-
-  private void checkNotStarted() {
-    if (isStarted()) {
-      throw new IllegalStateException("The process has been already started");
-    }
   }
 
   private boolean isStarted() {
@@ -304,7 +294,6 @@ public abstract class GitHandler {
    * @see #setStdoutSuppressed(boolean)
    */
   public void setSilent(boolean silent) {
-    checkNotStarted();
     mySilent = silent;
     if (silent) {
       setStderrSuppressed(true);
@@ -329,7 +318,6 @@ public abstract class GitHandler {
    * @param stdoutSuppressed true if output is not copied to the console
    */
   public void setStdoutSuppressed(final boolean stdoutSuppressed) {
-    checkNotStarted();
     myStdoutSuppressed = stdoutSuppressed;
   }
 
@@ -346,7 +334,6 @@ public abstract class GitHandler {
    * @param stderrSuppressed true if error output is not copied to the console
    */
   public void setStderrSuppressed(boolean stderrSuppressed) {
-    checkNotStarted();
     myStderrSuppressed = stderrSuppressed;
   }
 
@@ -418,7 +405,9 @@ public abstract class GitHandler {
   }
 
   private void start() {
-    checkNotStarted();
+    if (isStarted()) {
+      throw new IllegalStateException("The process has been already started");
+    }
 
     try {
       if (myWithLowPriority) ExecUtil.setupLowPriorityExecution(myCommandLine);
@@ -483,7 +472,7 @@ public abstract class GitHandler {
   @Deprecated
   private Integer myExitCode; // exit code or null if exit code is not yet available
   @Deprecated
-  private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<>());
+  private final List<String> myLastOutput = Collections.syncronizedList(new ArrayList<>());
   @Deprecated
   private static final int LAST_OUTPUT_SIZE = 5;
   @Deprecated
