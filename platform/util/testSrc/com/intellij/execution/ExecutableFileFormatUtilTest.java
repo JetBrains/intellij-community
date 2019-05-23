@@ -43,20 +43,18 @@ public class ExecutableFileFormatUtilTest {
 
   @Test
   public void testReadPeMachineTypeUnknown() {
+    final File binFile = getBundledBinFile("../linux/fsnotifier");
+    assertEquals(MachineType.UNKNOWN, ExecutableFileFormatUtil.tryReadPeMachineType(binFile.getPath()));
     //noinspection ResultOfMethodCallIgnored
-    Assertions.assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
-      final File binFile = getBundledBinFile("../linux/fsnotifier");
-      assertEquals(MachineType.UNKNOWN, ExecutableFileFormatUtil.readPeMachineType(binFile));
-    });
+    Assertions.assertThatExceptionOfType(IOException.class).isThrownBy(() -> ExecutableFileFormatUtil.readPeMachineType(binFile));
   }
 
   @Test
   public void testReadElfMachineTypeUnknown() {
+    final File binFile = getBundledBinFile("../win/fsnotifier.exe");
+    assertEquals(MachineType.UNKNOWN, ExecutableFileFormatUtil.tryReadElfMachineType(binFile.getPath()));
     //noinspection ResultOfMethodCallIgnored
-    Assertions.assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
-      final File binFile = getBundledBinFile("../win/fsnotifier.exe");
-      assertEquals(MachineType.UNKNOWN, ExecutableFileFormatUtil.readElfMachineType(binFile));
-    });
+    Assertions.assertThatExceptionOfType(IOException.class).isThrownBy(() -> ExecutableFileFormatUtil.readElfMachineType(binFile));
   }
 
   @NotNull

@@ -15,6 +15,26 @@ import java.nio.channels.FileChannel;
  */
 public class ExecutableFileFormatUtil {
   @NotNull
+  public static MachineType tryReadElfMachineType(@NotNull String path) {
+    try {
+      return readElfMachineType(path);
+    }
+    catch (IOException e) {
+      return MachineType.UNKNOWN;
+    }
+  }
+
+  @NotNull
+  public static MachineType tryReadPeMachineType(@NotNull String path) {
+    try {
+      return readPeMachineType(path);
+    }
+    catch (IOException e) {
+      return MachineType.UNKNOWN;
+    }
+  }
+
+  @NotNull
   public static MachineType readElfMachineType(@NotNull String path) throws IOException {
     final File file = new File(path);
     return readElfMachineType(file);
