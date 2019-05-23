@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -7,30 +7,26 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
-public class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
+public final class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    KeymapManagerEx manager = (KeymapManagerEx) KeymapManager.getInstance();
+    KeymapManagerImpl manager = (KeymapManagerImpl)KeymapManager.getInstance();
     Keymap current = manager.getActiveKeymap();
-    for (Keymap keymap : manager.getAllKeymaps()) {
-      addKeymapAction(group, manager, current, keymap, false);
+    for (Keymap keymap : manager.getKeymaps(null)) {
+      addKeymapAction(group, manager, current, keymap);
     }
   }
 
-  private static void addKeymapAction(final DefaultActionGroup group, final KeymapManagerEx manager, final Keymap current, final Keymap keymap, final boolean addScheme) {
+  private static void addKeymapAction(@NotNull DefaultActionGroup group, @NotNull KeymapManagerEx manager, @Nullable Keymap current, @NotNull Keymap keymap) {
     group.add(new DumbAwareAction(keymap.getPresentableName(), "", keymap == current ? ourCurrentAction : ourNotCurrentAction) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        if (addScheme) {
-          manager.getSchemeManager().addScheme(keymap, false);
-        }
         manager.setActiveKeymap(keymap);
       }
     });
@@ -38,6 +34,6 @@ public class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
 
   @Override
   protected boolean isEnabled() {
-    return ((KeymapManagerEx) KeymapManager.getInstance()).getAllKeymaps().length > 1;
+    return ((KeymapManagerImpl)KeymapManager.getInstance()).getKeymaps(null).size() > 1;
   }
 }
