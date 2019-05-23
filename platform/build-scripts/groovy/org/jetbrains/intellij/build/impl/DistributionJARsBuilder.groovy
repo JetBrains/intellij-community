@@ -283,7 +283,8 @@ class DistributionJARsBuilder {
   void buildAdditionalArtifacts() {
     def productProperties = buildContext.productProperties
 
-    if (productProperties.generateLibrariesLicensesTable) {
+    if (productProperties.generateLibrariesLicensesTable && !buildContext.options.buildStepsToSkip.
+      contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
       String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       buildContext.ant.copy(file: getThirdPartyLibrariesHtmlFilePath(),
                             tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.html")
