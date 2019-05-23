@@ -78,7 +78,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "Switcher"
   };
 
-  private final IdeEventQueue.EventDispatcher myEventDispatcher = new TerminalEventDispatcher();
+  private final TerminalEventDispatcher myEventDispatcher = new TerminalEventDispatcher();
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final TerminalEscapeKeyListener myEscapeKeyListener;
 
@@ -238,13 +238,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   private void installKeyDispatcher() {
     if (mySettingsProvider.overrideIdeShortcuts()) {
       myActionsToSkip = setupActionsToSkip();
-      IdeEventQueue.getInstance().addDispatcher(myEventDispatcher, this);
+      myEventDispatcher.register();
     }
     else {
       myActionsToSkip = null;
     }
   }
 
+  @NotNull
   private static List<AnAction> setupActionsToSkip() {
     List<AnAction> res = Lists.newArrayList();
     ActionManager actionManager = ActionManager.getInstance();
@@ -261,7 +262,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   public void focusLost(FocusEvent event) {
     if (myActionsToSkip != null) {
       myActionsToSkip = null;
-      IdeEventQueue.getInstance().removeDispatcher(myEventDispatcher);
+      myEventDispatcher.unregister();
     }
 
     refreshAfterExecution();
@@ -295,6 +296,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     }
   }
 
+  /**
+   * Adds "Override IDE shortcuts" terminal feature allowing terminal to process all the key events.
+   * Without own IdeEventQueue.EventDispatcher, terminal won't receive key events corresponding to IDE action shortcuts.
+   */
   private class TerminalEventDispatcher implements IdeEventQueue.EventDispatcher {
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
@@ -309,6 +314,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
         return true;
       }
       return false;
+    }
+
+    void register() {
+      IdeEventQueue.getInstance().addDispatcher(this, JBTerminalPanel.this);
+    }
+
+    void unregister() {
+      IdeEventQueue.getInstance().removeDispatcher(this);
     }
   }
 }
