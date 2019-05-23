@@ -53,7 +53,6 @@ public abstract class GitHandler {
 
   protected final GeneralCommandLine myCommandLine;
   private final Map<String, String> myCustomEnv = new HashMap<>();
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   protected Process myProcess;
 
   private boolean myStdoutSuppressed; // If true, the standard output is not copied to version control console
@@ -62,15 +61,11 @@ public abstract class GitHandler {
   @Nullable private ThrowableConsumer<OutputStream, IOException> myInputProcessor; // The processor for stdin
 
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   protected boolean mySilent; // if true, the command execution is not logged in version control view
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private boolean myWithLowPriority;
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private boolean myWithNoTty;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
 
@@ -311,10 +306,7 @@ public abstract class GitHandler {
     }
   }
 
-  /**
-   * @return true if process is started
-   */
-  private synchronized boolean isStarted() {
+  private boolean isStarted() {
     return myProcess != null;
   }
 
@@ -480,10 +472,7 @@ public abstract class GitHandler {
     }
   }
 
-  /**
-   * Start process
-   */
-  synchronized void start() {
+  void start() {
     checkNotStarted();
 
     try {
@@ -577,7 +566,7 @@ public abstract class GitHandler {
    * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
    */
   @Deprecated
-  public synchronized int getExitCode() {
+  public int getExitCode() {
     if (myExitCode == null) {
       return -1;
     }
@@ -589,7 +578,7 @@ public abstract class GitHandler {
    * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
    */
   @Deprecated
-  protected synchronized void setExitCode(int exitCode) {
+  protected void setExitCode(int exitCode) {
     if (myExitCode == null) {
       myExitCode = exitCode;
     }
