@@ -101,6 +101,7 @@ private fun createReviewForDev(context: Context): Review? {
       try {
         addReviewer(projectId, review, user.email)
         postVerificationResultToReview(review)
+        removeReviewer(projectId, review, UpsourceUser.email)
         review
       }
       catch (e: Exception) {
@@ -159,6 +160,7 @@ private fun createReviewForIcons(context: Context): Collection<Review> {
                                              commits.groupBy(CommitInfo::repo).commitMessage(), repos)
         val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, master, commitsForReview)
         addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, committer.email)
+        removeReviewer(UPSOURCE_ICONS_PROJECT_ID, review, UpsourceUser.email)
         review
       }
     }
