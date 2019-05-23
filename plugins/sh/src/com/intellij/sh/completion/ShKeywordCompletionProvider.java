@@ -4,6 +4,7 @@ package com.intellij.sh.completion;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProvider;
 import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -21,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.sh.completion.ShCompletionUtil.endsWithDot;
 
 class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
+  private static final int PRIORITY = 10;
+
   @NotNull
   private final String[] myKeywords;
   private final boolean myWithDescription;
@@ -50,11 +53,11 @@ class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameter
     Template template = TemplateSettings.getInstance().getTemplateById("shell_" + keyword);
 
     InsertHandler<LookupElement> insertHandler = createTemplateBasedInsertHandler(templateManager, template);
-    return LookupElementBuilder
+    return PrioritizedLookupElement.withPriority(LookupElementBuilder
         .create(keyword)
         .withTypeText(template != null && myWithDescription ? template.getDescription() : "")
         .withBoldness(true)
-        .withInsertHandler(insertHandler);
+        .withInsertHandler(insertHandler), PRIORITY);
   }
 
   private static InsertHandler<LookupElement> createTemplateBasedInsertHandler(@NotNull TemplateManagerImpl templateManager,
