@@ -56,6 +56,8 @@ class BuildOptions {
   static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   /** Toolbox links generator step */
   static final String TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
+  /** Build community distributives */
+  static final String COMMUNITY_DIST_STEP = "community_dist"
 
   /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
