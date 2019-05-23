@@ -125,6 +125,10 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.concurrency")
       withModule("intellij.platform.core.ui")
 
+      withModule("intellij.platform.objectSerializer.annotations")
+      withModule("intellij.platform.objectSerializer")
+      withModule("intellij.platform.configurationStore.impl")
+
       withModule("intellij.platform.extensions")
       withModule("intellij.platform.bootstrap")
       withModule("intellij.java.guiForms.rt")

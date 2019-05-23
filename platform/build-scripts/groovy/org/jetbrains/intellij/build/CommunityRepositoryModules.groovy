@@ -64,8 +64,6 @@ class CommunityRepositoryModules {
     "intellij.platform.lang.impl",
     "intellij.platform.lvcs.impl",
     "intellij.platform.ide.impl",
-    "intellij.platform.objectSerializer",
-    "intellij.platform.objectSerializer.annotations",
     "intellij.platform.projectModel.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
@@ -86,7 +84,6 @@ class CommunityRepositoryModules {
     "intellij.xml.psi.impl",
     "intellij.xml.structureView.impl",
     "intellij.xml.impl",
-    "intellij.platform.configurationStore.impl",
   ]
 
   /**
