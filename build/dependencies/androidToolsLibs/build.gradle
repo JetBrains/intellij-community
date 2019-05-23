@@ -16,6 +16,7 @@ allprojects {
 }
 
 project.ext.tools = new File("../../../android/tools-base").canonicalPath
+project.ext.libs = new File('../../../android/android/lib').canonicalPath
 
 subprojects {
   apply plugin: 'java'
@@ -26,7 +27,9 @@ subprojects {
 
   sourceSets {
     main.java.srcDir "$tools/$project.name/src/main/java"
-    main.kotlin.srcDirs += "$tools/$project.name/src"
+    if (project.name == 'usb-devices') {
+      main.kotlin.srcDirs += "$tools/$project.name/src"
+    }
 //  test.java.srcDir "$tools/$project.name/src/test/java"
   }
 
