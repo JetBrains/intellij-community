@@ -5,24 +5,19 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
-class GroovyInferenceSession(
+open class GroovyInferenceSession(
   typeParams: Array<PsiTypeParameter>,
   val contextSubstitutor: PsiSubstitutor,
   context: PsiElement,
   val skipClosureBlock: Boolean = true,
-  private val expressionPredicates: Set<ExpressionPredicate> = emptySet(),
-  val propagateVariablesToNestedSessions: Boolean = false,
-  private val parent: GroovyInferenceSession? = null
+  private val expressionPredicates: Set<ExpressionPredicate> = emptySet()
 ) : InferenceSession(typeParams, contextSubstitutor, context.manager, context) {
 
   private val nestedSessions = mutableMapOf<GroovyResolveResult, GroovyInferenceSession>()
@@ -54,16 +49,6 @@ class GroovyInferenceSession(
     return null
   }
 
-  override fun substituteWithInferenceVariables(type: PsiType?): PsiType {
-    val result = super.substituteWithInferenceVariables(type)
-    if (propagateVariablesToNestedSessions && (result == type || result == null) && parent != null) {
-      return parent.substituteWithInferenceVariables(result)
-    }
-    else {
-      return result
-    }
-  }
-
   fun initArgumentConstraints(mapping: ArgumentMapping?, inferenceSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY) {
     if (mapping == null) return
     val substitutor = inferenceSubstitutor.putAll(inferenceSubstitution)
@@ -80,28 +65,16 @@ class GroovyInferenceSession(
     }
   }
 
-  fun startNestedSession(params: Array<PsiTypeParameter>,
+  open fun startNestedSession(params: Array<PsiTypeParameter>,
                          siteSubstitutor: PsiSubstitutor,
                          context: PsiElement,
                          result: GroovyResolveResult,
                          f: (GroovyInferenceSession) -> Unit) {
-    val additionalSubstitution = if (propagateVariablesToNestedSessions) inferenceSubstitution else PsiSubstitutor.EMPTY
-    val nestedSession = GroovyInferenceSession(params, siteSubstitutor.putAll(additionalSubstitution), context,
-                                               skipClosureBlock,
-                                               expressionPredicates,
-                                               propagateVariablesToNestedSessions,
-                                               parent = this)
+    val nestedSession = GroovyInferenceSession(params, siteSubstitutor, context, skipClosureBlock, expressionPredicates)
     nestedSession.propagateVariables(this)
     f(nestedSession)
     nestedSessions[result] = nestedSession
     this.propagateVariables(nestedSession)
-    if (propagateVariablesToNestedSessions) {
-      nestedSession.inferenceVariables.forEach {
-        mergeVariables(it, InferenceBound.LOWER)
-        mergeVariables(it, InferenceBound.UPPER)
-        mergeVariables(it, InferenceBound.EQ)
-      }
-    }
     for ((vars, rightType) in nestedSession.myIncorporationPhase.captures) {
       this.myIncorporationPhase.addCapture(vars, rightType)
     }
@@ -109,12 +82,5 @@ class GroovyInferenceSession(
 
   fun checkPredicates(expression: GrExpression) : Boolean {
     return expressionPredicates.all { it.invoke(expression) }
-  }
-
-  private fun mergeVariables(variable: InferenceVariable, bound: InferenceBound) {
-    variable.getBounds(bound).forEach {
-      InferenceVariable.addBound(substituteWithInferenceVariables(variable.parameter.type()), it, bound, this)
-    }
-
   }
 }

@@ -10,7 +10,6 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUn
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.determineDependencies
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
@@ -34,8 +33,9 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
   }
 
   private fun setUpParametersSignature() {
-    val inferenceSession = GroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method,
-                                                  propagateVariablesToNestedSessions = true)
+    val inferenceSession = CollectingGroovyInferenceSession(method.typeParameters,
+                                                                                                                    PsiSubstitutor.EMPTY,
+                                                                                                                    method)
     driver.collectOuterCalls(inferenceSession)
     val signatureSubstitutor = inferenceSession.inferSubst()
     driver.parametrizeMethod(signatureSubstitutor)
@@ -43,8 +43,9 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
 
 
   private fun setUpGraph(): InferenceUnitGraph {
-    val inferenceSession = GroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method,
-                                                  propagateVariablesToNestedSessions = true)
+    val inferenceSession = CollectingGroovyInferenceSession(method.typeParameters,
+                                                                                                                    PsiSubstitutor.EMPTY,
+                                                                                                                    method)
     driver.collectInnerMethodCalls(inferenceSession)
     driver.constantTypes.forEach { getInferenceVariable(inferenceSession, it).instantiation = it }
     inferenceSession.run { repeatInferencePhases(); infer() }
