@@ -27,10 +27,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -355,8 +355,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    *
    * Please use {@link #runWriteCommandAction(Project, String, String, Runnable, PsiFile...)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  @Deprecated
+  @TestOnly
   public static void runWriteCommandAction(Project project, @NotNull Runnable runnable) {
     runWriteCommandAction(project, DEFAULT_COMMAND_NAME, DEFAULT_GROUP_ID, runnable);
   }
