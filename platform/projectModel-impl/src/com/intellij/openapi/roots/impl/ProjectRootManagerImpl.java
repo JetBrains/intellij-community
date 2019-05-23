@@ -79,7 +79,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       }
     }
 
-    protected void beforeRootsChanged() {
+    public void beforeRootsChanged() {
       if (myBatchLevel == 0 || !myChanged) {
         if (fireBeforeRootsChanged(myFileTypes)) {
           myChanged = true;
@@ -87,7 +87,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       }
     }
 
-    protected void rootsChanged() {
+    public void rootsChanged() {
       if (myBatchLevel == 0) {
         if (fireRootsChanged(myFileTypes)) {
           myChanged = false;
@@ -258,7 +258,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
   }
 
-  @NotNull
   @Override
   public Element getState() {
     Element element = new Element("state");
@@ -320,7 +319,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     myRootsCache.clearCache();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
-      ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).dropCaches();
+      ModuleRootManagerEx.getInstanceEx(module).dropCaches();
     }
   }
 
