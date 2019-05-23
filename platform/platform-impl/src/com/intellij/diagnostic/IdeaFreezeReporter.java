@@ -30,16 +30,16 @@ public class IdeaFreezeReporter {
     app.getMessageBus().connect().subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
       final List<ThreadDump> myCurrentDumps = new ArrayList<>();
       List<StackTraceElement> myStacktraceCommonPart = null;
-      volatile boolean myFreezeActive = false;
+      volatile boolean myFreezeRecording = false;
 
       @Override
       public void uiFreezeStarted() {
-        myFreezeActive = true;
+        myFreezeRecording = Registry.is("performance.watcher.freeze.report") && !DebugAttachDetector.isAttached();
       }
 
       @Override
       public void dumpedThreads(@NotNull File toFile, @NotNull ThreadDump dump) {
-        if (myFreezeActive) {
+        if (myFreezeRecording) {
           myCurrentDumps.add(dump);
           StackTraceElement[] edtStack = dump.getEDTStackTrace();
           if (edtStack != null) {
@@ -55,13 +55,14 @@ public class IdeaFreezeReporter {
 
       @Override
       public void uiFreezeFinished(int lengthInSeconds) {
-        myFreezeActive = false;
-        if (Registry.is("performance.watcher.freeze.report") &&
-            lengthInSeconds > FREEZE_THRESHOLD &&
+        if (!myFreezeRecording) {
+          return;
+        }
+        myFreezeRecording = false;
+        if (lengthInSeconds > FREEZE_THRESHOLD &&
             // check that we have at least half of the dumps required
             myCurrentDumps.size() >= Math.max(3, lengthInSeconds * 500 / Registry.intValue("performance.watcher.unresponsive.interval.ms")) &&
-            !ContainerUtil.isEmpty(myStacktraceCommonPart) &&
-            !DebugAttachDetector.isAttached()) {
+            !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
           int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
           int step = myCurrentDumps.size() / size;
           Attachment[] attachments = new Attachment[size];
