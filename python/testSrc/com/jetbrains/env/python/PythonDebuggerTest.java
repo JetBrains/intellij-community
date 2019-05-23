@@ -1734,10 +1734,13 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_builtin_break.py") {
       @Override
       public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()),2);
       }
 
       @Override
       public void testing() throws Exception {
+        waitForPause();
+        resume();
         waitForPause();
         eval("a").hasValue("1");
         resume();

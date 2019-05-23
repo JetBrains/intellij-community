@@ -436,7 +436,13 @@ class PyDBFrame:
         # ENDIF
 
         main_debugger, filename, info, thread, frame_skips_cache, frame_cache_key = self._args
+
         # print('frame trace_dispatch %s %s %s %s %s' % (frame.f_lineno, frame.f_code.co_name, frame.f_code.co_filename, event, info.pydev_step_cmd))
+
+        # The thread can be already suspended by another function, e.g. built-in breakpoint hook.
+        if info.is_tracing:
+            return None
+
         try:
             info.is_tracing = True
             line = frame.f_lineno
