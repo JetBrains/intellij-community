@@ -102,9 +102,8 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testFindLibraryByNameAfterRename() {
-    final long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
-    ProjectLibraryTableImpl table = (ProjectLibraryTableImpl)getProjectLibraryTable();
-    final long projectLibraryModificationCount = table.getStateModificationCount();
+    LibraryTable table = getProjectLibraryTable();
+
     Library a = createLibrary("a", null, null);
     LibraryTable.ModifiableModel model = table.getModifiableModel();
     assertSame(a, table.getLibraryByName("a"));
@@ -113,16 +112,29 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     libraryModel.setName("b");
     commit(libraryModel);
 
-    // module not marked as to save if project library modified, but module is not affected
-    assertThat(ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests()).isEqualTo(moduleModificationCount);
-    assertThat(table.getStateModificationCount()).isGreaterThan(projectLibraryModificationCount);
-
     assertNull(table.getLibraryByName("a"));
     assertNull(model.getLibraryByName("a"));
     assertSame(a, table.getLibraryByName("b"));
     assertSame(a, model.getLibraryByName("b"));
     commit(model);
     assertSame(a, table.getLibraryByName("b"));
+  }
+
+  public void testModificationCount() {
+    ignoreTestUnderTreeProjectModel();
+
+    final long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
+
+    ProjectLibraryTableImpl table = (ProjectLibraryTableImpl)getProjectLibraryTable();
+    final long projectLibraryModificationCount = table.getStateModificationCount();
+    Library a = createLibrary("a", null, null);
+    Library.ModifiableModel libraryModel = a.getModifiableModel();
+    libraryModel.setName("b");
+    commit(libraryModel);
+
+    // module not marked as to save if project library modified, but module is not affected
+    assertThat(ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests()).isEqualTo(moduleModificationCount);
+    assertThat(table.getStateModificationCount()).isGreaterThan(projectLibraryModificationCount);
   }
 
   private static void commit(LibraryTable.ModifiableModel model) {
@@ -146,6 +158,8 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testReloadLibraryTable() {
+    ignoreTestUnderTreeProjectModel();
+
     ((LibraryTableBase)getProjectLibraryTable()).loadState(new Element("component"));
     createLibrary("a", null, null);
     ((LibraryTableBase)getProjectLibraryTable()).loadState(new Element("component").addContent(new Element("library").setAttribute("name", "b")));
@@ -153,6 +167,8 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testReloadLibraryTableWithoutChanges() {
+    ignoreTestUnderTreeProjectModel();
+
     ((LibraryTableBase)getProjectLibraryTable()).loadState(new Element("component"));
     createLibrary("a", null, null);
     ((LibraryTableBase)getProjectLibraryTable()).loadState(new Element("component").addContent(new Element("library").setAttribute("name", "a")));
