@@ -162,6 +162,18 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testParametrizedInterface2() {
+    doTest(true)
+  }
+
+  void testIntersectionInArgument() {
+    doTest(true)
+  }
+
+  void testParametrizedMethod() {
+    doTest(true)
+  }
+
   void testBasicClosure() {
     doTest(true)
   }

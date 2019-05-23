@@ -62,15 +62,34 @@ fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superTypes: 
 
 }
 
-fun isClosureType(type: PsiType?) : Boolean {
+fun isClosureType(type: PsiType?): Boolean {
   return (type as? PsiClassType)?.rawType()?.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ?: false
 }
 
-fun PsiSubstitutor.recursiveSubstitute(type: PsiType) : PsiType {
+fun PsiSubstitutor.recursiveSubstitute(type: PsiType): PsiType {
   val substituted = substitute(type)
   if (substituted == type) {
     return type
-  } else {
+  }
+  else {
     return recursiveSubstitute(substituted)
   }
+}
+
+fun PsiType.ensureWildcards(factory: GroovyPsiElementFactory, manager: PsiManager): PsiType {
+  val enclosing = this
+  return accept(object : PsiTypeMapper() {
+    override fun visitClassType(classType: PsiClassType?): PsiType? {
+      classType ?: return classType
+      val mappedParameters = classType.parameters.map { it.accept(this) }
+      val newType = factory.createType(classType.resolve()!!, *mappedParameters.toTypedArray())
+      if (classType == enclosing) {
+        return newType
+      }
+      else {
+        return PsiWildcardType.createExtends(manager, newType)
+      }
+    }
+
+  })
 }

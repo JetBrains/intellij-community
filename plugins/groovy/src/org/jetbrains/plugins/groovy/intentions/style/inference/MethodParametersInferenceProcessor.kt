@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 /**
  * Allows to infer method parameters types regarding method calls and inner dependencies between types.
  */
-class MethodParametersInferenceProcessor(private val method: GrMethod, private val driver: InferenceDriver = InferenceDriverImpl(method)) {
+class MethodParametersInferenceProcessor(private val method: GrMethod, private val driver: InferenceDriver = InferenceDriver(method)) {
 
   /**
    * Performs full substitution for non-typed parameters of [method]
@@ -55,7 +55,8 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
     val inferenceVariables = method.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }
     return InferenceUnitGraphBuilder.createGraphFromInferenceVariables(inferenceVariables, inferenceSession, driver.flexibleTypes.toSet(),
                                                                        driver.constantTypes.toSet(),
-                                                                       driver.forbiddingTypes.toSet())
+                                                                       driver.forbiddingTypes.toSet(),
+                                                                       driver.appearedClassTypes)
   }
 
   private fun inferTypeParameters(initialGraph: InferenceUnitGraph) {
