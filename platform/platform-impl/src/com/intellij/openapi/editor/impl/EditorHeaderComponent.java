@@ -19,6 +19,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.tabs.JBTabsFactory;
+import com.intellij.ui.tabs.newImpl.TabsHeightController;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,8 +43,23 @@ public class EditorHeaderComponent extends JPanel implements UISettingsListener 
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
-    boolean topBorderRequired = uiSettings.getEditorTabPlacement() != SwingConstants.TOP &&
-                                (uiSettings.getShowNavigationBar() || uiSettings.getShowMainToolbar());
-    setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
+    if(JBTabsFactory.getUseNewTabs()) {
+      setBorder(new CustomLineBorder(JBColor.border(), 0, 0, 1, 0));
+    } else {
+      boolean topBorderRequired = uiSettings.getEditorTabPlacement() != SwingConstants.TOP &&
+                                  (uiSettings.getShowNavigationBar() || uiSettings.getShowMainToolbar());
+      setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
+    }
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    if(JBTabsFactory.getUseNewTabs()) {
+      Dimension size = super.getPreferredSize();
+      Insets insets = getInsets();
+      return new Dimension(size.width, TabsHeightController.getToolWindowHeight() - insets.top - insets.bottom);
+    } else {
+      return super.getPreferredSize();
+    }
   }
 }
