@@ -19,51 +19,50 @@ public class ExecutableFileFormatUtilTest {
 
   @Test
   public void testReadElfMachineType32bit() throws Exception {
-    doTestReadElfMachineTypeOfBundledBinary("../linux/fsnotifier", MachineType.I386);
+    final File binFile = getBundledBinFile("../linux/fsnotifier");
+    assertEquals(MachineType.I386, ExecutableFileFormatUtil.readElfMachineType(binFile));
   }
 
   @Test
   public void testReadElfMachineType64bit() throws Exception {
-    doTestReadElfMachineTypeOfBundledBinary("../linux/fsnotifier64", MachineType.AMD64);
+    final File binFile = getBundledBinFile("../linux/fsnotifier64");
+    assertEquals(MachineType.AMD64, ExecutableFileFormatUtil.readElfMachineType(binFile));
   }
 
   @Test
   public void testReadPeMachineType32bit() throws Exception {
-    doTestReadPeMachineTypeOfBundledBinary("../win/fsnotifier.exe", MachineType.I386);
+    final File binFile = getBundledBinFile("../win/fsnotifier.exe");
+    assertEquals(MachineType.I386, ExecutableFileFormatUtil.readPeMachineType(binFile));
   }
 
   @Test
   public void testReadPeMachineType64bit() throws Exception {
-    doTestReadPeMachineTypeOfBundledBinary("../win/fsnotifier64.exe", MachineType.AMD64);
+    final File binFile = getBundledBinFile("../win/fsnotifier64.exe");
+    assertEquals(MachineType.AMD64, ExecutableFileFormatUtil.readPeMachineType(binFile));
   }
 
   @Test
   public void testReadPeMachineTypeUnknown() {
     //noinspection ResultOfMethodCallIgnored
-    Assertions.assertThatExceptionOfType(IOException.class).isThrownBy(
-      () -> doTestReadPeMachineTypeOfBundledBinary("../linux/fsnotifier", MachineType.UNKNOWN));
+    Assertions.assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
+      final File binFile = getBundledBinFile("../linux/fsnotifier");
+      assertEquals(MachineType.UNKNOWN, ExecutableFileFormatUtil.readPeMachineType(binFile));
+    });
   }
 
   @Test
   public void testReadElfMachineTypeUnknown() {
     //noinspection ResultOfMethodCallIgnored
-    Assertions.assertThatExceptionOfType(IOException.class).isThrownBy(
-      () -> doTestReadElfMachineTypeOfBundledBinary("../win/fsnotifier.exe", MachineType.UNKNOWN));
+    Assertions.assertThatExceptionOfType(IOException.class).isThrownBy(() -> {
+      final File binFile = getBundledBinFile("../win/fsnotifier.exe");
+      assertEquals(MachineType.UNKNOWN, ExecutableFileFormatUtil.readElfMachineType(binFile));
+    });
   }
 
-  private static void doTestReadPeMachineTypeOfBundledBinary(@NotNull String binFileName,
-                                                             @NotNull MachineType expected) throws Exception {
+  @NotNull
+  private static File getBundledBinFile(@NotNull String binFileName) {
     final File binFile = PathManager.findBinFile(binFileName);
     assertNotNull("Couldn't find bundled " + binFileName, binFile);
-    final MachineType machineType = ExecutableFileFormatUtil.readPeMachineType(binFile);
-    assertEquals(expected, machineType);
-  }
-
-  private static void doTestReadElfMachineTypeOfBundledBinary(@NotNull String binFileName,
-                                                              @NotNull MachineType expected) throws Exception {
-    final File binFile = PathManager.findBinFile(binFileName);
-    assertNotNull("Couldn't find bundled " + binFileName, binFile);
-    final MachineType machineType = ExecutableFileFormatUtil.readElfMachineType(binFile);
-    assertEquals(expected, machineType);
+    return binFile;
   }
 }
