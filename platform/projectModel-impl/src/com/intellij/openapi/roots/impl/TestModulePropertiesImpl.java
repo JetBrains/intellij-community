@@ -18,13 +18,13 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 @State(name = "TestModuleProperties")
-public class TestModulePropertiesImpl extends TestModuleProperties implements PersistentStateComponent<TestModulePropertiesImpl.TestModulePropertiesState>,
-                                                                              ProjectModelElement {
+class TestModulePropertiesImpl extends TestModuleProperties implements PersistentStateComponent<TestModulePropertiesImpl.TestModulePropertiesState>,
+                                                                       ProjectModelElement {
   private final ModulePointerManager myModulePointerManager;
   private ModulePointer myProductionModulePointer;
   private final Module myModule;
 
-  public TestModulePropertiesImpl(@NotNull Module module, @NotNull ModulePointerManager modulePointerManager) {
+  TestModulePropertiesImpl(@NotNull Module module, @NotNull ModulePointerManager modulePointerManager) {
     myModule = module;
     myModulePointerManager = modulePointerManager;
   }

@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
+class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
   private static final Map<String, LibraryTable> myLibraryTables = new HashMap<>();
 
   @Override
