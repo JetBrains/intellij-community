@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.util.ui.update.ComparableObject;
@@ -24,8 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class UiActivity implements ComparableObject{
-  
+public class UiActivity implements ComparableObject {
   private final List<String> myElements = new ArrayList<>();
 
   public UiActivity(@NotNull String ... elements) {
@@ -69,15 +54,15 @@ public class UiActivity implements ComparableObject{
 
     return true;
   }
-  
+
   public static class Focus extends UiActivity {
-    
+
     public Focus(String ... subOperation) {
       super(new String[] {"focus"}, subOperation);
     }
 
   }
-  
+
   public static class AsyncBgOperation extends UiActivity {
     public AsyncBgOperation(String operationName) {
       super("asyncBgOperation", operationName);
@@ -88,7 +73,7 @@ public class UiActivity implements ComparableObject{
     public Progress(String type, String id) {
       super("progress", type, id);
     }
-    
+
     public static class Modal extends Progress {
       public Modal(String id) {
         super("modal", id);
