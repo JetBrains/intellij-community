@@ -581,7 +581,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   public VirtualFile getVcsRoot(@NotNull Project project, @NotNull FilePath path) {
     VirtualFile file = path.getVirtualFile();
     if (file != null && file.isDirectory()) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(file);
+      GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(file);
       if (repository != null) {
         GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
         if (submodule != null) {
