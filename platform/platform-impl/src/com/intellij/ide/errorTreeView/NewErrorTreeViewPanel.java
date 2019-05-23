@@ -119,13 +119,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
     myErrorViewStructure = createErrorViewStructure(project, canHideWarnings());
     myStructureModel = new StructureTreeModel<>(myErrorViewStructure, this);
-    myTree = new Tree(new AsyncTreeModel(myStructureModel, this)) {
-      @Override
-      public void setRowHeight(int i) {
-        super.setRowHeight(0);
-        // this is needed in order to make UI calculate the height for each particular row
-      }
-    };
+    myTree = new Tree(new AsyncTreeModel(myStructureModel, this));
+    myTree.setRowHeight(0);
     myTree.getEmptyText().setText(IdeBundle.message("errortree.noMessages"));
 
     myExporterToTextFile = new ErrorViewTextExporter(myErrorViewStructure);
