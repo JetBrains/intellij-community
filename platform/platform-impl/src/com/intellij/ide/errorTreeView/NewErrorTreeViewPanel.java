@@ -38,6 +38,8 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -278,8 +280,28 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     if (myIsDisposed) {
       return;
     }
-    myErrorViewStructure.addMessage(ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, underFileGroup, file, line, column, data);
-    myStructureModel.invalidate();
+    updateAddedElement(myErrorViewStructure.addMessage(
+      ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, underFileGroup, file, line, column, data
+    ));
+  }
+
+  private void updateAddedElement(ErrorTreeElement element) {
+    final Object parent = myErrorViewStructure.getParentElement(element);
+    if (parent instanceof GroupingElement) {
+      final Object parent2 = myErrorViewStructure.getParentElement(parent);
+      // first, need to invalidate GroupingElement itself as it may have been just added
+      final Promise<TreePath> groupRefresh = parent2 != null ? myStructureModel.invalidate(parent2, true) : Promises.resolvedPromise();
+      groupRefresh.onProcessed(
+        path -> myStructureModel.invalidate(parent, true)).onSuccess(
+        path -> myStructureModel.makeVisible(element, myTree, p->{})
+      );
+    }
+    else if (parent != null) {
+      myStructureModel.invalidate(parent, true);
+    }
+    else {
+      myStructureModel.invalidate();
+    }
   }
 
   @Override
@@ -300,8 +322,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     final String exportPrefix = exportTextPrefix == null ? "" : exportTextPrefix;
     final String renderPrefix = rendererTextPrefix == null ? "" : rendererTextPrefix;
     final ErrorTreeElementKind kind = ErrorTreeElementKind.convertMessageFromCompilerErrorType(type);
-    myErrorViewStructure.addNavigatableMessage(groupName, navigatable, kind, text, data, exportPrefix, renderPrefix, file);
-    myStructureModel.invalidate();
+    updateAddedElement(myErrorViewStructure.addNavigatableMessage(
+      groupName, navigatable, kind, text, data, exportPrefix, renderPrefix, file
+    ));
   }
 
   public ErrorViewStructure getErrorViewStructure() {
