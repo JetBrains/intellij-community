@@ -149,24 +149,16 @@ public abstract class GitHandler {
     return toPass;
   }
 
-  /**
-   * @return multicaster for listeners
-   */
+  @NotNull
   protected ProcessEventListener listeners() {
     return myListeners.getMulticaster();
   }
 
-  /**
-   * @return a context project
-   */
   @Nullable
   public Project project() {
     return myProject;
   }
 
-  /**
-   * @return the current working directory
-   */
   @NotNull
   File getWorkingDirectory() {
     return myCommandLine.getWorkDirectory();
@@ -182,11 +174,6 @@ public abstract class GitHandler {
     return myCommand;
   }
 
-  /**
-   * Add listener to handler
-   *
-   * @param listener a listener
-   */
   protected void addListener(@NotNull ProcessEventListener listener) {
     myListeners.addListener(listener);
   }
@@ -205,21 +192,11 @@ public abstract class GitHandler {
     myWithNoTty = true;
   }
 
-  /**
-   * Add string parameters
-   *
-   * @param parameters a parameters to add
-   */
   public void addParameters(@NonNls @NotNull String... parameters) {
     addParameters(Arrays.asList(parameters));
   }
 
-  /**
-   * Add parameters from the list
-   *
-   * @param parameters the parameters to add
-   */
-  public void addParameters(List<String> parameters) {
+  public void addParameters(@NotNull List<String> parameters) {
     checkNotStarted();
     for (String parameter : parameters) {
       myCommandLine.addParameter(escapeParameterIfNeeded(parameter));
@@ -242,23 +219,11 @@ public abstract class GitHandler {
     return StringUtil.toLowerCase(myCommandLine.getExePath()).endsWith("cmd");
   }
 
-  /**
-   * Add file path parameters. The parameters are made relative to the working directory
-   *
-   * @param parameters a parameters to add
-   * @throws IllegalArgumentException if some path is not under root.
-   */
   public void addRelativePaths(@NotNull FilePath... parameters) {
     addRelativePaths(Arrays.asList(parameters));
   }
 
-  /**
-   * Add file path parameters. The parameters are made relative to the working directory
-   *
-   * @param filePaths a parameters to add
-   * @throws IllegalArgumentException if some path is not under root.
-   */
-  public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
+  public void addRelativePaths(@NotNull Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
       if (path instanceof RemoteFilePath) {
@@ -270,12 +235,6 @@ public abstract class GitHandler {
     }
   }
 
-  /**
-   * Add virtual file parameters. The parameters are made relative to the working directory
-   *
-   * @param files a parameters to add
-   * @throws IllegalArgumentException if some path is not under root.
-   */
   public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
     checkNotStarted();
     for (VirtualFile file : files) {
@@ -295,11 +254,6 @@ public abstract class GitHandler {
     myCommandLine.addParameter("--");
   }
 
-  /**
-   * check that process is not started yet
-   *
-   * @throws IllegalStateException if process has been already started
-   */
   private void checkNotStarted() {
     if (isStarted()) {
       throw new IllegalStateException("The process has been already started");
@@ -332,19 +286,11 @@ public abstract class GitHandler {
     return commandLine;
   }
 
-  /**
-   * @return a character set to use for IO
-   */
   @NotNull
   public Charset getCharset() {
     return myCommandLine.getCharset();
   }
 
-  /**
-   * Set character set for IO
-   *
-   * @param charset a character set
-   */
   public void setCharset(@NotNull Charset charset) {
     myCommandLine.setCharset(charset);
   }
@@ -357,8 +303,7 @@ public abstract class GitHandler {
    * @see #setStderrSuppressed(boolean)
    * @see #setStdoutSuppressed(boolean)
    */
-  @SuppressWarnings({"SameParameterValue"})
-  public void setSilent(final boolean silent) {
+  public void setSilent(boolean silent) {
     checkNotStarted();
     mySilent = silent;
     if (silent) {
@@ -400,7 +345,7 @@ public abstract class GitHandler {
    *
    * @param stderrSuppressed true if error output is not copied to the console
    */
-  public void setStderrSuppressed(final boolean stderrSuppressed) {
+  public void setStderrSuppressed(boolean stderrSuppressed) {
     checkNotStarted();
     myStderrSuppressed = stderrSuppressed;
   }
