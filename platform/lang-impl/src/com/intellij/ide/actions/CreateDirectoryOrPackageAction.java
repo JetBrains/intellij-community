@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -22,7 +21,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent event) {
+  public void actionPerformed(@NotNull final AnActionEvent event) {
     final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (view == null || project == null) return;
@@ -30,27 +29,32 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
     if (directory == null) return;
 
-    final CreateGroupHandler validator;
-    final String message, title;
-
     if (PsiDirectoryFactory.getInstance(project).isPackage(directory)) {
-      validator = new CreatePackageHandler(project, directory);
-      message = IdeBundle.message("prompt.enter.new.package.name");
-      title = IdeBundle.message("title.new.package");
+      createPackage(view, project, directory);
     }
     else {
-      validator = new CreateDirectoryHandler(project, directory);
-      message = IdeBundle.message("prompt.enter.new.directory.name");
-      title = IdeBundle.message("title.new.directory");
+      createDirectory(view, project, directory);
     }
+  }
 
-    String initialText = validator.getInitialText();
-    Messages.showInputDialog(project, message, title, null, initialText, validator, TextRange.from(initialText.length(), 0));
+  private static void createDirectory(@NotNull final IdeView view, @NotNull final Project project, @NotNull final PsiDirectory directory) {
+    final CreateDirectoryOrPackageHandler validator = new CreateDirectoryOrPackageHandler(project, directory, true, "\\/");
+    final String message = IdeBundle.message("prompt.enter.new.directory.name");
+    final String title = IdeBundle.message("title.new.directory");
 
+    Messages.showInputDialog(project, message, title, null, "", validator);
     final PsiElement result = validator.getCreatedElement();
     if (result != null) {
       view.selectElement(result);
     }
+  }
+
+  private static void createPackage(@NotNull final IdeView view, @NotNull final Project project, @NotNull final PsiDirectory directory) {
+    new CreatePackageDialog(project, directory).showAndGetCreatedElements().ifPresent(list -> {
+      if (!list.isEmpty()) {
+        view.selectElement(list.get(0));
+      }
+    });
   }
 
   @Override
