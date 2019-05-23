@@ -264,8 +264,6 @@ class CommunityLibraryLicenses {
                        version: "no version number available (with patches by JetBrains)", license: "Sun Public License",
                        url: "https://versioncontrol.netbeans.org/javacvs/library/",
                        licenseUrl: "https://netbeans.org/about/legal/license.html"),
-    new LibraryLicense(name: "JavaHelp", version: "2.0_02", license: "CDDL 1.1", licenseUrl: "https://javaee.github.io/javahelp/LICENSE",
-                       url: "https://javaee.github.io/javahelp/"),
     new LibraryLicense(name: "Javassist", libraryName: "javassist", version: "3.21.0-GA", license: "Apache 2.0",
                        url: "https://github.com/jboss-javassist/javassist", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "javawriter", attachedTo: "intellij.android.core", license: "Apache 2.0", url: "https://github.com/square/javawriter"),
