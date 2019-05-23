@@ -125,7 +125,7 @@ RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteS
 
 HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 StringContent            = [^$\"`(\\] | {EscapedChar}
-EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
+EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
 
 %state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION
@@ -164,7 +164,7 @@ EvalContent              = [^\r\n$\"`'() ] | {EscapedChar}
                                    else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; } }
    {WhiteSpace}+                 { return WHITESPACE; }
    {RawString}                   { return RAW_STRING; }
-   ")"                           |
+   ")" | ";"                     |
    {LineTerminator}              { popState(); yypushback(yylength()); }
    "$" | "(" | {EvalContent}+    { return EVAL_CONTENT; }
 }

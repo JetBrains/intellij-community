@@ -1882,15 +1882,15 @@ public class ShParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // '!'? pipeline
+  //                     | '!'? eval_command 
   //                     | let_command
-  //                     | eval_command
   public static boolean pipeline_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, PIPELINE_COMMAND, "<pipeline command>");
     r = pipeline_command_0(b, l + 1);
+    if (!r) r = pipeline_command_1(b, l + 1);
     if (!r) r = let_command(b, l + 1);
-    if (!r) r = eval_command(b, l + 1);
     exit_section_(b, l, m, r, false, ShParser::pipeline_recover);
     return r;
   }
@@ -1909,6 +1909,24 @@ public class ShParser implements PsiParser, LightPsiParser {
   // '!'?
   private static boolean pipeline_command_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command_0_0")) return false;
+    consumeToken(b, BANG);
+    return true;
+  }
+
+  // '!'? eval_command
+  private static boolean pipeline_command_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pipeline_command_1_0(b, l + 1);
+    r = r && eval_command(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '!'?
+  private static boolean pipeline_command_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_1_0")) return false;
     consumeToken(b, BANG);
     return true;
   }

@@ -135,8 +135,8 @@ commands_list ::= pipeline_command (
                  )*
 
 pipeline_command ::=  '!'? pipeline
-                    | let_command
-                    | eval_command {recoverWhile=pipeline_recover}
+                    | '!'? eval_command
+                    | let_command  {recoverWhile=pipeline_recover}
 
 let_command  ::= let expression
 eval_command ::= eval (EVAL_CONTENT|simple_command_element)+
