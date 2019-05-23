@@ -16,4 +16,6 @@ public class ReuseOfLocalVariableInspectionFixTest extends IGQuickFixesTestCase 
 
   public void testSimple() { doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
   public void testParentheses() { doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
+  public void testSwitchExpression() { doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
+  public void testIfNoBlock() { doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
 }
