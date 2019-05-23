@@ -15,14 +15,6 @@
  */
 package com.intellij.internal.statistic.connect;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 public interface StatisticsService {
   StatisticsResult send();
-
-  Notification createNotification(@NotNull String groupDisplayId, @Nullable NotificationListener listener);
 }

@@ -5,8 +5,6 @@ import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
@@ -190,11 +188,6 @@ public class EventLogStatisticsService implements StatisticsService {
         LOG.trace("Removed sent log: " + file.getName());
       }
     }
-  }
-
-  @Override
-  public Notification createNotification(@NotNull String groupDisplayId, @Nullable NotificationListener listener) {
-    return null;
   }
 
   private static class EventLogCounterResultDecorator implements EventLogResultDecorator {
