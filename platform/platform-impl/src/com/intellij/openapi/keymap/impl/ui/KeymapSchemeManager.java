@@ -259,7 +259,7 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
 
   private static final NotNullLazyValue<Comparator<Keymap>> KEYMAP_COMPARATOR = NotNullLazyValue.createValue(() -> {
     String defaultKeymapName = DefaultKeymap.getInstance().getDefaultKeymapName();
-    return (keymap1, keymap2) -> {
+    Comparator<Keymap> comparator = (keymap1, keymap2) -> {
       if (keymap1 == keymap2) return 0;
       if (keymap1 == null) return -1;
       if (keymap2 == null) return 1;
@@ -280,6 +280,7 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
         return compareByName(parent1, parent2, defaultKeymapName);
       }
     };
+    return comparator;
   });
 
   private static int compareByName(@NotNull Keymap keymap1, @NotNull Keymap keymap2, @NotNull String defaultKeymapName) {
