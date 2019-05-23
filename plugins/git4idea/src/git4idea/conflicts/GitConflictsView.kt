@@ -1,14 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts
 
-import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
@@ -25,6 +27,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.Alarm
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -37,8 +40,8 @@ import git4idea.repo.GitConflictsHolder
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import java.awt.BorderLayout
-import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
@@ -75,10 +78,11 @@ class GitConflictsView(private val project: Project) : Disposable {
 
     val actionManager = ActionManager.getInstance()
     val toolbarGroup = DefaultActionGroup()
-    toolbarGroup.addAction(actionManager.getAction("ChangesView.Refresh"))
     toolbarGroup.addAction(ResolveAction())
     toolbarGroup.addAction(AcceptSideAction(false))
     toolbarGroup.addAction(AcceptSideAction(true))
+    toolbarGroup.addAction(actionManager.getAction("ChangesView.Refresh"))
+    toolbarGroup.addAction(Separator.getInstance())
     toolbarGroup.addAction(actionManager.getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
     val toolbar = actionManager.createActionToolbar("GitConflictsView", toolbarGroup, false)
     toolbar.setTargetComponent(table)
@@ -86,7 +90,7 @@ class GitConflictsView(private val project: Project) : Disposable {
     val mainPanel = MainPanel()
     mainPanel.add(ScrollPaneFactory.createScrollPane(table), BorderLayout.CENTER)
 
-    panel = SimpleToolWindowPanel(false, true)
+    panel = SimpleToolWindowPanel(true, true)
     panel.toolbar = toolbar.component
     panel.setContent(mainPanel)
 
@@ -202,17 +206,58 @@ class GitConflictsView(private val project: Project) : Disposable {
       }
   }
 
-  private inner class ResolveAction : DumbAwareAction("Resolve", null, AllIcons.Vcs.Merge) {
+  private inner class ResolveAction
+    : ButtonAction("Resolve") {
+
+    override fun update(e: AnActionEvent) {
+      val isEnabled = getSelectedConflicts().any { mergeHandler.canResolveConflict(it) }
+      e.presentation.isEnabled = isEnabled
+      updateButtonPresentation(e)
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       showMergeWindowForSelection()
     }
   }
 
-  private inner class AcceptSideAction(val takeTheirs: Boolean) :
-    DumbAwareAction(if (takeTheirs) "Accept Theirs" else "Accept Yours", null,
-                    if (takeTheirs) AllIcons.Vcs.Arrow_left else AllIcons.Vcs.Arrow_right) {
+  private inner class AcceptSideAction(val takeTheirs: Boolean)
+    : ButtonAction(if (takeTheirs) "Accept Theirs" else "Accept Yours") {
+
+    override fun update(e: AnActionEvent) {
+      val isEnabled = getSelectedConflicts().isNotEmpty()
+      e.presentation.isEnabled = isEnabled
+      updateButtonPresentation(e)
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       acceptConflictSideForSelection(takeTheirs)
+    }
+  }
+
+  private abstract class ButtonAction(text: String) : DumbAwareAction(text), CustomComponentAction {
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+      val button = JButton(presentation.text)
+      button.isFocusable = false
+      button.addActionListener {
+        val toolbar = UIUtil.getParentOfType(ActionToolbar::class.java, button)
+        val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(button)
+        actionPerformed(AnActionEvent.createFromAnAction(this@ButtonAction, null, place, dataContext))
+      }
+
+      updateButtonPresentation(button, presentation)
+
+      return JBUI.Panels.simplePanel(button)
+        .withBorder(JBUI.Borders.empty(4, if (SystemInfo.isWindows) 4 else 6))
+    }
+
+    fun updateButtonPresentation(e: AnActionEvent) {
+      val button = UIUtil.findComponentOfType(e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), JButton::class.java)
+      if (button != null) updateButtonPresentation(button, e.presentation)
+    }
+
+    fun updateButtonPresentation(button: JButton, presentation: Presentation) {
+      button.isEnabled = presentation.isEnabled
+      button.isVisible = presentation.isVisible
     }
   }
 
