@@ -264,7 +264,8 @@ public class UnixProcessManager {
       return readElfMachineType("/proc/" + pid + "/exe");
     }
     catch (IOException e) {
-      throw new IllegalStateException(e);
+      LOG.warn("Couldn't get executable information of process: pid=" + pid, e);
+      return ProcessMachineType.UNKNOWN;
     }
   }
 
