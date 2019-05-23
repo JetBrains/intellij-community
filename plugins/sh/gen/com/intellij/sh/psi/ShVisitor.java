@@ -302,6 +302,10 @@ public class ShVisitor extends PsiElementVisitor {
     visitCommand(o);
   }
 
+  public void visitTestCommand(@NotNull ShTestCommand o) {
+    visitCommand(o);
+  }
+
   public void visitThenClause(@NotNull ShThenClause o) {
     visitCompositeElement(o);
   }
