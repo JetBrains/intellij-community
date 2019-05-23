@@ -1178,13 +1178,19 @@
     </group>
 
     <group id="ServiceViewTreeToolbar">
+      <group id="ServiceView.GroupBy" popup="true" text="Group By" icon="AllIcons.Actions.GroupBy"
+             class="com.intellij.ide.actions.NonEmptyActionGroup">
+        <action id="ServiceView.GroupByType" class="com.intellij.execution.services.GroupByTypeAction"
+                text="Type"/>
+      </group>
+      <separator/>
       <action id="ServiceView.ShowInNewTab" class="com.intellij.execution.services.ShowInNewTabAction"
               text="Show in New Tab" icon="AllIcons.Actions.OpenNewTab"/>
       <action id="ServiceView.FlattenServices" class="com.intellij.execution.services.FlattenServicesAction"
               text="Flatten Services" icon="AllIcons.Actions.ListFiles"/>
       <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"
               text="Split By Type" icon="AllIcons.Modules.Split"/>
-      <group id="ServiceViewTreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
+      <group id="ServiceView.TreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
     <group id="ServiceViewNodeToolbar">
