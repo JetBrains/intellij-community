@@ -33,8 +33,11 @@ import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBImageIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -345,13 +348,6 @@ public class AppUIUtil {
    * @param isPrivacyPolicy  true if this document is a privacy policy
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
-    final String title = isPrivacyPolicy
-                         ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
-                         : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement";
-    showEndUserAgreementText(title, htmlText);
-  }
-
-  public static void showEndUserAgreementText(String title, @NotNull String htmlText) {
       DialogWrapper dialog = new DialogWrapper(true) {
 
       private JEditorPane myViewer;
@@ -399,8 +395,11 @@ public class AppUIUtil {
           JLabel label = new JLabel(AllIcons.General.BalloonInformation);
           label.setVerticalAlignment(SwingConstants.TOP);
           eapPanel.add(label, BorderLayout.WEST);
-          JEditorPane html = SwingHelper.createHtmlLabel("EAP builds report usage statistics by default per the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>." +
-                                                  "\nNo personal or sensitive data are sent. You may disable this in the settings.", null, null);
+          JEditorPane html = SwingHelper.createHtmlLabel(
+            "EAP builds report usage statistics by default per "+
+            (isPrivacyPolicy? "this Privacy Policy." : "the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>.") +
+            "\nNo personal or sensitive data are sent. You may disable this in the settings.", null, null
+          );
           eapPanel.add(html, BorderLayout.CENTER);
           bottomPanel.add(eapPanel, BorderLayout.NORTH);
         }
@@ -441,7 +440,11 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(title);
+    dialog.setTitle(
+      isPrivacyPolicy
+      ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
+      : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement"
+    );
     dialog.pack();
     dialog.show();
   }
