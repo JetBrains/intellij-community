@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import javax.swing.*;
@@ -363,6 +364,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
         return event;
       }
     };
+  }
+
+  @Override
+  protected PropertyChangeListener createPropertyChangeListener() {
+    // TODO: allow to change tree properties during instantiation
+    PropertyChangeListener listener = super.createPropertyChangeListener();
+    return event -> UIUtil.invokeLaterIfNeeded(() -> listener.propertyChange(event));
   }
 
   // TreeUI
