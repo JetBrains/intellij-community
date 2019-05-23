@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
@@ -39,5 +40,11 @@ public abstract class CustomUtilsWhiteListRule extends PerformanceCareRule imple
   protected static boolean isPluginFromPluginRepository(@NotNull String plugin) {
     final PluginId pluginId = PluginId.findId(plugin);
     return pluginId != null && PluginInfoDetectorKt.getPluginInfoById(pluginId).isSafeToReport();
+  }
+
+  @Nullable
+  protected Language getLanguage(@NotNull EventContext context) {
+    final Object id = context.eventData.get("lang");
+    return id instanceof String ? Language.findLanguageByID((String)id) : null;
   }
 }
