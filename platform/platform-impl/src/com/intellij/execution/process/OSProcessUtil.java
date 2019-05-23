@@ -2,7 +2,6 @@
 
 package com.intellij.execution.process;
 
-import com.intellij.execution.ExecutableFileFormatUtil;
 import com.intellij.execution.MachineType;
 import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -169,24 +167,6 @@ public class OSProcessUtil {
     }
     else {
       throw new IllegalStateException("getProcessMachineType() is not implemented for macOS processes");
-    }
-  }
-
-  @NotNull
-  public static MachineType getExecutableMachineType(@NotNull String path) {
-    try {
-      if (SystemInfo.isWindows) {
-        return ExecutableFileFormatUtil.readPeMachineType(path);
-      }
-      else if (SystemInfo.isLinux) {
-        return ExecutableFileFormatUtil.readElfMachineType(path);
-      }
-      else {
-        throw new IllegalStateException("getExecutableMachineType() is not implemented for macOS Mach-O executables");
-      }
-    }
-    catch (IOException e) {
-      return MachineType.UNKNOWN;
     }
   }
 
