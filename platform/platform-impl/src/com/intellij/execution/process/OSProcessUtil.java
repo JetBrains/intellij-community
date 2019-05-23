@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.pty4j.windows.WinPtyProcess;
-import kotlin.NotImplementedError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
@@ -167,7 +166,7 @@ public class OSProcessUtil {
       return UnixProcessManager.getProcessMachineType(pid);
     }
     else {
-      throw new NotImplementedError("macOS processes");
+      throw new IllegalStateException("getProcessMachineType() is not implemented for macOS processes");
     }
   }
 
@@ -181,7 +180,7 @@ public class OSProcessUtil {
         return UnixProcessManager.readElfMachineType(path);
       }
       else {
-        throw new NotImplementedError("macOS Mach-O executables");
+        throw new IllegalStateException("getExecutableMachineType() is not implemented for macOS Mach-O executables");
       }
     }
     catch (IOException e) {
