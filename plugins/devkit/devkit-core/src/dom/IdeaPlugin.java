@@ -141,8 +141,16 @@ public interface IdeaPlugin extends DomElement {
   Actions addActions();
 
 
+  /**
+   * @deprecated not used anymore
+   */
+  @Deprecated
   @NotNull
   List<Helpset> getHelpsets();
 
+  /**
+   * @deprecated not used anymore
+   */
+  @Deprecated
   Helpset addHelpset();
 }
