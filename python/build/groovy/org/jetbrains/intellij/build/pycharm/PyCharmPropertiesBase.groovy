@@ -76,7 +76,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     "PYCHARM"
   }
 
-  private void unzipArchives(BuildContext context, File destination) {
+  protected void unzipArchives(BuildContext context, File destination) {
     File tempFolder = new File(context.paths.temp, "zips")
     tempFolder.mkdirs()
     tempFolder.deleteOnExit()
@@ -96,7 +96,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     }
   }
 
-  private int getStubVersion(BuildContext context) {
+  protected int getStubVersion(BuildContext context) {
     CompilationTasks.create(context).compileModules(["intellij.python.tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
 
