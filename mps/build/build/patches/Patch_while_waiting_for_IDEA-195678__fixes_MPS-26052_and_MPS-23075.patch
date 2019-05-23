@@ -3,14 +3,14 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java	(revision e747c2d4f00ffb3c0c5204618268949b5415fada)
-+++ community/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java	(date 1532418834000)
-@@ -328,7 +328,7 @@
+--- community/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java	(revision a6c09b5fcd09fb92bb179513929384a9e37b2b53)
++++ community/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java	(date 1558536148000)
+@@ -344,7 +344,7 @@
      }
      final String userHome = SystemProperties.getUserHome();
      String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
--    if (PlatformUtils.isCLion()) {
-+    if (PlatformUtils.isCLion() || "MPS".equals(ApplicationNamesInfo.getInstance().getProductName())) {
+-    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode()) {
++    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || "MPS".equals(ApplicationNamesInfo.getInstance().getProductName())) {
        productName = ApplicationNamesInfo.getInstance().getProductName();
      }
-     //noinspection HardCodedStringLiteral
+     return userHome.replace('/', File.separatorChar) + File.separator + productName + "Projects";
