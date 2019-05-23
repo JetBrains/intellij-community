@@ -92,7 +92,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private @Nullable MultiMap<String, Element> myExtensionsPoints;
   private List<String> myModules;
   private ClassLoader myLoader;
-  private HelpSetPath[] myHelpSets;
   private String myDescriptionChildText;
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
@@ -222,18 +221,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
     else {
       myOptionalDependencies = ContainerUtil.filter(dependentPlugins, id -> !nonOptionalDependentPlugins.contains(id)).toArray(PluginId.EMPTY_ARRAY);
-    }
-
-    if (pluginBean.helpSets == null || pluginBean.helpSets.length == 0) {
-      myHelpSets = HelpSetPath.EMPTY;
-    }
-    else {
-      myHelpSets = new HelpSetPath[pluginBean.helpSets.length];
-      PluginHelpSet[] sets = pluginBean.helpSets;
-      for (int i = 0, n = sets.length; i < n; i++) {
-        PluginHelpSet pluginHelpSet = sets[i];
-        myHelpSets[i] = new HelpSetPath(pluginHelpSet.file, pluginHelpSet.path);
-      }
     }
 
     // we cannot use our new kotlin-aware XmlSerializer, so, will be used different bean cache,
@@ -656,12 +643,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public void setLoader(ClassLoader loader) {
     myLoader = loader;
-  }
-
-  @Override
-  @NotNull
-  public HelpSetPath[] getHelpSets() {
-    return myHelpSets;
   }
 
   @Override
