@@ -18,10 +18,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 internal class InferMethodParametersTypesIntention : Intention() {
 
   /**
-   * Performs inference of parameters for [GrMethod] pointed by [element]
-   * @param element used for pointing to processed method
-   * @param project current project
-   * @param editor current editor
+   * Performs inference of parameters for [GrMethod] referenced by [element]
+   * @param element used for referencing to processed method
    * @see [Intention.processIntention]
    */
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
@@ -40,9 +38,8 @@ internal class InferMethodParametersTypesIntention : Intention() {
    * Predicate for activating intention.
    * @return [PsiElementPredicate], which returns true if given element points to method header and there are any non-typed arguments
    */
-  override fun getElementPredicate(): PsiElementPredicate {
-    return PsiElementPredicate { element -> element is GrMethod && (element !is GrOpenBlock) && element.parameters.any { it.typeElement == null } }
-  }
+  override fun getElementPredicate(): PsiElementPredicate =
+    PsiElementPredicate { element -> element is GrMethod && (element !is GrOpenBlock) && element.parameters.any { it.typeElement == null } }
 
   override fun isStopElement(element: PsiElement?): Boolean {
     return element is GrOpenBlock || element is GrMethod || super.isStopElement(element)
@@ -55,7 +52,6 @@ internal class InferMethodParametersTypesIntention : Intention() {
   override fun getFamilyName(): String {
     return GroovyIntentionsBundle.message("infer.method.parameters.types.for.method.declaration")
   }
-
 
 }
 

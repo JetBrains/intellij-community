@@ -1,13 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
-import com.intellij.psi.PsiIntersectionType
-import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiWildcardType
+import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
-import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraphBuilder
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.createGraphFromInferenceVariables
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.determineDependencies
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
@@ -16,7 +13,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 /**
  * Allows to infer method parameters types regarding method calls and inner dependencies between types.
  */
-class MethodParametersInferenceProcessor(private val method: GrMethod, private val driver: InferenceDriver = InferenceDriver(method)) {
+class MethodParametersInferenceProcessor(private val method: GrMethod) {
+  private val driver: InferenceDriver = InferenceDriver(method)
 
   /**
    * Performs full substitution for non-typed parameters of [method]
@@ -33,9 +31,7 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
   }
 
   private fun setUpParametersSignature() {
-    val inferenceSession = CollectingGroovyInferenceSession(method.typeParameters,
-                                                                                                                    PsiSubstitutor.EMPTY,
-                                                                                                                    method)
+    val inferenceSession = CollectingGroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method)
     driver.collectOuterCalls(inferenceSession)
     val signatureSubstitutor = inferenceSession.inferSubst()
     driver.parametrizeMethod(signatureSubstitutor)
@@ -43,17 +39,12 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
 
 
   private fun setUpGraph(): InferenceUnitGraph {
-    val inferenceSession = CollectingGroovyInferenceSession(method.typeParameters,
-                                                                                                                    PsiSubstitutor.EMPTY,
-                                                                                                                    method)
+    val inferenceSession = CollectingGroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method)
     driver.collectInnerMethodCalls(inferenceSession)
     driver.constantTypes.forEach { getInferenceVariable(inferenceSession, it).instantiation = it }
     inferenceSession.run { repeatInferencePhases(); infer() }
     val inferenceVariables = method.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }
-    return InferenceUnitGraphBuilder.createGraphFromInferenceVariables(inferenceVariables, inferenceSession, driver.flexibleTypes.toSet(),
-                                                                       driver.constantTypes.toSet(),
-                                                                       driver.forbiddingTypes.toSet(),
-                                                                       driver.appearedClassTypes)
+    return createGraphFromInferenceVariables(inferenceVariables, inferenceSession, driver)
   }
 
   private fun inferTypeParameters(initialGraph: InferenceUnitGraph) {
@@ -68,28 +59,26 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
 
   private fun getPreferableType(unit: InferenceUnitNode,
                                 resultSubstitutor: PsiSubstitutor): PsiType {
-    val mayBeDirectlyInstantiated = !unit.forbidInstantiation &&
-                                    when {
-                                      unit.core.flexible -> (unit.typeInstantiation !is PsiIntersectionType)
-                                      else -> unit.subtypes.size <= 1
-                                    }
+    val mayBeDirectlyInstantiated =
+      !unit.forbidInstantiation &&
+      when {
+        unit.core.flexible -> (unit.typeInstantiation !is PsiIntersectionType)
+        else -> unit.subtypes.size <= 1
+      }
     when {
       mayBeDirectlyInstantiated -> {
         val instantiation = when {
           unit.core.flexible || unit.subtypes.isNotEmpty() || unit.direct -> unit.typeInstantiation
-          unit.typeInstantiation == unit.type || unit.typeInstantiation.equalsToText("java.lang.Object") -> PsiWildcardType.createUnbounded(
-            method.manager)
+          unit.typeInstantiation == unit.type || unit.typeInstantiation.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ->
+            PsiWildcardType.createUnbounded(method.manager)
           else -> PsiWildcardType.createExtends(method.manager, unit.typeInstantiation)
         }
         return resultSubstitutor.substitute(instantiation)
       }
       else -> {
-        val parent = unit.parent
-        val advice = parent?.type ?: unit.typeInstantiation
-        val newTypeParam = driver.createBoundedTypeParameterElement(unit.core.initialTypeParameter.name!!,
-                                                                    resultSubstitutor,
-                                                                    advice)
-        return newTypeParam.type()
+        val advice = unit.parent?.type ?: unit.typeInstantiation
+        val newTypeParameter = driver.createBoundedTypeParameterElement(unit.type.name, resultSubstitutor, advice)
+        return newTypeParameter.type()
       }
     }
   }

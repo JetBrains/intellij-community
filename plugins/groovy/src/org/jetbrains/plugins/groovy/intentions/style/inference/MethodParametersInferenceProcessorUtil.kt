@@ -11,20 +11,28 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 
 
-fun produceTypeParameterName(index: Int): String {
-  // todo: fix possible collisions
-  val nameRange = 'Z'.toByte() - 'T'.toByte()
-  return ('T'.toByte() + index % nameRange).toChar().toString() + (index / nameRange).toString()
-}
+class NameGenerator(private val restrictions: Collection<String> = emptySet()) {
+  companion object {
+    private const val nameRange = 'Z'.toByte() - 'T'.toByte()
 
-class NameGenerator {
-  var counter = 0
+    private fun produceTypeParameterName(index: Int): String {
+      return ('T'.toByte() + index % nameRange).toChar().toString() + (index / nameRange).toString()
+    }
+  }
+
+  private var counter = 0
+
   val name: String
     get() {
-      val name = produceTypeParameterName(counter)
-      ++counter
-      return name
+      while (true) {
+        val name = produceTypeParameterName(counter)
+        ++counter
+        if (name !in restrictions) {
+          return name
+        }
+      }
     }
+
 }
 
 typealias InferenceGraphNode = InferenceVariablesOrder.InferenceGraphNode<InferenceUnitNode>

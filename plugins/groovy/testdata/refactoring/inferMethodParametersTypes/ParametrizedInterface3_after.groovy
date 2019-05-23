@@ -1,4 +1,4 @@
-def <T1 extends java.util.List<? extends X0>, X0 extends Y1, Y1> void foo(List<T1> a, T1 b) {
+def <Y0 extends java.util.List<? extends W0>, W0 extends X1, X1> void foo(List<Y0> a, Y0 b) {
   a.add(b)
 }
 
