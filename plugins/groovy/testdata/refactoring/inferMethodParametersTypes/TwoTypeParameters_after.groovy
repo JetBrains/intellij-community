@@ -1,4 +1,4 @@
-def <T0, U0> Object foo(C<T0, U0> a, T0 b, U0 c) {
+def <U0, V0> Object foo(C<U0, V0> a, U0 b, V0 c) {
   a.doTU(b, c)
 }
 

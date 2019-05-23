@@ -1,4 +1,4 @@
-def <V0> Object foo(C<V0, V0, V0> a, V0 b) {
+def <W0> Object foo(C<W0, W0, W0> a, W0 b) {
   a.doU(b)
   a.doT(b)
   a.doV(b)

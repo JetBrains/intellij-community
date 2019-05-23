@@ -1,7 +1,7 @@
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
 
-static void foo(List<Integer> self, @ClosureParams(value = FromString, options = ["List<java.lang.Integer>,Integer"]) Closure<?> closure) {
+static def <U0 extends java.util.List<java.lang.Integer>> void foo(U0 self, @ClosureParams(value = FromString, options = ["U0,Integer"]) Closure<?> closure) {
   closure(self, 0)
 }
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
 
@@ -12,7 +14,35 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNod
 /**
  * Represents graph which is used for determining [InferenceUnitNode] dependencies.
  */
-data class InferenceUnitGraph(val units: List<InferenceUnitNode>)
+data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {
+  fun resolveOrder(): List<InferenceUnitNode> {
+    val visited = mutableSetOf<InferenceUnitNode>()
+    val order = mutableListOf<InferenceUnitNode>()
+    for (unit in units) {
+      visitTypes(unit, visited, order)
+    }
+    return order
+  }
+
+  private fun visitTypes(unit: InferenceUnitNode,
+                         visited: MutableSet<InferenceUnitNode>,
+                         order: MutableList<InferenceUnitNode>) {
+    if (unit in visited) {
+      return
+    }
+    visited.add(unit)
+    units.find { it.type == unit.typeInstantiation }?.run { visitTypes(this, visited, order) }
+    when (unit.typeInstantiation) {
+      is PsiClassType -> unit.typeInstantiation.parameters.forEach { parameter ->
+        units.find { it.type == parameter }?.run { visitTypes(this, visited, order) }
+      }
+      is PsiIntersectionType -> unit.typeInstantiation.conjuncts.forEach { parameter ->
+        units.find { it.type == parameter }?.run { visitTypes(this, visited, order) }
+      }
+    }
+    order.add(unit)
+  }
+}
 
 
 /**
@@ -62,9 +92,6 @@ private fun condensate(graph: InferenceUnitGraph): Pair<InferenceUnitGraph, Map<
   val builder = InferenceUnitGraphBuilder()
   for (component in components) {
     val representative = component.sortedBy { it.toString() }.first()
-    if (component.size > 1) {
-      builder.forbidInstantiation(representative.core)
-    }
     component.forEach {
       representativeMap[it.core] = representative.core
       if (it != representative) {

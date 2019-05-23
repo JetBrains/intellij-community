@@ -62,7 +62,7 @@ class MethodParametersInferenceProcessor(private val method: GrMethod, private v
   private fun inferTypeParameters(initialGraph: InferenceUnitGraph) {
     val inferredGraph = determineDependencies(initialGraph)
     var resultSubstitutor = PsiSubstitutor.EMPTY
-    for (unit in inferredGraph.units) {
+    for (unit in inferredGraph.resolveOrder()) {
       val preferableType = getPreferableType(unit, resultSubstitutor)
       resultSubstitutor = resultSubstitutor.put(unit.core.initialTypeParameter, preferableType)
     }

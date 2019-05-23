@@ -40,6 +40,6 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
   val parent: InferenceUnitNode? by lazy { supertypes.firstOrNull() }
 
   override fun toString(): String {
-    return "Inference unit: " + core.initialTypeParameter.type().canonicalText
+    return "Unit node: ${core.initialTypeParameter.type().canonicalText} (${typeInstantiation.presentableText})"
   }
 }

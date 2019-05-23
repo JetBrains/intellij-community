@@ -176,16 +176,25 @@ class InferenceDriver(private val method: GrMethod) {
         }
         return target.accept(visitor)
       }
-      target is PsiIntersectionType || target is PsiClassType && (target.hasParameters() || target.isRaw) -> return target.accept(visitor)
       target is PsiArrayType -> {
         val newTypeParameter = elementFactory.createProperTypeParameter(nameGenerator.name, emptyArray())
         typeParameterList.add(newTypeParameter)
         return newTypeParameter.type().createArrayType()
       }
       else -> {
-        val typeParam = elementFactory.createProperTypeParameter(nameGenerator.name, arrayOf(target as PsiClassType))
-        typeParameterList.add(typeParam)
-        return typeParam.type()
+        return when (target) {
+          PsiType.getJavaLangObject(method.manager, method.resolveScope) -> {
+            val param = elementFactory.createProperTypeParameter(nameGenerator.name, emptyArray())
+            typeParameterList.add(param)
+            param.type()
+          }
+          is PsiIntersectionType -> target.accept(visitor) as PsiClassType
+          else -> {
+            val param = elementFactory.createProperTypeParameter(nameGenerator.name, arrayOf(target.accept(visitor) as PsiClassType))
+            typeParameterList.add(param)
+            param.type()
+          }
+        }
       }
     }
   }
@@ -203,7 +212,7 @@ class InferenceDriver(private val method: GrMethod) {
         }
         resolve?.candidate?.argumentMapping?.expectedTypes?.forEach { (type, argument) ->
           val argumentType = (argument.type as? PsiClassType)
-            argumentType?.run {
+          argumentType?.run {
             boundsCollector.computeIfAbsent(argumentType.className) { mutableListOf() }.add((type as? PsiClassType)?.resolve())
           }
         }
@@ -280,7 +289,7 @@ class InferenceDriver(private val method: GrMethod) {
         classType ?: return classType
         val resolveElement = classType.resolveGenerics().element
         if (resolveElement is PsiTypeParameter) {
-          if (resolveElement.text !in necessaryTypeParameters.map { it.text }) {
+          if (resolveElement.name !in necessaryTypeParameters.map { it.name }) {
             necessaryTypeParameters.add(resolveElement)
             resolveElement.extendsList.referencedTypes.forEach { it.accept(this) }
           }
@@ -315,7 +324,7 @@ class InferenceDriver(private val method: GrMethod) {
   fun createBoundedTypeParameterElement(name: String,
                                         resultSubstitutor: PsiSubstitutor,
                                         advice: PsiType?): PsiTypeParameter {
-    val mappedSupertypes = when  {
+    val mappedSupertypes = when {
       advice is PsiClassType && (advice.name != name) -> arrayOf(resultSubstitutor.substitute(advice) as PsiClassType)
       advice is PsiIntersectionType -> PsiIntersectionType.flatten(advice.conjuncts, mutableSetOf()).map {
         resultSubstitutor.substitute(it) as PsiClassType

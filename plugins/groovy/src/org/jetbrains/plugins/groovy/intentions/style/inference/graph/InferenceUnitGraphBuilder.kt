@@ -31,8 +31,11 @@ class InferenceUnitGraphBuilder {
       val builder = InferenceUnitGraphBuilder()
       for (variable in variables) {
         val typeParameter = variable.parameter.type()
-        val parameterTypes = variable.parameter.extendsList.referencedTypes.filter {
-          appearedClassTypes[typeParameter.className]?.contains(it.resolve()) ?: false
+        val parameterTypes = when {
+          variable.parameter.extendsList.referencedTypes.size <= 1 -> variable.parameter.extendsList.referencedTypes.toList()
+          else -> variable.parameter.extendsList.referencedTypes.filter {
+            appearedClassTypes[typeParameter.className]?.contains(it.resolve()) ?: false
+          }
         }
         val instantiation = variable.instantiation
         val partialInstantiation = when {
@@ -46,7 +49,7 @@ class InferenceUnitGraphBuilder {
             parameterTypes.toList())
           // questionable condition. I guess, we can allow LUB instead of Object if variable will instantiate into a parametrized type.
           parameterTypes.isEmpty() && partialInstantiation is PsiIntersectionType -> PsiType.getJavaLangObject(session.manager,
-                                                                                                                 session.scope)
+                                                                                                               session.scope)
           else -> parameterTypes.firstOrNull() ?: partialInstantiation!!.ensureWildcards(
             GroovyPsiElementFactory.getInstance(variable.project), variable.manager)
         }
@@ -102,6 +105,8 @@ class InferenceUnitGraphBuilder {
   }
 
   fun add(left: InferenceUnit, right: InferenceUnit, type: RelationType): InferenceUnitGraphBuilder {
+    register(left)
+    register(right)
     relations.add(Relation(left, right, type))
     relations.add(Relation(right, left, type.complement()))
     return this
@@ -124,18 +129,21 @@ class InferenceUnitGraphBuilder {
     return this
   }
 
-  fun forbidInstantiation(parameter: InferenceUnit): InferenceUnitGraphBuilder {
-    fixedUnits.add(parameter)
+  fun forbidInstantiation(unit: InferenceUnit): InferenceUnitGraphBuilder {
+    register(unit)
+    fixedUnits.add(unit)
     return this
   }
 
   fun setDirect(unit: InferenceUnit): InferenceUnitGraphBuilder {
+    register(unit)
     directUnits.add(unit)
     return this
   }
 
-  fun setType(parameter: InferenceUnit, type: PsiType): InferenceUnitGraphBuilder {
-    fixedInstantiations[parameter] = type
+  fun setType(unit: InferenceUnit, type: PsiType): InferenceUnitGraphBuilder {
+    register(unit)
+    fixedInstantiations[unit] = type
     return this
   }
 
@@ -145,8 +153,7 @@ class InferenceUnitGraphBuilder {
     val superTypesMap: MutableList<MutableSet<() -> InferenceUnitNode>> = mutableListOf()
     val subTypesMap: MutableList<MutableSet<() -> InferenceUnitNode>> = mutableListOf()
     //todo: bug with order
-    val registeredUnits =
-      (relations.flatMap { listOf(it.left, it.right) } + registered).toSet().toList().sortedBy { it.initialTypeParameter.name }
+    val registeredUnits = registered.sortedBy { it.initialTypeParameter.name }
     repeat(registeredUnits.size) {
       superTypesMap.add(mutableSetOf())
       subTypesMap.add(mutableSetOf())
