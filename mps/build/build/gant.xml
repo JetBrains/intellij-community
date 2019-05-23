@@ -57,7 +57,7 @@
         <echo message="IDEA Community folder does not exists. Cloning..."/>
         <exec executable="git" dir="${basedir}/../">
             <arg value="clone"/>
-            <arg value="git://git.jetbrains.org/idea/community.git"/>
+            <arg value="https://github.com/JetBrains/intellij-community.git"/>
         </exec>
     </target>
 
