@@ -286,21 +286,25 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private void updateAddedElement(ErrorTreeElement element) {
+    Promise<?> promise;
     final Object parent = myErrorViewStructure.getParentElement(element);
-    if (parent instanceof GroupingElement) {
-      final Object parent2 = myErrorViewStructure.getParentElement(parent);
-      // first, need to invalidate GroupingElement itself as it may have been just added
-      final Promise<TreePath> groupRefresh = parent2 != null ? myStructureModel.invalidate(parent2, true) : Promises.resolvedPromise();
-      groupRefresh.onProcessed(
-        path -> myStructureModel.invalidate(parent, true)).onSuccess(
-        path -> myStructureModel.makeVisible(element, myTree, p->{})
-      );
-    }
-    else if (parent != null) {
-      myStructureModel.invalidate(parent, true);
+    if (parent == null) {
+      promise = myStructureModel.invalidate();
     }
     else {
-      myStructureModel.invalidate();
+      if (parent instanceof GroupingElement) {
+        final Object parent2 = myErrorViewStructure.getParentElement(parent);
+        // first, need to invalidate GroupingElement itself as it may have been just added
+        promise = parent2 != null ? myStructureModel.invalidate(parent2, true) : Promises.resolvedPromise();
+      }
+      else {
+        promise = Promises.resolvedPromise();
+      }
+      promise = promise.onProcessed(p -> myStructureModel.invalidate(parent, true));
+    }
+    if (element.getKind() == ErrorTreeElementKind.ERROR) {
+      // expand automatically only errors
+      promise.onSuccess(p -> myStructureModel.makeVisible(element, myTree, pp->{}));
     }
   }
 
