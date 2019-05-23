@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -56,10 +57,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -371,10 +369,17 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void rebuildTree() {
-      DefaultTreeModel newModel = buildTreeModel();
-      updateTreeModel(newModel);
+      myTree.setPaintBusy(true);
+      BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
+        final DefaultTreeModel newModel = buildTreeModel();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          updateTreeModel(newModel);
+          myTree.setPaintBusy(false);
+        });
+      });
     }
 
+    @CalledInBackground
     private DefaultTreeModel buildTreeModel() {
       MyShelvedTreeModelBuilder modelBuilder = new MyShelvedTreeModelBuilder();
       final List<ShelvedChangeList> changeLists = new ArrayList<>(myShelveChangesManager.getShelvedChangeLists());
