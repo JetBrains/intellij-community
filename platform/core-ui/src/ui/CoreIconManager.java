@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.ide.IconLayerProvider;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
@@ -83,7 +84,8 @@ public final class CoreIconManager implements IconManager {
       }
       icon = layeredIcon;
     }
-    RowIcon baseIcon = new RowIcon(2);
+
+    RowIcon baseIcon = new RowIcon(Registry.is("ide.completion.show.visibility.icon") ? 2 : 1);
     baseIcon.setIcon(icon, 0);
     return baseIcon;
   }
