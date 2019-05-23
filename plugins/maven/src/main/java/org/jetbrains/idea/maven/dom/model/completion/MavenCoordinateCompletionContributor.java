@@ -165,11 +165,15 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
         }
 
         case "dependency":
+        case "extension":
         case "plugin": {
           checkPlaceForParentTags(tag);
           break;
         }
+        default:
+          badPlace = true;
       }
+
       return this;
     }
 
