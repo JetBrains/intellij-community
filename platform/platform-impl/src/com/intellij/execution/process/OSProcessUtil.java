@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.pty4j.windows.WinPtyProcess;
+import kotlin.NotImplementedError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
@@ -162,8 +163,11 @@ public class OSProcessUtil {
     if (SystemInfo.isWindows) {
       return WinProcessManager.getProcessMachineType(pid);
     }
-    else {
+    if (SystemInfo.isLinux) {
       return UnixProcessManager.getProcessMachineType(pid);
+    }
+    else {
+      throw new NotImplementedError("macOS processes");
     }
   }
 
@@ -173,8 +177,11 @@ public class OSProcessUtil {
       if (SystemInfo.isWindows) {
         return WinProcessManager.readPeMachineType(path);
       }
-      else {
+      else if (SystemInfo.isLinux) {
         return UnixProcessManager.readElfMachineType(path);
+      }
+      else {
+        throw new NotImplementedError("macOS Mach-O executables");
       }
     }
     catch (IOException e) {
