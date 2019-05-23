@@ -79,8 +79,8 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
   open fun getKeymapPresentableName(keymap: KeymapImpl): String {
     // Netbeans keymap is no longer for version 6.5, but we need to keep the id
     return when (val name = keymap.name) {
-      KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> if (SystemInfoRt.isMac) "Default" else "macOS"
-      KeymapManager.DEFAULT_IDEA_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfoRt.isWindows) "" else " (Windows)")
+      KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> "Default for macOS"
+      KeymapManager.DEFAULT_IDEA_KEYMAP -> "Default for Windows"
       KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfoRt.isMac) "" else " (macOS)")
       "NetBeans 6.5" -> "NetBeans"
       else -> {
