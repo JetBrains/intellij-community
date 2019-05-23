@@ -101,8 +101,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         final Module module = moduleOrderEntry.getModule();
         if (module != null) {
           ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
-          boolean productionOnTests = orderEntry instanceof ModuleOrderEntryImpl
-                                      && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency();
+          boolean productionOnTests = ((ModuleOrderEntry)orderEntry).isProductionOnTestDependency();
           boolean includeTests = !myOrderEnumerator.isProductionOnly()
                                  && OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
                                  || productionOnTests;
@@ -138,8 +137,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         final Module module = moduleOrderEntry.getModule();
         if (module != null) {
           ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
-          boolean productionOnTests = orderEntry instanceof ModuleOrderEntryImpl
-                                      && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency();
+          boolean productionOnTests = ((ModuleOrderEntry)orderEntry).isProductionOnTestDependency();
           boolean includeTests = !myOrderEnumerator.isProductionOnly() && OrderEnumeratorBase
             .shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
                                  || productionOnTests;

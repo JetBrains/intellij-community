@@ -611,8 +611,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     }
     if (orderEntry1 instanceof ModuleOrderEntry) {
       LOG.assertTrue(orderEntry2 instanceof ModuleOrderEntry);
-      ModuleOrderEntryImpl entry1 = (ModuleOrderEntryImpl)orderEntry1;
-      ModuleOrderEntryImpl entry2 = (ModuleOrderEntryImpl)orderEntry2;
+      ModuleOrderEntry entry1 = (ModuleOrderEntry)orderEntry1;
+      ModuleOrderEntry entry2 = (ModuleOrderEntry)orderEntry2;
       return entry1.isProductionOnTestDependency() == entry2.isProductionOnTestDependency()
              && Comparing.equal(entry1.getModuleName(), entry2.getModuleName());
     }

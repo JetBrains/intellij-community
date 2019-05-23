@@ -28,4 +28,11 @@ public interface ModuleOrderEntry extends ExportableOrderEntry {
 
   @NotNull
   String getModuleName();
+
+  /**
+   * If {@code true} test sources roots from the dependency will be included into production classpath for the module containing this entry.
+   */
+  boolean isProductionOnTestDependency();
+
+  void setProductionOnTestDependency(boolean productionOnTestDependency);
 }
