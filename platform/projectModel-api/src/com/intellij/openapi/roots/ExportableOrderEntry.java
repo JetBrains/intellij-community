@@ -15,11 +15,10 @@
  */
 package com.intellij.openapi.roots;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
+@ApiStatus.NonExtendable
 public interface ExportableOrderEntry extends OrderEntry {
   boolean isExported();
   void setExported(boolean value);

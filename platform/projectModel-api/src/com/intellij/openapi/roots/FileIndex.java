@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -33,6 +34,7 @@ import java.util.Set;
  * @see ProjectRootManager#getFileIndex()
  * @see ModuleRootManager#getFileIndex()
  */
+@ApiStatus.NonExtendable
 public interface FileIndex {
   /**
    * Processes all files and directories under content roots skipping excluded and ignored files and directories.

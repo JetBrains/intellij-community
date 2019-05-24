@@ -16,12 +16,14 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
  */
+@ApiStatus.NonExtendable
 public interface ModuleOrderEntry extends ExportableOrderEntry {
   @Nullable
   Module getModule();
