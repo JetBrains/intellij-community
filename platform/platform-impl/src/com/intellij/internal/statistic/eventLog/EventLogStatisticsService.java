@@ -63,6 +63,7 @@ public class EventLogStatisticsService implements StatisticsService {
 
     final LogEventFilter filter = settings.getEventFilter();
     try {
+      int failed = 0;
       final List<File> toRemove = new ArrayList<>(logs.size());
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
       for (int i = 0; i < size; i++) {
@@ -75,6 +76,7 @@ public class EventLogStatisticsService implements StatisticsService {
           }
           decorator.failed(recordRequest);
           toRemove.add(file);
+          failed++;
           continue;
         }
 
@@ -98,6 +100,7 @@ public class EventLogStatisticsService implements StatisticsService {
           toRemove.add(file);
         }
         catch (HttpRequests.HttpStatusException e) {
+          failed++;
           decorator.failed(recordRequest);
           if (e.getStatusCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
             toRemove.add(file);
@@ -108,6 +111,7 @@ public class EventLogStatisticsService implements StatisticsService {
           }
         }
         catch (Exception e) {
+          failed++;
           if (LOG.isTraceEnabled()) {
             LOG.trace(file.getName() + " -> " + e.getMessage());
           }
@@ -115,6 +119,7 @@ public class EventLogStatisticsService implements StatisticsService {
       }
 
       cleanupFiles(toRemove);
+      EventLogSystemLogger.logFilesSend(config.getRecorderId(), logs.size(), size, failed);
       return decorator.toResult();
     }
     catch (Exception e) {

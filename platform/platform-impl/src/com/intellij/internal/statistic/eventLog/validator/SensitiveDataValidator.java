@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator;
 
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
-import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
-import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
@@ -30,10 +27,12 @@ public class SensitiveDataValidator {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator");
   private static final ConcurrentMap<String, SensitiveDataValidator> instances = ContainerUtil.newConcurrentMap();
 
+  private final String myRecorderId;
   private final Semaphore mySemaphore;
   private final AtomicBoolean isWhiteListInitialized;
   protected final Map<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
 
+  private String myVersion;
   private final EventLogWhitelistPersistence myWhitelistPersistence;
   private final EventLogExternalSettingsService mySettingsService;
 
@@ -46,11 +45,14 @@ public class SensitiveDataValidator {
   }
 
   protected SensitiveDataValidator(@NotNull String recorderId) {
+    myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     isWhiteListInitialized = new AtomicBoolean(false);
     myWhitelistPersistence = new EventLogWhitelistPersistence(recorderId);
     mySettingsService = new EventLogExternalSettingsService(recorderId);
-    updateValidators(myWhitelistPersistence.getCachedWhiteList());
+
+    myVersion = updateValidators(myWhitelistPersistence.getCachedWhiteList());
+    EventLogSystemLogger.logWhitelistLoad(recorderId, myVersion);
   }
 
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
@@ -82,7 +84,11 @@ public class SensitiveDataValidator {
   }
 
   public SensitiveDataValidator update() {
-    updateValidators(getWhiteListContent());
+    final String version = updateValidators(getWhiteListContent());
+    if (!StringUtil.equals(version, myVersion)) {
+      myVersion = version;
+      EventLogSystemLogger.logWhitelistUpdated(myRecorderId, myVersion);
+    }
     return this;
   }
 
@@ -90,7 +96,8 @@ public class SensitiveDataValidator {
     updateValidators(myWhitelistPersistence.getCachedWhiteList());
   }
 
-  private void updateValidators(@Nullable String whiteListContent) {
+  @Nullable
+  private String updateValidators(@Nullable String whiteListContent) {
     if (whiteListContent != null) {
       mySemaphore.down();
       try {
@@ -107,11 +114,13 @@ public class SensitiveDataValidator {
 
           isWhiteListInitialized.set(true);
         }
+        return groups == null ? null : groups.version;
       }
       finally {
         mySemaphore.up();
       }
     }
+    return null;
   }
 
   private boolean isUnreachableWhitelist() {
