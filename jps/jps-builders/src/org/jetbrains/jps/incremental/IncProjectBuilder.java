@@ -350,10 +350,6 @@ public class IncProjectBuilder {
           new File(root, CLASSPATH_INDEX_FILE_NAME).delete();
         }
       }
-
-      @Override
-      public void filesDeleted(@NotNull FileDeletedEvent event) {
-      }
     });
 
     for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
