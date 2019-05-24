@@ -442,31 +442,32 @@ public class StructuralSearchDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createNorthPanel() {
-    final DefaultActionGroup historyActionGroup = new DefaultActionGroup(new DumbAwareAction("History", null, getShowHistoryIcon()) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        final Object source = e.getInputEvent().getSource();
-        if (!(source instanceof Component)) return;
-        JBPopupFactory.getInstance()
-          .createPopupChooserBuilder(ConfigurationManager.getInstance(getProject()).getHistoryConfigurations())
-          .setRenderer(SimpleListCellRenderer.<Configuration>create((label, value, index) -> {
-            if (value instanceof ReplaceConfiguration) {
-              label.setIcon(AllIcons.Actions.Replace);
-              label.setText(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 49, 0, true)
-                            + " ⇒ "
-                            + shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true));
-            }
-            else {
-              label.setIcon(AllIcons.Actions.Find);
-              label.setText(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 100, 0, true));
-            }
-          }))
-          .setItemChosenCallback(c -> loadConfiguration(c))
-          .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-          .createPopup()
-          .showUnderneathOf((Component)source);
-      }
-    });
+    final DefaultActionGroup historyActionGroup =
+      new DefaultActionGroup(new DumbAwareAction("History", null, AllIcons.Actions.SearchWithHistory) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          final Object source = e.getInputEvent().getSource();
+          if (!(source instanceof Component)) return;
+          JBPopupFactory.getInstance()
+            .createPopupChooserBuilder(ConfigurationManager.getInstance(getProject()).getHistoryConfigurations())
+            .setRenderer(SimpleListCellRenderer.<Configuration>create((label, value, index) -> {
+              if (value instanceof ReplaceConfiguration) {
+                label.setIcon(AllIcons.Actions.Replace);
+                label.setText(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 49, 0, true)
+                              + " ⇒ "
+                              + shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true));
+              }
+              else {
+                label.setIcon(AllIcons.Actions.Find);
+                label.setText(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 100, 0, true));
+              }
+            }))
+            .setItemChosenCallback(c -> loadConfiguration(c))
+            .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+            .createPopup()
+            .showUnderneathOf((Component)source);
+        }
+      });
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbarImpl historyToolbar =
       (ActionToolbarImpl)actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, historyActionGroup, true);
@@ -1061,10 +1062,6 @@ public class StructuralSearchDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return "find.structuredSearch";
-  }
-
-  private static Icon getShowHistoryIcon() {
-    return AllIcons.Actions.SearchWithHistory;
   }
 
   private class SwitchAction extends AnAction implements DumbAware {
