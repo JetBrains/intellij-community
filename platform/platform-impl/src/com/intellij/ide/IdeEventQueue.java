@@ -347,6 +347,7 @@ public class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
+    long startedAt = System.currentTimeMillis();
     if (Registry.is("skip.typed.event") && skipTypedKeyEventsIfFocusReturnsToOwner(e)) return;
 
     if (isMetaKeyPressedOnLinux(e)) return;
@@ -399,6 +400,15 @@ public class IdeEventQueue extends EventQueue {
 
       if (e instanceof KeyEvent) {
         maybeReady();
+      }
+      if (e instanceof InvocationEvent) {
+        Runnable runnable = ReflectionUtil.getField(InvocationEvent.class, e, Runnable.class, "runnable");
+        if (runnable != null && !runnable.getClass().getName().equals("com.intellij.openapi.application.impl.LaterInvocator$FlushQueue")) {
+          TransactionGuardImpl.logTimeMillis(startedAt, runnable); // joined subtasks are measured in the LaterInvocator
+        }
+      }
+      else {
+        TransactionGuardImpl.logTimeMillis(startedAt, e);
       }
     }
 
@@ -1264,9 +1274,11 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void flushDelayedKeyEvents() {
+    long startedAt = System.currentTimeMillis();
     if (!isActionPopupShown() && delayKeyEvents.compareAndSet(true, false)) {
       postDelayedKeyEvents();
     }
+    TransactionGuardImpl.logTimeMillis(startedAt, "IdeEventQueue#flushDelayedKeyEvents");
   }
 
   private static boolean isActionPopupShown() {
