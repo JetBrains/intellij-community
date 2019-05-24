@@ -127,7 +127,7 @@ open class MultipleFileMergeDialog(
       table.selectionModel.setSelectionInterval(0, 0)
     }
     else {
-      table.tree.selectionPath = TreeUtil.getFirstLeafNodePath(table.tree)
+      TreeUtil.promiseSelectFirstLeaf(table.tree)
     }
   }
 
