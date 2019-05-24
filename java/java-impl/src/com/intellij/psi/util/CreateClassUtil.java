@@ -19,7 +19,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -177,9 +176,7 @@ public class CreateClassUtil {
       return null;
     }
     try {
-      final Properties properties = ApplicationManager.getApplication().isUnitTestMode() ?
-                                    new Properties() :
-                                    FileTemplateManager.getInstance(classDirectory.getProject()).getDefaultProperties();
+      final Properties properties =                                  FileTemplateManager.getInstance(classDirectory.getProject()).getDefaultProperties();
       return createClassNamed(className, new Properties(properties), templateName, classDirectory);
     }
     catch (IncorrectOperationException e) {
