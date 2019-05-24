@@ -70,4 +70,14 @@ public class PsiLambdaParameterType extends PsiType {
   public PsiParameter getParameter() {
     return myParameter;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o || o instanceof PsiLambdaParameterType && myParameter.equals(((PsiLambdaParameterType)o).myParameter);
+  }
+
+  @Override
+  public int hashCode() {
+    return myParameter.hashCode();
+  }
 }
