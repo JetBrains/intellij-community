@@ -64,6 +64,8 @@ public class PyKnownDecoratorUtil {
     TYPING_OVERLOAD("typing." + PyNames.OVERLOAD),
     TYPING_RUNTIME("typing.runtime"),
     TYPING_RUNTIME_EXT("typing_extensions.runtime"),
+    TYPING_FINAL("typing.final"),
+    TYPING_FINAL_EXT("typing_extensions.final"),
 
     REPRLIB_RECURSIVE_REPR("reprlib.recursive_repr"),
 
