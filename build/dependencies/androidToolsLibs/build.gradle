@@ -36,6 +36,7 @@ subprojects {
   task sourceJar(type: Jar) {
     from sourceSets.main.java
     from sourceSets.main.kotlin
+    from sourceSets.test.java
   }
 
   publishing {
