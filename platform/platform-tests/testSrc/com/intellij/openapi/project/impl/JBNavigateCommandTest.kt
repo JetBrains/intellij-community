@@ -2,6 +2,7 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.RecentProjectsManager
+import com.intellij.idea.Bombed
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.application.WriteAction
@@ -48,6 +49,7 @@ class JBNavigateCommandTest : PlatformTestCase() {
     PlatformTestUtil.forceCloseProjectWithoutSaving(project)
   }
 
+  @Bombed(year = 2019, month = 7, day = 1, user = "dima")
   fun testFqn1() {
     val project = createAndOpenProject()
     configure(project)
