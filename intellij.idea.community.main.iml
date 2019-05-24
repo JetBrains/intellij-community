@@ -131,5 +131,6 @@
     <orderEntry type="module" module-name="intellij.editorconfig" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.changeReminder" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.sh" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.java.maven" scope="RUNTIME" />
   </component>
 </module>
