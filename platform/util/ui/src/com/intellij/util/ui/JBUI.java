@@ -805,7 +805,7 @@ public class JBUI {
       }
 
       public static Color hoverInactiveBackground() {
-        return namedColorOrNull("ToolWindow.HeaderTab.hoverInactiveBackground");
+        return JBColor.namedColor("ToolWindow.HeaderTab.hoverInactiveBackground", hoverBackground());
       }
 
       public static Color underlinedTabInactiveBackground() {
