@@ -50,7 +50,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -74,7 +73,6 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.TextTransferable;
@@ -763,7 +761,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  private void highlightMatches(@NotNull List<MatchResult> elementList, @Nullable String statusBarText) {
+  private void highlightMatches(@NotNull List<MatchResult> matchResults, @Nullable String statusBarText) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final Project project = getProject();
       if (project.isDisposed()) {
@@ -778,11 +776,32 @@ public class StructuralSearchDialog extends DialogWrapper {
         highlightManager.removeSegmentHighlighter(editor, highlighter);
       }
       myRangeHighlighters.clear();
-      if (!elementList.isEmpty()) {
+      if (!matchResults.isEmpty()) {
         final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-        final TextAttributes textattributes = globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        final PsiElement[] elements = ContainerUtil.map2Array(elementList, PsiElement.class, m -> m.getMatch());
-        highlightManager.addOccurrenceHighlights(editor, elements, textattributes, true, myRangeHighlighters);
+        final TextAttributes textAttributes = globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+        for (MatchResult result : matchResults) {
+          int start = -1;
+          int end = -1;
+          if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {
+            for (MatchResult child : result.getChildren()) {
+              final TextRange range = child.getMatch().getTextRange();
+              final int startOffset = range.getStartOffset();
+              if (start == -1 || start > startOffset) {
+                start = startOffset;
+              }
+              final int endOffset = range.getEndOffset();
+              if (end < endOffset) {
+                end = endOffset;
+              }
+            }
+          }
+          else {
+            final TextRange range = result.getMatch().getTextRange();
+            start = range.getStartOffset();
+            end = range.getEndOffset();
+          }
+          highlightManager.addRangeHighlight(editor, start, end, textAttributes, false, myRangeHighlighters);
+        }
         final FindManager findmanager = FindManager.getInstance(project);
         FindModel findmodel = findmanager.getFindNextModel();
         if (findmodel == null) {
