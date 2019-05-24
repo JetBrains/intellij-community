@@ -1,9 +1,9 @@
 call text: new Test(instance).invoke();
 class: 
 static class Test {
-        private WithReflectionAccess instance;
+        private Object instance;
 
-        public Test(WithReflectionAccess instance) {
+        public Test(Object instance) {
             this.instance = instance;
         }
 
