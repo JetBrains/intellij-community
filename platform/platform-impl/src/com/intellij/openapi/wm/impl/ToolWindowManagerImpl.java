@@ -2199,6 +2199,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
   }
 
+  public boolean fallbackToEditor() {
+    return myActiveStack.getSize() == 1;
+  }
+
   private void focusToolWindowByDefault(@Nullable String idToIgnore) {
     String toFocus = null;
 
