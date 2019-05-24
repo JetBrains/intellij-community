@@ -360,3 +360,21 @@ class DisposableRule : ExternalResource() {
     }
   }
 }
+
+class SystemPropertyRule(private val name: String, private val value: String = "true") : ExternalResource() {
+  private var oldValue: String? = null
+
+  public override fun before() {
+    oldValue = System.getProperty(name)
+    System.setProperty(name, value)
+  }
+
+  public override fun after() {
+    if (oldValue == null) {
+      System.clearProperty(name)
+    }
+    else {
+      System.setProperty(name, oldValue)
+    }
+  }
+}
