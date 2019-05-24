@@ -3,6 +3,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -10,6 +11,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -159,25 +161,28 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     MultiMap<VirtualFile, FunExprOccurrence> allCandidates = getAllOccurrences(descriptors);
     if (allCandidates.isEmpty()) return;
 
-    for (VirtualFile vFile : putLikelyFilesFirst(descriptors, allCandidates.keySet(), project)) {
+    Set<VirtualFile> allFiles = allCandidates.keySet();
+    Set<VirtualFile> filesFirst = getLikelyFiles(descriptors, allFiles, project);
+    Processor<VirtualFile> vFileProcessor = vFile -> {
       Set<FunExprOccurrence> toLoad = filterInapplicable(samClasses, vFile, allCandidates.get(vFile), project);
       if (!toLoad.isEmpty()) {
-        LOG.trace("To load " + vFile.getPath() + " with values: " + toLoad);
-        if (!processor.process(vFile, toLoad)) {
-          return;
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("To load " + vFile.getPath() + " with values: " + toLoad);
         }
+        return processor.process(vFile, toLoad);
       }
-    }
+      return true;
+    };
+    if (!processConcurrentlyIfTooMany(filesFirst, vFileProcessor)) return;
+    allFiles.removeAll(filesFirst);
+    processConcurrentlyIfTooMany(allFiles, vFileProcessor);
   }
 
-  @NotNull
-  private static Set<VirtualFile> putLikelyFilesFirst(@NotNull List<? extends SamDescriptor> descriptors,
-                                                      @NotNull Set<? extends VirtualFile> allFiles,
-                                                      @NotNull Project project) {
-    Set<VirtualFile> orderedFiles = new LinkedHashSet<>(allFiles.size());
-    orderedFiles.addAll(getLikelyFiles(descriptors, allFiles, project));
-    orderedFiles.addAll(allFiles);
-    return orderedFiles;
+  private static boolean processConcurrentlyIfTooMany(@NotNull Set<? extends VirtualFile> files, @NotNull Processor<? super VirtualFile> processor) {
+    if (files.size() < 100) {
+      return ContainerUtil.process(files, processor);
+    }
+    return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(files), ProgressIndicatorProvider.getGlobalProgressIndicator(), processor);
   }
 
   @NotNull
