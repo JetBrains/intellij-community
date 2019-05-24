@@ -142,8 +142,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   /**
-   * @param parent parent component which is used to calculate heavy weight window ancestor.
-   *               {@code parent} cannot be {@code null} and must be showing.
+   * @param parent parent component (must be showing) which is used to calculate heavy weight window ancestor.
    */
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     boolean headless = isHeadlessEnv();
