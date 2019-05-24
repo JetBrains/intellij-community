@@ -609,7 +609,10 @@ public class ExternalSystemUtil {
             }
             project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null);
             project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
+            /* Android Studio: don't send finish sync events, which will be created by PostSyncProjectSetup::finishSuccessfulSync or finishFailedSync. See b/132566912.
+            The finish events here are duplicated and don't reflect the actual sync results. For example, if there're sync issues in the Gradle model, this reports "sync finished".
             sendSyncFinishEvent(finishSyncEventSupplier);
+            */
           }
         }
       }
