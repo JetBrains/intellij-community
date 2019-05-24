@@ -149,4 +149,12 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
     checkResult();
   }
+
+  public void testSoftWrappedLineHighlighterWithBlockInlay() throws Exception {
+    initText("some text");
+    configureSoftWraps(5);
+    addBlockInlay(0);
+    addLineHighlighter(0, 0, HighlighterLayer.CARET_ROW + 1, null, Color.red);
+    checkResultWithGutter();
+  }
 }

@@ -383,37 +383,25 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void drawEditorBackgroundForRange(Graphics g, int startOffset, int endOffset, TextAttributes attributes,
                                             Color defaultBackgroundColor, Color defaultForegroundColor, int startX) {
+    Color bgColor = myEditor.getBackgroundColor(attributes);
+    if (Comparing.equal(bgColor, defaultBackgroundColor)) return;
+
     VisualPosition visualStart = myEditor.offsetToVisualPosition(startOffset, true, false);
     VisualPosition visualEnd   = myEditor.offsetToVisualPosition(endOffset, false, false);
-    for (int line = visualStart.getLine(); line <= visualEnd.getLine(); line++) {
-      if (line == visualStart.getLine()) {
-        if (visualStart.getColumn() == 0) {
-          drawEditorLineBackgroundRect(g, attributes, line, defaultBackgroundColor, defaultForegroundColor, startX,
-                                       myEditor.visualLineToY(line));
-        }
-      }
-      else if (line != visualEnd.getLine() || visualEnd.getColumn() != 0) {
-        drawEditorLineBackgroundRect(g, attributes, line, defaultBackgroundColor, defaultForegroundColor, startX,
-                                     myEditor.visualLineToY(line));
-      }
-    }
-  }
+    int startVisualLine = visualStart.getLine() + (visualStart.getColumn() == 0 ? 0 : 1);
+    int endVisualLine = visualEnd.getLine() - (visualEnd.getColumn() == 0 ? 1 : 0);
+    if (startVisualLine <= endVisualLine) {
+      int startY = myEditor.visualLineToY(startVisualLine);
+      int endY = myEditor.visualLineToY(endVisualLine) + myEditor.getLineHeight();
+      g.setColor(bgColor);
+      g.fillRect(startX, startY, getWidth() - startX, endY - startY);
 
-  private void drawEditorLineBackgroundRect(Graphics g,
-                                            TextAttributes attributes,
-                                            int visualLine,
-                                            Color defaultBackgroundColor,
-                                            Color defaultForegroundColor,
-                                            int startX,
-                                            int startY) {
-    Color color = myEditor.getBackgroundColor(attributes);
-    if (!Comparing.equal(color, defaultBackgroundColor)) {
       Color fgColor = attributes.getForegroundColor();
       if (!Comparing.equal(fgColor, defaultForegroundColor)) {
-        myTextFgColors.put(visualLine, fgColor);
+        for (int line = startVisualLine; line <= endVisualLine; line++) {
+          myTextFgColors.put(line, fgColor);
+        }
       }
-      g.setColor(color);
-      g.fillRect(startX, startY, getWidth() - startX, myEditor.getLineHeight());
     }
   }
 
