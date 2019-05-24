@@ -18,13 +18,12 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
+@ApiStatus.OverrideOnly
 public abstract class OrderEnumerationHandler {
   public static final ExtensionPointName<Factory> EP_NAME =
     ExtensionPointName.create("com.intellij.orderEnumerationHandlerFactory");
