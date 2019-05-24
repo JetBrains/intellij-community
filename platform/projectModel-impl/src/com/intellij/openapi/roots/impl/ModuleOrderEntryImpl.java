@@ -94,6 +94,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   @Override
   public void setProductionOnTestDependency(boolean productionOnTestDependency) {
+    getRootModel().assertWritable();
     myProductionOnTestDependency = productionOnTestDependency;
   }
 
