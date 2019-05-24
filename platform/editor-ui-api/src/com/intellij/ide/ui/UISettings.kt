@@ -29,7 +29,9 @@ import kotlin.math.roundToInt
 private val LOG = logger<UISettings>()
 
 @State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], reportStatistic = true)
-class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRoamableUiSettings = NotRoamableUiSettings()) : PersistentStateComponent<UISettingsState> {
+class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponent<UISettingsState> {
+  constructor() : this(ServiceManager.getService(NotRoamableUiSettings::class.java))
+
   private var state = UISettingsState()
 
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
