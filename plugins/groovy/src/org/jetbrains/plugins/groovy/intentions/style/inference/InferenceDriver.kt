@@ -56,7 +56,7 @@ class InferenceDriver(private val method: GrMethod) {
       method.addAfter(elementFactory.createTypeParameterList(), method.firstChild)
     }
 
-    val generator = NameGenerator()
+    val generator = NameGenerator(method.typeParameters.mapNotNull { it.name })
     for (parameter in method.parameters.filter { it.typeElement == null }) {
       val newTypeParameter = createNewTypeParameter(generator)
       method.typeParameterList!!.add(newTypeParameter)
@@ -272,6 +272,7 @@ class InferenceDriver(private val method: GrMethod) {
   private fun buildResidualTypeParameterList(typeParameterList: PsiTypeParameterList): PsiTypeParameterList {
     method.typeParameterList!!.replace(typeParameterList)
     val necessaryTypeParameters = LinkedHashSet<PsiTypeParameter>()
+    necessaryTypeParameters.addAll(constantTypeParameters)
     val visitor = object : PsiTypeVisitor<PsiType>() {
 
       override fun visitClassType(classType: PsiClassType?): PsiType? {

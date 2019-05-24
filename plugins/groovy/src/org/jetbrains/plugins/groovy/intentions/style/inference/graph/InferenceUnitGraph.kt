@@ -81,7 +81,7 @@ private fun condensate(graph: InferenceUnitGraph): InferenceUnitGraph {
       }
     }
   }
-  graph.units.forEach { unit ->
+  graph.units.filter { representativeMap[it.core] == it.core }.forEach { unit ->
     builder.register(unit)
     unit.supertypes.mapNotNull { getRepresentative(unit, it, representativeMap) }.forEach { builder.addRelation(it, unit.core) }
     unit.subtypes.mapNotNull { getRepresentative(unit, it, representativeMap) }.forEach { builder.addRelation(unit.core, it) }

@@ -38,6 +38,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testLeaveUnusedTypeParameter() {
+    doTest(true)
+  }
+
   void testCustomInheritance() {
     doTest(true)
   }
@@ -79,6 +83,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   }
 
   void testDeepDependencyOfWildcards2() {
+    doTest(true)
+  }
+
+  void testDeepDependencyOfWildcards3() {
     doTest(true)
   }
 
@@ -163,10 +171,6 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
   }
 
   void testParametrizedInterface2() {
-    doTest(true)
-  }
-
-  void testParametrizedInterface3() {
     doTest(true)
   }
 
