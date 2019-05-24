@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 /**
@@ -85,4 +86,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    */
   @NotNull
   Condition<?> getDisposed();
+
+  default void initializeComponent(@NotNull Object component, @Nullable ServiceDescriptor serviceDescriptor) {
+  }
 }

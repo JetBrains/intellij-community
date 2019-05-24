@@ -236,8 +236,6 @@
     <applicationService serviceInterface="com.intellij.openapi.application.ApplicationInfo"
                         serviceImplementation="com.intellij.openapi.application.impl.ApplicationInfoImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.execution.RunnerRegistry"/>
-
     <applicationService serviceInterface="org.jetbrains.ide.script.IdeScriptEngineManager"
                         serviceImplementation="org.jetbrains.ide.script.Jsr223IdeScriptEngineManagerImpl"/>
 
