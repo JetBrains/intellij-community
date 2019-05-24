@@ -600,6 +600,8 @@
 
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
 
+    <postStartupActivity implementation="com.intellij.diagnostic.AnalyzePendingSnapshotActivity"/>
+
     <obsoleteStorage file="statistics.toolbar.clicks.xml">
       <components>
         <component>ToolbarClicksCollector</component>
