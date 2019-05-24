@@ -315,19 +315,29 @@ public class IndexDataGetter {
 
   @NotNull
   public FileHistoryData createFileHistoryData(@NotNull Collection<FilePath> paths) {
-    return new FileHistoryData(paths) {
-      @NotNull
-      @Override
-      public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
-        return IndexDataGetter.this.getAffectedCommits(path);
-      }
+    return new FileHistoryDataImpl(paths);
+  }
 
-      @Nullable
-      @Override
-      public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
-        return executeAndCatch(() -> myIndexStorage.paths.findRename(parent, child, path, isChildPath));
-      }
-    };
+  private class FileHistoryDataImpl extends FileHistoryData {
+    private FileHistoryDataImpl(@NotNull FilePath startPath) {
+      super(startPath);
+    }
+
+    private FileHistoryDataImpl(@NotNull Collection<? extends FilePath> startPaths) {
+      super(startPaths);
+    }
+
+    @NotNull
+    @Override
+    public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
+      return IndexDataGetter.this.getAffectedCommits(path);
+    }
+
+    @Nullable
+    @Override
+    public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+      return executeAndCatch(() -> myIndexStorage.paths.findRename(parent, child, path, isChildPath));
+    }
   }
 
   //
