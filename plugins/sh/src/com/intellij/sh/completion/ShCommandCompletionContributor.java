@@ -20,6 +20,7 @@ import com.intellij.sh.psi.ShFile;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +64,7 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
         }
 
         CompletionResultSet resultSetWithPrefix = result.withPrefixMatcher(prefix);
-        WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, ContainerUtil.newTroveSet(kws));
+        WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, new THashSet<>(kws));
       }
     });
   }

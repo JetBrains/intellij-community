@@ -4,7 +4,7 @@ package com.intellij.sh.run;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -60,7 +60,7 @@ public class ShTerminalRunner extends ShRunner {
   }
 
   @NotNull
-  private Pair<String, String> createCommandLine(@NotNull ShFile file) {
+  private static Pair<String, String> createCommandLine(@NotNull ShFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
       return Pair.create(null, "Cannot run " + file.getName());
@@ -69,7 +69,7 @@ public class ShTerminalRunner extends ShRunner {
       return Pair.create(null, "File " + virtualFile.getPath() + " doesn't exist");
     }
     String filePath = virtualFile.getPath() + "\n";
-    if (VfsUtil.virtualToIoFile(virtualFile).canExecute()) {
+    if (VfsUtilCore.virtualToIoFile(virtualFile).canExecute()) {
       return Pair.create(filePath, null);
     }
     String executable = ShRunner.getShebangExecutable(file);

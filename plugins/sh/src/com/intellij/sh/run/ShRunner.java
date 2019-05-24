@@ -4,7 +4,7 @@ package com.intellij.sh.run;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.sh.lexer.ShTokenTypes;
+import com.intellij.sh.ShTypes;
 import com.intellij.sh.psi.ShFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +20,7 @@ public abstract class ShRunner {
   static String getShebangExecutable(@NotNull ShFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && virtualFile.exists()) {
-      ASTNode shebang = file.getNode().findChildByType(ShTokenTypes.SHEBANG);
+      ASTNode shebang = file.getNode().findChildByType(ShTypes.SHEBANG);
       String prefix = "#!";
       if (shebang != null && shebang.getText().startsWith(prefix)) {
         String path = shebang.getText().substring(prefix.length()).trim();
