@@ -232,10 +232,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       float arc = COMPONENT_ARC.getFloat();
 
       boolean editable = comboBox.isEnabled() && editor != null && comboBox.isEditable();
-      Color backgroundColor = editable ? editor.getBackground() :
-                              comboBox.isBackgroundSet() ? comboBox.getBackground() :
-                              comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground();
-      g2.setColor(backgroundColor);
+      Color background0 = comboBox.getBackground();
+      Color background = editable ? editor.getBackground() :
+                         comboBox.isBackgroundSet() && !(background0 instanceof UIResource) ? background0 :
+                         comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground();
+      g2.setColor(background);
 
       g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
     }
@@ -264,7 +265,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
 
     c.setFont(comboBox.getFont());
-    Color background = comboBox.isBackgroundSet() ? comboBox.getBackground() :
+    Color background0 = comboBox.getBackground();
+    Color background = comboBox.isBackgroundSet() && !(background0 instanceof UIResource) ? background0 :
                        comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground();
     c.setBackground(background);
 
