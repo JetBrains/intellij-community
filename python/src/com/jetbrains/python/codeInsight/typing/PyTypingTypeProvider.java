@@ -88,6 +88,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String UNION = "typing.Union";
   public static final String OPTIONAL = "typing.Optional";
   public static final String NO_RETURN = "typing.NoReturn";
+  private static final String FINAL = "typing.Final";
+  private static final String FINAL_EXT = "typing_extensions.Final";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
@@ -120,10 +122,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   public static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
     // special forms
-    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR)
+    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL)
     // type aliases
     .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
-    .add(PROTOCOL_EXT)
+    .add(PROTOCOL_EXT, FINAL_EXT)
     .build();
 
   /**
@@ -147,12 +149,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(DEFAULT_DICT)
     .add(SET)
     .add(FROZEN_SET)
-    .add(PROTOCOL)
+    .add(PROTOCOL, PROTOCOL_EXT)
     .add(CLASS_VAR)
     .add(COUNTER)
     .add(DEQUE)
     .add(CHAIN_MAP)
     .add(NO_RETURN)
+    .add(FINAL, FINAL_EXT)
     .build();
 
   @Nullable
@@ -806,6 +809,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (classObjType != null) {
         return Ref.create(addTypeVarAlias(classObjType.get(), alias));
       }
+      final Ref<PyType> finalType = getFinalType(resolved, context);
+      if (finalType != null) {
+        return finalType;
+      }
       final PyType parameterizedType = getParameterizedType(resolved, context);
       if (parameterizedType != null) {
         return Ref.create(parameterizedType);
@@ -944,6 +951,23 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         return Ref.create();
       }
     }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getFinalType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)resolved;
+
+      final Collection<String> operandNames = resolveToQualifiedNames(subscriptionExpr.getOperand(), context.getTypeContext());
+      if (ContainerUtil.exists(operandNames, name -> name.equals(FINAL) || name.equals(FINAL_EXT))) {
+        final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
+        if (indexExpr != null) {
+          return getType(indexExpr, context);
+        }
+      }
+    }
+
     return null;
   }
 
