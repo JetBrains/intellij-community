@@ -1,13 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
-import com.intellij.execution.ExecutableFileFormatUtil;
-import com.intellij.execution.MachineType;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
@@ -46,7 +43,7 @@ public class UnixProcessManager {
   static {
     CLib lib = null;
     try {
-      if (SystemInfoRt.isUnix && JnaLoader.isLoaded()) {
+      if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
         lib = Native.load("c", CLib.class);
       }
     }
@@ -68,7 +65,7 @@ public class UnixProcessManager {
       return assertNotNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
     }
     catch (Throwable t) {
-      throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfoRt.OS_NAME, t);
+      throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
     }
   }
 
@@ -103,7 +100,7 @@ public class UnixProcessManager {
 
   private static void checkCLib() {
     if (C_LIB == null) {
-      throw new IllegalStateException("Couldn't load c library, OS: " + SystemInfoRt.OS_NAME + ", isUnix: " + SystemInfoRt.isUnix);
+      throw new IllegalStateException("Couldn't load c library, OS: " + SystemInfo.OS_NAME + ", isUnix: " + SystemInfo.isUnix);
     }
   }
 
@@ -246,29 +243,15 @@ public class UnixProcessManager {
     if (!new File(psCommand).isFile()) {
       psCommand = "ps";
     }
-    if (SystemInfoRt.isLinux) {
+    if (SystemInfo.isLinux) {
       return new String[]{psCommand, "-e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
     }
-    else if (SystemInfoRt.isMac || SystemInfoRt.isFreeBSD) {
+    else if (SystemInfo.isMac || SystemInfo.isFreeBSD) {
       final String command = isShortenCommand ? "comm" : "command";
       return new String[]{psCommand, "-ax", "-o", commandLineOnly ? command : "ppid,pid," + command};
     }
     else {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported.");
-    }
-  }
-
-  @NotNull
-  public static MachineType getProcessMachineType(int pid) {
-    if (!SystemInfoRt.isLinux) {
-      throw new IllegalStateException(System.getProperty("os.name") + " is not supported");
-    }
-    try {
-      return ExecutableFileFormatUtil.readElfMachineType("/proc/" + pid + "/exe");
-    }
-    catch (IOException e) {
-      LOG.warn("Couldn't get executable information of process: pid=" + pid, e);
-      return MachineType.UNKNOWN;
     }
   }
 
