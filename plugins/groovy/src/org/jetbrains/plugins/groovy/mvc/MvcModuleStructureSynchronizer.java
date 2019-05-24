@@ -59,14 +59,23 @@ public class MvcModuleStructureSynchronizer implements ProjectComponent {
 
   public MvcModuleStructureSynchronizer(Project project) {
     myProject = project;
+
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      queue(SyncAction.UpdateProjectStructure, myProject);
+      queue(SyncAction.EnsureRunConfigurationExists, myProject);
+      queue(SyncAction.UpgradeFramework, myProject);
+      queue(SyncAction.CreateAppStructureIfNeeded, myProject);
+
+      addListeners();
+    });
+
   }
 
   public SimpleModificationTracker getFileAndRootsModificationTracker() {
     return myModificationTracker;
   }
 
-  @Override
-  public void initComponent() {
+  private void addListeners() {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
