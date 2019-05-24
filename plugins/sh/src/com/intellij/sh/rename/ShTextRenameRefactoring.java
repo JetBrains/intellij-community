@@ -112,25 +112,30 @@ class ShTextRenameRefactoring {
         EditorColorsManager colorsManager = EditorColorsManager.getInstance();
         for (int i = 0; i < templateState.getSegmentsCount(); i++) {
           TextRange segmentOffset = templateState.getSegmentRange(i);
-          String name = template.getSegmentName(i);
-          TextAttributes attributes = null;
-          if (name.equals(PRIMARY_VARIABLE_NAME)) {
-            attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
+          TextAttributes attributes = getAttributes(colorsManager, template.getSegmentName(i));
+          if (attributes != null) {
+            rangesToHighlight.put(segmentOffset, attributes);
           }
-          else if (name.equals(OTHER_VARIABLE_NAME)) {
-            attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-          }
-          if (attributes == null) continue;
-          rangesToHighlight.put(segmentOffset, attributes);
         }
       }
-      addHighlights(rangesToHighlight, myHighlighters, HighlightManager.getInstance(myProject));
+      addHighlights(rangesToHighlight, myHighlighters);
     }
   }
 
+  @Nullable
+  private static TextAttributes getAttributes(@NotNull EditorColorsManager colorsManager, @NotNull String segmentName) {
+    if (segmentName.equals(PRIMARY_VARIABLE_NAME)) {
+      return colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
+    }
+    if (segmentName.equals(OTHER_VARIABLE_NAME)) {
+      return colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    }
+    return null;
+  }
+
   private void addHighlights(@NotNull Map<TextRange, TextAttributes> ranges,
-                             @NotNull Collection<RangeHighlighter> highlighters,
-                             @NotNull HighlightManager highlightManager) {
+                             @NotNull Collection<RangeHighlighter> highlighters) {
+    HighlightManager highlightManager = HighlightManager.getInstance(myProject);
     for (Map.Entry<TextRange, TextAttributes> entry : ranges.entrySet()) {
       TextRange range = entry.getKey();
       TextAttributes attributes = entry.getValue();
