@@ -9,8 +9,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import org.editorconfig.Utils;
+import org.editorconfig.configmanagement.editor.EditorConfigPreviewUtil;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.language.util.EditorConfigPresentationUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,15 +25,13 @@ public class EditorConfigNavigationActionsFactory {
 
   private final List<String> myEditorConfigFilePaths = new ArrayList<>();
 
-  private final ThreadLocal<Boolean> myNavigationFlag = new ThreadLocal<>();
-
   private static final Object INSTANCE_LOCK = new Object();
 
   private EditorConfigNavigationActionsFactory() {
   }
 
   @NotNull
-  public List<AnAction> getNavigationActions(@NotNull Project project) {
+  public List<AnAction> getNavigationActions(@NotNull Project project, @NotNull VirtualFile sourceFile) {
     final List<AnAction> actions = new ArrayList<>();
     synchronized (myEditorConfigFilePaths) {
       List<VirtualFile> editorConfigFiles = Utils.pathsToFiles(myEditorConfigFilePaths);
@@ -41,21 +39,16 @@ public class EditorConfigNavigationActionsFactory {
         if (editorConfigFile != null) {
           actions.add(DumbAwareAction.create(
             getActionName(editorConfigFile, editorConfigFiles.size() > 1),
-            event -> openEditorConfig(project, editorConfigFile)));
+            event -> openEditorConfig(project, sourceFile, editorConfigFile)));
         }
       }
     }
     return actions.size() <= 1 ? actions : Collections.singletonList(new NavigationActionGroup(actions.toArray(AnAction.EMPTY_ARRAY)));
   }
 
-  private void openEditorConfig(@NotNull Project project, VirtualFile editorConfigFile) {
-    myNavigationFlag.set(true);
+  private static void openEditorConfig(@NotNull Project project, @NotNull VirtualFile sourceFile, @NotNull VirtualFile editorConfigFile) {
+    EditorConfigPreviewUtil.associateWithPreviewFile(editorConfigFile, sourceFile);
     OpenFileAction.openFile(editorConfigFile, project);
-    myNavigationFlag.set(false);
-  }
-
-  public boolean isNavigating() {
-    return ObjectUtils.notNull(myNavigationFlag.get(), false);
   }
 
   public void updateEditorConfigFilePaths(@NotNull List<String> editorConfigFilePaths) {

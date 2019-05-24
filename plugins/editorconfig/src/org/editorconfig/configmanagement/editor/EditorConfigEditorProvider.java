@@ -8,7 +8,10 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.AsyncFileEditorProvider;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorPolicy;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
@@ -19,17 +22,15 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
 import org.editorconfig.language.filetype.EditorConfigFileType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 public class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
   private final static String EDITOR_TYPE_ID = "org.editorconfig.configmanagement.editor";
 
-  private final static int MAX_PREVIEW_LENGTH = 10000;
+  final static int MAX_PREVIEW_LENGTH = 10000;
 
   private final static PsiAwareTextEditorProvider myMainEditorProvider = new PsiAwareTextEditorProvider();
 
@@ -74,8 +75,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
 
     @Override
     public FileEditor build() {
-      FileEditor currEditor = FileEditorManager.getInstance(myProject).getSelectedEditor();
-      VirtualFile contextFile = getContextFile(currEditor);
+      VirtualFile contextFile = EditorConfigPreviewUtil.getAssociatedPreviewFile(myFile);
       if (contextFile != null) {
         Document document =EditorFactory.getInstance().createDocument(getPreviewText(contextFile));
         final EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document);
@@ -88,12 +88,6 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
       else {
         return myMainEditorProvider.createEditor(myProject, myFile);
       }
-    }
-
-    @Nullable
-    private static VirtualFile getContextFile(@Nullable FileEditor currEditor) {
-      VirtualFile contextFile = currEditor != null ? currEditor.getFile() : null;
-      return contextFile != null && EditorConfigNavigationActionsFactory.getInstance(contextFile).isNavigating() ? contextFile : null;
     }
 
     private FileEditor createPreviewEditor(@NotNull Document document, @NotNull VirtualFile previewFile) {
