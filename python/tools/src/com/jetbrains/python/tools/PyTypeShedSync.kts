@@ -22,7 +22,8 @@ sync(repo, bundled)
 
 val whiteList = setOf("typing", "six", "__builtin__", "builtins", "exceptions", "types", "datetime", "functools", "shutil", "re", "time",
                       "argparse", "uuid", "threading", "signal", "collections", "subprocess", "math", "queue", "socket", "sqlite3", "attr",
-                      "pathlib", "io", "_io", "itertools", "ssl", "multiprocessing", "asyncio", "mock", "unittest", "_importlib_modulespec")
+                      "pathlib", "io", "_io", "itertools", "ssl", "multiprocessing", "asyncio", "mock", "unittest", "_importlib_modulespec",
+                      "typing_extensions")
 
 clean(topLevelPackages(bundled), whiteList)
 
