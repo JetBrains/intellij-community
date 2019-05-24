@@ -605,7 +605,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
             String s = String.valueOf(lineToDisplay + 1);
             int textOffset = isMirrored() ?
                              offset - getLineNumberAreaWidth() - 1 :
-                             offset - g.getFontMetrics().stringWidth(s);
+                             offset - FontLayoutService.getInstance().stringWidth(g.getFontMetrics(), s);
 
             g.drawString(s,
                          textOffset,
