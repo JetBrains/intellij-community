@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static org.junit.Assume.assumeNotNull;
@@ -31,14 +32,18 @@ public class ShFileCompletionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myTempDirectory = FileUtil.createTempDirectory(ShFileCompletionTest.class.getSimpleName().toLowerCase(), null, true);
+    myTempDirectory = FileUtil.createTempDirectory(ShFileCompletionTest.class.getSimpleName().toLowerCase(Locale.ENGLISH), null, true);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
       FileUtil.delete(myTempDirectory);
-    } finally {
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
       super.tearDown();
     }
   }
