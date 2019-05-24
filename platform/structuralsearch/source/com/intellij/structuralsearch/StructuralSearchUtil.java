@@ -83,6 +83,7 @@ public class StructuralSearchUtil {
            : StructuralSearchProfile.EP_NAME.getExtensions();
   }
 
+  @NotNull
   public static LanguageFileType getDefaultFileType() {
     if (ourDefaultFileType == null) {
       for (StructuralSearchProfile profile : getProfiles()) {
@@ -158,6 +159,16 @@ public class StructuralSearchUtil {
     }
 
     return out;
+  }
+
+  public static Pattern[] createPatterns(String[] prefixes) {
+    final Pattern[] patterns = new Pattern[prefixes.length];
+
+    for (int i = 0; i < prefixes.length; i++) {
+      final String s = shieldRegExpMetaChars(prefixes[i]);
+      patterns[i] = Pattern.compile("\\b(" + s + "\\w+)\\b");
+    }
+    return patterns;
   }
 
   public static List<Configuration> getPredefinedTemplates() {

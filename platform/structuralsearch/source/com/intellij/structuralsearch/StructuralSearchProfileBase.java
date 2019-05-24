@@ -366,7 +366,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       if (StringUtil.isQuotedString(value)) {
         if (mySubstitutionPatterns == null) {
           final String[] prefixes = myGlobalVisitor.getContext().getPattern().getTypedVarPrefixes();
-          mySubstitutionPatterns = createPatterns(prefixes);
+          mySubstitutionPatterns = StructuralSearchUtil.createPatterns(prefixes);
         }
 
         for (Pattern substitutionPattern : mySubstitutionPatterns) {
@@ -379,16 +379,6 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
           }
         }
       }
-    }
-
-    private Pattern[] createPatterns(String[] prefixes) {
-      final Pattern[] patterns = new Pattern[prefixes.length];
-
-      for (int i = 0; i < prefixes.length; i++) {
-        final String s = StructuralSearchUtil.shieldRegExpMetaChars(prefixes[i]);
-        patterns[i] = Pattern.compile("\\b(" + s + "\\w+)\\b");
-      }
-      return patterns;
     }
 
     private void initTopLevelElement(PsiElement element) {
