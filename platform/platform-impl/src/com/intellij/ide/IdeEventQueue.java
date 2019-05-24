@@ -401,15 +401,7 @@ public class IdeEventQueue extends EventQueue {
       if (e instanceof KeyEvent) {
         maybeReady();
       }
-      if (e instanceof InvocationEvent) {
-        Runnable runnable = ReflectionUtil.getField(InvocationEvent.class, e, Runnable.class, "runnable");
-        if (runnable != null && !runnable.getClass().getName().equals("com.intellij.openapi.application.impl.LaterInvocator$FlushQueue")) {
-          TransactionGuardImpl.logTimeMillis(startedAt, runnable); // joined subtasks are measured in the LaterInvocator
-        }
-      }
-      else {
-        TransactionGuardImpl.logTimeMillis(startedAt, e);
-      }
+      TransactionGuardImpl.logTimeMillis(startedAt, e);
     }
 
     if (isFocusEvent(e)) {

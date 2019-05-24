@@ -17,10 +17,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.InvocationEvent;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.intellij.util.ReflectionUtil.getField;
 
 /**
  * @author peter
@@ -363,6 +366,14 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (threshold <= 10) return; // do not measure a time if a threshold is too small
     long time = System.currentTimeMillis() - startedAt;
     if (time <= threshold) return; // processed fast enough
+    if (processId instanceof InvocationEvent) {
+      Runnable runnable = getField(InvocationEvent.class, processId, Runnable.class, "runnable");
+      if (runnable != null) {
+        // joined sub-tasks are measured and logged in the LaterInvocator separately
+        if (runnable.getClass().getName().equals("com.intellij.openapi.application.impl.LaterInvocator$FlushQueue")) return;
+        processId = runnable;
+      }
+    }
     LOG.warn(time + "ms to process " + processId);
   }
 }
