@@ -393,10 +393,10 @@ class FileHistoryTest {
 private class FileNamesDataBuilder(private val path: FilePath) {
   private val commitsMap: MutableMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>> =
     THashMap(FILE_PATH_HASHING_STRATEGY)
-  private val renamesMap: MultiMap<Couple<Int>, Couple<FilePath>> = MultiMap.createSmart()
+  private val renamesMap: MultiMap<EdgeData<Int>, EdgeData<FilePath>> = MultiMap.createSmart()
 
   fun addRename(parent: Int, child: Int, beforePath: FilePath, afterPath: FilePath): FileNamesDataBuilder {
-    renamesMap.putValue(Couple(parent, child), Couple(beforePath, afterPath))
+    renamesMap.putValue(EdgeData(parent, child), EdgeData(beforePath, afterPath))
     return this
   }
 
@@ -407,8 +407,8 @@ private class FileNamesDataBuilder(private val path: FilePath) {
 
   fun build(): FileHistoryData {
     return object : FileHistoryData(path) {
-      override fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): Couple<FilePath>? {
-        return renamesMap[Couple(parent, child)].find { FILE_PATH_HASHING_STRATEGY.equals(if (isChildPath) it.second else it.first, path) }
+      override fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>? {
+        return renamesMap[EdgeData(parent, child)].find { FILE_PATH_HASHING_STRATEGY.equals(if (isChildPath) it.child else it.parent, path) }
       }
 
       override fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> {

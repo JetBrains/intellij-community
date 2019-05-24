@@ -313,7 +313,7 @@ abstract class FileHistoryData(private val startPaths: Collection<FilePath>) {
 
   private fun findRename(ad: AdditionDeletion): Rename? {
     return findRename(ad.parent, ad.child, ad.filePath, ad.isAddition)?.let { files ->
-      Rename(files.first, files.second, ad.parent, ad.child)
+      Rename(files.parent, files.child, ad.parent, ad.child)
     }
   }
 
@@ -418,7 +418,7 @@ abstract class FileHistoryData(private val startPaths: Collection<FilePath>) {
     affectedCommits.forEach { _, commitsMap -> commitsMap.removeAll(commits) }
   }
 
-  abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): Couple<FilePath>?
+  abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>?
   abstract fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>
 }
 
@@ -571,3 +571,5 @@ internal class FilePathCaseSensitiveStrategy : TObjectHashingStrategy<FilePath> 
     return result
   }
 }
+
+data class EdgeData<T>(val parent: T, val child: T)

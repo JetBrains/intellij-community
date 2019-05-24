@@ -17,6 +17,7 @@ import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
+import com.intellij.vcs.log.history.EdgeData;
 import com.intellij.vcs.log.history.FileHistoryData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.TroveUtil;
@@ -323,7 +324,7 @@ public class IndexDataGetter {
 
       @Nullable
       @Override
-      public Couple<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+      public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
         return executeAndCatch(() -> myIndexStorage.paths.findRename(parent, child, path, isChildPath));
       }
     };
