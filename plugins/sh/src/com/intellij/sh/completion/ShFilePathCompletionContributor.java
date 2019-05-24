@@ -19,6 +19,7 @@ import com.intellij.sh.ShStringUtil;
 import com.intellij.sh.ShTypes;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.psi.ShString;
+import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
@@ -34,6 +35,8 @@ import static com.intellij.sh.ShStringUtil.quote;
 import static com.intellij.sh.ShStringUtil.unquote;
 
 public class ShFilePathCompletionContributor extends CompletionContributor implements DumbAware {
+  private static final String FEATURE_ACTION_ID = "FilePathCompletionUsed";
+
   private static final InsertHandler<LookupElement> FILE_INSERT_HANDLER = (context, item) -> {
     File file = (File) item.getObject();
     Document document = context.getEditor().getDocument();
@@ -48,6 +51,7 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
       context.getEditor().getCaretModel().moveToOffset(end + 1);
       AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
     }
+    ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
   };
 
   @Override

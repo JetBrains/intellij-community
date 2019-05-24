@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
+import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
@@ -36,6 +37,7 @@ import java.util.TreeMap;
 
 class ShShellcheckUtil {
   private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
+  private static final String FEATURE_ACTION_ID = "ExternalAnnotatorDownloaded";
   static final String SHELLCHECK = "shellcheck";
   static final String SHELLCHECK_VERSION = "0.6.0-1";
   static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
@@ -102,6 +104,7 @@ class ShShellcheckUtil {
               if (onSuccess != null) {
                 ApplicationManager.getApplication().invokeLater(onSuccess);
               }
+              ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
             }
           }
         }

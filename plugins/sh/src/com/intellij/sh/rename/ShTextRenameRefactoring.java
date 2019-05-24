@@ -19,12 +19,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 class ShTextRenameRefactoring {
+  private static final String FEATURE_ACTION_ID = "RenamingActionUsed";
   private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   private static final String OTHER_VARIABLE_NAME = "OtherVariable";
 
@@ -76,6 +78,7 @@ class ShTextRenameRefactoring {
     }
     createCaretRangeMarker();
     WriteCommandAction.writeCommandAction(myProject).withName("Rename " + myOccurrenceText).run(() -> startTemplate(builder));
+    ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
   }
 
   private void createCaretRangeMarker() {

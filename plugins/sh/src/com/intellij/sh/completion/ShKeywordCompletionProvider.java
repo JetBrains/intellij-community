@@ -15,6 +15,7 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,14 +27,17 @@ class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameter
 
   @NotNull
   private final String[] myKeywords;
+  @NotNull
+  private final String myFeatureActionId;
   private final boolean myWithDescription;
 
-  ShKeywordCompletionProvider(@NotNull String... keywords) {
-    this(false, keywords);
+  ShKeywordCompletionProvider(@NotNull String featureActionId, @NotNull String... keywords) {
+    this(featureActionId, false, keywords);
   }
 
-  ShKeywordCompletionProvider(boolean withDescription, @NotNull String... keywords) {
+  ShKeywordCompletionProvider(@NotNull String featureActionId, boolean withDescription, @NotNull String... keywords) {
     myKeywords = keywords;
+    myFeatureActionId = featureActionId;
     myWithDescription = withDescription;
   }
 
@@ -52,7 +56,7 @@ class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameter
     TemplateManagerImpl templateManager = (TemplateManagerImpl) TemplateManager.getInstance(project);
     Template template = TemplateSettings.getInstance().getTemplateById("shell_" + keyword);
 
-    InsertHandler<LookupElement> insertHandler = createTemplateBasedInsertHandler(templateManager, template);
+    InsertHandler<LookupElement> insertHandler = createTemplateBasedInsertHandler(templateManager, template, myFeatureActionId);
     return PrioritizedLookupElement.withPriority(LookupElementBuilder
         .create(keyword)
         .withTypeText(template != null && myWithDescription ? template.getDescription() : "")
@@ -61,7 +65,7 @@ class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameter
   }
 
   private static InsertHandler<LookupElement> createTemplateBasedInsertHandler(@NotNull TemplateManagerImpl templateManager,
-                                                                               @Nullable Template template) {
+                                                                               @Nullable Template template, @NotNull String featureActionId) {
     return (context, item) -> {
       Editor editor = context.getEditor();
       if (template != null) {
@@ -71,6 +75,7 @@ class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameter
       else {
         EditorModificationUtil.insertStringAtCaret(editor, " ");
       }
+      ShFeatureUsagesCollector.logFeatureUsage(featureActionId);
     };
   }
 }

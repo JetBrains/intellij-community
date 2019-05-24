@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.settings.ShSettings;
+import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
@@ -33,6 +34,8 @@ import java.util.List;
 
 public class ShShfmtFormatterUtil {
   private static final Logger LOG = Logger.getInstance(ShShfmtFormatterUtil.class);
+  private static final String FEATURE_ACTION_ID = "ExternalFormatterDownloaded";
+
   private static final String SHFMT = "shfmt";
   private static final String SHFMT_VERSION = "v2.6.4";
   private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
@@ -94,6 +97,7 @@ public class ShShfmtFormatterUtil {
             if (onSuccess != null) {
               ApplicationManager.getApplication().invokeLater(onSuccess);
             }
+            ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
           }
         }
         catch (IOException e) {

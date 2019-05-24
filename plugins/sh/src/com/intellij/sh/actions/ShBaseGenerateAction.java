@@ -17,6 +17,8 @@ import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 abstract class ShBaseGenerateAction extends CodeInsightAction implements CodeInsightActionHandler {
+  protected static final String FEATURE_ACTION_ID = "GenerateActionUsed";
+
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return file.getLanguage().is(ShLanguage.INSTANCE);
