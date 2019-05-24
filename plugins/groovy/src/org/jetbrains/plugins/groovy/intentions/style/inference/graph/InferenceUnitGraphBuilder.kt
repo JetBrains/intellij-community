@@ -5,18 +5,20 @@ import com.intellij.psi.PsiType
 
 class InferenceUnitGraphBuilder {
 
-  private val relations: MutableList<Relation> = mutableListOf()
+  private val relations: MutableList<Pair<InferenceUnit, InferenceUnit>> = mutableListOf()
   private val registered: MutableSet<InferenceUnit> = mutableSetOf()
   private val fixedUnits: MutableSet<InferenceUnit> = mutableSetOf()
   private val fixedInstantiations: MutableMap<InferenceUnit, PsiType> = mutableMapOf()
   private val directUnits: MutableSet<InferenceUnit> = mutableSetOf()
 
 
-  fun add(left: InferenceUnit, right: InferenceUnit, type: RelationType): InferenceUnitGraphBuilder {
+  /**
+   * Creates a relation between units (left is a supertype of right)
+   */
+  fun addRelation(left: InferenceUnit, right: InferenceUnit): InferenceUnitGraphBuilder {
     register(left)
     register(right)
-    relations.add(Relation(left, right, type))
-    relations.add(Relation(right, left, type.complement()))
+    relations.add(Pair(left, right))
     return this
   }
 
@@ -26,7 +28,6 @@ class InferenceUnitGraphBuilder {
   }
 
   fun register(unitNode: InferenceUnitNode): InferenceUnitGraphBuilder {
-    register(unitNode.core)
     if (unitNode.direct) {
       setDirect(unitNode.core)
     }
@@ -58,28 +59,23 @@ class InferenceUnitGraphBuilder {
 
   fun build(): InferenceUnitGraph {
     val inferenceNodes = ArrayList<InferenceUnitNode>()
-    val superTypesMap: MutableList<MutableSet<() -> InferenceUnitNode>> = mutableListOf()
-    val subTypesMap: MutableList<MutableSet<() -> InferenceUnitNode>> = mutableListOf()
-    //todo: bug with order
+    val superTypesMap = mutableListOf<MutableSet<() -> InferenceUnitNode>>()
+    val subTypesMap = mutableListOf<MutableSet<() -> InferenceUnitNode>>()
     val registeredUnits = registered.sortedBy { it.initialTypeParameter.name }
     repeat(registeredUnits.size) {
       superTypesMap.add(mutableSetOf())
       subTypesMap.add(mutableSetOf())
     }
-    val unitIndexMap: Map<InferenceUnit, Int> = registeredUnits.zip(registeredUnits.indices).toMap()
-    for ((left, right, type) in relations) {
-      when (type) {
-        RelationType.SUPER -> subTypesMap[unitIndexMap.getValue(left)].add { inferenceNodes[unitIndexMap.getValue(right)] }
-        RelationType.SUB -> superTypesMap[unitIndexMap.getValue(left)].add { inferenceNodes[unitIndexMap.getValue(right)] }
-      }
+    val unitIndexMap = registeredUnits.zip(registeredUnits.indices).toMap()
+    for ((left, right) in relations) {
+      subTypesMap[unitIndexMap.getValue(left)].add { inferenceNodes[unitIndexMap.getValue(right)] }
+      superTypesMap[unitIndexMap.getValue(right)].add { inferenceNodes[unitIndexMap.getValue(left)] }
     }
-    for (index in registeredUnits.indices) {
-      val unit = registeredUnits[index]
+    for ((unit, index) in unitIndexMap) {
       inferenceNodes.add(InferenceUnitNode(unit, superTypesMap[index], subTypesMap[index],
-                                           fixedInstantiations[unit]
-                                           ?: PsiType.NULL,
-                                           unit in fixedUnits,
-                                           unit in directUnits))
+                                           fixedInstantiations[unit] ?: PsiType.NULL,
+                                           forbidInstantiation = unit in fixedUnits,
+                                           direct = unit in directUnits))
     }
     return InferenceUnitGraph(inferenceNodes)
   }

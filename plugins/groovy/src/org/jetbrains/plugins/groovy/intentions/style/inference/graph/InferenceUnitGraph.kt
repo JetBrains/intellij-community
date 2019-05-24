@@ -10,6 +10,9 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNod
  * Represents graph which is used for determining [InferenceUnitNode] dependencies.
  */
 data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {
+  /**
+   * @return [units], sorted in topological order by [InferenceUnitNode.typeInstantiation]. Takes into consideration class parameters.
+   */
   fun resolveOrder(): List<InferenceUnitNode> {
     val visited = mutableSetOf<InferenceUnitNode>()
     val order = mutableListOf<InferenceUnitNode>()
@@ -28,12 +31,11 @@ data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {
     visited.add(unit)
     units.find { it.type == unit.typeInstantiation }?.run { visitTypes(this, visited, order) }
     when (unit.typeInstantiation) {
-      is PsiClassType -> unit.typeInstantiation.parameters.forEach { parameter ->
-        units.find { it.type == parameter }?.run { visitTypes(this, visited, order) }
-      }
-      is PsiIntersectionType -> unit.typeInstantiation.conjuncts.forEach { parameter ->
-        units.find { it.type == parameter }?.run { visitTypes(this, visited, order) }
-      }
+      is PsiClassType -> unit.typeInstantiation.parameters
+      is PsiIntersectionType -> unit.typeInstantiation.conjuncts
+      else -> emptyArray()
+    }.forEach { parameter ->
+      units.find { it.type == parameter }?.run { visitTypes(this, visited, order) }
     }
     order.add(unit)
   }
@@ -44,21 +46,11 @@ data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {
  * Runs inference between nodes in the graph/
  */
 fun determineDependencies(graph: InferenceUnitGraph): InferenceUnitGraph {
-  val (unitGraph, representativeMap) = condensate(graph)
-  val resultGraph = propagatePossibleInstantiations(collapseTreeEdges(setTreeStructure(topologicalOrder(unitGraph))))
-  val builder = InferenceUnitGraphBuilder()
-  resultGraph.units.forEach { unit ->
-    builder.register(unit)
-    unit.subtypes.forEach {
-      builder.add(unit.core, it.core, RelationType.SUPER)
-    }
-  }
-  representativeMap.forEach { (core, representative) ->
-    if (core != representative) {
-      builder.register(core).setType(core, representativeMap.getValue(core).type).setDirect(core)
-    }
-  }
-  return builder.build()
+  val condensatedGraph = condensate(graph)
+  val sortedGraph = topologicalOrder(condensatedGraph)
+  val tree = setTreeStructure(sortedGraph)
+  val collapsedTree = collapseTreeEdges(tree)
+  return propagatePossibleInstantiations(collapsedTree)
 }
 
 /**
@@ -67,23 +59,18 @@ fun determineDependencies(graph: InferenceUnitGraph): InferenceUnitGraph {
  *
  * @return new condensated graph and mapping between nodes and their new parent
  */
-private fun condensate(graph: InferenceUnitGraph): Pair<InferenceUnitGraph, Map<InferenceUnit, InferenceUnit>> {
+private fun condensate(graph: InferenceUnitGraph): InferenceUnitGraph {
   val nodeMap = LinkedHashMap<InferenceUnitNode, InferenceGraphNode>()
   val representativeMap = mutableMapOf<InferenceUnit, InferenceUnit>()
   graph.units.forEach { nodeMap[it] = InferenceGraphNode(it); }
 
   for (unit in graph.units) {
     val node = nodeMap[unit]!!
-    for (dependency in unit.supertypes.map { nodeMap[it]!! }) {
-      node.addDependency(dependency)
-    }
-    for (dependency in unit.subtypes.map { nodeMap[it]!! }) {
-      dependency.addDependency(node)
-    }
+    unit.supertypes.map { nodeMap[it]!! }.forEach { node.addDependency(it) }
+    unit.subtypes.map { nodeMap[it]!! }.forEach { it.addDependency(node) }
   }
 
   val components = InferenceVariablesOrder.initNodes(nodeMap.values).map { it.value!! }
-
   val builder = InferenceUnitGraphBuilder()
   for (component in components) {
     val representative = component.sortedBy { it.toString() }.first()
@@ -96,20 +83,16 @@ private fun condensate(graph: InferenceUnitGraph): Pair<InferenceUnitGraph, Map<
   }
   graph.units.forEach { unit ->
     builder.register(unit)
-    unit.supertypes.mapNotNull { transformTypesToRepresentatives(unit, it, representativeMap) }.forEach {
-      builder.add(it, unit.core, RelationType.SUPER)
-    }
-    unit.subtypes.mapNotNull { transformTypesToRepresentatives(unit, it, representativeMap) }.forEach {
-      builder.add(it, unit.core, RelationType.SUB)
-    }
+    unit.supertypes.mapNotNull { getRepresentative(unit, it, representativeMap) }.forEach { builder.addRelation(it, unit.core) }
+    unit.subtypes.mapNotNull { getRepresentative(unit, it, representativeMap) }.forEach { builder.addRelation(unit.core, it) }
   }
-  return Pair(builder.build(), representativeMap)
+  return builder.build()
 }
 
 
-fun transformTypesToRepresentatives(anchor: InferenceUnitNode,
-                                    target: InferenceUnitNode,
-                                    representativeMap: Map<InferenceUnit, InferenceUnit>): InferenceUnit? {
+fun getRepresentative(anchor: InferenceUnitNode,
+                      target: InferenceUnitNode,
+                      representativeMap: Map<InferenceUnit, InferenceUnit>): InferenceUnit? {
   val representative = representativeMap.getValue(target.core)
   if (representative == representativeMap.getValue(anchor.core)) {
     return null
@@ -124,7 +107,7 @@ fun transformTypesToRepresentatives(anchor: InferenceUnitNode,
  *
  * @return ordered units
  */
-private fun topologicalOrder(unitGraph: InferenceUnitGraph): List<InferenceUnitNode> {
+private fun topologicalOrder(unitGraph: InferenceUnitGraph): InferenceUnitGraph {
   val visited = mutableSetOf<InferenceUnitNode>()
   val order = mutableListOf<InferenceUnitNode>()
   for (node in unitGraph.units) {
@@ -132,7 +115,7 @@ private fun topologicalOrder(unitGraph: InferenceUnitGraph): List<InferenceUnitN
       traverseGraph(node, visited, order)
     }
   }
-  return order.reversed()
+  return InferenceUnitGraph(order.reversed())
 }
 
 private fun traverseGraph(node: InferenceUnitNode,
@@ -155,14 +138,10 @@ private fun traverseGraph(node: InferenceUnitNode,
  * This transformation saves requirements T <: U and T <: S and therefore we can determine unique parent of T.
  * If there were no relation between S and U, it is undefined whether it will appear S <: U or U <: S.
  */
-private fun setTreeStructure(order: List<InferenceUnitNode>): InferenceUnitGraph {
+private fun setTreeStructure(order: InferenceUnitGraph): InferenceUnitGraph {
   val parentMap = mutableMapOf<InferenceUnitNode, InferenceUnitNode>()
-  order.forEach { node ->
-    for (dependentNode in node.subtypes) {
-      parentMap[dependentNode] = node
-    }
-  }
-  for (unit in order.filter { it.supertypes.size > 1 }) {
+  order.units.forEach { node -> node.subtypes.forEach { parentMap[it] = node } }
+  for (unit in order.units.filter { it.supertypes.size > 1 }) {
     val branches = unit.supertypes.toList()
     var lastUniqueBranchIndex = 0
     val processedUnits = collectParents(branches[lastUniqueBranchIndex], parentMap).toMutableSet()
@@ -176,12 +155,10 @@ private fun setTreeStructure(order: List<InferenceUnitNode>): InferenceUnitGraph
     parentMap[unit] = branches[lastUniqueBranchIndex]
   }
   val builder = InferenceUnitGraphBuilder()
-  for (unit in order) {
-    (parentMap[unit])?.run {
-      builder.add(unit.core, this.core, RelationType.SUB)
-    }
+  for (unit in order.units) {
+    (parentMap[unit])?.run { builder.addRelation(this.core, unit.core) }
   }
-  order.forEach { builder.register(it) }
+  order.units.forEach { builder.register(it) }
   return builder.build()
 }
 
@@ -189,20 +166,22 @@ private fun setTreeStructure(order: List<InferenceUnitNode>): InferenceUnitGraph
  * Constructs branch recursively by collecting parent units.
  */
 private fun collectParents(unit: InferenceUnitNode?,
-                           parentMap: Map<InferenceUnitNode, InferenceUnitNode>): Set<InferenceUnitNode> {
+                           parentMap: Map<InferenceUnitNode, InferenceUnitNode>): MutableSet<InferenceUnitNode> {
   unit ?: return mutableSetOf()
-  return collectParents(parentMap[unit], parentMap) + unit
+  val branch = collectParents(parentMap[unit], parentMap)
+  branch.add(unit)
+  return branch
 }
 
 /**
  * Merges two branches.
- * Goes up by branch of [mergingUnit] while all units from this branch are unique.
- * If there is no way further, so all branch of [mergingUnit] became connected to [anchorUnit].
+ * Goes up by branch of [mergingUnit] while all units from this branch are unique (not in [commonUnits]).
+ * If there is no way further, entire branch of [mergingUnit] became connected to [anchorUnit].
  */
-private fun merge(anchorUnit: InferenceUnitNode,
-                  mergingUnit: InferenceUnitNode,
-                  commonUnits: Set<InferenceUnitNode>,
-                  parentMap: MutableMap<InferenceUnitNode, InferenceUnitNode>) {
+private tailrec fun merge(anchorUnit: InferenceUnitNode,
+                          mergingUnit: InferenceUnitNode,
+                          commonUnits: Set<InferenceUnitNode>,
+                          parentMap: MutableMap<InferenceUnitNode, InferenceUnitNode>) {
   if (parentMap[mergingUnit] in commonUnits || parentMap[mergingUnit] == null) {
     parentMap[mergingUnit] = anchorUnit
   }
@@ -218,9 +197,7 @@ private fun merge(anchorUnit: InferenceUnitNode,
 private fun collapseTreeEdges(unitGraph: InferenceUnitGraph): InferenceUnitGraph {
   val internalNodeMap = LinkedHashMap<InferenceUnitNode, InternalNode>()
   val collapsedNodesMap = mutableMapOf<InferenceUnit, InferenceUnit>()
-  unitGraph.units.forEach {
-    internalNodeMap[it] = InternalNode(it)
-  }
+  unitGraph.units.forEach { internalNodeMap[it] = InternalNode(it) }
   unitGraph.units.map { internalNodeMap[it]!! }.forEach { internalNodeMap[it.parent]?.children?.add(it) }
   for (unit in unitGraph.units) {
     val node = internalNodeMap[unit]!!
@@ -239,8 +216,7 @@ private fun collapseTreeEdges(unitGraph: InferenceUnitGraph): InferenceUnitGraph
   internalNodeMap.values.filter { !it.removed }.forEach { node ->
     builder.register(node.unitNode)
     if (node.parent != null) {
-      builder.add(internalNodeMap[node.parent!!]!!.unitNode.core, node.unitNode.core,
-                  RelationType.SUPER)
+      builder.addRelation(internalNodeMap[node.parent!!]!!.unitNode.core, node.unitNode.core)
     }
   }
   collapsedNodesMap.forEach { (unit, representative) -> builder.register(unit).setDirect(unit).setType(unit, representative.type) }
@@ -259,9 +235,7 @@ data class InternalNode(val unitNode: InferenceUnitNode) {
  */
 private fun propagatePossibleInstantiations(unitGraph: InferenceUnitGraph): InferenceUnitGraph {
   val builder = InferenceUnitGraphBuilder()
-  unitGraph.units.forEach {
-    builder.register(it)
-  }
+  unitGraph.units.forEach { builder.register(it) }
   for (unit in unitGraph.units) {
     unit.run {
       val mayBeInstantiatedToSupertype = parent != null && subtypes.isEmpty()
@@ -276,7 +250,7 @@ private fun propagatePossibleInstantiations(unitGraph: InferenceUnitGraph): Infe
       Unit
     }
     unit.parent?.run {
-      builder.add(unit.core, this.core, RelationType.SUB)
+      builder.addRelation(this.core, unit.core)
     }
   }
   return builder.build()
