@@ -408,8 +408,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     formalArgTypeWithinHierarchy = getBooleanValue(element, FORMALTYPE_WITHIN_HIERARCHY, false);
     invertFormalType = getBooleanValue(element, NEGATE_FORMALTYPE_CONDITION, false);
 
-    minCount = getIntValue(element, MIN_OCCURS, 0);
-    maxCount = getIntValue(element, MAX_OCCURS, 0);
+    minCount = getIntValue(element, MIN_OCCURS, 1);
+    maxCount = getIntValue(element, MAX_OCCURS, 1);
 
     referenceConstraint = StringUtil.notNullize(element.getAttributeValue(REFERENCE_CONDITION));
     invertReference = getBooleanValue(element, NEGATE_REFERENCE_CONDITION, false);
