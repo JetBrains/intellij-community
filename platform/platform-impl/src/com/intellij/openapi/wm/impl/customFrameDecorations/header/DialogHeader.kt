@@ -5,11 +5,15 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButto
 import com.intellij.ui.awt.RelativeRectangle
 import net.miginfocom.swing.MigLayout
 import java.awt.*
+import java.beans.PropertyChangeListener
 import java.util.ArrayList
 import javax.swing.*
 
 class DialogHeader(val window: Window) : CustomHeader(window) {
     private val titleLabel = JLabel()
+    private val titleChangeListener = PropertyChangeListener{
+        titleLabel.text = getTitle()
+    }
 
     init {
         layout = MigLayout("novisualpadding, ins 0, fillx, gap 0", "$H_GAP[min!]$H_GAP[][pref!]", "")
@@ -18,6 +22,16 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
         add(productIcon)
         add(titleLabel, "wmin 0, left, hmin $MIN_HEIGHT")
         add(buttonPanes.getView(), "top, wmin pref")
+    }
+
+    override fun installListeners() {
+        super.installListeners()
+        window.addPropertyChangeListener("title", titleChangeListener)
+    }
+
+    override fun uninstallListeners() {
+        super.uninstallListeners()
+        window.removePropertyChangeListener(titleChangeListener)
     }
 
     override fun createButtonsPane(): CustomFrameTitleButtons = CustomFrameTitleButtons.create(myCloseAction)
