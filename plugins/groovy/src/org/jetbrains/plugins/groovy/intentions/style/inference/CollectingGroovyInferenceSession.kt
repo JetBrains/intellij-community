@@ -10,16 +10,21 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class CollectingGroovyInferenceSession(
   typeParams: Array<PsiTypeParameter>,
   contextSubstitutor: PsiSubstitutor,
   context: PsiElement,
+  private val proxyMethodMapping: Map<String, GrParameter> = emptyMap(),
   private val parent: CollectingGroovyInferenceSession? = null
 ) : GroovyInferenceSession(typeParams, contextSubstitutor, context, true, emptySet()) {
-
 
   override fun substituteWithInferenceVariables(type: PsiType?): PsiType {
     val result = super.substituteWithInferenceVariables(type)
@@ -36,7 +41,7 @@ class CollectingGroovyInferenceSession(
                                   context: PsiElement,
                                   result: GroovyResolveResult,
                                   f: (GroovyInferenceSession) -> Unit) {
-    val nestedSession = CollectingGroovyInferenceSession(params, siteSubstitutor, context, this)
+    val nestedSession = CollectingGroovyInferenceSession(params, siteSubstitutor, context, proxyMethodMapping, this)
     nestedSession.propagateVariables(this)
     f(nestedSession)
     this.propagateVariables(nestedSession)
@@ -47,6 +52,24 @@ class CollectingGroovyInferenceSession(
     }
     for ((vars, rightType) in nestedSession.myIncorporationPhase.captures) {
       this.myIncorporationPhase.addCapture(vars, rightType)
+    }
+  }
+
+  override fun initArgumentConstraints(mapping: ArgumentMapping?, inferenceSubstitutor: PsiSubstitutor) {
+    if (mapping == null) return
+    val substitutor = inferenceSubstitutor.putAll(inferenceSubstitution)
+    for ((expectedType, argument) in mapping.expectedTypes) {
+      val parameter = mapping.targetParameter(argument)
+      val resultingParameter = substituteWithInferenceVariables(proxyMethodMapping[parameter?.name]?.type ?: expectedType)
+      if (argument is ExpressionArgument) {
+        addConstraint(ExpressionConstraint(substitutor.substitute(contextSubstitutor.substitute(resultingParameter)), argument.expression))
+      }
+      else {
+        val type = argument.type
+        if (type != null) {
+          addConstraint(TypeConstraint(substitutor.substitute(resultingParameter), type, context))
+        }
+      }
     }
   }
 

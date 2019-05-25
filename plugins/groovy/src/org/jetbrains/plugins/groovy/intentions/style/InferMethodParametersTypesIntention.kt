@@ -30,11 +30,17 @@ internal class InferMethodParametersTypesIntention : Intention() {
     val processor = MethodParametersInferenceProcessor(method)
     val virtualMethod = processor.runInferenceProcess()
     if (virtualMethod.hasTypeParameters()) {
-      method.typeParameterList?.replace(virtualMethod.typeParameterList!!)
-    } else {
+      if (method.hasTypeParameters()) {
+        method.typeParameterList!!.replace(virtualMethod.typeParameterList!!)
+      }
+      else {
+        method.addAfter(virtualMethod.typeParameterList!!, method.firstChild)
+      }
+    }
+    else {
       method.typeParameterList?.delete()
     }
-    method.parameters.zip(virtualMethod.parameters).forEach { (need, inferred) -> need.setType(inferred.type) }
+    method.parameters.zip(virtualMethod.parameters).forEach { (actual, inferred) -> actual.setType(inferred.type) }
     if (method.isConstructor || method.returnTypeElementGroovy != null && !method.hasTypeParameters()) {
       method.modifierList.setModifierProperty("def", false)
     }

@@ -13,17 +13,17 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 /**
  * Allows to infer method parameters types regarding method calls and inner dependencies between types.
  */
-class MethodParametersInferenceProcessor(private val method: GrMethod) {
+class MethodParametersInferenceProcessor(method: GrMethod) {
   private val driver: InferenceDriver = InferenceDriver(method)
 
   /**
-   * Performs full substitution for non-typed parameters of [method]
+   * Performs full substitution for non-typed parameters of [InferenceDriver.virtualMethod]
    * Inference is performed in 3 phases:
    * 1. Creating a type parameter for each of existing non-typed parameter
    * 2. Inferring new parameters signature cause of possible generic types. Creating new type parameters.
    * 3. Inferring dependencies between new type parameters and instantiating them.
    */
-  fun runInferenceProcess() : GrMethod {
+  fun runInferenceProcess(): GrMethod {
     driver.setUpNewTypeParameters()
     setUpParametersSignature()
     val graph = setUpGraph()
@@ -32,7 +32,8 @@ class MethodParametersInferenceProcessor(private val method: GrMethod) {
   }
 
   private fun setUpParametersSignature() {
-    val inferenceSession = CollectingGroovyInferenceSession(driver.method.typeParameters, PsiSubstitutor.EMPTY, driver.method)
+    val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod,
+                                                            driver.virtualParametersMapping)
     driver.collectOuterCalls(inferenceSession)
     val signatureSubstitutor = inferenceSession.inferSubst()
     driver.parametrizeMethod(signatureSubstitutor)

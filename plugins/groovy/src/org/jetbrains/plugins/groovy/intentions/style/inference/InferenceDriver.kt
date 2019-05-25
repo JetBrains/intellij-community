@@ -31,10 +31,20 @@ class InferenceDriver(val method: GrMethod) {
   private val defaultTypeParameterList: PsiTypeParameterList = (method.typeParameterList?.copy()
                                                                 ?: elementFactory.createTypeParameterList()) as PsiTypeParameterList
   private val parameterIndex: MutableMap<GrParameter, PsiTypeParameter> = LinkedHashMap()
-  val virtualMethod: GrMethod by lazy {
-    elementFactory.createMethodFromText(method.text, method)
-  }
+  val virtualMethod: GrMethod
+  val virtualParametersMapping: Map<String, GrParameter>
   val appearedClassTypes: MutableMap<String, List<PsiClass?>> = mutableMapOf()
+
+  init {
+    if (method.isConstructor) {
+      virtualMethod = elementFactory.createConstructorFromText(method.name, method.text, method)
+    }
+    else {
+      virtualMethod = elementFactory.createMethodFromText(method.text, method)
+    }
+    virtualParametersMapping = method.parameters.map { it.name }.zip(virtualMethod.parameters).toMap()
+  }
+
   val constantTypes: List<PsiType> by lazy {
     constantTypeParameters.map { it.type() }
   }
@@ -48,17 +58,16 @@ class InferenceDriver(val method: GrMethod) {
   }
 
   /**
-   * Substitutes all non-typed parameters of the [method] with generic types
+   * Substitutes all non-typed parameters of the [virtualMethod] with generic types
    */
   fun setUpNewTypeParameters() {
-    if (!method.hasTypeParameters()) {
-      method.addAfter(elementFactory.createTypeParameterList(), method.firstChild)
+    if (!virtualMethod.hasTypeParameters()) {
+      virtualMethod.addAfter(elementFactory.createTypeParameterList(), virtualMethod.firstChild)
     }
-
-    val generator = NameGenerator(method.typeParameters.mapNotNull { it.name })
-    for (parameter in method.parameters.filter { it.typeElement == null }) {
+    val generator = NameGenerator(virtualMethod.typeParameters.mapNotNull { it.name })
+    for (parameter in virtualMethod.parameters.filter { it.typeElement == null }) {
       val newTypeParameter = createNewTypeParameter(generator)
-      method.typeParameterList!!.add(newTypeParameter)
+      virtualMethod.typeParameterList!!.add(newTypeParameter)
       parameterIndex[parameter] = newTypeParameter
       parameter.setType(newTypeParameter.type())
     }
@@ -74,7 +83,7 @@ class InferenceDriver(val method: GrMethod) {
 
 
   private fun collectOuterMethodCalls(inferenceSession: GroovyInferenceSession) {
-    for (parameter in method.parameters) {
+    for (parameter in virtualMethod.parameters) {
       inferenceSession.addConstraint(ExpressionConstraint(parameter.type, parameter.initializerGroovy ?: continue))
     }
     val references = ReferencesSearch.search(method).findAll()
@@ -87,13 +96,11 @@ class InferenceDriver(val method: GrMethod) {
    * All types in [parameterIndex] receive new deeply parametrized type
    */
   fun parametrizeMethod(signatureSubstitutor: PsiSubstitutor) {
-    method.typeParameterList?.replace(defaultTypeParameterList.copy())
-    val constantParameters = method.typeParameters.map { it.name }
+    virtualMethod.typeParameterList?.replace(defaultTypeParameterList.copy())
+    constantTypeParameters.addAll(virtualMethod.typeParameters)
     for ((parameter, typeParameter) in parameterIndex) {
-      parameter.setType(createDeeplyParametrizedType(signatureSubstitutor.substitute(typeParameter)!!, method.typeParameterList!!))
+      parameter.setType(createDeeplyParametrizedType(signatureSubstitutor.substitute(typeParameter)!!, virtualMethod.typeParameterList!!))
     }
-    constantTypeParameters.addAll(virtualMethod.typeParameters.filter { it.name in constantParameters })
-    virtualMethod.setBlock(method.block)
   }
 
 
@@ -119,7 +126,7 @@ class InferenceDriver(val method: GrMethod) {
         classType ?: return classType
         val generifiedClassType = if (classType.isRaw) {
           val resolveResult = classType.resolve()!!
-          val wildcards = Array(resolveResult.typeParameters.size) { PsiWildcardType.createUnbounded(method.manager) }
+          val wildcards = Array(resolveResult.typeParameters.size) { PsiWildcardType.createUnbounded(virtualMethod.manager) }
           elementFactory.createType(resolveResult, *wildcards)
         }
         else classType
@@ -151,7 +158,7 @@ class InferenceDriver(val method: GrMethod) {
       }
       else -> {
         return when (target) {
-          PsiType.getJavaLangObject(method.manager, method.resolveScope) -> {
+          PsiType.getJavaLangObject(virtualMethod.manager, virtualMethod.resolveScope) -> {
             registerTypeParameter(typeParameterList)
           }
           is PsiIntersectionType -> target.accept(visitor) as PsiClassType
@@ -196,8 +203,7 @@ class InferenceDriver(val method: GrMethod) {
 
 
   fun acceptFinalSubstitutor(resultSubstitutor: PsiSubstitutor) {
-    val inferredParameters = resultSubstitutor.substitutionMap.keys.map { it.type() }
-    val targetParameters = virtualMethod.parameters.filter { it.type in inferredParameters }
+    val targetParameters = parameterIndex.keys
     targetParameters.forEach { param ->
       param.setType(resultSubstitutor.substitute(param.type))
       when {
@@ -259,9 +265,7 @@ class InferenceDriver(val method: GrMethod) {
       else -> emptyArray()
     }
     return elementFactory.createProperTypeParameter(name, mappedSupertypes).apply {
-      if (name !in defaultTypeParameterList.typeParameters.map { it.name }) {
-        defaultTypeParameterList.add(this)
-      }
+      defaultTypeParameterList.add(this)
     }
   }
 }
