@@ -370,7 +370,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (!myMatchingVisitor.setResult(
       parameterList1.isEmpty() || myMatchingVisitor.matchSons(parameterList1, other.getParameterList()))) return;
     final PsiElement body1 = getElementToMatch(expression.getBody());
-    myMatchingVisitor.setResult(body1 == null || myMatchingVisitor.matchSequentially(body1, getElementToMatch(other.getBody())));
+    if (body1 == null) {
+      return;
+    }
+    final PsiElement body2 = getElementToMatch(other.getBody());
+    if (body1 instanceof PsiExpression && body2 instanceof PsiStatement) {
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(body1.getParent(), body2));
+    }
+    else {
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(body1, body2));
+    }
   }
 
   private static PsiElement getElementToMatch(PsiElement element) {
