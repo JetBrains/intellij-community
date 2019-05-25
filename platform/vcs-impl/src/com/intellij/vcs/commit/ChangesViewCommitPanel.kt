@@ -184,6 +184,8 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   override fun getIncludedUnversionedFiles(): List<VirtualFile> =
     includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(VirtualFile::class.java)
 
+  override fun isInclusionEmpty(): Boolean = changesView.isInclusionEmpty
+  override fun clearInclusion() = changesView.clearInclusion()
   override fun includeIntoCommit(items: Collection<*>) = changesView.includeChanges(items)
 
   override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =

@@ -485,6 +485,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     repaint();
   }
 
+  public void clearInclusion() {
+    myIncludedChanges.clear();
+    notifyInclusionListener();
+    repaint();
+  }
+
   public void retainInclusion(@NotNull Collection<?> changes) {
     if (myIncludedChanges.retainAll(changes)) {
       notifyInclusionListener();

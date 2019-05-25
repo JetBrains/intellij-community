@@ -57,6 +57,13 @@ class ChangesViewCommitWorkflowHandler(
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
   }
 
+  fun setCommitState(items: Collection<*>, forceIfNotEmpty: Boolean) {
+    if (forceIfNotEmpty || ui.isInclusionEmpty()) {
+      ui.clearInclusion()
+      ui.includeIntoCommit(items)
+    }
+  }
+
   fun activate(): Boolean = ui.activate()
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
