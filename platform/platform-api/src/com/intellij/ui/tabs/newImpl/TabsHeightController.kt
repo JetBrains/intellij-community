@@ -30,7 +30,7 @@ class TabsHeightController {
           heightMap.advise(lt.lifetime) {
             val value = heightMap.maxBy { it.value }?.value
             value?.let {
-              lastValue = it
+              lastValue = Math.max(it, lastValue)
             }
             toolWindowHeightProperty.set(value ?: lastValue)
           }

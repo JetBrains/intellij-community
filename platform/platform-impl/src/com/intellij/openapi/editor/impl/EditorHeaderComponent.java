@@ -57,7 +57,8 @@ public class EditorHeaderComponent extends JPanel implements UISettingsListener 
     if(JBTabsFactory.getUseNewTabs()) {
       Dimension size = super.getPreferredSize();
       Insets insets = getInsets();
-      return new Dimension(size.width, TabsHeightController.getToolWindowHeight() - insets.top - insets.bottom);
+      int tabsHeight = TabsHeightController.getToolWindowHeight() - insets.top - insets.bottom;
+      return tabsHeight > size.height ? new Dimension(size.width, tabsHeight) : size;
     } else {
       return super.getPreferredSize();
     }
