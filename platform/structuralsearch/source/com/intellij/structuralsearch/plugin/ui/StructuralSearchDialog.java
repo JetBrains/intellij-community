@@ -232,10 +232,6 @@ public class StructuralSearchDialog extends DialogWrapper {
       final boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
         try {
           final CompiledPattern compiledPattern = compilePattern();
-          if (compiledPattern == null) {
-            // invalid pattern, remove editor highlights
-            highlightMatches(Collections.emptyList(), "");
-          }
           initializeFilterPanel(compiledPattern);
           final JRootPane component = getRootPane();
           if (component == null) {
@@ -699,6 +695,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, true);
       reportMessage(null, false, mySearchCriteriaEdit);
+      highlightMatches(matchOptions);
       if (myReplace) {
         try {
           Replacer.checkReplacementPattern(project, myConfiguration.getReplaceOptions());
@@ -713,10 +710,10 @@ public class StructuralSearchDialog extends DialogWrapper {
         }
       }
       reportMessage(null, false, myReplaceCriteriaEdit);
-      highlightMatches(matchOptions);
       return compiledPattern;
     }
     catch (MalformedPatternException e) {
+      highlightMatches(Collections.emptyList(), "");
       final String message = isEmpty(matchOptions.getSearchPattern())
                              ? null
                              : SSRBundle.message("this.pattern.is.malformed.message", (e.getMessage() != null) ? e.getMessage() : "");
@@ -724,10 +721,12 @@ public class StructuralSearchDialog extends DialogWrapper {
       return null;
     }
     catch (UnsupportedPatternException e) {
+      highlightMatches(Collections.emptyList(), "");
       reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", e.getMessage()), true, mySearchCriteriaEdit);
       return null;
     }
     catch (NoMatchFoundException e) {
+      highlightMatches(Collections.emptyList(), "");
       reportMessage(e.getMessage(), false, myScopePanel);
       return null;
     }
