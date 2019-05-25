@@ -64,12 +64,7 @@ public abstract class ProjectManager {
 
   /**
    * Returns the list of currently opened projects.
-   *
-   * Result of {@link Project#isDisposed()} is valid only in scope of a read action.
-   * (see https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock)
-   * Checking {@link Project#isDisposed()} outside of a read action is meaningless, because project can be disposed at any moment.
-   *
-   * @return the array of currently opened projects.
+   * {@link Project#isDisposed()} must be checked for each project before use (if the whole operation is not under read action).
    */
   @NotNull
   public abstract Project[] getOpenProjects();

@@ -56,7 +56,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   /**
    * Gets all components whose implementation class is derived from {@code baseClass}.
    *
-   * @deprecated use <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extensions_and_extension_points.html">extension points</a> instead
+   * @deprecated use <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extensions_and_extension_points.html">extension points</a> instead
    */
   @Deprecated
   @NotNull
@@ -71,6 +71,11 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   @NotNull
   MessageBus getMessageBus();
 
+  /**
+   * Result is valid only in scope of a read action.
+   * (see https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock)
+   * Checking outside of a read action is meaningless, because application/project/module can be disposed at any moment.
+   */
   boolean isDisposed();
 
   /**
