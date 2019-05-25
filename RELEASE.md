@@ -118,7 +118,16 @@ For AOSP push:
     There are three basic tasks:
     (1) Build the IDE from the command line, and copy the profiler prebuilts
 
-        $ cp tools/idea/out/studio/dist.all/plugins/android/lib/studio-profiler-grpc-1.0-jarjar.jar \
+        $ cp tools/idea/out/studio/dist.all/plugins/android/lib/studio-proto.jar \
+             tools/adt/idea/android/lib/
+
+        $ cp tools/idea/out/studio/dist.all/plugins/android/lib/transport_java_proto.jar \
+             tools/adt/idea/android/lib/
+
+        $ cp tools/idea/out/studio/dist.all/plugins/android/lib/studio-grpc.jar \
+             tools/adt/idea/android/lib/
+
+        $ cp tools/idea/out/studio/dist.all/plugins/android/lib/perfetto-protos.jar \
              tools/adt/idea/android/lib/
 
         $ cp-recursive tools/idea/out/studio/dist.all/plugins/android/resources/ \

@@ -325,7 +325,6 @@ class CommunityRepositoryModules {
       withResourceFromModule("android.sdktools.layoutlib-resources", ".", "lib/layoutlib") // todo replace this with runtime downloading
       withResourceFromModule("android.sdktools.sdklib", "../templates", "lib/templates")
 
-      withProjectLibrary("studio-profiler-grpc-1.0-jarjar")
       withProjectLibrary("archive-patcher")
       withProjectLibrary("com.android.tools.analytics-library:shared:26.1.2")
       withProjectLibrary("com.android.tools.analytics-library:tracker:26.1.2")

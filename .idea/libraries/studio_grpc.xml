@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="studio-grpc">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../bazel-genfiles/tools/base/bazel/studio-grpc.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

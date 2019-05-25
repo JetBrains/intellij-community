@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="transport-proto">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../bazel-genfiles/tools/base/transport/proto/transport_java_proto.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

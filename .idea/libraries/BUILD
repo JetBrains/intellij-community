@@ -818,14 +818,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "studio-profiler-grpc-1.0-jarjar",
-    visibility = ["//visibility:public"],
-    exports = ["//tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
-    runtime_deps = ["//tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "junit5_rt",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -1132,14 +1124,6 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/aapt2-proto/0.3.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/aapt2-proto/0.3.1:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "aia-manifest-proto-1.0-jarjar",
-    visibility = ["//visibility:public"],
-    exports = ["//tools/base/sdk-common/aia-manifest-jar-generator:aia-manifest-proto-1.0-jarjar"],
-    runtime_deps = ["//tools/base/sdk-common/aia-manifest-jar-generator:aia-manifest-proto-1.0-jarjar"],
 )
 
 # managed by go/iml_to_build
@@ -1644,4 +1628,44 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/google/testing/compile/compile-testing/0.16:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/testing/compile/compile-testing/0.16:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "aia-proto",
+    visibility = ["//visibility:public"],
+    exports = ["//tools/base/sdk-common/aia-manifest-jar-generator:proto"],
+    runtime_deps = ["//tools/base/sdk-common/aia-manifest-jar-generator:proto"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "studio-proto",
+    visibility = ["//visibility:public"],
+    exports = ["//tools/base/bazel:studio-proto"],
+    runtime_deps = ["//tools/base/bazel:studio-proto"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "studio-grpc",
+    visibility = ["//visibility:public"],
+    exports = ["//tools/base/bazel:studio-grpc"],
+    runtime_deps = ["//tools/base/bazel:studio-grpc"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "transport-proto",
+    visibility = ["//visibility:public"],
+    exports = ["//tools/base/transport/proto:transport_java_proto"],
+    runtime_deps = ["//tools/base/transport/proto:transport_java_proto"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "perfetto-proto",
+    visibility = ["//visibility:public"],
+    exports = ["//tools/base/profiler:perfetto-protos"],
+    runtime_deps = ["//tools/base/profiler:perfetto-protos"],
 )

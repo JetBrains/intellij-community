@@ -13,7 +13,7 @@ import static org.jetbrains.intellij.build.LibraryLicense.jetbrainsLibrary
 @CompileStatic
 class CommunityLibraryLicenses {
   public static final List<LibraryLicense> LICENSES_LIST = [
-    new LibraryLicense(name: "AAPT Protos", libraryName: "aapt-proto-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "AAPT Protos", libraryName: "aapt-proto", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Aether", version: "1.1.0", license: "Eclipse Public License 1.0", url: "http://www.eclipse.org/aether/",
                        libraryName: 'org.eclipse.aether:aether-api',
                        additionalLibraryNames: ['org.eclipse.aether:aether-impl', 'org.eclipse.aether:aether-connector-basic', 'org.eclipse.aether:aether-transport-file', 'org.eclipse.aether:aether-transport-http'],
@@ -63,8 +63,14 @@ class CommunityLibraryLicenses {
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Manifest Merger", libraryName: "com.android.tools.build:manifest-merger",
                        license: "Apache 2.0", url: "http://source.android.com/"),
-    new LibraryLicense(name: "Android Profiler", libraryName: "studio-profiler-grpc-1.0-jarjar", license: "Apache 2.0",
-                       url: "http://source.android.com/"),
+    new LibraryLicense(name: "Perfetto protos", libraryName: "perfetto-proto", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "Studio gRPC", libraryName: "studio-grpc", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "Studio Protobuf", libraryName: "studio-proto", license: "protobuf",
+                       licenseUrl: "https://github.com/protocolbuffers/protobuf/blob/master/LICENSE"),
+    new LibraryLicense(name: "Transport Pipeline", libraryName: "transport-proto", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Android Repository", libraryName: "com.android.tools:repository", license: "Apache 2.0",
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Sdk Common", libraryName: "com.android.tools:sdk-common", license: "Apache 2.0",
@@ -393,7 +399,6 @@ class CommunityLibraryLicenses {
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "netty-handler", libraryName: "netty-handler", version: "4.1.32", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "nosyncbuilder-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", version: "2.5.1", license: "Apache 2.0", url: "http://objenesis.org/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Okio", libraryName: "okio", version: "1.14.0", license: "Apache 2.0",
