@@ -23,15 +23,16 @@ class MethodParametersInferenceProcessor(private val method: GrMethod) {
    * 2. Inferring new parameters signature cause of possible generic types. Creating new type parameters.
    * 3. Inferring dependencies between new type parameters and instantiating them.
    */
-  fun runInferenceProcess() {
+  fun runInferenceProcess() : GrMethod {
     driver.setUpNewTypeParameters()
     setUpParametersSignature()
     val graph = setUpGraph()
     inferTypeParameters(graph)
+    return driver.virtualMethod
   }
 
   private fun setUpParametersSignature() {
-    val inferenceSession = CollectingGroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method)
+    val inferenceSession = CollectingGroovyInferenceSession(driver.method.typeParameters, PsiSubstitutor.EMPTY, driver.method)
     driver.collectOuterCalls(inferenceSession)
     val signatureSubstitutor = inferenceSession.inferSubst()
     driver.parametrizeMethod(signatureSubstitutor)
@@ -39,11 +40,11 @@ class MethodParametersInferenceProcessor(private val method: GrMethod) {
 
 
   private fun setUpGraph(): InferenceUnitGraph {
-    val inferenceSession = CollectingGroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method)
+    val inferenceSession = CollectingGroovyInferenceSession(driver.virtualMethod.typeParameters, PsiSubstitutor.EMPTY, driver.virtualMethod)
     driver.collectInnerMethodCalls(inferenceSession)
     driver.constantTypes.forEach { getInferenceVariable(inferenceSession, it).instantiation = it }
     inferenceSession.run { repeatInferencePhases(); infer() }
-    val inferenceVariables = method.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }
+    val inferenceVariables = driver.virtualMethod.typeParameters.map { getInferenceVariable(inferenceSession, it.type()) }
     return createGraphFromInferenceVariables(inferenceVariables, inferenceSession, driver)
   }
 
@@ -70,8 +71,8 @@ class MethodParametersInferenceProcessor(private val method: GrMethod) {
         val instantiation = when {
           unit.core.flexible || unit.subtypes.isNotEmpty() || unit.direct -> unit.typeInstantiation
           unit.typeInstantiation == unit.type || unit.typeInstantiation.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ->
-            PsiWildcardType.createUnbounded(method.manager)
-          else -> PsiWildcardType.createExtends(method.manager, unit.typeInstantiation)
+            PsiWildcardType.createUnbounded(driver.virtualMethod.manager)
+          else -> PsiWildcardType.createExtends(driver.virtualMethod.manager, unit.typeInstantiation)
         }
         return resultSubstitutor.substitute(instantiation)
       }

@@ -28,8 +28,14 @@ internal class InferMethodParametersTypesIntention : Intention() {
       AddReturnTypeFix.applyFix(project, element)
     }
     val processor = MethodParametersInferenceProcessor(method)
-    processor.runInferenceProcess()
-    if (!method.hasTypeParameters() || method.isConstructor) {
+    val virtualMethod = processor.runInferenceProcess()
+    if (virtualMethod.hasTypeParameters()) {
+      method.typeParameterList?.replace(virtualMethod.typeParameterList!!)
+    } else {
+      method.typeParameterList?.delete()
+    }
+    method.parameters.zip(virtualMethod.parameters).forEach { (need, inferred) -> need.setType(inferred.type) }
+    if (method.isConstructor || method.returnTypeElementGroovy != null && !method.hasTypeParameters()) {
       method.modifierList.setModifierProperty("def", false)
     }
   }
