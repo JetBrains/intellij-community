@@ -89,6 +89,7 @@ import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
 import static git4idea.checkin.GitCommitAndPushExecutorKt.isPushAfterCommit;
@@ -186,6 +187,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull String commitMessage,
                                    @NotNull CommitContext commitContext,
                                    @NotNull Set<String> feedback) {
+    myNextCommitAmend = isAmendCommitMode(commitContext);
+
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
@@ -1109,7 +1112,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   public void reset() {
-    myNextCommitAmend = false;
     myNextCommitAuthor = null;
     myNextCommitAuthorDate = null;
     myNextCommitSkipHook = false;
@@ -1300,7 +1302,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       if (myNextCommitAuthor != null) {
         mySettings.saveCommitAuthor(myNextCommitAuthor);
       }
-      myNextCommitAmend = isAmend();
       myNextCommitAuthorDate = myAuthorDate;
 
       mySettings.setSignOffCommit(mySignOffCheckbox.isSelected());

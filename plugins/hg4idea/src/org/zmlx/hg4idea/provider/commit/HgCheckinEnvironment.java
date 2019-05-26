@@ -53,13 +53,13 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
 import static org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutorKt.isPushAfterCommit;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
 public class HgCheckinEnvironment implements CheckinEnvironment {
 
   private final Project myProject;
-  private boolean myNextCommitAmend; // If true, the next commit is amended
   private boolean myShouldCommitSubrepos;
   private boolean myMqNewPatch;
   private boolean myCloseBranch;
@@ -102,13 +102,15 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     List<VcsException> exceptions = new LinkedList<>();
     Map<HgRepository, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
     addRepositoriesWithoutChanges(repositoriesMap);
+    boolean isAmend = isAmendCommitMode(commitContext);
     for (Map.Entry<HgRepository, Set<HgFile>> entry : repositoriesMap.entrySet()) {
 
       HgRepository repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
-      HgCommitTypeCommand command = myMqNewPatch ? new HgQNewCommand(myProject, repo, commitMessage, myNextCommitAmend) :
-                                    new HgCommitCommand(myProject, repo, commitMessage, myNextCommitAmend, myCloseBranch,
-                                                        myShouldCommitSubrepos && !selectedFiles.isEmpty());
+      HgCommitTypeCommand command =
+        myMqNewPatch
+        ? new HgQNewCommand(myProject, repo, commitMessage, isAmend)
+        : new HgCommitCommand(myProject, repo, commitMessage, isAmend, myCloseBranch, myShouldCommitSubrepos && !selectedFiles.isEmpty());
 
       if (isMergeCommit(repo.getRoot())) {
         //partial commits are not allowed during merges
@@ -326,13 +328,11 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void refresh() {
       myAmend.refresh();
-      myNextCommitAmend = false;
       myShouldCommitSubrepos = false;
     }
 
     @Override
     public void saveState() {
-      myNextCommitAmend = isAmend();
       myShouldCommitSubrepos = myCommitSubrepos.isSelected();
     }
 
