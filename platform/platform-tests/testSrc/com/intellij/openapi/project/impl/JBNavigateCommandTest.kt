@@ -40,8 +40,7 @@ class JBNavigateCommandTest : PlatformTestCase() {
   }
 
   fun testPath1() {
-    val project = createAndOpenProject()
-    configure(project)
+    val project = configureProject()
 
     navigate(project.name, mapOf("path" to "A.java"))
 
@@ -51,13 +50,32 @@ class JBNavigateCommandTest : PlatformTestCase() {
 
   @Bombed(year = 2019, month = 7, day = 1, user = "dima")
   fun testFqn1() {
-    val project = createAndOpenProject()
-    configure(project)
+    val project = configureProject()
 
     navigate(project.name, mapOf("fqn" to "A"))
 
     UIUtil.dispatchAllInvocationEvents()
     TestCase.assertEquals(getCurrentElement(project).name, "A")
+    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+  }
+
+  fun testFqnMethod() {
+    val project = configureProject()
+
+    navigate(project.name, mapOf("fqn" to "A#main"))
+
+    UIUtil.dispatchAllInvocationEvents()
+    TestCase.assertEquals(getCurrentElement(project).name, "main")
+    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+  }
+
+  fun testFqnConstant() {
+    val project = configureProject()
+
+    navigate(project.name, mapOf("fqn" to "A#RUN_CONFIGURATION_AD_TEXT"))
+
+    UIUtil.dispatchAllInvocationEvents()
+    TestCase.assertEquals(getCurrentElement(project).name, "RUN_CONFIGURATION_AD_TEXT")
     PlatformTestUtil.forceCloseProjectWithoutSaving(project)
   }
 
@@ -76,6 +94,12 @@ class JBNavigateCommandTest : PlatformTestCase() {
     val recentProject = ProjectManager.getInstance().openProjects.find { it.name == actualProjectName }!!
     TestCase.assertEquals(getCurrentElement(recentProject).name, "A.java")
     PlatformTestUtil.forceCloseProjectWithoutSaving(recentProject)
+  }
+
+  private fun configureProject(): Project {
+    val project = createAndOpenProject()
+    configure(project)
+    return project
   }
 
   private fun configure(project: Project) {
