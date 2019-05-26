@@ -362,6 +362,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       for (String name : matchOptions.getVariableConstraintNames()) {
         matchOptions.getVariableConstraint(name).setPartOfSearchResults(name.equals(item));
       }
+      initiateValidation();
     });
 
     final JPanel centerPanel = new JPanel(null);
@@ -885,7 +886,8 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private void setSearchTargets(MatchOptions matchOptions) {
-    final List<String> names = new ArrayList<>(matchOptions.getVariableConstraintNames());
+    final List<String> names = new ArrayList<>(matchOptions.getUsedVariableNames());
+    Collections.sort(names);
     names.remove(Configuration.CONTEXT_VAR_NAME);
     names.add(SSRBundle.message("complete.match.variable.name"));
     myTargetComboBox.setItems(names);
@@ -895,9 +897,10 @@ public class StructuralSearchDialog extends DialogWrapper {
         final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
         if (constraint != null && constraint.isPartOfSearchResults()) {
           myTargetComboBox.setSelectedItem(name);
-          break;
+          return;
         }
       }
+      myTargetComboBox.setSelectedItem(SSRBundle.message("complete.match.variable.name"));
     }
     else {
       myTargetComboBox.setEnabled(false);
