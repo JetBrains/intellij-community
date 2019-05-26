@@ -23,10 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogFilterUi;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -317,7 +314,19 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onDetailsLoaded(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
-      myChangesBrowser.setSelectedDetails(detailsList);
+      int maxSize = VcsLogUtil.getMaxSize(detailsList);
+      if (maxSize > VcsLogUtil.getShownChangesLimit()) {
+        String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
+        String sizeText = VcsLogUtil.getSizeText(maxSize);
+        myChangesBrowser.showText(statusText -> {
+          statusText.setText(commitText + " has " + sizeText + " changes");
+          statusText.appendSecondaryText("Show anyway", VcsLogUiUtil.getLinkAttributes(),
+                                         e -> myChangesBrowser.setSelectedDetails(detailsList));
+        });
+      }
+      else {
+        myChangesBrowser.setSelectedDetails(detailsList);
+      }
     }
 
     @Override
@@ -337,7 +346,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onError(@NotNull Throwable error) {
-      myChangesBrowser.showError("Error loading commits");
+      myChangesBrowser.showText(statusText -> statusText.setText("Error loading commits"));
     }
   }
 

@@ -34,6 +34,8 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -386,5 +388,24 @@ public class VcsLogUtil {
 
   public static int getShownChangesLimit() {
     return Registry.intValue("vcs.log.max.changes.shown");
+  }
+
+  @NotNull
+  public static String getSizeText(int maxSize) {
+    if (maxSize < 1000) {
+      return String.valueOf(maxSize);
+    }
+    DecimalFormat format = new DecimalFormat("#.#");
+    format.setRoundingMode(RoundingMode.FLOOR);
+    if (maxSize < 10_000) {
+      return format.format(maxSize / 1000.0) + "K";
+    }
+    else if (maxSize < 1_000_000) {
+      return (maxSize / 1000) + "K";
+    }
+    else if (maxSize < 10_000_000) {
+      return format.format(maxSize / 1_000_000.0) + "M";
+    }
+    return (maxSize / 1_000_000) + "M";
   }
 }
