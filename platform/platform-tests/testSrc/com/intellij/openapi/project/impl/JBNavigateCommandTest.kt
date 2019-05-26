@@ -59,6 +59,7 @@ class JBNavigateCommandTest : PlatformTestCase() {
     PlatformTestUtil.forceCloseProjectWithoutSaving(project)
   }
 
+  @Bombed(year = 2019, month = 7, day = 1, user = "dima")
   fun testFqnMethod() {
     val project = configureProject()
 
@@ -69,6 +70,7 @@ class JBNavigateCommandTest : PlatformTestCase() {
     PlatformTestUtil.forceCloseProjectWithoutSaving(project)
   }
 
+  @Bombed(year = 2019, month = 7, day = 1, user = "dima")
   fun testFqnConstant() {
     val project = configureProject()
 
