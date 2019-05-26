@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.instantiateAndRun;
 import static org.junit.Assert.*;
@@ -253,15 +254,13 @@ public class EditorTestFixture {
     final LookupImpl lookup = getLookup();
     assertNotNull("No lookup is shown", lookup);
 
-    reportLeadingSpacesInLookupExpectations(expected);
+    reportLookupExpectations(expected);
 
     final JList list = lookup.getList();
     List<String> strings = getLookupElementStrings();
     assertNotNull(strings);
-    // JavaGenerateMemberCompletionContributor uses leading spaces in the lookup string to cleverly control sorting
-    // We just care about the order of the individual sort items, we don't want to depend on this implementation detail in our tests
-    List<String> lookupsNoLeadingSpace = ContainerUtil.map(strings, StringUtil::trimLeading);
-    final List<String> actual = ContainerUtil.getFirstItems(lookupsNoLeadingSpace, expected.length);
+    List<String> fixedStrings = ContainerUtil.map(strings, StringUtil::trimLeading);
+    final List<String> actual = ContainerUtil.getFirstItems(fixedStrings, expected.length);
     if (!actual.equals(Arrays.asList(expected))) {
       UsefulTestCase.assertOrderedEquals(DumpLookupElementWeights.getLookupElementWeights(lookup, false), expected);
     }
@@ -272,8 +271,8 @@ public class EditorTestFixture {
     assertEquals(selected, list.getSelectedIndex());
   }
 
-  private static void reportLeadingSpacesInLookupExpectations(String[] expectedLookupTexts) {
-    // Prevent tests from depending on implementation detail hack to adjust sorting (see JavaGenerateMemberCompletionContributor#createGenerateMethodElement)
+  private static void reportLookupExpectations(String[] expectedLookupTexts) {
+    // Prevent tests from depending on implementation detail hack to adjust sorting
     for (String expectedLookupText : expectedLookupTexts) {
       if (expectedLookupText.startsWith(" ")) {
         fail("Expected lookup element string should not begin with space, this is an implementation detail: " + expectedLookupText);
