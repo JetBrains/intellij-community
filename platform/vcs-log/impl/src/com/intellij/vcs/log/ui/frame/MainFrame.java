@@ -72,7 +72,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final VcsLogClassicFilterUi myFilterUi;
   @NotNull private final SearchTextField myTextFilter;
 
-  @NotNull private final JBLoadingPanel myChangesLoadingPane;
   @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
   @NotNull private final MyCommitSelectionListenerForDiff mySelectionListenerForDiff;
@@ -106,8 +105,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return myLogData.getMiniDetailsGetter().getCommitData(index, Collections.singleton(index));
     }, this);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
-    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
-    myChangesLoadingPane.add(myChangesBrowser);
+    JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
+                                                           ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    changesLoadingPane.add(myChangesBrowser);
 
     myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, false, this);
 
@@ -116,7 +116,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
     myPreviewDiff.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
 
-    mySelectionListenerForDiff = new MyCommitSelectionListenerForDiff();
+    mySelectionListenerForDiff = new MyCommitSelectionListenerForDiff(changesLoadingPane);
     myGraphTable.getSelectionModel().addListSelectionListener(mySelectionListenerForDiff);
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, myLogData, this);
@@ -129,7 +129,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                                                       myLogData, logUi.getId(), this), BorderLayout.CENTER);
 
     myDetailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.7f);
-    myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
+    myDetailsSplitter.setFirstComponent(changesLoadingPane);
     showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
 
     myChangesBrowserSplitter = new OnePixelSplitter(false, CHANGES_SPLITTER_PROPORTION, 0.7f);
@@ -303,8 +303,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   private class MyCommitSelectionListenerForDiff extends CommitSelectionListener<VcsFullCommitDetails> {
-    protected MyCommitSelectionListenerForDiff() {
+    @NotNull private final JBLoadingPanel myChangesLoadingPane;
+
+    protected MyCommitSelectionListenerForDiff(@NotNull JBLoadingPanel changesLoadingPane) {
       super(MainFrame.this.myGraphTable, myLogData.getCommitDetailsGetter());
+      myChangesLoadingPane = changesLoadingPane;
     }
 
     @Override
