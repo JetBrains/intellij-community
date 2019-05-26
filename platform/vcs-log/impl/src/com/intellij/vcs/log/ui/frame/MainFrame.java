@@ -23,12 +23,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
-import com.intellij.vcs.CommittedChangeListForRevision;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -63,36 +64,32 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
 
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLog myLog;
+  @NotNull private final MainVcsLogUiProperties myUiProperties;
+
+  @NotNull private final JComponent myToolbar;
+  @NotNull private final VcsLogGraphTable myGraphTable;
+
   @NotNull private final VcsLogClassicFilterUi myFilterUi;
+  @NotNull private final SearchTextField myTextFilter;
 
   @NotNull private final JBLoadingPanel myChangesLoadingPane;
-  @NotNull private final VcsLogGraphTable myGraphTable;
-  @NotNull private final DetailsPanel myDetailsPanel;
-  @NotNull private final Splitter myDetailsSplitter;
-  @NotNull private final JComponent myToolbar;
   @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
-  @NotNull private final Splitter myPreviewDiffSplitter;
-  @NotNull private final SearchTextField myTextFilter;
-  @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final MyCommitSelectionListenerForDiff mySelectionListenerForDiff;
-  @NotNull private final VcsLogChangeProcessor myPreviewDiff;
 
-  public MainFrame(@NotNull VcsLogData logData,
-                   @NotNull VcsLogUiImpl logUi,
-                   @NotNull MainVcsLogUiProperties uiProperties,
-                   @NotNull VcsLog log,
-                   @NotNull VisiblePack initialDataPack,
-                   @Nullable VcsLogFilterCollection filters) {
-    // collect info
+  @NotNull private final VcsLogChangeProcessor myPreviewDiff;
+  @NotNull private final Splitter myPreviewDiffSplitter;
+
+  @NotNull private final DetailsPanel myDetailsPanel;
+  @NotNull private final Splitter myDetailsSplitter;
+
+  public MainFrame(@NotNull VcsLogData logData, @NotNull VcsLogUiImpl logUi, @NotNull MainVcsLogUiProperties uiProperties,
+                   @NotNull VisiblePack initialDataPack, @Nullable VcsLogFilterCollection filters) {
     myLogData = logData;
-    myLog = log;
     myUiProperties = uiProperties;
 
     myFilterUi = new VcsLogClassicFilterUi(logUi, logData, myUiProperties, initialDataPack, filters);
 
-    // initialize components
     myGraphTable = new MyVcsLogGraphTable(logUi, logData, initialDataPack);
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
     myGraphTable.setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
