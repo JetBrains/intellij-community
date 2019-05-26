@@ -265,7 +265,7 @@ class DeepComparator(private val project: Project,
             pickedCommits.add(storage.getCommitIndex(HashImpl.build(line), root))
           }
           catch (e: Exception) {
-            LOG.error("Couldn't parse line [$line]")
+            LOG.error("Couldn't parse line [$line]", e)
           }
         }
       }
