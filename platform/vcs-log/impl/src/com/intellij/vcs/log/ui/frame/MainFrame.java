@@ -74,7 +74,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
-  @NotNull private final MyCommitSelectionListenerForDiff mySelectionListenerForDiff;
 
   @NotNull private final VcsLogChangeProcessor myPreviewDiff;
   @NotNull private final Splitter myPreviewDiffSplitter;
@@ -116,8 +115,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
     myPreviewDiff.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
 
-    mySelectionListenerForDiff = new MyCommitSelectionListenerForDiff(changesLoadingPane);
-    myGraphTable.getSelectionModel().addListSelectionListener(mySelectionListenerForDiff);
+    MyCommitSelectionListenerForDiff listenerForDiff = new MyCommitSelectionListenerForDiff(changesLoadingPane);
+    myGraphTable.getSelectionModel().addListSelectionListener(listenerForDiff);
+    Disposer.register(this, () -> myGraphTable.getSelectionModel().removeListSelectionListener(listenerForDiff));
+
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, myLogData, this);
 
@@ -297,7 +298,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @Override
   public void dispose() {
-    myGraphTable.getSelectionModel().removeListSelectionListener(mySelectionListenerForDiff);
     myDetailsSplitter.dispose();
     myChangesBrowserSplitter.dispose();
   }
