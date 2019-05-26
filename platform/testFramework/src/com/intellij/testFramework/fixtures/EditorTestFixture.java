@@ -254,13 +254,10 @@ public class EditorTestFixture {
     final LookupImpl lookup = getLookup();
     assertNotNull("No lookup is shown", lookup);
 
-    reportLookupExpectations(expected);
-
     final JList list = lookup.getList();
     List<String> strings = getLookupElementStrings();
     assertNotNull(strings);
-    List<String> fixedStrings = ContainerUtil.map(strings, StringUtil::trimLeading);
-    final List<String> actual = ContainerUtil.getFirstItems(fixedStrings, expected.length);
+    final List<String> actual = ContainerUtil.getFirstItems(strings, expected.length);
     if (!actual.equals(Arrays.asList(expected))) {
       UsefulTestCase.assertOrderedEquals(DumpLookupElementWeights.getLookupElementWeights(lookup, false), expected);
     }
@@ -269,15 +266,6 @@ public class EditorTestFixture {
       System.out.println(DumpLookupElementWeights.getLookupElementWeights(lookup, false));
     }
     assertEquals(selected, list.getSelectedIndex());
-  }
-
-  private static void reportLookupExpectations(String[] expectedLookupTexts) {
-    // Prevent tests from depending on implementation detail hack to adjust sorting
-    for (String expectedLookupText : expectedLookupTexts) {
-      if (expectedLookupText.startsWith(" ")) {
-        fail("Expected lookup element string should not begin with space, this is an implementation detail: " + expectedLookupText);
-      }
-    }
   }
 
   public void finishLookup(char completionChar) {

@@ -835,11 +835,11 @@ class Foo {
   }
 
   void testPreferTypeToGeneratedMethod() {
-    checkPreferredItems 0, 'SomeClass', 'public SomeClass getZoo'
+    checkPreferredItems 0, 'SomeClass', ' public SomeClass getZoo'
   }
 
   void testPreferPrimitiveTypeToGeneratedMethod() {
-    checkPreferredItems 0, 'boolean', 'public boolean isZoo', 'public boolean equals'
+    checkPreferredItems 0, 'boolean', ' public boolean isZoo', ' public boolean equals'
   }
 
   void testPreferExceptionsInCatch() {
@@ -919,34 +919,34 @@ class Foo {
   private void typeOutAtOverrideOnEmptyLine() {
     type "@O"
     complete()
-    assertPreferredItems 0, 'Override', 'String firstOverride'
+    assertPreferredItems 0, 'Override', ' String firstOverride'
     type "verride"
-    assertPreferredItems 0, 'Override', 'String firstOverride'
+    assertPreferredItems 0, 'Override', ' String firstOverride'
     type " "
     complete()
-    assertPreferredItems 0, 'String firstOverride'
+    assertPreferredItems 0, ' String firstOverride'
   }
 
   private void checkPreferMissingOverrideOverGetterOverSetter(int dummyFieldCount) {
     complete()
     if (dummyFieldCount == 0) {
-      assertPreferredItems (0, 'String firstOverride',
-                            'protected Object clone', 'public boolean equals', 'public int hashCode', 'public String toString', 'protected void finalize',
+      assertPreferredItems (0, ' String firstOverride',
+                            ' protected Object clone', ' public boolean equals', ' public int hashCode', ' public String toString', ' protected void finalize',
                             'final')
     } else if (dummyFieldCount == 1) {
-      assertPreferredItems (0, 'String firstOverride',
-                            'public int getDummyField1',
-                            'public void setDummyField1',
-                            'protected Object clone', 'public boolean equals', 'public int hashCode', 'public String toString', 'protected void finalize',
+      assertPreferredItems (0, ' String firstOverride',
+                            ' public int getDummyField1',
+                            ' public void setDummyField1',
+                            ' protected Object clone', ' public boolean equals', ' public int hashCode', ' public String toString', ' protected void finalize',
                             'final')
     }
     else if (dummyFieldCount == 2) {
-      assertPreferredItems (0, 'String firstOverride',
-                            'public int getDummyField1',
-                            'public int getDummyField2',
-                            'public void setDummyField1',
-                            'public void setDummyField2',
-                            'protected Object clone', 'public boolean equals', 'public int hashCode', 'public String toString', 'protected void finalize',
+      assertPreferredItems (0, ' String firstOverride',
+                            ' public int getDummyField1',
+                            ' public int getDummyField2',
+                            ' public void setDummyField1',
+                            ' public void setDummyField2',
+                            ' protected Object clone', ' public boolean equals', ' public int hashCode', ' public String toString', ' protected void finalize',
                             'final')
     } else {
       throw new IllegalArgumentException("Unsupported dummyFieldCount: $dummyFieldCount")
