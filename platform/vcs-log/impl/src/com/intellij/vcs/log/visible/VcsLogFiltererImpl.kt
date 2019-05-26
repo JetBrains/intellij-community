@@ -134,29 +134,28 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                          matchingHeads: Set<Int>?,
                          matchingCommits: Set<Int>?,
                          fileHistoryData: FileHistoryData? = null): VisibleGraph<Int> {
-    return if (matchingHeads.matchesNothing() || matchingCommits.matchesNothing()) {
-      EmptyVisibleGraph.getInstance()
+    if (matchingHeads.matchesNothing() || matchingCommits.matchesNothing()) {
+      return EmptyVisibleGraph.getInstance()
     }
-    else {
-      val permanentGraph = dataPack.permanentGraph
-      if (permanentGraph !is PermanentGraphImpl || fileHistoryData == null) {
-        permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits)
-      }
-      else {
-        val preprocessor: BiConsumer<LinearGraphController, PermanentGraphInfo<Int>>
-        if (fileHistoryData.startPaths.size == 1 && fileHistoryData.startPaths.single().isDirectory) {
-          preprocessor = FileHistoryBuilder(null, fileHistoryData.startPaths.single(), fileHistoryData, EMPTY_HISTORY)
-        }
-        else {
-          preprocessor = BiConsumer { controller, permanentGraphInfo ->
-            removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData) { trivialMerges ->
-              LOG.debug("Removed ${trivialMerges.size} trivial merges")
-            }
-          }
-        }
-        permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits, preprocessor)
+
+    val permanentGraph = dataPack.permanentGraph
+    if (permanentGraph !is PermanentGraphImpl || fileHistoryData == null) {
+      return permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits)
+    }
+
+    if (fileHistoryData.startPaths.size == 1 && fileHistoryData.startPaths.single().isDirectory) {
+      val unmatchedRenames = matchingCommits?.let { fileHistoryData.getCommitsWithRenames().subtract(it) } ?: emptySet()
+      val preprocessor = FileHistoryBuilder(null, fileHistoryData.startPaths.single(), fileHistoryData,
+                                            EMPTY_HISTORY, unmatchedRenames)
+      return permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits?.union(unmatchedRenames), preprocessor)
+    }
+
+    val preprocessor = BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> { controller, permanentGraphInfo ->
+      removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData) { trivialMerges ->
+        LOG.debug("Removed ${trivialMerges.size} trivial merges")
       }
     }
+    return permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits, preprocessor)
   }
 
   private fun filterByDetails(dataPack: DataPack,
