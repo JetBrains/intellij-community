@@ -24,6 +24,8 @@ class SingleChangeListCommitWorkflowHandler(
     }
   }
 
+  override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
+
   private fun getChangeList() = ui.getChangeList()
 
   private fun getCommitState() = ChangeListCommitState(getChangeList(), getIncludedChanges(), getCommitMessage())

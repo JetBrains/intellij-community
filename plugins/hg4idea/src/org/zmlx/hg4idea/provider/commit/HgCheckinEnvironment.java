@@ -31,6 +31,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.vcs.commit.AmendCommitAware;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,16 +58,17 @@ import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode
 import static org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutorKt.isPushAfterCommit;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
-public class HgCheckinEnvironment implements CheckinEnvironment {
-
-  private final Project myProject;
+public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
+  @NotNull private final HgVcs myVcs;
+  @NotNull private final Project myProject;
   private boolean myShouldCommitSubrepos;
   private boolean myMqNewPatch;
   private boolean myCloseBranch;
   @Nullable private Collection<HgRepository> myRepos;
 
-  public HgCheckinEnvironment(Project project) {
-    myProject = project;
+  public HgCheckinEnvironment(@NotNull HgVcs vcs) {
+    myVcs = vcs;
+    myProject = vcs.getProject();
   }
 
   @NotNull
@@ -91,6 +93,11 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   @Override
   public String getCheckinOperationName() {
     return HgVcsMessages.message("hg4idea.commit");
+  }
+
+  @Override
+  public boolean isAmendCommitSupported() {
+    return myVcs.getVersion().isAmendSupported();
   }
 
   @NotNull

@@ -49,6 +49,7 @@ import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.vcs.commit.AmendCommitAware;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -97,7 +98,7 @@ import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
-public class GitCheckinEnvironment implements CheckinEnvironment {
+public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
   private static final Logger LOG = Logger.getInstance(GitCheckinEnvironment.class);
   @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-commit-msg-"; // the file name prefix for commit message file
   @NonNls private static final String GIT_COMMIT_MSG_FILE_EXT = ".txt"; // the file extension for commit message file
@@ -179,6 +180,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @Override
   public String getCheckinOperationName() {
     return GitBundle.getString("commit.action.name");
+  }
+
+  @Override
+  public boolean isAmendCommitSupported() {
+    return true;
   }
 
   @NotNull

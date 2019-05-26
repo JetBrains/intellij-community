@@ -20,6 +20,7 @@ class ChangesViewCommitWorkflowHandler(
   private val changeListManager = ChangeListManager.getInstance(project)
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
+  override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
 
   private fun getCommitState() = CommitState(getIncludedChanges(), getCommitMessage())
 

@@ -63,7 +63,7 @@ public abstract class AmendComponent {
   }
 
   private void updateCommitWorkflow() {
-    myCheckinPanel.getCommitWorkflowHandler().setAmendCommitMode(isAmendMode());
+    myCheckinPanel.getCommitWorkflowHandler().getAmendCommitHandler().setAmendCommitMode(isAmendMode());
   }
 
   private void updateCommitMessage() {

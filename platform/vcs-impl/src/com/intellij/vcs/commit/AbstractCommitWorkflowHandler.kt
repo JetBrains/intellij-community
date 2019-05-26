@@ -54,12 +54,6 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   protected val commitHandlers get() = workflow.commitHandlers
   protected val commitOptions get() = workflow.commitOptions
 
-  override var isAmendCommitMode: Boolean
-    get() = commitContext.isAmendCommitMode
-    set(value) {
-      commitContext.isAmendCommitMode = value
-    }
-
   protected fun createDataProvider() = DataProvider { dataId ->
     when {
       COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this

@@ -2,15 +2,24 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.vcs.commit.CommitWorkflowHandler
 
 object NullCommitWorkflowHandler : CommitWorkflowHandler {
-  @Suppress("UNUSED_PARAMETER")
-  override var isAmendCommitMode: Boolean
-    get() = false
-    set(value) = Unit
+  override val amendCommitHandler: AmendCommitHandler = NullAmendCommitHandler
 
   override fun getExecutor(executorId: String): CommitExecutor? = null
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean = false
   override fun execute(executor: CommitExecutor) = Unit
+}
+
+@Suppress("UNUSED_PARAMETER")
+object NullAmendCommitHandler : AmendCommitHandler {
+  override var isAmendCommitMode: Boolean
+    get() = false
+    set(value) = Unit
+
+  override var isAmendCommitModeTogglingEnabled: Boolean
+    get() = false
+    set(value) = Unit
+
+  override fun isAmendCommitModeSupported(): Boolean = false
 }

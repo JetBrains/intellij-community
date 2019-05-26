@@ -17,6 +17,7 @@ public class AllIcons {
 
   public final static class Actions {
     /** 16x16 */ public static final Icon AddMulticaret = load("/actions/AddMulticaret.svg");
+    /** 16x16 */ public static final Icon Amend = load("/actions/amend.svg");
     /** 16x16 */ public static final Icon Annotate = load("/actions/annotate.svg");
     /** 16x16 */ public static final Icon Back = load("/actions/back.svg");
     /** 16x16 */ public static final Icon Cancel = load("/actions/cancel.svg");

@@ -28,7 +28,7 @@ private fun CheckinProjectPanel.gitCheckinOptions(): GitCheckinEnvironment.GitCh
          ?: return null
 }
 
-fun CheckinProjectPanel.isAmend(): Boolean = commitWorkflowHandler.isAmendCommitMode
+fun CheckinProjectPanel.isAmend(): Boolean = commitWorkflowHandler.amendCommitHandler.isAmendCommitMode
 
 fun CheckinProjectPanel.author(): String? = this.gitCheckinOptions()?.author
 
