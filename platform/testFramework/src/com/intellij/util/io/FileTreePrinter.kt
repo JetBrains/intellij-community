@@ -4,7 +4,6 @@ package com.intellij.util.io
 import com.intellij.util.containers.nullize
 import java.nio.charset.MalformedInputException
 import java.nio.file.Path
-import java.util.*
 
 @JvmOverloads
 fun Path.getDirectoryTree(excluded: Set<String> = emptySet(), printContent: Boolean = true): String {
@@ -14,7 +13,7 @@ fun Path.getDirectoryTree(excluded: Set<String> = emptySet(), printContent: Bool
 }
 
 private fun getDirectoryTree(dir: Path, indent: Int, sb: StringBuilder, excluded: Set<String>, printContent: Boolean) {
-  val fileList = sortedFileList(dir)?.filter { !excluded.contains(it.fileName.toString()) }.nullize() ?: return
+  val fileList = sortedFileList(dir, excluded).nullize() ?: return
 
   getIndentString(indent, sb)
   if (printContent) {
@@ -33,10 +32,13 @@ private fun getDirectoryTree(dir: Path, indent: Int, sb: StringBuilder, excluded
   }
 }
 
-private fun sortedFileList(dir: Path): List<Path>? {
+private fun sortedFileList(dir: Path, excluded: Set<String>?): List<Path>? {
   return dir.directoryStreamIfExists { stream ->
-    val list = ArrayList<Path>()
-    stream.asSequence().mapTo(list) { it }.sorted()
+    var sequence = stream.asSequence()
+    if (!excluded.isNullOrEmpty()) {
+      sequence = sequence.filter { excluded.contains(it.fileName.toString()) }
+    }
+    val list = sequence.toMutableList()
     list.sort()
     list
   }
