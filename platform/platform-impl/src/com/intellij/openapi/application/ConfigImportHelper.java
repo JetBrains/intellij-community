@@ -19,6 +19,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.io.PathKt;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -177,7 +178,7 @@ public class ConfigImportHelper {
       return Collections.emptyList();
     }
 
-    HashMap<Path, FileTime> lastModified = new HashMap<>();
+    Map<Path, FileTime> lastModified = new THashMap<>();
     for (Path child : candidates) {
       Path candidate = isMacOs ? child : child.resolve(CONFIG);
       FileTime max = null;
