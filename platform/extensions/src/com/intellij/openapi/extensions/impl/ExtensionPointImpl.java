@@ -25,6 +25,7 @@ import org.picocontainer.PicoContainer;
 
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -245,6 +246,21 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
     }
     return array.length == 0 ? array : array.clone();
+  }
+
+  @Override
+  public void forEachExtension(Consumer<T> extensionConsumer) {
+    for (T t : getExtensionList()) {
+      try {
+        extensionConsumer.accept(t);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
   }
 
   /**
