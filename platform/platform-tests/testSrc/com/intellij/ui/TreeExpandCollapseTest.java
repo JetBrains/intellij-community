@@ -37,6 +37,7 @@ public class TreeExpandCollapseTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myTree.setRootVisible(true);
     myTreeModel.insertNodeInto(myChildA, myRoot, 0);
     myTreeModel.insertNodeInto(myChildB, myRoot, 1);
     myTreeModel.insertNodeInto(myChild2, myChildA, 0);
@@ -87,6 +88,7 @@ public class TreeExpandCollapseTest extends TestCase {
   public void testInfiniteExpand() {
     InfiniteTreeModel model = new InfiniteTreeModel();
     myTree = new JTree(model);
+    myTree.setRootVisible(true);
     TreePath rootPath = new TreePath(model.getRoot());
     myTree.setSelectionPath(rootPath);
     myTree.collapsePath(rootPath);
@@ -98,6 +100,7 @@ public class TreeExpandCollapseTest extends TestCase {
   public void testSubsequentExpand() {
     InfiniteTreeModel model = new InfiniteTreeModel();
     myTree = new JTree(model);
+    myTree.setRootVisible(true);
     TreeExpandCollapse.expandAll(myTree);
     TreePath path = new TreePath(model.getRoot());
     while (myTree.isExpanded(path)) path = path.pathByAddingChild(model.getChild(path.getLastPathComponent(), 0));
