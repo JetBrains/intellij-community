@@ -45,7 +45,7 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     if (element instanceof EditorConfigHeader) {
-      if (EditorConfigPreviewUtil.getAssociatedPreviewFile(element.getContainingFile().getVirtualFile()) == null) {
+      if (EditorConfigPreviewManager.getInstance(element.getProject()).getAssociatedPreviewFile(element.getContainingFile().getVirtualFile()) == null) {
         ActionGroup actionGroup = createActions((EditorConfigHeader)element);
         PsiElement child = element.getFirstChild();
         if (child != null && child.getNode().getElementType() == EditorConfigElementTypes.L_BRACKET) {
@@ -108,7 +108,7 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       VirtualFile previewFile =
-        choosePreviewFile(myHeader.getProject(), getRootDir(myHeader), EditorConfigPreviewUtil.extractExtensions(myHeader));
+        choosePreviewFile(myHeader.getProject(), getRootDir(myHeader), EditorConfigPreviewManager.extractExtensions(myHeader));
       if (previewFile != null) {
         VirtualFile editorConfigFile = myHeader.getContainingFile().getVirtualFile();
         openPreview(myHeader.getProject(), editorConfigFile, previewFile);
@@ -146,7 +146,7 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
 
   private static void openPreview(@NotNull Project project, @NotNull VirtualFile editorConfigFile, @NotNull VirtualFile previewFile) {
     FileEditorManager.getInstance(project).closeFile(editorConfigFile);
-    EditorConfigPreviewUtil.associateWithPreviewFile(editorConfigFile, previewFile);
+    EditorConfigPreviewManager.getInstance(project).associateWithPreviewFile(editorConfigFile, previewFile);
     FileEditorManager.getInstance(project).openFile(editorConfigFile, true);
   }
 

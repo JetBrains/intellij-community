@@ -75,7 +75,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
 
     @Override
     public FileEditor build() {
-      VirtualFile contextFile = EditorConfigPreviewUtil.getAssociatedPreviewFile(myFile);
+      VirtualFile contextFile = EditorConfigPreviewManager.getInstance(myProject).getAssociatedPreviewFile(myFile);
       if (contextFile != null) {
         Document document =EditorFactory.getInstance().createDocument(getPreviewText(contextFile));
         final EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document);

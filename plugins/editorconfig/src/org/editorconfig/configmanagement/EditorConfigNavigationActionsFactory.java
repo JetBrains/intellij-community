@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.editorconfig.Utils;
-import org.editorconfig.configmanagement.editor.EditorConfigPreviewUtil;
+import org.editorconfig.configmanagement.editor.EditorConfigPreviewManager;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.language.util.EditorConfigPresentationUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public class EditorConfigNavigationActionsFactory {
   }
 
   private static void openEditorConfig(@NotNull Project project, @NotNull VirtualFile sourceFile, @NotNull VirtualFile editorConfigFile) {
-    EditorConfigPreviewUtil.associateWithPreviewFile(editorConfigFile, sourceFile);
+    EditorConfigPreviewManager.getInstance(project).associateWithPreviewFile(editorConfigFile, sourceFile);
     OpenFileAction.openFile(editorConfigFile, project);
   }
 
