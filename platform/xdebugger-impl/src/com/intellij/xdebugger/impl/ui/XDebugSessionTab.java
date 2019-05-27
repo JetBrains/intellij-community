@@ -109,7 +109,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
-    myUi.getOptions().setAdditionalFocusActions(focus);
+    myUi.getOptions().setAdditionalFocusActions(focus).setMinimizeActionEnabled(true).setMoveToGridActionEnabled(true);
 
     myUi.addListener(new ContentManagerAdapter() {
       @Override
