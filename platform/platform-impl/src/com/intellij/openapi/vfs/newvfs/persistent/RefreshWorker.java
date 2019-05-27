@@ -89,7 +89,7 @@ public class RefreshWorker {
 
     checkAndScheduleChildRefresh(fs, persistence, root.getParent(), root, attributes);
 
-    if (root.isDirty() && root.isDirectory()) {
+    if (root.isDirty()) {
       if (myRefreshQueue.isEmpty()) {
         myRefreshQueue.addLast(root);
       }
@@ -356,9 +356,7 @@ public class RefreshWorker {
     }
 
     if (checkAndScheduleFileTypeChange(fs, parent, child, childAttributes)) {
-      if (!childAttributes.isDirectory()) {
-        child.markClean();
-      }
+      child.markClean();
       return;
     }
 
