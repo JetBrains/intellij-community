@@ -18,15 +18,15 @@ import java.util.Set;
 
 public class ExpressionCompatibilityConstraint extends InputOutputConstraintFormula {
   private final PsiExpression myExpression;
-  private PsiType myT;
 
   public ExpressionCompatibilityConstraint(@NotNull PsiExpression expression, @NotNull PsiType type) {
+    super(type);
     myExpression = expression;
-    myT = type;
   }
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+    PsiType myT = getCurrentType();
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
 
       PsiType exprType = myExpression.getType();
@@ -225,16 +225,6 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
   @Override
   public PsiExpression getExpression() {
     return myExpression;
-  }
-
-  @Override
-  public PsiType getT() {
-    return myT;
-  }
-
-  @Override
-  protected void setT(PsiType t) {
-    myT = t;
   }
 
   @Override
