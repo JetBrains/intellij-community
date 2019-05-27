@@ -22,7 +22,7 @@ class PluginStartupCostAction : AnAction() {
   }
 }
 
-data class PluginStartupCostEntry(val pluginName: String, val cost: Long)
+data class PluginStartupCostEntry(val pluginName: String, val cost: Long, val costDetails: String)
 
 class PluginStartupCostDialog(project: Project) : DialogWrapper(project) {
   init {
@@ -31,9 +31,11 @@ class PluginStartupCostDialog(project: Project) : DialogWrapper(project) {
   }
 
   override fun createCenterPanel(): JComponent {
-    val tableData = StartUpMeasurer.pluginCostMap.mapNotNull { (pluginId, cost) ->
+    val tableData = StartUpMeasurer.pluginCostMap.mapNotNull { (pluginId, costMap) ->
       val name = PluginManager.getPlugin(PluginId.getId(pluginId))?.name ?: return@mapNotNull null
-      PluginStartupCostEntry(name, cost)
+      val totalCost = costMap.map { it.value }.sum()
+      val costDetails = costMap.entries.sortedBy { it.key }.joinToString { it.key + ": " + (it.value / 1000000)  }
+      PluginStartupCostEntry(name, totalCost, costDetails)
     }.sortedByDescending { it.cost }
 
     val model = ListTableModel<PluginStartupCostEntry>(
@@ -41,8 +43,11 @@ class PluginStartupCostDialog(project: Project) : DialogWrapper(project) {
         object : ColumnInfo<PluginStartupCostEntry, String>("Plugin") {
           override fun valueOf(item: PluginStartupCostEntry) = item.pluginName
         },
-        object : ColumnInfo<PluginStartupCostEntry, Double>("Cost (ms)") {
-          override fun valueOf(item: PluginStartupCostEntry) = item.cost.toDouble() / 1000000
+        object : ColumnInfo<PluginStartupCostEntry, Int>("Cost (ms)") {
+          override fun valueOf(item: PluginStartupCostEntry) = (item.cost / 1000000).toInt()
+        },
+        object : ColumnInfo<PluginStartupCostEntry, String>("Cost Details") {
+          override fun valueOf(item: PluginStartupCostEntry) = item.costDetails
         }
       ), tableData)
 

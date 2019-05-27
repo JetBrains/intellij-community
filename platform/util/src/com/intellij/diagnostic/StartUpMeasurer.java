@@ -84,7 +84,7 @@ public final class StartUpMeasurer {
     return System.nanoTime();
   }
 
-  public static final Map<String, Long> pluginCostMap = new HashMap<>();
+  public static final Map<String, Map<String, Long>> pluginCostMap = new HashMap<>();
 
   @NotNull
   public static Activity start(@NotNull String name, @Nullable String description) {
@@ -125,15 +125,21 @@ public final class StartUpMeasurer {
     if (isEnabled) {
       items.add(activity);
     }
-    addPluginCost(activity.getPluginId(), activity.getEnd() - activity.getStart());
+    String phase = activity.getParallelActivity() != null ? activity.getParallelActivity().name() : "unknown";
+    addPluginCost(activity.getPluginId(), phase, activity.getEnd() - activity.getStart());
   }
 
-  public static void addPluginCost(@Nullable String pluginId, long time) {
+  public static void addPluginCost(@Nullable String pluginId, @NotNull String phase, long time) {
     if (pluginId == null || !measuringPluginStartupCosts) return;
     synchronized (pluginCostMap) {
-      Long oldCost = pluginCostMap.get(pluginId);
+      Map<String, Long> costPerPhaseMap = pluginCostMap.get(pluginId);
+      if (costPerPhaseMap == null) {
+        costPerPhaseMap = new HashMap<>();
+        pluginCostMap.put(pluginId, costPerPhaseMap);
+      }
+      Long oldCost = costPerPhaseMap.get(phase);
       if (oldCost == null) oldCost = 0L;
-      pluginCostMap.put(pluginId, oldCost + time);
+      costPerPhaseMap.put(phase, oldCost + time);
     }
   }
 }

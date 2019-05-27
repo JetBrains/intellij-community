@@ -148,7 +148,7 @@ public class PluginClassLoader extends UrlClassLoader {
       }
     }
 
-    StartUpMeasurer.addPluginCost(myPluginId != null ? myPluginId.getIdString() : null, System.nanoTime() - startTime);
+    StartUpMeasurer.addPluginCost(myPluginId != null ? myPluginId.getIdString() : null, "Classloading", System.nanoTime() - startTime);
     return c;
   }
 
