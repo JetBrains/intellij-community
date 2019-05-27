@@ -67,7 +67,7 @@ open class RestoreScaleRule : ExternalResource() {
   }
 }
 
-suspend fun changeLafIfNeed(lafName: String) {
+suspend fun changeLafIfNeeded(lafName: String) {
   System.setProperty("idea.ui.set.password.echo.char", "true")
 
   if (UIManager.getLookAndFeel().name == lafName) {
