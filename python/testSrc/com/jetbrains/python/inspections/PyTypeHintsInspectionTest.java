@@ -342,6 +342,26 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "assert issubclass(A, <error descr=\"'Generic' cannot be used with instance and class checks\">C</error>)");
   }
 
+  // PY-34945
+  public void testInstanceAndClassChecksOnFinal() {
+    doTestByText("from typing import TypeVar\n" +
+                 "from typing_extensions import Final\n" +
+                 "\n" +
+                 "T = TypeVar(\"T\")\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Final' cannot be used with instance and class checks\">Final</error>)\n" +
+                 "B = Final\n" +
+                 "assert issubclass(A, <error descr=\"'Final' cannot be used with instance and class checks\">B</error>)\n" +
+                 "\n" +
+                 "assert isinstance(A(), <error descr=\"'Final' cannot be used with instance and class checks\">Final[T]</error>)\n" +
+                 "assert issubclass(A, <error descr=\"'Final' cannot be used with instance and class checks\">B[T]</error>)\n" +
+                 "C = B[T]\n" +
+                 "assert issubclass(A, <error descr=\"'Final' cannot be used with instance and class checks\">C</error>)");
+  }
+
   // PY-28249
   public void testInstanceAndClassChecksOnGenericInheritor() {
     doTestByText("from typing import TypeVar, List\n" +
