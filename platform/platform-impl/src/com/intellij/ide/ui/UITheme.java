@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
@@ -25,9 +25,10 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.IconUIResource;
 import java.awt.*;
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,13 +73,17 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IOException {
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) {
     return loadFromJson(stream, themeId, provider, s -> s);
   }
 
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider,
-                                     @NotNull Function<? super String, String> iconsMapper) throws IOException {
-    UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
+  public static UITheme loadFromJson(@NotNull InputStream stream,
+                                     @NotNull String themeId,
+                                     @Nullable ClassLoader provider,
+                                     @NotNull Function<? super String, String> iconsMapper) {
+    UITheme theme = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), UITheme.class);
+    if (theme == null) return null;
+
     theme.id = themeId;
     if (provider != null) {
       theme.providerClassLoader = provider;
