@@ -377,14 +377,8 @@ def builtin_module_hash(mod_qname):
 
 
 def physical_module_hash(mod_path):
-    pure_py = os.path.splitext(mod_path)[1] == '.py'
-    if pure_py:
-        # Open .py files in text mode to avoid LF/CRLF conversion issues. It should happen only in tests.
-        with fopen(mod_path, 'r') as f:
-            return sha256_digest(f.read().encode(OUT_ENCODING))
-    else:
-        with fopen(mod_path, 'rb') as f:
-            return sha256_digest(f)
+    with fopen(mod_path, 'rb') as f:
+        return sha256_digest(f)
 
 
 def version_to_tuple(version):
