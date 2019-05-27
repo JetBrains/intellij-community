@@ -28,14 +28,14 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 
-class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
+class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private static final Logger LOG = Logger.getInstance(IdeScriptEngineManager.class);
 
   private final Future<ScriptEngineManager> myManagerFuture = PooledThreadExecutor.INSTANCE.submit(() -> {
     long start = System.currentTimeMillis();
     try {
-      return ClassLoaderUtil.runWithClassLoader(AllPluginsLoader.INSTANCE,
-                                                (Computable<ScriptEngineManager>)() -> new ScriptEngineManager());
+      return ClassLoaderUtil.runWithClassLoader(AllPluginsLoader.INSTANCE, (Computable<ScriptEngineManager>)() ->
+        new ScriptEngineManager());
     }
     finally {
       long end = System.currentTimeMillis();
@@ -66,16 +66,16 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   @Override
   public IdeScriptEngine getEngineForLanguage(@NotNull final String language, @Nullable ClassLoader loader) {
     ClassLoader l = ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE);
-    return ClassLoaderUtil.runWithClassLoader(l,
-                                              (Computable<IdeScriptEngine>)() -> createIdeScriptEngine(getScriptEngineManager().getEngineByName(language)));
+    return ClassLoaderUtil.runWithClassLoader(l, (Computable<IdeScriptEngine>)() ->
+      createIdeScriptEngine(getScriptEngineManager().getEngineByName(language)));
   }
 
   @Nullable
   @Override
   public IdeScriptEngine getEngineForFileExtension(@NotNull final String extension, @Nullable ClassLoader loader) {
     ClassLoader l = ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE);
-    return ClassLoaderUtil.runWithClassLoader(l,
-                                              (Computable<IdeScriptEngine>)() -> createIdeScriptEngine(getScriptEngineManager().getEngineByExtension(extension)));
+    return ClassLoaderUtil.runWithClassLoader(l, (Computable<IdeScriptEngine>)() ->
+      createIdeScriptEngine(getScriptEngineManager().getEngineByExtension(extension)));
   }
 
   @Override
@@ -97,7 +97,7 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
   @Nullable
   private static IdeScriptEngine createIdeScriptEngine(@Nullable ScriptEngine engine) {
-    return engine == null ? null : redirectOutputToLog(new Jsr223IdeScriptEngine(engine));
+    return engine == null ? null : redirectOutputToLog(new EngineImpl(engine));
   }
 
   private static IdeScriptEngine redirectOutputToLog(IdeScriptEngine engine) {
@@ -118,11 +118,11 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     return engine;
   }
 
-  static class Jsr223IdeScriptEngine implements IdeScriptEngine {
+  static class EngineImpl implements IdeScriptEngine {
     private final ScriptEngine myEngine;
     private final ClassLoader myLoader;
 
-    Jsr223IdeScriptEngine(ScriptEngine engine) {
+    EngineImpl(ScriptEngine engine) {
       myEngine = engine;
       myLoader = Thread.currentThread().getContextClassLoader();
     }
