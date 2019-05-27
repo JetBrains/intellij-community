@@ -276,7 +276,7 @@ public class PluginGroups {
                         "Tools Integration:Integration with JetBrains TeamCity - innovative solution for continuous integration and build management:Jetbrains TeamCity Plugin");
   }
 
-  private void initIfNeed() {
+  private void initIfNeeded() {
     if (myInitialized) return;
     myInitialized = true;
     for (Entry<String, Pair<Icon, List<String>>> entry : myTree.entrySet()) {
@@ -307,22 +307,22 @@ public class PluginGroups {
   }
 
   Map<String, Pair<Icon, List<String>>> getTree() {
-    initIfNeed();
+    initIfNeeded();
     return myTree;
   }
 
   Map<String, String> getFeaturedPlugins() {
-    initIfNeed();
+    initIfNeeded();
     return myFeaturedPlugins;
   }
 
   public String getDescription(String group) {
-    initIfNeed();
+    initIfNeeded();
     return myDescriptions.get(group);
   }
 
   public List<IdSet> getSets(String group) {
-    initIfNeed();
+    initIfNeeded();
     return myGroups.get(group);
   }
 
@@ -359,12 +359,12 @@ public class PluginGroups {
   }
 
   boolean isPluginEnabled(String pluginId) {
-    initIfNeed();
+    initIfNeeded();
     return !myDisabledPluginIds.contains(pluginId);
   }
 
   IdSet getSet(String pluginId) {
-    initIfNeed();
+    initIfNeeded();
     for (List<IdSet> sets : myGroups.values()) {
       for (IdSet set : sets) {
         for (String id : set.getIds()) {
@@ -386,7 +386,7 @@ public class PluginGroups {
   }
 
   void setPluginEnabledWithDependencies(final String pluginId, boolean enabled) {
-    initIfNeed();
+    initIfNeeded();
     Set<String> ids = new HashSet<>();
     collectInvolvedIds(pluginId, enabled, ids);
     Set<IdSet> sets = new HashSet<>();
