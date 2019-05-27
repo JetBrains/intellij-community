@@ -75,16 +75,19 @@ fun HttpResponse.send(channel: Channel, request: HttpRequest?, extraHeaders: Htt
   extraHeaders?.let {
     headers().add(it)
   }
-  send(channel, request != null && !addKeepAliveIfNeed(request))
+  send(channel, request != null && !addKeepAliveIfNeeded(request))
 }
 
-fun HttpResponse.addKeepAliveIfNeed(request: HttpRequest): Boolean {
+fun HttpResponse.addKeepAliveIfNeeded(request: HttpRequest): Boolean {
   if (HttpUtil.isKeepAlive(request)) {
     HttpUtil.setKeepAlive(this, true)
     return true
   }
   return false
 }
+
+@Deprecated("The method name is grammatically incorrect", replaceWith = ReplaceWith("this.addKeepAliveIfNeeded(request)"))
+fun HttpResponse.addKeepAliveIfNeed(request: HttpRequest): Boolean = addKeepAliveIfNeeded(request)
 
 fun HttpResponse.addCommonHeaders() {
   addServer()
