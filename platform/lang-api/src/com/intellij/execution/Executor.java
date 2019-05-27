@@ -101,12 +101,12 @@ public abstract class Executor {
   }
 
   /**
-   * @return text of the action specialized for given configuration name 
+   * @return text of the action specialized for given configuration name
    * in {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format.
    */
   @NotNull
   public String getStartActionText(@NotNull String configurationName) {
-    String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'";
+    String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeeded(configurationName) + "'";
     return TextWithMnemonic.parse(getStartActionText()).append(configName).toString();
   }
 
@@ -120,7 +120,13 @@ public abstract class Executor {
   /**
    * Too long names don't fit into UI controls and have to be trimmed
    */
-  public static String shortenNameIfNeed(@NotNull String name) {
+  public static String shortenNameIfNeeded(@NotNull String name) {
     return StringUtil.trimMiddle(name, Registry.intValue("run.configuration.max.name.length", 80));
+  }
+
+  /** @deprecated use {@link #shortenNameIfNeeded(String)} instead */
+  @Deprecated
+  public static String shortenNameIfNeed(@NotNull String name) {
+    return shortenNameIfNeeded(name);
   }
 }
