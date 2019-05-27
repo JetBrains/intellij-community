@@ -47,7 +47,7 @@ private fun listGitTree(
   if (!isUnderTeamCity()) gitPull(repo)
   return execute(repo, GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .trim().lines().stream()
-    .filter { it.isNotBlank() }.map { line ->
+    .filter(String::isNotBlank).map { line ->
       // format: <mode> SP <type> SP <object> TAB <file>
       line.splitWithTab()
         .also { if (it.size != 2) error(line) }
@@ -192,11 +192,8 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
   if (!latestChangeCommits.containsKey(file)) {
     synchronized(file) {
       if (!latestChangeCommits.containsKey(file)) {
-        val commitInfo = commitInfo(repo, "--", path)
+        val commitInfo = monoRepoMergeAwareCommitInfo(repo, path)
         if (commitInfo != null) {
-          if (commitInfo.parents.size == 6 && commitInfo.subject.contains("Merge all repositories")) {
-            return null
-          }
           synchronized(latestChangeCommitsGuard) {
             latestChangeCommits += file to commitInfo
           }
@@ -206,6 +203,26 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
     }
   }
   return latestChangeCommits.getValue(file)
+}
+
+private fun monoRepoMergeAwareCommitInfo(repo: File, path: String) =
+  commitInfo(repo, "--", path)?.let { commitInfo ->
+    if (commitInfo.parents.size == 6 && commitInfo.subject.contains("Merge all repositories")) {
+      val strippedPath = path.stripMergedRepoPrefix()
+      commitInfo.parents.asSequence().mapNotNull {
+        commitInfo(repo, it, "--", strippedPath)
+      }.firstOrNull()
+    }
+    else commitInfo
+  }
+
+private fun String.stripMergedRepoPrefix(): String = when {
+  startsWith("community/android/tools-base/") -> removePrefix("community/android/tools-base/")
+  startsWith("community/android/") -> removePrefix("community/android/")
+  startsWith("community/") -> removePrefix("community/")
+  startsWith("contrib/") -> removePrefix("contrib/")
+  startsWith("CIDR/") -> removePrefix("CIDR/")
+  else -> this
 }
 
 /**
@@ -231,7 +248,7 @@ private fun findMergeCommit(repo: File, commit: String, searchUntil: String = "H
     .lineSequence().filter { it.isNotBlank() }.toSet()
   // last common commit may be the latest merge
   return ancestryPathList
-    .lastOrNull { firstParentList.contains(it) }
+    .lastOrNull(firstParentList::contains)
     ?.let { commitInfo(repo, it) }
     ?.takeIf {
       // should be merge

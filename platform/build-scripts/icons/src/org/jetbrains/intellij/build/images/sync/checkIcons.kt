@@ -109,7 +109,7 @@ private fun searchForChangedIconsByDesigners(context: Context) {
     .map { context.iconsRepo.resolve(it).toRelativeString(context.iconsRepoDir) }
   ArrayList(context.iconsCommitHashesToSync).map {
     commitInfo(context.iconsRepo, it) ?: error("Commit $it is not found in ${context.iconsRepoName}")
-  }.sortedBy { it.timestamp }.forEach {
+  }.sortedBy(CommitInfo::timestamp).forEach {
     val commit = it.hash
     val before = context.iconsChanges().size
     changesFromCommit(context.iconsRepo, commit).forEach { (type, files) ->

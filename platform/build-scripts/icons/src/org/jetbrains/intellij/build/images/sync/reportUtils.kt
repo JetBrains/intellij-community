@@ -269,7 +269,7 @@ private fun findCommits(context: Context, root: File, changes: Changes) = change
     val commit = it.first.hash
     val change = it.second
     if (!context.byCommit.containsKey(commit)) context.byCommit[commit] = Changes(changes.includeRemoved)
-    val commitChange = context.byCommit[commit]!!
+    val commitChange = context.byCommit.getValue(commit)
     when {
       changes.added.contains(change) -> commitChange.added += change
       changes.modified.contains(change) -> commitChange.modified += change
