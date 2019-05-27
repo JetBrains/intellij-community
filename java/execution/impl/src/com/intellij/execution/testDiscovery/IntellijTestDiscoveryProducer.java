@@ -27,7 +27,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
-  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery.labs.intellij.net";
+  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "https://intellij-test-discovery.labs.intellij.net";
 
   @NotNull
   @Override
