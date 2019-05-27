@@ -123,6 +123,25 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     assertSdkRootsNotParsed(currentFile);
   }
 
+  // PY-34945
+  public void testFinalParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "def foo(a: <warning descr=\"'Final' could not be used in annotations for function parameters\">Final</warning>) -> None:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def bar(a, <warning descr=\"'Final' could not be used in annotations for function parameters\"># type: Final[str]</warning>\n" +
+                         "        ):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def baz(a):\n" +
+                         "    <warning descr=\"'Final' could not be used in annotations for function parameters\"># type: (Final[int]) -> None</warning>\n" +
+                         "    pass")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
