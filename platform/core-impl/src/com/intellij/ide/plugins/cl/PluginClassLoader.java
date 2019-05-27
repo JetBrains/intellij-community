@@ -11,6 +11,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -148,7 +149,8 @@ public class PluginClassLoader extends UrlClassLoader {
       }
     }
 
-    StartUpMeasurer.addPluginCost(myPluginId != null ? myPluginId.getIdString() : null, "Classloading", System.nanoTime() - startTime);
+    String phase = SwingUtilities.isEventDispatchThread() ? "Classloading (EDT)" : "Classloading (background)";
+    StartUpMeasurer.addPluginCost(myPluginId != null ? myPluginId.getIdString() : null, phase, System.nanoTime() - startTime);
     return c;
   }
 
@@ -313,6 +315,10 @@ public class PluginClassLoader extends UrlClassLoader {
 
   public PluginId getPluginId() {
     return myPluginId;
+  }
+
+  public String getPluginIdString() {
+    return myPluginId != null ? myPluginId.getIdString() : "<unknown>";
   }
 
   @Override

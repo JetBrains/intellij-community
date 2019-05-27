@@ -2,6 +2,8 @@
 package com.intellij.openapi.application;
 
 import com.google.common.base.MoreObjects;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,6 +23,7 @@ import java.awt.event.InvocationEvent;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.util.ReflectionUtil.getField;
@@ -372,6 +375,13 @@ public class TransactionGuardImpl extends TransactionGuard {
         // joined sub-tasks are measured and logged in the LaterInvocator separately
         if (runnable.getClass().getName().equals("com.intellij.openapi.application.impl.LaterInvocator$FlushQueue")) return;
         processId = runnable;
+      }
+    }
+    if (processId instanceof Runnable) {
+      ClassLoader loader = processId.getClass().getClassLoader();
+      if (loader instanceof PluginClassLoader) {
+        String pluginId = ((PluginClassLoader) loader).getPluginIdString();
+        StartUpMeasurer.addPluginCost(pluginId, "invokeLater", TimeUnit.MILLISECONDS.toNanos(time));
       }
     }
     LOG.warn(time + "ms to process " + processId);

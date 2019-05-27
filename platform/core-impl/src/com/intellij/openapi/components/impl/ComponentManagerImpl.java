@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Level;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -32,6 +33,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
@@ -345,6 +347,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myPicoContainer = picoContainer;
 
     myMessageBus = MessageBusFactory.newMessageBus(name, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
+    if (myMessageBus instanceof MessageBusImpl) {
+      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((handler, duration) -> {
+        ClassLoader loader = handler.getClass().getClassLoader();
+        if (loader instanceof PluginClassLoader) {
+          StartUpMeasurer.addPluginCost(((PluginClassLoader) loader).getPluginIdString(), "MessageBus", duration);
+        }
+      });
+    }
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
   }
 

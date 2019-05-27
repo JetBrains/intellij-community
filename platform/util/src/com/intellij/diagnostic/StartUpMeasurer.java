@@ -129,7 +129,7 @@ public final class StartUpMeasurer {
     addPluginCost(activity.getPluginId(), phase, activity.getEnd() - activity.getStart());
   }
 
-  public static void addPluginCost(@Nullable String pluginId, @NotNull String phase, long time) {
+  public static void addPluginCost(@Nullable String pluginId, @NotNull String phase, long timeNanos) {
     if (pluginId == null || !measuringPluginStartupCosts) return;
     synchronized (pluginCostMap) {
       Map<String, Long> costPerPhaseMap = pluginCostMap.get(pluginId);
@@ -139,7 +139,7 @@ public final class StartUpMeasurer {
       }
       Long oldCost = costPerPhaseMap.get(phase);
       if (oldCost == null) oldCost = 0L;
-      costPerPhaseMap.put(phase, oldCost + time);
+      costPerPhaseMap.put(phase, oldCost + timeNanos);
     }
   }
 }
