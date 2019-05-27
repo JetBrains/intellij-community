@@ -173,16 +173,11 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       }
       return true;
     };
-    if (!processConcurrentlyIfTooMany(filesFirst, vFileProcessor)) return;
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(filesFirst),
+                     ProgressIndicatorProvider.getGlobalProgressIndicator(), vFileProcessor)) return;
     allFiles.removeAll(filesFirst);
-    processConcurrentlyIfTooMany(allFiles, vFileProcessor);
-  }
-
-  private static boolean processConcurrentlyIfTooMany(@NotNull Set<? extends VirtualFile> files, @NotNull Processor<? super VirtualFile> processor) {
-    if (files.size() < 100) {
-      return ContainerUtil.process(files, processor);
-    }
-    return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(files), ProgressIndicatorProvider.getGlobalProgressIndicator(), processor);
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(allFiles),
+                     ProgressIndicatorProvider.getGlobalProgressIndicator(), vFileProcessor);
   }
 
   @NotNull
