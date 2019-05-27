@@ -106,11 +106,9 @@ public class RefreshWorker {
     TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
 
     while (!myRefreshQueue.isEmpty()) {
-      NewVirtualFile file = myRefreshQueue.pullFirst();
-      if (!VfsEventGenerationHelper.checkDirty(file)) continue;
-
-      VirtualDirectoryImpl dir = (VirtualDirectoryImpl)file;
+      VirtualDirectoryImpl dir = (VirtualDirectoryImpl)myRefreshQueue.pullFirst();
       boolean fullSync = dir.allChildrenLoaded(), succeed;
+
       do {
         myHelper.beginTransaction();
         succeed = fullSync ? fullDirRefresh(fs, persistence, strategy, dir) : partialDirRefresh(fs, persistence, strategy, dir);
@@ -120,7 +118,7 @@ public class RefreshWorker {
       while (!succeed);
 
       if (myIsRecursive) {
-        file.markClean();
+        dir.markClean();
       }
     }
   }
