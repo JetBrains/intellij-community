@@ -71,6 +71,7 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     ourToolwindowWhitelist.put(DATABASE_VIEW, getPlatformPlugin());
     ourToolwindowWhitelist.put(PREVIEW, getPlatformPlugin());
     ourToolwindowWhitelist.put(RUN_DASHBOARD, getPlatformPlugin());
+    ourToolwindowWhitelist.put(SERVICES, getPlatformPlugin());
   }
 
   public ToolWindowCollector() {

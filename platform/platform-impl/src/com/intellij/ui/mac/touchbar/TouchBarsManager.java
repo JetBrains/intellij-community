@@ -84,7 +84,7 @@ public class TouchBarsManager {
               if (topContainer.getType() != BarType.DEBUGGER)
                 return false;
 
-              if (!ToolWindowId.DEBUG.equals(twid) && !ToolWindowId.RUN_DASHBOARD.equals(twid))
+              if (!ToolWindowId.DEBUG.equals(twid) && !ToolWindowId.RUN_DASHBOARD.equals(twid) && !ToolWindowId.SERVICES.equals(twid))
                 return false;
 
               // System.out.println("processTerminated, dbgSessionsCount=" + pd.getDbgSessions());
