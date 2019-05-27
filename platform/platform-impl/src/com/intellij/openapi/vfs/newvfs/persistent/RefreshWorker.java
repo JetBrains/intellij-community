@@ -42,7 +42,7 @@ import static com.intellij.util.containers.ContainerUtil.newTroveSet;
  */
 public class RefreshWorker {
   private final boolean myIsRecursive;
-  private final Queue<NewVirtualFile> myRefreshQueue = new Queue<>(100);
+  private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<>(100);
   private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
   private volatile boolean myCancelled;
   private final LocalFileSystemRefreshWorker myLocalFileSystemRefreshWorker;
@@ -52,7 +52,7 @@ public class RefreshWorker {
     myLocalFileSystemRefreshWorker = canUseNioRefresher && Registry.is("vfs.use.nio-based.local.refresh.worker") ?
                                      new LocalFileSystemRefreshWorker(refreshRoot, isRecursive) : null;
     myIsRecursive = isRecursive;
-    myRefreshQueue.addLast(refreshRoot);
+    myRefreshQueue.addLast(pair(refreshRoot, null));
   }
 
   @NotNull
@@ -72,31 +72,16 @@ public class RefreshWorker {
       return;
     }
 
-    NewVirtualFile root = myRefreshQueue.pullFirst();
+    NewVirtualFile root = myRefreshQueue.peekFirst().first;
     NewVirtualFileSystem fs = root.getFileSystem();
     if (root.isDirectory()) {
       fs = PersistentFS.replaceWithNativeFS(fs);
     }
-    PersistentFS persistence = PersistentFS.getInstance();
-
-    FileAttributes attributes = fs.getAttributes(root);
-    if (attributes == null) {
-      myHelper.scheduleDeletion(root);
-      root.markClean();
-      return;
+    try {
+      processQueue(fs, PersistentFS.getInstance());
     }
-
-    checkAndScheduleChildRefresh(fs, persistence, root.getParent(), root, attributes);
-    if (root.isDirty()) {
-      if (myRefreshQueue.isEmpty()) {
-        myRefreshQueue.addLast(root);
-      }
-      try {
-        processQueue(fs, persistence);
-      }
-      catch (RefreshCancelledException e) {
-        LOG.trace("refresh cancelled");
-      }
+    catch (RefreshCancelledException e) {
+      LOG.trace("refresh cancelled");
     }
   }
 
@@ -104,21 +89,52 @@ public class RefreshWorker {
     TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
 
     while (!myRefreshQueue.isEmpty()) {
-      NewVirtualFile file = myRefreshQueue.pullFirst();
+      Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
+      NewVirtualFile file = pair.first;
       if (!VfsEventGenerationHelper.checkDirty(file)) continue;
 
       checkCancelled(file);
 
-      VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file;
-      boolean fullSync = directory.allChildrenLoaded();
-      if (fullSync) {
-        fullDirRefresh(fs, persistence, strategy, directory);
-      }
-      else {
-        partialDirRefresh(fs, persistence, strategy, directory);
+      FileAttributes attributes = pair.second != null ? pair.second : fs.getAttributes(file);
+      if (attributes == null) {
+        myHelper.scheduleDeletion(file);
+        file.markClean();
+        continue;
       }
 
-      if (myIsRecursive) {
+      NewVirtualFile parent = file.getParent();
+      if (parent != null && checkAndScheduleFileTypeChange(fs, parent, file, attributes)) {
+        // ignore everything else
+        file.markClean();
+        continue;
+      }
+
+      if (file.isDirectory()) {
+        VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file;
+        boolean fullSync = directory.allChildrenLoaded();
+        if (fullSync) {
+          fullDirRefresh(fs, persistence, strategy, directory);
+        }
+        else {
+          partialDirRefresh(fs, strategy, directory);
+        }
+      }
+      else {
+        myHelper.checkContentChanged(file, persistence.getTimeStamp(file), attributes.lastModified,
+                                     persistence.getLastRecordedLength(file), attributes.length);
+      }
+
+      myHelper.checkWritableAttributeChange(file, persistence.isWritable(file), attributes.isWritable());
+
+      if (SystemInfo.isWindows) {
+        myHelper.checkHiddenAttributeChange(file, file.is(VFileProperty.HIDDEN), attributes.isHidden());
+      }
+
+      if (attributes.isSymLink()) {
+        myHelper.checkSymbolicLinkChange(file, file.getCanonicalPath(), fs.resolveSymLink(file));
+      }
+
+      if (myIsRecursive || !file.isDirectory()) {
         file.markClean();
       }
     }
@@ -185,7 +201,7 @@ public class RefreshWorker {
 
     // generating events unless a directory was changed in between
     myHelper.beginTransaction();
-    boolean transactionSucceeded = true;
+    boolean transactionSucceeded = false;
     try {
       checkCancelled(dir);
       if (isDirectoryChanged(persistence, dir, persistedNames, children)) {
@@ -204,11 +220,11 @@ public class RefreshWorker {
       }
 
       for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
-        NewVirtualFile child = (NewVirtualFile)pair.first;
-        checkCancelled(child);
+        checkCancelled(dir);
+        VirtualFile child = pair.first;
         FileAttributes childAttributes = pair.second;
         if (childAttributes != null) {
-          checkAndScheduleChildRefresh(fs, persistence, dir, child, childAttributes);
+          checkAndScheduleChildRefresh(fs, dir, (NewVirtualFile)child, childAttributes);
           checkAndScheduleFileNameChange(actualNames, child);
         }
         else {
@@ -216,7 +232,6 @@ public class RefreshWorker {
           myHelper.scheduleDeletion(child);
         }
       }
-
       transactionSucceeded = !isDirectoryChanged(persistence, dir, persistedNames, children);
     }
     finally {
@@ -241,7 +256,6 @@ public class RefreshWorker {
   }
 
   private void partialDirRefresh(@NotNull NewVirtualFileSystem fs,
-                                 @NotNull PersistentFS persistence,
                                  @NotNull TObjectHashingStrategy<String> strategy,
                                  @NotNull VirtualDirectoryImpl dir) {
     while (true) {
@@ -289,7 +303,7 @@ public class RefreshWorker {
           VirtualFile child = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            checkAndScheduleChildRefresh(fs, persistence, dir, (NewVirtualFile)child, childAttributes);
+            checkAndScheduleChildRefresh(fs, dir, (NewVirtualFile)child, childAttributes);
             checkAndScheduleFileNameChange(actualNames, child);
           }
           else {
@@ -333,7 +347,8 @@ public class RefreshWorker {
       if (LOG.isTraceEnabled()) LOG.trace("cancelled at: " + stopAt);
       forceMarkDirty(stopAt);
       while (!myRefreshQueue.isEmpty()) {
-        forceMarkDirty(myRefreshQueue.pullFirst());
+        NewVirtualFile next = myRefreshQueue.pullFirst().first;
+        forceMarkDirty(next);
       }
       throw new RefreshCancelledException();
     }
@@ -345,43 +360,19 @@ public class RefreshWorker {
   }
 
   private void checkAndScheduleChildRefresh(@NotNull NewVirtualFileSystem fs,
-                                            @NotNull PersistentFS persistence,
-                                            @Nullable NewVirtualFile parent,
+                                            @NotNull NewVirtualFile parent,
                                             @NotNull NewVirtualFile child,
                                             @NotNull FileAttributes childAttributes) {
-    if (!VfsEventGenerationHelper.checkDirty(child)) {
-      return;
-    }
-
-    if (checkAndScheduleFileTypeChange(fs, parent, child, childAttributes)) {
-      child.markClean();
-      return;
-    }
-
-    myHelper.checkWritableAttributeChange(child, persistence.isWritable(child), childAttributes.isWritable());
-
-    if (SystemInfo.isWindows) {
-      myHelper.checkHiddenAttributeChange(child, child.is(VFileProperty.HIDDEN), childAttributes.isHidden());
-    }
-
-    if (childAttributes.isSymLink()) {
-      myHelper.checkSymbolicLinkChange(child, child.getCanonicalPath(), fs.resolveSymLink(child));
-    }
-
-    if (!childAttributes.isDirectory()) {
-      long oltTS = persistence.getTimeStamp(child), newTS = childAttributes.lastModified;
-      long oldLength = persistence.getLastRecordedLength(child), newLength = childAttributes.length;
-      myHelper.checkContentChanged(child, oltTS, newTS, oldLength, newLength);
-
-      child.markClean();
-    }
-    else if (myIsRecursive) {
-      myRefreshQueue.addLast(child);
+    if (!checkAndScheduleFileTypeChange(fs, parent, child, childAttributes)) {
+      boolean upToDateIsDirectory = childAttributes.isDirectory();
+      if (myIsRecursive || !upToDateIsDirectory) {
+        myRefreshQueue.addLast(pair(child, childAttributes));
+      }
     }
   }
 
   private boolean checkAndScheduleFileTypeChange(@NotNull NewVirtualFileSystem fs,
-                                                 @Nullable NewVirtualFile parent,
+                                                 @NotNull NewVirtualFile parent,
                                                  @NotNull NewVirtualFile child,
                                                  @NotNull FileAttributes childAttributes) {
     boolean currentIsDirectory = child.isDirectory();
@@ -393,13 +384,8 @@ public class RefreshWorker {
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
-      if (parent != null) {
-        String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
-        myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, () -> checkCancelled(parent));
-      }
-      else {
-        LOG.error("Trans-gender orphan: " + child + ' ' + childAttributes);
-      }
+      String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
+      myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, () -> checkCancelled(parent));
       return true;
     }
 
