@@ -228,14 +228,12 @@ public class RefreshWorker {
                                  @NotNull TObjectHashingStrategy<String> strategy,
                                  @NotNull VirtualDirectoryImpl dir) {
     while (true) {
-      // obtaining directory snapshot
-      Pair<List<VirtualFile>, List<String>> result =
-        ReadAction.compute(() -> {
-          checkCancelled(dir);
-          return pair(dir.getCachedChildren(), dir.getSuspiciousNames());
-        });
-      List<VirtualFile> cached = result.getFirst();
-      List<String> wanted = result.getSecond();
+      Pair<List<VirtualFile>, List<String>> snapshot = ReadAction.compute(() -> {
+        checkCancelled(dir);
+        return pair(dir.getCachedChildren(), dir.getSuspiciousNames());
+      });
+      List<VirtualFile> cached = snapshot.getFirst();
+      List<String> wanted = snapshot.getSecond();
 
       OpenTHashSet<String> actualNames =
         fs.isCaseSensitive() || cached.isEmpty() ? null : new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
@@ -265,7 +263,6 @@ public class RefreshWorker {
       boolean hasEvents = ReadAction.compute(() -> {
         checkCancelled(dir);
         if (!cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames())) {
-          if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           return false;
         }
 
@@ -289,6 +286,7 @@ public class RefreshWorker {
       });
 
       if (hasEvents) break;
+      if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
     }
   }
 
