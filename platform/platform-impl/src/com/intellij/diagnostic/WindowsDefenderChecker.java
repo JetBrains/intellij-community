@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,8 +35,13 @@ public class WindowsDefenderChecker {
     ERROR
   }
 
+  public static WindowsDefenderChecker getInstance() {
+    return ServiceManager.getService(WindowsDefenderChecker.class);
+  }
+
   public static class CheckResult {
     public final RealtimeScanningStatus status;
+    // Value in the map is true if the path is excluded, false otherwise
     public final Map<Path, Boolean> pathStatus;
 
     public CheckResult(RealtimeScanningStatus status, Map<Path, Boolean> pathStatus) {

@@ -480,6 +480,8 @@
     <postStartupActivity id="OpenFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
 
+    <postStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity"/>
+
     <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <preloadingActivity implementation="com.intellij.ide.ui.search.SearchableOptionPreloader"/>
 
