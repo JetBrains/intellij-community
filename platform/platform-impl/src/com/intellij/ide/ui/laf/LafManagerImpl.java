@@ -652,7 +652,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * NOTE: This code could be removed if {@link com.intellij.ui.components.JBOptionButton} is moved to [platform-impl]
    * and default UI is created there directly.
    */
-  private static void fixOptionButton(UIDefaults uiDefaults) {
+  static void fixOptionButton(UIDefaults uiDefaults) {
     if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
       uiDefaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
     }
