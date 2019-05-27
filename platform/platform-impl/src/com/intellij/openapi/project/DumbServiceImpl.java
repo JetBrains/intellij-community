@@ -2,6 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
@@ -349,6 +350,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         return false;
       }
     }
+
+    LoadingPhase.compareAndSet(LoadingPhase.PROJECT_OPENED, LoadingPhase.INDEXING_FINISHED);
+
     myDumbEnterTrace = null;
     myDumbStart = null;
     myModificationCount++;

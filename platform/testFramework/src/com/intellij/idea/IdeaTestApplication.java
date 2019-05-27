@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
@@ -43,6 +44,7 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
       PlatformTestCase.doAutodetectPlatformPrefix();
       new IdeaTestApplication();
       ApplicationManagerEx.getApplicationEx().load(configPath);
+      LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
     }
     return (IdeaTestApplication)ourInstance;
   }

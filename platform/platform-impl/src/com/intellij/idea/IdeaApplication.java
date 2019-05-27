@@ -4,6 +4,7 @@ package com.intellij.idea;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -123,6 +124,8 @@ public class IdeaApplication {
       Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
       System.exit(Main.NO_GRAPHICS);
     }
+
+    LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
 
     if (Main.isCommandLine()) {
       if (CommandLineApplication.ourInstance == null) {
@@ -393,6 +396,8 @@ public class IdeaApplication {
       if (Registry.is("ide.popup.enablePopupType")) {
         System.setProperty("jbre.popupwindow.settype", "true");
       }
+
+      LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
 
       if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
         WelcomeFrame.showNow();

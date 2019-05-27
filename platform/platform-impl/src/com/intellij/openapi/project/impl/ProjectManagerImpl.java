@@ -5,6 +5,7 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
@@ -409,6 +410,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           }
         }
       }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(
+        () -> LoadingPhase.compareAndSet(LoadingPhase.FRAME_SHOWN,
+                                         DumbService.isDumb(project)
+                                         ? LoadingPhase.PROJECT_OPENED
+                                         : LoadingPhase.INDEXING_FINISHED),
+        ModalityState.NON_MODAL);
     }));
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
