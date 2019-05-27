@@ -14,7 +14,7 @@ from pycharm_generator_utils.constants import (
     CACHE_DIR_NAME,
     ENV_STANDALONE_MODE_FLAG,
 )
-from pycharm_generator_utils.test import GeneratorTestCase
+from generator3_tests import GeneratorTestCase
 
 logging.basicConfig(level=logging.DEBUG)
 
