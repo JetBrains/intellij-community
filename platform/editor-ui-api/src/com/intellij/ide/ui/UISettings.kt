@@ -411,7 +411,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
      */
     @JvmStatic
     val shadowInstance: UISettings
-      get() = instanceOrNull ?: UISettings()
+      get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
     @JvmField
     val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)
