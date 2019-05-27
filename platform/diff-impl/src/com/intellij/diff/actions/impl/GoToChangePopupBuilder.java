@@ -35,16 +35,16 @@ public class GoToChangePopupBuilder {
 
   public interface Chain extends DiffRequestChain {
     @Nullable
-    AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected);
+    AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection);
   }
 
   @NotNull
-  public static AnAction create(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected) {
+  public static AnAction create(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected, int defaultSelection) {
     if (chain instanceof Chain) {
-      AnAction action = ((Chain)chain).createGoToChangeAction(onSelected);
+      AnAction action = ((Chain)chain).createGoToChangeAction(onSelected, defaultSelection);
       if (action != null) return action;
     }
-    return new SimpleGoToChangePopupAction(chain, onSelected);
+    return new SimpleGoToChangePopupAction(chain, onSelected, defaultSelection);
   }
 
   public static abstract class BaseGoToChangePopupAction<Chain extends DiffRequestChain> extends GoToChangePopupAction {
@@ -97,11 +97,13 @@ public class GoToChangePopupBuilder {
   }
 
   private static class SimpleGoToChangePopupAction extends BaseGoToChangePopupAction<DiffRequestChain> {
-    @NotNull protected final Consumer<Integer> myOnSelected;
+    @NotNull private final Consumer<Integer> myOnSelected;
+    private final int myDefaultSelection;
 
-    SimpleGoToChangePopupAction(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected) {
+    SimpleGoToChangePopupAction(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected, int defaultSelection) {
       super(chain);
       myOnSelected = onSelected;
+      myDefaultSelection = defaultSelection;
     }
 
     @NotNull
@@ -113,7 +115,7 @@ public class GoToChangePopupBuilder {
     private class MyListPopupStep extends BaseListPopupStep<DiffRequestProducer> {
       MyListPopupStep() {
         super("Go To Change", myChain.getRequests());
-        setDefaultOptionIndex(myChain.getIndex());
+        setDefaultOptionIndex(myDefaultSelection);
       }
 
       @NotNull
