@@ -12,8 +12,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
@@ -195,6 +194,25 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       })
       .handleWindowed(toolWindowId -> {})
       .bind(myProject);
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        assert event instanceof FocusEvent;
+        FocusEvent focusEvent = (FocusEvent)event;
+        if (focusEvent.getID() == FocusEvent.FOCUS_GAINED) {
+          Component component = focusEvent.getComponent();
+          if (component != null) {
+            boolean editorIsGoingToGetFocus = Arrays.stream(FileEditorManagerEx.getInstanceEx(project).getSplitters().getEditorsComposites()).
+              flatMap(c -> Arrays.stream(c.getEditors())).anyMatch(editor -> SwingUtilities.isDescendingFrom(component, editor.getComponent()));
+
+            if (editorIsGoingToGetFocus) {
+              myActiveStack.clear();
+            }
+          }
+        }
+      }
+    }, AWTEvent.FOCUS_EVENT_MASK);
   }
 
   private static void focusDefaultElementInSelectedEditor() {
@@ -799,9 +817,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
-    if (!info.isVisible()) {
-      return;
-    }
 
     List<FinalizableCommand> commandList = new ArrayList<>();
     final boolean wasActive = info.isActive();
@@ -2200,7 +2215,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   public boolean fallbackToEditor() {
-    return myActiveStack.getSize() == 1;
+    return myActiveStack.isEmpty();
   }
 
   private void focusToolWindowByDefault(@Nullable String idToIgnore) {

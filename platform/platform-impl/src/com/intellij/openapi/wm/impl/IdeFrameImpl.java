@@ -14,18 +14,13 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
@@ -208,7 +203,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
           }
         }
       } else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
-        String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
+        JComponent activeToolWindowComponent = toolWindowManagerEx.getToolWindow(toolWindowManagerEx.getActiveToolWindowId()).getComponent();
+        String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId(component -> component != activeToolWindowComponent);
         ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
         if (toolWindow != null) {
           return toolWindow.getComponent().getFocusTraversalPolicy().getDefaultComponent(toolWindow.getComponent());
