@@ -4,10 +4,8 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyDecoratable
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyKnownDecoratorUtil
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
@@ -48,8 +46,30 @@ class PyFinalInspection : PyInspection() {
       }
     }
 
+    override fun visitPyTargetExpression(node: PyTargetExpression) {
+      super.visitPyTargetExpression(node)
+
+      if (!node.hasAssignedValue()) {
+        val value = node.annotation?.value
+        if (value is PyReferenceExpression) {
+          value
+            .multiFollowAssignmentsChain(resolveContext) { !isFinal(it.qualifiedName) }
+            .asSequence()
+            .mapNotNull { it.element }
+            .any { it is PyTargetExpression && isFinal(it.qualifiedName) }
+            .let {
+              if (it) registerProblem(value, "If assigned value is omitted, there should be an explicit type argument to 'Final'")
+            }
+        }
+      }
+    }
+
     private fun isFinal(decoratable: PyDecoratable): Boolean {
       return PyKnownDecoratorUtil.getKnownDecorators(decoratable, myTypeEvalContext).any { it == TYPING_FINAL || it == TYPING_FINAL_EXT }
+    }
+
+    private fun isFinal(qualifiedName: String?): Boolean {
+      return qualifiedName == PyTypingTypeProvider.FINAL || qualifiedName == PyTypingTypeProvider.FINAL_EXT
     }
   }
 }

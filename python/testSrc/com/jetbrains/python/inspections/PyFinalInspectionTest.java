@@ -67,6 +67,23 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                  "    pass");
   }
 
+  // PY-34945
+  public void testOmittedAssignedValue() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "a: <warning descr=\"If assigned value is omitted, there should be an explicit type argument to 'Final'\">Final</warning>\n" +
+                         "b: Final[int]\n" +
+                         "\n" +
+                         "MY_FINAL = Final\n" +
+                         "MY_FINAL_INT = Final[int]\n" +
+                         "\n" +
+                         "с: <warning descr=\"If assigned value is omitted, there should be an explicit type argument to 'Final'\">MY_FINAL</warning>\n" +
+                         "в: MY_FINAL_INT")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
