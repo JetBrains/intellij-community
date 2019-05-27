@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -11,7 +11,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityActionWrapper;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.lang.jvm.JvmModifier;
-import com.intellij.lang.jvm.JvmModifiersOwner;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.lang.jvm.util.JvmUtil;
@@ -76,7 +75,7 @@ public class HighlightFixUtil {
    * make element protected/package-private/public suggestion
    * for private method in the interface it should add default modifier as well
    */
-  static void registerAccessQuickFixAction(@NotNull PsiMember refElement,
+  static void registerAccessQuickFixAction(@NotNull PsiJvmMember refElement,
                                            @NotNull PsiJavaCodeReferenceElement place,
                                            @Nullable HighlightInfo errorResult,
                                            final PsiElement fileResolveScope) {
@@ -195,13 +194,16 @@ public class HighlightFixUtil {
   }
 
   static void registerStaticProblemQuickFixAction(@NotNull PsiElement refElement, HighlightInfo errorResult, @NotNull PsiJavaCodeReferenceElement place) {
-    if (refElement instanceof PsiModifierListOwner) {
-      QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions((JvmModifiersOwner)refElement, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true)));
+    if (refElement instanceof PsiJvmModifiersOwner) {
+      QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions((PsiJvmModifiersOwner)refElement, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true)));
     }
     // make context non static
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, null);
     if (staticParent != null && isInstanceReference(place)) {
-      QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(staticParent, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
+      QuickFixAction.registerQuickFixAction(
+        errorResult,
+        QUICK_FIX_FACTORY.createModifierListFix(staticParent, PsiModifier.STATIC, false, false)
+      );
     }
     if (place instanceof PsiReferenceExpression && refElement instanceof PsiField) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createCreateFieldFromUsageFix((PsiReferenceExpression)place));

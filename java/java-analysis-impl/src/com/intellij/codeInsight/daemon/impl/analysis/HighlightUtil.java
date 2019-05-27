@@ -2876,8 +2876,8 @@ public class HighlightUtil extends HighlightUtilBase {
         if (moduleAccessProblem) {
           problem.second.forEach(fix -> QuickFixAction.registerQuickFixAction(info, fix));
         }
-        else if (result.isStaticsScopeCorrect() && resolved instanceof PsiMember) {
-          HighlightFixUtil.registerAccessQuickFixAction((PsiMember)resolved, ref, info, result.getCurrentFileResolveScope());
+        else if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
+          HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)resolved, ref, info, result.getCurrentFileResolveScope());
           if (ref instanceof PsiReferenceExpression) {
             QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameWrongRefFix((PsiReferenceExpression)ref));
           }

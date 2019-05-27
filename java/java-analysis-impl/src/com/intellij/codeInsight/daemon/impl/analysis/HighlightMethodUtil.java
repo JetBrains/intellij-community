@@ -782,7 +782,7 @@ public class HighlightMethodUtil {
       registerMethodCallIntentions(info, methodCall, list, resolveHelper);
     }
     if (!resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect() && methodCandidate2 != null) {
-      HighlightFixUtil.registerAccessQuickFixAction((PsiMember)element, referenceToMethod, info, resolveResult.getCurrentFileResolveScope());
+      HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)element, referenceToMethod, info, resolveResult.getCurrentFileResolveScope());
     }
     if (element != null && !resolveResult.isStaticsScopeCorrect()) {
       HighlightFixUtil.registerStaticProblemQuickFixAction(element, info, referenceToMethod);
@@ -1822,7 +1822,7 @@ public class HighlightMethodUtil {
   }
 
   private static HighlightInfo buildAccessProblem(@NotNull PsiJavaCodeReferenceElement ref,
-                                                  @NotNull PsiMember resolved,
+                                                  @NotNull PsiJvmMember resolved,
                                                   @NotNull JavaResolveResult result) {
     String description = HighlightUtil.accessProblemDescription(ref, resolved, result);
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description).navigationShift(+1).create();
