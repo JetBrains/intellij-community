@@ -43,23 +43,28 @@ public class EditorHeaderComponent extends JPanel implements UISettingsListener 
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
-    if(JBTabsFactory.getUseNewTabs()) {
-      setBorder(new CustomLineBorder(JBColor.border(), 0, 0, 1, 0));
-    } else {
-      boolean topBorderRequired = uiSettings.getEditorTabPlacement() != SwingConstants.TOP &&
-                                  (uiSettings.getShowNavigationBar() || uiSettings.getShowMainToolbar());
-      setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
+    boolean topBorderRequired = uiSettings.getShowNavigationBar() || uiSettings.getShowMainToolbar();
+
+    if (JBTabsFactory.getUseNewTabs()) {
+      topBorderRequired = uiSettings.getEditorTabPlacement() == 0 && topBorderRequired;
     }
+    else {
+      topBorderRequired = uiSettings.getEditorTabPlacement() != SwingConstants.TOP;
+    }
+
+    setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
   }
 
   @Override
   public Dimension getPreferredSize() {
-    if(JBTabsFactory.getUseNewTabs()) {
+    if (JBTabsFactory.getUseNewTabs()) {
       Dimension size = super.getPreferredSize();
       Insets insets = getInsets();
-      int tabsHeight = TabsHeightController.getToolWindowHeight() - insets.top - insets.bottom;
+      int offset = UISettings.getInstance().getEditorTabPlacement() == 0 ? 0 : insets.top + insets.bottom;
+      int tabsHeight = TabsHeightController.getToolWindowHeight() - offset;
       return tabsHeight > size.height ? new Dimension(size.width, tabsHeight) : size;
-    } else {
+    }
+    else {
       return super.getPreferredSize();
     }
   }
