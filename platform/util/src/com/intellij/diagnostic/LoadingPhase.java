@@ -3,10 +3,12 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ApiStatus.Internal
 public enum LoadingPhase {
   BOOTSTRAP,
   SPLASH,
