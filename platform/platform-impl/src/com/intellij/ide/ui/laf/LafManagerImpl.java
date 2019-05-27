@@ -516,6 +516,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     final FontUIResource uiFont = getFont(face, 13, Font.PLAIN);
     initFontDefaults(defaults, uiFont);
     for (Object key : new HashSet<>(defaults.keySet())) {
+      if (!(key instanceof String)) continue;
+      if (!StringUtil.endsWithIgnoreCase(((String)key), "font")) continue;
       Object value = defaults.get(key);
       if (value instanceof FontUIResource) {
         FontUIResource font = (FontUIResource)value;
