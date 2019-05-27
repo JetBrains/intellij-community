@@ -589,7 +589,7 @@
     </experimentalFeature>
 
     <experimentalFeature id="linux.native.menu" percentOfUsers="100" requireRestart="true">
-      <description>Intergation with global menu in Linux</description>
+      <description>Integration with global menu in Linux</description>
     </experimentalFeature>
 
     <experimentalFeature id="recent.and.edited.files.together" percentOfUsers="100">
