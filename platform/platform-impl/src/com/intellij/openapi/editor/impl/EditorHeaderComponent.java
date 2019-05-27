@@ -49,23 +49,9 @@ public class EditorHeaderComponent extends JPanel implements UISettingsListener 
       topBorderRequired = uiSettings.getEditorTabPlacement() == 0 && topBorderRequired;
     }
     else {
-      topBorderRequired = uiSettings.getEditorTabPlacement() != SwingConstants.TOP;
+      topBorderRequired = uiSettings.getEditorTabPlacement() != SwingConstants.TOP && topBorderRequired;
     }
 
     setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    if (JBTabsFactory.getUseNewTabs()) {
-      Dimension size = super.getPreferredSize();
-      Insets insets = getInsets();
-      int offset = UISettings.getInstance().getEditorTabPlacement() == 0 ? 0 : insets.top + insets.bottom;
-      int tabsHeight = TabsHeightController.getToolWindowHeight() - offset;
-      return tabsHeight > size.height ? new Dimension(size.width, tabsHeight) : size;
-    }
-    else {
-      return super.getPreferredSize();
-    }
   }
 }
