@@ -362,10 +362,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return object instanceof Node && child instanceof Node ? ((Node)object).getIndex((TreeNode)child) : -1;
   }
 
-  @Override
-  public void valueForPathChanged(TreePath path, Object value) {
-  }
-
   private boolean isValid(@NotNull Node node) {
     return isValid(structure, node.getElement());
   }

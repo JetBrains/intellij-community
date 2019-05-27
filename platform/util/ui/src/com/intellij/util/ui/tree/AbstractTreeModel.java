@@ -90,4 +90,14 @@ public abstract class AbstractTreeModel implements Disposable, TreeModel {
   public void removeTreeModelListener(@NotNull TreeModelListener listener) {
     if (!disposed) listeners.remove(listener);
   }
+
+  /**
+   * @param path  the path to the node that the user has altered
+   * @param value the new value from the tree cell editor
+   * @see javax.swing.tree.DefaultTreeModel#valueForPathChanged
+   */
+  @Override
+  public void valueForPathChanged(TreePath path, Object value) {
+    throw new UnsupportedOperationException("editable tree have to implement TreeModel#valueForPathChanged");
+  }
 }
