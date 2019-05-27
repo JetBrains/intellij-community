@@ -23,8 +23,8 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
     val searchParameters = createSearchParameters(parameters)
     val groupId = trimDummy(coordinates.groupId.stringValue)
     val artifactId = trimDummy(coordinates.artifactId.stringValue)
-    if (MavenAbstractPluginExtensionCompletionProvider.isPluginOrExtension(coordinates) && StringUtil.isEmpty(groupId)) {
-      return MavenAbstractPluginExtensionCompletionProvider.findPluginByArtifactId(service, artifactId, searchParameters, consumer);
+    if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && StringUtil.isEmpty(groupId)) {
+      return MavenAbstractPluginExtensionCompletionContributor.findPluginByArtifactId(service, artifactId, searchParameters, consumer)
     }
     if (groupId.isBlank()) {
       return service.fulltextSearch(artifactId, searchParameters, consumer)

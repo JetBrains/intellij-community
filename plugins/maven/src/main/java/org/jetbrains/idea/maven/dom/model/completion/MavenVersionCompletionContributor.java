@@ -52,8 +52,8 @@ public class MavenVersionCompletionContributor extends MavenCoordinateCompletion
     String groupId = trimDummy(coordinates.getGroupId().getStringValue());
     String artifactId = trimDummy(coordinates.getArtifactId().getStringValue());
 
-    if (MavenAbstractPluginExtensionCompletionProvider.isPluginOrExtension(coordinates) && StringUtil.isEmpty(groupId)) {
-      return MavenAbstractPluginExtensionCompletionProvider.findPluginByArtifactId(service, artifactId, searchParameters, consumer);
+    if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && StringUtil.isEmpty(groupId)) {
+      return MavenAbstractPluginExtensionCompletionContributor.findPluginByArtifactId(service, artifactId, searchParameters, consumer);
     }
 
     return service.suggestPrefix(groupId, artifactId, searchParameters, mrai -> {

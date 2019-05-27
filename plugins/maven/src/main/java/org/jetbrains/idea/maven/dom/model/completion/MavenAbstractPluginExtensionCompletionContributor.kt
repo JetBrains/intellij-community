@@ -15,7 +15,7 @@ import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters
 import java.util.function.Consumer
 
 
-abstract class MavenAbstractPluginExtensionCompletionProvider(tagName: String) : MavenCoordinateCompletionContributor(tagName) {
+abstract class MavenAbstractPluginExtensionCompletionContributor(tagName: String) : MavenCoordinateCompletionContributor(tagName) {
   override fun find(service: DependencySearchService,
                     coordinates: MavenDomShortArtifactCoordinates,
                     parameters: CompletionParameters,
@@ -42,7 +42,7 @@ abstract class MavenAbstractPluginExtensionCompletionProvider(tagName: String) :
       val codehausPromise = service.suggestPrefix("org.codehaus.mojo", text, searchParameters, consumer)
       val result = AsyncPromise<Void>()
       listOf(apachePromise, codehausPromise).collectResults().onSuccess { result.setResult(null) }.onError { result.setError(it) }
-      return result;
+      return result
     }
 
     @JvmStatic

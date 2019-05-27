@@ -2,4 +2,4 @@
 package org.jetbrains.idea.maven.dom.model.completion
 
 
-class MavenPluginCompletionProvider : MavenAbstractPluginExtensionCompletionProvider("plugin")
+class MavenPluginCompletionContributor : MavenAbstractPluginExtensionCompletionContributor("plugin")

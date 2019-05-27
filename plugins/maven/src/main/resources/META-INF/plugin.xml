@@ -155,13 +155,13 @@
                             order="first"/>
 
     <completion.contributor language="XML"
-                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenDependenciesCompletionProvider"/>
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenDependenciesCompletionContributor"/>
 
     <completion.contributor language="XML"
-                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenPluginCompletionProvider"/>
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenPluginCompletionContributor"/>
 
     <completion.contributor language="XML"
-                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenExtensionCompletionProvider"/>
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenExtensionCompletionContributor"/>
 
     <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
 

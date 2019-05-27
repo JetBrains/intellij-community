@@ -10,7 +10,7 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactIn
 import java.util.function.Consumer
 
 
-open class MavenDependenciesCompletionProvider : MavenCoordinateCompletionContributor("dependency") {
+open class MavenDependenciesCompletionContributor : MavenCoordinateCompletionContributor("dependency") {
 
   override fun find(service: DependencySearchService,
                     coordinates: MavenDomShortArtifactCoordinates,
