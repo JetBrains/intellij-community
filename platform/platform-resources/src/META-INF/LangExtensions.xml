@@ -655,6 +655,8 @@
                             id="filePath" order="before javaClassName"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor"
                             id="liveTemplates" order="first"/>
+    <completion.contributor id="reference" language="any" order="last"
+                            implementationClass="com.intellij.codeInsight.completion.ReferenceBasedCompletionContributor"/>
 
     <applicationService serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
 
