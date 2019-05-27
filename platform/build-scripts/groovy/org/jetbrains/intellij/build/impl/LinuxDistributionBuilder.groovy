@@ -57,18 +57,32 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           buildTarGz(null, osSpecificDistPath, "-no-jbr")
         }
       }
-      def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
+      String jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
+      String modularJreDirectoryPath // Used for Snap packages
       if (jreDirectoryPath != null) {
         buildTarGz(jreDirectoryPath, osSpecificDistPath, buildContext.bundledJreManager.jreSuffix())
-        buildSnapPackage(jreDirectoryPath, osSpecificDistPath)
+        if (buildContext.bundledJreManager.bundledJreModular) {
+          modularJreDirectoryPath = jreDirectoryPath
+        }
       }
       else {
         buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
       }
-      def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
+
+      String secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
       if (secondJreBuild != null) {
-        def secondJreDirectoryPath = buildContext.bundledJreManager.extractSecondJre("linux", secondJreBuild)
+        String secondJreDirectoryPath = buildContext.bundledJreManager.extractSecondJre("linux", secondJreBuild)
         buildTarGz(secondJreDirectoryPath, osSpecificDistPath, "")
+        if (buildContext.bundledJreManager.secondBundledJreModular) {
+          modularJreDirectoryPath = secondJreDirectoryPath
+        }
+      }
+
+      if (modularJreDirectoryPath != null) {
+        buildSnapPackage(modularJreDirectoryPath, osSpecificDistPath)
+      }
+      else {
+        buildContext.messages.info("Skipping building Snap packages because no modular JRE are available")
       }
     }
   }
