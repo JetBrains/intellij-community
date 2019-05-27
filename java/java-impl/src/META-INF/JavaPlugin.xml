@@ -313,7 +313,6 @@
     <applicationService serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringActionHandlerFactory"
                         serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringActionHandlerFactoryImpl"/>
-    <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.JavaElementRenderer"/>
     <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassArrayConverter"
                         serviceImplementation="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
     <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassValueConverter"
