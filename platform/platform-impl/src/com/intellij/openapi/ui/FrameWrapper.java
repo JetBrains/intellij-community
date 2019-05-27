@@ -347,6 +347,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   private static class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child {
+    private static final boolean USE_SINGLE_SYSTEM_MENUBAR = SystemInfo.isMacSystemMenu && "true".equalsIgnoreCase(System.getProperty("mac.system.menu.singleton"));
     private FrameWrapper myOwner;
     private final IdeFrame myParent;
 
@@ -360,7 +361,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       FrameState.setFrameStateListener(this);
       setGlassPane(new IdeGlassPaneImpl(getRootPane(), true));
 
-      final boolean setMenuOnFrame = SystemInfo.isMac;
+      final boolean setMenuOnFrame = SystemInfo.isMac && !USE_SINGLE_SYSTEM_MENUBAR;
 
       if (setMenuOnFrame) {
         setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));
