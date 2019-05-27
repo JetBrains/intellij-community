@@ -535,7 +535,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     private Activity createMeasureActivity(@NotNull PicoContainer picoContainer) {
       Level level = DefaultPicoContainer.getActivityLevel(picoContainer);
       if (level == Level.APPLICATION || (level == Level.PROJECT && activityNamePrefix() != null)) {
-        return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level);
+        return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level, myPluginId != null ? myPluginId.getIdString() : null);
       }
       return null;
     }

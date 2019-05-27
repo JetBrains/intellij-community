@@ -4,6 +4,8 @@ package com.intellij.diagnostic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
@@ -50,6 +52,12 @@ public final class StartUpMeasurer {
     public static final String LOAD_MODULES = "module loading";
   }
 
+  private static boolean measuringPluginStartupCosts = true;
+
+  public static void stopPluginCostMeasurement() {
+    measuringPluginStartupCosts = false;
+  }
+
   // ExtensionAreas not available for ExtensionPointImpl
   public enum Level {
     APPLICATION("app"), PROJECT("project"), MODULE("module");
@@ -76,19 +84,21 @@ public final class StartUpMeasurer {
     return System.nanoTime();
   }
 
+  public static final Map<String, Long> pluginCostMap = new HashMap<>();
+
   @NotNull
   public static Activity start(@NotNull String name, @Nullable String description) {
-    return new ActivityImpl(name, description, null);
+    return new ActivityImpl(name, description, null, null);
   }
 
   @NotNull
   public static Activity start(@NotNull String name) {
-    return new ActivityImpl(name, null, null);
+    return new ActivityImpl(name, null, null, null);
   }
 
   @NotNull
   public static Activity start(@NotNull String name, @NotNull Level level) {
-    return new ActivityImpl(name, null, level);
+    return new ActivityImpl(name, null, level, null);
   }
 
   public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<? super ActivityImpl> consumer) {
@@ -114,6 +124,16 @@ public final class StartUpMeasurer {
   static void add(@NotNull ActivityImpl activity) {
     if (isEnabled) {
       items.add(activity);
+    }
+    addPluginCost(activity.getPluginId(), activity.getEnd() - activity.getStart());
+  }
+
+  public static void addPluginCost(@Nullable String pluginId, long time) {
+    if (pluginId == null || !measuringPluginStartupCosts) return;
+    synchronized (pluginCostMap) {
+      Long oldCost = pluginCostMap.get(pluginId);
+      if (oldCost == null) oldCost = 0L;
+      pluginCostMap.put(pluginId, oldCost + time);
     }
   }
 }

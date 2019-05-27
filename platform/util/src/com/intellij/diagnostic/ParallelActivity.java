@@ -35,7 +35,12 @@ public enum ParallelActivity {
 
   @NotNull
   public Activity start(@NotNull String name, @NotNull StartUpMeasurer.Level level) {
-    return new ActivityImpl(name, /* description = */ null, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, this);
+    return new ActivityImpl(name, /* description = */ null, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, this, null);
+  }
+
+  @NotNull
+  public Activity start(@NotNull String name, @NotNull StartUpMeasurer.Level level, @Nullable String pluginId) {
+    return new ActivityImpl(name, /* description = */ null, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, this, pluginId);
   }
 
   public long record(long start, @NotNull Class<?> clazz) {
@@ -46,13 +51,20 @@ public enum ParallelActivity {
    * Default threshold is applied.
    */
   public long record(long start, @NotNull Class<?> clazz, @Nullable StartUpMeasurer.Level level) {
+    return record(start, clazz, level, null);
+  }
+
+  /**
+   * Default threshold is applied.
+   */
+  public long record(long start, @NotNull Class<?> clazz, @Nullable StartUpMeasurer.Level level, String pluginId) {
     long end = StartUpMeasurer.getCurrentTime();
     long duration = end - start;
     if (duration <= MEASURE_THRESHOLD) {
       return duration;
     }
 
-    ActivityImpl item = new ActivityImpl(clazz.getName(), /* description = */ null, start, /* parent = */ null, level, this);
+    ActivityImpl item = new ActivityImpl(clazz.getName(), /* description = */ null, start, /* parent = */ null, level, this, pluginId);
     item.setEnd(end);
     StartUpMeasurer.add(item);
     return duration;

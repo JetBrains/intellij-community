@@ -5,6 +5,7 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -408,6 +409,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
             StorageUtilKt.checkUnknownMacros(project, true);
           }
+          StartUpMeasurer.stopPluginCostMeasurement();
         }
       }, ModalityState.NON_MODAL);
       ApplicationManager.getApplication().invokeLater(

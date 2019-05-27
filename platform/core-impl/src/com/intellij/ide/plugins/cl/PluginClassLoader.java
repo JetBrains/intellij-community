@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
@@ -131,6 +132,7 @@ public class PluginClassLoader extends UrlClassLoader {
   // a different version of which is used in IDEA.
   @Nullable
   private Class tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited) {
+    long startTime = System.nanoTime();
     Class c = null;
     if (!mustBeLoadedByPlatform(name)) {
       c = loadClassInsideSelf(name);
@@ -144,10 +146,10 @@ public class PluginClassLoader extends UrlClassLoader {
       if (resolve) {
         resolveClass(c);
       }
-      return c;
     }
 
-    return null;
+    StartUpMeasurer.addPluginCost(myPluginId != null ? myPluginId.getIdString() : null, System.nanoTime() - startTime);
+    return c;
   }
 
   private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = ContainerUtil.set(

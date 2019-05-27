@@ -1280,5 +1280,9 @@
               text="Create And Schedule Heap Dump Analysis (Non-user invoked)" internal="true"/>
       <add-to-group group-id="Internal"/>
     </group>
+
+    <action class="com.intellij.diagnostic.PluginStartupCostAction" internal="true" text="Show Plugin Startup Cost">
+      <add-to-group group-id="Internal"/>
+    </action>
   </actions>
 </idea-plugin>
