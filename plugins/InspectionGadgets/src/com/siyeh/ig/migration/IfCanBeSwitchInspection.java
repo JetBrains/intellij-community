@@ -24,9 +24,11 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.CheckBox;
@@ -49,7 +51,9 @@ import java.awt.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class IfCanBeSwitchInspection extends BaseInspection {
 
@@ -186,7 +190,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       }
     }
     final PsiIfStatement statementToReplace = ifStatement;
-    final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(ifStatement, 0, false, true);
+    final PsiExpression switchExpression = SwitchUtils.getSwitchSelectorExpression(ifStatement.getCondition());
     if (switchExpression == null) {
       return;
     }
@@ -480,19 +484,36 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (parent instanceof PsiIfStatement) {
         return;
       }
-      final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(statement, minimumBranches, false, true);
+      final PsiExpression condition = statement.getCondition();
+      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(statement);
+      final PsiExpression switchExpression = SwitchUtils.getSwitchSelectorExpression(condition);
       if (switchExpression == null) {
         return;
       }
+      int branchCount = 0;
+      final Set<Object> switchCaseValues = new HashSet<>();
+      PsiIfStatement branch = statement;
+      while (true) {
+        branchCount++;
+        if (!SwitchUtils.canBeSwitchCase(branch.getCondition(), switchExpression, languageLevel, switchCaseValues)) {
+          return;
+        }
+        final PsiStatement elseBranch = branch.getElseBranch();
+        if (!(elseBranch instanceof PsiIfStatement)) {
+          break;
+        }
+        branch = (PsiIfStatement)elseBranch;
+      }
+
       final ProblemHighlightType highlightType;
-      if (shouldHighlight(switchExpression)) {
+      if (shouldHighlight(switchExpression) && branchCount >= minimumBranches) {
         highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       }
       else {
         if (!isOnTheFly()) return;
         highlightType = ProblemHighlightType.INFORMATION;
       }
-      registerError(statement.getFirstChild(), highlightType, switchExpression);
+      registerError(statement.getFirstChild(), highlightType);
     }
 
     private boolean shouldHighlight(PsiExpression switchExpression) {
