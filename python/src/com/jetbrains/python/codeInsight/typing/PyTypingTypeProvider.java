@@ -88,8 +88,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String UNION = "typing.Union";
   public static final String OPTIONAL = "typing.Optional";
   public static final String NO_RETURN = "typing.NoReturn";
-  private static final String FINAL = "typing.Final";
-  private static final String FINAL_EXT = "typing_extensions.Final";
+  public static final String FINAL = "typing.Final";
+  public static final String FINAL_EXT = "typing_extensions.Final";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
