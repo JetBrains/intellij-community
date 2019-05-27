@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -82,6 +83,44 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                          "с: <warning descr=\"If assigned value is omitted, there should be an explicit type argument to 'Final'\">MY_FINAL</warning>\n" +
                          "в: MY_FINAL_INT")
     );
+  }
+
+  // PY-34945
+  public void testOverloadedFinalMethod() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing import overload\n" +
+                         "from typing_extensions import final\n" +
+                         "\n" +
+                         "class A:\n" +
+                         "    @overload\n" +
+                         "    def foo(self, a: int) -> int: ...\n" +
+                         "\n" +
+                         "    @overload\n" +
+                         "    def foo(self, a: str) -> str: ...\n" +
+                         "\n" +
+                         "    @final\n" +
+                         "    def foo(self, a):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "class B:\n" +
+                         "    @final\n" +
+                         "    @overload\n" +
+                         "    def <warning descr=\"'@final' should be placed on the implementation\">foo</warning>(self, a: int) -> int: ...\n" +
+                         "\n" +
+                         "    @overload\n" +
+                         "    def foo(self, a: str) -> str: ...\n" +
+                         "\n" +
+                         "    def foo(self, a):\n" +
+                         "        pass\n")
+    );
+  }
+
+  // PY-34945
+  public void testOverloadedFinalMethodInStub() {
+    final PsiFile currentFile = myFixture.configureByFile(getTestFilePath() + "i");
+    configureInspection();
+    assertSdkRootsNotParsed(currentFile);
   }
 
   @NotNull
