@@ -15,29 +15,22 @@
  */
 package com.intellij.diff.editor
 
-import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 
-class DiffEditorProvider : AsyncFileEditorProvider, DumbAware {
+class DiffEditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean {
     return file is DiffVirtualFile
   }
 
-  override fun createEditorAsync(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
-    val builder = (file as DiffVirtualFile).createProcessorAsync(project)
-    return object : AsyncFileEditorProvider.Builder() {
-      override fun build() = DiffRequestProcessorEditor(file, builder.build())
-    }
-  }
-
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val builder = (file as DiffVirtualFile).createProcessorAsync(project)
-    return DiffRequestProcessorEditor(file, builder.build())
+    val processor = (file as DiffVirtualFile).createProcessor(project)
+    return DiffRequestProcessorEditor(file, processor)
   }
 
   override fun disposeEditor(editor: FileEditor) {

@@ -20,15 +20,5 @@ import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightVirtualFile
 
 abstract class DiffVirtualFile : LightVirtualFile("Diff", DiffFileType.INSTANCE, "") {
-  abstract fun createProcessorAsync(project: Project): Builder
-
-  interface Builder {
-    fun build(): DiffRequestProcessor
-
-    companion object {
-      fun create(action: () -> DiffRequestProcessor) = object : Builder {
-        override fun build(): DiffRequestProcessor = action()
-      }
-    }
-  }
+  abstract fun createProcessor(project: Project): DiffRequestProcessor
 }
