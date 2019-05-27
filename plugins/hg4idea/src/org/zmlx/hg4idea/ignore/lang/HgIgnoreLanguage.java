@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.ignore.lang;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType;
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguage;
 import com.intellij.openapi.vcs.changes.ignore.lang.Syntax;
@@ -11,7 +10,7 @@ public class HgIgnoreLanguage extends IgnoreLanguage {
   public static final HgIgnoreLanguage INSTANCE = new HgIgnoreLanguage();
 
   private HgIgnoreLanguage() {
-    super("HgIgnore", "hgignore", AllIcons.Vcs.Ignore_file);
+    super("HgIgnore", "hgignore");
   }
 
   @NotNull
