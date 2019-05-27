@@ -228,11 +228,12 @@ public class RefreshWorker {
     return transactionSucceeded;
   }
 
-  private static boolean isDirectoryChanged(@NotNull PersistentFS persistence,
+  private boolean isDirectoryChanged(@NotNull PersistentFS persistence,
                                             @NotNull VirtualDirectoryImpl dir,
                                             @NotNull String[] persistedNames,
                                             @NotNull VirtualFile[] children) {
     return ReadAction.compute(() -> {
+      checkCancelled(dir);
       if (!Arrays.equals(persistedNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
         if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
         // directory was changed in between, must retry
@@ -247,11 +248,12 @@ public class RefreshWorker {
                                  @NotNull TObjectHashingStrategy<String> strategy,
                                  @NotNull VirtualDirectoryImpl dir) {
     while (true) {
-      checkCancelled(dir);
-
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
-        ReadAction.compute(() -> pair(dir.getCachedChildren(), dir.getSuspiciousNames()));
+        ReadAction.compute(() -> {
+          checkCancelled(dir);
+          return pair(dir.getCachedChildren(), dir.getSuspiciousNames());
+        });
       List<VirtualFile> cached = result.getFirst();
       List<String> wanted = result.getSecond();
 
