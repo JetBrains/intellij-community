@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.*;
@@ -310,7 +309,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public synchronized void dispose() {
-    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();  // dispose must be under write action
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()

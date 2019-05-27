@@ -110,7 +110,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     if (Registry.is("suppress.focus.stealing") &&
         Registry.is("suppress.focus.stealing.auto.request.focus") &&
-        !ApplicationManagerEx.getApplicationEx().isActive()) {
+        !ApplicationManager.getApplication().isActive()) {
       setAutoRequestFocus(false);
     }
 

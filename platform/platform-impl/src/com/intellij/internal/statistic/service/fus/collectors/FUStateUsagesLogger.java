@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,7 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
   }
 
   public void logProjectStates(@NotNull Project project, @NotNull FUSWhitelist whitelist, boolean recordAll) {
-    if (!whitelist.isEmpty() || ApplicationManagerEx.getApplicationEx().isInternal()) {
+    if (!whitelist.isEmpty() || ApplicationManager.getApplication().isInternal()) {
       synchronized (LOCK) {
         for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
           if (recordAll || whitelist.accepts(usagesCollector.getGroupId(), usagesCollector.getVersion())) {

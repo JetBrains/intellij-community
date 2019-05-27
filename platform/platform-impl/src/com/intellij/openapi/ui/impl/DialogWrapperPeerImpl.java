@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
@@ -848,7 +847,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           setupSelectionOnPreferredComponent(toFocus);
 
           if (toFocus != null) {
-            if (isShowing() && (ApplicationManagerEx.getApplicationEx() == null || ApplicationManagerEx.getApplicationEx().isActive())) {
+            if (isShowing() && (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isActive())) {
               toFocus.requestFocus();
             } else {
               toFocus.requestFocusInWindow();

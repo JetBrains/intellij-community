@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -109,7 +108,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    if (ApplicationManagerEx.getApplicationEx().isActive() || !Registry.is("suppress.focus.stealing")) {
+    if (ApplicationManager.getApplication().isActive() || !Registry.is("suppress.focus.stealing")) {
       c.requestFocus();
     }
     else {
@@ -407,7 +406,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     }
 
     if (toFocus != null) {
-      if (ApplicationManagerEx.getApplicationEx().isActive() || !Registry.is("suppress.focus.stealing")) {
+      if (ApplicationManager.getApplication().isActive() || !Registry.is("suppress.focus.stealing")) {
         toFocus.requestFocus();
       }
       else {

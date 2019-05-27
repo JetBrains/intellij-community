@@ -17,9 +17,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -430,7 +428,7 @@ public class AppUIUtil {
       @Override
       public void doCancelAction() {
         super.doCancelAction();
-        ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+        Application application = ApplicationManager.getApplication();
         if (application == null) {
           System.exit(Main.PRIVACY_POLICY_REJECTION);
         }
