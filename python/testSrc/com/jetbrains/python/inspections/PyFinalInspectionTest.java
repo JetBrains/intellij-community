@@ -142,6 +142,26 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-34945
+  public void testOuterMostFinal() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "a1: Final[int] = 10\n" +
+                         "b1: List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>[int]] = []\n" +
+                         "\n" +
+                         "a2 = 10  # type: Final[int]\n" +
+                         "b2 = []  # type: List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>[int]]\n" +
+                         "\n" +
+                         "a3: Final = 10\n" +
+                         "b3: List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>] = []\n" +
+                         "\n" +
+                         "a4 = 10  # type: Final\n" +
+                         "b4 = []  # type: List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>]")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
