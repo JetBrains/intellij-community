@@ -381,10 +381,6 @@
       <add-to-group group-id="Internal.Dump"/>
     </action>
 
-    <action class="org.jetbrains.idea.devkit.actions.MigrateModuleNamesInSourcesAction" id="ReplaceModuleNamesInSources" internal="true">
-      <add-to-group group-id="FindMenuGroup" anchor="last"/>
-    </action>
-
     <!-- Theme Toolbar -->
     <group id="DevKit.ThemeEditorToolbar">
       <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" text="Preview Theme" icon="AllIcons.Actions.Execute"/>
