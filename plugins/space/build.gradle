@@ -5,7 +5,7 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.3.12"
+    id "org.jetbrains.intellij" version "0.4.8"
 }
 
 applyKotlinJVM()
@@ -32,7 +32,7 @@ dependencies {
 test { finalizedBy jacocoTestReport }
 
 intellij {
-    version "IC-173.4127.17"
+    version "IC-2019.1.2"
     pluginName "circlet-intellij-plugin"
     updateSinceUntilBuild false
     sandboxDirectory "${project.projectDir}/.sandbox"

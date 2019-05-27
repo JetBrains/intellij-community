@@ -9,14 +9,14 @@ import runtime.reactive.*
 object IdeaPasswordSafePersistence : Persistence {
 
     override suspend fun put(key: String, value: String) {
-        PasswordSafe.getInstance().setPassword(createCredentialAttributes(key), value)
+        PasswordSafe.instance.setPassword(createCredentialAttributes(key), value)
     }
 
     override suspend fun get(key: String): String? =
-        PasswordSafe.getInstance().getPassword(createCredentialAttributes(key))
+        PasswordSafe.instance.getPassword(createCredentialAttributes(key))
 
     override suspend fun delete(key: String) {
-        PasswordSafe.getInstance().setPassword(createCredentialAttributes(key), null)
+        PasswordSafe.instance.setPassword(createCredentialAttributes(key), null)
     }
 
     override suspend fun batchPut(keyValuePairs: List<Pair<String, String>>) {
