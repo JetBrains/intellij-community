@@ -314,11 +314,17 @@ public class AppUIUtil {
           log.warn(e);
         }
       }
-      showConsentsAgreementIfNeed(log);
+      showConsentsAgreementIfNeeded(log);
     }
   }
 
+  /** @deprecated use {@link #showUserAgreementAndConsentsIfNeeded(Logger)} instead */
+  @Deprecated
   public static boolean showConsentsAgreementIfNeed(@NotNull Logger log) {
+    return showConsentsAgreementIfNeeded(log);
+  }
+
+  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log) {
     final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     if (consentsToShow.second) {
