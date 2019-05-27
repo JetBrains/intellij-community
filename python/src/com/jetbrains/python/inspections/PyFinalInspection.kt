@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.pyi.PyiUtil
 
 class PyFinalInspection : PyInspection() {
 
@@ -28,6 +29,21 @@ class PyFinalInspection : PyInspection() {
           registerProblem(it, "'${cls.name}' is marked as '@final' and should not be subclassed")
         }
       }
+
+      if (PyiUtil.isInsideStub(node)) {
+        val visitedNames = mutableSetOf<String?>()
+
+        node.visitMethods(
+          { m ->
+            if (!visitedNames.add(m.name) && isFinal(m)) {
+              registerProblem(m.nameIdentifier, "'@final' should be placed on the first overload")
+            }
+            true
+          },
+          false,
+          myTypeEvalContext
+        )
+      }
     }
 
     override fun visitPyFunction(node: PyFunction) {
@@ -40,6 +56,10 @@ class PyFinalInspection : PyInspection() {
           ?.let {
             registerProblem(node.nameIdentifier, "'${(it as PyFunction).qualifiedName}' is marked as '@final' and should not be overridden")
           }
+
+        if (!PyiUtil.isInsideStub(node) && isFinal(node) && PyiUtil.isOverload(node, myTypeEvalContext)) {
+          registerProblem(node.nameIdentifier, "'@final' should be placed on the implementation")
+        }
       }
       else if (isFinal(node)) {
         registerProblem(node.nameIdentifier, "Non-method function could not be marked as '@final'")
