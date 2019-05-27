@@ -4,7 +4,9 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getFunctionTypeAnnotation
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT
@@ -64,23 +66,30 @@ class PyFinalInspection : PyInspection() {
       else if (isFinal(node)) {
         registerProblem(node.nameIdentifier, "Non-method function could not be marked as '@final'")
       }
+
+      getFunctionTypeAnnotation(node)?.let { comment ->
+        if (comment.parameterTypeList.parameterTypes.any { resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it) }) {
+          registerProblem(node.typeComment, "'Final' could not be used in annotations for function parameters")
+        }
+      }
     }
 
     override fun visitPyTargetExpression(node: PyTargetExpression) {
       super.visitPyTargetExpression(node)
 
       if (!node.hasAssignedValue()) {
-        val value = node.annotation?.value
-        if (value is PyReferenceExpression) {
-          value
-            .multiFollowAssignmentsChain(resolveContext) { !isFinal(it.qualifiedName) }
-            .asSequence()
-            .mapNotNull { it.element }
-            .any { it is PyTargetExpression && isFinal(it.qualifiedName) }
-            .let {
-              if (it) registerProblem(value, "If assigned value is omitted, there should be an explicit type argument to 'Final'")
-            }
+        node.annotation?.value.takeIf(this::resolvesToFinal).let {
+          registerProblem(it, "If assigned value is omitted, there should be an explicit type argument to 'Final'")
         }
+      }
+    }
+
+    override fun visitPyNamedParameter(node: PyNamedParameter) {
+      super.visitPyNamedParameter(node)
+
+      val typeHint = typeHintAsExpression(node)
+      if (resolvesToFinal(if (typeHint is PySubscriptionExpression) typeHint.operand else typeHint)) {
+        registerProblem(node.annotation?.value ?: node.typeComment, "'Final' could not be used in annotations for function parameters")
       }
     }
 
@@ -90,6 +99,26 @@ class PyFinalInspection : PyInspection() {
 
     private fun isFinal(qualifiedName: String?): Boolean {
       return qualifiedName == PyTypingTypeProvider.FINAL || qualifiedName == PyTypingTypeProvider.FINAL_EXT
+    }
+
+    private fun resolvesToFinal(expression: PyExpression?): Boolean {
+      return expression is PyReferenceExpression &&
+             expression
+               .multiFollowAssignmentsChain(resolveContext) { !isFinal(it.qualifiedName) }
+               .asSequence()
+               .mapNotNull { it.element }
+               .any { it is PyTargetExpression && isFinal(it.qualifiedName) }
+    }
+
+    private fun <T> typeHintAsExpression(node: T): PyExpression? where T : PyAnnotationOwner, T : PyTypeCommentOwner {
+      val annotation = node.annotation?.value
+      if (annotation != null) return annotation
+
+      val typeComment = node.typeCommentAnnotation
+      if (typeComment == null) return null
+
+      val file = FileContextUtil.getContextFile(node) ?: return null
+      return PyUtil.createExpressionFromFragment(typeComment, file)
     }
   }
 }
