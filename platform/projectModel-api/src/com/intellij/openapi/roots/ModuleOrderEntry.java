@@ -36,5 +36,6 @@ public interface ModuleOrderEntry extends ExportableOrderEntry {
    */
   boolean isProductionOnTestDependency();
 
+  @ApiStatus.Internal
   void setProductionOnTestDependency(boolean productionOnTestDependency);
 }
