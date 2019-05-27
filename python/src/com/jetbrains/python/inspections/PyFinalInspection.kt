@@ -43,6 +43,9 @@ class PyFinalInspection : PyInspection() {
             registerProblem(node.nameIdentifier, "'${(it as PyFunction).qualifiedName}' is marked as '@final' and should not be overridden")
           }
       }
+      else if (isFinal(node)) {
+        registerProblem(node.nameIdentifier, "Non-method function could not be marked as '@final'")
+      }
     }
 
     private fun isFinal(decoratable: PyDecoratable): Boolean {

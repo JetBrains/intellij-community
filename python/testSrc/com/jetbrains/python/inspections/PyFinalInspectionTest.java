@@ -59,6 +59,14 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-34945
+  public void testFinalNonMethodFunction() {
+    doTestByText("from typing_extensions import final\n" +
+                 "@final\n" +
+                 "def <warning descr=\"Non-method function could not be marked as '@final'\">foo</warning>():\n" +
+                 "    pass");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
