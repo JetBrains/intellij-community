@@ -13,15 +13,18 @@ object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>("c
 
 /**
  * Provider of inlay hints for single language. If you need to create hints for multiple languages, please use InlayHintsProviderFactory.
- * Both vertical and horizontal hints collection are supported.
+ * Both block and inline hints collection are supported.
+ * Block hints draws between lines of code text. Inline ones are placed on the code text line (like parameter hints)
  * @param T settings type of this provider, if no settings required, please, use [NoSettings]
+ * @see com.intellij.openapi.editor.InlayModel.addInlineElement
+ * @see com.intellij.openapi.editor.InlayModel.addBlockElement
  */
 interface InlayHintsProvider<T : Any> {
   /**
    * If this method is called, provider is enabled for this file
    * Warning! Your collector should not use any settings besides [settings]
    */
-  fun getCollectorFor(file: PsiFile, editor: Editor, settings: T, sink: InlayHintsSink): InlayHintsCollector<T>?
+  fun getCollectorFor(file: PsiFile, editor: Editor, settings: T, sink: InlayHintsSink): InlayHintsCollector?
 
   /**
    * Settings must be plain java object, fields of this settings will be copied via serialization.
@@ -86,7 +89,7 @@ class NoSettings {
 }
 
 /**
- * Similar to Key, but it also requires language to be unique
+ * Similar to [com.intellij.openapi.util.Key], but it also requires language to be unique
  */
 @Suppress("unused")
 data class SettingsKey<T>(val id: String) {

@@ -527,7 +527,6 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     boolean oldValue = settings.isShowParameterNameHints();
     try {
-      // TODO!
       settings.setShowParameterNameHints(false);
 
       // check hints appearance on completion

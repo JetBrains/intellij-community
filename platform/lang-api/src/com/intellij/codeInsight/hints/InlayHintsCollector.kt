@@ -8,16 +8,9 @@ import com.intellij.psi.PsiElement
 /**
  * Collects inlays in the given element (not recursively).
  */
-interface InlayHintsCollector<T : Any> {
+interface InlayHintsCollector {
   /**
-   * Collect hints into some collection stored in this collector
    * Implementors must handle dumb mode themselves.
-   * @param isEnabled provider is enabled
    */
-  fun collect(element: PsiElement, editor: Editor, settings: T, isEnabled: Boolean, sink: InlayHintsSink)
-
-  /**
-   * Settings key of corresponding [InlayHintsProvider]
-   */
-  val key: SettingsKey<T>
+  fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink)
 }
