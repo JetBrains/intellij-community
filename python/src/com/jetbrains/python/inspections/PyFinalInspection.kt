@@ -5,8 +5,10 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.resolve.FileContextUtil
+import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getFunctionTypeAnnotation
+import com.jetbrains.python.documentation.doctest.PyDocstringFile
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT
@@ -93,6 +95,23 @@ class PyFinalInspection : PyInspection() {
       }
     }
 
+    override fun visitPyReferenceExpression(node: PyReferenceExpression) {
+      super.visitPyReferenceExpression(node)
+
+      checkFinalIsOuterMost(node)
+    }
+
+    private fun checkFinalIsOuterMost(node: PyReferenceExpression) {
+      if (isTopLevelInAnnotationOrTypeComment(node)) return
+      (node.parent as? PySubscriptionExpression)?.let {
+        if (it.operand == node && isTopLevelInAnnotationOrTypeComment(it)) return
+      }
+
+      if (PyTypingTypeProvider.isInAnnotationOrTypeComment(node) && resolvesToFinal(node)) {
+        registerProblem(node, "'Final' could only be used as the outermost type")
+      }
+    }
+
     private fun isFinal(decoratable: PyDecoratable): Boolean {
       return PyKnownDecoratorUtil.getKnownDecorators(decoratable, myTypeEvalContext).any { it == TYPING_FINAL || it == TYPING_FINAL_EXT }
     }
@@ -119,6 +138,13 @@ class PyFinalInspection : PyInspection() {
 
       val file = FileContextUtil.getContextFile(node) ?: return null
       return PyUtil.createExpressionFromFragment(typeComment, file)
+    }
+
+    private fun isTopLevelInAnnotationOrTypeComment(node: PyExpression): Boolean {
+      if (node.parent is PyAnnotation) return true
+      if (node.parent is PyExpressionStatement && node.parent.parent is PyDocstringFile) return true
+      if (node.parent is PyParameterTypeList) return true
+      return false
     }
   }
 }
