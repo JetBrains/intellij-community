@@ -32,6 +32,7 @@ public abstract class ActionPlaces {
   public static final String EDITOR_TAB = "EditorTab";
   public static final String EDITOR_GUTTER = "ICON_NAVIGATION";
   public static final String EDITOR_GUTTER_POPUP = "ICON_NAVIGATION_SECONDARY_BUTTON";
+  public static final String RIGHT_EDITOR_GUTTER_POPUP = "RightEditorGutterPopup";
   public static final String COMMANDER_POPUP = "CommanderPopup";
   public static final String COMMANDER_TOOLBAR = "CommanderToolbar";
   public static final String CONTEXT_TOOLBAR = "ContextToolbar";
