@@ -151,7 +151,7 @@ public final class WinPythonSdkFlavor extends CPythonSdkFlavor {
       }
       rootVDir.refresh(true, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
-        if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(dir_prefix)) {
+        if (dir.isDirectory() && StringUtil.toLowerCase(dir.getName()).startsWith(dir_prefix)) {
           VirtualFile python_exe = dir.findChild(exe_name);
           if (python_exe != null) candidates.add(FileUtil.toSystemDependentName(python_exe.getPath()));
         }

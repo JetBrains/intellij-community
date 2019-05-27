@@ -90,7 +90,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
            : parent != null || object != state ? null : state.toString();
   }
 
-  private Object getUniqueID(TreePath path, Node node, ArrayDeque<String> deque) {
+  private Object getUniqueID(TreePath path, Node node, ArrayDeque<? super String> deque) {
     deque.addFirst(node.getName());
     Object object = path.getLastPathComponent();
     TreePath parent = path.getParentPath();

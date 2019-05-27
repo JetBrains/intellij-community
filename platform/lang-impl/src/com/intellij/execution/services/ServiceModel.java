@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -48,9 +49,32 @@ class ServiceModel implements Disposable, InvokerSupplier {
   private List<? extends ServiceViewItem> doGetRoots() {
     List<ServiceViewItem> result = new ArrayList<>();
     for (ServiceViewContributor<?> contributor : EP_NAME.getExtensions()) {
-      result.addAll(getContributorChildren(myProject, null, contributor));
+      ContributorNode root = new ContributorNode(myProject, contributor);
+      if (!root.getChildren().isEmpty()) {
+        result.add(root);
+      }
     }
     return result;
+  }
+
+  @Nullable
+  ServiceViewItem findItemById(List<String> ids, ServiceViewContributor contributor) {
+    if (ids.isEmpty()) return null;
+
+    List<? extends ServiceViewItem> roots = ContainerUtil.filter(getRoots(), item -> contributor.equals(item.getContributor()));
+    if (roots.isEmpty()) return null;
+
+    return findItemById(new LinkedList<>(ids), roots);
+  }
+
+  private static ServiceViewItem findItemById(Deque<String> path, List<? extends ServiceViewItem> roots) {
+    String id = path.removeFirst();
+    for (ServiceViewItem root : roots) {
+      if (id.equals(root.getViewDescriptor().getId())) {
+        return path.isEmpty() ? root : findItemById(path, root.getChildren());
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -65,27 +89,25 @@ class ServiceModel implements Disposable, InvokerSupplier {
       startIndex = 0;
     }
     else {
-      Map<ServiceViewContributor, Integer> indexes = new HashMap<>();
-      List<ServiceViewItem> toRemove = new ArrayList<>();
-      ServiceViewContributor previous = null;
+      ServiceViewItem contributorNode = null;
       for (int i = 0; i < myRoots.size(); i++) {
         ServiceViewItem child = myRoots.get(i);
         if (contributorClass.isInstance(child.getContributor())) {
-          toRemove.add(child);
-          if (startIndex < 0) {
-            startIndex = i;
-          }
-        }
-        else if (previous != child.getContributor()) {
-          previous = child.getContributor();
-          indexes.put(previous, i);
+          contributorNode = child;
+          startIndex = i;
+          break;
         }
       }
-      if (startIndex < 0) {
+      if (contributorNode != null) {
+        myRoots.remove(contributorNode);
+      }
+      else {
         ServiceViewContributor[] contributors = EP_NAME.getExtensions();
+        List<ServiceViewContributor> existingContributors = ContainerUtil.map(myRoots, ServiceViewItem::getContributor);
         for (int i = contributors.length - 1; i >= 0; i--) {
-          if (!contributorClass.isInstance(contributors[i])) {
-            startIndex = indexes.getOrDefault(contributors[i], Integer.valueOf(-1));
+          ServiceViewContributor contributor = contributors[i];
+          if (!contributorClass.isInstance(contributor)) {
+            startIndex = existingContributors.indexOf(contributor);
             if (startIndex == 0) {
               break;
             }
@@ -95,21 +117,23 @@ class ServiceModel implements Disposable, InvokerSupplier {
           }
         }
         if (startIndex < 0) {
-          startIndex = myRoots.size() - toRemove.size();
+          startIndex = myRoots.size();
         }
       }
-      myRoots.removeAll(toRemove);
     }
 
-    List<ServiceViewItem> newChildren = null;
+    ServiceViewItem newRoot = null;
     for (ServiceViewContributor<?> contributor : EP_NAME.getExtensions()) {
       if (contributorClass.isInstance(contributor)) {
-        newChildren = getContributorChildren(myProject, null, contributor);
+        newRoot = new ContributorNode(myProject, contributor);
+        if (newRoot.getChildren().isEmpty()) {
+          newRoot = null;
+        }
         break;
       }
     }
-    if (newChildren != null) {
-      myRoots.addAll(startIndex, newChildren);
+    if (newRoot != null) {
+      myRoots.add(startIndex, newRoot);
     }
   }
 
@@ -216,6 +240,21 @@ class ServiceModel implements Disposable, InvokerSupplier {
     @Override
     public int hashCode() {
       return myValue.hashCode();
+    }
+  }
+
+  static class ContributorNode extends ServiceViewItem {
+    private final Project myProject;
+
+    ContributorNode(@NotNull Project project, @NotNull ServiceViewContributor contributor) {
+      super(contributor, null, contributor, contributor.getViewDescriptor());
+      myProject = project;
+    }
+
+    @NotNull
+    @Override
+    List<ServiceViewItem> doGetChildren() {
+      return getContributorChildren(myProject, this, (ServiceViewContributor<?>)getContributor());
     }
   }
 

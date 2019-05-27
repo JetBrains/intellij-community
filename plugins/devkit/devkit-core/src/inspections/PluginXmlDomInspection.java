@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
@@ -187,6 +187,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       else if (element instanceof IdeaVersion) {
         annotateIdeaVersion((IdeaVersion)element, holder);
       }
+      else if (element instanceof Dependency) {
+        annotateDependency((Dependency)element, holder);
+      }
       else if (element instanceof Extensions) {
         annotateExtensions((Extensions)element, holder);
       }
@@ -204,6 +207,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         if (element instanceof Component.Project) {
           annotateProjectComponent((Component.Project)element, holder);
         }
+      }
+      else if (element instanceof Helpset) {
+        highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
       }
     }
 
@@ -231,6 +237,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     VirtualFile virtualFile = DomUtil.getFile(domElement).getVirtualFile();
     return virtualFile != null &&
            ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION);
+  }
+
+  private static void annotateDependency(Dependency dependency, DomElementAnnotationHolder holder) {
+    final GenericAttributeValue<Boolean> optional = dependency.getOptional();
+    if (optional.getValue() == Boolean.FALSE) {
+      highlightRedundant(optional,
+                         DevKitBundle.message("inspections.plugin.xml.dependency.superfluous.optional"),
+                         ProblemHighlightType.WARNING, holder);
+    }
+    else if (optional.getValue() == Boolean.TRUE &&
+             !DomUtil.hasXml(dependency.getConfigFile())) {
+      holder.createProblem(dependency, DevKitBundle.message("inspections.plugin.xml.dependency.specify.config.file"),
+                           new AddDomElementQuickFix<>(dependency.getConfigFile())).highlightWholeElement();
+    }
   }
 
   private static void annotateIdeaPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, @NotNull Module module) {
@@ -470,7 +490,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     if (StringUtil.isEmpty(name) ||
         !Character.isLowerCase(name.charAt(0)) || // also checks that name doesn't start with dot
-        name.toUpperCase().equals(name) || // not all uppercase
+        StringUtil.toUpperCase(name).equals(name) || // not all uppercase
         !StringUtil.isLatinAlphanumeric(name.replace(".", "")) ||
         name.charAt(name.length() - 1) == '.') {
       return false;

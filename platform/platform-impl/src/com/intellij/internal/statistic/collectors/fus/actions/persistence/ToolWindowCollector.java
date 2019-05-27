@@ -4,6 +4,9 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
@@ -21,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.internal.statistic.beans.ConvertUsagesUtil.escapeDescriptorName;
 import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.ACTIVATION;
 import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.CLICK;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
@@ -94,17 +96,13 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
   }
 
   private void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source) {
-    if (toolWindowId == null) return;
-
-    final PluginInfo info = getPluginInfo(toolWindowId);
-    final String key = escapeDescriptorName(info.isDevelopedByJetBrains() ? toolWindowId: "unknown");
-
-    final FeatureUsageData data = new FeatureUsageData().addOS().addPluginInfo(info);
-
-    if (source != ACTIVATION) {
-      data.addData("source", StringUtil.toLowerCase(source.name()));
+    if (StringUtil.isNotEmpty(toolWindowId)) {
+      final FeatureUsageData data = new FeatureUsageData().addOS();
+      if (source != ACTIVATION) {
+        data.addData("source", StringUtil.toLowerCase(source.name()));
+      }
+      FUCounterUsageLogger.getInstance().logEvent("toolwindow", toolWindowId, data);
     }
-    FUCounterUsageLogger.getInstance().logEvent("toolwindow", key, data);
   }
 
   @NotNull
@@ -175,6 +173,26 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
 
     @Override
     public void loadState(@NotNull ToolWindowCollector.State state) {
+    }
+  }
+
+  public static class ToolWindowUtilValidator extends CustomUtilsWhiteListRule {
+
+    @Override
+    public boolean acceptRuleId(@Nullable String ruleId) {
+      return "toolwindow".equals(ruleId);
+    }
+
+    @NotNull
+    @Override
+    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+      if ("unknown".equals(data)) return ValidationResultType.ACCEPTED;
+
+      final PluginInfo info = getPluginInfo(data);
+      if (StringUtil.equals(data, context.eventId)) {
+        context.setPluginInfo(info);
+      }
+      return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
   }
 }

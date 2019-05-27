@@ -21,10 +21,10 @@ public class ReferringObjectsInfo {
   private static final Logger LOG = Logger.getInstance(ReferringObjectsInfo.class);
 
   private final Map<ObjectReference, Integer> myReversedMap = new HashMap<>();
-  private final List<ObjectReference> myDirectMap;
-  private final List<List<Integer>> myReferrers;
+  private final List<? extends ObjectReference> myDirectMap;
+  private final List<? extends List<Integer>> myReferrers;
 
-  public ReferringObjectsInfo(@NotNull List<ObjectReference> values, @NotNull List<List<Integer>> referrers) {
+  public ReferringObjectsInfo(@NotNull List<? extends ObjectReference> values, @NotNull List<? extends List<Integer>> referrers) {
     myDirectMap = values;
     for (int i = 0; i < values.size(); i++) {
       myReversedMap.put(values.get(i), i);

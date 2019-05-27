@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
-import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,7 +50,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
     this(module.getProject(), Collections.singleton(module));
   }
 
-  public ModuleWithDependentsScope(@NotNull Project project, @NotNull Collection<Module> modules) {
+  public ModuleWithDependentsScope(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     super(project);
     myRootModules = new LinkedHashSet<>(modules);
 
@@ -100,7 +99,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
               if (((ModuleOrderEntry)orderEntry).isExported()) {
                 index.exportingUsages.putValue(referenced, module);
               }
-              if (orderEntry instanceof ModuleOrderEntryImpl && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency()) {
+              if (((ModuleOrderEntry)orderEntry).isProductionOnTestDependency()) {
                 index.productionOnTestUsages.putValue(referenced, module);
               }
             }

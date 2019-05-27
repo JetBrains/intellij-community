@@ -623,7 +623,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     @NotNull
     private static <T> JBList<T> createList(CollectionListModel<T> baseModel,
-                                            Function<T, String> namer,
+                                            Function<? super T, String> namer,
                                             SwitcherSpeedSearch speedSearch,
                                             boolean pinned) {
       ListModel<T> listModel;
@@ -654,8 +654,7 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     private Container getPopupFocusAncestor() {
-      JComponent content = myPopup.getContent();
-      return content == null ? null : content.getFocusCycleRootAncestor();
+      return myPopup.isDisposed() ? null : myPopup.getContent().getFocusCycleRootAncestor();
     }
 
     @NotNull

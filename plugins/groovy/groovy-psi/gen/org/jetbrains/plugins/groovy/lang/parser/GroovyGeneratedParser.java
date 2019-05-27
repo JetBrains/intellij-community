@@ -1294,13 +1294,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // array_initializer_declaration array_initializer
+  // array_initializer_declaration mb_nl array_initializer
   static boolean array_initializer_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "array_initializer_tail")) return false;
     if (!nextTokenIsFast(b, T_LBRACK)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = array_initializer_declaration(b, l + 1);
+    r = r && mb_nl(b, l + 1);
     r = r && array_initializer(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -5034,13 +5035,26 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // array_initializer_tail | array_declaration | call_argument_list
+  // array_initializer_tail | array_declaration | (mb_nl call_argument_list)
   static boolean new_expression_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "new_expression_tail")) return false;
     boolean r;
+    Marker m = enter_section_(b);
     r = array_initializer_tail(b, l + 1);
     if (!r) r = array_declaration(b, l + 1);
-    if (!r) r = call_argument_list(b, l + 1);
+    if (!r) r = new_expression_tail_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl call_argument_list
+  private static boolean new_expression_tail_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "new_expression_tail_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && call_argument_list(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 

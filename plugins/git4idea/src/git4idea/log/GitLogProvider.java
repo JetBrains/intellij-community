@@ -499,7 +499,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       Collection<String> names = ContainerUtil.map(userFilter.getUsers(root), VcsUserUtil::toExactString);
       if (regexp) {
         List<String> authors = ContainerUtil.map(names, UserNameRegex.EXTENDED_INSTANCE);
-        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs.getVersion())) {
+        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs)) {
           filterParameters.add(prepareParameter("author", StringUtil.join(authors, "|")));
         }
         else {
@@ -581,7 +581,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   public VirtualFile getVcsRoot(@NotNull Project project, @NotNull FilePath path) {
     VirtualFile file = path.getVirtualFile();
     if (file != null && file.isDirectory()) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(file);
+      GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(file);
       if (repository != null) {
         GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
         if (submodule != null) {
@@ -601,6 +601,9 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     }
     else if (property == VcsLogProperties.SUPPORTS_INDEXING) {
       return (T)Boolean.valueOf(isIndexingOn());
+    }
+    else if (property == VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY) {
+      return (T)Boolean.TRUE;
     }
     return null;
   }

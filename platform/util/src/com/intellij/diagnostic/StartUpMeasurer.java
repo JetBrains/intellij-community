@@ -91,7 +91,7 @@ public final class StartUpMeasurer {
     return new ActivityImpl(name, null, level);
   }
 
-  public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<ActivityImpl> consumer) {
+  public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<? super ActivityImpl> consumer) {
     isEnabled = isContinueToCollect;
 
     while (true) {

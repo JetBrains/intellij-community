@@ -60,7 +60,7 @@ class AntReferenceInjector implements DomReferenceInjector {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  private static void addPropertyReferences(@NotNull ConvertContext context, final XmlAttributeValue xmlAttributeValue, final Collection<PsiReference> result) {
+  private static void addPropertyReferences(@NotNull ConvertContext context, final XmlAttributeValue xmlAttributeValue, final Collection<? super PsiReference> result) {
     final String value = xmlAttributeValue.getValue();
     final DomElement contextElement = context.getInvocationElement();
     

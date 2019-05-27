@@ -17,7 +17,8 @@ package git4idea.config;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import git4idea.GitVcs;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.util.ObjectUtils;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -161,13 +162,6 @@ public enum GitVersionSpecialty {
     }
   },
 
-  FOLLOW_IS_BUGGY_IN_THE_LOG {
-    @Override
-    public boolean existsIn(@NotNull GitVersion version) {
-      return version.isOlderOrEqual(new GitVersion(1, 7, 2, 0));
-    }
-  },
-
   FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY { // for some reason, even with "simplify-merges", it used to show a lot of merges in history
 
     @Override
@@ -268,10 +262,15 @@ public enum GitVersionSpecialty {
   public abstract boolean existsIn(@NotNull GitVersion version);
 
   public boolean existsIn(@NotNull Project project) {
-    return existsIn(GitVcs.getInstance(project).getVersion());
+    GitVersion version = GitExecutableManager.getInstance().tryGetVersion(project);
+    return existsIn(ObjectUtils.chooseNotNull(version, GitVersion.NULL));
   }
 
   public boolean existsIn(@NotNull GitRepository repository) {
-    return existsIn(repository.getVcs().getVersion());
+    return existsIn(repository.getProject());
+  }
+
+  public boolean existsIn(@NotNull AbstractVcs vcs) {
+    return existsIn(vcs.getProject());
   }
 }

@@ -61,9 +61,6 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManagerUtil"/>
 
-    <applicationService serviceImplementation="com.intellij.navigation.ChooseByNameRegistry"/>
-
-
     <applicationService serviceInterface="com.intellij.ide.PsiActionSupportFactory"
                         serviceImplementation="com.intellij.ide.PsiActionSupportFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
@@ -473,6 +470,7 @@
     <patternDialectProvider implementation="com.intellij.packageDependencies.ui.ProjectPatternProvider" id="file"/>
     <customScopesProvider implementation="com.intellij.packageDependencies.DefaultScopesProvider" id="default" order="first"/>
     <customScopesProvider implementation="com.intellij.psi.search.scope.ProblemsScope$Provider" order="last"/>
+    <customScopesProvider implementation="com.intellij.openapi.fileEditor.impl.OpenFilesScope$Provider" order="last"/>
     <customScopesProvider implementation="com.intellij.packageDependencies.ChangeListsScopesProvider" order="last"/>
 
     <searchScopesProvider implementation="com.intellij.psi.search.DefaultSearchScopeProviders$Favorites"/>
@@ -917,11 +915,19 @@
     <statistics.counterUsagesCollector groupId="ui.event" version="1"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
-    <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector$ValidationRule" />
-    <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger$LiveTemplateValidator" />
-    <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator" />
-    <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule" />
-    <statistics.validation.customUtilsWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector$ValidationRule" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger$LiveTemplateValidator" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.execution.impl.statistics.AbstractRunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationExecutorUtilValidator" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.codeInsight.template.impl.SurroundWithLogger$SurroundWithIdValidator"/>
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger$PostfixTemplateValidator"/>
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$AbstractToolValidator"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionUsagesCollector"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeExtensionUsagesCollectorStartupActivity"/>
@@ -939,8 +945,10 @@
 
     <statistics.counterUsagesCollector groupId="searchEverywhere" version="1"/>
     <statistics.counterUsagesCollector groupId="actions.runAnything" version="1"/>
+    <statistics.counterUsagesCollector groupId="surround.with" version="1"/>
 
     <applicationService serviceImplementation="com.intellij.internal.statistic.persistence.ApprovedGroupsCacheConfigurable" />
+    <applicationService serviceImplementation="com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence" />
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last" id="renamePsiFile"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
@@ -1090,16 +1098,11 @@
       schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
       implementationClass="com.intellij.application.options.colors.ColorSchemeImporter"/>
     <schemeExporter
-      name="IntelliJ IDEA code style JSON"
-      schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
-      implementationClass="com.intellij.psi.impl.source.codeStyle.json.CodeStyleSchemeJsonExporter"/>
-
-    <schemeExporter
-      name="Intellij IDEA inspection profile XML"
+      name="IntelliJ IDEA inspection profile XML"
       schemeClass="com.intellij.codeInspection.ex.InspectionProfileModifiableModel"
       implementationClass="com.intellij.application.options.schemes.SerializableSchemeExporter"/>
     <schemeImporter
-      name="Intellij IDEA inspection profile XML"
+      name="IntelliJ IDEA inspection profile XML"
       schemeClass="com.intellij.codeInspection.ex.InspectionProfileModifiableModel"
       implementationClass="com.intellij.profile.codeInspection.ui.InspectionProfileImporter"/>
 

@@ -50,6 +50,7 @@ public class UITheme {
   private Map<String, Object> icons;
   private IconPathPatcher patcher;
   private Map<String, Object> background;
+  private Map<String, Object> colors;
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
   private SVGLoader.SvgColorPatcher colorPatcher;
@@ -76,7 +77,7 @@ public class UITheme {
   }
 
   public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider,
-                                     @NotNull Function<String, String> iconsMapper) throws IOException {
+                                     @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
     if (provider != null) {
@@ -251,8 +252,24 @@ public class UITheme {
   public void applyProperties(UIDefaults defaults) {
     if (ui == null) return;
 
+    loadColorPalette(defaults);
+
     for (Map.Entry<String, Object> entry : ui.entrySet()) {
-      apply(entry.getKey(), entry.getValue(), defaults);
+      apply(this, entry.getKey(), entry.getValue(), defaults);
+    }
+  }
+
+  private void loadColorPalette(UIDefaults defaults) {
+    if (colors != null) {
+      for (Map.Entry<String, Object> entry : colors.entrySet()) {
+        Object value = entry.getValue();
+        if (value instanceof String) {
+          Color color = parseColor((String)value);
+          if (color != null) {
+            defaults.put("ColorPalette." + entry.getKey(), color);
+          }
+        }
+      }
     }
   }
 
@@ -269,14 +286,22 @@ public class UITheme {
     return providerClassLoader;
   }
 
-  private static void apply(String key, Object value, UIDefaults defaults) {
+  private static void apply(UITheme theme, String key, Object value, UIDefaults defaults) {
     if (value instanceof HashMap) {
       //noinspection unchecked
       for (Map.Entry<String, Object> o : ((HashMap<String, Object>)value).entrySet()) {
-        apply(key + "." + o.getKey(), o.getValue(), defaults);
+        apply(theme, key + "." + o.getKey(), o.getValue(), defaults);
       }
     } else {
-      value = parseValue(key, value.toString());
+      String valueStr = value.toString();
+      if (theme.colors != null && theme.colors.containsKey(valueStr)) {
+        Color color = parseColor(String.valueOf(theme.colors.get(valueStr)));
+        if (color != null) {
+          defaults.put(key, color);
+          return;
+        }
+      }
+      value = parseValue(key, valueStr);
       if (key.startsWith("*.")) {
         String tail = key.substring(1);
         Object finalValue = value;
@@ -484,5 +509,13 @@ public class UITheme {
 
   public void setBackground(Map<String, Object> background) {
     this.background = background;
+  }
+
+  public Map<String, Object> getColors() {
+    return colors;
+  }
+
+  public void setColors(Map<String, Object> colors) {
+    this.colors = colors;
   }
 }

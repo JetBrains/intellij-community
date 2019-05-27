@@ -87,7 +87,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.copy(todir: "${unixDistPath}/bin") {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
 
-      filterset(begintoken: "@@", endtoken: "@@") {
+      filterset(begintoken: "__", endtoken: "__") {
         filter(token: "product_full", value: fullName)
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "vm_options", value: vmOptionsFileName)
@@ -142,8 +142,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     String javaExecutablePath = null
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
-      extraBins += "jre64/bin/*"
-      javaExecutablePath = "jre64/bin/java"
+      extraBins += "jbr/bin/*"
+      javaExecutablePath = "jbr/bin/java"
     }
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(productJsonDir, javaExecutablePath)
@@ -247,11 +247,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           customizer.extraExecutables.each { include(name: it) }
         }
         fileset(dir: jreDirectoryPath) {
-          include(name: "jre64/bin/*")
+          include(name: "jbr/bin/*")
         }
       }
 
-      generateProductJson(unixSnapDistPath, "jre64/bin/java")
+      generateProductJson(unixSnapDistPath, "jbr/bin/java")
       new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, "", [unixSnapDistPath, jreDirectoryPath], [])
 
       buildContext.ant.mkdir(dir: "${snapDir}/result")

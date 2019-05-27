@@ -51,6 +51,11 @@ public abstract class SearchResultPanel {
   }
 
   @NotNull
+  public PluginsGroup getGroup() {
+    return myGroup;
+  }
+
+  @NotNull
   public JComponent createScrollPane() {
     JBScrollPane pane = new JBScrollPane(myPanel);
     pane.setBorder(JBUI.Borders.empty());
@@ -193,7 +198,7 @@ public abstract class SearchResultPanel {
     myGroup = new PluginsGroup("Search Results");
   }
 
-  private void fullRepaint() {
+  public void fullRepaint() {
     myPanel.doLayout();
     myPanel.revalidate();
     myPanel.repaint();

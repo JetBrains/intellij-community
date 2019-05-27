@@ -259,8 +259,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   @Nullable
   public PsiElement getCompletionContext() {
-    PsiElement context = getContext();
-    return context == null ? JavaPsiFacade.getInstance(getElement().getProject()).findPackage("") : context;
+    final PsiReference contextRef = getContextReference();
+    if (contextRef == null) {
+      return JavaPsiFacade.getInstance(getElement().getProject()).findPackage("");
+    }
+    return contextRef.resolve();
   }
 
   /** @deprecated use {@link #getSuperClasses()} instead */
@@ -531,7 +534,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return list;
   }
 
-  public void processSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses, Consumer<LookupElement> result) {
+  public void processSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses, Consumer<? super LookupElement> result) {
     GlobalSearchScope packageScope = PackageScope.packageScope(context, true);
     GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(getElement().getProject());
     if (scope != null) {

@@ -607,10 +607,11 @@ public class FindInProjectUtil {
 
   @NotNull
   static SearchScope getScopeFromModel(@NotNull Project project, @NotNull FindModel findModel) {
-    SearchScope customScope = findModel.getCustomScope();
+    SearchScope customScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
     VirtualFile directory = getDirectory(findModel);
     Module module = findModel.getModuleName() == null ? null : ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName());
-    return findModel.isCustomScope() && customScope != null ? customScope.intersectWith(GlobalSearchScope.allScope(project)) :
+    // do not alter custom scope in any way, learn from history
+    return customScope != null ? customScope :
            // we don't have to check for myProjectFileIndex.isExcluded(file) here like FindInProjectTask.collectFilesInScope() does
            // because all found usages are guaranteed to be not in excluded dir
            directory != null ? forDirectory(project, findModel.isWithSubdirectories(), directory) :

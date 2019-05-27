@@ -47,7 +47,7 @@ public class CompletionAutoPopupTester {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void waitPhase(Predicate<CompletionPhase> condition) {
+  private static void waitPhase(Predicate<? super CompletionPhase> condition) {
     for (int j = 1; j < 1000; j++) {
       // in EDT to avoid getting the phase in the middle of a complex EDT operation that changes the phase several times
       CompletionPhase phase = EdtTestUtil.runInEdtAndGet(() -> CompletionServiceImpl.getCompletionPhase());

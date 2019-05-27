@@ -151,7 +151,7 @@ public class FilterPanel implements FilterTable {
     }
   }
 
-  public final void initFilter(FilterAction filter, List<PsiElement> nodes, boolean completePattern, boolean target) {
+  public final void initFilter(FilterAction filter, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     if (filter.isApplicable(nodes, completePattern, target) && !myTableModel.getItems().contains(filter)) {
       addFilterIfPresent(filter);
     }

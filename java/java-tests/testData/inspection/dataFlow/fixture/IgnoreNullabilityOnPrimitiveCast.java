@@ -2,7 +2,7 @@ import foo.*;
 
 class IgnoreNullabilityOnPrimitiveCast {
   private static int map(@Nullable int[] mapping, int idx) {
-    return <warning descr="Array access 'mapping[idx]' may produce 'NullPointerException'">mapping[idx]</warning>;
+    return mapping[idx];
   }
 
   static final int TEST;

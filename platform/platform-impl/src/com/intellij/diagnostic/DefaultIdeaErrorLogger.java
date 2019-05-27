@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
@@ -53,14 +52,15 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(t, pluginId);
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
 
-      boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
+      final MemoryKind kind = getOOMErrorKind(event.getThrowable());
+      boolean isOOM = kind != null;
       boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
 
-      LifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed, pluginId, t);
+      LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
 
       return notificationEnabled ||
              showPluginError ||
-             ApplicationManagerEx.getApplicationEx().isInternal() ||
+             ApplicationManager.getApplication().isInternal() ||
              isOOM ||
              isMappingFailed;
     }

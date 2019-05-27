@@ -745,7 +745,7 @@ public class ControlFlowGraph implements CodeConstants {
     return res;
   }
 
-  private static void addToReversePostOrderListIterative(BasicBlock root, List<BasicBlock> lst) {
+  private static void addToReversePostOrderListIterative(BasicBlock root, List<? super BasicBlock> lst) {
 
     LinkedList<BasicBlock> stackNode = new LinkedList<>();
     LinkedList<Integer> stackIndex = new LinkedList<>();

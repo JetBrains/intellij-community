@@ -1,3 +1,0 @@
-deprecated: doubleComboArrow.png
-deprecated: treeNodeCollapsed.png
-deprecated: treeNodeExpanded.png

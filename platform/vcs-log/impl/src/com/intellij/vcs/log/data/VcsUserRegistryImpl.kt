@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.util.containers.HashSetInterner
 import com.intellij.util.containers.Interner
 import com.intellij.util.io.*
 import com.intellij.vcs.log.VcsUser
@@ -30,7 +31,7 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
 
   init {
     initEnumerator()
-    interner = Interner()
+    interner = HashSetInterner()
   }
 
   private fun initEnumerator(): Boolean {

@@ -193,7 +193,7 @@ public class JavadocHighlightUtil {
     String text = Stream.of(elements).map(e -> e.getText().trim()).collect(Collectors.joining(" ")).trim();
     if (StringUtil.isQuotedString(text) && text.charAt(0) == '"') return true;
 
-    if (text.toLowerCase(Locale.US).matches("^<a\\s+href=.+")) return true;
+    if (StringUtil.toLowerCase(text).matches("^<a\\s+href=.+")) return true;
 
     return false;
   }

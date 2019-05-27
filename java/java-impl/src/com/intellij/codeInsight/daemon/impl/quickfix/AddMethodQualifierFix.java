@@ -140,7 +140,7 @@ public class AddMethodQualifierFix implements IntentionAction {
     return false;
   }
 
-  private void chooseAndQualify(Project project, Editor editor, List<PsiVariable> candidates) {
+  private void chooseAndQualify(Project project, Editor editor, List<? extends PsiVariable> candidates) {
     final BaseListPopupStep<PsiVariable> step =
       new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), candidates) {
         @Override

@@ -54,7 +54,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   private PagedImage myBuffer;
   private List<Crumb> myCrumbs = new ArrayList<>();
   private final CrumbLineMouseListener myMouseListener;
-  private List<T> myItems;
+  private List<? extends T> myItems;
   private int myOffset;
 
   public BreadcrumbsComponent() {
@@ -65,7 +65,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     setToolTipText("");
   }
 
-  public void setItems(@Nullable final List<T> itemsList) {
+  public void setItems(@Nullable final List<? extends T> itemsList) {
     if (myItems != itemsList) {
       myItems = itemsList;
       myCrumbs = null;
@@ -199,7 +199,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
   }
 
-  private void setSelectedCrumb(@NotNull final Crumb<T> c, final int modifiers) {
+  private void setSelectedCrumb(@NotNull final Crumb<? extends T> c, final int modifiers) {
     final T selectedElement = c.getItem();
 
     final Set<BreadcrumbsItem> items = new HashSet<>();
@@ -239,7 +239,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   }
 
   @Nullable
-  private List<Crumb> createCrumbList(@NotNull final FontMetrics fm, @NotNull final List<T> elements, final int width) {
+  private List<Crumb> createCrumbList(@NotNull final FontMetrics fm, @NotNull final List<? extends T> elements, final int width) {
     if (elements.size() == 0) {
       return null;
     }
@@ -325,7 +325,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     return result;
   }
 
-  private static int getTotalWidth(@NotNull final List<Crumb> crumbList) {
+  private static int getTotalWidth(@NotNull final List<? extends Crumb> crumbList) {
     int totalWidth = 0;
     for (final Crumb each : crumbList) {
       totalWidth += each.getWidth();
@@ -395,7 +395,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
 
     private void repaint(@NotNull final Graphics2D g2,
-                         @NotNull final List<Crumb> crumbList,
+                         @NotNull final List<? extends Crumb> crumbList,
                          @NotNull final Painter painter,
                          final int height) {
       UISettings.setupAntialiasing(g2);
@@ -414,7 +414,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       return myPage * myPageWidth;
     }
 
-    public void paintPage(@NotNull final Graphics2D g2, @NotNull final List<Crumb> list, @NotNull final Painter p, final int height) {
+    public void paintPage(@NotNull final Graphics2D g2, @NotNull final List<? extends Crumb> list, @NotNull final Painter p, final int height) {
       repaint(g2, list, p, height);
     }
 

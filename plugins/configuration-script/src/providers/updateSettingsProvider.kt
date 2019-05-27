@@ -10,8 +10,8 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider
 import com.intellij.openapi.util.NotNullLazyKey
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import org.yaml.snakeyaml.nodes.MappingNode
-import org.yaml.snakeyaml.nodes.ScalarNode
+import org.snakeyaml.engine.v1.nodes.MappingNode
+import org.snakeyaml.engine.v1.nodes.ScalarNode
 
 private val dataKey = NotNullLazyKey.create<SynchronizedClearableLazy<PluginsConfiguration?>, Project>("MyUpdateSettingsProvider") { project ->
   val data = SynchronizedClearableLazy {

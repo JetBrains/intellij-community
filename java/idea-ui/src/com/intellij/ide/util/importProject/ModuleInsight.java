@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public abstract class ModuleInsight {
   private final Map<File, Set<String>> mySourceRootToReferencedPackagesMap = new HashMap<>();
   private final Map<File, Set<String>> mySourceRootToPackagesMap = new HashMap<>();
   private final Map<File, Set<String>> myJarToPackagesMap = new HashMap<>();
-  private final StringInterner myInterner = new StringInterner();
+  private final Interner<String> myInterner = new StringInterner();
 
   private List<ModuleDescriptor> myModules;
   private List<LibraryDescriptor> myLibraries;
@@ -148,7 +149,7 @@ public abstract class ModuleInsight {
     return myIgnoredNames.contains(sourceRoot.getName());
   }
 
-  protected void addModules(Collection<ModuleDescriptor> newModules) {
+  protected void addModules(Collection<? extends ModuleDescriptor> newModules) {
     if (myModules == null) {
       myModules = new ArrayList<>(newModules);
     }
@@ -285,8 +286,8 @@ public abstract class ModuleInsight {
     }
   }
 
-  public LibraryDescriptor splitLibrary(LibraryDescriptor library, String newLibraryName, final Collection<File> jarsToExtract) {
-    final LibraryDescriptor newLibrary = new LibraryDescriptor(newLibraryName, jarsToExtract);
+  public LibraryDescriptor splitLibrary(LibraryDescriptor library, String newLibraryName, final Collection<? extends File> jarsToExtract) {
+    final LibraryDescriptor newLibrary = new LibraryDescriptor(newLibraryName, new ArrayList<>(jarsToExtract));
     myLibraries.add(newLibrary);
     library.removeJars(jarsToExtract);
     if (library.getJars().size() == 0) {
@@ -296,7 +297,7 @@ public abstract class ModuleInsight {
   }
 
   @Nullable
-  public ModuleDescriptor splitModule(final ModuleDescriptor descriptor, String newModuleName, final Collection<File> contentsToExtract) {
+  public ModuleDescriptor splitModule(final ModuleDescriptor descriptor, String newModuleName, final Collection<? extends File> contentsToExtract) {
     ModuleDescriptor newModule = null;
     for (File root : contentsToExtract) {
       final Collection<DetectedSourceRoot> sources = descriptor.removeContentRoot(root);
@@ -341,7 +342,7 @@ public abstract class ModuleInsight {
     myLibraries.remove(lib);
   }
 
-  public void moveJarsToLibrary(final LibraryDescriptor from, Collection<File> files, LibraryDescriptor to) {
+  public void moveJarsToLibrary(final LibraryDescriptor from, Collection<? extends File> files, LibraryDescriptor to) {
     to.addJars(files);
     from.removeJars(files);
     // remove the library if it became empty
@@ -402,7 +403,7 @@ public abstract class ModuleInsight {
     return new ArrayList<>(rootToLibraryMap.values());
   }
 
-  private void scanSources(final File fromRoot, final String parentPackageName, final Set<String> usedPackages, final Set<String> selfPackages) {
+  private void scanSources(final File fromRoot, final String parentPackageName, final Set<? super String> usedPackages, final Set<? super String> selfPackages) {
     if (isIgnoredName(fromRoot)) {
       return;
     }
@@ -430,7 +431,7 @@ public abstract class ModuleInsight {
 
   protected abstract boolean isSourceFile(final File file);
 
-  private void scanSourceFile(File file, final Set<String> usedPackages) {
+  private void scanSourceFile(File file, final Set<? super String> usedPackages) {
     myProgress.setText2(file.getName());
     try {
       final char[] chars = FileUtil.loadFileText(file);

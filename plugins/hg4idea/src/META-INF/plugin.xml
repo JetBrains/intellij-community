@@ -39,7 +39,19 @@
     <projectService serviceImplementation="org.zmlx.hg4idea.repo.HgRepositoryManager"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"/>
-    <projectService serviceImplementation="org.zmlx.hg4idea.HgRootsHandler"/>
+    <ignoredFileContentProvider implementation="org.zmlx.hg4idea.ignore.HgIgnoredFileContentProvider"/>
+
+    <!-- HG ignore lang -->
+    <fileTypeFactory
+        implementation="org.zmlx.hg4idea.ignore.HgIgnoreFileTypeFactory"/>
+    <lang.parserDefinition language="HgIgnore"
+                           implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
+    <codeInsight.lineMarkerProvider language="HgIgnore"
+                                    implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInsight.IgnoreDirectoryMarkerProvider"/>
+    <lang.braceMatcher language="HgIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreBraceMatcher"/>
+    <lang.commenter language="HgIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
+    <!--END HG ignore lang-->
+
   </extensions>
 
   <actions>
@@ -152,6 +164,12 @@
       <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
       <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
     </action>
+
+    <group id="Hg.Ignore.File" class="org.zmlx.hg4idea.ignore.actions.HgIgnoreFileActionGroup">
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
+      <add-to-group group-id="hg4idea.file.menu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
+      <add-to-group group-id="Unversioned.Files.Dialog.Popup" anchor="after" relative-to-action="$Delete"/>
+    </group>
   </actions>
 
   <resource-bundle>org.zmlx.hg4idea.HgVcsMessages</resource-bundle>

@@ -182,7 +182,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     Disposer.dispose(myDisposable);
   }
 
-  private void validateRepositories(@NotNull List<UrlInfo> urls) {
+  private void validateRepositories(@NotNull List<? extends UrlInfo> urls) {
     List<UrlInfo> infos = new ArrayList<>();
     List<String> results = new ArrayList<>();
 

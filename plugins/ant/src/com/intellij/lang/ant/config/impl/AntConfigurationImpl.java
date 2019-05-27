@@ -671,7 +671,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private static void collectTargetActions(final AntBuildTarget[] targets,
-                                           final List<Pair<String, AnAction>> actionList,
+                                           final List<? super Pair<String, AnAction>> actionList,
                                            final AntBuildFile buildFile) {
     for (final AntBuildTarget target : targets) {
       final String actionId = ((AntBuildTargetBase)target).getActionId();
@@ -824,7 +824,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   @Nullable
   public XmlFile getEffectiveContextFile(final XmlFile file) {
     return new Object() {
-      @Nullable XmlFile findContext(final XmlFile file, Set<PsiElement> processed) {
+      @Nullable XmlFile findContext(final XmlFile file, Set<? super PsiElement> processed) {
         if (file != null) {
           processed.add(file);
           final XmlFile contextFile = getContextFile(file);

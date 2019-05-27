@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author traff
@@ -186,26 +187,33 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return convertToList(myDebugProcess.loadFrame());
   }
 
-  protected String computeValueAsync(List<PyDebugValue> debugValues, String name) throws PyDebuggerException {
+  protected String computeValueAsync(List<PyDebugValue> debugValues, String name) throws PyDebuggerException, InterruptedException {
     final PyDebugValue debugValue = findDebugValueByName(debugValues, name);
     assert debugValue != null;
     Semaphore variableSemaphore = new Semaphore(0);
+    final ArrayList<PyFrameAccessor.PyAsyncValue<String>> valuesForEvaluation = createAsyncValue(debugValue, variableSemaphore);
+    myDebugProcess.loadAsyncVariablesValues(valuesForEvaluation);
+    if (!variableSemaphore.tryAcquire(NORMAL_TIMEOUT, TimeUnit.MILLISECONDS)) {
+      throw new PyDebuggerException("Timeout exceeded, failed to load variable: " + debugValue.getName());
+    }
+    return debugValue.getValue();
+  }
+
+  public static ArrayList<PyFrameAccessor.PyAsyncValue<String>> createAsyncValue(PyDebugValue debugValue, Semaphore semaphore) {
     ArrayList<PyFrameAccessor.PyAsyncValue<String>> valuesForEvaluation = new ArrayList<>();
     valuesForEvaluation.add(new PyFrameAccessor.PyAsyncValue<>(debugValue, new PyDebugCallback<String>() {
       @Override
       public void ok(String value) {
         debugValue.setValue(value);
-        variableSemaphore.release();
+        semaphore.release();
       }
 
       @Override
       public void error(PyDebuggerException exception) {
-        variableSemaphore.release();
+        semaphore.release();
       }
     }));
-    myDebugProcess.loadAsyncVariablesValues(valuesForEvaluation);
-    XDebuggerTestUtil.waitFor(variableSemaphore, NORMAL_TIMEOUT);
-    return debugValue.getValue();
+    return valuesForEvaluation;
   }
 
   public static List<PyDebugValue> convertToList(XValueChildrenList childrenList) {

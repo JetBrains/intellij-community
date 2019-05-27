@@ -34,7 +34,7 @@ public class RequiredLibrariesInfo {
   }
 
   @Nullable
-  public RequiredClassesNotFoundInfo checkLibraries(List<VirtualFile> libraryFiles) {
+  public RequiredClassesNotFoundInfo checkLibraries(List<? extends VirtualFile> libraryFiles) {
     List<LibraryInfo> infos = new ArrayList<>();
     List<String> classes = new ArrayList<>();
 

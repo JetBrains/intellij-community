@@ -23,7 +23,7 @@ import java.util.*;
  * Date: 01-Oct-18
  */
 public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> implements StandardJavaFileManager {
-  private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.US);
+  private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
   private static final boolean isWindows = _OS_NAME.startsWith("windows");
   private static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
   private static final boolean isMac = _OS_NAME.startsWith("mac");
@@ -45,7 +45,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
   });
   private final Context myContext;
   private final boolean myJavacBefore9;
-  private final Collection<JavaSourceTransformer> mySourceTransformers;
+  private final Collection<? extends JavaSourceTransformer> mySourceTransformers;
   private final FileOperations myFileOperations = new DefaultFileOperations();
 
   private final Function<File, JavaFileObject> myFileToInputFileObjectConverter = new Function<File, JavaFileObject>() {
@@ -65,7 +65,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
   private String myEncodingName;
   private int myChecksCounter = 0;
 
-  public JpsJavacFileManager(final Context context, boolean javacBefore9, Collection<JavaSourceTransformer> transformers) {
+  public JpsJavacFileManager(final Context context, boolean javacBefore9, Collection<? extends JavaSourceTransformer> transformers) {
     super(context.getStandardFileManager());
     myJavacBefore9 = javacBefore9;
     mySourceTransformers = transformers;
@@ -379,6 +379,9 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
 
   private boolean isFileSystemLocation(Location location) {
     try {
+      if (!(location instanceof StandardLocation)) {
+        return false;
+      }
       final StandardLocation loc = StandardLocation.valueOf(location.getName());
       if (loc == StandardLocation.PLATFORM_CLASS_PATH) {
         return myJavacBefore9;
@@ -498,13 +501,13 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     myOutputsMap = outputDirToSrcRoots;
   }
 
-  public static <T> Iterable<T> merge(final Iterable<T> first, final Iterable<T> second) {
+  public static <T> Iterable<T> merge(final Iterable<? extends T> first, final Iterable<? extends T> second) {
     return new Iterable<T>() {
       @Override
       @NotNull
       public Iterator<T> iterator() {
-        final Iterator<T> i1 = first.iterator();
-        final Iterator<T> i2 = second.iterator();
+        final Iterator<? extends T> i1 = first.iterator();
+        final Iterator<? extends T> i2 = second.iterator();
         return new Iterator<T>() {
           @Override
           public boolean hasNext() {
@@ -525,7 +528,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     };
   }
 
-  public static <T> Iterable<T> merge(final Collection<Iterable<T>> parts) {
+  public static <T> Iterable<T> merge(final Collection<? extends Iterable<T>> parts) {
     if (parts.isEmpty()) {
       return Collections.emptyList();
     }
@@ -535,14 +538,14 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     return merge((Iterable<Iterable<T>>)parts);
   }
 
-  public static <T> Iterable<T> merge(final Iterable<Iterable<T>> parts) {
+  public static <T> Iterable<T> merge(final Iterable<? extends Iterable<? extends T>> parts) {
     return new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {
-        final Iterator<Iterable<T>> partsIterator = parts.iterator();
+        final Iterator<? extends Iterable<? extends T>> partsIterator = parts.iterator();
         return new Iterator<T>() {
-          Iterator<T> currentPart;
+          Iterator<? extends T> currentPart;
           @Override
           public boolean hasNext() {
             return getCurrentPart() != null;
@@ -550,7 +553,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
 
           @Override
           public T next() {
-            final Iterator<T> part = getCurrentPart();
+            final Iterator<? extends T> part = getCurrentPart();
             if (part != null) {
               return part.next();
             }
@@ -562,7 +565,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
             throw new UnsupportedOperationException();
           }
 
-          private Iterator<T> getCurrentPart() {
+          private Iterator<? extends T> getCurrentPart() {
             while (currentPart == null || !currentPart.hasNext()) {
               if (partsIterator.hasNext()) {
                 currentPart = partsIterator.next().iterator();
@@ -579,7 +582,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     };
   }
 
-  public static <I,O> Iterable<O> convert(final Iterable<? extends I> from, final Function<I, ? extends O> converter) {
+  public static <I,O> Iterable<O> convert(final Iterable<? extends I> from, final Function<? super I, ? extends O> converter) {
     return new Iterable<O>() {
       @NotNull
       @Override
@@ -605,12 +608,12 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     };
   }
 
-  public static <T> Iterable<T> filter(final Iterable<T> data, final BooleanFunction<? super T> acceptElement) {
+  public static <T> Iterable<T> filter(final Iterable<? extends T> data, final BooleanFunction<? super T> acceptElement) {
     return new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {
-        final Iterator<T> it = data.iterator();
+        final Iterator<? extends T> it = data.iterator();
         return new Iterator<T>() {
           private T current = null;
           private boolean isPending = false;

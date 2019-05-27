@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
@@ -142,8 +141,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   /**
-   * @param parent parent component which is used to calculate heavy weight window ancestor.
-   *               {@code parent} cannot be {@code null} and must be showing.
+   * @param parent parent component (must be showing) which is used to calculate heavy weight window ancestor.
    */
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     boolean headless = isHeadlessEnv();
@@ -817,9 +815,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         SwingUtilities.invokeLater(() -> {
           myOpened = true;
           final DialogWrapper activeWrapper = getActiveWrapper();
-          for (JComponent c : UIUtil.uiTraverser(e.getWindow()).filter(JComponent.class)) {
+          UIUtil.uiTraverser(e.getWindow()).filter(JComponent.class).consumeEach(c -> {
             GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent());
-          }
+            c.invalidate();
+          });
+
+          e.getComponent().repaint();
+
           if (activeWrapper == null) {
             myFocusedCallback.setRejected();
           }
@@ -845,7 +847,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           setupSelectionOnPreferredComponent(toFocus);
 
           if (toFocus != null) {
-            if (isShowing() && (ApplicationManagerEx.getApplicationEx() == null || ApplicationManagerEx.getApplicationEx().isActive())) {
+            if (isShowing() && (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isActive())) {
               toFocus.requestFocus();
             } else {
               toFocus.requestFocusInWindow();

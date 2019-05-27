@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
@@ -8,7 +8,9 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.ui.*;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUIScale.*;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContextAware;
+import com.intellij.util.ui.JBUIScale.UserScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -25,6 +27,8 @@ import static com.intellij.util.ui.JBUIScale.DerivedScaleType.DEV_SCALE;
 import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
 import static com.intellij.util.ui.JBUIScale.ScaleType.*;
 import static com.intellij.util.ui.TestScaleHelper.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 /**
  * Tests that {@link com.intellij.openapi.util.ScalableIcon#scale(float)} works correctly for custom JB icons.

@@ -12,12 +12,14 @@ import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
+import com.intellij.util.ArrayUtil
 import com.intellij.util.AuthData
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
+import javax.swing.Action
 import javax.swing.JComponent
 
 
@@ -25,11 +27,16 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
                                                    private val url: String,
                                                    rememberPassword: Boolean = true,
                                                    username: String? = null,
-                                                   editableUsername: Boolean = true) : DialogWrapper(project, true) {
+                                                   editableUsername: Boolean = true,
+                                                   private val showActionForCredHelper: Boolean = false) : DialogWrapper(project, true) {
   private val usernameField = JBTextField(username).apply { isEditable = editableUsername }
   private val passwordField = JBPasswordField()
   private val rememberCheckbox = JBCheckBox(CommonBundle.message("checkbox.remember.password"), rememberPassword)
   private val additionalProvidersButton = JBOptionButton(null, null).apply { isVisible = false }
+
+  companion object {
+    const val USE_CREDENTIAL_HELPER_CODE = NEXT_USER_EXIT_CODE
+  }
 
   var externalAuthData: AuthData? = null
     private set
@@ -47,6 +54,21 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
       row("Password:") { passwordField() }
       row {
         rememberCheckbox()
+      }
+    }
+  }
+
+  override fun createActions(): Array<Action> {
+    if (showActionForCredHelper) {
+      return ArrayUtil.prepend(createUsingCredHelperAction(), super.createActions())
+    }
+    return super.createActions()
+  }
+
+  private fun createUsingCredHelperAction(): AbstractAction {
+    return object : AbstractAction("I'm Using Credential Helper") {
+      override fun actionPerformed(e: ActionEvent?) {
+        close(USE_CREDENTIAL_HELPER_CODE, false)
       }
     }
   }

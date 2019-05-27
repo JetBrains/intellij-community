@@ -45,7 +45,7 @@ public class CountFilter extends FilterAction {
   }
 
   @Override
-  public boolean isApplicable(List<PsiElement> nodes, boolean completePattern, boolean target) {
+  public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     final StructuralSearchProfile profile = myTable.getProfile();
     myMinZero = profile.isApplicableConstraint(UIUtil.MINIMUM_ZERO, nodes, completePattern, false);
     myMaxUnlimited = profile.isApplicableConstraint(UIUtil.MAXIMUM_UNLIMITED, nodes, completePattern, false);

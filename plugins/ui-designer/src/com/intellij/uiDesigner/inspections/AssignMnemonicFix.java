@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.SwingProperties;
@@ -68,7 +69,7 @@ public class AssignMnemonicFix extends QuickFix {
     for(int i=0; i<value.length(); i++) {
       final char ch = value.charAt(i);
       if (i == 0 || Character.isUpperCase(ch) || (i > 0 && value.charAt(i-1) == ' ')) {
-        if (Character.isLetter(ch) && usedMnemonics.indexOf(String.valueOf(ch).toUpperCase()) < 0) {
+        if (Character.isLetter(ch) && usedMnemonics.indexOf(StringUtil.toUpperCase(String.valueOf(ch))) < 0) {
           variants.add(value.substring(0, i) + "&" + value.substring(i));
         }
       }
@@ -78,7 +79,7 @@ public class AssignMnemonicFix extends QuickFix {
       // try any unused characters
       for(int i=0; i<value.length(); i++) {
         final char ch = value.charAt(i);
-        if (Character.isLetter(ch) && usedMnemonics.indexOf(String.valueOf(ch).toUpperCase()) < 0) {
+        if (Character.isLetter(ch) && usedMnemonics.indexOf(StringUtil.toUpperCase(String.valueOf(ch))) < 0) {
           variants.add(value.substring(0, i) + "&" + value.substring(i));
         }
       }

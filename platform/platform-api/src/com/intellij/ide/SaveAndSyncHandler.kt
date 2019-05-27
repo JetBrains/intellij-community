@@ -26,6 +26,12 @@ abstract class SaveAndSyncHandler {
   }
 
   data class SaveTask @JvmOverloads constructor(val onlyProject: Project? = null, val saveDocuments: Boolean = true, val forceSavingAllSettings: Boolean = false) {
+    companion object {
+      // for Java clients
+      @JvmStatic
+      fun projectIncludingAllSettings(project: Project) = SaveTask(onlyProject = project, saveDocuments = false, forceSavingAllSettings = true)
+    }
+
     fun isMoreGenericThan(other: SaveTask): Boolean {
       return onlyProject == null && other.onlyProject != null && saveDocuments == other.saveDocuments && forceSavingAllSettings == other.forceSavingAllSettings
     }
@@ -33,6 +39,8 @@ abstract class SaveAndSyncHandler {
 
   @ApiStatus.Experimental
   abstract fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean = false)
+
+  fun scheduleProjectSave(project: Project) = scheduleSave(SaveTask(project, saveDocuments = false))
 
   @Deprecated("", ReplaceWith("FileDocumentManager.getInstance().saveAllDocuments()", "com.intellij.openapi.fileEditor.FileDocumentManager"))
   fun saveProjectsAndDocuments() {

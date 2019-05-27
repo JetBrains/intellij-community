@@ -3,7 +3,10 @@ package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.FirstBaseTestConfigurationFactory;
+import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.MultiFactoryLocalTestConfigurationFactory;
+import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.MultiFactoryRemoteTestConfigurationFactory;
 import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.SecondBaseTestConfigurationFactory;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -18,8 +21,8 @@ import static java.lang.String.valueOf;
 
 public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
 
-  private static void doTest(@NotNull List<RunnerAndConfigurationSettings> configurations,
-                             @NotNull Set<TestUsageDescriptor> expected, boolean withTemporary) {
+  private static void doTest(@NotNull List<? extends RunnerAndConfigurationSettings> configurations,
+                             @NotNull Set<? extends TestUsageDescriptor> expected, boolean withTemporary) {
     final Project project = getProject();
     final RunManager manager = RunManager.getInstance(project);
     try {
@@ -329,10 +332,37 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
     doTest(configurations, expected, true);
   }
 
+  public void testRunConfigurationWithLocalFactory() {
+    final List<RunnerAndConfigurationSettings> configurations = new ArrayList<>();
+    final RunManager instance = RunManager.getInstance(getProject());
+    final MultiFactoryLocalTestConfigurationFactory factory = MultiFactoryLocalTestConfigurationFactory.INSTANCE;
+    configurations.add(createByFactory(instance, factory, 1, false, false, false, true));
+
+    final Set<TestUsageDescriptor> expected = new HashSet<>();
+    expected.add(new TestUsageDescriptor(
+      "MultiFactoryTestRunConfigurationType/Local", 1,
+      create(false, false, false, true))
+    );
+    doTest(configurations, expected, true);
+  }
+
+  public void testRunConfigurationWithRemoteFactory() {
+    final List<RunnerAndConfigurationSettings> configurations = new ArrayList<>();
+    final RunManager instance = RunManager.getInstance(getProject());
+    final MultiFactoryRemoteTestConfigurationFactory factory = MultiFactoryRemoteTestConfigurationFactory.INSTANCE;
+    configurations.add(createByFactory(instance, factory, 1, false, false, false, true));
+
+    final Set<TestUsageDescriptor> expected = new HashSet<>();
+    expected.add(new TestUsageDescriptor(
+      "MultiFactoryTestRunConfigurationType/Remote", 1,
+      create(false, false, false, true))
+    );
+    doTest(configurations, expected, true);
+  }
+
   @NotNull
   private static FeatureUsageData create(boolean isShared, boolean isEditBeforeRun, boolean isActivate, boolean isParallel) {
     return new FeatureUsageData().
-      addData("plugin_type", "PLATFORM").
       addData("edit_before_run", isEditBeforeRun).
       addData("activate_before_run", isActivate).
       addData("shared", isShared).
@@ -390,17 +420,20 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
   private static RunnerAndConfigurationSettings createFirst(@NotNull RunManager manager, int index,
                                                             boolean isShared, boolean isEditBeforeRun,
                                                             boolean isActivate, boolean isParallel) {
-    return configure(manager.createConfiguration("Test_" + index, FirstBaseTestConfigurationFactory.INSTANCE),
-                     isShared, isEditBeforeRun, isActivate, isParallel
-    );
+    return createByFactory(manager, FirstBaseTestConfigurationFactory.INSTANCE, index, isShared, isEditBeforeRun, isActivate, isParallel);
+
   }
 
   private static RunnerAndConfigurationSettings createSecond(@NotNull RunManager manager, int index,
                                                              boolean isShared, boolean isEditBeforeRun,
                                                              boolean isActivate, boolean isParallel) {
-    return configure(manager.createConfiguration("Test_" + index, SecondBaseTestConfigurationFactory.INSTANCE),
-                     isShared, isEditBeforeRun, isActivate, isParallel
-    );
+    return createByFactory(manager, SecondBaseTestConfigurationFactory.INSTANCE, index, isShared, isEditBeforeRun, isActivate, isParallel);
+  }
+
+  private static RunnerAndConfigurationSettings createByFactory(@NotNull RunManager manager, @NotNull ConfigurationFactory factory,
+                                                                int index, boolean isShared, boolean isEditBeforeRun,
+                                                                boolean isActivate, boolean isParallel) {
+    return configure(manager.createConfiguration("Test_" + index, factory), isShared, isEditBeforeRun, isActivate, isParallel);
   }
 
   @NotNull

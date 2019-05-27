@@ -42,4 +42,10 @@ public interface PersistentStateComponent<T> {
    */
   default void noStateLoaded() {
   }
+
+  /**
+   * If class also is a component, then this method will be called after loading state (even if not state).
+   */
+  default void initializeComponent() {
+  }
 }

@@ -44,7 +44,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   }
 
   @NotNull
-  private Collection<AbstractTreeNode> doModify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children) {
+  private Collection<AbstractTreeNode> doModify(@NotNull AbstractTreeNode parent, @NotNull Collection<? extends AbstractTreeNode> children) {
     List<AbstractTreeNode> result = new ArrayList<>();
     for (AbstractTreeNode<?> child : children) {
       ProgressManager.checkCanceled();

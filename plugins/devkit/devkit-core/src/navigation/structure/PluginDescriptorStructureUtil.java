@@ -304,7 +304,7 @@ public class PluginDescriptorStructureUtil {
       return result;
     }
 
-    if (KNOWN_TOP_LEVEL_NODE_NAMES.contains(element.getXmlElementName().toLowerCase())) {
+    if (KNOWN_TOP_LEVEL_NODE_NAMES.contains(StringUtil.toLowerCase(element.getXmlElementName()))) {
       return element.getRawText();
     }
 
@@ -387,7 +387,7 @@ public class PluginDescriptorStructureUtil {
     String[] words = NameUtil.nameToWords(result);
     for (int i = 0; i < words.length; i++) {
       @NonNls String word = words[i];
-      String replacement = TAG_DISPLAY_NAME_REPLACEMENTS.get(word.toLowerCase());
+      String replacement = TAG_DISPLAY_NAME_REPLACEMENTS.get(StringUtil.toLowerCase(word));
       if (replacement != null) {
         words[i] = replacement;
       }

@@ -139,8 +139,8 @@ abstract class ChunkOptimizer<T> {
     @NotNull private final CharSequence myText1;
     @NotNull private final CharSequence myText2;
 
-    public WordChunkOptimizer(@NotNull List<InlineChunk> words1,
-                              @NotNull List<InlineChunk> words2,
+    public WordChunkOptimizer(@NotNull List<? extends InlineChunk> words1,
+                              @NotNull List<? extends InlineChunk> words2,
                               @NotNull CharSequence text1,
                               @NotNull CharSequence text2,
                               @NotNull FairDiffIterable changes,

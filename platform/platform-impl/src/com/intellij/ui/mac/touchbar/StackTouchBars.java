@@ -37,7 +37,7 @@ public class StackTouchBars {
   }
 
   synchronized
-  void pop(@Nullable Condition<BarContainer> condition) {
+  void pop(@Nullable Condition<? super BarContainer> condition) {
     final BarContainer top = myContainersStack.peek();
     if (top == null)
       return;

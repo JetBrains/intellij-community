@@ -8,6 +8,7 @@ import com.intellij.ide.browsers.BrowserLauncherAppless;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +37,7 @@ public class BrowserUtil {
   private BrowserUtil() { }
 
   public static boolean isAbsoluteURL(String url) {
-    return ourExternalPrefix.matcher(url.toLowerCase(Locale.ENGLISH)).find();
+    return ourExternalPrefix.matcher(StringUtil.toLowerCase(url)).find();
   }
 
   public static String getDocURL(String url) {

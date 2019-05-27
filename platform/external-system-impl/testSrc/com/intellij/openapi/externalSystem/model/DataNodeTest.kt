@@ -61,11 +61,12 @@ class DataNodeTest {
     val dataNodes = listOf(DataNode(Key.create(ProjectSystemId::class.java, 0), id, null),
                            DataNode(Key.create(ProjectSystemId::class.java, 0), id, null))
 
-    dataNodes.forEach { it.serializeData() }
+    val buffer = WriteAndCompressSession()
+    dataNodes.forEach { it.serializeData(buffer) }
     val out = BufferExposingByteArrayOutputStream()
     ObjectSerializer.instance.writeList(dataNodes, DataNode::class.java, out)
     val bytes = out.toByteArray()
-    val deserializedList = ObjectSerializer.instance.readList(DataNode::class.java, bytes, beanConstructed = externalSystemBeanConstructed)
+    val deserializedList = ObjectSerializer.instance.readList(DataNode::class.java, bytes, createDataNodeReadConfiguration(javaClass.classLoader))
 
     assertThat(deserializedList).hasSize(2)
     assertThat(deserializedList[0].data === deserializedList[1].data)
@@ -97,7 +98,7 @@ class DataNodeTest {
 
   private fun wrapAndDeserialize(barObject: Any): DataNode<*> {
     val original = DataNode(Key.create(barObject.javaClass, 0), barObject, null)
-    original.serializeData()
+    original.serializeData(WriteAndCompressSession())
     val bytes = ObjectSerializer.instance.writeAsBytes(original)
     return ObjectSerializer.instance.read(DataNode::class.java, bytes)
   }

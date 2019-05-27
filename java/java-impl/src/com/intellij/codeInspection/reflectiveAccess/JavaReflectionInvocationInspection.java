@@ -126,9 +126,9 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
   @Nullable
   static Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset, boolean allowVarargAsArray) {
     if (allowVarargAsArray && arguments.length == argumentOffset + 1) {
-      final PsiExpression[] expressions = getVarargAsArray(arguments[argumentOffset]);
+      final List<PsiExpression> expressions = getVarargs(arguments[argumentOffset]);
       if (expressions != null) {
-        return new Arguments(expressions, true);
+        return new Arguments(expressions.toArray(PsiExpression.EMPTY_ARRAY), true);
       }
     }
     if (arguments.length >= argumentOffset) {

@@ -7,6 +7,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.*;
 import javax.swing.*;
@@ -162,6 +163,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     return myIcon;
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return this;

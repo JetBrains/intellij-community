@@ -231,6 +231,11 @@ public class JBTabsImpl extends JComponent
     mySingleRowLayout = createSingleRowLayout();
     myLayout = mySingleRowLayout;
 
+    if(JBTabsFactory.getUseNewTabs()) {
+      OnePixelDivider divider = mySplitter.getDivider();
+      divider.setOpaque(false);
+    }
+
     PropertyCombinatorsKt.map(childAtMouse(this), it -> it instanceof TabLabel ? it : null).advise(lifetime, label -> {
       if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
 
@@ -1267,6 +1272,18 @@ public class JBTabsImpl extends JComponent
   }
 
   void revalidateAndRepaint(final boolean layoutNow) {
+    if (myVisibleInfos.isEmpty()) {
+      setOpaque(false);
+      final Component nonOpaque = UIUtil.findUltimateParent(this);
+      if (nonOpaque != null && getParent() != null) {
+        final Rectangle toRepaint = SwingUtilities.convertRectangle(getParent(), getBounds(), nonOpaque);
+        nonOpaque.repaint(toRepaint.x, toRepaint.y, toRepaint.width, toRepaint.height);
+      }
+    }
+    else {
+      setOpaque(true);
+    }
+
     if (layoutNow) {
       validate();
     }
@@ -1698,9 +1715,6 @@ public class JBTabsImpl extends JComponent
 
   @Override
   protected void paintComponent(final Graphics g) {
-    myTabPainter.fillBackground((Graphics2D)g, new Rectangle(0, 0, getWidth(), getHeight()));
-    myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
-
     super.paintComponent(g);
 
     if (myVisibleInfos.isEmpty()) {
@@ -1708,11 +1722,14 @@ public class JBTabsImpl extends JComponent
         UISettings.setupAntialiasing(g);
         UIUtil.drawCenteredString((Graphics2D)g, getBounds(), myEmptyText);
       }
+      return;
     }
-    else {
-      if (!isStealthModeEffective() && !isHideTabs()) {
-        myLastPaintedSelection = getSelectedInfo();
-      }
+
+    myTabPainter.fillBackground((Graphics2D)g, new Rectangle(0, 0, getWidth(), getHeight()));
+    myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
+
+    if (!isStealthModeEffective() && !isHideTabs()) {
+      myLastPaintedSelection = getSelectedInfo();
     }
   }
 

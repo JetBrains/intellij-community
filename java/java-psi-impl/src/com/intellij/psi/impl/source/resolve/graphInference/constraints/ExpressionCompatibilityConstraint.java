@@ -18,15 +18,15 @@ import java.util.Set;
 
 public class ExpressionCompatibilityConstraint extends InputOutputConstraintFormula {
   private final PsiExpression myExpression;
-  private PsiType myT;
 
   public ExpressionCompatibilityConstraint(@NotNull PsiExpression expression, @NotNull PsiType type) {
+    super(type);
     myExpression = expression;
-    myT = type;
   }
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+    PsiType myT = getCurrentType();
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
 
       PsiType exprType = myExpression.getType();
@@ -64,7 +64,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     }
     if (myExpression instanceof PsiParenthesizedExpression) {
       final PsiExpression expression = ((PsiParenthesizedExpression)myExpression).getExpression();
-      if (expression != null) {
+      if (expression != null && !InferenceSession.ignoreLambdaConstraintTree(expression)) {
         constraints.add(new ExpressionCompatibilityConstraint(expression, myT));
         return true;
       }
@@ -72,19 +72,23 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
     if (myExpression instanceof PsiConditionalExpression) {
       final PsiExpression thenExpression = ((PsiConditionalExpression)myExpression).getThenExpression();
-      if (thenExpression != null) {
+      if (thenExpression != null && !InferenceSession.ignoreLambdaConstraintTree(thenExpression)) {
         constraints.add(new ExpressionCompatibilityConstraint(thenExpression, myT));
       }
 
       final PsiExpression elseExpression = ((PsiConditionalExpression)myExpression).getElseExpression();
-      if (elseExpression != null) {
+      if (elseExpression != null && !InferenceSession.ignoreLambdaConstraintTree(elseExpression)) {
         constraints.add(new ExpressionCompatibilityConstraint(elseExpression, myT));
       }
       return true;
     }
 
     if (myExpression instanceof PsiSwitchExpression) {
-      PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)myExpression).forEach(expression -> constraints.add(new ExpressionCompatibilityConstraint(expression,myT)));
+      PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)myExpression).forEach(expression -> {
+        if (!InferenceSession.ignoreLambdaConstraintTree(expression)) {
+          constraints.add(new ExpressionCompatibilityConstraint(expression, myT));
+        }
+      });
       return true;
     }
 
@@ -99,7 +103,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         for (Pair<InferenceVariable[], PsiClassType> pair : callSession.myIncorporationPhase.getCaptures()) {
           session.myIncorporationPhase.addCapture(pair.first, pair.second);
         }
-        callSession.setUncheckedInContext();
+        final MethodCandidateInfo currentMethod = session.getCurrentMethod(((PsiCall)myExpression).getArgumentList());
+        final JavaResolveResult resolveResult = currentMethod != null ? currentMethod : PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)myExpression);
+        if (resolveResult instanceof MethodCandidateInfo) {
+          ((MethodCandidateInfo)resolveResult).setErased(callSession.isErased());
+        }
       }
       return true;
     }
@@ -155,7 +163,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
       if (typeParams != null) {
         PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(currentMethod, resolveResult, method);
-        final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression);
+        InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression, session.getInferencePolicy());
         callSession.propagateVariables(session);
         if (method != null) {
           final PsiExpression[] args = argumentList.getExpressions();
@@ -217,16 +225,6 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
   @Override
   public PsiExpression getExpression() {
     return myExpression;
-  }
-
-  @Override
-  public PsiType getT() {
-    return myT;
-  }
-
-  @Override
-  protected void setT(PsiType t) {
-    myT = t;
   }
 
   @Override

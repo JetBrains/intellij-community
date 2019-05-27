@@ -8,8 +8,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
-
 /**
  * @author nik
  */
@@ -101,7 +99,7 @@ public class ApplicationNamesInfo {
    * <strong>Kept for compatibility; use {@link #getFullProductName()} instead.</strong>
    */
   public String getLowercaseProductName() {
-    return StringUtil.capitalize(myProductName.toLowerCase(Locale.US));
+    return StringUtil.capitalize(StringUtil.toLowerCase(myProductName));
   }
 
   /**

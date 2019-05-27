@@ -7,7 +7,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
@@ -23,14 +22,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 final class CheckRegExpIntentionAction extends QuickEditAction implements Iconable {
-  CheckRegExpIntentionAction() {
-    if (PlatformUtils.isPyCharmEducational()) {
-      throw ExtensionNotApplicableException.INSTANCE;
-    }
-  }
-
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (PlatformUtils.isPyCharmEducational()) {
+      return false;
+    }
+
     if (editor.getUserData(CheckRegExpForm.CHECK_REG_EXP_EDITOR) != null) {
       // to disable intention inside CheckRegExpForm itself
       return false;

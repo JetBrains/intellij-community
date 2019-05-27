@@ -101,7 +101,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
 
   @Nullable
   protected RunnerAndConfigurationSettings findExistingByElement(final Location location,
-                                                                 @NotNull final List<RunnerAndConfigurationSettings> existingConfigurations,
+                                                                 @NotNull final List<? extends RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     assert isClone;
     return null;

@@ -217,6 +217,9 @@ public enum SpecialField implements VariableDescriptor {
   abstract boolean isMyAccessor(PsiMember accessor);
 
   public String getPresentationText(@NotNull DfaValue value, @Nullable PsiType type) {
+    if (value.getFactory() != null && getDefaultValue(value.getFactory(), false) == value) {
+      return "";
+    }
     return value.toString();
   }
 

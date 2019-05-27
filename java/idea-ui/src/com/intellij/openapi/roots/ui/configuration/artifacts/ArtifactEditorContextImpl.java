@@ -19,10 +19,11 @@ import com.intellij.facet.Facet;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -133,8 +134,8 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
         final ModuleRootModel rootModel = myParent.getModulesProvider().getRootModel(module);
         final String libraryName = library.getName();
         for (OrderEntry entry : rootModel.getOrderEntries()) {
-          if (entry instanceof ModuleLibraryOrderEntryImpl) {
-            final ModuleLibraryOrderEntryImpl libraryEntry = (ModuleLibraryOrderEntryImpl)entry;
+          if (entry instanceof LibraryOrderEntry && OrderEntryUtil.isModuleLibraryOrderEntry(entry)) {
+            final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
             if (libraryName != null && libraryName.equals(libraryEntry.getLibraryName())
                || libraryName == null && library.equals(libraryEntry.getLibrary())) {
               ProjectStructureConfigurable.getInstance(getProject()).selectOrderEntry(module, libraryEntry);
@@ -194,7 +195,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @Override
-  public List<Module> chooseModules(final List<Module> modules, final String title) {
+  public List<Module> chooseModules(final List<? extends Module> modules, final String title) {
     return new ChooseModulesDialog(getProject(), modules, title, null).showAndGetResult();
   }
 

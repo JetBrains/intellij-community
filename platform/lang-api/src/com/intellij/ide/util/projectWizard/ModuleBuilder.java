@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -338,14 +339,17 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return getModuleType().getNodeIcon(false);
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String getDescription() {
     return getModuleType().getDescription();
   }
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getPresentableName() {
     return getModuleTypeName();
   }
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   protected String getModuleTypeName() {
     String name = getModuleType().getName();
     return StringUtil.trimEnd(name, " Module");

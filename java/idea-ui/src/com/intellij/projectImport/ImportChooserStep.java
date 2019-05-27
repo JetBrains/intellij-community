@@ -30,7 +30,7 @@ import java.util.List;
 public class ImportChooserStep extends ProjectImportWizardStep {
   private static final String PREFERRED = "create.project.preferred.importer";
 
-  private final List<ProjectImportProvider> myProviders;
+  private final List<? extends ProjectImportProvider> myProviders;
   private final StepSequence mySequence;
   @Nullable
   private ProjectImportProvider myFromSourcesProvider;
@@ -40,7 +40,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
   private JBRadioButton myCreateFromSources;
   private JBRadioButton myImportFrom;
 
-  public ImportChooserStep(final List<ProjectImportProvider> providers, final StepSequence sequence, final WizardContext context) {
+  public ImportChooserStep(final List<? extends ProjectImportProvider> providers, final StepSequence sequence, final WizardContext context) {
     super(context);
     myProviders = providers;
     mySequence = sequence;
@@ -135,7 +135,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     }
   }
 
-  private static List<ProjectImportProvider> sorted(List<ProjectImportProvider> providers) {
+  private static List<ProjectImportProvider> sorted(List<? extends ProjectImportProvider> providers) {
     List<ProjectImportProvider> result = new ArrayList<>(providers);
     Collections.sort(result, (l, r) -> l.getName().compareToIgnoreCase(r.getName()));
     return result;

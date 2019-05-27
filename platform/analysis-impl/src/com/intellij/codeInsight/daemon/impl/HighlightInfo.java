@@ -951,7 +951,7 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  public void unregisterQuickFix(@NotNull Condition<IntentionAction> condition) {
+  public void unregisterQuickFix(@NotNull Condition<? super IntentionAction> condition) {
     quickFixActionRanges.removeIf(pair -> condition.value(pair.first.getAction()));
   }
 }

@@ -58,7 +58,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
     new InjectionProcessor(Configuration.getProjectInstance(project), support, operands) {
       @Override
       protected void processInjection(Language language,
-                                      List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                      List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                       boolean settingsAvailable,
                                       boolean unparsable) {
         InjectorUtils.registerInjection(language, list, file, registrar);
@@ -352,7 +352,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
     }
 
     protected void processInjection(Language language,
-                                    List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                    List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                     boolean settingsAvailable, boolean unparsable) {
     }
   }

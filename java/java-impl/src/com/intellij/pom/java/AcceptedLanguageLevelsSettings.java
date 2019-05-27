@@ -96,7 +96,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
     return LanguageLevel.HIGHEST.compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
   }
 
-  private static void acceptAndRestore(Project project, Collection<Module> modules, LanguageLevel languageLevel) {
+  private static void acceptAndRestore(Project project, Collection<? extends Module> modules, LanguageLevel languageLevel) {
     if (!getSettings().acceptedNames.contains(languageLevel.name())) {
       getSettings().acceptedNames.add(languageLevel.name());
     }

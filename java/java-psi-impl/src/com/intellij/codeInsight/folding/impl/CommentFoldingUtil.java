@@ -34,8 +34,8 @@ public final class CommentFoldingUtil {
   @Nullable
   public static FoldingDescriptor getCommentDescriptor(@NotNull PsiComment comment,
                                                        @NotNull Document document,
-                                                       @NotNull Set<PsiElement> processedComments,
-                                                       @NotNull Predicate<PsiElement> isCustomRegionFunc,
+                                                       @NotNull Set<? super PsiElement> processedComments,
+                                                       @NotNull Predicate<? super PsiElement> isCustomRegionFunc,
                                                        boolean isCollapse) {
     if (!processedComments.add(comment)) return null;
 
@@ -56,8 +56,8 @@ public final class CommentFoldingUtil {
 
   @Nullable
   private static TextRange getCommentRange(@NotNull PsiComment comment,
-                                           @NotNull Set<PsiElement> processedComments,
-                                           @NotNull Predicate<PsiElement> isCustomRegionFunc,
+                                           @NotNull Set<? super PsiElement> processedComments,
+                                           @NotNull Predicate<? super PsiElement> isCustomRegionFunc,
                                            @NotNull CodeDocumentationAwareCommenter docCommenter) {
     final IElementType commentType = comment.getTokenType();
     if (commentType == docCommenter.getDocumentationCommentTokenType() || commentType == docCommenter.getBlockCommentTokenType()) {
@@ -84,8 +84,8 @@ public final class CommentFoldingUtil {
    */
   @Nullable
   private static TextRange getOneLineCommentRange(@NotNull PsiComment startComment,
-                                                  @NotNull Set<PsiElement> processedComments,
-                                                  @NotNull Predicate<PsiElement> isCustomRegionFunc,
+                                                  @NotNull Set<? super PsiElement> processedComments,
+                                                  @NotNull Predicate<? super PsiElement> isCustomRegionFunc,
                                                   @NotNull CodeDocumentationAwareCommenter docCommenter) {
     if (isCustomRegionFunc.test(startComment)) return null;
 

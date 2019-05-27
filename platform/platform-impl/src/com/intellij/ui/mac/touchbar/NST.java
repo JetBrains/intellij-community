@@ -143,7 +143,7 @@ public class NST {
     return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // called from AppKit, uses per-event autorelease-pool
   }
 
-  public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<TBItemScrubber.ItemData> items, int itemsCount) {
+  public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<? extends TBItemScrubber.ItemData> items, int itemsCount) {
     final Memory mem = _packItems(items, 0, itemsCount);
     final ID scrubberNativePeer = ourNSTLibrary.createScrubber(uid, itemWidth, delegate, updater, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
     return scrubberNativePeer;
@@ -187,7 +187,7 @@ public class NST {
     ourNSTLibrary.updatePopover(popoverObj, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // creates autorelease-pool internally
   }
 
-  public static void updateScrubber(ID scrubObj, int itemWidth, List<TBItemScrubber.ItemData> items) {
+  public static void updateScrubber(ID scrubObj, int itemWidth, List<? extends TBItemScrubber.ItemData> items) {
     LOG.error("updateScrubber musn't be called");
   }
 
@@ -204,7 +204,7 @@ public class NST {
     return mem;
   }
 
-  static void appendScrubberItems(ID scrubObj, List<TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
+  static void appendScrubberItems(ID scrubObj, List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
     final Memory mem = _packItems(items, fromIndex, itemsCount);
     ourNSTLibrary.appendScrubberItems(scrubObj, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
   }
@@ -221,7 +221,7 @@ public class NST {
     ourNSTLibrary.showScrubberItems(scrubObj, mem, indices.size(), show);
   }
 
-  private static @Nullable Memory _packItems(List<TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
+  private static @Nullable Memory _packItems(List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
     if (items == null || itemsCount <= 0)
       return null;
     if (fromIndex < 0) {

@@ -32,6 +32,8 @@ import com.intellij.vcs.log.VcsLogFileHistoryProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -68,12 +70,12 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
 
   private static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
     VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
-    historyProvider.showFileHistory(project, path, revisionNumber);
+    historyProvider.showFileHistory(project, Collections.singletonList(path), revisionNumber);
   }
 
   private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
     VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
-    return historyProvider != null && historyProvider.canShowFileHistory(project, path, revisionNumber);
+    return historyProvider != null && historyProvider.canShowFileHistory(project, Collections.singletonList(path), revisionNumber);
   }
 
   private static boolean isVisible(@NotNull AnActionEvent event) {

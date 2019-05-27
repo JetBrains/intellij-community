@@ -51,6 +51,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testClsCapturedReturnTypes() { doTest(); }
   public void testOverloadChooserOfReturnType() { doTest(); }
   public void testIDEA98866() { doTest(); }
+  public void testDiamondWithConditionalInside() { doTest(); }
   public void testIncompleteSubstitution() { doTest(); }
   public void testJDK8028774() { doTest(); }
   public void testErasedByReturnConstraint() { doTest(); }

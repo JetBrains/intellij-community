@@ -105,7 +105,7 @@ fun getSnapshotRelativePath(lafName: String): String {
 }
 
 @Throws(FileComparisonFailure::class)
-fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal) {
+fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String) {
   val actualSerializedLayout: String
   if (component.layout is MigLayout) {
     actualSerializedLayout = serializeLayout(component)
@@ -118,11 +118,11 @@ fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String
       .dump(linkedMapOf("bounds" to dumpComponentBounds(component)))
   }
 
-  compareSnapshot(snapshotDir.resolve("$snapshotName.yml"), actualSerializedLayout, isUpdateSnapshots)
+  compareFileContent(actualSerializedLayout, snapshotDir.resolve("$snapshotName.yml"))
 }
 
 @Throws(FileComparisonFailure::class)
-internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, isUpdateSnapshots: Boolean) {
+internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, updateIfMismatch: Boolean) {
   if (!snapshotFile.exists()) {
     System.out.println("Write a new snapshot ${snapshotFile.fileName}")
     snapshotFile.write(newData)
@@ -131,17 +131,13 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, isUpdateSna
 
   val uri = snapshotFile.toUri().toURL()
 
-  fun updateSnapshot() {
-    System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
-    snapshotFile.write(newData)
-  }
-
   val old = try {
     snapshotFile.inputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
   }
   catch (e: Exception) {
-    if (isUpdateSnapshots) {
-      updateSnapshot()
+    if (updateIfMismatch) {
+      System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
+      snapshotFile.write(newData)
       return
     }
 
@@ -155,38 +151,10 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, isUpdateSna
   }
 
   try {
-    compareFileContent(newData, snapshotFile)
+    compareFileContent(newData, snapshotFile, updateIfMismatch = updateIfMismatch)
   }
   catch (e: FileComparisonFailure) {
-    if (isUpdateSnapshots) {
-      updateSnapshot()
-      return
-    }
-    else {
-      throw MultipleFailureException(listOf(AssertionError(imageMismatchError.toString()), e))
-    }
-  }
-}
-
-@Throws(FileComparisonFailure::class)
-internal fun compareSnapshot(snapshotFile: Path, newData: String, isUpdateSnapshots: Boolean) {
-  if (!snapshotFile.exists()) {
-    System.out.println("Write a new snapshot ${snapshotFile.fileName}")
-    snapshotFile.write(newData)
-    return
-  }
-
-  try {
-    compareFileContent(newData, snapshotFile)
-  }
-  catch (e: FileComparisonFailure) {
-    if (isUpdateSnapshots) {
-      System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
-      snapshotFile.write(newData)
-    }
-    else {
-      throw e
-    }
+    throw MultipleFailureException(listOf(AssertionError(imageMismatchError.toString()), e))
   }
 }
 

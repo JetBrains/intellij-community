@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -162,7 +161,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
                                                       MethodCandidateInfo.isOverloadCheck(parentArgList) &&
                                                       Arrays.stream(parentArgList.getExpressions())
                                                         .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-                                                        .noneMatch(expression -> LambdaUtil.getFunctionalTypeMap().containsKey(expression));
+                                                        .noneMatch(expression -> expression != null && ThreadLocalTypes.hasBindingFor(expression));
 
       PsiType theOnly = null;
       for (int i = 0; i < results.length; i++) {
@@ -230,7 +229,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       return TypeConversionUtil.erasure(ret);
     }
 
-    if (InferenceSession.wasUncheckedConversionPerformed(call)) {
+    if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isErased()) {
       // 18.5.2
       // if unchecked conversion was necessary, then this substitution provides the parameter types of the invocation type, 
       // while the return type and thrown types are given by the erasure of m's type (without applying theta').

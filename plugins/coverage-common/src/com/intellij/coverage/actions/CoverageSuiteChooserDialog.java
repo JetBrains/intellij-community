@@ -67,7 +67,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     mySuitesTree.setShowsRootHandles(false);
     TreeUtil.installActions(mySuitesTree);
     TreeUtil.expandAll(mySuitesTree);
-    TreeUtil.selectFirstNode(mySuitesTree);
+    TreeUtil.promiseSelectFirst(mySuitesTree);
     mySuitesTree.setMinimumSize(new Dimension(25, -1));
     setOKButtonText("Show selected");
     init();

@@ -336,7 +336,7 @@ public final class CommentTracker {
   }
 
   public @NotNull PsiElement replaceExpressionAndRestoreComments(@NotNull PsiExpression expression, @NotNull String replacementText,
-                                                                 List<PsiElement> toDelete) {
+                                                                 List<? extends PsiElement> toDelete) {
     List<PsiElement> trailingComments = new SmartList<>();
     List<PsiElement> comments = grabCommentsBefore(PsiTreeUtil.lastChild(expression));
     if (!comments.isEmpty()) {
@@ -381,7 +381,7 @@ public final class CommentTracker {
     return hasComment ? suffix : Collections.emptyList();
   }
 
-  private static void restoreSuffixComments(PsiElement target, List<PsiElement> suffix) {
+  private static void restoreSuffixComments(PsiElement target, List<? extends PsiElement> suffix) {
     if (!suffix.isEmpty()) {
       PsiElement lastChild = target.getLastChild();
       if (lastChild instanceof PsiComment && JavaTokenType.END_OF_LINE_COMMENT.equals(((PsiComment)lastChild).getTokenType())) {

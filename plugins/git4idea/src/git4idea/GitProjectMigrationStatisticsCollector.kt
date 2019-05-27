@@ -25,7 +25,7 @@ class GitProjectMigrationStatisticsCollector : ProjectUsagesCollector() {
 
     val gitMappings = mappings.filter { it.vcs == gitVcs.name }
     val hasDefaultGitMapping = gitMappings.any { it.isDefaultMapping }
-    val explicitlyMappedRoots = gitMappings.mapNotNull { LocalFileSystem.getInstance().findFileByPath(it.systemIndependentPath()) }
+    val explicitlyMappedRoots = gitMappings.mapNotNull { LocalFileSystem.getInstance().findFileByPath(it.directory) }
     val projectMappingRoots = actualGitRoots.toMutableSet() - explicitlyMappedRoots
 
     if (hasDefaultGitMapping) {

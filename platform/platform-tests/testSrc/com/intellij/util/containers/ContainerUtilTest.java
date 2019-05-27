@@ -32,7 +32,7 @@ import static org.junit.Assert.assertArrayEquals;
 public class ContainerUtilTest extends TestCase {
   public void testFindInstanceOf() {
     Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList(), "1").iterator();
-    String string = (String)ContainerUtil.find(iterator, FilteringIterator.instanceOf(String.class));
+    String string = ContainerUtil.findInstance(iterator, String.class);
     assertEquals("1", string);
   }
 

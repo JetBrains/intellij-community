@@ -41,6 +41,7 @@ import java.awt.event.KeyEvent;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -291,10 +292,16 @@ public final class TreeUtil {
     return result;
   }
 
+  /**
+   * Tries to select the first node in the specified tree as soon as possible.
+   *
+   * @param tree a tree, which node should be selected
+   * @return a callback that will be done when first visible node is selected
+   * @see #promiseSelectFirst
+   */
   @NotNull
   public static ActionCallback selectFirstNode(@NotNull JTree tree) {
-    TreePath selectionPath = getFirstNodePath(tree);
-    return selectPath(tree, selectionPath);
+    return Promises.toActionCallback(promiseSelectFirst(tree));
   }
 
   @NotNull
@@ -308,6 +315,11 @@ public final class TreeUtil {
     return selectionPath;
   }
 
+  /**
+   * @see #promiseSelectFirstLeaf
+   * @deprecated
+   */
+  @Deprecated
   @NotNull
   public static TreePath getFirstLeafNodePath(@NotNull JTree tree) {
     final TreeModel model = tree.getModel();
@@ -1554,6 +1566,37 @@ public final class TreeUtil {
     return promiseSelect(tree, path -> !tree.isRootVisible() && path.getParentPath() == null
                                        ? TreeVisitor.Action.CONTINUE
                                        : TreeVisitor.Action.INTERRUPT);
+  }
+
+  /**
+   * Promises to select the first leaf node in the specified tree.
+   * <strong>NB!:</strong>
+   * The returned promise may be resolved immediately,
+   * if this method is called on inappropriate background thread.
+   *
+   * @param tree a tree, which node should be selected
+   * @return a promise that will be succeed when first leaf node is made visible and selected
+   */
+  @NotNull
+  public static Promise<TreePath> promiseSelectFirstLeaf(@NotNull JTree tree) {
+    AtomicReference<TreePath> reference = new AtomicReference<>();
+    AsyncPromise<TreePath> promise = new AsyncPromise<>();
+    promiseMakeVisible(tree, path -> {
+      TreePath parent = reference.getAndSet(path);
+      if (getPathCount(parent) == getPathCount(path.getParentPath())) return TreeVisitor.Action.CONTINUE;
+      internalSelectPath(tree, parent);
+      promise.setResult(parent);
+      return TreeVisitor.Action.INTERRUPT;
+    }, promise)
+      .onError(promise::setError)
+      .onSuccess(path -> {
+        if (!promise.isDone()) promise.cancel();
+      });
+    return promise;
+  }
+
+  private static int getPathCount(@Nullable TreePath path) {
+    return path == null ? 0 : path.getPathCount();
   }
 
   /**

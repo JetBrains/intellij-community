@@ -284,7 +284,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           }
 
           @Override
-          public void addChildren(List<DebuggerTreeNode> nodes, boolean last) {
+          public void addChildren(List<? extends DebuggerTreeNode> nodes, boolean last) {
             XValueChildrenList childrenList = XValueChildrenList.EMPTY;
             if (!nodes.isEmpty()) {
               childrenList = new XValueChildrenList(nodes.size());
@@ -304,7 +304,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           }
 
           @Override
-          public void setChildren(List<DebuggerTreeNode> nodes) {
+          public void setChildren(List<? extends DebuggerTreeNode> nodes) {
             addChildren(nodes, true);
           }
 

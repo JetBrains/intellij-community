@@ -60,7 +60,7 @@ import java.util.concurrent.TimeoutException;
  * @author Dmitry Avdeev
  */
 @State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, ChangeListDecorator, Disposable, BaseComponent {
+public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, ChangeListDecorator, Disposable {
   private static final Logger LOG = Logger.getInstance(TaskManagerImpl.class);
 
   private static final DecimalFormat LOCAL_TASK_ID_FORMAT = new DecimalFormat("LOCAL-00000");
@@ -707,7 +707,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myCacheRefreshTimer = UIUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
         @Override

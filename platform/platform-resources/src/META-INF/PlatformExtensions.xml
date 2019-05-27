@@ -236,8 +236,6 @@
     <applicationService serviceInterface="com.intellij.openapi.application.ApplicationInfo"
                         serviceImplementation="com.intellij.openapi.application.impl.ApplicationInfoImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.execution.RunnerRegistry"/>
-
     <applicationService serviceInterface="org.jetbrains.ide.script.IdeScriptEngineManager"
                         serviceImplementation="org.jetbrains.ide.script.Jsr223IdeScriptEngineManagerImpl"/>
 
@@ -246,8 +244,12 @@
 
     <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor" serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.diagnostic.WindowsDefenderChecker"/>
+
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
+
+    <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
 
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
@@ -409,6 +411,9 @@
 
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
 
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector$FacetTypeUtilValidator" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl$ProductivityUtilValidator" />
+    <statistics.validation.customUtilWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector$RegistryUtilValidator" />
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
@@ -474,6 +479,8 @@
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity" order="after OpenFilesActivity"/>
     <postStartupActivity id="OpenFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
+
+    <postStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity"/>
 
     <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <preloadingActivity implementation="com.intellij.ide.ui.search.SearchableOptionPreloader"/>
@@ -594,6 +601,8 @@
     </experimentalFeature>
 
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
+
+    <postStartupActivity implementation="com.intellij.diagnostic.AnalyzePendingSnapshotActivity"/>
 
     <obsoleteStorage file="statistics.toolbar.clicks.xml">
       <components>

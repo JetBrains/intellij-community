@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author max
  */
-public class RefreshSessionImpl extends RefreshSession {
+class RefreshSessionImpl extends RefreshSession {
   private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
   private static final AtomicLong ID_COUNTER = new AtomicLong(0);
@@ -102,7 +102,7 @@ public class RefreshSessionImpl extends RefreshSession {
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
 
-  public void scan() {
+  void scan() {
     List<VirtualFile> workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<>();
     boolean haveEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
@@ -205,7 +205,7 @@ public class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  public void waitFor() {
+  void waitFor() {
     mySemaphore.waitFor();
   }
 

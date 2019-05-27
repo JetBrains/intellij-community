@@ -381,7 +381,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   @Nullable
   @Deprecated
   protected SerializationFilter getSerializationFilter() {
-    return XmlSerializer.getDefaultSerializationFilter();
+    return XmlSerializer.getJdomSerializer().getDefaultSerializationFilter();
   }
 
   /**

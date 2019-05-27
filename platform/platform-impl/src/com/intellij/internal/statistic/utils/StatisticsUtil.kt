@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TimeoutCachedValue
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
 import java.io.IOException
@@ -28,6 +29,13 @@ fun getProjectId(project: Project): String {
 
 fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
   return newData(project, context)
+}
+
+fun addPluginInfoTo(info: PluginInfo, data : MutableMap<String, Any>) {
+  data["plugin_type"] = info.type.name
+  if (info.type.isSafeToReport() && info.id != null && StringUtil.isNotEmpty(info.id)) {
+    data["plugin"] = info.id
+  }
 }
 
 fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {

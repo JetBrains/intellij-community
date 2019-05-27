@@ -178,7 +178,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
     }
   }
 
-  private static List<LineFragment> createInnerFragments(@NotNull List<LineFragment> lineFragments,
+  private static List<LineFragment> createInnerFragments(@NotNull List<? extends LineFragment> lineFragments,
                                                          @NotNull CharSequence text1,
                                                          @NotNull CharSequence text2,
                                                          @NotNull ComparisonPolicy policy,
@@ -431,8 +431,8 @@ public class ComparisonManagerImpl extends ComparisonManager {
     return newFragments;
   }
 
-  private static void processAdjoining(@NotNull List<LineFragment> oldFragments,
-                                       @NotNull Consumer<List<LineFragment>> consumer) {
+  private static void processAdjoining(@NotNull List<? extends LineFragment> oldFragments,
+                                       @NotNull Consumer<? super List<? extends LineFragment>> consumer) {
     int startIndex = 0;
     for (int i = 1; i < oldFragments.size(); i++) {
       if (!isAdjoining(oldFragments.get(i - 1), oldFragments.get(i))) {
@@ -446,9 +446,9 @@ public class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  private static List<LineFragment> processAdjoining(@NotNull List<LineFragment> fragments,
-                                                     @NotNull CharSequence text1, @NotNull CharSequence text2,
-                                                     @NotNull ComparisonPolicy policy, boolean squash, boolean trim) {
+  private static List<? extends LineFragment> processAdjoining(@NotNull List<? extends LineFragment> fragments,
+                                                               @NotNull CharSequence text1, @NotNull CharSequence text2,
+                                                               @NotNull ComparisonPolicy policy, boolean squash, boolean trim) {
     int start = 0;
     int end = fragments.size();
 
@@ -486,7 +486,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  private static LineFragment doSquash(@NotNull List<LineFragment> oldFragments) {
+  private static LineFragment doSquash(@NotNull List<? extends LineFragment> oldFragments) {
     assert !oldFragments.isEmpty();
     if (oldFragments.size() == 1) return oldFragments.get(0);
 

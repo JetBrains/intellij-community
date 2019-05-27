@@ -19,6 +19,7 @@ import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaFactMap;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -27,7 +28,9 @@ import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author gregsh
@@ -82,15 +85,33 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) return "<unknown>";
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
-    DfaFactMap map = result == null ? null : result.getAllFacts(expression);
+    String advancedTypeInfo = "";
     String basicTypeEscaped = getInformationHint(expression);
-    PsiType type = expression.getType();
-    String advancedTypeInfo = map == null ? "" : map.facts(new DfaFactMap.FactMapper<String>() {
-      @Override
-      public <T> String apply(DfaFactType<T> factType, T value) {
-        return formatFact(factType, value, type);
+    if (result != null) {
+      DfaFactMap map = result.getAllFacts(expression);
+      PsiType type = expression.getType();
+      if (map != null) {
+        advancedTypeInfo = map.facts(new DfaFactMap.FactMapper<String>() {
+          @Override
+          public <T> String apply(DfaFactType<T> factType, T value) {
+            return formatFact(factType, value, type);
+          }
+        }).joining();
       }
-    }).joining();
+      List<Object> nonValues = new ArrayList<>(result.getValuesNotEqualToExpression(expression));
+      nonValues.remove(null); // Nullability: not-null will be displayed, so this just duplicates nullability info
+      if (!nonValues.isEmpty()) {
+        advancedTypeInfo = makeHtmlRow("Not equal to", StringUtil.join(nonValues, DfaConstValue::renderValue, ", ")) + advancedTypeInfo;
+      }
+      Set<Object> values = result.getExpressionValues(expression);
+      if (!values.isEmpty()) {
+        if (values.size() == 1) {
+          advancedTypeInfo = makeHtmlRow("Value", DfaConstValue.renderValue(values.iterator().next())) + advancedTypeInfo;
+        } else {
+          advancedTypeInfo = makeHtmlRow("Value (one of)", StringUtil.join(values, DfaConstValue::renderValue, ", ")) + advancedTypeInfo;
+        }
+      }
+    }
     return advancedTypeInfo.isEmpty()
            ? basicTypeEscaped
            : "<table>" + makeHtmlRow("Type", basicTypeEscaped) + advancedTypeInfo + "</table>";

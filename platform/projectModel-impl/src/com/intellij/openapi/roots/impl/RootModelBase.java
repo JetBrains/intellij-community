@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -18,6 +19,7 @@ import java.util.*;
 /**
  * @author nik
  */
+@ApiStatus.Internal
 public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull

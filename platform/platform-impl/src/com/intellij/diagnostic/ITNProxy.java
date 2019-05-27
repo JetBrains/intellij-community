@@ -29,10 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.*;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -46,6 +43,7 @@ import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * @author stathik
@@ -138,7 +136,7 @@ class ITNProxy {
                         @Nullable String password,
                         @NotNull ErrorBean error,
                         @NotNull IntConsumer onSuccess,
-                        @NotNull Consumer<Exception> onError) {
+                        @NotNull Consumer<? super Exception> onError) {
     if (StringUtil.isEmptyOrSpaces(login)) {
       login = DEFAULT_USER;
       password = DEFAULT_PASS;
@@ -284,14 +282,22 @@ class ITNProxy {
       connection.setHostnameVerifier(new EaHostnameVerifier());
     }
 
+    ByteArrayOutputStream outputByteStream = new ByteArrayOutputStream(bytes.length);
+    try (GZIPOutputStream gzip = new GZIPOutputStream(outputByteStream)) {
+      gzip.write(bytes);
+    }
+
+    byte[] compressedBytes = outputByteStream.toByteArray();
+
     connection.setRequestMethod("POST");
     connection.setDoInput(true);
     connection.setDoOutput(true);
     connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + StandardCharsets.UTF_8.name());
-    connection.setRequestProperty("Content-Length", Integer.toString(bytes.length));
+    connection.setRequestProperty("Content-Length", Integer.toString(compressedBytes.length));
+    connection.setRequestProperty("Content-Encoding", "gzip");
 
     try (OutputStream out = connection.getOutputStream()) {
-      out.write(bytes);
+      out.write(compressedBytes);
     }
 
     return connection;

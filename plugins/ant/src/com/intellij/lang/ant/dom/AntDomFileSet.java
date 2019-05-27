@@ -68,7 +68,7 @@ public abstract class AntDomFileSet extends AntDomFilesProviderImpl{
     private int myDirsProcessed = 0;
     private boolean myDirCheckEnabled = false;
 
-    public void collectFiles(List<File> container, File from, String relativePath, final AntDomPattern pattern) {
+    public void collectFiles(List<? super File> container, File from, String relativePath, final AntDomPattern pattern) {
       if (myDirsProcessed > MAX_DIRS_TO_PROCESS) {
         return;
       }

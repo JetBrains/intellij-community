@@ -32,5 +32,5 @@ public interface ConvertSchemaSettings {
 
   String getOutputDestination();
 
-  void addAdvancedSettings(List<String> inputParams, List<String> outputParams);
+  void addAdvancedSettings(List<? super String> inputParams, List<? super String> outputParams);
 }

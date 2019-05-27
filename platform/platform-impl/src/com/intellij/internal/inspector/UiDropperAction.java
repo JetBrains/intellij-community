@@ -59,7 +59,6 @@ import java.util.*;
 
 import static java.awt.event.MouseEvent.BUTTON1;
 import static java.awt.event.MouseEvent.MOUSE_CLICKED;
-import static java.util.Locale.ENGLISH;
 
 public class UiDropperAction extends ToggleAction implements DumbAware {
 
@@ -741,7 +740,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       sb.append(" argb:0x");
       String hex = Integer.toHexString(value.getRGB());
       for (int i = hex.length(); i < 8; i++) sb.append('0');
-      sb.append(hex.toUpperCase(ENGLISH));
+      sb.append(StringUtil.toUpperCase(hex));
 
       if (value instanceof UIResource) sb.append(" UIResource");
       setText(sb.toString());

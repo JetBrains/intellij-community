@@ -546,6 +546,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
 
       final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
+
       List<Thread> threads = new ArrayList<>(numOfThreads);
       for (int i = 0; i < numOfThreads; i++) {
         @SuppressWarnings("Convert2Lambda") // runnable is more debuggable
@@ -561,7 +562,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
               }
             }
           }
-        }, "read thread " + i);
+        }, "read thread " + i+"/"+numOfThreads);
         thread.start();
         threads.add(thread);
       }

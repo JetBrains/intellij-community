@@ -234,8 +234,8 @@ public class BuildRunner {
     return new CompileScopeImpl(targetTypes, targetTypesToForceBuild, targets, files);
   }
 
-  private static void includeDependenciesToScope(Set<BuildTargetType<?>> targetTypes, Set<BuildTarget<?>> targets,
-                                                 Set<BuildTargetType<?>> targetTypesToForceBuild, ProjectDescriptor descriptor) {
+  private static void includeDependenciesToScope(Set<? extends BuildTargetType<?>> targetTypes, Set<BuildTarget<?>> targets,
+                                                 Set<? super BuildTargetType<?>> targetTypesToForceBuild, ProjectDescriptor descriptor) {
     //todo[nik] get rid of CompileContext parameter for BuildTargetIndex.getDependencies() and use it here
     TargetOutputIndex dummyIndex = new TargetOutputIndex() {
       @Override

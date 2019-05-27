@@ -31,13 +31,27 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class FindUsagesHelper {
+  /**
+   * @deprecated use {@code processUsagesInText(PsiElement, Collection<String>, GlobalSearchScope, boolean, Processor<? super UsageInfo>} instead.
+   */
+  @Deprecated
   public static boolean processUsagesInText(@NotNull final PsiElement element,
                                             @NotNull Collection<String> stringToSearch,
                                             @NotNull GlobalSearchScope searchScope,
                                             @NotNull Processor<? super UsageInfo> processor) {
-    final TextRange elementTextRange = ReadAction.compute(() -> !element.isValid() || element instanceof PsiCompiledElement ? null : element.getTextRange());
+    return processUsagesInText(element, stringToSearch, false, searchScope, processor);
+  }
+
+  public static boolean processUsagesInText(@NotNull final PsiElement element,
+                                            @NotNull Collection<String> stringToSearch,
+                                            boolean equivalentReferencesOnly,
+                                            @NotNull GlobalSearchScope searchScope,
+                                            @NotNull Processor<? super UsageInfo> processor) {
+    final TextRange elementTextRange = ReadAction.compute(
+      () -> !element.isValid() || element instanceof PsiCompiledElement ? null
+                                                                        : element.getTextRange());
     UsageInfoFactory factory = (usage, startOffset, endOffset) -> {
-      if (!element.isValid()) return new UsageInfo(usage, startOffset, endOffset, true);
+      if (!element.isValid()) return equivalentReferencesOnly ? null : new UsageInfo(usage, startOffset, endOffset, true);
       if (elementTextRange != null
           && usage.getContainingFile() == element.getContainingFile()
           && elementTextRange.contains(startOffset)
@@ -48,15 +62,17 @@ public class FindUsagesHelper {
       PsiReference someReference = usage.findReferenceAt(startOffset);
       if (someReference != null) {
         PsiElement refElement = someReference.getElement();
-        for (PsiReference ref : PsiReferenceService.getService().getReferences(refElement, new PsiReferenceService.Hints(element, null))) {
+        for (PsiReference ref : PsiReferenceService.getService()
+          .getReferences(refElement, new PsiReferenceService.Hints(element, null))) {
           if (element.getManager().areElementsEquivalent(ref.resolve(), element)) {
-            TextRange range = ref.getRangeInElement().shiftRight(refElement.getTextRange().getStartOffset() - usage.getTextRange().getStartOffset());
+            TextRange range = ref.getRangeInElement()
+              .shiftRight(refElement.getTextRange().getStartOffset() - usage.getTextRange().getStartOffset());
             return new UsageInfo(usage, range.getStartOffset(), range.getEndOffset(), true);
           }
         }
       }
 
-      return new UsageInfo(usage, startOffset, endOffset, true);
+      return equivalentReferencesOnly ? null : new UsageInfo(usage, startOffset, endOffset, true);
     };
     for (String s : stringToSearch) {
       if (!PsiSearchHelperImpl.processTextOccurrences(element, s, searchScope, processor, factory)) return false;

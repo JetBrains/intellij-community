@@ -12,4 +12,5 @@
 
   <extensions <error descr="Use defaultExtensionNs instead">xmlns="<error descr="URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)">com.intellij</error>"</error>/>
 
+  <error descr="Helpset is not used anymore, use 'com.intellij.openapi.help.WebHelpProvider' instead"><helpset file="help.jar" path="/Help.hs"/></error>
 </idea-plugin>

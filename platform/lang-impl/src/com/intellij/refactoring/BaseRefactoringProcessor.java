@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring;
 
@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -45,7 +44,6 @@ import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -338,20 +336,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         final PsiElement element = elementUsage.getElement();
         if (element == null) continue;
         final PsiFile containingFile = element.getContainingFile();
-        if (elementUsage.isNonCodeUsage()) {
+        if (usage instanceof UsageInfo2UsageAdapter && ((UsageInfo2UsageAdapter)usage).getUsageInfo().isDynamicUsage()) {
+          dynamicUsagesCount++;
+          dynamicUsagesCodeFiles.add(containingFile);
+        }
+        else if (elementUsage.isNonCodeUsage()) {
           nonCodeUsageCount++;
           nonCodeFiles.add(containingFile);
         }
         else {
           codeUsageCount++;
           codeFiles.add(containingFile);
-        }
-        if (usage instanceof UsageInfo2UsageAdapter) {
-          final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
-          if (usageInfo instanceof MoveRenameUsageInfo && usageInfo.isDynamicUsage()) {
-            dynamicUsagesCount++;
-            dynamicUsagesCodeFiles.add(containingFile);
-          }
         }
       }
     }
@@ -497,7 +492,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
           }
         }
       };
-      ApplicationImpl app = (ApplicationImpl)ApplicationManagerEx.getApplicationEx();
+      ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
       if (Registry.is("run.refactorings.under.progress")) {
         app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performRefactoringRunnable.run());
       }

@@ -3,7 +3,6 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ThreeState;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -323,7 +322,7 @@ public class URLUtil {
   @NotNull
   public static String encodeURIComponent(@NotNull String s) {
     try {
-      return URLEncoder.encode(s, CharsetToolkit.UTF8)
+      return URLEncoder.encode(s, StandardCharsets.UTF_8.name())
         .replace("+", "%20")
         .replace("%21", "!")
         .replace("%27", "'")

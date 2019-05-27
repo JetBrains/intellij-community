@@ -52,7 +52,7 @@ public class InlineModuleDependencyAction extends AnAction {
     inlineEntry(myClasspathPanel, selectedEntry, depEntry -> depEntry instanceof LibraryOrderEntry || depEntry instanceof ModuleOrderEntry);
   }
 
-  static void inlineEntry(ClasspathPanel classpathPanel, OrderEntry entry, Predicate<OrderEntry> dependencyEntryFilter) {
+  static void inlineEntry(ClasspathPanel classpathPanel, OrderEntry entry, Predicate<? super OrderEntry> dependencyEntryFilter) {
     if (!(entry instanceof ModuleOrderEntry)) return;
 
     ModuleOrderEntry entryToInline = (ModuleOrderEntry)entry;

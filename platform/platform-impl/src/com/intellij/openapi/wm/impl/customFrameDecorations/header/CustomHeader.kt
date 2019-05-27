@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButto
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
@@ -44,10 +45,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     private var windowListener: WindowAdapter
     private val myComponentListener: ComponentListener
-    private val myIconProvider = JBUIScale.ScaleContext.Cache { ctx ->
-        ObjectUtils.notNull(
-                AppUIUtil.loadHiDPIApplicationIcon(ctx, 16), AllIcons.Icon_small)
-    }
+    private val myIconProvider = JBUIScale.ScaleContext.Cache { ctx -> AppUIUtil.loadSmallApplicationIcon(ctx) }
 
     protected var myActive = false
     protected val windowRootPane: JRootPane? = when (window) {
@@ -63,7 +61,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         get() {
             val ctx = JBUIScale.ScaleContext.create(window)
             ctx.overrideScale(JBUIScale.ScaleType.USR_SCALE.of(1.0))
-            return myIconProvider.getOrProvide(ctx) ?: AllIcons.Icon_small
+            return myIconProvider.getOrProvide(ctx)!!
         }
 
 
@@ -105,7 +103,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
         myComponentListener = object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent?) {
-                setCustomDecorationHitTestSpots()
+                updateCustomDecorationHitTestSpots()
             }
         }
 
@@ -127,6 +125,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     override fun addNotify() {
         super.addNotify()
         installListeners()
+        updateCustomDecorationHitTestSpots()
     }
 
     override fun removeNotify() {
@@ -148,15 +147,17 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         window.removeComponentListener(myComponentListener)
     }
 
-    protected fun setCustomDecorationHitTestSpots() {
-        JdkEx.setCustomDecorationHitTestSpots(window, getHitTestSpots())
+    protected fun updateCustomDecorationHitTestSpots() {
+        val toList = getHitTestSpots().map {it.getRectangleOn(window)}.toList()
+        JdkEx.setCustomDecorationHitTestSpots(window, toList)
     }
 
-    abstract fun getHitTestSpots(): List<Rectangle>
+    abstract fun getHitTestSpots(): List<RelativeRectangle>
 
     private fun setActive(value: Boolean) {
         myActive = value
         updateActive()
+        updateCustomDecorationHitTestSpots()
     }
 
     protected open fun updateActive() {

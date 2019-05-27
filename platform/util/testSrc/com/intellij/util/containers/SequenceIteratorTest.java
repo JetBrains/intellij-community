@@ -68,7 +68,7 @@ public class SequenceIteratorTest extends TestCase {
     assertEquals(arr1.length + arr2.length + arr3.length, cnt);
   }
 
-  private static Iterator<Integer> compose(List<Iterator<Integer>> iterators) {
+  private static Iterator<Integer> compose(List<? extends Iterator<Integer>> iterators) {
     return ContainerUtil.concatIterators(iterators);
   }
 

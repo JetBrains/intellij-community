@@ -8,11 +8,11 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.CharBuffer
 import java.nio.channels.Channels
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
-import java.util.*
 
 fun Path.exists(): Boolean = Files.exists(this)
 
@@ -202,7 +202,7 @@ fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Pat
  * Consider using [SafeWriteRequestor.shallUseSafeStream] along with [SafeFileOutputStream]
  */
 fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
-  val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
+  val tempFile = parent.resolve("${fileName}.${DigestUtil.randomToken()}.tmp")
   tempFile.outputStream().use(outConsumer)
   try {
     Files.move(tempFile, this, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
@@ -216,11 +216,19 @@ fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
 
 @JvmOverloads
 @Throws(IOException::class)
-fun Path.write(data: String, createParentDirs: Boolean = true): Path {
+fun Path.write(data: CharSequence, createParentDirs: Boolean = true): Path {
   if (createParentDirs) {
     parent?.createDirectories()
   }
-  Files.write(this, data.toByteArray())
+
+  if (data is String) {
+    Files.write(this, data.toByteArray())
+  }
+  else {
+    Files.newByteChannel(this, setOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)).use {
+      it.write(Charsets.UTF_8.encode(CharBuffer.wrap(data)))
+    }
+  }
   return this
 }
 

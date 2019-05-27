@@ -129,7 +129,7 @@ public class IncProjectBuilder {
       final BuildFSState fsState = myProjectDescriptor.fsState;
       for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
         if (scope.isAffected(target)) {
-          BuildOperations.ensureFSStateInitialized(context, target);
+          BuildOperations.ensureFSStateInitialized(context, target, true);
           final FilesDelta delta = fsState.getEffectiveFilesDelta(context, target);
           delta.lockData();
           try {
@@ -349,10 +349,6 @@ public class IncProjectBuilder {
           //noinspection ResultOfMethodCallIgnored
           new File(root, CLASSPATH_INDEX_FILE_NAME).delete();
         }
-      }
-
-      @Override
-      public void filesDeleted(@NotNull FileDeletedEvent event) {
       }
     });
 
@@ -771,7 +767,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {
+  private static void runTasks(CompileContext context, final List<? extends BuildTask> tasks) throws ProjectBuildException {
     for (BuildTask task : tasks) {
       task.build(context);
     }
@@ -912,7 +908,7 @@ public class IncProjectBuilder {
       }
     }
 
-    private void queueTasks(List<BuildChunkTask> tasks) {
+    private void queueTasks(List<? extends BuildChunkTask> tasks) {
       if (LOG.isDebugEnabled() && !tasks.isEmpty()) {
         final List<BuildTargetChunk> chunksToLog = new ArrayList<>();
         for (BuildChunkTask task : tasks) {
@@ -1065,7 +1061,7 @@ public class IncProjectBuilder {
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
 
       for (BuildTarget<?> target : chunk.getTargets()) {
-        BuildOperations.ensureFSStateInitialized(context, target);
+        BuildOperations.ensureFSStateInitialized(context, target, false);
       }
 
       doneSomething = processDeletedPaths(context, chunk.getTargets());

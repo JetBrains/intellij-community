@@ -70,7 +70,7 @@ public class JavaIntroduceParameterObjectDelegate
   @Override
   public ParameterInfoImpl createMergedParameterInfo(JavaIntroduceParameterObjectClassDescriptor descriptor,
                                                      PsiMethod method,
-                                                     List<ParameterInfoImpl> oldMethodParameters) {
+                                                     List<? extends ParameterInfoImpl> oldMethodParameters) {
     final PsiCodeBlock body = method.getBody();
     String baseParameterName = StringUtil.decapitalize(descriptor.getClassName());
     final Project project = method.getProject();
@@ -183,7 +183,7 @@ public class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public <M1 extends PsiNamedElement, P1 extends ParameterInfo> ReadWriteAccessDetector.Access collectInternalUsages(Collection<FixableUsageInfo> usages,
+  public <M1 extends PsiNamedElement, P1 extends ParameterInfo> ReadWriteAccessDetector.Access collectInternalUsages(Collection<? super FixableUsageInfo> usages,
                                                                                                                      PsiMethod overridingMethod,
                                                                                                                      IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
                                                                                                                      P1 parameterInfo,
@@ -224,7 +224,7 @@ public class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public void collectUsagesToGenerateMissedFieldAccessors(Collection<FixableUsageInfo> usages,
+  public void collectUsagesToGenerateMissedFieldAccessors(Collection<? super FixableUsageInfo> usages,
                                                           PsiMethod method,
                                                           JavaIntroduceParameterObjectClassDescriptor descriptor,
                                                           ReadWriteAccessDetector.Access[] accessors) {
@@ -253,7 +253,7 @@ public class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public void collectAdditionalFixes(Collection<FixableUsageInfo> usages,
+  public void collectAdditionalFixes(Collection<? super FixableUsageInfo> usages,
                                      final PsiMethod method,
                                      final JavaIntroduceParameterObjectClassDescriptor descriptor) {
 

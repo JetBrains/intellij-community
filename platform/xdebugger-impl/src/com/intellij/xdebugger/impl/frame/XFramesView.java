@@ -246,7 +246,7 @@ public class XFramesView extends XDebugView {
     return myBuilders.computeIfAbsent(executionStack, k -> new StackFramesListBuilder(executionStack, session));
   }
 
-  private void withCurrentBuilder(Consumer<StackFramesListBuilder> consumer) {
+  private void withCurrentBuilder(Consumer<? super StackFramesListBuilder> consumer) {
     StackFramesListBuilder builder = myBuilders.get(mySelectedStack);
     if (builder != null) {
       consumer.consume(builder);

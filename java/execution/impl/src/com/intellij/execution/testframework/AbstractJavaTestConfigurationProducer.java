@@ -184,7 +184,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   protected boolean collectContextElements(DataContext dataContext,
                                            boolean checkAbstract,
                                            boolean checkIsTest,
-                                           LinkedHashSet<String> classes,
+                                           LinkedHashSet<? super String> classes,
                                            PsiElementProcessor.CollectElements<PsiElement> processor) {
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements != null) {
@@ -268,7 +268,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   private boolean collectTestMembers(PsiElement[] elements,
                                      boolean checkAbstract,
                                      boolean checkIsTest,
-                                     PsiElementProcessor.CollectElements<PsiElement> processor, LinkedHashSet<String> classes) {
+                                     PsiElementProcessor.CollectElements<PsiElement> processor, LinkedHashSet<? super String> classes) {
     collectTestMembers(elements, checkAbstract, checkIsTest, processor);
     for (PsiElement psiClass : processor.getCollection()) {
       classes.add(getQName(psiClass));
@@ -276,7 +276,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     return classes.size() > 1;
   }
 
-  protected PsiElement[] collectLocationElements(LinkedHashSet<String> classes, DataContext dataContext) {
+  protected PsiElement[] collectLocationElements(LinkedHashSet<? super String> classes, DataContext dataContext) {
     final Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
     if (locations != null) {
       List<PsiElement> elements = new ArrayList<>();

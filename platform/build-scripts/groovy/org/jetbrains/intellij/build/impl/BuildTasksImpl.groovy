@@ -360,29 +360,27 @@ idea.fatal.error.notification=disabled
 
       List<String> paths = runInParallel(tasks).findAll { it != null }
 
-      if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
+      buildContext.executeStep("Building Toolbox Lite-Gen Links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
         if (buildContext.buildNumber == null) {
           buildContext.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
-        }
-        else {
-          buildContext.executeStep("Building Toolbox Lite-Gen Links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
-            String toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
-            if (toolboxLiteGenVersion == null) {
-              buildContext.messages.error("Toolbox Lite-Gen version is not specified!")
-            }
-            else {
-              String[] liteGenArgs = [
-                'runToolboxLiteGen',
-                "-Pintellij.build.toolbox.litegen.version=${toolboxLiteGenVersion}",
-                //NOTE[jo]: right now we assume all installer files are created under the same path
-                "-Pintellij.build.artifacts=${buildContext.paths.artifacts}",
-                "-Pintellij.build.productCode=${buildContext.productProperties.productCode}",
-                "-Pintellij.build.isEAP=${buildContext.applicationInfo.isEAP}",
-                "-Pintellij.build.output=${buildContext.paths.buildOutputRoot}/toolbox-lite-gen",
-              ]
+        } else if (buildContext.options.targetOS != BuildOptions.OS_ALL) {
+          buildContext.messages.warning("Toolbox LiteGen is not executed - it doesn't support specific OS were selection")
+        } else {
+          String toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
+          if (toolboxLiteGenVersion == null) {
+            buildContext.messages.error("Toolbox Lite-Gen version is not specified!")
+          } else {
+            String[] liteGenArgs = [
+              'runToolboxLiteGen',
+              "-Pintellij.build.toolbox.litegen.version=${toolboxLiteGenVersion}",
+              //NOTE[jo]: right now we assume all installer files are created under the same path
+              "-Pintellij.build.artifacts=${buildContext.paths.artifacts}",
+              "-Pintellij.build.productCode=${buildContext.productProperties.productCode}",
+              "-Pintellij.build.isEAP=${buildContext.applicationInfo.isEAP}",
+              "-Pintellij.build.output=${buildContext.paths.buildOutputRoot}/toolbox-lite-gen",
+            ]
 
-              buildContext.gradle.run('Run Toolbox LiteGen', liteGenArgs)
-            }
+            buildContext.gradle.run('Run Toolbox LiteGen', liteGenArgs)
           }
         }
       }
@@ -431,6 +429,15 @@ idea.fatal.error.notification=disabled
     ]
     if (buildContext.options.bundledJreBuild != null) {
       args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
+    }
+    [
+      'intellij.build.bundle.second.jre',
+      'intellij.build.bundled.second.jre.build',
+      'intellij.build.bundled.second.jre.version'
+    ].each { prop ->
+      System.getProperty(prop)?.with {
+        args += "-D$prop=$it"
+      }
     }
     buildContext.gradle.run('Setting up JetBrains JREs', args)
     logFreeDiskSpace("after downloading JREs")

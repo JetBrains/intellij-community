@@ -21,7 +21,7 @@ public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
 
     UnwrapHandler h = new UnwrapHandler() {
       @Override
-      protected void selectOption(List<UnwrapHandler.MyUnwrapAction> options, Editor editor, PsiFile file) {
+      protected void selectOption(List<? extends MyUnwrapAction> options, Editor editor, PsiFile file) {
         if (options.isEmpty()) return;
         options.get(option).perform();
       }
@@ -39,7 +39,7 @@ public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
 
     UnwrapHandler h = new UnwrapHandler() {
       @Override
-      protected void selectOption(List<UnwrapHandler.MyUnwrapAction> options, Editor editor, PsiFile file) {
+      protected void selectOption(List<? extends MyUnwrapAction> options, Editor editor, PsiFile file) {
         for (AnAction each : options) {
           actualOptions.add(each.getTemplatePresentation().getText());
         }

@@ -53,24 +53,22 @@ public abstract class NotNullVerifyingInstrumenterTest {
   public static class TypesTargetTest extends WithTypeUse { }
 
   @TestDirectory("mixed")
-  public static class MixedTargetTest extends WithTypeUse {
-  }
+  public static class MixedTargetTest extends WithTypeUse { }
 
   private static final String TEST_DATA_PATH = "/compiler/notNullVerification/";
 
   private static class AnnotationCompiler extends ExternalResource {
-    private File classes;
+    File classes;
 
     @Override
     public Statement apply(Statement base, Description description) {
       TestDirectory annotation = description.getAnnotation(TestDirectory.class);
       if (annotation == null) throw new IllegalArgumentException("Class " + description.getTestClass() + " misses @TestDirectory annotation");
       File source = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + annotation.value());
-      if (!source.isDirectory() || source.listFiles().length == 0) throw new IllegalArgumentException("Cannot find annotation file at " + source);
+      File[] annotations = source.listFiles();
+      if (annotations == null || annotations.length == 0) throw new IllegalArgumentException("Cannot find annotations at " + source);
       classes = IoTestUtil.createTestDir("test-notNullInstrumenter-" + annotation.value());
-      for (File file : source.listFiles()) {
-        IdeaTestUtil.compileFile(file, classes);
-      }
+      for (File file : annotations) IdeaTestUtil.compileFile(file, classes);
       return super.apply(base, description);
     }
 
@@ -298,13 +296,14 @@ public abstract class NotNullVerifyingInstrumenterTest {
       Object instance = test.newInstance();
 
       Object[] singleNullArg = {null};
-      verifyCallThrowsException("Argument 0 for @NotNull parameter of TypeUseAndMemberAnnotationsOnArrays.notNullArray must not be null", instance, test.getMethod("notNullArray", String[].class), singleNullArg);
+      verifyCallThrowsException("Argument 0 for @NotNull parameter of TypeUseAndMemberAnnotationsOnArrays.notNullArray must not be null",
+                                instance, test.getMethod("notNullArray", String[].class), singleNullArg);
       test.getMethod("nullableArray", String[].class).invoke(instance, singleNullArg);
 
-      verifyCallThrowsException("@NotNull method TypeUseAndMemberAnnotationsOnArrays.notNullReturn must not return null", instance, test.getMethod("notNullReturn"));
+      verifyCallThrowsException("@NotNull method TypeUseAndMemberAnnotationsOnArrays.notNullReturn must not return null",
+                                instance, test.getMethod("notNullReturn"));
       assertNull(test.getMethod("nullableReturn").invoke(instance));
     }
-
   }
 
   @Test

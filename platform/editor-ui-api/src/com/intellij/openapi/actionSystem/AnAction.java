@@ -168,8 +168,6 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   /**
    * Copies template presentation and shortcuts set from {@code sourceAction}.
-   *
-   * @param sourceAction cannot be {@code null}
    */
   public final void copyFrom(@NotNull AnAction sourceAction){
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();

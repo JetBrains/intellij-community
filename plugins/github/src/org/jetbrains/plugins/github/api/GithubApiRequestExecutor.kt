@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 import com.intellij.openapi.Disposable
@@ -168,7 +168,7 @@ sealed class GithubApiRequestExecutor {
       val errorText = getErrorText(connection)
       LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Error ${statusLine} body:\n${errorText}")
 
-      val jsonError = getJsonError(connection, errorText)
+      val jsonError = errorText?.let { getJsonError(connection, it) }
       jsonError ?: LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Unable to parse JSON error")
 
       throw when (connection.responseCode) {
@@ -182,7 +182,7 @@ sealed class GithubApiRequestExecutor {
           else if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
             GithubRateLimitExceededException(jsonError.presentableError)
           }
-          else GithubAuthenticationException("Request response: " + (jsonError?.presentableError ?: errorText))
+          else GithubAuthenticationException("Request response: " + (jsonError?.presentableError ?: errorText ?: statusLine))
         }
         else -> {
           if (jsonError != null) {
@@ -195,8 +195,8 @@ sealed class GithubApiRequestExecutor {
       }
     }
 
-    private fun getErrorText(connection: HttpURLConnection): String {
-      val errorStream = connection.errorStream ?: return ""
+    private fun getErrorText(connection: HttpURLConnection): String? {
+      val errorStream = connection.errorStream ?: return null
       val stream = if (connection.contentEncoding == "gzip") GZIPInputStream(errorStream) else errorStream
       return InputStreamReader(stream, Charsets.UTF_8).use { it.readText() }
     }

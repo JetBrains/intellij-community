@@ -110,14 +110,14 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   }
 
   private static class MyDiffWindow extends DiffWindowBase {
-    @NotNull private final List<DiffHyperlink> myRequests;
+    @NotNull private final List<? extends DiffHyperlink> myRequests;
     private final int myIndex;
 
     MyDiffWindow(@Nullable Project project, @NotNull DiffHyperlink request) {
       this(project, Collections.singletonList(request), 0);
     }
 
-    MyDiffWindow(@Nullable Project project, @NotNull List<DiffHyperlink> requests, int index) {
+    MyDiffWindow(@Nullable Project project, @NotNull List<? extends DiffHyperlink> requests, int index) {
       super(project, DiffDialogHints.DEFAULT);
       myRequests = requests;
       myIndex = index;
@@ -130,7 +130,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     }
 
     private class MyTestDiffRequestProcessor extends TestDiffRequestProcessor {
-      MyTestDiffRequestProcessor(@Nullable Project project, @NotNull List<DiffHyperlink> requests, int index) {
+      MyTestDiffRequestProcessor(@Nullable Project project, @NotNull List<? extends DiffHyperlink> requests, int index) {
         super(project, requests, index);
         putContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY, "#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog");
       }

@@ -1,0 +1,4 @@
+$ ('$')
+{ ('{')
+parameter_expansion_body ('var##abc')
+} ('}')

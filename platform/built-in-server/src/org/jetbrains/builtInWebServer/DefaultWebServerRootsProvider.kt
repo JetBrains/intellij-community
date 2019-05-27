@@ -24,7 +24,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.DirectoryIndex
-import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl
+import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.SystemInfo
@@ -166,7 +166,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
         var module = info.module
         if (isLibrary && module == null) {
           for (entry in directoryIndex.getOrderEntries(info)) {
-            if (entry is ModuleLibraryOrderEntryImpl) {
+            if (OrderEntryUtil.isModuleLibraryOrderEntry(entry)) {
               module = entry.ownerModule
               break
             }

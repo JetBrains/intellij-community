@@ -9,6 +9,7 @@ import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledWhiteListProvider
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -119,6 +120,15 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.util")
       withModule("intellij.platform.util.rt", "util.jar")
       withModule("intellij.platform.util.classLoader", "util.jar")
+      withModule("intellij.platform.util.ui")
+
+      withModule("intellij.platform.concurrency")
+      withModule("intellij.platform.core.ui")
+
+      withModule("intellij.platform.objectSerializer.annotations")
+      withModule("intellij.platform.objectSerializer")
+      withModule("intellij.platform.configurationStore.impl")
+
       withModule("intellij.platform.extensions")
       withModule("intellij.platform.bootstrap")
       withModule("intellij.java.guiForms.rt")
@@ -277,7 +287,8 @@ class DistributionJARsBuilder {
   void buildAdditionalArtifacts() {
     def productProperties = buildContext.productProperties
 
-    if (productProperties.generateLibrariesLicensesTable) {
+    if (productProperties.generateLibrariesLicensesTable && !buildContext.options.buildStepsToSkip.
+      contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
       String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       buildContext.ant.copy(file: getThirdPartyLibrariesHtmlFilePath(),
                             tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.html")
@@ -333,6 +344,10 @@ class DistributionJARsBuilder {
     if (buildContext.productProperties.reassignAltClickToMultipleCarets) {
       def patchedKeyMapDir = createKeyMapWithAltClickReassignedToMultipleCarets()
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
+    }
+    if (buildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
+      def whiteList = StatisticsRecorderBundledWhiteListProvider.downloadWhiteList(buildContext)
+      layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', whiteList.absolutePath)
     }
 
     buildContext.messages.block("Build platform JARs in lib directory") {

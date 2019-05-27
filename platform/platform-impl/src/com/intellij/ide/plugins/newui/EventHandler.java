@@ -63,7 +63,7 @@ public abstract class EventHandler {
   public void setSelection(@NotNull CellPluginComponent component, boolean scrollAndFocus) {
   }
 
-  public void setSelection(@NotNull List<CellPluginComponent> components) {
+  public void setSelection(@NotNull List<? extends CellPluginComponent> components) {
   }
 
   public void updateSelection() {
@@ -72,7 +72,7 @@ public abstract class EventHandler {
   public void clear() {
   }
 
-  public void setSelectionListener(@Nullable Consumer<PluginsGroupComponent> listener) {
+  public void setSelectionListener(@Nullable Consumer<? super PluginsGroupComponent> listener) {
   }
 
   public void handleUpDown(@NotNull KeyEvent event) {

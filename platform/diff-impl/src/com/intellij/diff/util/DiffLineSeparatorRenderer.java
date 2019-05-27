@@ -28,18 +28,22 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.util.Arrays;
 
 public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSeparatorRenderer {
+  private static Object[] ourCachedImageKey = null;
+  private static BufferedImage outCachedImage = null;
+
   @NotNull private final Editor myEditor;
   @NotNull private final BooleanGetter myCondition;
   @Nullable private final String myDescription;
@@ -60,10 +64,10 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                                        @Nullable EditorColorsScheme scheme) {
     int step = getStepSize(lineHeight);
     int height = getHeight(lineHeight);
-    if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    int verticalOffset = getVerticalOffset(lineHeight, step, height);
 
-    int start1 = y1 + (lineHeight - height - step) / 2 + step / 2;
-    int start2 = y2 + (lineHeight - height - step) / 2 + step / 2;
+    int start1 = y1 + verticalOffset + step / 2;
+    int start2 = y2 + verticalOffset + step / 2;
     int end1 = start1 + height - 1;
     int end2 = start2 + height - 1;
 
@@ -163,62 +167,64 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                            @NotNull EditorColorsScheme scheme) {
     int step = getStepSize(lineHeight);
     int height = getHeight(lineHeight);
+    Color color = getBackgroundColor(scheme);
 
     Rectangle clip = g.getClipBounds();
     if (clip.width <= 0) return;
-    int count = (clip.width / step + 3);
-    int shift = (clip.x - shiftX) / step;
 
-    int[] xPoints = new int[count];
-    int[] yPoints = new int[count];
+    int startX = clip.x - shiftX;
+    int endX = startX + clip.width;
 
-    shiftY += (lineHeight - height - step) / 2;
+    int startIndex = startX / step;
+    int endIndex = endX / step + 1;
 
-    for (int index = 0; index < count; index++) {
-      int absIndex = index + shift;
+    Graphics2D gg = (Graphics2D)g.create();
+    gg.translate(shiftX, shiftY + getVerticalOffset(lineHeight, step, height));
 
-      int xPos = absIndex * step + shiftX;
-      int yPos;
-
-      if (absIndex == 0) {
-        yPos = step / 2 + shiftY;
-      }
-      else if (absIndex % 2 == 0) {
-        yPos = shiftY;
-      }
-      else {
-        yPos = step + shiftY;
-      }
-
-      xPoints[index] = xPos;
-      yPoints[index] = yPos;
+    if (startIndex == 0) {
+      gg.setColor(color);
+      LinePainter2D.fillPolygon(gg,
+                                new double[]{0, step, step, 0},
+                                new double[]{step / 2, step, step + height, step / 2 + height}, 4,
+                                LinePainter2D.StrokeType.CENTERED_CAPS_SQUARE, 1.0,
+                                RenderingHints.VALUE_ANTIALIAS_OFF);
+    }
+    else if (startIndex % 2 == 0) {
+      startIndex--; // we should start painting with even index
     }
 
-    GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
-    try {
-      paintLine(g, xPoints, yPoints, lineHeight, scheme);
+    BufferedImage image = createImage(gg, color, step, height);
+    gg.setComposite(AlphaComposite.SrcOver);
+
+    for (int index = startIndex; index < endIndex; index++) {
+      if (index % 2 == 0) continue;
+      UIUtil.drawImage(gg, image, index * step, 0, null);
     }
-    finally {
-      config.restore();
-    }
+    gg.dispose();
   }
 
-  private static void paintLine(@NotNull Graphics g,
-                                @NotNull int[] xPoints, @NotNull int[] yPoints,
-                                int lineHeight,
-                                @NotNull EditorColorsScheme scheme) {
-    int height = getHeight(lineHeight);
+  @NotNull
+  private static BufferedImage createImage(@NotNull Graphics2D g, @NotNull Color color, int step, int height) {
+    Object[] key = new Object[]{color.getRGB(), JBUI.sysScale(g), step, height};
+    if (Arrays.equals(ourCachedImageKey, key) && outCachedImage != null) return outCachedImage;
 
-    g.setColor(getBackgroundColor(scheme));
+    int imageWidth = step * 2;
+    int imageHeight = step + height;
+    BufferedImage image = UIUtil.createImage(g, imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
 
-    Graphics2D gg = ((Graphics2D)g);
-    AffineTransform oldTransform = gg.getTransform();
+    Graphics2D gg = image.createGraphics();
 
-    for (int i = 0; i < height; i++) {
-      gg.drawPolyline(xPoints, yPoints, xPoints.length);
-      gg.translate(0, 1);
-    }
-    gg.setTransform(oldTransform);
+    gg.setColor(color);
+    LinePainter2D.fillPolygon(gg,
+                              new double[]{0, step, step * 2, step * 2, step, 0},
+                              new double[]{step, 0, step, step + height, height, step + height}, 6,
+                              LinePainter2D.StrokeType.CENTERED_CAPS_SQUARE, 1.0,
+                              RenderingHints.VALUE_ANTIALIAS_OFF);
+
+    outCachedImage = image;
+    ourCachedImageKey = key;
+
+    return image;
   }
 
   //
@@ -235,8 +241,13 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     return Math.max(lineHeight / 2, 1);
   }
 
+  private static int getVerticalOffset(int lineHeight, int step, int height) {
+    return (lineHeight - height - step) / 2;
+  }
+
   @NotNull
-  private static Color getBackgroundColor(@NotNull EditorColorsScheme scheme) {
+  private static Color getBackgroundColor(@Nullable EditorColorsScheme scheme) {
+    if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Color color = scheme.getColor(BACKGROUND);
     return color != null ? color : Gray._128;
   }

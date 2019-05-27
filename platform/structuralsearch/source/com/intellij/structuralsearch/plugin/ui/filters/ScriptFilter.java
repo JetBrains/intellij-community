@@ -37,7 +37,7 @@ public class ScriptFilter extends FilterAction {
   }
 
   @Override
-  public boolean isApplicable(List<PsiElement> nodes, boolean completePattern, boolean target) {
+  public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     return true;
   }
 

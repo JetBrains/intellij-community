@@ -104,7 +104,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   protected abstract Item cloneOf(Item item);
 
   @Nullable
-  protected Pair<String, Fix> validate(List<Item> current, List<String> warnings) {
+  protected Pair<String, Fix> validate(List<? extends Item> current, List<? super String> warnings) {
     String error = null;
     for (int i = 0; i < current.size(); i++) {
       Item item = current.get(i);
@@ -282,7 +282,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     return (ListTableModel<Item>)myTable.getModel();
   }
 
-  public void setModel(ColumnInfo<Item, Object>[] valueColumns, List<Item> items) {
+  public void setModel(ColumnInfo<Item, Object>[] valueColumns, List<? extends Item> items) {
     ColumnInfo[] columns = new ColumnInfo[valueColumns.length + 1];
     IconColumn iconColumn = new IconColumn();
     int maxHeight = iconColumn.getRowHeight();
@@ -319,7 +319,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     return items;
   }
 
-  private void setItems(List<Item> items) {
+  private void setItems(List<? extends Item> items) {
     if (items.isEmpty()) {
       getTableModel().setItems(Collections.emptyList());
       myWarnings.clear();

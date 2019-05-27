@@ -820,10 +820,9 @@ public class FileUtil extends FileUtilRt {
    *             If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
    */
   @Deprecated
-  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @NotNull
   public static String getExtension(@NotNull String fileName) {
-    return FileUtilRt.getExtension(fileName).toLowerCase();
+    return StringUtil.toLowerCase(FileUtilRt.getExtension(fileName));
   }
 
   @NotNull
@@ -1095,7 +1094,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
-    (Function<File, Iterable<File>>)file -> file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.empty());
+    (Function<File, Iterable<File>>)file -> file == null ? Collections.emptySet() : JBIterable.of(file.listFiles()));
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);
@@ -1511,8 +1510,8 @@ public class FileUtil extends FileUtilRt {
       throw new FileNotFoundException(path);
     }
 
-    FileAttributes upper = FileSystemUtil.getAttributes(path.toUpperCase(Locale.ENGLISH));
-    FileAttributes lower = FileSystemUtil.getAttributes(path.toLowerCase(Locale.ENGLISH));
+    FileAttributes upper = FileSystemUtil.getAttributes(StringUtil.toUpperCase(path));
+    FileAttributes lower = FileSystemUtil.getAttributes(StringUtil.toLowerCase(path));
     return !(attributes.equals(upper) && attributes.equals(lower));
   }
 

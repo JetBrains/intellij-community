@@ -32,8 +32,8 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.util.Alarm;
@@ -81,7 +81,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
           return true;
         });
       }
-      for (Library library : ProjectLibraryTable.getInstance(project).getLibraries()) {
+      for (Library library : LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
         if (predicate.test(library)) {
           result.add(library);
         }

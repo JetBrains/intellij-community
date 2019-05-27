@@ -75,7 +75,7 @@ public class ReplaceOnDemandImportIntention extends Intention {
 
   private static <T> void createImportStatements(PsiImportStatementBase importStatement,
                                                  T[] importedMembers,
-                                                 Function<T, PsiImportStatementBase> function) {
+                                                 Function<? super T, ? extends PsiImportStatementBase> function) {
     final PsiElement importList = importStatement.getParent();
     for (T importedMember : importedMembers) {
       importList.add(function.apply(importedMember));

@@ -153,7 +153,7 @@ class NSScrollerHelper {
     processReferences(null, listener, null);
   }
 
-  private static void processReferences(ScrollbarStyleListener toAdd, ScrollbarStyleListener toRemove, List<ScrollbarStyleListener> list) {
+  private static void processReferences(ScrollbarStyleListener toAdd, ScrollbarStyleListener toRemove, List<? super ScrollbarStyleListener> list) {
     synchronized (ourStyleListeners) {
       Iterator<Reference<ScrollbarStyleListener>> iterator = ourStyleListeners.iterator();
       while (iterator.hasNext()) {

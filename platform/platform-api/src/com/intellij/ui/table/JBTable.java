@@ -974,7 +974,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
        */
       JTable table = getTable();
       if (table != null) {
-        table.setCursor(cursor);
+        table.setCursor(UIUtil.cursorIfNotDefault(cursor));
         myCursor = cursor;
       }
       else {
@@ -1048,7 +1048,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     public void mouseReleased(@NotNull MouseEvent e) {
       mouseInputListener.mouseReleased(convertMouseEvent(e));
       if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)) {
-        header.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        header.setCursor(null);
       }
     }
 

@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathsList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author nik
  */
+@ApiStatus.NonExtendable
 public interface OrderRootsEnumerator {
   /**
    * @return all roots processed by this enumerator
@@ -80,5 +82,5 @@ public interface OrderRootsEnumerator {
    * @return this instance
    */
   @NotNull
-  OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<OrderEntry, VirtualFile[]> provider);
+  OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider);
 }

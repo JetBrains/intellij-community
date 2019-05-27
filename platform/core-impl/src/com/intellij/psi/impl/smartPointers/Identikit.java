@@ -20,11 +20,15 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +38,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class Identikit {
   private static final Logger LOG = Logger.getInstance(Identikit.class);
-  private static final WeakInterner<ByType> ourPlainInterner = new WeakInterner<>();
-  private static final WeakInterner<ByAnchor> ourAnchorInterner = new WeakInterner<>();
+  private static final Interner<ByType> ourPlainInterner = new WeakInterner<>();
+  private static final Interner<ByAnchor> ourAnchorInterner = new WeakInterner<>();
 
   @Nullable
   public abstract PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset);

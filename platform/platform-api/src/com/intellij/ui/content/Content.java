@@ -37,7 +37,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   void setPreferredFocusableComponent(JComponent component);
 
-  void setPreferredFocusedComponent(Computable<JComponent> computable);
+  void setPreferredFocusedComponent(Computable<? extends JComponent> computable);
 
   void setIcon(Icon icon);
   Icon getIcon();

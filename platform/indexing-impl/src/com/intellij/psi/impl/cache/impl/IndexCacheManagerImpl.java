@@ -113,7 +113,7 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   @Override
-  public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+  public boolean processFilesWithWord(@NotNull final Processor<? super PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     final List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
     collectVirtualFilesWithWord(word, occurrenceMask, scope, caseSensitively, processor);

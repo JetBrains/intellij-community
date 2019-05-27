@@ -267,7 +267,7 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
-  public void closeSourceToOutputStorages(Collection<BuildTargetChunk> chunks) throws IOException {
+  public void closeSourceToOutputStorages(Collection<? extends BuildTargetChunk> chunks) throws IOException {
     for (BuildTargetChunk chunk : chunks) {
       for (BuildTarget<?> target : chunk.getTargets()) {
         final AtomicNotNullLazyValue<SourceToOutputMappingImpl> mapping = mySourceToOutputs.remove(target);
@@ -305,7 +305,7 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
-  private static <K, V> V fetchValue(ConcurrentMap<K, AtomicNotNullLazyValue<V>> container, K key, final LazyValueFactory<K, V> valueFactory) throws IOException {
+  private static <K, V> V fetchValue(ConcurrentMap<K, AtomicNotNullLazyValue<V>> container, K key, final LazyValueFactory<? super K, V> valueFactory) throws IOException {
     AtomicNotNullLazyValue<V> lazy = container.get(key);
     if (lazy == null) {
       final AtomicNotNullLazyValue<V> newValue = valueFactory.create(key);

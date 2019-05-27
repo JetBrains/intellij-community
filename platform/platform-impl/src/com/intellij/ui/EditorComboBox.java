@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,8 +31,7 @@ import java.util.List;
 /**
  * @author max
  */
-// TODO[pegov]: should extend ComboBox not JComboBox!
-public class EditorComboBox extends JComboBox implements DocumentListener {
+public class EditorComboBox extends ComboBox implements DocumentListener {
   public static TextComponentAccessor<EditorComboBox> COMPONENT_ACCESSOR = new TextComponentAccessor<EditorComboBox>() {
     @Override
     public String getText(EditorComboBox component) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,6 +34,7 @@ public class FrameStateManagerImpl extends FrameStateManager {
           System.setProperty("com.jetbrains.suppressWindowRaise", "false");
           myActive.onReady();
           myPublisher.onFrameActivated();
+          LifecycleUsageTriggerCollector.onFrameActivated(ideFrame.getProject());
           for (FrameStateListener listener : myListeners) {
             listener.onFrameActivated();
           }
@@ -45,6 +47,7 @@ public class FrameStateManagerImpl extends FrameStateManager {
             return;
           }
 
+          LifecycleUsageTriggerCollector.onFrameDeactivated(ideFrame.getProject());
           myPublisher.onFrameDeactivated();
           for (FrameStateListener listener : myListeners) {
             listener.onFrameDeactivated();

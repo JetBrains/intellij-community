@@ -1,0 +1,236 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            PsiElement(\n)('\n')
+            PsiElement(\n)('\n')
+            PIPELINE_COMMAND
+              PsiElement(!)('!')
+              PsiWhiteSpace(' ')
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  NUMBER
+                    PsiElement(int)('1')
+            PsiElement(\n)('\n')
+            PsiElement(\n)('\n')
+            PsiElement(\n)('\n')
+            PsiElement(\n)('\n')
+          PsiElement())(')')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            PsiElement(\n)('\n')
+            PsiElement(\n)('\n')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace(' ')
+            PIPELINE_COMMAND
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  NUMBER
+                    PsiElement(int)('1')
+            PsiWhiteSpace(' ')
+            PsiElement(;)(';')
+            PsiElement(\n)('\n')
+          PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            PsiElement(\n)('\n')
+            PsiElement(\n)('\n')
+            PIPELINE_COMMAND
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  NUMBER
+                    PsiElement(int)('1')
+            PsiElement(\n)('\n')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace(' ')
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('echo')
+            PsiWhiteSpace('  ')
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          PsiElement())(')')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PsiElement(!)('!')
+              PsiWhiteSpace(' ')
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  NUMBER
+                    PsiElement(int)('1')
+          PsiWhiteSpace(' ')
+          PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  NUMBER
+                    PsiElement(int)('1')
+            PsiWhiteSpace(' ')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  NUMBER
+                    PsiElement(int)('1')
+                  PsiWhiteSpace(' ')
+                  LITERAL
+                    PsiElement(word)('echo')
+            PsiWhiteSpace('  ')
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          PsiElement())(')')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement(CLOSE_QUOTE)('"')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(>>)('>>')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('AGENT_CONFIG_FILE')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement(CLOSE_QUOTE)('"')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(>>)('>>')
+              PsiWhiteSpace(' ')
+              PsiElement($)('$')
+              SHELL_PARAMETER_EXPANSION
+                PsiElement({)('{')
+                PsiElement(parameter_expansion_body)('AGENT_CONFIG_FILE')
+                PsiElement(})('}')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('SHA256MAP[$VERSION]')
+              PsiElement(})('}')
+            PsiElement(STRING_CONTENT)(' /tmp/')
+            VARIABLE
+              PsiElement(var)('$FILE')
+            PsiElement(CLOSE_QUOTE)('"')
+        PsiWhiteSpace(' ')
+        PsiElement(|)('|')
+        PsiWhiteSpace(' ')
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('sha256sum')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-c')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-')

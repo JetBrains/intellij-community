@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -54,7 +55,7 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
       }
       rootVDir.refresh(true, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
-        final String dirName = dir.getName().toLowerCase();
+        final String dirName = StringUtil.toLowerCase(dir.getName());
         if (dir.isDirectory()) {
           if ("Current".equals(dirName) || dirName.startsWith("2") || dirName.startsWith("3")) {
             final VirtualFile binDir = dir.findChild("bin");

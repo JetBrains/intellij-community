@@ -115,7 +115,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   public Element getState() {
     Element state = new Element("state");
     if (defaultBrowserPolicy != DefaultBrowserPolicy.SYSTEM) {
-      state.setAttribute("default", defaultBrowserPolicy.name().toLowerCase(Locale.ENGLISH));
+      state.setAttribute("default", StringUtil.toLowerCase(defaultBrowserPolicy.name()));
     }
     if (!myShowBrowserHover) {
       state.setAttribute("showHover", "false");
@@ -218,7 +218,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     String defaultValue = element.getAttributeValue("default");
     if (!StringUtil.isEmpty(defaultValue)) {
       try {
-        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(defaultValue.toUpperCase(Locale.ENGLISH));
+        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(StringUtil.toUpperCase(defaultValue));
       }
       catch (IllegalArgumentException e) {
         LOG.warn(e);
@@ -306,12 +306,12 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   }
 
   @NotNull
-  public List<WebBrowser> getBrowsers(@NotNull Condition<WebBrowser> condition) {
+  public List<WebBrowser> getBrowsers(@NotNull Condition<? super WebBrowser> condition) {
     return getBrowsers(condition, true);
   }
 
   @NotNull
-  public List<WebBrowser> getBrowsers(@NotNull Condition<WebBrowser> condition, boolean onlyActive) {
+  public List<WebBrowser> getBrowsers(@NotNull Condition<? super WebBrowser> condition, boolean onlyActive) {
     List<WebBrowser> result = new SmartList<>();
     for (ConfigurableWebBrowser browser : browsers) {
       if ((!onlyActive || browser.isActive()) && condition.value(browser)) {

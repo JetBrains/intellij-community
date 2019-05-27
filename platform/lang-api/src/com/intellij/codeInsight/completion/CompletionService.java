@@ -46,13 +46,13 @@ public abstract class CompletionService {
    */
   public void getVariantsFromContributors(final CompletionParameters parameters,
                                           @Nullable final CompletionContributor from,
-                                          final Consumer<CompletionResult> consumer) {
+                                          final Consumer<? super CompletionResult> consumer) {
     getVariantsFromContributors(parameters, from, createMatcher(suggestPrefix(parameters), false), consumer);
   }
 
   protected void getVariantsFromContributors(CompletionParameters parameters,
                                            @Nullable CompletionContributor from,
-                                           PrefixMatcher matcher, Consumer<CompletionResult> consumer) {
+                                           PrefixMatcher matcher, Consumer<? super CompletionResult> consumer) {
     final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
 
     for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
@@ -67,7 +67,7 @@ public abstract class CompletionService {
     }
   }
 
-  protected abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<CompletionResult> consumer,
+  protected abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
                                                          @NotNull CompletionContributor contributor, PrefixMatcher matcher);
 
   protected abstract String suggestPrefix(CompletionParameters parameters);

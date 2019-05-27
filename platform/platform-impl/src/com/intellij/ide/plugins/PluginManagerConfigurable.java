@@ -143,9 +143,9 @@ public class PluginManagerConfigurable implements SearchableConfigurable, Config
 
   @Messages.YesNoResult
   public static int showRestartDialog(@NotNull String title) {
-    String action = IdeBundle.message(ApplicationManagerEx.getApplicationEx().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
+    String action = IdeBundle.message(ApplicationManager.getApplication().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
     String message = IdeBundle.message("ide.restart.required.message", action, ApplicationNamesInfo.getInstance().getFullProductName());
-    return Messages.showYesNoDialog(message, title, action, IdeBundle.message("ide.postpone.action"), Messages.getQuestionIcon());
+    return Messages.showYesNoDialog(message, title, action, IdeBundle.message("ide.notnow.action"), Messages.getQuestionIcon());
   }
 
   public static void shutdownOrRestartApp() {

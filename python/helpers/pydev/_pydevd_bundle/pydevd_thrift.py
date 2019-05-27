@@ -15,7 +15,7 @@ from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K,
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, MAXIMUM_ARRAY_SIZE
 from pydev_console.protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
-    UnsupportedArrayTypeException
+    UnsupportedArrayTypeException, ExceedingArrayDimensionsException
 from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements
 
 try:
@@ -440,7 +440,7 @@ def array_to_meta_thrift_struct(array, name, format):
     l = len(array.shape)
     reslice = ""
     if l > 2:
-        raise Exception("%s has more than 2 dimensions." % slice)
+        raise ExceedingArrayDimensionsException
     elif l == 1:
         # special case with 1D arrays arr[i, :] - row, but arr[:, i] - column with equal shape and ndim
         # http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns

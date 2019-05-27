@@ -461,7 +461,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private void fillProperties(PropertiesContainer<?> component, List<Property> properties) {
+  private void fillProperties(PropertiesContainer<?> component, List<? super Property> properties) {
     for (Property each : getProperties(component)) {
       if (addIfNeeded(component, each, properties)) {
         addExpandedChildren(component, each, properties);
@@ -469,7 +469,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private void addExpandedChildren(PropertiesContainer<?> component, Property property, List<Property> properties) {
+  private void addExpandedChildren(PropertiesContainer<?> component, Property property, List<? super Property> properties) {
     if (isExpanded(property)) {
       for (Property child : getChildren(property)) {
         if (addIfNeeded(component, child, properties)) {
@@ -479,7 +479,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private boolean addIfNeeded(PropertiesContainer<?> component, Property property, List<Property> properties) {
+  private boolean addIfNeeded(PropertiesContainer<?> component, Property property, List<? super Property> properties) {
     if (property.isExpert() && !myShowExpertProperties) {
       try {
         if (property.isDefaultRecursively(component)) {

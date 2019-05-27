@@ -1416,11 +1416,11 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitArrayFillingInspection"
                      displayName="Explicit array filling"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ExplicitMinMaxCheck"
+    <localInspection groupPath="Java" language="JAVA" shortName="ManualMinMaxCalculation"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.ExplicitMinMaxCheckInspection"
-                     displayName="Explicit min/max check"/>
+                     implementationClass="com.intellij.codeInspection.ManualMinMaxCalculationInspection"
+                     displayName="Manual min/max calculation"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CollectionAddAllCanBeReplacedWithConstructor"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"

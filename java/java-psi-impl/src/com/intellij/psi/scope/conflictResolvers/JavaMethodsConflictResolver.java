@@ -48,7 +48,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   @Override
   public final CandidateInfo resolveConflict(@NotNull final List<CandidateInfo> conflicts){
-    if (MethodCandidateInfo.isOverloadCheck(myArgumentsList)) {
+    if (myArgumentsList instanceof PsiExpressionList && MethodCandidateInfo.isOverloadCheck(myArgumentsList)) {
       LOG.error("Recursive conflict resolution for:" + myArgumentsList.getParent() + "; " +
                 "file=" + myArgumentsList.getContainingFile());
     }
@@ -307,7 +307,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
       else if (expression == null && !ImportsUtil.hasStaticImportOn(parent, method, true)) {
         PsiClass qualifierClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
-        if (qualifierClass != null && !PsiTreeUtil.isAncestor(method.getContainingClass(), qualifierClass, false)) {
+        if (qualifierClass != null && !PsiTreeUtil.isAncestor(method.getContainingClass(), qualifierClass, true)) {
           return qualifierClass;
         }
       }

@@ -6,24 +6,27 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.InvertedIndex;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.MapIndexStorage;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
-import java.io.DataOutputStream;
 import java.io.*;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -71,7 +74,7 @@ public class CompilerReferenceIndex<Input> {
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
         @Override
         public int enumerate(String value) throws IOException {
-          return super.enumerate(SystemInfo.isFileSystemCaseSensitive ? value : value.toLowerCase(Locale.ROOT));
+          return super.enumerate(SystemInfo.isFileSystemCaseSensitive ? value : StringUtil.toLowerCase(value));
         }
       };
 
@@ -213,7 +216,7 @@ public class CompilerReferenceIndex<Input> {
     LOG.error(e);
   }
 
-  private static void close(InvertedIndex<?, ?, ?> index, CommonProcessors.FindFirstProcessor<Exception> exceptionProcessor) {
+  private static void close(InvertedIndex<?, ?, ?> index, CommonProcessors.FindFirstProcessor<? super Exception> exceptionProcessor) {
     try {
       index.dispose();
     }
@@ -222,7 +225,7 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  private static void close(Closeable closeable, Processor<Exception> exceptionProcessor) {
+  private static void close(Closeable closeable, Processor<? super Exception> exceptionProcessor) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (closeable) {
       try {

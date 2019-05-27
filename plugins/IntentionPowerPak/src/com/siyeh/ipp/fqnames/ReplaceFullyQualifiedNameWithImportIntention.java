@@ -21,11 +21,11 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.HighlightUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -87,6 +87,6 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
         "multiple.fully.qualified.names.status.bar.escape.highlighting.message",
         Integer.valueOf(elementCount));
     }
-    HighlightUtil.highlightElements(shortenedElements, text);
+    HighlightUtils.highlightElements(shortenedElements, text);
   }
 }

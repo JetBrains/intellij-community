@@ -1,0 +1,12 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement($)('$')
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            LITERAL_EXPRESSION
+              NUMBER
+                PsiElement(int)('1')
+            PsiElement()))('))')

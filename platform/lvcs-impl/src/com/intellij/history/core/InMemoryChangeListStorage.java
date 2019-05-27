@@ -50,6 +50,6 @@ public class InMemoryChangeListStorage implements ChangeListStorage {
   }
 
   @Override
-  public void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor) {
+  public void purge(long period, int intervalBetweenActivities, Consumer<? super ChangeSet> processor) {
   }
 }

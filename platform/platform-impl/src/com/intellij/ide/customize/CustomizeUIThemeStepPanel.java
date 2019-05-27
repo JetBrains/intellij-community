@@ -114,7 +114,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     SwingUtilities.invokeLater(() -> applyLaf(myDefaultTheme, this));
   }
 
-  protected void initThemes(Collection<ThemeInfo> result) {
+  protected void initThemes(Collection<? super ThemeInfo> result) {
     if (SystemInfo.isMac) {
       result.add(DARCULA);
       result.add(getDefaultLafOnMac());
@@ -173,10 +173,10 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   @Override
   public String getHTMLFooter() {
-    return "UI theme can be changed later in " +
+    return "You can change the UI theme later in " +
            CommonBundle.settingsTitle()
            + " | " + OptionsBundle.message("configurable.group.appearance.settings.display.name")
-           + " | " + "Appearance";
+           + " | " + "Appearance. Additional themes are available in " + CommonBundle.settingsTitle() + " | Plugins.";
   }
 
   private void applyLaf(ThemeInfo theme, Component component) {

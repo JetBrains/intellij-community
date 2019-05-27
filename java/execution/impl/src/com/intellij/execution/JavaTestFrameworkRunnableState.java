@@ -273,8 +273,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       }
     } else if (isExecutorDisabledInForkedMode()) {
       final String actionName = executor.getActionName();
-      throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + actionName.toLowerCase(
-        Locale.ENGLISH) + ".");
+      throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + StringUtil.toLowerCase(actionName) + ".");
     }
 
     final JavaParameters javaParameters = getJavaParameters();

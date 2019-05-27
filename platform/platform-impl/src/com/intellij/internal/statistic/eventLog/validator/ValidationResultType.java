@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NonNls;
 
 public enum ValidationResultType {
   ACCEPTED("accepted"),
+  THIRD_PARTY("third.party"),
   REJECTED("validation.unmatched_rule"),
   INCORRECT_RULE("validation.incorrect_rule"),
   UNDEFINED_RULE("validation.undefined_rule"),

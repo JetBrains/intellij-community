@@ -25,6 +25,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,11 +87,7 @@ public abstract class IdeFrameDecorator implements Disposable {
 
     @Override
     public boolean isInFullScreen() {
-      if (myFrame == null) return false;
-
-      Rectangle frameBounds = myFrame.getBounds();
-      GraphicsDevice device = ScreenUtil.getScreenDevice(frameBounds);
-      return device != null && device.getDefaultConfiguration().getBounds().equals(frameBounds) && myFrame.isUndecorated();
+      return UIUtil.isWindowClientPropertyTrue(myFrame, WindowManagerImpl.FULL_SCREEN);
     }
 
     @Override

@@ -188,7 +188,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
     private static void collectVariables(@NotNull PsiDeclarationStatement declaration,
                                          @NotNull PsiStatement scope,
                                          @NotNull Set<PsiVariable> nonFinalVariables,
-                                         @NotNull Set<PsiVariable> declaredVariables) {
+                                         @NotNull Set<? super PsiVariable> declaredVariables) {
       Set<PsiVariable> usedVariables = VariableAccessUtils.collectUsedVariables(declaration);
       boolean hasNonFinalVariables = haveCommonElements(usedVariables, nonFinalVariables);
       for (PsiElement element : declaration.getDeclaredElements()) {

@@ -324,7 +324,7 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  private static List<Change> collectAllChanges(@NotNull List<CommitNode> commitNodes) {
+  private static List<Change> collectAllChanges(@NotNull List<? extends CommitNode> commitNodes) {
     return CommittedChangesTreeBrowser.zipChanges(collectChanges(commitNodes));
   }
 
@@ -343,7 +343,7 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  private static List<Change> collectChanges(@NotNull List<CommitNode> commitNodes) {
+  private static List<Change> collectChanges(@NotNull List<? extends CommitNode> commitNodes) {
     List<Change> changes = new ArrayList<>();
     for (CommitNode node : commitNodes) {
       changes.addAll(node.getUserObject().getChanges());

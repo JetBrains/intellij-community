@@ -39,6 +39,7 @@ class CommonCodeStyleSettingsManager {
   private static class DefaultsHolder {
     private final static CommonCodeStyleSettings SETTINGS = new CommonCodeStyleSettings(Language.ANY);
     static {
+      SETTINGS.initIndentOptions();
       SETTINGS.setRootSettings(CodeStyleSettings.getDefaults());
     }
   }

@@ -176,8 +176,8 @@
                   "version_added": "13",
                   "partial_implementation": true,
                   "notes": [
-                    "Until Edge 14 (build 14357), attempting to download data URIs caused Edge to crash (<a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/7160092/'>bug 7160092</a>).",
-                    "Edge 17 or older didn't follow the attributes' value to determine filename (<a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/7260192/'>bug 7260192</a>)."
+                    "Until Edge 14 (build 14357), attempting to download data URIs caused Edge to crash (<a href='https://developer.microsoft.com/microsoft-edge/platform/issues/7160092/'>bug 7160092</a>).",
+                    "Edge 17 or older didn't follow the attributes' value to determine filename (<a href='https://developer.microsoft.com/microsoft-edge/platform/issues/7260192/'>bug 7260192</a>)."
                   ]
                 }
               ],
@@ -206,7 +206,8 @@
                 "version_added": false
               },
               "samsunginternet_android": {
-                "version_added": null
+                "version_added": true,
+                "notes": "Starting in Samsung Internet 9.0, cross-origin downloads are not supported on the <code>&lt;a&gt;</code> element."
               },
               "webview_android": {
                 "version_added": true,
@@ -428,7 +429,7 @@
                 "version_added": true
               },
               "chrome_android": {
-                "version_added": null
+                "version_added": true
               },
               "edge": {
                 "version_added": false
@@ -472,10 +473,10 @@
                 "version_added": false
               },
               "samsunginternet_android": {
-                "version_added": null
+                "version_added": true
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {

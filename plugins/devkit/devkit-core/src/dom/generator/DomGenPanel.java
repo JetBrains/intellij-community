@@ -69,7 +69,7 @@ public class DomGenPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         final File file = new File(mySchemaLocation.getText());
-        if (file.exists() && file.getName().toLowerCase().endsWith(".xsd")) {
+        if (file.exists() && StringUtil.toLowerCase(file.getName()).endsWith(".xsd")) {
           final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
           if (vf != null) {
             final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vf);

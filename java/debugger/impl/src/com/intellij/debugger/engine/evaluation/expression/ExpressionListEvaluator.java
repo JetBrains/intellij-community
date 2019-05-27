@@ -15,9 +15,9 @@ import java.util.List;
  * @author egor
  */
 public class ExpressionListEvaluator implements Evaluator {
-  private final List<Evaluator> myEvaluators;
+  private final List<? extends Evaluator> myEvaluators;
 
-  public ExpressionListEvaluator(List<Evaluator> evaluators) {
+  public ExpressionListEvaluator(List<? extends Evaluator> evaluators) {
     myEvaluators = evaluators;
   }
 

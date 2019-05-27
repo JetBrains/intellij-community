@@ -57,6 +57,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private PluginUpdatesService myPluginUpdatesService;
 
+  private Runnable myInvalidFixCallback;
+
   protected MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
     myStatusBar = getStatusBar(window);
@@ -159,7 +161,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     List<PluginNode> pluginsToInstall = ContainerUtil.newArrayList(pluginNode);
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
-    needRestart = true;
 
     installPlugin(pluginsToInstall, getAllRepoPlugins(), this, prepareToInstall(descriptor, updateDescriptor));
   }
@@ -306,6 +307,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     info.indicator.cancel();
 
+    if (success) {
+      needRestart = true;
+    }
     if (!success && showErrors) {
       Messages.showErrorDialog("Plugin " + descriptor.getName() + " download or installing failed",
                                IdeBundle.message("action.download.and.install.plugin"));
@@ -441,7 +445,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @NotNull
-  public static List<String> getVendors(@NotNull List<IdeaPluginDescriptor> descriptors) {
+  public static List<String> getVendors(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
     Map<String, Integer> vendors = new HashMap<>();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
@@ -539,7 +543,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     if (!requiredPlugins.isEmpty()) {
       enablePlugins(requiredPlugins);
+
+      if (myInvalidFixCallback != null) {
+        ApplicationManager.getApplication().invokeLater(myInvalidFixCallback, ModalityState.any());
+      }
     }
+  }
+
+  public void setInvalidFixCallback(@Nullable Runnable invalidFixCallback) {
+    myInvalidFixCallback = invalidFixCallback;
   }
 
   private void updateAfterEnableDisable() {
@@ -648,7 +660,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @NotNull
-  public String getErrorMessage(@NotNull PluginDescriptor pluginDescriptor, @NotNull Ref<String> enableAction) {
+  public String getErrorMessage(@NotNull PluginDescriptor pluginDescriptor, @NotNull Ref<? super String> enableAction) {
     String message;
 
     Set<PluginId> requiredPlugins = getRequiredPlugins(pluginDescriptor.getPluginId());
@@ -666,7 +678,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       int size = requiredPlugins.size();
       message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "", size));
+      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "required", size));
     }
 
     return message;

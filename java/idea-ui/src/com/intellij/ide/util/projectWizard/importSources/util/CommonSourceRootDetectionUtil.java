@@ -21,9 +21,9 @@ public abstract class CommonSourceRootDetectionUtil<F> {
 
   @Nullable
   public Pair<F, String> suggestRootForFileWithPackageStatement(F file,
-                                                                 F topmostPossibleRoot,
-                                                                 NullableFunction<CharSequence, String> packageNameFetcher,
-                                                                 boolean packagePrefixSupported) {
+                                                                F topmostPossibleRoot,
+                                                                NullableFunction<? super CharSequence, String> packageNameFetcher,
+                                                                boolean packagePrefixSupported) {
     if (!isFile(file)) return null;
 
     final CharSequence chars;

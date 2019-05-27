@@ -18,7 +18,7 @@ import javax.swing.DefaultComboBoxModel
 internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigurable(message("ignored.file.tab.title"),
                                                                                       "project.propVCSSupport.Ignored.Files"), SearchableConfigurable {
   internal var selectedManageIgnoreOption = getIgnoredOption()
-  internal var selectedMarkExcludedAsIgnored = VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED
+  internal var settings = VcsApplicationSettings.getInstance()
 
   override fun apply() {
     val modified = isModified
@@ -26,7 +26,6 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
 
     if (modified) {
       updateIgnoredOption(selectedManageIgnoreOption)
-      VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED = selectedMarkExcludedAsIgnored
     }
   }
 
@@ -37,7 +36,7 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
           cell {
             Label(message("ignored.file.manage.policy.label"))()
             comboBox(
-              DefaultComboBoxModel(arrayOf(None,
+              DefaultComboBoxModel(arrayOf(AlwaysAsk,
                                            AllProjectsManage,
                                            CurrentProjectManage,
                                            DoNotManageForCurrentProject,
@@ -50,9 +49,10 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
       }
       titledRow(message("ignored.file.excluded.settings.title")) {
         row {
-          cell {
-            checkBox(message("ignored.file.excluded.to.ignored.label"), ::selectedMarkExcludedAsIgnored)
-          }
+          checkBox(message("ignored.file.excluded.to.ignored.label"), settings::MARK_EXCLUDED_AS_IGNORED)
+        }
+        row {
+          checkBox(message("ignored.file.ignored.to.excluded.label"), settings::MARK_IGNORED_AS_EXCLUDED)
         }
       }
     }
@@ -85,7 +85,7 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
         applicationSettings.MANAGE_IGNORE_FILES = false
         applicationSettings.DISABLE_MANAGE_IGNORE_FILES = false
       }
-      None -> {
+      AlwaysAsk -> {
         propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, false)
         propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, false)
         applicationSettings.MANAGE_IGNORE_FILES = false
@@ -102,12 +102,12 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
       applicationSettings.MANAGE_IGNORE_FILES -> AllProjectsManage
       propertiesComponent.getBoolean(MANAGE_IGNORE_FILES_PROPERTY, false) -> CurrentProjectManage
       propertiesComponent.getBoolean(ASKED_MANAGE_IGNORE_FILES_PROPERTY, false) -> DoNotManageForCurrentProject
-      else -> None
+      else -> AlwaysAsk
     }
   }
 
   enum class ManageIgnoredOption(val displayName: String) {
-    None(""),
+    AlwaysAsk(message("ignored.file.manage.always.ask.option")),
     AllProjectsManage(message("ignored.file.manage.all.projects.option")),
     CurrentProjectManage(message("ignored.file.manage.this.project.option")),
     DoNotManageForCurrentProject(message("ignored.file.not.manage.this.project.option")),

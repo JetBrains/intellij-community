@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -41,16 +41,15 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     super.tearDown();
   }
 
-  protected int findMatchesCount(String in, String pattern, FileType fileType) {
+  protected int findMatchesCount(String in, String pattern, LanguageFileType fileType) {
     return findMatches(in, pattern, fileType).size();
   }
 
   protected List<MatchResult> findMatches(String in,
                                           String pattern,
-                                          FileType patternFileType,
+                                          LanguageFileType patternFileType,
                                           Language patternLanguage,
-                                          FileType sourceFileType,
-                                          String sourceExtension,
+                                          LanguageFileType sourceFileType,
                                           boolean physicalSourceFile) {
     options.fillSearchCriteria(pattern);
     options.setFileType(patternFileType);
@@ -58,7 +57,7 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
 
     final String message = checkApplicableConstraints(options);
     assertNull(message, message);
-    return testMatcher.testFindMatches(in, options, true, sourceFileType, sourceExtension, physicalSourceFile);
+    return testMatcher.testFindMatches(in, options, true, sourceFileType, physicalSourceFile);
   }
 
   public static String checkApplicableConstraints(MatchOptions options) {
@@ -99,8 +98,8 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     return null;
   }
 
-  protected List<MatchResult> findMatches(String in, String pattern, FileType patternFileType) {
-    return findMatches(in, pattern, patternFileType, null, patternFileType, null, false);
+  protected List<MatchResult> findMatches(String in, String pattern, LanguageFileType patternFileType) {
+    return findMatches(in, pattern, patternFileType, null, patternFileType, false);
   }
 
   protected int findMatchesCount(String in, String pattern) {

@@ -187,7 +187,7 @@ public class ClassRepr extends ClassFileRepr {
   }
 
   @Override
-  protected void updateClassUsages(final DependencyContext context, final Set<UsageRepr.Usage> s) {
+  protected void updateClassUsages(final DependencyContext context, final Set<? super UsageRepr.Usage> s) {
     mySuperClass.updateClassUsages(context, name, s);
 
     for (TypeRepr.AbstractType t : myInterfaces) {

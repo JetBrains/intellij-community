@@ -3,18 +3,42 @@ package com.intellij.serialization
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.SmartList
+import com.intellij.util.io.readChars
+import com.intellij.util.io.write
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
+import java.io.ByteArrayOutputStream
 
 class ListTest {
   @Rule
   @JvmField
   val testName = TestName()
 
-  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration? = null): T {
+  @JvmField
+  @Rule
+  val fsRule = InMemoryFsRule()
+
+  private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration = defaultTestWriteConfiguration): T {
     return test(bean, testName, writeConfiguration)
+  }
+
+  @Test
+  fun `same list binding for the same type and annotation set`() {
+    val serializer = ObjectSerializer()
+    val bindingProducer = getBindingProducer(serializer)
+
+    @Suppress("unused")
+    class TestBean {
+      @JvmField
+      val a: MutableList<String> = SmartList()
+      val b: MutableList<String> = SmartList()
+    }
+
+    serializer.write(TestBean(), ByteArrayOutputStream())
+    assertThat(getBindingCount(bindingProducer)).isEqualTo(3 /* TestBean/String/Collection */)
   }
 
   @Test
@@ -61,5 +85,36 @@ class ListTest {
     bean.list.add(setOf("bar"))
     val deserializedBean = test(bean)
     assertThat(deserializedBean.list.first()).isInstanceOf(Set::class.java)
+  }
+
+  @Test
+  fun `versioned file`() {
+    val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42, isCompressed = false)
+    val list = listOf("foo", "bar")
+    val configuration = WriteConfiguration(binary = false)
+    file.writeList(list, String::class.java, configuration = configuration)
+    assertThat(file.file.readChars().trim()).isEqualToIgnoringNewLines("""
+      {
+        version:42,
+        formatVersion:1,
+        data:[
+          foo,
+          bar
+        ]
+      }
+    """.trimIndent())
+    assertThat(file.readList(String::class.java)).isEqualTo(list)
+
+    // test that we can read regardless of compressed setting
+    VersionedFile(file.file, 42, isCompressed = true).writeList(list, String::class.java, configuration = configuration)
+    assertThat(VersionedFile(file.file, 42, isCompressed = false).readList(String::class.java)).isEqualTo(list)
+  }
+
+  @Test
+  fun `remove versioned file on input error`() {
+    val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42)
+    file.file.write(byteArrayOf(0, 42, 0))
+    assertThat(file.readList(String::class.java)).isNull()
+    assertThat(file.file).doesNotExist()
   }
 }

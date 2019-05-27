@@ -456,8 +456,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @CalledInAwt
-    private void apply(@NotNull List<MergeLineFragment> fragments,
-                       @NotNull List<MergeConflictType> conflictTypes,
+    private void apply(@NotNull List<? extends MergeLineFragment> fragments,
+                       @NotNull List<? extends MergeConflictType> conflictTypes,
                        @NotNull IgnorePolicy ignorePolicy) {
       if (isDisposed()) return;
 
@@ -536,7 +536,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @CalledInAwt
-      public void scheduleRediff(@NotNull Collection<TextMergeChange> changes) {
+      public void scheduleRediff(@NotNull Collection<? extends TextMergeChange> changes) {
         if (!myEnabled) return;
 
         putChanges(changes);
@@ -591,7 +591,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @CalledInAwt
-      private void putChanges(@NotNull Collection<TextMergeChange> changes) {
+      private void putChanges(@NotNull Collection<? extends TextMergeChange> changes) {
         for (TextMergeChange change : changes) {
           if (change.isResolved()) continue;
           myScheduled.add(change);
@@ -627,8 +627,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @NotNull
       @CalledInBackground
-      private Runnable performRediff(@NotNull final List<TextMergeChange> scheduled,
-                                     @NotNull final List<InnerChunkData> data,
+      private Runnable performRediff(@NotNull final List<? extends TextMergeChange> scheduled,
+                                     @NotNull final List<? extends InnerChunkData> data,
                                      @NotNull final ProgressIndicator indicator) {
         ComparisonPolicy comparisonPolicy = myTextDiffProvider.getIgnorePolicy().getComparisonPolicy();
         final List<MergeInnerDifferences> result = new ArrayList<>(data.size());
@@ -740,7 +740,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
      */
     public boolean executeMergeCommand(@Nullable String commandName,
                                        boolean underBulkUpdate,
-                                       @Nullable List<TextMergeChange> affected,
+                                       @Nullable List<? extends TextMergeChange> affected,
                                        @NotNull Runnable task) {
       myContentModified = true;
 
@@ -756,7 +756,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     public boolean executeMergeCommand(@Nullable String commandName,
-                                       @Nullable List<TextMergeChange> affected,
+                                       @Nullable List<? extends TextMergeChange> affected,
                                        @NotNull Runnable task) {
       return executeMergeCommand(commandName, false, affected, task);
     }
@@ -1041,7 +1041,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       protected abstract boolean isEnabled(@NotNull TextMergeChange change);
 
       @CalledWithWriteLock
-      protected abstract void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes);
+      protected abstract void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes);
     }
 
     private class IgnoreSelectedChangesSideAction extends ApplySelectedChangesActionBase {
@@ -1069,7 +1069,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
+      protected void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes) {
         for (TextMergeChange change : changes) {
           ignoreChange(change, mySide, false);
         }
@@ -1098,7 +1098,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
+      protected void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes) {
         for (TextMergeChange change : changes) {
           markChangeResolved(change);
         }
@@ -1131,7 +1131,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
+      protected void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes) {
         for (int i = changes.size() - 1; i >= 0; i--) {
           replaceChange(changes.get(i), mySide, false);
         }
@@ -1163,7 +1163,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
+      protected void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes) {
         for (int i = changes.size() - 1; i >= 0; i--) {
           replaceChange(changes.get(i), mySide, true);
         }
@@ -1192,7 +1192,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
+      protected void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes) {
         for (int i = changes.size() - 1; i >= 0; i--) {
           TextMergeChange change = changes.get(i);
           resolveChangeAutomatically(change, ThreeSide.BASE);
@@ -1411,13 +1411,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   private static class InnerChunkData {
     @NotNull public final List<CharSequence> text;
 
-    InnerChunkData(@NotNull TextMergeChange change, @NotNull List<Document> documents) {
+    InnerChunkData(@NotNull TextMergeChange change, @NotNull List<? extends Document> documents) {
       text = getChunks(change, documents);
     }
 
     @NotNull
     private static List<CharSequence> getChunks(@NotNull TextMergeChange change,
-                                                @NotNull List<Document> documents) {
+                                                @NotNull List<? extends Document> documents) {
       return ThreeSide.map(side -> {
         if (!change.isChange(side) || change.isResolved(side)) return null;
 

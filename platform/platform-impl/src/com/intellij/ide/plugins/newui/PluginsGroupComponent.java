@@ -54,7 +54,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     return myGroups;
   }
 
-  public void setSelectionListener(@Nullable Consumer<PluginsGroupComponent> listener) {
+  public void setSelectionListener(@Nullable Consumer<? super PluginsGroupComponent> listener) {
     myEventHandler.setSelectionListener(listener);
   }
 
@@ -67,7 +67,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     myEventHandler.setSelection(component);
   }
 
-  public void setSelection(@NotNull List<CellPluginComponent> components) {
+  public void setSelection(@NotNull List<? extends CellPluginComponent> components) {
     myEventHandler.setSelection(components);
   }
 
@@ -117,7 +117,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   private static final Color SECTION_HEADER_BACKGROUND =
     JBColor.namedColor("Plugins.SectionHeader.background", new JBColor(0xF7F7F7, 0x3C3F41));
 
-  private void addGroup(@NotNull PluginsGroup group, @NotNull List<IdeaPluginDescriptor> descriptors, int groupIndex) {
+  private void addGroup(@NotNull PluginsGroup group, @NotNull List<? extends IdeaPluginDescriptor> descriptors, int groupIndex) {
     UIPluginGroup uiGroup = new UIPluginGroup();
     group.ui = uiGroup;
     myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
@@ -194,7 +194,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     return -1;
   }
 
-  private void addToGroup(@NotNull PluginsGroup group, @NotNull List<IdeaPluginDescriptor> descriptors, int index, int eventIndex) {
+  private void addToGroup(@NotNull PluginsGroup group, @NotNull List<? extends IdeaPluginDescriptor> descriptors, int index, int eventIndex) {
     for (IdeaPluginDescriptor descriptor : descriptors) {
       CellPluginComponent pluginComponent = myFunction.fun(descriptor);
       group.ui.plugins.add(pluginComponent);

@@ -209,7 +209,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       return myFile != null;
     }
 
-    public void flush(final List<Printable> printables) {
+    public void flush(final List<? extends Printable> printables) {
       if (printables.isEmpty()) return;
       final ArrayList<Printable> currentPrintables = new ArrayList<>(printables);
       //move out from AWT thread
@@ -225,11 +225,11 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       invokeInAlarm(request, ApplicationManager.getApplication().isUnitTestMode());
     }
 
-    public void printOn(final Printer console, final List<Printable> printables) {
+    public void printOn(final Printer console, final List<? extends Printable> printables) {
       printOn(console, printables, false);
     }
 
-    public void printOn(final Printer console, final List<Printable> printables, final boolean skipFileContent) {
+    public void printOn(final Printer console, final List<? extends Printable> printables, final boolean skipFileContent) {
       final Runnable request = () -> {
         if (skipFileContent) {
           readFileContentAndPrint(console, null, printables);
@@ -332,7 +332,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       }
     }
 
-    private void readFileContentAndPrint(Printer printer, @Nullable File file, List<Printable> nestedPrintables) {
+    private void readFileContentAndPrint(Printer printer, @Nullable File file, List<? extends Printable> nestedPrintables) {
       if (file != null) {
         int lineNum = 0;
         Map<String, ConsoleViewContentType> contentTypeByNameMap = ContainerUtil.newMapFromValues(
@@ -393,7 +393,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
     return new DiffHyperlink(expected, actual, filePath, actualFilePath, printOneLine);
   }
 
-  private void printOutputFile(List<Printable> currentPrintables) {
+  private void printOutputFile(List<? extends Printable> currentPrintables) {
     if (myOutputFile != null && new File(myOutputFile).isFile()) {
       try (PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true))) {
         for (Printable currentPrintable : currentPrintables) {

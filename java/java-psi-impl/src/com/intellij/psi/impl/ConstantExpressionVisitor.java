@@ -21,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.ConstantExpressionUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ import java.util.concurrent.ConcurrentMap;
 @SuppressWarnings("UnnecessaryBoxing")
 class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstantEvaluationHelper.AuxEvaluator {
   
-  private final StringInterner myInterner = new StringInterner();
+  private final Interner<String> myInterner = new StringInterner();
 
   private Set<PsiVariable> myVisitedVars;
   private final Map<PsiElement, Object> myCachedValues = new HashMap<>();

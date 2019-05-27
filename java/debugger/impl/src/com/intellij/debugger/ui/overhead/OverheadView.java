@@ -208,9 +208,9 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
   }
 
   private static class TimingColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
-    private final Function<OverheadProducer, Long> myGetter;
+    private final Function<? super OverheadProducer, Long> myGetter;
 
-    TimingColumnInfo(@NotNull String name, Function<OverheadProducer, Long> getter) {
+    TimingColumnInfo(@NotNull String name, Function<? super OverheadProducer, Long> getter) {
       super(name);
       myGetter = getter;
     }

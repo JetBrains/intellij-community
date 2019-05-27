@@ -64,6 +64,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.tasks.core",
     "intellij.maven",
     "intellij.gradle",
+    "intellij.gradle.java.maven",
     "intellij.vcs.git",
     "intellij.vcs.svn",
     "intellij.vcs.hg",
@@ -87,6 +88,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.java.debugger.streams",
     "intellij.android.smali",
     "intellij.statsCollector",
+    "intellij.sh",
     "intellij.vcs.changeReminder"
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [

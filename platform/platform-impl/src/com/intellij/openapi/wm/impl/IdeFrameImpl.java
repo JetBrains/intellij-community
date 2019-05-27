@@ -110,7 +110,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     if (Registry.is("suppress.focus.stealing") &&
         Registry.is("suppress.focus.stealing.auto.request.focus") &&
-        !ApplicationManagerEx.getApplicationEx().isActive()) {
+        !ApplicationManager.getApplication().isActive()) {
       setAutoRequestFocus(false);
     }
 
@@ -196,14 +196,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     if (myProject != null) {
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
-      if (focusOwner instanceof EditorComponentImpl && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
-        String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
-        ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
-        if (toolWindow != null) {
-          return toolWindow.getComponent().getFocusTraversalPolicy().getDefaultComponent(toolWindow.getComponent());
-        }
-      }
-      else {
+      if (ToolWindowManagerEx.getInstanceEx(myProject).fallbackToEditor()) {
         EditorWindow currentWindow = FileEditorManagerEx.getInstanceEx(myProject).getSplitters().getCurrentWindow();
         if (currentWindow != null) {
           EditorWithProviderComposite selectedEditor = currentWindow.getSelectedEditor();
@@ -213,6 +206,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
               return preferredFocusedComponent;
             }
           }
+        }
+      } else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
+        String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
+        ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
+        if (toolWindow != null) {
+          return toolWindow.getComponent().getFocusTraversalPolicy().getDefaultComponent(toolWindow.getComponent());
         }
       }
     }

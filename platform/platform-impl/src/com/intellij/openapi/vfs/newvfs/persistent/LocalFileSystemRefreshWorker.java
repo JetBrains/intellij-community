@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
-import com.intellij.util.Function;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.text.FilePathHashingStrategy;
@@ -31,8 +30,8 @@ import java.nio.file.attribute.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
-import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 
 class LocalFileSystemRefreshWorker {
@@ -47,15 +46,15 @@ class LocalFileSystemRefreshWorker {
   }
 
   @NotNull
-  public List<VFileEvent> getEvents() {
+  List<VFileEvent> getEvents() {
     return myHelper.getEvents();
   }
 
-  public void cancel() {
+  void cancel() {
     myCancelled = true;
   }
 
-  public void scan() {
+  void scan() {
     NewVirtualFile root = myRefreshRoot;
     boolean rootDirty = root.isDirty();
     if (LOG.isDebugEnabled()) LOG.debug("root=" + root + " dirty=" + rootDirty);
@@ -84,58 +83,9 @@ class LocalFileSystemRefreshWorker {
     int parallelism = Registry.intValue("vfs.use.nio-based.local.refresh.worker.parallelism", Runtime.getRuntime().availableProcessors() - 1);
 
     if (myIsRecursive && parallelism > 0 && !ApplicationManager.getApplication().isDispatchThread()) {
-      return new RefreshContext(fs, persistentFS, strategy) {
-        private final ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("Refresh Worker", parallelism);
-        private final AtomicInteger tasksScheduled = new AtomicInteger();
-        private final AtomicInteger workersInProcess = new AtomicInteger();
-        private final CountDownLatch refreshFinishedLatch = new CountDownLatch(1);
-
-        @Override
-        void submitRefreshRequest(@NotNull Runnable action) {
-          tasksScheduled.incrementAndGet();
-
-          service.submit(() -> {
-            workersInProcess.incrementAndGet();
-            try {
-              action.run();
-            }
-            finally {
-              workersInProcess.decrementAndGet();
-              int currentTasks = tasksScheduled.decrementAndGet();
-              if (currentTasks == 0 && workersInProcess.get() == 0) {
-                refreshFinishedLatch.countDown();
-              }
-            }
-          });
-        }
-
-        @Override
-        void doWaitForRefreshToFinish() {
-          try {
-            refreshFinishedLatch.await(1, TimeUnit.DAYS);
-            service.shutdown();
-          }
-          catch (InterruptedException ignore) { }
-        }
-      };
+      return new ConcurrentRefreshContext(fs, persistentFS, strategy, parallelism);
     }
-    else {
-      return new RefreshContext(fs, persistentFS, strategy) {
-        private final Queue<Runnable> myRefreshRequests = new Queue<>(100);
-
-        @Override
-        void submitRefreshRequest(@NotNull Runnable request) {
-          myRefreshRequests.addLast(request);
-        }
-
-        @Override
-        void doWaitForRefreshToFinish() {
-          while (!myRefreshRequests.isEmpty()) {
-            myRefreshRequests.pullFirst().run();
-          }
-        }
-      };
-    }
+    return new SequentialRefreshContext(fs, persistentFS, strategy);
   }
 
   private void processFile(@NotNull NewVirtualFile file, @NotNull RefreshContext refreshContext) {
@@ -236,14 +186,14 @@ class LocalFileSystemRefreshWorker {
   }
 
   static Pair<String[], VirtualFile[]> getDirectorySnapshot(@NotNull PersistentFS persistence, @NotNull VirtualDirectoryImpl dir) {
-    return ReadAction.compute(() -> ApplicationManager.getApplication().isDisposed() ? null : pair(persistence.list(dir), dir.getChildren()));
+    return ReadAction.compute(() -> ApplicationManager.getApplication().isDisposed() ? null : Pair.create(persistence.list(dir), dir.getChildren()));
   }
 
   private void partialDirRefresh(@NotNull VirtualDirectoryImpl dir, @NotNull RefreshContext refreshContext) {
     while (true) {
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
-        ReadAction.compute(() -> pair(dir.getCachedChildren(), dir.getSuspiciousNames()));
+        ReadAction.compute(() -> Pair.create(dir.getCachedChildren(), dir.getSuspiciousNames()));
 
       List<VirtualFile> cached = result.getFirst();
       List<String> wanted = result.getSecond();
@@ -274,9 +224,10 @@ class LocalFileSystemRefreshWorker {
   }
 
   private boolean isCancelled(@NotNull NewVirtualFile stopAt, @NotNull RefreshContext refreshContext) {
-    boolean requestedCancel = false;
-    if (myCancelled || (requestedCancel = ourUnitTestCancellingCondition != null && ourUnitTestCancellingCondition.fun(stopAt))) {
-      if (requestedCancel) myCancelled = true;
+    if (ourTestListener != null) {
+      ourTestListener.accept(stopAt);
+    }
+    if (myCancelled) {
       refreshContext.filesToBecomeDirty.offer(stopAt);
       return true;
     }
@@ -292,12 +243,70 @@ class LocalFileSystemRefreshWorker {
     file.markDirty();
   }
 
-  private static Function<? super VirtualFile, Boolean> ourUnitTestCancellingCondition;
+  private static Consumer<? super VirtualFile> ourTestListener;
 
   @TestOnly
-  static void setCancellingCondition(@Nullable Function<? super VirtualFile, Boolean> condition) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    ourUnitTestCancellingCondition = condition;
+  static void setTestListener(@Nullable Consumer<? super VirtualFile> testListener) {
+    ourTestListener = testListener;
+  }
+
+  private static class SequentialRefreshContext extends RefreshContext {
+    private final Queue<Runnable> myRefreshRequests = new Queue<>(100);
+
+    SequentialRefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistentFS, @NotNull TObjectHashingStrategy<String> strategy) {
+      super(fs, persistentFS, strategy);
+    }
+
+    @Override
+    void submitRefreshRequest(@NotNull Runnable request) {
+      myRefreshRequests.addLast(request);
+    }
+
+    @Override
+    void doWaitForRefreshToFinish() {
+      while (!myRefreshRequests.isEmpty()) {
+        myRefreshRequests.pullFirst().run();
+      }
+    }
+  }
+
+  private static class ConcurrentRefreshContext extends RefreshContext {
+    private final ExecutorService service;
+    private final AtomicInteger tasksScheduled = new AtomicInteger();
+    private final CountDownLatch refreshFinishedLatch = new CountDownLatch(1);
+
+    ConcurrentRefreshContext(@NotNull NewVirtualFileSystem fs,
+                             @NotNull PersistentFS persistentFS,
+                             @NotNull TObjectHashingStrategy<String> strategy,
+                             int parallelism) {
+      super(fs, persistentFS, strategy);
+      service = AppExecutorUtil.createBoundedApplicationPoolExecutor("Refresh Worker", parallelism);
+    }
+
+    @Override
+    void submitRefreshRequest(@NotNull Runnable action) {
+      tasksScheduled.incrementAndGet();
+
+      service.execute(() -> {
+        try {
+          action.run();
+        }
+        finally {
+          if (tasksScheduled.decrementAndGet() == 0) {
+            refreshFinishedLatch.countDown();
+          }
+        }
+      });
+    }
+
+    @Override
+    void doWaitForRefreshToFinish() {
+      try {
+        refreshFinishedLatch.await(1, TimeUnit.DAYS);
+        service.shutdown();
+      }
+      catch (InterruptedException ignore) { }
+    }
   }
 
   private class RefreshingFileVisitor extends SimpleFileVisitor<Path> {
@@ -311,11 +320,11 @@ class LocalFileSystemRefreshWorker {
     RefreshingFileVisitor(@NotNull NewVirtualFile fileOrDir,
                           @NotNull RefreshContext refreshContext,
                           @Nullable("null means all") Collection<String> childrenToRefresh,
-                          @NotNull Collection<VirtualFile> existingPersistentChildren) {
+                          @NotNull Collection<? extends VirtualFile> existingPersistentChildren) {
       myFileOrDir = fileOrDir;
       myRefreshContext = refreshContext;
       myPersistentChildren = new THashMap<>(existingPersistentChildren.size(), refreshContext.strategy);
-      myChildrenWeAreInterested = childrenToRefresh != null ? new THashSet<>(childrenToRefresh, refreshContext.strategy) : null;
+      myChildrenWeAreInterested = childrenToRefresh == null ? null : new THashSet<>(childrenToRefresh, refreshContext.strategy);
 
       for (VirtualFile child : existingPersistentChildren) {
         String name = child.getName();

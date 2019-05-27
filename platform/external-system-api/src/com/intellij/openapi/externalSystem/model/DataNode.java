@@ -4,13 +4,12 @@ package com.intellij.openapi.externalSystem.model;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.serialization.ObjectSerializer;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Proxy;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -57,7 +56,7 @@ public class DataNode<T> implements UserDataHolderEx {
     this.parent = parent;
   }
 
-  // deserialization, serializer can create object without default constructor, but in this case fields (userData) will be not initialized to default values
+  // deserialization, data decoded on demand
   @SuppressWarnings("unused")
   private DataNode() {
   }
@@ -107,7 +106,7 @@ public class DataNode<T> implements UserDataHolderEx {
    *
    * @param classLoaders  class loaders which are assumed to be able to build object of the target content class
    */
-  public void deserializeData(@NotNull Collection<ClassLoader> classLoaders) {
+  public void deserializeData(@NotNull Collection<? extends ClassLoader> classLoaders) {
     if (data != null) {
       return;
     }
@@ -117,15 +116,17 @@ public class DataNode<T> implements UserDataHolderEx {
     if (rawData.length == 0) {
       return;
     }
-    if (dataClassName == null) {
-      throw new IllegalStateException(String.format("Data node of key '%s' does not contain data class name", key));
+
+
+    String className = dataClassName;
+    if (className == null) {
+      className = key.getDataType();
     }
 
     try {
       MultiLoaderWrapper classLoader = new MultiLoaderWrapper(getClass().getClassLoader(), classLoaders);
       //noinspection unchecked
-      data = ObjectSerializer.getInstance().read((Class<T>)classLoader.findClass(dataClassName), rawData, SerializationKt.getExternalSystemBeanConstructed());
-      assert data != null;
+      data = SerializationKt.readDataNodeData(((Class<T>)classLoader.findClass(className)), rawData, classLoader);
       clearRawData();
     }
     catch (Exception e) {
@@ -220,7 +221,7 @@ public class DataNode<T> implements UserDataHolderEx {
     return result;
   }
 
-  public void serializeData() {
+  public void serializeData(@NotNull WriteAndCompressSession buffer) {
     if (rawData != null) {
       return;
     }
@@ -230,9 +231,11 @@ public class DataNode<T> implements UserDataHolderEx {
       rawData = ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     else {
-      LOG.assertTrue(!(data instanceof Proxy));
       dataClassName = data.getClass().getName();
-      rawData = ObjectSerializer.getInstance().writeAsBytes(data);
+      if (dataClassName.equals(key.getDataType())) {
+        dataClassName = null;
+      }
+      rawData = SerializationKt.serializeDataNodeData(data, buffer);
     }
   }
 
@@ -347,5 +350,17 @@ public class DataNode<T> implements UserDataHolderEx {
       copy.addChild(copy(child, copy));
     }
     return copy;
+  }
+
+  public final void visit(@NotNull Consumer<? super DataNode<?>> consumer) {
+    ArrayDeque<List<DataNode<?>>> toProcess = new ArrayDeque<>();
+    toProcess.add(Collections.singletonList(this));
+    List<DataNode<?>> nodes;
+    while ((nodes = toProcess.pollFirst()) != null) {
+      nodes.forEach(consumer);
+      for (DataNode<?> node : nodes) {
+        toProcess.add(node.children);
+      }
+    }
   }
 }

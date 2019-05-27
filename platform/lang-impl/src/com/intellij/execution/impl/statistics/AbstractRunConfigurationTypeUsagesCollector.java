@@ -9,11 +9,15 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +28,6 @@ import java.util.Objects;
 import java.util.Set;
 
 public abstract class AbstractRunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
-  private static final String DEFAULT_ID = "third.party";
-
   protected abstract boolean isApplicable(@NotNull RunManager runManager, @NotNull RunnerAndConfigurationSettings settings);
 
   @NotNull
@@ -44,10 +46,9 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
             continue;
           }
 
-          final FeatureUsageData data = new FeatureUsageData();
-          final String key = toReportedId(configurationFactory, data);
+          final String key = toReportedId(configurationFactory);
           if (StringUtil.isNotEmpty(key)) {
-            final Template template = new Template(key, addContext(data, settings, runConfiguration));
+            final Template template = new Template(key, addContext(settings, runConfiguration));
             if (templates.containsKey(template)) {
               templates.increment(template);
             }
@@ -65,30 +66,23 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
   }
 
   @Nullable
-  public static String toReportedId(@NotNull ConfigurationFactory factory, @NotNull FeatureUsageData data) {
+  public static String toReportedId(@NotNull ConfigurationFactory factory) {
     final ConfigurationType configurationType = factory.getType();
     if (configurationType instanceof UnknownConfigurationType) {
       return null;
     }
 
-    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(configurationType.getClass());
-    data.addPluginInfo(info);
-
-    if (!info.isDevelopedByJetBrains()) {
-      return DEFAULT_ID;
-    }
     final StringBuilder keyBuilder = new StringBuilder();
     keyBuilder.append(configurationType.getId());
     if (configurationType.getConfigurationFactories().length > 1) {
-      keyBuilder.append(".").append(factory.getId());
+      keyBuilder.append("/").append(factory.getId());
     }
     return keyBuilder.toString();
   }
 
-  private static FeatureUsageData addContext(@NotNull FeatureUsageData data,
-                                             @NotNull RunnerAndConfigurationSettings settings,
+  private static FeatureUsageData addContext(@NotNull RunnerAndConfigurationSettings settings,
                                              @NotNull RunConfiguration runConfiguration) {
-    return data.
+    return new FeatureUsageData().
       addData("shared", settings.isShared()).
       addData("edit_before_run", settings.isEditBeforeRun()).
       addData("activate_before_run", settings.isActivateToolWindowBeforeRun()).
@@ -120,6 +114,70 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
     @Override
     public int hashCode() {
       return Objects.hash(myKey, myData);
+    }
+  }
+
+  public static class RunConfigurationUtilValidator extends CustomUtilsWhiteListRule {
+
+    @Override
+    public boolean acceptRuleId(@Nullable String ruleId) {
+      return "run_config".equals(ruleId);
+    }
+
+    @NotNull
+    @Override
+    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+      if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
+
+      final String[] split = data.split("/");
+      if (split.length == 1 || split.length == 2) {
+        final String factoryId = split.length == 2 ? split[1].trim() : null;
+        final Pair<ConfigurationType, ConfigurationFactory> configurationAndFactory = findConfigurationAndFactory(split[0].trim(), factoryId);
+
+        final ConfigurationType configuration = configurationAndFactory.getFirst();
+        final ConfigurationFactory factory = configurationAndFactory.getSecond();
+        if (configuration != null && (StringUtil.isEmpty(factoryId) || factory != null)) {
+          final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(configuration.getClass());
+          if (StringUtil.equals(data, context.eventId)) {
+            context.setPluginInfo(info);
+          }
+          return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
+        }
+      }
+      return ValidationResultType.REJECTED;
+    }
+
+    @NotNull
+    private static Pair<ConfigurationType, ConfigurationFactory> findConfigurationAndFactory(@NotNull String configurationId,
+                                                                                             @Nullable String factoryId) {
+      final ConfigurationType configuration = findRunConfigurationById(configurationId);
+      if (configuration == null) {
+        return Pair.empty();
+      }
+
+      final ConfigurationFactory factory = StringUtil.isEmpty(factoryId) ? null : findFactoryById(configuration, factoryId);
+      return Pair.create(configuration, factory);
+    }
+
+    @Nullable
+    private static ConfigurationType findRunConfigurationById(@NotNull String configuration) {
+      final ConfigurationType[] types = ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions();
+      for (ConfigurationType type : types) {
+        if (StringUtil.equals(type.getId(), configuration)) {
+          return type;
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static ConfigurationFactory findFactoryById(@NotNull ConfigurationType configuration, @NotNull String factoryId) {
+      for (ConfigurationFactory factory : configuration.getConfigurationFactories()) {
+        if (StringUtil.equals(factory.getId(), factoryId)) {
+          return factory;
+        }
+      }
+      return null;
     }
   }
 }

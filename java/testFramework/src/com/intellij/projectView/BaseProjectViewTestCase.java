@@ -20,14 +20,19 @@ import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   protected TestProjectTreeStructure myStructure;
@@ -101,5 +106,9 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   protected PsiDirectory getPackageDirectory() {
     return getPackageDirectory(getPackageRelativePath());
+  }
+
+  public static void sortClassesByName(@NotNull PsiClass[] classes) {
+    Arrays.sort(classes, Comparator.comparing(NavigationItem::getName));
   }
 }

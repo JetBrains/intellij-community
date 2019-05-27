@@ -42,7 +42,7 @@ public interface CacheManager {
   @NotNull
   VirtualFile[] getVirtualFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
 
-  boolean processFilesWithWord(@NotNull Processor<PsiFile> processor,
+  boolean processFilesWithWord(@NotNull Processor<? super PsiFile> processor,
                                @NotNull String word,
                                @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurenceMask,
                                @NotNull GlobalSearchScope scope,

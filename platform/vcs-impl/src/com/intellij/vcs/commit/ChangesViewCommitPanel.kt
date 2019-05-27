@@ -4,7 +4,6 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.CommonShortcuts.CTRL_ENTER
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.Messages
@@ -37,8 +36,13 @@ import com.intellij.util.ui.UIUtil.addBorder
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Point
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.KeyStroke.getKeyStroke
+
+private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
 
 private fun createHorizontalPanel(): JBPanel<*> = JBPanel<JBPanel<*>>(HorizontalLayout(scale(16)))
 
@@ -115,7 +119,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
 
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
 
-  fun setupShortcuts(component: JComponent) = DefaultCommitAction().registerCustomShortcutSet(CTRL_ENTER, component)
+  fun setupShortcuts(component: JComponent) = DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component)
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
 
@@ -160,7 +164,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
   override fun getData(dataId: String) = getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
-  private fun getDataFromProviders(dataId: String) = dataProviders.asSequence().mapNotNull { it.getData(dataId) }.firstOrNull()
+  fun getDataFromProviders(dataId: String) = dataProviders.asSequence().mapNotNull { it.getData(dataId) }.firstOrNull()
 
   override fun addDataProvider(provider: DataProvider) {
     dataProviders += provider
@@ -180,6 +184,8 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   override fun getIncludedUnversionedFiles(): List<VirtualFile> =
     includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(VirtualFile::class.java)
 
+  override fun isInclusionEmpty(): Boolean = changesView.isInclusionEmpty
+  override fun clearInclusion() = changesView.clearInclusion()
   override fun includeIntoCommit(items: Collection<*>) = changesView.includeChanges(items)
 
   override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =
@@ -197,7 +203,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
 
   override fun dispose() = Unit
 
-  private inner class DefaultCommitAction : DumbAwareAction() {
+  inner class DefaultCommitAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = commitButton.isEnabled
     }

@@ -38,7 +38,7 @@ public class JavacMain {
   public static boolean compile(Collection<String> options,
                                 final Collection<? extends File> sources,
                                 Collection<? extends File> classpath,
-                                Collection<File> platformClasspath,
+                                Collection<? extends File> platformClasspath,
                                 Collection<? extends File> modulePath,
                                 Collection<? extends File> upgradeModulePath,
                                 Collection<? extends File> sourcePath,
@@ -173,10 +173,9 @@ public class JavacMain {
       };
 
       final StandardJavaFileManager fm = wrapWithCallDispatcher(fileManager);
-      final JavaCompiler.CompilationTask task = compiler.getTask(
+      final JavaCompiler.CompilationTask task = tryUnwrapFileManager(compiler.getTask(
         out, fm, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
-      );
-      tryUnwrapFileManager(task, fileManager);
+      ), fileManager);
       for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
         try {
           extension.beforeCompileTaskExecution(compilingTool, task, _options, diagnosticConsumer);
@@ -230,10 +229,10 @@ public class JavacMain {
   // Workaround for javac bug:
   // the internal ClientCodeWrapper class may not implement some interface-declared methods
   // which throw UnsupportedOperationException instead of delegating to our JpsFileManager instance
-  private static void tryUnwrapFileManager(JavaCompiler.CompilationTask task, JavaFileManager manager) {
+  private static JavaCompiler.CompilationTask tryUnwrapFileManager(JavaCompiler.CompilationTask task, JavaFileManager manager) {
     try {
       final Class<? extends JavaCompiler.CompilationTask> taskClass = task.getClass();
-      final Field contextField = findFiledOfType(taskClass, Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader()));
+      final Field contextField = findFieldOfType(taskClass, Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader()));
       if (contextField != null) {
         final Object contextObject = contextField.get(task);
         final Method getMethod = contextObject.getClass().getMethod("get", Class.class);
@@ -246,9 +245,10 @@ public class JavacMain {
     }
     catch (Throwable ignored) {
     }
+    return task;
   }
 
-  private static Field findFiledOfType(final Class<?> aClass, final Class<?> fieldType) {
+  private static Field findFieldOfType(final Class<?> aClass, final Class<?> fieldType) {
     for (Class<?> from = aClass; from != null && !Object.class.equals(from); from = from.getSuperclass()) {
       for (Field field : from.getDeclaredFields()) {
         if (fieldType.equals(field.getType())) {
@@ -343,7 +343,7 @@ public class JavacMain {
     return result;
   }
 
-  private static Collection<File> buildPlatformClasspath(Collection<File> platformClasspath, Collection<String> options) {
+  private static Collection<? extends File> buildPlatformClasspath(Collection<? extends File> platformClasspath, Collection<String> options) {
     final Map<PathOption, String> argsMap = new HashMap<PathOption, String>();
     for (Iterator<String> iterator = options.iterator(); iterator.hasNext(); ) {
       final String arg = iterator.next();
@@ -368,7 +368,7 @@ public class JavacMain {
     return result;
   }
 
-  private static void appendFiles(Map<PathOption, String> args, PathOption option, Collection<File> container, boolean listDir) {
+  private static void appendFiles(Map<PathOption, String> args, PathOption option, Collection<? super File> container, boolean listDir) {
     final String path = args.get(option);
     if (path == null) {
       return;

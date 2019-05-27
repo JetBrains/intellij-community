@@ -21,9 +21,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
@@ -134,5 +132,29 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
     WriteCommandAction.runWriteCommandAction(ourProject, () -> ((DocumentEx)myEditor.getDocument()).moveText(5, 10, 0));
     checkResult();
+  }
+
+  public void testSoftWrapWithWithLineSeparator() throws Exception {
+    initText("x\nabcef\ny");
+    configureSoftWraps(2);
+    verifySoftWrapPositions(4, 5);
+
+    RangeHighlighter topHighlighter = addRangeHighlighter(4, 4, 0, null);
+    topHighlighter.setLineSeparatorColor(Color.red);
+    topHighlighter.setLineSeparatorPlacement(SeparatorPlacement.TOP);
+
+    RangeHighlighter bottomHighlighter = addRangeHighlighter(4, 4, 0, null);
+    bottomHighlighter.setLineSeparatorColor(Color.blue);
+    bottomHighlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
+
+    checkResult();
+  }
+
+  public void testSoftWrappedLineHighlighterWithBlockInlay() throws Exception {
+    initText("some text");
+    configureSoftWraps(5);
+    addBlockInlay(0);
+    addLineHighlighter(0, 0, HighlighterLayer.CARET_ROW + 1, null, Color.red);
+    checkResultWithGutter();
   }
 }

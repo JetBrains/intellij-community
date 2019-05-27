@@ -314,7 +314,7 @@ public class ExternalDocumentValidator {
     return parentOfType;
   }
 
-  private static void addAllInfos(Validator.ValidationHost host,List<ValidationInfo> highlightInfos) {
+  private static void addAllInfos(Validator.ValidationHost host, List<? extends ValidationInfo> highlightInfos) {
     for (ValidationInfo info : highlightInfos) {
       host.addMessage(info.element, info.message, info.type);
     }

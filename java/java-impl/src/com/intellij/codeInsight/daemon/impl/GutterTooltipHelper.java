@@ -64,18 +64,18 @@ public final class GutterTooltipHelper {
    * @param actionId                 an action identifier to generate context help or {@code null} if not applicable
    */
   @NotNull
-  public static <E extends PsiElement> String getTooltipText(@NotNull Collection<E> elements,
-                                                             @NotNull Function<E, String> elementToPrefix,
-                                                             @NotNull Predicate<E> skipFirstMemberOfElement,
+  public static <E extends PsiElement> String getTooltipText(@NotNull Collection<? extends E> elements,
+                                                             @NotNull Function<? super E, String> elementToPrefix,
+                                                             @NotNull Predicate<? super E> skipFirstMemberOfElement,
                                                              @Nullable String actionId) {
     return getTooltipText(null, elements, elementToPrefix, skipFirstMemberOfElement, actionId);
   }
 
   @NotNull
   private static <E extends PsiElement> String getTooltipText(@Nullable String prefix,
-                                                              @NotNull Collection<E> elements,
-                                                              @NotNull Function<E, String> elementToPrefix,
-                                                              @NotNull Predicate<E> skipFirstMemberOfElement,
+                                                              @NotNull Collection<? extends E> elements,
+                                                              @NotNull Function<? super E, String> elementToPrefix,
+                                                              @NotNull Predicate<? super E> skipFirstMemberOfElement,
                                                               @Nullable String actionId) {
     StringBuilder sb = new StringBuilder("<html><body><p>");
     if (prefix != null) sb.append(prefix);

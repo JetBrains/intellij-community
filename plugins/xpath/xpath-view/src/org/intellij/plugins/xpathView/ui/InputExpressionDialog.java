@@ -115,8 +115,8 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
             }
         });
         myComboBox = new EditorComboBox(myDocument, project, XPathFileType.XPATH);
-        myComboBox.setRenderer(SimpleListCellRenderer.<HistoryElement>create("", value -> value.expression));
         myComboBox.setModel(myModel);
+        myComboBox.setRenderer(SimpleListCellRenderer.<HistoryElement>create("", value -> value.expression));
 
         myComboBox.setEditable(true);
 

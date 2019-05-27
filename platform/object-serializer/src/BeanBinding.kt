@@ -5,12 +5,9 @@ import com.amazon.ion.IonReader
 import com.amazon.ion.IonType
 import com.amazon.ion.system.IonBinaryWriterBuilder
 import com.amazon.ion.system.IonReaderBuilder
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.ObjectIntHashMap
 import java.lang.reflect.Constructor
 import java.lang.reflect.Type
-
-internal val LOG = logger<BeanBinding>()
 
 private val structWriterBuilder by lazy {
   IonBinaryWriterBuilder.standard().withStreamCopyOptimized(true).immutable()
@@ -22,33 +19,21 @@ private val structReaderBuilder by lazy {
 
 private const val ID_FIELD_NAME = "@id"
 
-internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), RootBinding {
-  private lateinit var bindings: Array<NestedBinding>
+internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Binding {
+  private lateinit var bindings: Array<Binding>
   private lateinit var nameToBindingIndex: ObjectIntHashMap<String>
-  private lateinit var accessors: List<MutableAccessor>
+  private lateinit var properties: List<MutableAccessor>
 
   private val propertyMapping: Lazy<NonDefaultConstructorInfo?> = lazy {
-    for (constructor in beanClass.declaredConstructors) {
-      val annotation = constructor.getAnnotation(PropertyMapping::class.java) ?: continue
-      try {
-        constructor.isAccessible = true
-      }
-      catch (ignore: SecurityException) {
-      }
-
-      if (constructor.parameterCount != annotation.value.size) {
-        throw SerializationException("PropertyMapping annotation specifies ${annotation.value.size} parameters, " +
-                                     "but constructor accepts ${constructor.parameterCount}")
-      }
-      return@lazy NonDefaultConstructorInfo(annotation.value, constructor)
-    }
-
-    null
+    computeNonDefaultConstructorInfo(beanClass)
   }
+
+  // type parameters for bean binding doesn't play any role, should be the only binding for such class
+  override fun createCacheKey(aClass: Class<*>, type: Type) = aClass
 
   override fun init(originalType: Type, context: BindingInitializationContext) {
     val list = context.propertyCollector.collect(beanClass)
-    accessors = list
+    properties = list
     val nameToBindingIndex = ObjectIntHashMap<String>(list.size)
     bindings = Array(list.size) { index ->
       val accessor = list.get(index)
@@ -89,16 +74,23 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
     }
 
     val bindings = bindings
-    val accessors = accessors
+    val properties = properties
     for (i in 0 until bindings.size) {
-      bindings[i].serialize(obj, accessors[i], context)
+      val property = properties[i]
+      val binding = bindings[i]
+      try {
+        binding.serialize(obj, property, context)
+      }
+      catch (e: Exception) {
+        throw SerializationException("Cannot serialize property (property=$property, binding=$binding, beanClass=${beanClass.name})", e)
+      }
     }
     writer.stepOut()
   }
 
   private fun createUsingCustomConstructor(context: ReadContext): Any {
-    val constructorInfo = propertyMapping.value ?: throw SerializationException("Please annotate non-default constructor with PropertyMapping")
-
+    val constructorInfo = propertyMapping.value
+                          ?: throw SerializationException("Please annotate non-default constructor with PropertyMapping (beanClass=${beanClass.name})")
     val names = constructorInfo.names
     val initArgs = arrayOfNulls<Any?>(names.size)
 
@@ -113,6 +105,10 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
       reader.next()
       val subReadContext = context.createSubContext(reader)
       readStruct(reader) { fieldName, type ->
+        if (type == IonType.NULL) {
+          return@readStruct
+        }
+
         if (type == IonType.INT && fieldName == ID_FIELD_NAME) {
           id = reader.intValue()
           return@readStruct
@@ -125,7 +121,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
 
         val bindingIndex = nameToBindingIndex.get(fieldName)
         if (bindingIndex == -1) {
-          LOG.error("Cannot find binding for field $fieldName")
+          LOG.error("Cannot find binding (fieldName=$fieldName, valueType=${reader.type}, beanClass=${beanClass.name}")
           return@readStruct
         }
 
@@ -134,12 +130,18 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
           initArgs[argIndex] = binding.deserialize(subReadContext)
         }
         catch (e: Exception) {
-          LOG.error("Cannot deserialize value for parameter $fieldName (binding=$binding, valueType=${reader.type}, beanClass=${beanClass})", e)
+          throw SerializationException("Cannot deserialize parameter value (fieldName=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e)
         }
       }
     }
 
-    val instance = constructorInfo.constructor.newInstance(*initArgs)
+    val instance = try {
+      constructorInfo.constructor.newInstance(*initArgs)
+    }
+    catch (e: Exception) {
+      throw SerializationException("Cannot create instance (beanClass=${beanClass.name}, initArgs=${initArgs.joinToString()})", e)
+    }
+
     if (id != -1) {
       context.objectIdReader.registerObject(instance, id)
     }
@@ -150,7 +152,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
         readIntoObject(instance, context.createSubContext(reader), checkId = false /* already registered */) { !names.contains(it) }
       }
     }
-    return context.beanConstructed?.let { it(instance) } ?: instance
+    return context.configuration.beanConstructed?.let { it(instance) } ?: instance
   }
 
   override fun deserialize(context: ReadContext): Any {
@@ -181,18 +183,21 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
 
     readIntoObject(instance, context)
 
-    return context.beanConstructed?.let { it(instance) } ?: instance
+    return context.configuration.beanConstructed?.let { it(instance) } ?: instance
   }
 
   private fun readIntoObject(instance: Any, context: ReadContext, checkId: Boolean = true, filter: ((fieldName: String) -> Boolean)? = null) {
     val nameToBindingIndex = nameToBindingIndex
     val bindings = bindings
-    val accessors = accessors
+    val accessors = properties
     val reader = context.reader
     readStruct(reader) { fieldName, type ->
-      if (checkId && type == IonType.INT && fieldName == ID_FIELD_NAME) {
-        val id = reader.intValue()
-        context.objectIdReader.registerObject(instance, id)
+      if (type == IonType.INT && fieldName == ID_FIELD_NAME) {
+        // check flag checkId only here, to ensure that @id is not reported as unknown field
+        if (checkId) {
+          val id = reader.intValue()
+          context.objectIdReader.registerObject(instance, id)
+        }
         return@readStruct
       }
 
@@ -203,7 +208,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
       val bindingIndex = nameToBindingIndex.get(fieldName)
       // ignore unknown field
       if (bindingIndex == -1) {
-        LOG.warn("Unknown field $fieldName (beanClass=${beanClass})")
+        context.errors.unknownFields.add(ReadError("Unknown field (fieldName=$fieldName, beanClass=${beanClass.name})"))
         return@readStruct
       }
 
@@ -211,8 +216,11 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Ro
       try {
         binding.deserialize(instance, accessors[bindingIndex], context)
       }
+      catch (e: SerializationException) {
+        throw e
+      }
       catch (e: Exception) {
-        LOG.error("Cannot deserialize value for field $fieldName (binding=$binding, valueType=${reader.type}, beanClass=${beanClass})", e)
+        context.errors.fields.add(ReadError("Cannot deserialize field value (field=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e))
       }
     }
   }
@@ -222,9 +230,32 @@ private inline fun readStruct(reader: IonReader, read: (fieldName: String, type:
   reader.stepIn()
   while (true) {
     val type = reader.next() ?: break
-    read(reader.fieldName, type)
+    val fieldName = reader.fieldName
+    if (fieldName == null) {
+      throw IllegalStateException("No valid current value or the current value is not a field of a struct.")
+    }
+    read(fieldName, type)
   }
   reader.stepOut()
 }
 
 private class NonDefaultConstructorInfo(val names: Array<String>, val constructor: Constructor<*>)
+
+private fun computeNonDefaultConstructorInfo(beanClass: Class<*>): NonDefaultConstructorInfo? {
+  for (constructor in beanClass.declaredConstructors) {
+    val annotation = constructor.getAnnotation(PropertyMapping::class.java) ?: continue
+    try {
+      constructor.isAccessible = true
+    }
+    catch (ignore: SecurityException) {
+    }
+
+    if (constructor.parameterCount != annotation.value.size) {
+      throw SerializationException("PropertyMapping annotation specifies ${annotation.value.size} parameters, " +
+                                   "but constructor accepts ${constructor.parameterCount}")
+    }
+    return NonDefaultConstructorInfo(annotation.value, constructor)
+  }
+
+  return null
+}

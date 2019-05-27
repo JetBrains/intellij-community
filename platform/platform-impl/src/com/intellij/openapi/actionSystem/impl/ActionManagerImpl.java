@@ -549,7 +549,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     // read ID and register loaded action
     String id = obtainActionId(element, className);
-    if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
+    if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManager.getApplication().isInternal()) {
       myNotRegisteredInternalActionIds.add(id);
       return null;
     }
@@ -671,7 +671,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         reportActionError(pluginId, "ID of the group cannot be an empty string");
         return null;
       }
-      if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
+      if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManager.getApplication().isInternal()) {
         myNotRegisteredInternalActionIds.add(id);
         return null;
       }

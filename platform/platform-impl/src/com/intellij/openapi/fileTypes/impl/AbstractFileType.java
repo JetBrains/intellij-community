@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType, ExternalizableScheme,
-                                                                                CustomSyntaxTableFileType {
+                                                                                CustomSyntaxTableFileType, PlainTextLikeFileType {
   private static final String SEMICOLON = ";";
   protected SyntaxTable mySyntaxTable;
   private SyntaxTable myDefaultSyntaxTable;

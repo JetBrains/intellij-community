@@ -142,7 +142,15 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
   @Nullable
   private InteractiveGitHttpAuthDataProvider getProvider(@NotNull Project project, @NotNull String url, @Nullable String login) {
     Set<GithubAccount> potentialAccounts = myAuthDataProvider.getSuitableAccounts(project, url, login);
-    if (potentialAccounts.isEmpty()) return null;
-    return new InteractiveGithubHttpAuthDataProvider(project, potentialAccounts, myAuthenticationManager);
+    if (!potentialAccounts.isEmpty()) {
+      return new InteractiveSelectGithubAccountHttpAuthDataProvider(project, potentialAccounts, myAuthenticationManager);
+    }
+
+    if (GithubServerPath.DEFAULT_SERVER.matches(url)) {
+      return new InteractiveCreateGithubAccountHttpAuthDataProvider(project, myAuthenticationManager,
+                                                                    GithubServerPath.DEFAULT_SERVER, login);
+    }
+
+    return null;
   }
 }

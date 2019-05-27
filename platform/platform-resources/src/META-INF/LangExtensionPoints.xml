@@ -113,7 +113,9 @@
                     interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"/>
 
     <extensionPoint name="templateParameterTraversalPolicy"
-                    interface="com.intellij.codeInsight.completion.TemplateParameterTraversalPolicy"/>
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.TemplateParameterTraversalPolicy"/>
+    </extensionPoint>
 
     <!-- com.intellij.psi.PsiElement -->
     <extensionPoint name="cantBeStatic"

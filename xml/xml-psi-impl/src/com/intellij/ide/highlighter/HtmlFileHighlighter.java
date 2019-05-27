@@ -89,7 +89,7 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     //noinspection SynchronizationOnGetClass,SynchronizeOnThis
     synchronized (getClass()) {
-      return SyntaxHighlighterBase.pack(XmlHighlighterColors.HTML_CODE, ourMap.get(tokenType).toArray(EMPTY));
+      return SyntaxHighlighterBase.pack(XmlHighlighterColors.HTML_CODE, ourMap.get(tokenType).toArray(TextAttributesKey.EMPTY_ARRAY));
     }
   }
 

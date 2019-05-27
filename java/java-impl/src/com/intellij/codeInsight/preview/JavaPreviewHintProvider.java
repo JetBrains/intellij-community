@@ -161,7 +161,7 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
 
         if (psiElement instanceof PsiField) {
           if ("java.awt.Color".equals(((PsiField)psiElement).getContainingClass().getQualifiedName())) {
-            final String colorName = ((PsiField)psiElement).getName().toLowerCase().replace("_", "");
+            final String colorName = StringUtil.toLowerCase(((PsiField)psiElement).getName()).replace("_", "");
             final String hex = ColorMap.getHexCodeForColorName(colorName);
             return new ColorPreviewComponent(Color.decode("0x" + hex.substring(1)));
           }

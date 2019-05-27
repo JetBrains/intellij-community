@@ -1,23 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.bootRuntime;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.Locale;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class BinTrayUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SwitchBootJdkAction");
@@ -32,7 +31,7 @@ public class BinTrayUtil {
 
   private static String getExecutable() {
     String executable = System.getProperty("idea.executable");
-    return executable != null ? executable : ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    return executable != null ? executable : StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
   }
 
   @NotNull
@@ -97,7 +96,7 @@ public class BinTrayUtil {
         var17.printStackTrace();
       }
 
-      ApplicationManagerEx.getApplicationEx().restart();
+      ApplicationManager.getApplication().restart();
     }
   }
 

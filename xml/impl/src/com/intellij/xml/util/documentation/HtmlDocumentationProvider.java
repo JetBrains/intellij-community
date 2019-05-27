@@ -34,7 +34,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import static com.intellij.codeInsight.documentation.DocumentationManager.ORIGINAL_ELEMENT_KEY;
@@ -180,7 +179,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
       key = nameElement.getText();
     }
 
-    key = StringUtil.notNullize(key).toLowerCase(Locale.US);
+    key = StringUtil.toLowerCase(StringUtil.notNullize(key));
 
     int dotIndex = key.indexOf('.');
     if (dotIndex > 0) {
@@ -307,7 +306,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
   }
 
   public PsiElement createNavigationElementHTML(PsiManager psiManager, String text, PsiElement context) {
-    String key = text.toLowerCase(Locale.US);
+    String key = StringUtil.toLowerCase(text);
     final HtmlTagDescriptor descriptor = HtmlDescriptorsTable.getTagDescriptor(key);
 
     if (descriptor != null && !isAttributeContext(context) ) {

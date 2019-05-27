@@ -28,6 +28,11 @@ final class FieldAccessor implements MutableAccessor {
   }
 
   @Override
+  public Object readUnsafe(@NotNull Object o) throws IllegalAccessException {
+    return myField.get(o);
+  }
+
+  @Override
   public int readInt(@NotNull Object o) throws IllegalAccessException {
     return myField.getInt(o);
   }
@@ -152,6 +157,6 @@ final class FieldAccessor implements MutableAccessor {
 
   @NotNull
   public String toString() {
-    return "FieldAccessor[" + myField.getDeclaringClass() + "." + myField.getName() + "]";
+    return "FieldAccessor(name=" + myField.getName() + ", class=" + myField.getDeclaringClass().getName() + ")";
   }
 }

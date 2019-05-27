@@ -18,6 +18,7 @@ package com.intellij.util.indexing.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.indexing.IndexId;
 import com.intellij.util.io.KeyDescriptor;
 
 import java.util.Collection;
@@ -25,6 +26,8 @@ import java.util.Formatter;
 
 public class DebugAssertions {
   private static final Logger LOG = Logger.getInstance(DebugAssertions.class);
+
+  public static final ThreadLocal<IndexId> DEBUG_INDEX_ID = new ThreadLocal<>();
 
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean DEBUG = SystemProperties.getBooleanProperty(

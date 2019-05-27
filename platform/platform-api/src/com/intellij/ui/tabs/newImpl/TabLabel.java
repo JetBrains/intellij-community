@@ -12,6 +12,7 @@ import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.newImpl.themes.TabTheme;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -163,8 +164,11 @@ public class TabLabel extends JPanel implements Accessible {
 
       @Override
       protected Color getActiveTextColor(Color attributesColor) {
+        JBTabPainter painter = myTabs.getTabPainter();
+        TabTheme theme = painter.getTabTheme();
         return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null) ?
-               JBUI.CurrentTheme.EditorTabs.underlinedTabForeground() : super.getActiveTextColor(attributesColor);
+               myTabs.isActiveTabs(myInfo) ? theme.getUnderlinedTabForeground() : theme.getUnderlinedTabInactiveForeground()
+                                                   : super.getActiveTextColor(attributesColor);
       }
 
     };
@@ -478,7 +482,7 @@ public class TabLabel extends JPanel implements Accessible {
     Graphics2D g2d = (Graphics2D)g;
     if (isSelected) {
       painter
-        .paintSelectedTab(myTabs.getPosition(), g2d, rect, myInfo.getTabColor(), myTabs.isActiveTabs(myInfo), myTabs.isHoveredTab(this));
+        .paintSelectedTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isActiveTabs(myInfo), myTabs.isHoveredTab(this));
     }
     else {
       painter.paintTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isHoveredTab(this));

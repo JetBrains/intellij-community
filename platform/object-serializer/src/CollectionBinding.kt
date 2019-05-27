@@ -10,18 +10,8 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.util.function.Consumer
 
-internal fun createBindingByType(type: Type, context: BindingInitializationContext): RootBinding {
-  return context.bindingProducer.getRootBinding(ClassUtil.typeToClass(type), type)
-}
-
-internal abstract class BaseCollectionBinding(itemType: Type, context: BindingInitializationContext) : RootBinding, NestedBinding {
-  private val itemBinding = createBindingByType(itemType, context)
-
-  final override fun serialize(hostObject: Any, property: MutableAccessor, context: WriteContext) {
-    write(hostObject, property, context) {
-      serialize(it, context)
-    }
-  }
+internal abstract class BaseCollectionBinding(itemType: Type, context: BindingInitializationContext) : Binding {
+  private val itemBinding = createElementBindingByType(itemType, context)
 
   protected fun createItemConsumer(context: WriteContext): Consumer<Any?> {
     val writer = context.writer
@@ -55,6 +45,11 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
   private val collectionClass = ClassUtil.typeToClass(type)
 
   override fun deserialize(context: ReadContext): Collection<Any?> {
+    if (context.reader.type == IonType.INT) {
+      LOG.assertTrue(context.reader.intValue() == 0)
+      return if (Set::class.java.isAssignableFrom(collectionClass)) emptySet() else emptyList()
+    }
+
     val result = createCollection()
     readInto(result, context)
     return result
@@ -63,6 +58,12 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
   override fun serialize(obj: Any, context: WriteContext) {
     val writer = context.writer
     val collection = obj as Collection<*>
+    if (context.filter.skipEmptyCollection && collection.isEmpty()) {
+      // some value must be written otherwise on deserialize null will be used for constructor parameters (and it can be not expected)
+      writer.writeInt(0)
+      return
+    }
+
     writer.stepIn(IonType.LIST)
     collection.forEach(createItemConsumer(context))
     writer.stepOut()
@@ -74,9 +75,12 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
       property.set(hostObject, null)
       return
     }
+    else if (type == IonType.INT /* empty collection if context.filter.skipEmptyCollection */) {
+      return
+    }
 
     @Suppress("UNCHECKED_CAST")
-    var result = property.read(hostObject) as MutableCollection<Any?>?
+    var result = property.readUnsafe(hostObject) as MutableCollection<Any?>?
     if (result != null && ClassUtil.isMutableCollection(result)) {
       result.clear()
     }
@@ -115,18 +119,28 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
 internal class ArrayBinding(private val itemClass: Class<*>, context: BindingInitializationContext) : BaseCollectionBinding(itemClass, context) {
   override fun deserialize(context: ReadContext) = readArray(context)
 
-  override fun serialize(obj: Any, context: WriteContext) {
-    val writer = context.writer
-    writer.stepIn(IonType.LIST)
-    val consumer = createItemConsumer(context)
-    (obj as Array<*>).forEach { consumer.accept(it) }
-    writer.stepOut()
+  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
+    val type = context.reader.type
+    if (type == IonType.NULL) {
+      property.set(hostObject, null)
+    }
+    else if (type != IonType.INT) {
+      property.set(hostObject, readArray(context))
+    }
   }
 
-  override fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
-    read(hostObject, property, context) {
-      readArray(context)
+  override fun serialize(obj: Any, context: WriteContext) {
+    val array = obj as Array<*>
+    val writer = context.writer
+    if (context.filter.skipEmptyArray && array.isEmpty()) {
+      writer.writeInt(0)
+      return
     }
+
+    writer.stepIn(IonType.LIST)
+    val consumer = createItemConsumer(context)
+    array.forEach { consumer.accept(it) }
+    writer.stepOut()
   }
 
   private fun readArray(context: ReadContext): Array<out Any> {

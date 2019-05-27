@@ -38,7 +38,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   public FilteringTreeBuilder(Tree tree,
                               ElementFilter filter,
                               AbstractTreeStructure structure,
-                              @Nullable Comparator<NodeDescriptor> comparator) {
+                              @Nullable Comparator<? super NodeDescriptor> comparator) {
     super(tree,
           (DefaultTreeModel)tree.getModel(),
           structure instanceof FilteringTreeStructure ? structure
@@ -110,8 +110,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   @NotNull
   @Deprecated
   public ActionCallback refilter() {
-    //noinspection unchecked
-    return Promises.toActionCallback((Promise<Object>)refilter(null, true, false));
+    return Promises.toActionCallback(refilter(null, true, false));
   }
 
   @SuppressWarnings("UnusedReturnValue")

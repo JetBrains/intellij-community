@@ -48,7 +48,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
   @Storage(value = StoragePathMacros.CACHE_FILE),
   @Storage(value = "stubIndex.xml", deprecated = true, roamingType = RoamingType.DISABLED)
 })
-public class StubIndexImpl extends StubIndex implements PersistentStateComponent<StubIndexState>, BaseComponent {
+public class StubIndexImpl extends StubIndex implements PersistentStateComponent<StubIndexState> {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<>(null);
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndexImpl");
 
@@ -381,7 +381,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
   @Override
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey,
-                                    @NotNull Processor<K> processor,
+                                    @NotNull Processor<? super K> processor,
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
     final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey); // wait for initialization to finish
@@ -440,7 +440,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization());
 
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {

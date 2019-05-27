@@ -112,16 +112,19 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
 
 
   @Override
+  @NotNull
   public String getPresentableName() {
     return "IntelliJ IDEA";
   }
 
   @Override
+  @NotNull
   public String getId() {
     return "idea";
   }
 
   @Override
+  @NotNull
   public String getDataFileExtension() {
     return "ic";
   }

@@ -39,5 +39,5 @@ public interface DownloadableFileDescription {
   String getDefaultFileName();
 
   @NotNull
-  String generateFileName(@NotNull Condition<String> validator);
+  String generateFileName(@NotNull Condition<? super String> validator);
 }

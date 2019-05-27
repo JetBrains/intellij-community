@@ -519,7 +519,7 @@ public final class PythonSdkType extends SdkType {
   public static VirtualFile getSdkRootVirtualFile(@NotNull VirtualFile path) {
     String suffix = path.getExtension();
     if (suffix != null) {
-      suffix = suffix.toLowerCase(); // Why on earth empty suffix is null and not ""?
+      suffix = StringUtil.toLowerCase(suffix); // Why on earth empty suffix is null and not ""?
     }
     if (!path.isDirectory() && ("zip".equals(suffix) || "egg".equals(suffix))) {
       // a .zip / .egg file must have its root extracted first

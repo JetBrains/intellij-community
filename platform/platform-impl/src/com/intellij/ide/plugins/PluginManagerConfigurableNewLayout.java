@@ -66,8 +66,7 @@ public class PluginManagerConfigurableNewLayout
   private static final int MARKETPLACE_TAB = 0;
   private static final int INSTALLED_TAB = 1;
 
-  private TabHeaderComponent myTabHeaderComponent;
-  private PluginManagerConfigurableNew.CountTabName myInstalledTabName;
+  private TabbedPaneHeaderComponent myTabHeaderComponent;
   private MultiPanel myCardPanel;
 
   private PluginsTab myMarketplaceTab;
@@ -85,7 +84,8 @@ public class PluginManagerConfigurableNewLayout
   private LinkListener<String> mySearchListener;
 
   private final LinkLabel<Object> myUpdateAll = new LinkLabel<>("Update All", null);
-  private final JLabel myUpdateCounter = new PluginManagerConfigurableTreeRenderer.CountComponent();
+  private final JLabel myUpdateCounter = new CountComponent();
+  private final CountIcon myCountIcon = new CountIcon();
 
   private final MyPluginModel myPluginModel = new MyPluginModel() {
     @Override
@@ -134,7 +134,7 @@ public class PluginManagerConfigurableNewLayout
   @Nullable
   @Override
   public JComponent createComponent() {
-    myTabHeaderComponent = new TabHeaderComponent(createGearActions(), index -> {
+    myTabHeaderComponent = new TabbedPaneHeaderComponent(createGearActions(), index -> {
       myCardPanel.select(index, true);
       storeSelectionTab(index);
     });
@@ -142,20 +142,23 @@ public class PluginManagerConfigurableNewLayout
     myUpdateAll.setVisible(false);
     myUpdateCounter.setVisible(false);
 
-    myTabHeaderComponent.addTab("Marketplace");
-    myTabHeaderComponent.addTab(myInstalledTabName = new PluginManagerConfigurableNew.CountTabName(myTabHeaderComponent, "Installed") {
-      @Override
-      public void setCount(int count) {
-        super.setCount(count);
-        myUpdateAll.setEnabled(true);
-        myUpdateAll.setVisible(count > 0);
-        myUpdateCounter.setText(String.valueOf(count));
-        myUpdateCounter.setVisible(count > 0);
-      }
-    });
+    myTabHeaderComponent.addTab("Marketplace", null);
+    myTabHeaderComponent.addTab("Installed", myCountIcon);
 
-    myPluginUpdatesService =
-      PluginUpdatesService.connectConfigurable(countValue -> myInstalledTabName.setCount(countValue == null ? 0 : countValue));
+    myPluginUpdatesService = PluginUpdatesService.connectConfigurable(countValue -> {
+      int count = countValue == null ? 0 : countValue;
+      String text = String.valueOf(count);
+      boolean visible = count > 0;
+
+      myUpdateAll.setEnabled(true);
+      myUpdateAll.setVisible(visible);
+
+      myUpdateCounter.setText(text);
+      myUpdateCounter.setVisible(visible);
+
+      myCountIcon.setText(text);
+      myTabHeaderComponent.update();
+    });
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
 
     myNameListener = (aSource, aLinkData) -> {
@@ -181,6 +184,8 @@ public class PluginManagerConfigurableNewLayout
       }
     };
     myCardPanel.setMinimumSize(new JBDimension(580, 380));
+
+    myTabHeaderComponent.setListener();
 
     int selectionTab = getStoredSelectionTab();
     myTabHeaderComponent.setSelection(selectionTab);
@@ -325,6 +330,7 @@ public class PluginManagerConfigurableNewLayout
       @Override
       protected void createSearchTextField(int flyDelay) {
         super.createSearchTextField(250);
+        mySearchTextField.setHistoryPropertyName("MarketplacePluginsSearchHistory");
       }
 
       @NotNull
@@ -337,7 +343,7 @@ public class PluginManagerConfigurableNewLayout
 
       @NotNull
       @Override
-      protected JComponent createPluginsPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myMarketplacePanel = new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler, myNameListener,
                                                                    PluginManagerConfigurableNewLayout.this.mySearchListener,
@@ -414,13 +420,13 @@ public class PluginManagerConfigurableNewLayout
       }
 
       @Override
-      protected void updateMainSelection(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         selectionListener.accept(myMarketplacePanel);
       }
 
       @NotNull
       @Override
-      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         SearchUpDownPopupController marketplaceController = new SearchUpDownPopupController(mySearchTextField) {
           @NotNull
           @Override
@@ -586,7 +592,7 @@ public class PluginManagerConfigurableNewLayout
             @Override
             protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
               super.handleAttribute(name, value, invert);
-              queries.add(name + ":" + value);
+              queries.add(name + ":" + SearchQueryParser.wrapAttribute(value));
             }
           };
           if (removeAction != null) {
@@ -737,6 +743,8 @@ public class PluginManagerConfigurableNewLayout
                   () -> showRightBottomPopup(textField, "Show", myInstalledSearchGroup)));
         textField.putClientProperty("JTextField.variant", null);
         textField.putClientProperty("JTextField.variant", "search");
+
+        mySearchTextField.setHistoryPropertyName("InstalledPluginsSearchHistory");
       }
 
       @NotNull
@@ -749,7 +757,7 @@ public class PluginManagerConfigurableNewLayout
 
       @NotNull
       @Override
-      protected JComponent createPluginsPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myInstalledPanel = new PluginsGroupComponent(new PluginListLayout(), eventHandler, myNameListener,
                                                      PluginManagerConfigurableNewLayout.this.mySearchListener,
@@ -848,7 +856,7 @@ public class PluginManagerConfigurableNewLayout
       }
 
       @Override
-      protected void updateMainSelection(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         selectionListener.accept(myInstalledPanel);
       }
 
@@ -860,11 +868,12 @@ public class PluginManagerConfigurableNewLayout
             ((InstalledSearchOptionAction)action).setState(null);
           }
         }
+        myPluginModel.setInvalidFixCallback(null);
       }
 
       @NotNull
       @Override
-      protected SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener) {
+      protected SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         SearchUpDownPopupController installedController = new SearchUpDownPopupController(mySearchTextField) {
           @NotNull
           @Override
@@ -917,7 +926,7 @@ public class PluginManagerConfigurableNewLayout
             protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
               super.handleAttribute(name, value, invert);
               if (!updateAction.myState) {
-                queries.add("/" + name + (value.isEmpty() ? "" : ":" + value));
+                queries.add("/" + name + (value.isEmpty() ? "" : ":" + SearchQueryParser.wrapAttribute(value)));
               }
             }
           };
@@ -955,6 +964,8 @@ public class PluginManagerConfigurableNewLayout
         myInstalledSearchPanel = new SearchResultPanel(installedController, panel, 0, 0) {
           @Override
           protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
+            myPluginModel.setInvalidFixCallback(null);
+
             SearchQueryParser.InstalledWithVendor parser = new SearchQueryParser.InstalledWithVendor(query);
 
             if (myInstalledSearchSetState) {
@@ -994,6 +1005,31 @@ public class PluginManagerConfigurableNewLayout
               }
 
               if (!result.descriptors.isEmpty()) {
+                if (parser.invalid) {
+                  myPluginModel.setInvalidFixCallback(() -> {
+                    PluginsGroup group = myInstalledSearchPanel.getGroup();
+                    if (group.ui == null) {
+                      myPluginModel.setInvalidFixCallback(null);
+                      return;
+                    }
+
+                    PluginsGroupComponent resultPanel = myInstalledSearchPanel.getPanel();
+
+                    for (IdeaPluginDescriptor descriptor : new ArrayList<>(group.descriptors)) {
+                      if (!myPluginModel.hasErrors(descriptor)) {
+                        resultPanel.removeFromGroup(group, descriptor);
+                      }
+                    }
+
+                    group.titleWithCount();
+                    myInstalledSearchPanel.fullRepaint();
+
+                    if (group.descriptors.isEmpty()) {
+                      myPluginModel.setInvalidFixCallback(null);
+                    }
+                  });
+                }
+
                 Collection<PluginDownloader> updates = PluginUpdatesService.getUpdates();
                 if (!ContainerUtil.isEmpty(updates)) {
                   myPostFillGroupCallback = () -> {
@@ -1028,7 +1064,7 @@ public class PluginManagerConfigurableNewLayout
     }
   }
 
-  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<PluginDownloader> updates) {
+  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<? extends PluginDownloader> updates) {
     for (PluginDownloader downloader : updates) {
       IdeaPluginDescriptor descriptor = downloader.getDescriptor();
       for (UIPluginGroup group : panel.getGroups()) {
@@ -1275,10 +1311,11 @@ public class PluginManagerConfigurableNewLayout
     }
   }
 
-  private void addGroup(@NotNull List<PluginsGroup> groups,
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull String name,
                         @NotNull String showAllQuery,
-                        @NotNull ThrowableNotNullFunction<List<IdeaPluginDescriptor>, Boolean, IOException> function) throws IOException {
+                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function)
+    throws IOException {
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
@@ -1292,7 +1329,7 @@ public class PluginManagerConfigurableNewLayout
     }
   }
 
-  private void addGroup(@NotNull List<PluginsGroup> groups,
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull Map<String, IdeaPluginDescriptor> allRepositoriesMap,
                         @NotNull String name,
                         @NotNull String query,

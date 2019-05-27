@@ -15,10 +15,10 @@
  */
 package com.intellij.build;
 
-import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.FinishBuildEvent;
-import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.events.*;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SimpleColoredComponent;
@@ -44,6 +45,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -53,7 +55,9 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 /**
  * @author Vladislav.Soroka
@@ -65,6 +69,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   protected final Project myProject;
   protected final BuildContentManager myBuildContentManager;
   private final AtomicBoolean isInitializeStarted;
+  private final AtomicBoolean isFirstErrorShown = new AtomicBoolean();
   private final List<Runnable> myPostponedRunnables;
   private final ProgressWatcher myProgressWatcher;
   private final OnePixelSplitter myThreeComponentsSplitter;
@@ -157,35 +162,46 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           (DefaultListModel<AbstractViewManager.BuildInfo>)myBuildsList.getModel();
         listModel.addElement(buildInfo);
 
+        RunContentDescriptor contentDescriptor;
+        Supplier<RunContentDescriptor> contentDescriptorSupplier = startBuildEvent.getContentDescriptorSupplier();
+        contentDescriptor = contentDescriptorSupplier != null ? contentDescriptorSupplier.get() : null;
+        final Runnable activationCallback;
+        if (contentDescriptor != null) {
+          buildInfo.setActivateToolWindowWhenAdded(contentDescriptor.isActivateToolWindowWhenAdded());
+          if (contentDescriptor instanceof BuildContentDescriptor) {
+            buildInfo.setActivateToolWindowWhenFailed(((BuildContentDescriptor)contentDescriptor).isActivateToolWindowWhenFailed());
+          }
+          buildInfo.setAutoFocusContent(contentDescriptor.isAutoFocusContent());
+          activationCallback = contentDescriptor.getActivationCallback();
+        }
+        else {
+          activationCallback = null;
+        }
+
         BuildView view = myViewMap.computeIfAbsent(buildInfo, info -> {
-          final BuildDescriptor buildDescriptor = new DefaultBuildDescriptor(
-            startBuildEvent.getId(), startBuildEvent.getBuildTitle(), startBuildEvent.getWorkingDir(), startBuildEvent.getEventTime());
+          final DefaultBuildDescriptor buildDescriptor = new DefaultBuildDescriptor(
+            buildInfo.getId(), buildInfo.getTitle(), buildInfo.getWorkingDir(), buildInfo.getStartTime());
+          buildDescriptor.setActivateToolWindowWhenAdded(buildInfo.isActivateToolWindowWhenAdded());
+          buildDescriptor.setActivateToolWindowWhenFailed(buildInfo.isActivateToolWindowWhenFailed());
+          buildDescriptor.setAutoFocusContent(buildInfo.isAutoFocusContent());
+
           String selectionStateKey = "build.toolwindow." + myViewManager.getViewName() + ".selection.state";
           final BuildView buildView = new BuildView(myProject, buildDescriptor, selectionStateKey, myViewManager);
           Disposer.register(this, buildView);
+          if (contentDescriptor != null) {
+            Disposer.register(buildView, contentDescriptor);
+          }
           return buildView;
         });
         view.onEvent(startBuildEvent);
 
         myContent.setPreferredFocusedComponent(view::getPreferredFocusableComponent);
 
-        RunContentDescriptor contentDescriptor;
-        Supplier<RunContentDescriptor> contentDescriptorSupplier = startBuildEvent.getContentDescriptorSupplier();
-        contentDescriptor = contentDescriptorSupplier != null ? contentDescriptorSupplier.get() : null;
-        if (contentDescriptor != null) {
-          boolean activateToolWindow = contentDescriptor.isActivateToolWindowWhenAdded();
-          buildInfo.activateToolWindowWhenAdded = activateToolWindow;
-          if (contentDescriptor instanceof BuildContentDescriptor) {
-            buildInfo.activateToolWindowWhenFailed = ((BuildContentDescriptor)contentDescriptor).isActivateToolWindowWhenFailed();
-          }
-          boolean focusContent = contentDescriptor.isAutoFocusContent();
-          myBuildContentManager.setSelectedContent(
-            myContent, focusContent, focusContent, activateToolWindow, contentDescriptor.getActivationCallback());
-          Disposer.register(view, contentDescriptor);
-        }
-        else {
-          myBuildContentManager.setSelectedContent(myContent, true, true, false, null);
-        }
+        myBuildContentManager.setSelectedContent(myContent,
+                                                 buildInfo.isAutoFocusContent(),
+                                                 buildInfo.isAutoFocusContent(),
+                                                 buildInfo.isActivateToolWindowWhenAdded(),
+                                                 activationCallback);
         buildInfo.content = myContent;
 
         if (myThreeComponentsSplitter.getSecondComponent() == null) {
@@ -215,6 +231,17 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(buildInfo, buildInfo.content, startBuildEvent.getProcessHandler());
       }
       else {
+        if (!isFirstErrorShown.get() &&
+            (event instanceof FinishEvent && ((FinishEvent)event).getResult() instanceof FailureResult) ||
+            (event instanceof MessageEvent && ((MessageEvent)event).getResult().getKind() == MessageEvent.Kind.ERROR)) {
+          if (isFirstErrorShown.compareAndSet(false, true)) {
+            ListModel<AbstractViewManager.BuildInfo> listModel = myBuildsList.getModel();
+            IntStream.range(0, listModel.getSize())
+              .filter(i -> buildInfo == listModel.getElementAt(i))
+              .findFirst()
+              .ifPresent(myBuildsList::setSelectedIndex);
+          }
+        }
         if (event instanceof FinishBuildEvent) {
           buildInfo.endTime = event.getEventTime();
           buildInfo.message = event.getMessage();
@@ -257,7 +284,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
             }
           });
 
-          final JComponent consoleComponent = new JPanel(new BorderLayout());
+          final JComponent consoleComponent = new MultipleBuildsPanel();
           consoleComponent.add(myThreeComponentsSplitter, BorderLayout.CENTER);
           myToolbarActions = new DefaultActionGroup();
           ActionToolbar tb = ActionManager.getInstance().createActionToolbar("BuildView", myToolbarActions, false);
@@ -327,6 +354,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         myThreeComponentsSplitter.setSecondComponent(null);
       });
       myToolbarActions.removeAll();
+      isFirstErrorShown.set(false);
     }
     else {
       sameBuildsToClear.forEach(info -> {
@@ -336,6 +364,94 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         }
         listModel.removeElement(info);
       });
+    }
+  }
+
+  private class MultipleBuildsPanel extends JPanel implements OccurenceNavigator {
+    MultipleBuildsPanel() {super(new BorderLayout());}
+
+    @Override
+    public boolean hasNextOccurence() {
+      return getOccurenceNavigator(true) != null;
+    }
+
+    @Nullable
+    private Pair<Integer, Supplier<OccurenceInfo>> getOccurenceNavigator(boolean next) {
+      if (myBuildsList.getItemsCount() == 0) return null;
+      int index = Math.max(myBuildsList.getSelectedIndex(), 0);
+
+      Function<Integer, Pair<Integer, Supplier<OccurenceInfo>>> function = i -> {
+        AbstractViewManager.BuildInfo buildInfo = myBuildsList.getModel().getElementAt(i);
+        BuildView buildView = myViewMap.get(buildInfo);
+        if (buildView == null) return null;
+        if (i != index) {
+          BuildTreeConsoleView eventView = buildView.getEventView();
+          if (eventView == null) return null;
+          eventView.getTree().clearSelection();
+        }
+        if (next) {
+          if (buildView.hasNextOccurence()) return Pair.create(i, buildView::goNextOccurence);
+        }
+        else {
+          if (buildView.hasPreviousOccurence()) {
+            return Pair.create(i, buildView::goPreviousOccurence);
+          }
+          else if (i != index && buildView.hasNextOccurence()) {
+            return Pair.create(i, buildView::goNextOccurence);
+          }
+        }
+        return null;
+      };
+      if (next) {
+        for (int i = index; i < myBuildsList.getItemsCount(); i++) {
+          Pair<Integer, Supplier<OccurenceInfo>> buildViewPair = function.apply(i);
+          if (buildViewPair != null) return buildViewPair;
+        }
+      }
+      else {
+        for (int i = index; i >= 0; i--) {
+          Pair<Integer, Supplier<OccurenceInfo>> buildViewPair = function.apply(i);
+          if (buildViewPair != null) return buildViewPair;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public boolean hasPreviousOccurence() {
+      return getOccurenceNavigator(false) != null;
+    }
+
+    @Override
+    public OccurenceInfo goNextOccurence() {
+      Pair<Integer, Supplier<OccurenceInfo>> navigator = getOccurenceNavigator(true);
+      if (navigator != null) {
+        myBuildsList.setSelectedIndex(navigator.first);
+        return navigator.second.get();
+      }
+      return null;
+    }
+
+    @Override
+    public OccurenceInfo goPreviousOccurence() {
+      Pair<Integer, Supplier<OccurenceInfo>> navigator = getOccurenceNavigator(false);
+      if (navigator != null) {
+        myBuildsList.setSelectedIndex(navigator.first);
+        return navigator.second.get();
+      }
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public String getNextOccurenceActionName() {
+      return IdeBundle.message("action.next.problem");
+    }
+
+    @NotNull
+    @Override
+    public String getPreviousOccurenceActionName() {
+      return IdeBundle.message("action.previous.problem");
     }
   }
 

@@ -64,8 +64,7 @@ public abstract class ProjectManager {
 
   /**
    * Returns the list of currently opened projects.
-   *
-   * @return the array of currently opened projects.
+   * {@link Project#isDisposed()} must be checked for each project before use (if the whole operation is not under read action).
    */
   @NotNull
   public abstract Project[] getOpenProjects();

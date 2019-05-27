@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
-import java.util.Locale;
 
 import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -85,7 +84,7 @@ public class SystemInfo extends SystemInfoRt {
   /* http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669 */
   public static final boolean isGNOME = isXWindow &&
                                         (notNull(System.getenv("GDMSESSION"), "").startsWith("gnome") ||
-                                         notNull(System.getenv("XDG_CURRENT_DESKTOP"), "").toLowerCase(Locale.ENGLISH).endsWith("gnome"));
+                                         StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).endsWith("gnome"));
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
   public static final boolean isKDE = isXWindow && !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
@@ -190,6 +189,10 @@ public class SystemInfo extends SystemInfoRt {
     catch (NumberFormatException e) {
       return 0;
     }
+  }
+
+  public static boolean isJavaVersionAtLeast(int major) {
+    return isJavaVersionAtLeast(major, 0, 0);
   }
 
   public static boolean isJavaVersionAtLeast(int major, int minor, int update) {

@@ -65,6 +65,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * @see #showInBestPositionFor(DataContext)
    * @see #setLocation(Point)
    */
+  @NotNull
   Point getBestPositionFor(@NotNull DataContext dataContext);
 
   /**
@@ -75,8 +76,6 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * @see #getBestPositionFor(DataContext)
    */
   void showInBestPositionFor(@NotNull DataContext dataContext);
-
-
 
   /**
    * Shows the popup near the cursor location in the specified editor.
@@ -102,7 +101,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
   /**
    * Shows in best position with a given owner
    */
-  void show(Component owner);  
+  void show(@NotNull Component owner);
 
   /**
    * Shows the popup in the center of the active window in the IDEA frame for the specified project.
@@ -129,7 +128,6 @@ public interface JBPopup extends Disposable, LightweightWindow {
   /**
    * Cancels the popup as a response to some mouse action. All the subsequent mouse events originated from the event's point
    * will be consumed.
-   * @param e
    */
   void cancel(@Nullable InputEvent e);
 
@@ -153,6 +151,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
    *
    * @return the contents of the popup.
    */
+  @NotNull
   JComponent getContent();
 
   /**
@@ -162,9 +161,10 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void setLocation(@NotNull Point screenPoint);
 
   void setSize(@NotNull Dimension size);
+
   Dimension getSize();
 
-  void setCaption(String title);
+  void setCaption(@NotNull String title);
 
   boolean isPersistent();
 
@@ -174,8 +174,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void setUiVisible(boolean visible);
 
   @Nullable
-    <T>
-  T getUserData(Class<T> userDataClass);
+  <T> T getUserData(@NotNull Class<T> userDataClass);
 
   boolean isFocused();
 
@@ -188,12 +187,13 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   Component getOwner();
   
-  void setMinimumSize(Dimension size);
+  void setMinimumSize(@Nullable Dimension size);
 
   void setFinalRunnable(@Nullable Runnable runnable);
 
   void moveToFitScreen();
 
+  @NotNull
   Point getLocationOnScreen();
 
   void pack(boolean width, boolean height);

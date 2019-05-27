@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.text.ParseException;
 import java.util.Collections;
-import java.util.Objects;
 
 /**
  * Manager for "current git executable".
@@ -62,6 +61,7 @@ public class GitExecutableManager {
                                                 Collections.emptyList());
     handler.setPreValidateExecutable(false);
     handler.setSilent(false);
+    handler.setTerminationTimeout(1000);
     handler.setStdoutSuppressed(false);
     GitCommandResult result = Git.getInstance().runCommand(handler);
     String rawResult = result.getOutputOrThrow();
@@ -129,6 +129,27 @@ public class GitExecutableManager {
     return version;
   }
 
+  @CalledInAny
+  @Nullable
+  public GitVersion tryGetVersion(@NotNull Project project) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return ProgressManager
+        .getInstance()
+        .runProcessWithProgressSynchronously(() -> tryGetVersion(project),
+                                             GitBundle.getString("git.executable.version.progress.title"), true, project);
+    }
+    try {
+      String pathToGit = getPathToGit(project);
+      return identifyVersion(pathToGit);
+    }
+    catch (ProcessCanceledException e) {
+      return null;
+    }
+    catch (GitVersionIdentificationException e) {
+      return null;
+    }
+  }
+
   /**
    * Try to identify version of git executable
    *
@@ -146,6 +167,10 @@ public class GitExecutableManager {
     else {
       return result.getResult();
     }
+  }
+
+  public void dropVersionCache(@NotNull String pathToGit) {
+    myVersionCache.dropCache(pathToGit);
   }
 
   /**

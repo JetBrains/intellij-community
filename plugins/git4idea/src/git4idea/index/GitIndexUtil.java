@@ -181,7 +181,8 @@ public class GitIndexUtil {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.HASH_OBJECT);
     h.setSilent(true);
     h.addParameters("-w", "--stdin");
-    h.addParameters("--path", VcsFileUtil.relativePath(repository.getRoot(), filePath));
+    h.addParameters("--path");
+    h.addRelativePaths(filePath);
     h.setInputProcessor(GitHandlerInputProcessorUtil.redirectStream(content));
     h.endOptions();
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();

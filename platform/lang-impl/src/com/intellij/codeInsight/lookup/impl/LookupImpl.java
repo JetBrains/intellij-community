@@ -68,8 +68,8 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
@@ -493,7 +493,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myList.setVisibleRowCount(Math.min(model.getSize(), UISettings.getInstance().getMaxLookupListHeight()));
   }
 
-  private void addEmptyItem(CollectionListModel<LookupElement> model) {
+  private void addEmptyItem(CollectionListModel<? super LookupElement> model) {
     LookupElement item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"), false);
     model.add(item);
 
@@ -678,7 +678,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       sameCase = sameCase && i < lookupString.length() && isLower == Character.isLowerCase(lookupString.charAt(i));
     }
     if (sameCase) return lookupString;
-    if (isAllLower) return lookupString.toLowerCase();
+    if (isAllLower) return StringUtil.toLowerCase(lookupString);
     if (isAllUpper) return StringUtil.toUpperCase(lookupString);
     return lookupString;
   }
@@ -806,7 +806,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  private void delegateActionToEditor(@NotNull String actionID, @Nullable Supplier<AnAction> delegateActionSupplier, @NotNull AnActionEvent actionEvent) {
+  private void delegateActionToEditor(@NotNull String actionID, @Nullable Supplier<? extends AnAction> delegateActionSupplier, @NotNull AnActionEvent actionEvent) {
     AnAction action = ActionManager.getInstance().getAction(actionID);
     DumbAwareAction.create(
       e -> ActionUtil.performActionDumbAware(delegateActionSupplier == null ? action : delegateActionSupplier.get(), actionEvent)

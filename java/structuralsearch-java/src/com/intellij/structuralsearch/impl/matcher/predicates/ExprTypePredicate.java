@@ -66,7 +66,7 @@ public class ExprTypePredicate extends MatchPredicate {
     return match.getType();
   }
 
-  private boolean doMatchWithTheType(final PsiType type, MatchContext context, PsiElement matchedNode, Set<PsiType> visited) {
+  private boolean doMatchWithTheType(final PsiType type, MatchContext context, PsiElement matchedNode, Set<? super PsiType> visited) {
     final List<String> permutations = getTextPermutations(type);
     for (String permutation : permutations) {
       if (delegate == null ? doMatch(permutation) : delegate.doMatch(permutation, context, matchedNode)) {
@@ -139,7 +139,7 @@ public class ExprTypePredicate extends MatchPredicate {
     return result;
   }
 
-  private static void addWithoutTypeParameters(String typeText, String suffix, List<String> result) {
+  private static void addWithoutTypeParameters(String typeText, String suffix, List<? super String> result) {
     final int lt = typeText.indexOf("<");
     if (lt >= 0) {
       result.add(typeText.substring(0, lt) + suffix);

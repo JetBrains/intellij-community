@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class PlainTextFileType extends LanguageFileType {
+public class PlainTextFileType extends LanguageFileType implements PlainTextLikeFileType {
   public static final PlainTextFileType INSTANCE = new PlainTextFileType();
 
   private PlainTextFileType() {

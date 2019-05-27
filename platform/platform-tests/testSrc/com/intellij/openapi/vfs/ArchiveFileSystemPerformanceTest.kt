@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 

@@ -57,7 +57,7 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
         return Collections.emptyMap();
       }
 
-      LighterAST lighterAst = ((FileContentImpl)inputData).getLighterASTForPsiDependentIndex();
+      LighterAST lighterAst = ((PsiDependentFileContent)inputData).getLighterAST();
 
       CharSequence text = inputData.getContentAsText();
       Set<LighterASTNode> calls = findCallsWithNulls(lighterAst, text);

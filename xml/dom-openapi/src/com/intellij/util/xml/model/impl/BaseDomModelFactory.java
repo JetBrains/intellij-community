@@ -123,7 +123,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
 
   @Override
   @Nullable
-  public DomFileElement<T> createMergedModelRoot(final Set<XmlFile> configFiles) {
+  public DomFileElement<T> createMergedModelRoot(final Set<? extends XmlFile> configFiles) {
     return mySimpleDomModelFactory.createMergedModelRoot(configFiles);
   }
 

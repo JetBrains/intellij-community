@@ -2,10 +2,10 @@
 package com.intellij.serialization
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.CleanupSnapshots
+import com.intellij.util.io.sanitizeFileName
 import org.junit.ClassRule
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
@@ -30,31 +30,26 @@ class ObjectSerializerTestSuite {
   }
 }
 
-internal fun <T : Any> test(bean: T, testName: TestName, _writeConfiguration: WriteConfiguration? = null): T {
+internal val defaultTestWriteConfiguration = WriteConfiguration(binary = false)
+
+// don't use serialization filter in tests to make sure that test are closer to production usage (e.g. not null arg was not caught by tests because of null filtration)
+internal fun <T : Any> test(bean: T, testName: TestName, writeConfiguration: WriteConfiguration): T {
   val out = BufferExposingByteArrayOutputStream(8 * 1024)
 
   // just to test binary
-  objectSerializer.write(bean, out, WriteConfiguration(binary = true))
+  objectSerializer.write(bean, out, writeConfiguration.copy(binary = true))
   assertThat(out.size() > 0)
   out.reset()
 
-  val writeConfiguration = _writeConfiguration ?: WriteConfiguration(binary = false, filter = FILTER)
   objectSerializer.write(bean, out, writeConfiguration)
 
   val ionText = out.toString()
   out.reset()
 
-  val deserializedBean = objectSerializer.read(bean.javaClass, ionText)
+  val deserializedBean = objectSerializer.read(bean.javaClass, ionText, configuration = ReadConfiguration(allowAnySubTypes = writeConfiguration.allowAnySubTypes))
   objectSerializer.write(deserializedBean, out, writeConfiguration)
   assertThat(out.toString()).isEqualTo(ionText)
 
-  assertThat(ionText.trim()).toMatchSnapshot(testSnapshotDir.resolve(FileUtil.sanitizeFileName(testName.methodName) + ".ion"))
+  assertThat(ionText.trim()).toMatchSnapshot(testSnapshotDir.resolve("${sanitizeFileName(testName.methodName)}.ion"))
   return deserializedBean
-}
-
-// for all our test beans null it is default value - to reduce snapshots, filter null out
-internal val FILTER = object : SerializationFilter {
-  override fun isSkipped(value: Any?): Boolean {
-    return value == null || (value is Collection<*> && value.isEmpty()) || (value is Map<*, *> && value.isEmpty())
-  }
 }

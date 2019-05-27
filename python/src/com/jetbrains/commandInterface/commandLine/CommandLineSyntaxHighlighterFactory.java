@@ -44,7 +44,6 @@ public final class CommandLineSyntaxHighlighterFactory extends SyntaxHighlighter
 
   private static class CommandLineSyntaxHighlighter implements SyntaxHighlighter {
     private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
-    public static final TextAttributesKey[] NO_ATTRS = new TextAttributesKey[0];
 
     static {
       ATTRIBUTES.put(CommandLineElementTypes.LITERAL_STARTS_FROM_LETTER,
@@ -72,7 +71,7 @@ public final class CommandLineSyntaxHighlighterFactory extends SyntaxHighlighter
     @Override
     public TextAttributesKey[] getTokenHighlights(final IElementType tokenType) {
       final TextAttributesKey attributesKey = ATTRIBUTES.get(tokenType);
-      return (attributesKey == null ? NO_ATTRS : new TextAttributesKey[]{attributesKey});
+      return attributesKey == null ? TextAttributesKey.EMPTY_ARRAY : new TextAttributesKey[]{attributesKey};
     }
   }
 }

@@ -310,7 +310,7 @@ public class PluginLogo {
   }
 
   @Nullable
-  private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<InputStream, IOException> provider) {
+  private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<? extends InputStream, ? extends IOException> provider) {
     try {
       Icon logo40 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE);
       Icon logo80 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), PLUGIN_ICON_SIZE_SCALED, PLUGIN_ICON_SIZE_SCALED);
