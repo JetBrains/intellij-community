@@ -130,69 +130,56 @@ public class RefreshWorker {
                               @NotNull PersistentFS persistence,
                               @NotNull TObjectHashingStrategy<String> strategy,
                               @NotNull VirtualDirectoryImpl dir) {
-    checkCancelled(dir);
-    while (!refreshDir(fs, persistence, strategy, dir)) {
+    while (true) {
       checkCancelled(dir);
-    }
-  }
 
-  // true if refreshed successfully, false if interrupted or disposed
-  private boolean refreshDir(@NotNull NewVirtualFileSystem fs,
-                             @NotNull PersistentFS persistence,
-                             @NotNull TObjectHashingStrategy<String> strategy,
-                             @NotNull VirtualDirectoryImpl dir) {
-    // obtaining directory snapshot
-    Pair<String[], VirtualFile[]> result = LocalFileSystemRefreshWorker.getDirectorySnapshot(persistence, dir);
-    if (result == null) return false;
-    String[] persistedNames = result.getFirst();
-    VirtualFile[] children = result.getSecond();
+      Pair<String[], VirtualFile[]> snapshot = LocalFileSystemRefreshWorker.getDirectorySnapshot(persistence, dir);
+      if (snapshot == null) continue;
+      String[] persistedNames = snapshot.getFirst();
+      VirtualFile[] children = snapshot.getSecond();
 
-    // reading children attributes
-    String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
-    Set<String> newNames = newTroveSet(strategy, upToDateNames);
-    if (dir.allChildrenLoaded() && children.length < upToDateNames.length) {
-      for (VirtualFile child : children) {
-        newNames.remove(child.getName());
-      }
-    }
-    else {
-      ContainerUtil.removeAll(newNames, persistedNames);
-    }
-
-    Set<String> deletedNames = newTroveSet(strategy, persistedNames);
-    ContainerUtil.removeAll(deletedNames, upToDateNames);
-
-    OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, upToDateNames);
-    if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(persistedNames) + " +" + newNames + " -" + deletedNames);
-
-    List<ChildInfo> newKids = new ArrayList<>(newNames.size());
-    for (String newName : newNames) {
-      checkCancelled(dir);
-      ChildInfo record = childRecord(fs, dir, newName);
-      if (record != null) {
-        newKids.add(record);
+      String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
+      Set<String> newNames = newTroveSet(strategy, upToDateNames);
+      if (dir.allChildrenLoaded() && children.length < upToDateNames.length) {
+        for (VirtualFile child : children) {
+          newNames.remove(child.getName());
+        }
       }
       else {
-        if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + newName);
+        ContainerUtil.removeAll(newNames, persistedNames);
       }
-    }
 
-    List<Pair<VirtualFile, FileAttributes>> updatedMap = new ArrayList<>(children.length);
-    for (VirtualFile child : children) {
-      checkCancelled(dir);
-      if (!deletedNames.contains(child.getName())) {
-        updatedMap.add(pair(child, fs.getAttributes(child)));
+      Set<String> deletedNames = newTroveSet(strategy, persistedNames);
+      ContainerUtil.removeAll(deletedNames, upToDateNames);
+
+      OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, upToDateNames);
+      if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(persistedNames) + " +" + newNames + " -" + deletedNames);
+
+      List<ChildInfo> newKids = new ArrayList<>(newNames.size());
+      for (String newName : newNames) {
+        checkCancelled(dir);
+        ChildInfo record = childRecord(fs, dir, newName);
+        if (record != null) {
+          newKids.add(record);
+        }
+        else {
+          if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + newName);
+        }
       }
-    }
 
-    // generating events unless a directory was changed in between
-    myHelper.beginTransaction();
-    boolean transactionSucceeded = true;
-    try {
-      checkCancelled(dir);
+      List<Pair<VirtualFile, FileAttributes>> updatedMap = new ArrayList<>(children.length);
+      for (VirtualFile child : children) {
+        checkCancelled(dir);
+        if (!deletedNames.contains(child.getName())) {
+          updatedMap.add(pair(child, fs.getAttributes(child)));
+        }
+      }
+
       if (isDirectoryChanged(persistence, dir, persistedNames, children)) {
-        return false;
+        continue;
       }
+
+      myHelper.beginTransaction();
 
       for (String name : deletedNames) {
         VirtualFileSystemEntry child = dir.findChild(name);
@@ -219,27 +206,20 @@ public class RefreshWorker {
         }
       }
 
-      transactionSucceeded = !isDirectoryChanged(persistence, dir, persistedNames, children);
+      boolean succeed = !isDirectoryChanged(persistence, dir, persistedNames, children);
+      myHelper.endTransaction(succeed);
+      if (succeed) break;
+      if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
     }
-    finally {
-      myHelper.endTransaction(transactionSucceeded);
-    }
-
-    return transactionSucceeded;
   }
 
   private boolean isDirectoryChanged(@NotNull PersistentFS persistence,
-                                            @NotNull VirtualDirectoryImpl dir,
-                                            @NotNull String[] persistedNames,
-                                            @NotNull VirtualFile[] children) {
+                                     @NotNull VirtualDirectoryImpl dir,
+                                     @NotNull String[] persistedNames,
+                                     @NotNull VirtualFile[] children) {
     return ReadAction.compute(() -> {
       checkCancelled(dir);
-      if (!Arrays.equals(persistedNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
-        if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
-        // directory was changed in between, must retry
-        return true;
-      }
-      return false;
+      return !Arrays.equals(persistedNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren());
     });
   }
 
