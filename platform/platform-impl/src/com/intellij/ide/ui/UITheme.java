@@ -73,14 +73,14 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) {
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IllegalStateException {
     return loadFromJson(stream, themeId, provider, s -> s);
   }
 
   public static UITheme loadFromJson(@NotNull InputStream stream,
                                      @NotNull String themeId,
                                      @Nullable ClassLoader provider,
-                                     @NotNull Function<? super String, String> iconsMapper) {
+                                     @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
     UITheme theme = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), UITheme.class);
     if (theme == null) return null;
 
