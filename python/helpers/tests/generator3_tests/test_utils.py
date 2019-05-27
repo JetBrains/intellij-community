@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 from unittest import TestCase
 
-from pycharm_generator_utils.test import GeneratorTestCase
+from generator3_tests import GeneratorTestCase
 from pycharm_generator_utils.util_methods import copy, delete, mkdir, copy_skeletons, cached
 
 
