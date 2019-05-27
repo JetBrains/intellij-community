@@ -90,6 +90,16 @@ public class TabLabel extends JPanel implements Accessible {
         myInfo.setPreviousSelection(null);
         handlePopup(e);
       }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        setHovered(true);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        setHovered(false);
+      }
     });
 
     if (isFocusable()) {
@@ -120,7 +130,7 @@ public class TabLabel extends JPanel implements Accessible {
               }
             }
           }
-          }
+        }
       });
 
       // Repaint when we gain/lost focus so that the focus cue is displayed.
@@ -138,11 +148,22 @@ public class TabLabel extends JPanel implements Accessible {
     }
   }
 
+  private void setHovered(boolean value) {
+    if (myTabs.isHoveredTab(this) == value) return;
+    if (value) {
+      myTabs.setHovered(this);
+    }
+    else {
+      myTabs.unHover(this);
+    }
+  }
+
   @Override
   public boolean isFocusable() {
     // We don't want the focus unless we are the selected tab.
-    if (myTabs.getSelectedLabel() != this)
+    if (myTabs.getSelectedLabel() != this) {
       return false;
+    }
 
     return super.isFocusable();
   }
@@ -379,8 +400,9 @@ public class TabLabel extends JPanel implements Accessible {
 
     if (group == null) return;
 
-    myActionPanel = new ActionPanel(myTabs, myInfo, e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)));
-
+    myActionPanel = new ActionPanel(myTabs, myInfo, e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)),
+                                    value -> setHovered(value));
+    myActionPanel.setBorder(JBUI.Borders.empty(1, 0));
     toggleShowActions(false);
 
     add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
@@ -482,7 +504,8 @@ public class TabLabel extends JPanel implements Accessible {
     Graphics2D g2d = (Graphics2D)g;
     if (isSelected) {
       painter
-        .paintSelectedTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isActiveTabs(myInfo), myTabs.isHoveredTab(this));
+        .paintSelectedTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isActiveTabs(myInfo),
+                          myTabs.isHoveredTab(this));
     }
     else {
       painter.paintTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isHoveredTab(this));
@@ -493,8 +516,9 @@ public class TabLabel extends JPanel implements Accessible {
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
 
-    if (getLabelComponent().getParent() == null)
+    if (getLabelComponent().getParent() == null) {
       return;
+    }
 
     final Rectangle textBounds = SwingUtilities.convertRectangle(getLabelComponent().getParent(), getLabelComponent().getBounds(), this);
     // Paint border around label if we got the focus
@@ -503,8 +527,9 @@ public class TabLabel extends JPanel implements Accessible {
       UIUtil.drawDottedRectangle(g, textBounds.x, textBounds.y, textBounds.x + textBounds.width - 1, textBounds.y + textBounds.height - 1);
     }
 
-    if (myOverlayedIcon == null)
+    if (myOverlayedIcon == null) {
       return;
+    }
 
     if (getLayeredIcon().isLayerEnabled(1)) {
 
@@ -565,7 +590,7 @@ public class TabLabel extends JPanel implements Accessible {
     public String getAccessibleName() {
       String name = super.getAccessibleName();
       if (name == null && myLabel != null) {
-          name = myLabel.getAccessibleContext().getAccessibleName();
+        name = myLabel.getAccessibleContext().getAccessibleName();
       }
       return name;
     }
@@ -574,7 +599,7 @@ public class TabLabel extends JPanel implements Accessible {
     public String getAccessibleDescription() {
       String description = super.getAccessibleDescription();
       if (description == null && myLabel != null) {
-          description = myLabel.getAccessibleContext().getAccessibleDescription();
+        description = myLabel.getAccessibleContext().getAccessibleDescription();
       }
       return description;
     }

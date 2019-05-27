@@ -22,7 +22,7 @@ public class ActionPanel extends NonOpaquePanel {
   private boolean myAutoHide;
   private boolean myActionsIsVisible = false;
 
-  public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Consumer<MouseEvent> pass) {
+  public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Consumer<MouseEvent> pass, Consumer<Boolean> hover) {
     myTabs = tabs;
     ActionGroup group = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
     AnAction[] children = group.getChildren(null);
@@ -33,7 +33,7 @@ public class ActionPanel extends NonOpaquePanel {
     inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
     wrapper.add(inner, BorderLayout.CENTER);
     for (AnAction each : children) {
-      ActionButton eachButton = new ActionButton(myTabs, tabInfo, each, tabInfo.getTabActionPlace(), pass, tabs.getTabActionsMouseDeadzone()) {
+      ActionButton eachButton = new ActionButton(myTabs, tabInfo, each, tabInfo.getTabActionPlace(), pass, hover, tabs.getTabActionsMouseDeadzone()) {
         @Override
         protected void repaintComponent(final Component c) {
           TabLabel tabLabel = (TabLabel) SwingUtilities.getAncestorOfClass(TabLabel.class, c);

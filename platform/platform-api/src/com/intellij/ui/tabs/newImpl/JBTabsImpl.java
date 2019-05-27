@@ -236,16 +236,6 @@ public class JBTabsImpl extends JComponent
       divider.setOpaque(false);
     }
 
-    PropertyCombinatorsKt.map(childAtMouse(this), it -> it instanceof TabLabel ? it : null).advise(lifetime, label -> {
-      if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
-
-      tabLabelAtMouse = (TabLabel)label;
-
-      if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
-
-      return null;
-    });
-
     myPopupListener = new PopupMenuListener() {
       @Override
       public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
@@ -442,6 +432,26 @@ public class JBTabsImpl extends JComponent
     }
 
     return this;
+  }
+
+  public void setHovered(TabLabel label) {
+    TabLabel old = tabLabelAtMouse;
+    tabLabelAtMouse = label;
+
+    if(old != null) {
+      old.repaint();
+    }
+
+    if(tabLabelAtMouse != null) {
+      tabLabelAtMouse.repaint();
+    }
+  }
+
+  public void unHover(TabLabel label) {
+    if(tabLabelAtMouse == label) {
+      tabLabelAtMouse = null;
+      label.repaint();
+    }
   }
 
   protected boolean isHoveredTab(TabLabel label) {
