@@ -243,10 +243,10 @@ class LocalFileSystemRefreshWorker {
     file.markDirty();
   }
 
-  private static Consumer<VirtualFile> ourTestListener;
+  private static Consumer<? super VirtualFile> ourTestListener;
 
   @TestOnly
-  static void setTestListener(@Nullable Consumer<VirtualFile> testListener) {
+  static void setTestListener(@Nullable Consumer<? super VirtualFile> testListener) {
     ourTestListener = testListener;
   }
 

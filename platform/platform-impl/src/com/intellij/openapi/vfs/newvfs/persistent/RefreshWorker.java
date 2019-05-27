@@ -402,10 +402,10 @@ public class RefreshWorker {
     }
   }
 
-  private static Consumer<VirtualFile> ourTestListener;
+  private static Consumer<? super VirtualFile> ourTestListener;
 
   @TestOnly
-  public static void setTestListener(@Nullable Consumer<VirtualFile> testListener) {
+  public static void setTestListener(@Nullable Consumer<? super VirtualFile> testListener) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     ourTestListener = testListener;
     LocalFileSystemRefreshWorker.setTestListener(testListener);
