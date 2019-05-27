@@ -48,9 +48,10 @@ public class RefreshWorker {
   private final LocalFileSystemRefreshWorker myLocalFileSystemRefreshWorker;
 
   public RefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
-    boolean canUseNioRefresher = refreshRoot.isInLocalFileSystem() && !(refreshRoot.getFileSystem() instanceof TempFileSystem);
-    myLocalFileSystemRefreshWorker = canUseNioRefresher && Registry.is("vfs.use.nio-based.local.refresh.worker") ?
-                                     new LocalFileSystemRefreshWorker(refreshRoot, isRecursive) : null;
+    boolean canUseNioRefresher = refreshRoot.isInLocalFileSystem() &&
+                                 !(refreshRoot.getFileSystem() instanceof TempFileSystem) &&
+                                 Registry.is("vfs.use.nio-based.local.refresh.worker");
+    myLocalFileSystemRefreshWorker = canUseNioRefresher ? new LocalFileSystemRefreshWorker(refreshRoot, isRecursive) : null;
     myIsRecursive = isRecursive;
     myRefreshQueue.addLast(refreshRoot);
   }
