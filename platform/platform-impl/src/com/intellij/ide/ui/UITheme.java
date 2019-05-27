@@ -370,16 +370,14 @@ public class UITheme {
     } else if (key.endsWith("grayFilter")) {
       return parseGrayFilter(value);
     } else {
-      final Color color = parseColor(value);
-      final Integer invVal = getInteger(value);
       Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
-      if (color != null) {
-        return  new ColorUIResource(color);
-      } else if (invVal != null) {
-        return invVal;
-      } else if (icon != null) {
-        return new IconUIResource(icon);
-      }
+      if (icon != null) return new IconUIResource(icon);
+
+      Color color = parseColor(value);
+      if (color != null) return new ColorUIResource(color);
+
+      Integer invVal = getInteger(value);
+      if (invVal != null) return invVal;
     }
     return value;
   }
