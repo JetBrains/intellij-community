@@ -32,7 +32,7 @@ except ImportError:
 basename = os.path.basename
 
 IGNORE_EXCEPTION_TAG = re.compile('[^#]*#.*@IgnoreException')
-DEBUG_START = ('pydevd.py', 'run')
+DEBUG_START = ('pydevd.py', '_exec')
 DEBUG_START_PY3K = ('_pydev_execfile.py', 'execfile')
 TRACE_PROPERTY = 'pydevd_traceproperty.py'
 get_file_type = DONT_TRACE.get
