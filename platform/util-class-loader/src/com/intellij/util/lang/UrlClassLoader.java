@@ -63,7 +63,6 @@ public class UrlClassLoader extends ClassLoader {
   @SuppressWarnings("unused")
   void appendToClassPathForInstrumentation(String jar) {
     try {
-      //noinspection deprecation
       addURL(new File(jar).toURI().toURL());
     } catch(MalformedURLException ignore) {}
   }
@@ -345,8 +344,11 @@ public class UrlClassLoader extends ClassLoader {
     return defineClass(name, b, 0, b.length, protectionDomain);
   }
 
+  private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<Boolean>();
+
   @Override
   public URL findResource(String name) {
+    if (ourSkipFindingResource.get() != null) return null;
     Resource res = findResourceImpl(name);
     return res != null ? res.getURL() : null;
   }
@@ -365,7 +367,13 @@ public class UrlClassLoader extends ClassLoader {
   @Override
   public InputStream getResourceAsStream(String name) {
     if (myAllowBootstrapResources) {
-      return super.getResourceAsStream(name);
+      ourSkipFindingResource.set(Boolean.TRUE);
+      try {
+        InputStream stream = super.getResourceAsStream(name);
+        if (stream != null) return stream;
+      } finally {
+        ourSkipFindingResource.set(null);
+      }
     }
     try {
       Resource res = findResourceImpl(name);
