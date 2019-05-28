@@ -16,14 +16,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
-import com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.TreeSpeedSearch
 import com.intellij.util.Alarm
 import com.intellij.util.FontUtil.spaceAndThinSpace
-import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -57,12 +54,6 @@ class GitConflictsView(private val project: Project) : Disposable {
   init {
     conflictsTree = MyChangesTree(project)
     updateQueue = MergingUpdateQueue("GitConflictsView", 300, true, conflictsTree, this, null, Alarm.ThreadToUse.POOLED_THREAD)
-
-    conflictsTree.groupingSupport.addPropertyChangeListener(PropertyChangeListener { rebuildTree() })
-    conflictsTree.groupingSupport.setGroupingKeysOrSkip(DEFAULT_GROUPING_KEYS.toSet())
-
-    TreeSpeedSearch(conflictsTree, Convertor { (it.lastPathComponent as? GitConflict)?.filePath?.name })
-
 
     val actionManager = ActionManager.getInstance()
     val toolbarGroup = DefaultActionGroup()
@@ -274,9 +265,16 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
 private class MyChangesTree(project: Project)
   : ChangesTreeImpl<GitConflict>(project, false, true, GitConflict::class.java) {
 
-  override fun buildTreeModel(conflicts: MutableList<out GitConflict>): DefaultTreeModel {
-    val builder = MyTreeModelBuilder(project, groupingSupport.grouping)
+  override fun buildTreeModel(conflicts: List<GitConflict>): DefaultTreeModel {
+    val builder = MyTreeModelBuilder(project, grouping)
     builder.addConflicts(conflicts)
     return builder.build()
+  }
+
+  override fun installGroupingSupport(): ChangesGroupingSupport {
+    val groupingSupport = ChangesGroupingSupport(myProject, this, false)
+    groupingSupport.setGroupingKeysOrSkip(DEFAULT_GROUPING_KEYS.toSet())
+    groupingSupport.addPropertyChangeListener(PropertyChangeListener { rebuildTree() })
+    return groupingSupport
   }
 }
