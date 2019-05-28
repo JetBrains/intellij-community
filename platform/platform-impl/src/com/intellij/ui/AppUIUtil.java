@@ -64,7 +64,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
  */
 public class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
-  private static final boolean DEBUG_MODE = PluginManagerCore.isRunningFromSources();
+  private static final boolean RUNNING_FROM_SOURCES = PluginManagerCore.isRunningFromSources();
   private static List<Image> ourIcons = null;
   private static boolean ourMacDocIconSet = false;
 
@@ -74,9 +74,8 @@ public class AppUIUtil {
   }
 
   public static void updateWindowIcon(@NotNull Window window) {
-    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
-    if (SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported")) {
-      return;  // JDK will load icon from the exe resource
+    if (isWindowIconAlreadyExternallySet()) {
+      return;
     }
 
     List<Image> images = ourIcons;
@@ -108,14 +107,23 @@ public class AppUIUtil {
     }
 
     if (!images.isEmpty()) {
-      if (!SystemInfo.isMac) {
+      if (!SystemInfoRt.isMac) {
         window.setIconImages(images);
       }
-      else if (DEBUG_MODE && !ourMacDocIconSet) {
+      else if (RUNNING_FROM_SOURCES && !ourMacDocIconSet) {
         MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
         ourMacDocIconSet = true;
       }
     }
+  }
+
+  private static boolean isWindowIconAlreadyExternallySet() {
+    if (SystemInfoRt.isMac) {
+      return !RUNNING_FROM_SOURCES;
+    }
+
+    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
+    return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
   }
 
   @NotNull
@@ -202,7 +210,7 @@ public class AppUIUtil {
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
     String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
-    if (DEBUG_MODE) wmClass += "-debug";
+    if (RUNNING_FROM_SOURCES) wmClass += "-debug";
     return wmClass;
   }
 
