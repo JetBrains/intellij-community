@@ -699,7 +699,7 @@ public class JBUI {
       }
 
       public static Color underlinedTabBackground() {
-        return namedColorOrNull("DefaultTabs.underlinedTabBackground");
+        return UIManager.getColor("DefaultTabs.underlinedTabBackground");
       }
 
       @NotNull
@@ -721,7 +721,7 @@ public class JBUI {
       }
 
       public static Color underlinedTabBackground() {
-        return namedColorOrNull("DebuggerTabs.underlinedTabBackground");
+        return UIManager.getColor("DebuggerTabs.underlinedTabBackground");
       }
     }
 
@@ -741,7 +741,7 @@ public class JBUI {
       }
 
       public static Color underlinedTabBackground() {
-        return namedColorOrNull("EditorTabs.underlinedTabBackground");
+        return UIManager.getColor("EditorTabs.underlinedTabBackground");
       }
 
       @NotNull
@@ -805,7 +805,7 @@ public class JBUI {
       }
 
       public static Color underlinedTabBackground() {
-        return namedColorOrNull("ToolWindow.HeaderTab.underlinedTabBackground");
+        return UIManager.getColor("ToolWindow.HeaderTab.underlinedTabBackground");
       }
 
       public static Color hoverInactiveBackground() {
@@ -813,7 +813,7 @@ public class JBUI {
       }
 
       public static Color underlinedTabInactiveBackground() {
-        return namedColorOrNull("ToolWindow.HeaderTab.underlinedTabInactiveBackground");
+        return UIManager.getColor("ToolWindow.HeaderTab.underlinedTabInactiveBackground");
       }
 
       @NotNull
@@ -1219,17 +1219,6 @@ public class JBUI {
       }
     }
   }
-
-  public static Color namedColorOrNull(@NotNull final String propertyName) {
-    Color color = UIManager.getColor(propertyName);
-    if (color == null) return null;
-
-    if (UIManager.get(propertyName) == null) {
-      UIManager.put(propertyName, color);
-    }
-    return color;
-  }
-
 
   public static int getInt(@NotNull String propertyName, int defaultValue) {
     Object value = UIManager.get(propertyName);
