@@ -83,6 +83,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   private final ActiveStack myActiveStack = new ActiveStack();
   private final SideStack mySideStack = new SideStack();
+  private AWTEventListener awtFocusListener;
 
   private ToolWindowsPane myToolWindowsPane;
   private IdeFrameImpl myFrame;
@@ -124,6 +125,27 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     if (project.isDefault()) {
       return;
     }
+
+    awtFocusListener = new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        assert event instanceof FocusEvent;
+        FocusEvent focusEvent = (FocusEvent)event;
+        if (focusEvent.getID() == FocusEvent.FOCUS_GAINED) {
+          Component component = focusEvent.getComponent();
+          if (component != null) {
+            boolean editorIsGoingToGetFocus =
+              Arrays.stream(FileEditorManagerEx.getInstanceEx(project).getSplitters().getEditorsComposites()).
+                flatMap(c -> Arrays.stream(c.getEditors()))
+                .anyMatch(editor -> SwingUtilities.isDescendingFrom(component, editor.getComponent()));
+
+            if (editorIsGoingToGetFocus) {
+              myActiveStack.clear();
+            }
+          }
+        }
+      }
+    };
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
@@ -195,24 +217,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       .handleWindowed(toolWindowId -> {})
       .bind(myProject);
 
-    Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-      @Override
-      public void eventDispatched(AWTEvent event) {
-        assert event instanceof FocusEvent;
-        FocusEvent focusEvent = (FocusEvent)event;
-        if (focusEvent.getID() == FocusEvent.FOCUS_GAINED) {
-          Component component = focusEvent.getComponent();
-          if (component != null) {
-            boolean editorIsGoingToGetFocus = Arrays.stream(FileEditorManagerEx.getInstanceEx(project).getSplitters().getEditorsComposites()).
-              flatMap(c -> Arrays.stream(c.getEditors())).anyMatch(editor -> SwingUtilities.isDescendingFrom(component, editor.getComponent()));
-
-            if (editorIsGoingToGetFocus) {
-              myActiveStack.clear();
-            }
-          }
-        }
-      }
-    }, AWTEvent.FOCUS_EVENT_MASK);
+    Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK);
   }
 
   private static void focusDefaultElementInSelectedEditor() {
@@ -518,6 +523,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     if (myFrame == null) {
       return;
     }
+
+    Toolkit.getDefaultToolkit().removeAWTEventListener(awtFocusListener);
 
     // remove ToolWindowsPane
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(null);
