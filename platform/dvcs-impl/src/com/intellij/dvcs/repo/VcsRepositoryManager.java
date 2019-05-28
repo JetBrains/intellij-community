@@ -200,7 +200,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
       if (checkedRoot != null && repositories.containsKey(checkedRoot)) return;
 
-      Collection<VirtualFile> invalidRoots = findInvalidRoots(repositories.keySet());
+      Collection<VirtualFile> invalidRoots = findInvalidRoots(repositories.values());
       repositories.keySet().removeAll(invalidRoots);
       Map<VirtualFile, Repository> newRoots = findNewRoots(repositories.keySet());
       repositories.putAll(newRoots);
@@ -249,9 +249,17 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   }
 
   @NotNull
-  private Collection<VirtualFile> findInvalidRoots(@NotNull final Collection<VirtualFile> roots) {
-    final VirtualFile[] validRoots = myVcsManager.getAllVersionedRoots();
-    return ContainerUtil.filter(roots, file -> !ArrayUtil.contains(file, validRoots));
+  private Collection<VirtualFile> findInvalidRoots(@NotNull Collection<Repository> repositories) {
+    List<VirtualFile> invalidRepos = new ArrayList<>();
+    for (Repository repo : repositories) {
+      VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(repo.getRoot());
+      if (vcsRoot == null ||
+          !repo.getRoot().equals(vcsRoot.getPath()) ||
+          !repo.getVcs().equals(vcsRoot.getVcs())) {
+        invalidRepos.add(repo.getRoot());
+      }
+    }
+    return invalidRepos;
   }
 
   @Nullable
