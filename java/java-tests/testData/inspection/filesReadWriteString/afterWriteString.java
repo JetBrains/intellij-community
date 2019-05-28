@@ -18,10 +18,10 @@ public class Example {
       /*3*/
       /*1*/
       /*2*/
-      Files.writeString(Paths.get("/etc/passwd"), "foo");
+      Files.writeString(Paths.get("/etc/passwd"), "foo", StandardCharsets.UTF_16);
   }
 
   void test3() throws IOException {
-    Files.writeString(Paths.get("/etc/passwd"), "foo");
+    Files.writeString(Paths.get("/etc/passwd"), "foo", StandardCharsets.UTF_16);
   }
 }
