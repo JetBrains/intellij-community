@@ -6,10 +6,12 @@ import com.intellij.psi.PsiElement
 
 
 /**
- * Collects inlays in the given element (not recursively).
+ * Collector created once for collection session and reused for all session elements.
+ * Implementors do NOT need to traverse element subtree themselves.
  */
 interface InlayHintsCollector {
   /**
+   * Explores [element] and adds some hints to [sink] if necessary.
    * Implementors must handle dumb mode themselves.
    */
   fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink)
