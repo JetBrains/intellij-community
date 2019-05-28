@@ -52,8 +52,9 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   @Override
   public void dispose() {
     myDisposed = true;
+
+    REPO_LOCK.writeLock().lock();
     try {
-      REPO_LOCK.writeLock().lock();
       myRepositories.clear();
     }
     finally {
@@ -108,8 +109,9 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   private Repository getRepositoryForRoot(@Nullable VirtualFile root, boolean updateIfNeeded) {
     if (root == null) return null;
     Repository result;
+
+    REPO_LOCK.readLock().lock();
     try {
-      REPO_LOCK.readLock().lock();
       if (myDisposed) {
         throw new ProcessCanceledException();
       }
@@ -119,12 +121,14 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
     finally {
       REPO_LOCK.readLock().unlock();
     }
+
     // if we didn't find appropriate repository, request update mappings if needed and try again
     // may be this should not be called  from several places (for example: branch widget updating from edt).
     if (updateIfNeeded && result == null && ArrayUtil.contains(root, myVcsManager.getAllVersionedRoots())) {
       checkAndUpdateRepositoriesCollection(root);
+
+      REPO_LOCK.readLock().lock();
       try {
-        REPO_LOCK.readLock().lock();
         return myRepositories.get(root);
       }
       finally {
@@ -157,8 +161,8 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   }
 
   public boolean isExternal(@NotNull Repository repository) {
+    REPO_LOCK.readLock().lock();
     try {
-      REPO_LOCK.readLock().lock();
       return !myRepositories.containsValue(repository) && myExternalRepositories.containsValue(repository);
     }
     finally {
@@ -168,8 +172,8 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
   @NotNull
   public Collection<Repository> getRepositories() {
+    REPO_LOCK.readLock().lock();
     try {
-      REPO_LOCK.readLock().lock();
       return new ArrayList<>(myRepositories.values());
     }
     finally {
@@ -179,11 +183,12 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
   // note: we are not calling this method during the project startup - it is called anyway by f.e the GitRootTracker
   private void checkAndUpdateRepositoriesCollection(@Nullable VirtualFile checkedRoot) {
-    Map<VirtualFile, Repository> repositories;
+    MODIFY_LOCK.lock();
     try {
-      MODIFY_LOCK.lock();
+      Map<VirtualFile, Repository> repositories;
+
+      REPO_LOCK.readLock().lock();
       try {
-        REPO_LOCK.readLock().lock();
         if (myRepositories.containsKey(checkedRoot)) return;
         repositories = new HashMap<>(myRepositories);
       }
