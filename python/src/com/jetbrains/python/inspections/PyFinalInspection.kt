@@ -54,7 +54,9 @@ class PyFinalInspection : PyInspection() {
         )
       }
       else {
-        checkClassLevelFinalsAreInitialized(node)
+        val (classLevelFinals, initAttributes) = getClassLevelFinalsAndInitAttributes(node)
+        checkClassLevelFinalsAreInitialized(classLevelFinals, initAttributes)
+        checkSameNameClassAndInstanceFinals(classLevelFinals, initAttributes)
       }
 
       checkRedeclarationsInScope(node)
@@ -140,24 +142,39 @@ class PyFinalInspection : PyInspection() {
       }
     }
 
-    private fun checkClassLevelFinalsAreInitialized(cls: PyClass) {
-      val notInitializedFinals = mutableMapOf<String?, PyTargetExpression>()
+    private fun getClassLevelFinalsAndInitAttributes(cls: PyClass): Pair<Map<String?, PyTargetExpression>, Map<String, PyTargetExpression>> {
+      val classLevelFinals = mutableMapOf<String?, PyTargetExpression>()
+      cls.classAttributes.forEach { if (isFinal(it)) classLevelFinals[it.name] = it }
 
-      cls.classAttributes.forEach {
-        if (!it.hasAssignedValue() && isFinal(it)) {
-          notInitializedFinals[it.name] = it
+      val initAttributes = mutableMapOf<String, PyTargetExpression>()
+      cls.findMethodByName(PyNames.INIT, false, myTypeEvalContext)?.let { PyClassImpl.collectInstanceAttributes(it, initAttributes) }
+
+      return Pair(classLevelFinals, initAttributes)
+    }
+
+    private fun checkClassLevelFinalsAreInitialized(classLevelFinals: Map<String?, PyTargetExpression>,
+                                                    initAttributes: Map<String, PyTargetExpression>) {
+      classLevelFinals.forEach { (name, psi) ->
+        if (!psi.hasAssignedValue() && name !in initAttributes) {
+          registerProblem(psi, "'Final' name should be initialized with a value")
         }
       }
+    }
 
-      if (notInitializedFinals.isNotEmpty()) {
-        cls.findMethodByName(PyNames.INIT, false, myTypeEvalContext)?.let {
-          val initializedAttributes = mutableMapOf<String, PyTargetExpression>()
-          PyClassImpl.collectInstanceAttributes(it, initializedAttributes)
-          notInitializedFinals -= initializedAttributes.keys
-        }
+    private fun checkSameNameClassAndInstanceFinals(classLevelFinals: Map<String?, PyTargetExpression>,
+                                                    initAttributes: Map<String, PyTargetExpression>) {
+      initAttributes.forEach { (name, initAttribute) ->
+        val sameNameClassLevelFinal = classLevelFinals[name]
 
-        notInitializedFinals.values.forEach {
-          registerProblem(it, "'Final' name should be initialized with a value")
+        if (sameNameClassLevelFinal != null && isFinal(initAttribute)) {
+          if (sameNameClassLevelFinal.hasAssignedValue()) {
+            registerProblem(initAttribute, "Already declared name could not be redefined as 'Final'")
+          }
+          else {
+            val message = "Either instance attribute or class attribute could be type hinted as 'Final'"
+            registerProblem(sameNameClassLevelFinal, message)
+            registerProblem(initAttribute, message)
+          }
         }
       }
     }
