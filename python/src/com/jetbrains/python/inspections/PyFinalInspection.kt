@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.resolve.FileContextUtil
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
@@ -15,6 +16,7 @@ import com.jetbrains.python.documentation.doctest.PyDocstringFile
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT
+import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.pyi.PyiUtil
@@ -50,6 +52,9 @@ class PyFinalInspection : PyInspection() {
           false,
           myTypeEvalContext
         )
+      }
+      else {
+        checkClassLevelFinalsAreInitialized(node)
       }
 
       checkRedeclarationsInScope(node)
@@ -127,6 +132,28 @@ class PyFinalInspection : PyInspection() {
       ControlFlowCache.getScope(scopeOwner).targetExpressions.forEach {
         if (!visitedNames.add(it.name) && isFinal(it)) {
           registerProblem(it, "Already declared name could not be redefined as 'Final'")
+        }
+      }
+    }
+
+    private fun checkClassLevelFinalsAreInitialized(cls: PyClass) {
+      val notInitializedFinals = mutableMapOf<String?, PyTargetExpression>()
+
+      cls.classAttributes.forEach {
+        if (!it.hasAssignedValue() && isFinal(it)) {
+          notInitializedFinals[it.name] = it
+        }
+      }
+
+      if (notInitializedFinals.isNotEmpty()) {
+        cls.findMethodByName(PyNames.INIT, false, myTypeEvalContext)?.let {
+          val initializedAttributes = mutableMapOf<String, PyTargetExpression>()
+          PyClassImpl.collectInstanceAttributes(it, initializedAttributes)
+          notInitializedFinals -= initializedAttributes.keys
+        }
+
+        notInitializedFinals.values.forEach {
+          registerProblem(it, "'Final' name should be initialized with a value")
         }
       }
     }
