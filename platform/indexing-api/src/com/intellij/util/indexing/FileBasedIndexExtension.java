@@ -1,10 +1,10 @@
-
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.PersistentFSConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -12,10 +12,12 @@ import java.util.Collections;
 
 /**
  * <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/indexing_and_psi_stubs/file_based_indexes.html">SDK Docs</a>
+ * <p>
+ * V class MUST have equals / hashcode properly defined!!!
  *
  * @author Eugene Zhuravlev
- * V class MUST have equals / hashcode properly defined!!!
  */
+@ApiStatus.OverrideOnly
 public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V, FileContent> {
 
   public static final ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME =
