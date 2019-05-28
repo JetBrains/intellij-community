@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-export type ActivityChartType = "prepareAppInitActivities" | "components" | "services" | "extensions" | "topHitProviders" | "projectPostStartupActivities"
+export type ActivityChartType = "prepareAppInitActivities" | "components" | "services" | "extensions" | "topHitProviders" | "projectPostStartupActivities" | "GCs"
 
 export interface ActivityChartDescriptor {
   readonly label: string
@@ -38,5 +38,9 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
   {
     label: "Project Post-Startup",
     id: "projectPostStartupActivities",
+  },
+  {
+    label: "GCs",
+    id: "GCs",
   },
 ]

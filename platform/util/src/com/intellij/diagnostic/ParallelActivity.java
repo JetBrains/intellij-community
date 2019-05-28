@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // non-sequential and repeated items
 public enum ParallelActivity {
@@ -20,6 +21,8 @@ public enum ParallelActivity {
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
   private final String jsonName;
+
+  private final AtomicInteger counter = new AtomicInteger();
 
   ParallelActivity(@NotNull String jsonName) {
     this.jsonName = jsonName;
@@ -45,8 +48,8 @@ public enum ParallelActivity {
     return new ActivityImpl(name, /* description = */ null, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, this, pluginId);
   }
 
-  public long record(long start, @NotNull Class<?> clazz) {
-    return record(start, clazz, null);
+  public long record(long start, @Nullable Class<?> clazz) {
+    return record(start, clazz, null, null);
   }
 
   /**
@@ -59,14 +62,14 @@ public enum ParallelActivity {
   /**
    * Default threshold is applied.
    */
-  public long record(long start, @NotNull Class<?> clazz, @Nullable StartUpMeasurer.Level level, String pluginId) {
+  public long record(long start, @Nullable Class<?> clazz, @Nullable StartUpMeasurer.Level level, String pluginId) {
     long end = StartUpMeasurer.getCurrentTime();
     long duration = end - start;
     if (duration <= MEASURE_THRESHOLD) {
       return duration;
     }
 
-    ActivityImpl item = new ActivityImpl(clazz.getName(), /* description = */ null, start, /* parent = */ null, level, this, pluginId);
+    ActivityImpl item = new ActivityImpl(clazz == null ? Integer.toString(counter.incrementAndGet()) : clazz.getName(), /* description = */ null, start, /* parent = */ null, level, this, pluginId);
     item.setEnd(end);
     StartUpMeasurer.add(item);
     return duration;
