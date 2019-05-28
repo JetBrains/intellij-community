@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBDimension;
 import org.editorconfig.language.messages.EditorConfigBundle;
 
 import javax.swing.*;
@@ -59,6 +60,7 @@ public class CreateEditorConfigForm {
         if (currPanel == null) {
           currPanel = createLanguageColumnPanel();
           languagesPanel.add(currPanel);
+          languagesPanel.add(Box.createRigidArea(new JBDimension(30, 1)));
           rowCount = 0;
         }
         String langName = ObjectUtils.notNull(provider.getLanguageName(), language.getDisplayName());
