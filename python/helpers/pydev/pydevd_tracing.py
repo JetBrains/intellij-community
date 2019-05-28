@@ -74,13 +74,20 @@ def SetTrace(tracing_func):
         sys.settrace(tracing_func)
         return
 
+    current_thread = threading.currentThread()
+    do_not_trace_before = getattr(current_thread, 'pydev_do_not_trace', None)
+    if do_not_trace_before:
+        return
+
     try:
         TracingFunctionHolder._lock.acquire()
+        current_thread.pydev_do_not_trace = True  # avoid settrace reentering
         TracingFunctionHolder._warn = False
         _internal_set_trace(tracing_func)
         TracingFunctionHolder._warn = True
     finally:
         TracingFunctionHolder._lock.release()
+        current_thread.pydev_do_not_trace = do_not_trace_before
 
 
 def replace_sys_set_trace_func():
