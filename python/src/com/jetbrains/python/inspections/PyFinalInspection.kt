@@ -71,8 +71,12 @@ class PyFinalInspection : PyInspection() {
             registerProblem(node.nameIdentifier, "'${(it as PyFunction).qualifiedName}' is marked as '@final' and should not be overridden")
           }
 
-        if (!PyiUtil.isInsideStub(node) && isFinal(node) && PyiUtil.isOverload(node, myTypeEvalContext)) {
-          registerProblem(node.nameIdentifier, "'@final' should be placed on the implementation")
+        if (!PyiUtil.isInsideStub(node)) {
+          if (isFinal(node) && PyiUtil.isOverload(node, myTypeEvalContext)) {
+            registerProblem(node.nameIdentifier, "'@final' should be placed on the implementation")
+          }
+
+          checkInstanceFinalsOutsideInit(node)
         }
       }
       else if (isFinal(node)) {
@@ -155,6 +159,16 @@ class PyFinalInspection : PyInspection() {
         notInitializedFinals.values.forEach {
           registerProblem(it, "'Final' name should be initialized with a value")
         }
+      }
+    }
+
+    private fun checkInstanceFinalsOutsideInit(method: PyFunction) {
+      if (PyUtil.isInit(method)) return
+
+      val instanceAttributes = mutableMapOf<String, PyTargetExpression>()
+      PyClassImpl.collectInstanceAttributes(method, instanceAttributes)
+      instanceAttributes.values.forEach {
+        if (isFinal(it)) registerProblem(it, "'Final' attribute should be declared in class body or '__init__'")
       }
     }
 

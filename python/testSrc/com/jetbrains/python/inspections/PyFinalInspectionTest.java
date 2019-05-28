@@ -272,6 +272,22 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-34945
+  public void testFinalInstanceAttributes() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "class A:\n" +
+                         "    def __init__(self):\n" +
+                         "        self.a: Final[str] = \"str\"\n" +
+                         "\n" +
+                         "    def method(self):\n" +
+                         "        <warning descr=\"'Final' attribute should be declared in class body or '__init__'\">self.a</warning>: Final[int] = 10\n" +
+                         "        <warning descr=\"'Final' attribute should be declared in class body or '__init__'\">self.b</warning>: Final[int] = 10")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
