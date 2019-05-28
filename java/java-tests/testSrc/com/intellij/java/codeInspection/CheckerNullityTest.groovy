@@ -92,7 +92,7 @@ class MyClass {
     myFixture.addFileToProject "foo/package-info.java", """
 @DefaultQualifiers({
   @DefaultQualifier(value = Nullable.class, locations = TypeUseLocation.RETURN), 
-  @DefaultQualifier(value = Nullable.class, locations = {TypeUseLocation.PARAMETER}))
+  @DefaultQualifier(value = Nullable.class, locations = {TypeUseLocation.PARAMETER})})
 package foo;
 
 import org.checkerframework.checker.nullness.qual.*;
