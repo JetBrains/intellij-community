@@ -451,9 +451,9 @@ public class MessageBusImpl implements MessageBus {
     myListener = listener;
   }
 
-  void notifyMessageDeliveryListener(Object handler, long duration) {
+  void notifyMessageDeliveryListener(Topic topic, Object handler, long durationNanos) {
     if (myListener != null) {
-      myListener.messageDelivered(handler, duration);
+      myListener.messageDelivered(topic, handler, durationNanos);
     }
   }
 

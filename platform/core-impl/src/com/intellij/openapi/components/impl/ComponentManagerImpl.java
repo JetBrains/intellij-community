@@ -33,6 +33,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
@@ -348,13 +349,17 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     myMessageBus = MessageBusFactory.newMessageBus(name, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
     if (myMessageBus instanceof MessageBusImpl) {
-      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((handler, duration) -> {
-        ClassLoader loader = handler.getClass().getClassLoader();
-        String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : "com.intellij";
-        StartUpMeasurer.addPluginCost(pluginId, "MessageBus", duration);
+      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((topic, handler, duration) -> {
+        logMessageBusDelivery(topic, handler, duration);
       });
     }
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
+  }
+
+  protected void logMessageBusDelivery(Topic topic, Object handler, long durationNanos) {
+    ClassLoader loader = handler.getClass().getClassLoader();
+    String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : "com.intellij";
+    StartUpMeasurer.addPluginCost(pluginId, "MessageBus", durationNanos);
   }
 
   protected final ComponentManager getParentComponentManager() {

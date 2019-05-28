@@ -5,14 +5,12 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.LoadingPhase;
-import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.diagnostic.*;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.Notification;
@@ -26,6 +24,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -797,7 +796,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     // (and, so, should be called after project initialization)
     if (project instanceof ComponentManagerImpl) {
       for (ProjectComponent component : ((ComponentManagerImpl)project).getComponentInstancesOfType(ProjectComponent.class)) {
-        StartupManagerImpl.runActivity(() -> component.projectOpened());
+        StartupManagerImpl.runActivity(() -> {
+          ClassLoader loader = component.getClass().getClassLoader();
+          String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : null;
+          Activity componentActivity =
+            ParallelActivity.PROJECT_OPEN_HANDLER.start(component.getClass().getName(), StartUpMeasurer.Level.PROJECT, pluginId);
+          component.projectOpened();
+          componentActivity.end();
+        });
       }
     }
     activity.end();
