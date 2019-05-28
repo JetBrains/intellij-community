@@ -69,20 +69,64 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-34945
-  public void testOmittedAssignedValue() {
+  public void testOmittedAssignedValueOnModuleLevel() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> doTestByText("from typing_extensions import Final\n" +
                          "\n" +
-                         "a: <warning descr=\"If assigned value is omitted, there should be an explicit type argument to 'Final'\">Final</warning>\n" +
-                         "b: Final[int]\n" +
+                         "<warning descr=\"'Final' name should be initialized with a value\">a</warning>: Final[int]\n" +
+                         "<warning descr=\"'Final' name should be initialized with a value\">b</warning>: Final\n" +
+                         "b = \"10\"\n" +
+                         "c: Final[str] = \"10\"\n" +
+                         "d: int\n")
+    );
+  }
+
+  // PY-34945
+  public void testOmittedAssignedValueOnClassLevel() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "class A:\n" +
+                         "    a: <warning descr=\"If assigned value is omitted, there should be an explicit type argument to 'Final'\">Final</warning>\n" +
+                         "    b: Final[int]\n" +
+                         "    c: int\n" +
                          "\n" +
                          "MY_FINAL = Final\n" +
                          "MY_FINAL_INT = Final[int]\n" +
                          "\n" +
-                         "с: <warning descr=\"If assigned value is omitted, there should be an explicit type argument to 'Final'\">MY_FINAL</warning>\n" +
-                         "в: MY_FINAL_INT")
+                         "class B:\n" +
+                         "    с: <warning descr=\"If assigned value is omitted, there should be an explicit type argument to 'Final'\">MY_FINAL</warning>\n" +
+                         "    d: MY_FINAL_INT")
     );
+  }
+
+  // PY-34945
+  public void testOmittedAssignedValueOnFunctionLevel() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "def foo(self):\n" +
+                         "    <warning descr=\"'Final' name should be initialized with a value\">a</warning>: Final[int]\n" +
+                         "    <warning descr=\"'Final' name should be initialized with a value\">b</warning>: Final\n" +
+                         "    c: Final[str] = \"10\"\n")
+    );
+  }
+
+  // PY-34945
+  public void testOmittedAssignedValueInStubOnModuleLevel() {
+    final PsiFile currentFile = myFixture.configureByFile(getTestFilePath() + "i");
+    configureInspection();
+    assertSdkRootsNotParsed(currentFile);
+  }
+
+  // PY-34945
+  public void testOmittedAssignedValueInStubOnClassLevel() {
+    final PsiFile currentFile = myFixture.configureByFile(getTestFilePath() + "i");
+    configureInspection();
+    assertSdkRootsNotParsed(currentFile);
   }
 
   // PY-34945

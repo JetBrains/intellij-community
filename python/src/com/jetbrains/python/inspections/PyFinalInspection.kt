@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.resolve.FileContextUtil
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getFunctionTypeAnnotation
@@ -80,8 +81,17 @@ class PyFinalInspection : PyInspection() {
       super.visitPyTargetExpression(node)
 
       if (!node.hasAssignedValue()) {
-        node.annotation?.value.takeIf(this::resolvesToFinal).let {
-          registerProblem(it, "If assigned value is omitted, there should be an explicit type argument to 'Final'")
+        node.annotation?.value?.let {
+          if (PyiUtil.isInsideStub(node) || ScopeUtil.getScopeOwner(node) is PyClass) {
+            if (resolvesToFinal(it)) {
+              registerProblem(it, "If assigned value is omitted, there should be an explicit type argument to 'Final'")
+            }
+          }
+          else {
+            if (resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it)) {
+              registerProblem(node, "'Final' name should be initialized with a value")
+            }
+          }
         }
       }
     }
