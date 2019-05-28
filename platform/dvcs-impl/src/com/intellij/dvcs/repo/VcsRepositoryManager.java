@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -207,6 +208,14 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
       REPO_LOCK.writeLock().lock();
       try {
         if (!myDisposed) {
+          for (VirtualFile file : myRepositories.keySet()) {
+            Repository oldRepo = myRepositories.get(file);
+            Repository newRepo = repositories.get(file);
+            if (oldRepo != newRepo) {
+              Disposer.dispose(oldRepo);
+            }
+          }
+
           myRepositories.clear();
           myRepositories.putAll(repositories);
         }
