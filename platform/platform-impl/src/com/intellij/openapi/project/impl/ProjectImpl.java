@@ -249,7 +249,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
     //noinspection CodeBlock2Expr
-    init(PluginManagerCore.getLoadedPlugins(null), progressIndicator, application.isUnitTestMode() ? () -> {
+    init(PluginManagerCore.getLoadedPlugins(), progressIndicator, application.isUnitTestMode() ? () -> {
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
     } : null);
 

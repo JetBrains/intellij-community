@@ -71,11 +71,6 @@ public class PluginManagerCore {
   public static final String PLUGIN_XML = "plugin.xml";
   public static final String PLUGIN_XML_PATH = META_INF + PLUGIN_XML;
 
-  static final float PLUGINS_PROGRESS_PART = 0.3f;
-  private static final float LOADERS_PROGRESS_PART = 0.35f;
-
-  public static final float PROGRESS_PART = PLUGINS_PROGRESS_PART + LOADERS_PROGRESS_PART;
-
   /** @noinspection StaticNonFinalField*/
   public static String BUILD_NUMBER;
 
@@ -129,13 +124,8 @@ public class PluginManagerCore {
    */
   @NotNull
   public static IdeaPluginDescriptor[] getPlugins() {
-    return getPlugins(null);
-  }
-
-  @NotNull
-  public static IdeaPluginDescriptor[] getPlugins(@Nullable StartupProgress progress) {
     IdeaPluginDescriptor[] result = ourPlugins.get();
-    return result == null ? initPlugins(progress) : result;
+    return result == null ? initPlugins() : result;
   }
 
   /**
@@ -143,9 +133,9 @@ public class PluginManagerCore {
    * the plugins it depends on.
    */
   @NotNull
-  public static synchronized List<IdeaPluginDescriptor> getLoadedPlugins(@Nullable StartupProgress progress) {
+  public static synchronized List<IdeaPluginDescriptor> getLoadedPlugins() {
     if (ourLoadedPlugins == null) {
-      initPlugins(progress);
+      initPlugins();
     }
     return ourLoadedPlugins;
   }
@@ -458,7 +448,7 @@ public class PluginManagerCore {
                                      @NotNull Map<PluginId, IdeaPluginDescriptor> map,
                                      boolean checkModuleDependencies) {
     for (PluginId id: descriptor.getDependentPluginIds()) {
-      if (ArrayUtil.contains(id, (Object[])descriptor.getOptionalDependentPluginIds())) {
+      if (ArrayUtil.contains(id, descriptor.getOptionalDependentPluginIds())) {
         continue;
       }
       if (!checkModuleDependencies && isModuleDependency(id)) {
@@ -1005,9 +995,6 @@ public class PluginManagerCore {
       }
 
       if (existingResults.add(descriptor)) {
-        if (context.getPluginLoadProgressManager() != null) {
-          context.getPluginLoadProgressManager().showProgress(descriptor);
-        }
         result.add(descriptor);
       }
       else {
@@ -1114,7 +1101,7 @@ public class PluginManagerCore {
     List<IdeaPluginDescriptorImpl> descriptors = ContainerUtil.newSmartList();
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(loader, urlsFromClassPath);
-    loadDescriptorsFromClassPath(urlsFromClassPath, descriptors, new LoadDescriptorsContext(null, false), platformPluginURL);
+    loadDescriptorsFromClassPath(urlsFromClassPath, descriptors, new LoadDescriptorsContext(false), platformPluginURL);
     return descriptors;
   }
 
@@ -1140,9 +1127,6 @@ public class PluginManagerCore {
       if (descriptor != null && existingResults.add(descriptor)) {
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
-        if (context.getPluginLoadProgressManager() != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
-          context.getPluginLoadProgressManager().showProgress(descriptor);
-        }
       }
     }
   }
@@ -1228,16 +1212,15 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  public static IdeaPluginDescriptorImpl[] loadDescriptors(@Nullable StartupProgress progress, @NotNull List<? super String> errors) {
+  public static IdeaPluginDescriptorImpl[] loadDescriptors(@NotNull List<? super String> errors) {
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
 
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.LOAD_PLUGIN_DESCRIPTORS);
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
 
-    PluginLoadProgressManager pluginLoadProgressManager = progress == null ? null : new PluginLoadProgressManager(progress, urlsFromClassPath.size());
     boolean parallel = SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", true);
-    try (LoadDescriptorsContext context = new LoadDescriptorsContext(pluginLoadProgressManager, parallel)) {
+    try (LoadDescriptorsContext context = new LoadDescriptorsContext(parallel)) {
       loadDescriptorsFromDir(new File(PathManager.getPluginsPath()), result, false, context);
       Application application = ApplicationManager.getApplication();
       if (application == null || !application.isUnitTestMode()) {
@@ -1450,11 +1433,11 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static IdeaPluginDescriptorImpl[] initializePlugins(@Nullable StartupProgress progress) {
+  private static IdeaPluginDescriptorImpl[] initializePlugins() {
     configureExtensions();
 
     List<String> errors = new ArrayList<>();
-    IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(progress, errors);
+    IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(errors);
     checkEssentialPluginsAreAvailable(pluginDescriptors);
 
     Class callerClass = ReflectionUtil.findCallerClass(1);
@@ -1480,7 +1463,6 @@ public class PluginManagerCore {
       ourId2Index.put(result.get(i).getPluginId(), i);
     }
 
-    int i = 0;
     for (IdeaPluginDescriptorImpl pluginDescriptor : result) {
       if (pluginDescriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID) || pluginDescriptor.isUseCoreClassLoader()) {
         pluginDescriptor.setLoader(coreLoader);
@@ -1490,10 +1472,6 @@ public class PluginManagerCore {
         ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, pluginDescriptor.getDependentPluginIds());
         if (parentLoaders.length == 0) parentLoaders = new ClassLoader[]{coreLoader};
         pluginDescriptor.setLoader(createPluginClassLoader(classPath, parentLoaders, pluginDescriptor));
-      }
-
-      if (progress != null) {
-        progress.showProgress("", PLUGINS_PROGRESS_PART + i++ / (float)result.size() * LOADERS_PROGRESS_PART);
       }
     }
 
@@ -1640,11 +1618,11 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static synchronized IdeaPluginDescriptorImpl[] initPlugins(@Nullable StartupProgress progress) {
+  private static synchronized IdeaPluginDescriptorImpl[] initPlugins() {
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
     IdeaPluginDescriptorImpl[] result;
     try {
-      result = initializePlugins(progress);
+      result = initializePlugins();
     }
     catch (PicoPluginExtensionInitializationException e) {
       throw new PluginException(e, e.getPluginId());

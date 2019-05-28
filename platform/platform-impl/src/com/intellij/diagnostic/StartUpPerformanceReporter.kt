@@ -247,7 +247,7 @@ private fun writeServiceStats(writer: JsonGenerator) {
   val component = StatItem("component")
   val service = StatItem("service")
 
-  val plugins = PluginManagerCore.getLoadedPlugins(null)
+  val plugins = PluginManagerCore.getLoadedPlugins()
   for (plugin in plugins) {
     service.app += (plugin as IdeaPluginDescriptorImpl).appServices.size
     service.project += plugin.projectServices.size

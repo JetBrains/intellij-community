@@ -400,7 +400,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void load(@Nullable final String configPath) {
-    load(configPath, null, PluginManagerCore.getLoadedPlugins(null));
+    load(configPath, null, PluginManagerCore.getLoadedPlugins());
   }
 
   public void load(@Nullable String configPath, @Nullable Splash splash, @NotNull List<? extends IdeaPluginDescriptor> plugins) {
@@ -476,12 +476,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     // could be called before full initialization
     ProgressManager progressManager = (ProgressManager)getPicoContainer().getComponentInstance(ProgressManager.class.getName());
     return progressManager == null ? null : progressManager.getProgressIndicator();
-  }
-
-  @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
-    float start = PluginManagerCore.PROGRESS_PART;
-    indicator.setFraction(start + getPercentageOfComponentsLoaded() * (1 - start));
   }
 
   private static void createLocatorFile() {

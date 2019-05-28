@@ -84,7 +84,7 @@ public class IdeaApplication {
 
     List<IdeaPluginDescriptor> plugins;
     try {
-      plugins = PluginManagerCore.getLoadedPlugins(null);
+      plugins = PluginManagerCore.getLoadedPlugins();
     }
     catch (Throwable e) {
       pluginDescriptorsFuture.completeExceptionally(e);
@@ -270,10 +270,6 @@ public class IdeaApplication {
       throw new CompletionException(e);
     }
 
-    if (splash != null) {
-      splash.showProgress("", PluginManagerCore.PROGRESS_PART);
-    }
-
     ((ApplicationImpl)ApplicationManager.getApplication()).load(null, splash, plugins);
     myLoaded = true;
 
@@ -300,18 +296,11 @@ public class IdeaApplication {
       final SplashScreen splashScreen = getSplashScreen();
       if (splashScreen == null) {
         mySplash = new Splash(appInfo);
-        mySplash.show();
       }
-      else {
-        updateSplashScreen(appInfo, splashScreen);
-      }
-    }
-
-    private static void updateSplashScreen(@NotNull ApplicationInfoEx appInfo, @NotNull SplashScreen splashScreen) {
-      final Graphics2D graphics = splashScreen.createGraphics();
-      final Dimension size = splashScreen.getSize();
-      if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getSplashTextColor(), appInfo)) {
-        splashScreen.update();
+      else if (appInfo.showLicenseeInfo()) {
+        if (Splash.showLicenseeInfo(splashScreen.createGraphics(), 0, 0, splashScreen.getSize().height, appInfo, Splash.createFont())) {
+          splashScreen.update();
+        }
       }
     }
 

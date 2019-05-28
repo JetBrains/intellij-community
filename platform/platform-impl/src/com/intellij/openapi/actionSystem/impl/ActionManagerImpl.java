@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -439,7 +438,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private void registerPluginActions() {
-    final List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(null);
+    final List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
       final List<Element> elementList = plugin.getAndClearActionDescriptionElements();
       if (elementList != null) {
