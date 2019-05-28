@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.StartupProgress;
@@ -14,14 +14,12 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
 
 /**
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
@@ -30,8 +28,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class Splash extends JDialog implements StartupProgress {
-  @Nullable public static Rectangle BOUNDS;
-
   private final Icon myImage;
   private final ApplicationInfoEx myInfo;
   private int myProgressHeight;
@@ -55,7 +51,7 @@ public class Splash extends JDialog implements StartupProgress {
       myProgressTail = appInfo.getProgressTailIcon();
     }
     setUndecorated(true);
-    if (!(SystemInfo.isLinux)) {
+    if (!SystemInfo.isLinux) {
       setResizable(false);
     }
     setFocusableWindowState(false);
@@ -102,7 +98,7 @@ public class Splash extends JDialog implements StartupProgress {
     myProgressSlideImages.sort(Comparator.comparing(ProgressSlide::getProgressRation));
   }
 
-  private ArrayList<ProgressSlide> myProgressSlideImages = new ArrayList<>();
+  private final ArrayList<ProgressSlide> myProgressSlideImages = new ArrayList<>();
 
   private void setLocationInTheCenterOfScreen() {
     Rectangle bounds = getGraphicsConfiguration().getBounds();
@@ -117,8 +113,6 @@ public class Splash extends JDialog implements StartupProgress {
   public void show() {
     super.show();
     toFront();
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    BOUNDS = getBounds();
     //Sometimes this causes deadlock in EDT
     // http://bugs.sun.com/view_bug.do?bug_id=6724890
     //
@@ -189,37 +183,44 @@ public class Splash extends JDialog implements StartupProgress {
   }
 
   public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor, ApplicationInfo info) {
-    if (ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
-      final LicensingFacade provider = LicensingFacade.getInstance();
-      if (provider != null) {
-        UIUtil.applyRenderingHints(g);
-        final String licensedToMessage = provider.getLicensedToMessage();
-        final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
-
-        Font font = SystemInfo.isMacOSElCapitan ? createFont(".SF NS Text") :
-                    SystemInfo.isMacOSYosemite ? createFont("HelveticaNeue-Regular") :
-                    null;
-        if (font == null || UIUtil.isDialogFont(font)) {
-          font = createFont(UIUtil.ARIAL_FONT_NAME);
-        }
-
-        g.setFont(UIUtil.getFontWithFallback(font));
-        g.setColor(textColor);
-        if (!(info instanceof ApplicationInfoImpl)) {
-          return false;
-        }
-        int offsetX = Math.max(uiScale(15), uiScale(((ApplicationInfoImpl)info).getLicenseOffsetX()));
-        int offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
-        if (licensedToMessage != null) {
-          g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetY));
-        }
-        if (licenseRestrictionsMessages.size() > 0) {
-          g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetY - 16));
-        }
-      }
-      return true;
+    if (!ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
+      return false;
     }
-    return false;
+
+    final LicensingFacade provider = LicensingFacade.getInstance();
+    if (provider != null) {
+      UIUtil.applyRenderingHints(g);
+      final String licensedToMessage = provider.getLicensedToMessage();
+      final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
+
+      Font font;
+      if (SystemInfo.isMacOSElCapitan) {
+        font = createFont(".SF NS Text");
+      }
+      else {
+        font = SystemInfo.isMacOSYosemite ? createFont("HelveticaNeue-Regular") : null;
+      }
+
+      if (font == null || UIUtil.isDialogFont(font)) {
+        font = createFont(UIUtil.ARIAL_FONT_NAME);
+      }
+
+      g.setFont(UIUtil.getFontWithFallback(font));
+      g.setColor(textColor);
+      if (!(info instanceof ApplicationInfoImpl)) {
+        return false;
+      }
+
+      int offsetX = Math.max(uiScale(15), uiScale(((ApplicationInfoImpl)info).getLicenseOffsetX()));
+      int offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
+      if (licensedToMessage != null) {
+        g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetY));
+      }
+      if (licenseRestrictionsMessages.size() > 0) {
+        g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetY - 16));
+      }
+    }
+    return true;
   }
 
   @NotNull
