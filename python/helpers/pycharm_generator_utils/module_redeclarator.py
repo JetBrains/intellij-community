@@ -55,6 +55,11 @@ class ClassBuf(Buf):
         super(ClassBuf, self).__init__(indenter)
         self.name = name
 
+class OriginType(object):
+    FILE = 'FILE'
+    BUILTIN = '(built-in)'
+    PREGENERATED = '(pre-generated)'
+
 
 #noinspection PyBroadException
 class ModuleRedeclarator(object):
@@ -783,17 +788,24 @@ class ModuleRedeclarator(object):
             mod_name = " does not know its name"
         out(0, "# module ", p_name, mod_name) # line 2
 
-        BUILT_IN_HEADER = "(built-in)"
+        origin_type = OriginType.FILE
         if is_pregenerated is not None:
-            filename = '(pre-generated)'
+            origin = origin_type = OriginType.PREGENERATED
         elif self.mod_filename:
-            filename = self.mod_filename
+            origin = self.mod_filename
         elif p_name in sys.builtin_module_names:
-            filename = BUILT_IN_HEADER
+            origin = origin_type = OriginType.BUILTIN
         else:
-            filename = getattr(self.module, "__file__", BUILT_IN_HEADER)
-        if not self.test_mode:
-            out(0, "# from %s" % filename)  # line 3
+            try:
+                origin = getattr(self.module, "__file__")
+            except AttributeError:
+                origin = origin_type = OriginType.BUILTIN
+
+        if self.test_mode and origin_type == OriginType.FILE:
+            origin = self._get_relative_path(origin, self.qname)
+
+
+        out(0, "# from %s" % origin)  # line 3
         out(0, "# by generator %s" % self.gen_version)  # line 4
         if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
             out(0, "from __future__ import print_function")
@@ -1114,3 +1126,12 @@ class ModuleRedeclarator(object):
             for mod_name in sorted_no_case(self.hidden_imports.keys()):
                 out(0, 'import ', mod_name, ' as ', self.hidden_imports[mod_name])
             out(0, "") # empty line after group
+
+    def _get_relative_path(self, path, qname):
+        abs_path_components = os.path.split(path)
+        qname_components_count = len(qname.split('.'))
+        if os.path.splitext(abs_path_components[-1])[0] == '__init__':
+            rel_path_components_count = qname_components_count + 1
+        else:
+            rel_path_components_count = qname_components_count
+        return os.path.join(*abs_path_components[-rel_path_components_count:])
