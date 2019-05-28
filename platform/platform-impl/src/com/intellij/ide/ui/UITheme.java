@@ -293,9 +293,9 @@ public class UITheme {
   }
 
   private static void apply(UITheme theme, String key, Object value, UIDefaults defaults) {
-    if (value instanceof HashMap) {
+    if (value instanceof Map) {
       //noinspection unchecked
-      for (Map.Entry<String, Object> o : ((HashMap<String, Object>)value).entrySet()) {
+      for (Map.Entry<String, Object> o : ((Map<String, Object>)value).entrySet()) {
         apply(theme, key + "." + o.getKey(), o.getValue(), defaults);
       }
     } else {
