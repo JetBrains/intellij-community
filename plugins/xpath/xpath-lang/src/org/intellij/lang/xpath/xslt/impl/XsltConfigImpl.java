@@ -55,17 +55,6 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
   }
 
   @Override
-  public void initializeComponent() {
-    final Language xmlLang = StdFileTypes.XML.getLanguage();
-
-    //            intentionManager.addAction(new DeleteUnusedParameterFix());
-    //            intentionManager.addAction(new DeleteUnusedVariableFix());
-
-    final XsltFormattingModelBuilder builder = new XsltFormattingModelBuilder(LanguageFormatting.INSTANCE.forLanguage(xmlLang));
-    LanguageFormatting.INSTANCE.addExplicitExtension(xmlLang, builder);
-  }
-
-  @Override
   public boolean isShowLinkedFiles() {
     return SHOW_LINKED_FILES;
   }
