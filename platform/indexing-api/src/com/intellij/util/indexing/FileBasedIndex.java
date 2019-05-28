@@ -124,6 +124,7 @@ public abstract class FileBasedIndex {
    * DO NOT CALL DIRECTLY IN CLIENT CODE
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
+  @ApiStatus.Internal
   public abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter);
 
   public abstract void requestRebuild(@NotNull ID<?, ?> indexId, Throwable throwable);
