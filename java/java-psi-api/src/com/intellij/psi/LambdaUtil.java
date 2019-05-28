@@ -904,14 +904,35 @@ public class LambdaUtil {
         if (function instanceof PsiFunctionalExpression && ((PsiFunctionalExpression)function).getFunctionalInterfaceType() == null) {
           return false;
         }
-        PsiType newType = copyCall instanceof PsiExpression ? ((PsiExpression)copyCall).getType() : null;
-        if (origType instanceof PsiClassType && newType instanceof PsiClassType &&
-            ((PsiClassType)origType).isRaw() != ((PsiClassType)newType).isRaw()) {
-          return false;
+        if (origType instanceof PsiClassType && !((PsiClassType)origType).isRaw() && 
+            //when lambda has no formal parameter types, it's ignored during applicability check
+            //so unchecked warnings inside lambda's body won't lead to erasure of the type of the containing call 
+            //but after replacement of lambda with the equivalent method call, unchecked warning won't be ignored anymore
+            //and the type of the call would be erased => red code may appear
+            !lambda.hasFormalParameterTypes()) {
+          PsiExpression expressionFromBody = extractSingleExpressionFromBody(body);
+          if (expressionFromBody instanceof PsiMethodCallExpression && isUncheckedCall((PsiMethodCallExpression)expressionFromBody)) {
+            return false;
+          }
         }
       }
     }
     return true;
+  }
+
+  private static boolean isUncheckedCall(PsiMethodCallExpression callExpression) {
+    JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
+    if (resolveResult instanceof MethodCandidateInfo) {
+      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+      PsiElement element = resolveResult.getElement();
+      if (element instanceof PsiMethod && PsiUtil.isRawSubstitutor(((PsiMethod)element), substitutor)) {
+        PsiMethod method = (PsiMethod)element;
+        Set<PsiTypeParameter> typeParameters = substitutor.getSubstitutionMap().keySet();
+        return Arrays.stream(method.getParameterList().getParameters())
+          .anyMatch(parameter -> PsiTypesUtil.mentionsTypeParametersOrUnboundedWildcard(parameter.getType(), typeParameters, true));
+      }
+    }
+    return false;
   }
 
   /**
