@@ -442,6 +442,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                                      : GlobalSearchScope.projectScope(project));
 
     }
+    if (element instanceof Location) {
+      return ((Location)element).getPsiElement();
+    }
     return element instanceof PsiElement ? (PsiElement)element : null;
   }
 
