@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -95,9 +96,13 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     _commitHandlers += handlers
   }
 
-  internal fun clearCommitOptions() = _commitOptions.clear()
+  internal fun disposeCommitOptions() {
+    _commitOptions.allOptions.filterIsInstance<Disposable>().forEach { Disposer.dispose(it) }
+    _commitOptions.clear()
+  }
+
   internal fun initCommitOptions(options: CommitOptions) {
-    clearCommitOptions()
+    disposeCommitOptions()
     _commitOptions.add(options)
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
@@ -33,6 +34,7 @@ class SingleChangeListCommitWorkflowHandler(
   private val commitMessagePolicy get() = workflow.commitMessagePolicy
 
   init {
+    Disposer.register(this, Disposable { workflow.disposeCommitOptions() })
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)

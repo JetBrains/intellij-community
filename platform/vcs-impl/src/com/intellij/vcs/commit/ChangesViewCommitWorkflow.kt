@@ -63,7 +63,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
     override fun onFailure() = resetState()
 
     private fun resetState() = runInEdt {
-      workflow.clearCommitOptions()
+      workflow.disposeCommitOptions()
       workflow.areCommitOptionsCreated = false
 
       workflow.clearCommitContext()

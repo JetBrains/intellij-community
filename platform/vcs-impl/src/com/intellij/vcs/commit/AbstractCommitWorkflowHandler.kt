@@ -67,6 +67,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   protected fun createCommitOptions(): CommitOptions = CommitOptionsImpl(
     if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, commitContext) else emptyMap(),
     getBeforeOptions(workflow.commitHandlers),
+    // TODO Potential leak here for non-modal
     getAfterOptions(workflow.commitHandlers, this)
   )
 
