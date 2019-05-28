@@ -3,10 +3,7 @@ package com.intellij.idea;
 
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.GcPauseWatcher;
-import com.intellij.diagnostic.LoadingPhase;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
@@ -71,6 +68,13 @@ public class IdeaApplication {
     EventQueue.invokeLater(() -> {
       IdeaApplication app = new IdeaApplication(args, pluginDescriptorsFuture);
 
+      CompletableFuture<Void> registerComponentsFuture = pluginDescriptorsFuture
+        .thenAccept(pluginDescriptors -> {
+          Activity activity1 = ParallelActivity.PREPARE_APP_INIT.start("app component registration");
+          ((ApplicationImpl)ApplicationManager.getApplication()).registerComponents(pluginDescriptors);
+          activity1.end();
+        });
+
       // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
       Activity placeOnEventQueueActivity = activity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
       EventQueue.invokeLater(() -> {
@@ -78,7 +82,7 @@ public class IdeaApplication {
         PluginManager.installExceptionHandler();
         activity.end();
         // this run is blocking, while app is running
-        app.run(pluginDescriptorsFuture);
+        app.run(registerComponentsFuture);
       });
     });
 
@@ -257,20 +261,19 @@ public class IdeaApplication {
     return null;
   }
 
-  private void run(@NotNull CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture) {
+  private void run(@NotNull CompletableFuture<Void> registerComponentsFuture) {
     Splash splash = myStarter instanceof IdeStarter ? ((IdeStarter)myStarter).mySplash : null;
 
-    List<IdeaPluginDescriptor> plugins;
     try {
       Activity activity = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT);
-      plugins = pluginDescriptorsFuture.get();
+      registerComponentsFuture.get();
       activity.end();
     }
     catch (InterruptedException | ExecutionException e) {
       throw new CompletionException(e);
     }
 
-    ((ApplicationImpl)ApplicationManager.getApplication()).load(null, splash, plugins);
+    ((ApplicationImpl)ApplicationManager.getApplication()).load(null, splash);
     myLoaded = true;
 
     ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> myStarter.main(myArgs));

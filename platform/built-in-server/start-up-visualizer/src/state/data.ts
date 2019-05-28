@@ -7,6 +7,8 @@ export interface Item {
   readonly end: number
 
   readonly duration: number
+
+  readonly thread: string
 }
 
 export interface InputData {

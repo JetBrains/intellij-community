@@ -6,6 +6,9 @@ export interface ActivityChartDescriptor {
   readonly id: ActivityChartType
 
   readonly sourceNames?: Array<string>
+
+  readonly rotatedLabels?: boolean
+  readonly groupByThread?: boolean
 }
 
 // not as part of ItemChartManager.ts to reduce scope of changes on change
@@ -34,6 +37,7 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
   {
     label: "Prepare App Init",
     id: "prepareAppInitActivities",
+    groupByThread: true,
   },
   {
     label: "Project Post-Startup",
@@ -42,5 +46,6 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
   {
     label: "GCs",
     id: "GCs",
+    rotatedLabels: false,
   },
 ]

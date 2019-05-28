@@ -7,9 +7,9 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "@amcharts/amcharts4": "4.4.8",
+    "@amcharts/amcharts4": "4.4.9",
     "element-ui": "^2.8.2",
-    "semver": "^6.1.0",
+    "semver": "^6.1.1",
     "vue": "^2.6.10",
     "vue-class-component": "^7.1.0",
     "vue-property-decorator": "^8.1.1",
@@ -33,6 +33,7 @@
   "browserslist": [
     "> 1%",
     "last 2 versions",
-    "not ie <= 8"
+    "not ie <= 8",
+    "not dead"
   ]
 }

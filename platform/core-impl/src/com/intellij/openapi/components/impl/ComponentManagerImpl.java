@@ -88,17 +88,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return null;
   }
 
-  protected final void init(@NotNull List<? extends IdeaPluginDescriptor> plugins,
-                            @Nullable ProgressIndicator indicator,
-                            @Nullable Runnable componentsRegistered) {
-    String activityNamePrefix = activityNamePrefix();
-    boolean isNeededToMeasure = activityNamePrefix != null;
-    Activity totalActivity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
-
-    final Application app = ApplicationManager.getApplication();
+  protected void registerComponents(@NotNull List<? extends IdeaPluginDescriptor> plugins) {
+    Application app = ApplicationManager.getApplication();
     boolean headless = app == null || app.isHeadlessEnvironment();
 
-    Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX) : null;
     int componentConfigCount = 0;
     for (IdeaPluginDescriptor plugin : plugins) {
       for (ComponentConfig config : getMyComponentConfigsFromDescriptor(plugin)) {
@@ -114,30 +107,29 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
       registerServices(plugin);
     }
-
-    if (activity != null) {
-      activity.end();
-    }
     myComponentConfigCount = componentConfigCount;
+  }
 
+  protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
+    LOG.assertTrue(!myComponentsCreated);
+
+    String activityNamePrefix = activityNamePrefix();
+    boolean isNeededToMeasure = activityNamePrefix != null;
     if (componentsRegistered != null) {
-      activity = isNeededToMeasure ? totalActivity.startChild(activityNamePrefix + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
+      Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
       componentsRegistered.run();
       if (activity != null) {
         activity.end();
       }
     }
 
-    activity = isNeededToMeasure ? totalActivity.startChild(activityNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX) : null;
+    Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX) : null;
     createComponents(indicator);
     if (activity != null) {
       activity.end();
     }
 
     myComponentsCreated = true;
-    if (isNeededToMeasure) {
-      totalActivity.end("component count: " + getComponentConfigCount());
-    }
   }
 
   protected void registerServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
@@ -349,9 +341,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     myMessageBus = MessageBusFactory.newMessageBus(name, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
     if (myMessageBus instanceof MessageBusImpl) {
-      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((topic, handler, duration) -> {
-        logMessageBusDelivery(topic, handler, duration);
-      });
+      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((topic, handler, duration) -> logMessageBusDelivery(topic, handler, duration));
     }
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
   }
@@ -364,10 +354,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected final ComponentManager getParentComponentManager() {
     return myParentComponentManager;
-  }
-
-  private int getComponentConfigCount() {
-    return myComponentConfigCount;
   }
 
   @Nullable

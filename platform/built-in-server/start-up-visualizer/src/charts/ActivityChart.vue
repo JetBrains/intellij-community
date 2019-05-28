@@ -41,7 +41,7 @@
         return new ComponentChartManager(chartContainer, sourceNames!!)
       }
       else {
-        return new ActivityChartManager(chartContainer, sourceNames == null ? [type] : sourceNames)
+        return new ActivityChartManager(chartContainer, sourceNames == null ? [type] : sourceNames, descriptor)
       }
     }
   }
