@@ -306,9 +306,6 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   }
 
   private boolean belongsToThisRepository(VirtualFile file) {
-    // this check should be quick
-    // we shouldn't create a full instance repository here because it may lead to SOE while many unversioned files will be processed
-    GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(myVcsManager.getVcsRootFor(file));
-    return repository != null && repository.getRoot().equals(myRoot);
+    return myRoot.equals(myVcsManager.getVcsRootFor(file));
   }
 }
