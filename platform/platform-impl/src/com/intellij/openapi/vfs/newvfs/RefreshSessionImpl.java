@@ -36,11 +36,12 @@ class RefreshSessionImpl extends RefreshSession {
   private final Semaphore mySemaphore = new Semaphore();
 
   private List<VirtualFile> myWorkQueue = new ArrayList<>();
-  private List<VFileEvent> myEvents = new ArrayList<>();
+  private final List<VFileEvent> myEvents = new ArrayList<>();
   private volatile boolean myHaveEventsToFire;
   private volatile RefreshWorker myWorker;
   private volatile boolean myCancelled;
   private final TransactionId myTransaction;
+  private boolean myLaunched;
 
   RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState context) {
     myIsAsync = async;
@@ -83,6 +84,9 @@ class RefreshSessionImpl extends RefreshSession {
 
   @Override
   public void addFile(@NotNull VirtualFile file) {
+    if (myLaunched) {
+      throw new IllegalStateException("Adding files is only allowed before launch");
+    }
     if (file instanceof NewVirtualFile) {
       myWorkQueue.add(file);
     }
@@ -98,6 +102,10 @@ class RefreshSessionImpl extends RefreshSession {
 
   @Override
   public void launch() {
+    if (myLaunched) {
+      throw new IllegalStateException("launch() can be called only once");
+    }
+    myLaunched = true;
     mySemaphore.down();
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
@@ -185,10 +193,7 @@ class RefreshSessionImpl extends RefreshSession {
 
     manager.fireBeforeRefreshStart(myIsAsync);
     try {
-      while (!myWorkQueue.isEmpty() || !myEvents.isEmpty()) {
-        PersistentFS.getInstance().processEvents(mergeEventsAndReset());
-        scan();
-      }
+      PersistentFS.getInstance().processEvents(new ArrayList<>(new LinkedHashSet<>(myEvents)));
     }
     catch (AssertionError e) {
       if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING.equals(e.getMessage())) {
@@ -210,14 +215,6 @@ class RefreshSessionImpl extends RefreshSession {
 
   void waitFor() {
     mySemaphore.waitFor();
-  }
-
-  @NotNull
-  private List<VFileEvent> mergeEventsAndReset() {
-    Set<VFileEvent> mergedEvents = new LinkedHashSet<>(myEvents);
-    List<VFileEvent> events = new ArrayList<>(mergedEvents);
-    myEvents = new ArrayList<>();
-    return events;
   }
 
   @Nullable
