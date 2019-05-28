@@ -190,7 +190,6 @@ public class GitFileHistory {
    *
    * @param project           Context project.
    * @param path              FilePath which history is queried.
-   * @param root              Git root - optional: if this is null, then git root will be detected automatically.
    * @param startingFrom      Revision from which to start file history, when null history is started from HEAD revision.
    * @param consumer          This consumer is notified ({@link Consumer#consume(Object)} when new history records are retrieved.
    * @param exceptionConsumer This consumer is notified in case of error while executing git command.
@@ -198,12 +197,11 @@ public class GitFileHistory {
    */
   public static void loadHistory(@NotNull Project project,
                                  @NotNull FilePath path,
-                                 @Nullable VirtualFile root,
                                  @Nullable VcsRevisionNumber startingFrom,
                                  @NotNull Consumer<GitFileRevision> consumer,
                                  @NotNull Consumer<VcsException> exceptionConsumer,
                                  String... parameters) {
-    VirtualFile repositoryRoot = root == null ? ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path) : root;
+    VirtualFile repositoryRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path);
     if (repositoryRoot == null) {
       exceptionConsumer.consume(new VcsException("The file " + path + " is not under vcs."));
       return;
@@ -230,7 +228,7 @@ public class GitFileHistory {
     List<VcsFileRevision> revisions = new ArrayList<>();
     List<VcsException> exceptions = new ArrayList<>();
 
-    loadHistory(project, path, null, startingFrom, revisions::add, exceptions::add, parameters);
+    loadHistory(project, path, startingFrom, revisions::add, exceptions::add, parameters);
 
     if (!exceptions.isEmpty()) {
       throw exceptions.get(0);
