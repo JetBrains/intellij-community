@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ActionsCollector;
@@ -442,9 +443,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (IdeaPluginDescriptor plugin : plugins) {
       final List<Element> elementList = plugin.getAndClearActionDescriptionElements();
       if (elementList != null) {
+        long startTime = System.nanoTime();
         for (Element e : elementList) {
           processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
         }
+        StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", System.nanoTime() - startTime);
       }
     }
   }
