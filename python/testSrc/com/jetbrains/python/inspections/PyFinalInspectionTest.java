@@ -206,6 +206,69 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-34945
+  public void testRedeclarationOnModuleLevel() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "a: Final[int] = 10\n" +
+                         "print(a)\n" +
+                         "<warning descr=\"Already declared name could not be redefined as 'Final'\">a</warning>" +
+                         ": Final[str] = \"10\"\n" +
+                         "\n" +
+                         "b = 10  # type: int\n" +
+                         "print(b)\n" +
+                         "<warning descr=\"Already declared name could not be redefined as 'Final'\">b</warning> = \"10\"  # type: Final[str]\n" +
+                         "\n" +
+                         "c: Final[int] = 10\n" +
+                         "print(c)\n" +
+                         "c: str = \"10\"")
+    );
+  }
+
+  // PY-34945
+  public void testRedeclarationOnClassLevel() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "class A:\n" +
+                         "    a: Final[int] = 10\n" +
+                         "    print(a)\n" +
+                         "    <warning descr=\"Already declared name could not be redefined as 'Final'\">a</warning>: Final[str] = \"10\"\n" +
+                         "\n" +
+                         "    b = 10  # type: int\n" +
+                         "    print(b)\n" +
+                         "    <warning descr=\"Already declared name could not be redefined as 'Final'\">b</warning> = \"10\"  # type: Final[str]\n" +
+                         "\n" +
+                         "    c: Final[int] = 10\n" +
+                         "    print(c)\n" +
+                         "    c: str = \"10\"")
+    );
+  }
+
+  // PY-34945
+  public void testRedeclarationOnFunctionLevel() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "def foo():\n" +
+                         "    a: Final[int] = 10\n" +
+                         "    print(a)\n" +
+                         "    <warning descr=\"Already declared name could not be redefined as 'Final'\">a</warning>: Final[str] = \"10\"\n" +
+                         "\n" +
+                         "    b = 10  # type: int\n" +
+                         "    print(b)\n" +
+                         "    <warning descr=\"Already declared name could not be redefined as 'Final'\">b</warning> = \"10\"  # type: Final[str]\n" +
+                         "\n" +
+                         "    c: Final[int] = 10\n" +
+                         "    print(c)\n" +
+                         "    c: str = \"10\"")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

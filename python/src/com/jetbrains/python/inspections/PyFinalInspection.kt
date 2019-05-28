@@ -5,6 +5,8 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.resolve.FileContextUtil
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -49,6 +51,8 @@ class PyFinalInspection : PyInspection() {
           myTypeEvalContext
         )
       }
+
+      checkRedeclarationsInScope(node)
     }
 
     override fun visitPyFunction(node: PyFunction) {
@@ -75,6 +79,8 @@ class PyFinalInspection : PyInspection() {
           registerProblem(node.typeComment, "'Final' could not be used in annotations for function parameters")
         }
       }
+
+      checkRedeclarationsInScope(node)
     }
 
     override fun visitPyTargetExpression(node: PyTargetExpression) {
@@ -99,8 +105,7 @@ class PyFinalInspection : PyInspection() {
     override fun visitPyNamedParameter(node: PyNamedParameter) {
       super.visitPyNamedParameter(node)
 
-      val typeHint = typeHintAsExpression(node)
-      if (resolvesToFinal(if (typeHint is PySubscriptionExpression) typeHint.operand else typeHint)) {
+      if (isFinal(node)) {
         registerProblem(node.annotation?.value ?: node.typeComment, "'Final' could not be used in annotations for function parameters")
       }
     }
@@ -109,6 +114,21 @@ class PyFinalInspection : PyInspection() {
       super.visitPyReferenceExpression(node)
 
       checkFinalIsOuterMost(node)
+    }
+
+    override fun visitPyFile(node: PyFile) {
+      super.visitPyFile(node)
+
+      checkRedeclarationsInScope(node)
+    }
+
+    private fun checkRedeclarationsInScope(scopeOwner: ScopeOwner) {
+      val visitedNames = mutableSetOf<String?>()
+      ControlFlowCache.getScope(scopeOwner).targetExpressions.forEach {
+        if (!visitedNames.add(it.name) && isFinal(it)) {
+          registerProblem(it, "Already declared name could not be redefined as 'Final'")
+        }
+      }
     }
 
     private fun checkFinalIsOuterMost(node: PyReferenceExpression) {
@@ -124,6 +144,11 @@ class PyFinalInspection : PyInspection() {
 
     private fun isFinal(decoratable: PyDecoratable): Boolean {
       return PyKnownDecoratorUtil.getKnownDecorators(decoratable, myTypeEvalContext).any { it == TYPING_FINAL || it == TYPING_FINAL_EXT }
+    }
+
+    private fun <T> isFinal(node: T): Boolean where T : PyAnnotationOwner, T : PyTypeCommentOwner {
+      val typeHint = typeHintAsExpression(node)
+      return resolvesToFinal(if (typeHint is PySubscriptionExpression) typeHint.operand else typeHint)
     }
 
     private fun isFinal(qualifiedName: String?): Boolean {
