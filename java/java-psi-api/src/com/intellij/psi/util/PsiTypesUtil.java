@@ -485,6 +485,48 @@ public class PsiTypesUtil {
     return null;
   }
 
+  public static Boolean mentionsTypeParameters(@Nullable PsiType type, final Set<PsiTypeParameter> typeParameters) {
+    if (type == null) return false;
+    return type.accept(new PsiTypeVisitor<Boolean>() {
+      @NotNull
+      @Override
+      public Boolean visitType(PsiType type) {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        if (bound != null) {
+          return bound.accept(this);
+        }
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public Boolean visitClassType(PsiClassType classType) {
+        PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+        final PsiClass psiClass = result.getElement();
+        if (psiClass != null) {
+          PsiSubstitutor substitutor = result.getSubstitutor();
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+            PsiType type = substitutor.substitute(parameter);
+            if (type != null && type.accept(this)) return true;
+          }
+        }
+        return psiClass instanceof PsiTypeParameter && typeParameters.contains(psiClass);
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitArrayType(PsiArrayType arrayType) {
+        return arrayType.getComponentType().accept(this);
+      }
+    });
+  }
+
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
     private final Set<PsiTypeParameter> myTypeParams = new HashSet<>();
 

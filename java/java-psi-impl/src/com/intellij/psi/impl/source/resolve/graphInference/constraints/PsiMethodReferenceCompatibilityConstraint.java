@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -174,8 +173,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       if (typeParameters.length == 0 && method.getTypeParameters().length > 0) {
         final PsiClass interfaceClass = classResolveResult.getElement();
         LOG.assertTrue(interfaceClass != null);
-        if (PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType,
-                                                         ContainerUtil.newHashSet(method.getTypeParameters()))) {
+        if (PsiTypesUtil.mentionsTypeParameters(referencedMethodReturnType,
+                                                ContainerUtil.newHashSet(method.getTypeParameters()))) {
           session.initBounds(myExpression, psiSubstitutor, method.getTypeParameters());
           //the constraint reduces to the bound set B3 which would be used to determine the method reference's invocation type 
           //when targeting the return type of the function type, as defined in 18.5.2.
