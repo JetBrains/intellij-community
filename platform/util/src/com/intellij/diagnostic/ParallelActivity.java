@@ -13,6 +13,7 @@ public enum ParallelActivity {
   COMPONENT("component"), SERVICE("service"), EXTENSION("extension"),
 
   POST_STARTUP_ACTIVITY("projectPostStartupActivity"),
+  GC("GC")
   ;
 
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);

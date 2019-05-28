@@ -16,6 +16,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.Logger
 import java.lang.management.GarbageCollectorMXBean
 import java.lang.management.ManagementFactory
 import java.util.concurrent.Executors
@@ -41,6 +42,10 @@ open class GcPauseWatcher {
   }
 
   protected open fun recordGcPauseTime(name: String, currPauseDuration: Long) {
+    if (!LoadingPhase.isStartupComplete()) {
+      ParallelActivity.GC.record(StartUpMeasurer.getCurrentTime() - TimeUnit.MILLISECONDS.toNanos(currPauseDuration),
+                                 GcPauseWatcher::class.java)
+    }
   }
 
   init {
@@ -55,5 +60,7 @@ open class GcPauseWatcher {
     private const val SAMPLING_RATE_MS = 50L  // ms. Should be set low enough that getting two pauses between samples is rare
 
     fun getInstance(): GcPauseWatcher = ServiceManager.getService(GcPauseWatcher::class.java)
+
+    val LOG = Logger.getInstance(GcPauseWatcher::class.java)
   }
 }

@@ -59,4 +59,8 @@ public enum LoadingPhase {
         return false;
       });
   }
+
+  public static boolean isStartupComplete() {
+    return myCurrentPhase == INDEXING_FINISHED;
+  }
 }

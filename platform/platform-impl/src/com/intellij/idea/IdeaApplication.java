@@ -4,6 +4,7 @@ package com.intellij.idea;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.GcPauseWatcher;
 import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
@@ -377,6 +378,7 @@ public class IdeaApplication {
       SystemDock.updateMenu();
 
       RecentProjectsManager.getInstance();  // ensures that RecentProjectsManager app listener is added
+      GcPauseWatcher.Companion.getInstance();
 
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
