@@ -38,9 +38,9 @@ public class DependencySearchService {
     myOfflineSearchService = offlineSearchService;
   }
 
-  public Promise<Void> fulltextSearch(String template,
-                                      SearchParameters parameters,
-                                      Consumer<MavenRepositoryArtifactInfo> consumer) {
+  public Promise<Void> fulltextSearch(@NotNull String template,
+                                      @NotNull SearchParameters parameters,
+                                      @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
 
 
     MavenDependencyCompletionItem localSearchItem = new MavenDependencyCompletionItem(template);
@@ -59,10 +59,10 @@ public class DependencySearchService {
     return returnPromise;
   }
 
-  public Promise<Void> suggestPrefix(String groupId,
-                                     String artifactId,
-                                     SearchParameters parameters,
-                                     Consumer<MavenRepositoryArtifactInfo> consumer) {
+  public Promise<Void> suggestPrefix(@NotNull String groupId,
+                                     @NotNull String artifactId,
+                                     @NotNull SearchParameters parameters,
+                                     @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
 
 
     MavenDependencyCompletionItem localSearchItem = new MavenDependencyCompletionItem(groupId, artifactId, null);

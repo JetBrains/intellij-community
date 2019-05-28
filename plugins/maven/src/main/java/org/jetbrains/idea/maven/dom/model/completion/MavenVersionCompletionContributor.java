@@ -18,15 +18,11 @@ package org.jetbrains.idea.maven.dom.model.completion;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionService;
-import com.intellij.codeInsight.completion.impl.NegatingComparable;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
@@ -85,11 +81,6 @@ public class MavenVersionCompletionContributor extends MavenCoordinateCompletion
   @Override
   protected CompletionResultSet amendResultSet(@NotNull CompletionResultSet result) {
     return result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
-      new LookupElementWeigher("mavenVersionWeigher") {
-        @Override
-        public Comparable weigh(@NotNull LookupElement element) {
-          return new NegatingComparable(new MavenVersionComparable(element.getLookupString()));
-        }
-      }));
+      new MavenVersionNegatingWeigher()));
   }
 }

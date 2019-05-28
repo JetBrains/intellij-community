@@ -2,22 +2,33 @@
 package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER
+import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
+import org.jetbrains.idea.maven.dom.model.completion.MavenVersionNegatingWeigher
 import org.jetbrains.idea.maven.indices.MavenArtifactSearcher
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager
-import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters
 import org.jetbrains.plugins.gradle.codeInsight.AbstractGradleCompletionContributor
 import org.jetbrains.plugins.gradle.integrations.maven.MavenRepositoriesHolder
+import org.jetbrains.plugins.groovy.lang.completion.GrDummyIdentifierProvider.DUMMY_IDENTIFIER_DECAPITALIZED
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner
+import java.util.concurrent.ConcurrentLinkedDeque
 
 /**
  * @author Vladislav.Soroka
@@ -39,31 +50,36 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
         }
         result.stopHere()
 
+        val searchParameters = createSearchParameters(params)
+        val cld = ConcurrentLinkedDeque<MavenRepositoryArtifactInfo>()
+        val dependencySearch = MavenProjectIndicesManager.getInstance(parent.project).dependencySearchService
+        result.restartCompletionOnAnyPrefixChange()
         if (GROUP_LABEL == parent.labelName) {
-          MavenRepositoriesHolder.getInstance(parent.project).checkNotIndexedRepositories()
-          val m = MavenProjectIndicesManager.getInstance(parent.project)
-          for (groupId in m.groupIds) {
-            result.addElement(LookupElementBuilder.create(groupId).withIcon(AllIcons.Nodes.PpLib))
+          val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
+          val searchPromise = dependencySearch.fulltextSearch(groupId, searchParameters) { cld.add(it) }
+          waitAndAdd(searchPromise, cld) {
+            result.addElement(MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleMapStyleInsertGroupHandler.INSTANCE))
           }
         }
         else if (NAME_LABEL == parent.labelName) {
-          MavenRepositoriesHolder.getInstance(parent.project).checkNotIndexedRepositories()
-          val groupId = findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL) ?: return
-
-          val m = MavenProjectIndicesManager.getInstance(parent.project)
-          for (artifactId in m.getArtifactIds(groupId)) {
-            result.addElement(LookupElementBuilder.create(artifactId).withIcon(AllIcons.Nodes.PpLib))
+          val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
+          val artifactId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, NAME_LABEL))
+          val searchPromise = searchArtifactId(groupId, artifactId, dependencySearch, searchParameters) { cld.add(it) }
+          waitAndAdd(searchPromise, cld) {
+            result.addElement(
+              MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleMapStyleInsertArtifactIdHandler.INSTANCE))
           }
         }
         else if (VERSION_LABEL == parent.labelName) {
-          MavenRepositoriesHolder.getInstance(parent.project).checkNotIndexedRepositories()
-          val namedArgumentsOwner = parent.parent as GrNamedArgumentsOwner
-          val groupId = findNamedArgumentValue(namedArgumentsOwner, GROUP_LABEL) ?: return
-          val artifactId = findNamedArgumentValue(namedArgumentsOwner, NAME_LABEL) ?: return
-
-          val m = MavenProjectIndicesManager.getInstance(parent.project)
-          for (version in m.getVersions(groupId, artifactId)) {
-            result.addElement(LookupElementBuilder.create(version).withIcon(AllIcons.Nodes.PpLib))
+          val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
+          val artifactId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, NAME_LABEL))
+          val searchPromise = searchArtifactId(groupId, artifactId, dependencySearch, searchParameters) { cld.add(it) }
+          val newResult = result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
+            MavenVersionNegatingWeigher()))
+          waitAndAdd(searchPromise, cld) { repo ->
+            repo.items.forEach {
+              newResult.addElement(MavenDependencyCompletionUtil.lookupElement(it, it.version))
+            }
           }
         }
       }
@@ -77,35 +93,103 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
       override fun addCompletions(params: CompletionParameters,
                                   context: ProcessingContext,
                                   result: CompletionResultSet) {
-        val parent = params.position.parent
-        if (parent !is GrLiteral || parent.parent !is GrArgumentList) return
+        val element = params.position.parent
+        if (element !is GrLiteral || element.parent !is GrArgumentList) {
+          //try
+          val parent = element?.parent
+          if (parent !is GrLiteral || parent.parent !is GrArgumentList) return
+        }
 
         result.stopHere()
 
-        MavenRepositoriesHolder.getInstance(parent.project).checkNotIndexedRepositories()
+        MavenRepositoriesHolder.getInstance(element.project).checkNotIndexedRepositories()
         val searchText = CompletionUtil.findReferenceOrAlphanumericPrefix(params)
-        val searcher = MavenArtifactSearcher()
-        val searchResults = searcher.search(params.position.project, searchText, MAX_RESULT)
-        for (searchResult in searchResults) {
-          for (artifactInfo in searchResult.versions) {
-            val buf = StringBuilder()
-            MavenId.append(buf, artifactInfo.groupId)
-            MavenId.append(buf, artifactInfo.artifactId)
-            MavenId.append(buf, artifactInfo.version)
-
-            result.addElement(LookupElementBuilder.create(buf.toString()).withIcon(AllIcons.Nodes.PpLib))
-          }
+        val dependencySearch = MavenProjectIndicesManager.getInstance(element.project).dependencySearchService
+        val searchParameters = createSearchParameters(params)
+        val cld = ConcurrentLinkedDeque<MavenRepositoryArtifactInfo>()
+        val splitted = searchText.split(":")
+        val groupId = splitted.get(0)
+        val artifactId = splitted.getOrNull(1)
+        val version = splitted.getOrNull(2)
+        val searchPromise = searchStringDependency(groupId, artifactId, dependencySearch, searchParameters) { cld.add(it) }
+        result.restartCompletionOnAnyPrefixChange()
+        if (version != null) {
+          val newResult = result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
+            MavenVersionNegatingWeigher()))
+          waitAndAdd(searchPromise, cld, completeVersions(newResult))
+        }
+        else if (artifactId != null) {
+          waitAndAdd(searchPromise, cld, completeArtifacts(result))
+        }
+        else {
+          waitAndAdd(searchPromise, cld, completeGroups(result))
         }
       }
     })
   }
 
+  private fun completeVersions(result: CompletionResultSet): (MavenRepositoryArtifactInfo) -> Unit {
+    return { info ->
+      info.items.filter { it.version != null }.forEach { item ->
+        result.addElement(
+          LookupElementBuilder
+            .create(MavenDependencyCompletionUtil.getLookupString(item))
+            .withPresentableText(item.version!!)
+        )
+      }
+    }
+  }
+
+  private fun completeArtifacts(result: CompletionResultSet): (MavenRepositoryArtifactInfo) -> Unit {
+    return { result.addElement(MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleStringStyleArtifactIdHandler.INSTANCE)) }
+  }
+
+  private fun completeGroups(result: CompletionResultSet): (MavenRepositoryArtifactInfo) -> Unit {
+    return { result.addElement(MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleStringStyleGroupIdHandler.INSTANCE)) }
+  }
+
+  private fun searchStringDependency(groupId: String,
+                                     artifactId: String?,
+                                     service: DependencySearchService,
+                                     searchParameters: SearchParameters,
+                                     consumer: (MavenRepositoryArtifactInfo) -> Unit): Promise<Void> {
+    if (artifactId == null) {
+      return service.fulltextSearch(groupId, searchParameters, consumer)
+    }
+    else {
+      return service.suggestPrefix(groupId, artifactId, searchParameters, consumer)
+    }
+
+  }
+
+  private fun searchArtifactId(groupId: String,
+                               artifactId: String,
+                               service: DependencySearchService,
+                               searchParameters: SearchParameters,
+                               consumer: (MavenRepositoryArtifactInfo) -> Unit): Promise<Void> {
+    if (groupId.isBlank()) {
+      return service.fulltextSearch(artifactId, searchParameters, consumer)
+    }
+    return service.suggestPrefix(groupId, artifactId, searchParameters, consumer)
+  }
+
+  private fun waitAndAdd(searchPromise: Promise<Void>,
+                         cld: ConcurrentLinkedDeque<MavenRepositoryArtifactInfo>,
+                         handler: (MavenRepositoryArtifactInfo) -> Unit) {
+    while (searchPromise.state == Promise.State.PENDING || !cld.isEmpty()) {
+      ProgressManager.checkCanceled()
+      val item = cld.poll()
+      if (item != null) {
+        handler.invoke(item)
+      }
+    }
+  }
+
   companion object {
-    private const val GROUP_LABEL = "group"
-    private const val NAME_LABEL = "name"
-    private const val VERSION_LABEL = "version"
-    private const val DEPENDENCIES_SCRIPT_BLOCK = "dependencies"
-    private const val MAX_RESULT = 1000
+    internal const val GROUP_LABEL = "group"
+    internal const val NAME_LABEL = "name"
+    internal const val VERSION_LABEL = "version"
+    internal const val DEPENDENCIES_SCRIPT_BLOCK = "dependencies"
 
     private val DEPENDENCIES_CALL_PATTERN = psiElement()
       .inside(true, psiElement(GrMethodCallExpression::class.java).with(
@@ -131,5 +215,21 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
     private val IN_METHOD_DEPENDENCY_NOTATION = psiElement()
       .and(GRADLE_FILE_PATTERN)
       .and(DEPENDENCIES_CALL_PATTERN)
+
+    private fun createSearchParameters(params: CompletionParameters): SearchParameters {
+      if (ApplicationManager.getApplication().isUnitTestMode || params.invocationCount < 2) {
+        return SearchParameters.DEFAULT
+      }
+      return SearchParameters.FULL
+    }
+
+    private fun trimDummy(value: String?): String {
+      return if (value == null) {
+        ""
+      }
+      else StringUtil.trim(value.replace(DUMMY_IDENTIFIER, "")
+                             .replace(DUMMY_IDENTIFIER_TRIMMED, "")
+                             .replace(DUMMY_IDENTIFIER_DECAPITALIZED, ""))
+    }
   }
 }
