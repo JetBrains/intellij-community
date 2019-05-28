@@ -18,6 +18,7 @@ public interface ServiceViewContributor<T> {
   @NotNull
   ServiceViewDescriptor getServiceDescriptor(@NotNull T service);
 
+  // TODO [konstantin.aleev] remove with ide.service.view registry key
   default boolean alwaysEnabled() {
     return false;
   }
