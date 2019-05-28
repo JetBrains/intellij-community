@@ -15,6 +15,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
@@ -681,21 +683,28 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       super(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), EditorTabbedContainer.this);
       IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
       setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));
+
+      Disposable disp = Disposer.newDisposable();
+      Disposer.register(project, disp);
+      Disposer.register(EditorTabbedContainer.this, disp);
+
+      project.getMessageBus().connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+        @Override
+        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+          updateActive();
+        }
+
+        @Override
+        public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+          updateActive();
+        }
+
+        @Override
+        public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+          updateActive();
+        }
+      });
     }
-
-/*      @Override
-      protected boolean isActiveTabs(TabInfo info) {
-        if (Utils.Companion.isFocusOwner(this)) return true;
-
-        FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-        if (editorManager == null) return false;
-
-        final EditorWindow window = FileEditorManagerEx.getInstanceEx(project).getCurrentWindow();
-        VirtualFile file = window.getSelectedFile();
-        if(file == null) return false;
-
-        return file.equals(info.getObject()) && window.equals(myWindow);
-      }*/
 
     @Override
     protected JBEditorTabPainter createTabPainter() {
@@ -720,16 +729,20 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       return e -> {
         if (e instanceof FocusEvent) {
           SwingUtilities.invokeLater(() -> {
-            boolean newActive = UIUtil.isFocusAncestor(this);
-
-            if(newActive != active) {
-              active = newActive;
-              revalidateAndRepaint();
-            }
+            updateActive();
           });
         }
         return false;
       };
+    }
+
+    private void updateActive() {
+      boolean newActive = UIUtil.isFocusAncestor(this);
+
+      if(newActive != active) {
+        active = newActive;
+        revalidateAndRepaint();
+      }
     }
 
     @Override
