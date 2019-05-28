@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
@@ -181,7 +182,7 @@ public class RefreshWorker {
     }
 
     for (ChildInfo record : newKids) {
-      myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, () -> checkCancelled(dir));
+      myHelper.scheduleCreation(dir, record.getName().toString(), record.getFileAttributes(), record.getSymLinkTarget(), () -> checkCancelled(dir));
     }
 
     for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
@@ -261,7 +262,7 @@ public class RefreshWorker {
     }
 
     for (ChildInfo record : newKids) {
-      myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget, () -> checkCancelled(dir));
+      myHelper.scheduleCreation(dir, record.getName().toString(), record.getFileAttributes(), record.getSymLinkTarget(), () -> checkCancelled(dir));
     }
 
     return !isDirectoryChanged(dir, cached, wanted);
@@ -281,7 +282,7 @@ public class RefreshWorker {
     if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
-    return new ChildInfo(ChildInfo.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
+    return new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
   static class RefreshCancelledException extends RuntimeException {

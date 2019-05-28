@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.ArrayUtil;
@@ -90,7 +91,7 @@ class VfsEventGenerationHelper {
   private static ChildInfo[] scanChildren(@NotNull Path root, @NotNull Path[] excluded, @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled) throws RefreshWorker.RefreshCancelledException {
     // top of the stack contains list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
-    ChildInfo fakeRoot = new ChildInfo(ChildInfo.UNKNOWN_ID_YET, "", null, null, null);
+    ChildInfo fakeRoot = new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, "", null, null, null);
     stack.push(ContainerUtil.newSmartList(fakeRoot));
     FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
       int checkCanceledCount;
@@ -124,7 +125,7 @@ class VfsEventGenerationHelper {
         }
         FileAttributes attributes = LocalFileSystemRefreshWorker.toFileAttributes(file, attrs, isSymLink);
         String symLinkTarget = attributes.isSymLink() ? file.toRealPath().toString() : null;
-        ChildInfo info = new ChildInfo(ChildInfo.UNKNOWN_ID_YET, name, attributes, null, symLinkTarget);
+        ChildInfo info = new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, name, attributes, null, symLinkTarget);
         stack.peek().add(info);
         return FileVisitResult.CONTINUE;
       }
@@ -136,7 +137,7 @@ class VfsEventGenerationHelper {
         // store children back
         ChildInfo parentInfo = ContainerUtil.getLastItem(parentInfos);
         ChildInfo[] children = childInfos.toArray(ChildInfo.EMPTY_ARRAY);
-        ChildInfo newInfo = new ChildInfo(parentInfo.id, parentInfo.name, parentInfo.attributes, children, parentInfo.symLinkTarget);
+        ChildInfo newInfo = new ChildInfoImpl(parentInfo.getId(), parentInfo.getNameId(), parentInfo.getFileAttributes(), children, parentInfo.getSymLinkTarget());
         parentInfos.set(parentInfos.size() - 1, newInfo);
         return FileVisitResult.CONTINUE;
       }
@@ -149,7 +150,7 @@ class VfsEventGenerationHelper {
       // tell client we didn't find any children, abandon the optimization altogether
       return null;
     }
-    return stack.pop().get(0).children;
+    return stack.pop().get(0).getChildren();
   }
 
   void scheduleDeletion(@NotNull VirtualFile file) {
