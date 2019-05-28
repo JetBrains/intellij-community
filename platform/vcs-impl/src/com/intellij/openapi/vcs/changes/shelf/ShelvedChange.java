@@ -89,7 +89,7 @@ public class ShelvedChange {
   public Change getChange(@NotNull Project project) {
     // todo unify with
     if (myChange == null) {
-      File baseDir = new File(project.getBaseDir().getPath());
+      File baseDir = new File(Objects.requireNonNull(project.getBasePath()));
 
       File file = getAbsolutePath(baseDir, myBeforePath);
       FilePath beforePath = VcsUtil.getFilePath(file, false);

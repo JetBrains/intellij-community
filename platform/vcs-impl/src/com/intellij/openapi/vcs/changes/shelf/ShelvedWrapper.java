@@ -75,8 +75,8 @@ class ShelvedWrapper {
 
   @Nullable
   public VirtualFile getBeforeVFUnderProject(@NotNull final Project project) {
-    if (getBeforePath() == null || project.getBaseDir() == null) return null;
-    final File baseDir = new File(project.getBaseDir().getPath());
+    if (getBeforePath() == null || project.getBasePath() == null) return null;
+    final File baseDir = new File(project.getBasePath());
     final File file = new File(baseDir, getBeforePath());
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
