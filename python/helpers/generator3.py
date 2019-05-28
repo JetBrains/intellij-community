@@ -578,7 +578,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                             action("closing %r", mod_cache_dir)
         else:
             # Copy entire skeletons directory if nothing needs to be updated
-            note('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
+            say('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
             copy_skeletons(mod_cache_dir, sdk_skeletons_dir, get_module_origin(mod_file_name, name))
     except:
         exctype, value = sys.exc_info()[:2]
