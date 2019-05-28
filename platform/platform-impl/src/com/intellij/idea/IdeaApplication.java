@@ -295,9 +295,6 @@ public class IdeaApplication {
       return null;
     }
 
-    @Override
-    public void premain(String[] args) { }
-
     private void showSplash() {
       final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       final SplashScreen splashScreen = getSplashScreen();
