@@ -10,16 +10,15 @@ import java.awt.event.MouseEvent
 interface InputHandler {
   /**
    * Called when user clicks on presentation.
-   * @param e event translated into coordinates of current presentation
-   * @param editorPoint original event point
+   * @param translated event point in coordinate system of associated presentation.
    */
-  fun mouseClicked(e: MouseEvent, editorPoint: Point) {}
+  fun mouseClicked(event: MouseEvent, translated: Point) {}
 
   /**
    * Called when user moves mouse in bounds of inlay.
-   * @param e event translated into coordinates of current presentation
+   * @param translated event point in coordinate system of associated presentation.
    */
-  fun mouseMoved(e: MouseEvent) {}
+  fun mouseMoved(event: MouseEvent, translated: Point) {}
 
   /**
    * Called when mouse leaves presentation.
