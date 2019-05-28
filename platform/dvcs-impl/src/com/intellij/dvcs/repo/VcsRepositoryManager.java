@@ -239,7 +239,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
         AbstractVcs vcs = root.getVcs();
         VcsRepositoryCreator repositoryCreator = getRepositoryCreator(vcs);
         if (repositoryCreator == null) continue;
-        Repository repository = repositoryCreator.createRepositoryIfValid(rootPath);
+        Repository repository = repositoryCreator.createRepositoryIfValid(rootPath, this);
         if (repository != null) {
           newRootsMap.put(rootPath, repository);
         }

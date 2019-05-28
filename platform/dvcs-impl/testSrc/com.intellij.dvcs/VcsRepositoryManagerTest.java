@@ -4,6 +4,7 @@ package com.intellij.dvcs;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryCreator;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -120,7 +121,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
 
       @Nullable
       @Override
-      public Repository createRepositoryIfValid(@NotNull VirtualFile root) {
+      public Repository createRepositoryIfValid(@NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
         READY_TO_READ.countDown();
         try {
           //wait until reading thread gets existing info
@@ -129,7 +130,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
         catch (InterruptedException e) {
           return null;
         }
-        return new MockRepositoryImpl(myProject, root, myProject);
+        return new MockRepositoryImpl(myProject, root, parentDisposable);
       }
     };
   }
