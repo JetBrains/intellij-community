@@ -24,14 +24,12 @@ import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -399,11 +397,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Nullable
   protected URL getDescriptionUrl() {
-    final String fileName = getDescriptionFileName();
-    if (fileName == null) return null;
-    return ResourceUtil.getResource(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
+    return null;
   }
 
   @NotNull
@@ -429,9 +427,12 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     if (description != null) return description;
 
     try {
-      URL descriptionUrl = getDescriptionUrl();
-      if (descriptionUrl == null) return null;
-      return ResourceUtil.loadText(descriptionUrl);
+      InputStream descriptionStream = null;
+      final String fileName = getDescriptionFileName();
+      if (fileName != null) {
+        descriptionStream = ResourceUtil.getResourceAsStream(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
+      }
+      return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
     }
     catch (IOException ignored) {
     }

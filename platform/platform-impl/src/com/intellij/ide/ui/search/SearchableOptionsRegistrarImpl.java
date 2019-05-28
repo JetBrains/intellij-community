@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.DocumentEvent;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
@@ -76,10 +77,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         ApplicationManager.getApplication().isUnitTestMode()) return;
     try {
       //stop words
-      URL url = ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt");
-      if (url == null) throw new IOException("Broken installation: IDE does not provide /search/ignore.txt");
+      InputStream stream = ResourceUtil.getResourceAsStream(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt");
+      if (stream == null) throw new IOException("Broken installation: IDE does not provide /search/ignore.txt");
 
-      String text = ResourceUtil.loadText(url);
+      String text = ResourceUtil.loadText(stream);
       final String[] stopWords = text.split("[\\W]");
       ContainerUtil.addAll(myStopWords, stopWords);
     }

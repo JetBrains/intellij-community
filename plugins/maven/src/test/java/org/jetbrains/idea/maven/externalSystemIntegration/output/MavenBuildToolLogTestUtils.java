@@ -46,7 +46,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
   @NotNull
   protected static String[] fromFile(String resource) throws IOException {
-    try (InputStream stream = ResourceUtil.getResource(MavenBuildToolLogTestUtils.class, "", resource).openStream();
+    try (InputStream stream = ResourceUtil.getResourceAsStream(MavenBuildToolLogTestUtils.class, "", resource);
          Scanner scanner = new Scanner(stream)) {
       List<String> result = new ArrayList<>();
       while (scanner.hasNextLine()) {
