@@ -561,12 +561,10 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                 for m in sys.modules.keys():
                     if m.startswith("pycharm_generator_utils"): continue
                     action("looking at possible submodule %r", m)
-                    # if module has __file__ defined, it has Python source code and doesn't need a skeleton
-                    if (m not in old_modules and
-                            m not in imported_module_names and
-                            m != name and
-                            not hasattr(sys.modules[m], '__file__') and
-                            m not in sys.builtin_module_names):
+                    if m == name or m in old_modules or m in sys.builtin_module_names:
+                        continue
+                    # Synthetic module, not explicitly imported
+                    if m not in imported_module_names and not hasattr(sys.modules[m], '__file__'):
                         if not quiet:
                             say(m)
                             sys.stdout.flush()
