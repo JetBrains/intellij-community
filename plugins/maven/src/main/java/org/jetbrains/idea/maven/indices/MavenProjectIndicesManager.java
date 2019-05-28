@@ -108,7 +108,9 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         if (remoteRepositoriesIdsAndUrls == null || localRepository == null) return;
         Set<DependencyCompletionProvider> providers = new HashSet<>();
         MavenIndex localIndex = indicesManager.createIndexForLocalRepo(myProject, localRepository);
-        providers.add(new IndexBasedCompletionProvider(localIndex));
+        if (localIndex != null) {
+          providers.add(new IndexBasedCompletionProvider(localIndex));
+        }
         providers.add(new ProjectModulesCompletionProvider(myProject));
 
 
