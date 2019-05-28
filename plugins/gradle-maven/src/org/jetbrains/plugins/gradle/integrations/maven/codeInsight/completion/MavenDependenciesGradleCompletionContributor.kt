@@ -102,7 +102,6 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
 
         result.stopHere()
 
-        MavenRepositoriesHolder.getInstance(element.project).checkNotIndexedRepositories()
         val searchText = CompletionUtil.findReferenceOrAlphanumericPrefix(params)
         val dependencySearch = MavenProjectIndicesManager.getInstance(element.project).dependencySearchService
         val searchParameters = createSearchParameters(params)
