@@ -156,7 +156,7 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
           else {
             status = FileStatus.MODIFIED;
           }
-          myChanges.add(new ShelvedChange(PATH, patch.getBeforeName(), patch.getAfterName(), status));
+          myChanges.add(new ShelvedChange(project, PATH, patch.getBeforeName(), patch.getAfterName(), status));
         }
       }
       catch (Exception e) {

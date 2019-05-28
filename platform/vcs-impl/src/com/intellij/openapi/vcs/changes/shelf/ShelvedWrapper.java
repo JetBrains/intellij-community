@@ -70,7 +70,7 @@ class ShelvedWrapper {
   }
 
   Change getChange(@NotNull Project project) {
-    return myShelvedChange != null ? myShelvedChange.getChange(project) : assertNotNull(myBinaryFile).createChange(project);
+    return myShelvedChange != null ? myShelvedChange.getChange() : assertNotNull(myBinaryFile).createChange(project);
   }
 
   @Nullable

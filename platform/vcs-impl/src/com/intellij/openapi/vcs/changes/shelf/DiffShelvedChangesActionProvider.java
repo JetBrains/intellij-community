@@ -392,7 +392,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         }
       }
       else {
-        return createDiffRequest(myProject, myChange.getChange(myProject), getName(), context, indicator);
+        return createDiffRequest(myProject, myChange.getChange(), getName(), context, indicator);
       }
     }
   }
@@ -500,9 +500,9 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
                                                     @NotNull TextFilePatch patch,
                                                     @NotNull UserDataHolder context,
                                                     @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
-      DiffRequest diffRequest = myChange.isConflictingChange(myProject)
+      DiffRequest diffRequest = myChange.isConflictingChange()
                                 ? createConflictDiffRequest(myProject, myFile, patch, SHELVED_VERSION, texts, getName())
-                                : createDiffRequest(myProject, myChange.getChange(myProject), getName(), context, indicator);
+                                : createDiffRequest(myProject, myChange.getChange(), getName(), context, indicator);
       if (!myWithLocal) {
         DiffUtil.addNotification(createNotification(DIFF_WITH_BASE_ERROR + " Showing difference with local version"), diffRequest);
       }
