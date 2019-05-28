@@ -35,6 +35,7 @@
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
+  <depends>com.intellij.modules.java</depends>
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
 

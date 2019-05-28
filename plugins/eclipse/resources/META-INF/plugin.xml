@@ -16,6 +16,7 @@
     </description>
 
   <vendor>JetBrains</vendor>
+  <depends>com.intellij.modules.java</depends>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
     <compileServer.plugin classpath="eclipse-jps-plugin.jar;common-eclipse-util.jar"/>
