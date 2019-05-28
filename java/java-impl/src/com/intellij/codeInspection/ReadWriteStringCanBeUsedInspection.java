@@ -47,6 +47,9 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
             } else {
               highlight = ProblemHighlightType.INFORMATION;
             }
+            if (highlight == ProblemHighlightType.INFORMATION && !isOnTheFly) {
+              return;
+            }
             holder.registerProblem(call, message, highlight, new ReplaceWithWriteStringFix(highlight == ProblemHighlightType.INFORMATION));
           }
         } else if (FILES_READ_ALL_BYTES.test(call)) {
