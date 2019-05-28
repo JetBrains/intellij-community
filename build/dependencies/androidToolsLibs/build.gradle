@@ -22,6 +22,7 @@ subprojects {
   apply plugin: 'java'
   apply plugin: 'kotlin'
   apply plugin: 'maven-publish'
+  apply plugin: 'com.jfrog.bintray'
 
   project.buildDir = 'out'
   compileKotlin {
@@ -39,7 +40,6 @@ subprojects {
   task sourceJar(type: Jar) {
     from sourceSets.main.java
     from sourceSets.main.kotlin
-    from sourceSets.test.java
   }
 
   publishing {
@@ -85,7 +85,7 @@ subprojects {
 
       pkg {
         repo = 'intellij-third-party-dependencies'
-        name = "$project.name"
+        name = "android-tools-base"
         userOrg = 'jetbrains'
 
         version {
