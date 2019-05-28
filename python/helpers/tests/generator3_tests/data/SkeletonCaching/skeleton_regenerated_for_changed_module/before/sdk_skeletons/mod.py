@@ -1,5 +1,6 @@
 # encoding: utf-8
 # module mod
+# from mod.py
 # by generator test
 # no doc
 
