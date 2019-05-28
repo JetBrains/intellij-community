@@ -68,6 +68,12 @@
       "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground."
     },
     {
+      "key": "DebuggerTabs.underlineHeight"
+    },
+    {
+      "key": "DebuggerTabs.underlinedTabBackground"
+    },
+    {
     "key": "DefaultTabs.background"
     },
     {

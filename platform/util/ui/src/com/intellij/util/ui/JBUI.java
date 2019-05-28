@@ -719,6 +719,10 @@ public class JBUI {
       public static int underlineHeight() {
         return getInt("DebuggerTabs.underlineHeight", scale(2));
       }
+
+      public static Color underlinedTabBackground() {
+        return namedColorOrNull("DebuggerTabs.underlinedTabBackground");
+      }
     }
 
     public static class EditorTabs {
