@@ -6,8 +6,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -58,8 +56,6 @@ class PyFinalInspection : PyInspection() {
         checkClassLevelFinalsAreInitialized(classLevelFinals, initAttributes)
         checkSameNameClassAndInstanceFinals(classLevelFinals, initAttributes)
       }
-
-      checkRedeclarationsInScope(node)
     }
 
     override fun visitPyFunction(node: PyFunction) {
@@ -90,8 +86,6 @@ class PyFinalInspection : PyInspection() {
           registerProblem(node.typeComment, "'Final' could not be used in annotations for function parameters")
         }
       }
-
-      checkRedeclarationsInScope(node)
     }
 
     override fun visitPyTargetExpression(node: PyTargetExpression) {
@@ -111,6 +105,19 @@ class PyFinalInspection : PyInspection() {
           }
         }
       }
+      else if (!isFinal(node)) {
+        val qualifierType = node.qualifier?.let { myTypeEvalContext.getType(it) }
+        if (qualifierType is PyClassType && !qualifierType.isDefinition) {
+          checkInstanceFinalReassignment(node, qualifierType.pyClass)
+        }
+        else if (PyUtil.multiResolveTopPriority(node, resolveContext).any { it != node && it is PyTargetExpression && isFinal(it) }) {
+          registerProblem(node, "'${node.name}' is 'Final' and could not be reassigned")
+        }
+      }
+
+      if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any { it != node }) {
+        registerProblem(node, "Already declared name could not be redefined as 'Final'")
+      }
     }
 
     override fun visitPyNamedParameter(node: PyNamedParameter) {
@@ -125,21 +132,6 @@ class PyFinalInspection : PyInspection() {
       super.visitPyReferenceExpression(node)
 
       checkFinalIsOuterMost(node)
-    }
-
-    override fun visitPyFile(node: PyFile) {
-      super.visitPyFile(node)
-
-      checkRedeclarationsInScope(node)
-    }
-
-    private fun checkRedeclarationsInScope(scopeOwner: ScopeOwner) {
-      val visitedNames = mutableSetOf<String?>()
-      ControlFlowCache.getScope(scopeOwner).targetExpressions.forEach {
-        if (!visitedNames.add(it.name) && isFinal(it)) {
-          registerProblem(it, "Already declared name could not be redefined as 'Final'")
-        }
-      }
     }
 
     private fun getClassLevelFinalsAndInitAttributes(cls: PyClass): Pair<Map<String?, PyTargetExpression>, Map<String, PyTargetExpression>> {
@@ -186,6 +178,41 @@ class PyFinalInspection : PyInspection() {
       PyClassImpl.collectInstanceAttributes(method, instanceAttributes)
       instanceAttributes.values.forEach {
         if (isFinal(it)) registerProblem(it, "'Final' attribute should be declared in class body or '__init__'")
+      }
+    }
+
+    private fun checkInstanceFinalReassignment(target: PyTargetExpression, cls: PyClass) {
+      val name = target.name ?: return
+
+      val classAttribute = cls.findClassAttribute(name, false, myTypeEvalContext)
+      if (classAttribute != null && !classAttribute.hasAssignedValue() && isFinal(classAttribute)) {
+        val scopeOwner = ScopeUtil.getScopeOwner(target)
+        val insideClsInit = scopeOwner is PyFunction && PyUtil.isInit(scopeOwner) && cls == scopeOwner.containingClass
+        if (!insideClsInit) {
+          registerProblem(target, "'$name' is 'Final' and could not be reassigned")
+        }
+        return
+      }
+
+      for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {
+        val inheritedClassAttribute = ancestor.findClassAttribute(name, false, myTypeEvalContext)
+        if (inheritedClassAttribute != null && !inheritedClassAttribute.hasAssignedValue() && isFinal(inheritedClassAttribute)) {
+          registerProblem(target, "'${ancestor.name}.$name' is 'Final' and could not be reassigned")
+          return
+        }
+      }
+
+      for (current in (sequenceOf(cls) + cls.getAncestorClasses(myTypeEvalContext).asSequence())) {
+        val init = current.findMethodByName(PyNames.INIT, false, myTypeEvalContext)
+        if (init != null) {
+          val attributesInInit = mutableMapOf<String, PyTargetExpression>()
+          PyClassImpl.collectInstanceAttributes(init, attributesInInit)
+          if (attributesInInit[name]?.let { it != target && isFinal(it) } == true) {
+            val qualifier = if (cls == current) "" else "${current.name}."
+            registerProblem(target, "'$qualifier$name' is 'Final' and could not be reassigned")
+            break
+          }
+        }
       }
     }
 
