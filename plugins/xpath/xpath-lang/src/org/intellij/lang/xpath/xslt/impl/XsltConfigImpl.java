@@ -63,17 +63,6 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
 
     final XsltFormattingModelBuilder builder = new XsltFormattingModelBuilder(LanguageFormatting.INSTANCE.forLanguage(xmlLang));
     LanguageFormatting.INSTANCE.addExplicitExtension(xmlLang, builder);
-
-    try {
-      // TODO: put this into com.intellij.refactoring.actions.IntroduceParameterAction, just like IntroduceVariableAction
-      final AnAction introduceParameter = ActionManager.getInstance().getAction("IntroduceParameter");
-      if (introduceParameter != null) {
-        introduceParameter.setInjectedContext(true);
-      }
-    }
-    catch (Exception e) {
-      Logger.getInstance(XsltConfigImpl.class.getName()).error(e);
-    }
   }
 
   @Override
