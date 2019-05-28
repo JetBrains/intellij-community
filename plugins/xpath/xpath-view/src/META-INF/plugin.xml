@@ -44,6 +44,8 @@
         serviceInterface="org.intellij.plugins.xpathView.support.XPathSupport"
         serviceImplementation="org.intellij.plugins.xpathView.support.jaxen.XPathSupportImpl" />
 
+    <applicationService serviceImplementation="org.intellij.plugins.xpathView.XPathAppComponent"/>
+
     <applicationService
         serviceInterface="org.intellij.lang.xpath.xslt.psi.XsltElementFactory"
         serviceImplementation="org.intellij.lang.xpath.xslt.psi.impl.XsltElementFactoryImpl" />
@@ -84,6 +86,9 @@
     <completion.contributor language="XPath" implementationClass="org.intellij.lang.xpath.completion.XPathCompletionContributor" />
     <typedHandler implementation="org.intellij.lang.xpath.XPathTypedHandler"/>
     <lookup.charFilter implementation="org.intellij.lang.xpath.completion.XPathCharFilter" />
+
+    <editorActionHandler action="FindNext" implementationClass="org.intellij.plugins.xpathView.XPathAppComponent$FindNextHandler"/>
+    <editorActionHandler action="FindPrevious" implementationClass="org.intellij.plugins.xpathView.XPathAppComponent$FindPreviousHandler"/>
 
     <applicationService serviceInterface="org.intellij.lang.xpath.xslt.XsltConfig"
                         serviceImplementation="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl"/>
@@ -164,14 +169,6 @@
     <xpath.contextProviderExtension implementation="org.intellij.lang.xpath.xslt.context.Xslt2ContextProviderExtension" />
 
   </extensions>
-
-  <!-- Plugin's application components -->
-  <application-components>
-    <!-- XPathView components -->
-    <component>
-      <implementation-class>org.intellij.plugins.xpathView.XPathAppComponent</implementation-class>
-    </component>
-  </application-components>
 
   <!-- Plugin's project components -->
   <project-components>
