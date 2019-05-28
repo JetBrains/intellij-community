@@ -2,6 +2,7 @@
 package git4idea.conflicts
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
@@ -265,6 +267,10 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
 private class MyChangesTree(project: Project)
   : ChangesTreeImpl<GitConflict>(project, false, true, GitConflict::class.java) {
 
+  companion object {
+    private const val GROUPING_KEYS_PROPERTY = "GitConflictsView.GroupingKeys"
+  }
+
   override fun buildTreeModel(conflicts: List<GitConflict>): DefaultTreeModel {
     val builder = MyTreeModelBuilder(project, grouping)
     builder.addConflicts(conflicts)
@@ -273,8 +279,16 @@ private class MyChangesTree(project: Project)
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
     val groupingSupport = ChangesGroupingSupport(myProject, this, false)
-    groupingSupport.setGroupingKeysOrSkip(DEFAULT_GROUPING_KEYS.toSet())
-    groupingSupport.addPropertyChangeListener(PropertyChangeListener { rebuildTree() })
+
+    val propertiesComponent = PropertiesComponent.getInstance(project)
+    groupingSupport.setGroupingKeysOrSkip(propertiesComponent.getValues(GROUPING_KEYS_PROPERTY)?.toSet() ?: setOf(DIRECTORY_GROUPING))
+    groupingSupport.addPropertyChangeListener(PropertyChangeListener {
+      propertiesComponent.setValues(GROUPING_KEYS_PROPERTY, groupingSupport.groupingKeys.toTypedArray())
+
+      val oldSelection = VcsTreeModelData.selected(this).userObjects()
+      rebuildTree()
+      setSelectedChanges(oldSelection)
+    })
     return groupingSupport
   }
 }
