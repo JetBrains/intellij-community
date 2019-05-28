@@ -42,7 +42,11 @@ public final class StartUpMeasurer {
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
     public static final String APP_INITIALIZED_CALLBACK = "app initialized callback";
+    public static final String FRAME_INITIALIZATION = "frame initialization";
 
+    public static final String PROJECT_CONVERSION = "project conversion";
+    public static final String PROJECT_BEFORE_LOADED = "project before loaded callbacks";
+    public static final String PROJECT_INSTANTIATION = "project instantiation";
     public static final String PROJECT_PRE_STARTUP = "project pre-startup";
     public static final String PROJECT_STARTUP = "project startup";
 
@@ -50,6 +54,7 @@ public final class StartUpMeasurer {
     public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES = "project post-startup activities";
 
     public static final String LOAD_MODULES = "module loading";
+    public static final String PROJECT_OPENED_CALLBACKS = "project opened callbacks";
   }
 
   private static boolean measuringPluginStartupCosts = true;

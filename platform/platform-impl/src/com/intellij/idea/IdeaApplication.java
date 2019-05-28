@@ -371,6 +371,7 @@ public class IdeaApplication {
 
     @Override
     public void main(String[] args) {
+      Activity activity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION);
       if (SystemInfo.isMac) MacOSApplicationProvider.initApplication();
 
       SystemDock.updateMenu();
@@ -414,8 +415,11 @@ public class IdeaApplication {
         }, ModalityState.any());
       }
 
+      activity.end();
+
       TransactionGuard.submitTransaction(app, () -> {
         Project projectFromCommandLine = myPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
+        // The appStarting callback in RecentProjectsManagerBase will reopen the last project
         app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
         //noinspection SSBasedInspection

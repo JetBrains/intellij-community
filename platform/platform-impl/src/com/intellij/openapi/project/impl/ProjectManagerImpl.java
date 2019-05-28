@@ -5,6 +5,7 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
+import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.ThreadDumper;
@@ -274,7 +275,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
     }
 
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_BEFORE_LOADED);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
+    activity.end();
 
     boolean succeed = false;
     try {
@@ -293,7 +296,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @NotNull
   protected ProjectEx doCreateProject(@Nullable String projectName, @NotNull String filePath) {
-    return new ProjectImpl(FileUtilRt.toSystemIndependentName(filePath), projectName);
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_INSTANTIATION);
+    ProjectImpl project = new ProjectImpl(FileUtilRt.toSystemIndependentName(filePath), projectName);
+    activity.end();
+    return project;
   }
 
   @Override
@@ -555,7 +561,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @Nullable
   public Project convertAndLoadProject(@NotNull VirtualFile path) throws IOException {
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_CONVERSION);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(path);
+    activity.end();
     if (conversionResult.openingIsCanceled()) {
       return null;
     }
@@ -780,6 +788,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     LifecycleUsageTriggerCollector.onProjectOpened(project);
+    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_OPENED_CALLBACKS);
     myBusPublisher.projectOpened(project);
     // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
     // projectOpened in the project components is called _after_ message bus event projectOpened for ages
@@ -791,6 +800,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         StartupManagerImpl.runActivity(() -> component.projectOpened());
       }
     }
+    activity.end();
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ProjectImpl.ourClassesAreLoaded = true;
