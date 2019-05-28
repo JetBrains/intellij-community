@@ -64,8 +64,8 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
 
     private final XsltConfigImpl myConfig;
 
-    public UIImpl(XsltConfigImpl config) {
-      myConfig = config;
+    public UIImpl() {
+      myConfig = (XsltConfigImpl)XsltConfig.getInstance();
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
       myShowLinkedFiles = new JCheckBox("Show Associated Files in Project View");
