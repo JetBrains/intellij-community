@@ -23,6 +23,9 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author tav
+ */
 public class JCEFHtmlPanel implements Disposable {
   @NotNull
   private final JPanel myPanelWrapper;
@@ -36,12 +39,16 @@ public class JCEFHtmlPanel implements Disposable {
   private boolean myIsCefBrowserCreated;
   private @Nullable String myHtml;
 
+  // workaround for the UI garbage issue: keep the browser component min until the browser loads html
+  private static final boolean USE_SIZE_WORKAROUND = !SystemInfo.isMac;
+
   static {
     CefSettings settings = new CefSettings();
     settings.windowless_rendering_enabled = false;
     settings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_ERROR;
     if (SystemInfo.isMac) {
       CefApp.startup();
+      // todo: move it to jcef
       String JCEF_FRAMEWORKS_PATH = System.getProperty("java.home") + "/Frameworks";
       CefApp.addAppHandler(new CefAppHandlerAdapter(new String[] {
         "--framework-dir-path=" + JCEF_FRAMEWORKS_PATH + "/Chromium Embedded Framework.framework",
@@ -70,16 +77,18 @@ public class JCEFHtmlPanel implements Disposable {
         }
       }
     });
-    ourCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
-      @Override
-      public void onLoadEnd(CefBrowser browser, CefFrame frame, int i) {
-        JCEFHtmlPanel panel = ourCefBrowser2Panel.get(browser);
-        if (panel != null && browser.getURL() != null && panel.isHtmlLoaded()) {
-          browser.getUIComponent().setSize(panel.myPanelWrapper.getSize());
-          panel.myPanelWrapper.revalidate();
+    if (USE_SIZE_WORKAROUND) {
+      ourCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
+        @Override
+        public void onLoadEnd(CefBrowser browser, CefFrame frame, int i) {
+          JCEFHtmlPanel panel = ourCefBrowser2Panel.get(browser);
+          if (panel != null && browser.getURL() != null && panel.isHtmlLoaded()) {
+            browser.getUIComponent().setSize(panel.myPanelWrapper.getSize());
+            panel.myPanelWrapper.revalidate();
+          }
         }
-      }
-    });
+      });
+    }
     ourCefClient.addFocusHandler(new CefFocusHandlerAdapter() {
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
@@ -92,25 +101,20 @@ public class JCEFHtmlPanel implements Disposable {
         return false;
       }
     });
-    Disposer.register(ApplicationManager.getApplication(), () -> ourCefApp.dispose()); // todo: crashes on exit
+    Disposer.register(ApplicationManager.getApplication(), () -> {
+      ourCefBrowser2Panel.clear();
+      ourCefApp.dispose();
+    });
   }
 
   public JCEFHtmlPanel() {
-    myPanelWrapper = new JPanel(new BorderLayout()) {
-      @Override
-      public void removeNotify() {
-        super.removeNotify();
-        ourCefBrowser2Panel.remove(myCefBrowser);
-        myCefBrowser.close(true);
-      }
-    };
+    myPanelWrapper = new JPanel(new BorderLayout());
     myPanelWrapper.setBackground(JBColor.background());
 
     myCefBrowser = ourCefClient.createBrowser("about:blank", false, false);
     ourCefBrowser2Panel.put(myCefBrowser, this);
 
-    if (!SystemInfo.isMac) {
-      // workaround for the UI garbage issue: keep the browser component min until the browser loads html
+    if (USE_SIZE_WORKAROUND) {
       myPanelWrapper.setLayout(null);
       myCefBrowser.getUIComponent().setSize(1, 1);
       myPanelWrapper.addComponentListener(new ComponentAdapter() {
@@ -168,6 +172,7 @@ public class JCEFHtmlPanel implements Disposable {
 
   @Override
   public void dispose() {
+    ourCefBrowser2Panel.remove(myCefBrowser);
     myCefBrowser.close(true);
   }
 }
