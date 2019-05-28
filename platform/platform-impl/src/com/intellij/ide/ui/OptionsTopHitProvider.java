@@ -234,7 +234,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       long millis = System.currentTimeMillis();
       String name = project == null ? "application" : "project";
       Deque<ConfigurableOptionsTopHitProvider> edtProviders = new ArrayDeque<>();
-      for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensionList()) {
+      for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getIterable()) {
         if (provider instanceof ConfigurableOptionsTopHitProvider) {
           // process on EDT, because it creates a Swing components
           // do not process all in one unified invokeLater to ensure that EDT is not blocked for a long time
@@ -250,7 +250,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       }
 
       if (project != null) {
-        for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getExtensionList()) {
+        for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getIterable()) {
           if (indicator != null && indicator.isCanceled()) {
             getCachedOptions(provider, project);
           }
