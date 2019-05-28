@@ -10,18 +10,17 @@ import java.awt.Cursor;
 import static com.intellij.util.ui.EmptyIcon.ICON_16;
 
 class IdeErrorsIcon extends JLabel {
-  private final Icon myReadIcon;
-  private final Icon myUnreadIcon;
+  private final boolean myEnableBlink;
 
   IdeErrorsIcon(boolean enableBlink) {
-    myReadIcon = AllIcons.Ide.FatalError_read;
-    myUnreadIcon = !enableBlink ? AllIcons.Ide.FatalError : new Blinking(AllIcons.Ide.FatalError);
+    myEnableBlink = enableBlink;
     setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
   }
 
   void setState(MessagePool.State state) {
+    Icon myUnreadIcon = !myEnableBlink ? AllIcons.Ide.FatalError : new Blinking(AllIcons.Ide.FatalError);
     if (state != null && state != MessagePool.State.NoErrors) {
-      setIcon(state == MessagePool.State.ReadErrors ? myReadIcon : myUnreadIcon);
+      setIcon(state == MessagePool.State.ReadErrors ? AllIcons.Ide.FatalError_read : myUnreadIcon);
       setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       setToolTipText(DiagnosticBundle.message("error.notification.tooltip"));
     }
