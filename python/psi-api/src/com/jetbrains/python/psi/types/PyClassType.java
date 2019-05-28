@@ -27,9 +27,10 @@ public interface PyClassType extends PyClassLikeType, UserDataHolder {
   PyClass getPyClass();
 
   /**
-   * @param name name to check
+   * @param name    name to check
    * @param context type evaluation context
    * @return true if attribute with the specified name could be created or updated.
+   * Does not take `typing.Final` into account.
    * @see PyClass#getSlots(TypeEvalContext)
    */
   default boolean isAttributeWritable(@NotNull String name, @NotNull TypeEvalContext context) {
