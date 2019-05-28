@@ -54,7 +54,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myScheme = scheme;
     myLexer = highlighter.getHighlightingLexer();
     myLexer.start(ArrayUtil.EMPTY_CHAR_SEQUENCE);
-    myInitialState = myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getRestartableState() : myLexer.getState();
+    myInitialState = myLexer.getState();
     myHighlighter = highlighter;
     mySegments = createSegments();
   }

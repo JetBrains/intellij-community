@@ -37,14 +37,6 @@ public interface RestartableLexer {
    */
   int getStartState();
 
-
-  /**
-   * Returns the default restartable state of the lexer.
-   *
-   * @return the lexer state.
-   */
-  int getRestartableState();
-
   /**
    * This method specifies which states are restartable
    *
