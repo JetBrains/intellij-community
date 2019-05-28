@@ -567,34 +567,27 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return expr.getType() instanceof PsiArrayType ? StringUtil.pluralize(text) : text;
   }
 
+  private static boolean isNameSupplier(String text) {
+    if (!StringUtil.isQuotedString(text)) return false;
+    String stringPresentation = StringUtil.unquoteString(text);
+    String[] words = stringPresentation.split(" ");
+    if (words.length > 5) return false;
+    return Arrays.stream(words).allMatch(StringUtil::isJavaIdentifier);
+  }
+
   @Nullable
   private static String findLiteralText(@NotNull PsiExpression expr) {
-    final PsiElement[] literals = PsiTreeUtil.collectElements(expr, new PsiElementFilter() {
-      @Override
-      public boolean isAccepted(@NotNull PsiElement element) {
-        if (isStringPsiLiteral(element) && isNameSupplier(element)) {
-          final PsiElement exprList = element.getParent();
-          if (exprList instanceof PsiExpressionList) {
-            final PsiElement call = exprList.getParent();
-            if (call instanceof PsiNewExpression) {
-              return true;
-            }
-            if (call instanceof PsiMethodCallExpression) {
-              //TODO: exclude or not getA().getB("name").getC(); or getA(getB("name").getC()); It works fine for now in the most cases
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      private boolean isNameSupplier(PsiElement element) {
-        String stringPresentation = StringUtil.unquoteString(element.getText());
-        String[] words = stringPresentation.split(" ");
-        if (words.length > 5) return false;
-        return Arrays.stream(words).allMatch(StringUtil::isJavaIdentifier);
-      }
-    });
+    final PsiLiteralExpression[] literals = SyntaxTraverser.psiTraverser(expr)
+      .filter(PsiLiteralExpression.class)
+      .filter(lit -> isNameSupplier(lit.getText()))
+      .filter(lit -> {
+        final PsiElement exprList = lit.getParent();
+        if (!(exprList instanceof PsiExpressionList)) return false;
+        final PsiElement call = exprList.getParent();
+        //TODO: exclude or not getA().getB("name").getC(); or getA(getB("name").getC()); It works fine for now in the most cases
+        return call instanceof PsiNewExpression || call instanceof PsiMethodCallExpression;
+      })
+      .toArray(new PsiLiteralExpression[0]);
 
     if (literals.length == 1) {
       return StringUtil.unquoteString(literals[0].getText()).replaceAll(" ", "_");
