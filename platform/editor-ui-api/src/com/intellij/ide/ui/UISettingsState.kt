@@ -85,7 +85,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SCROLL_TAB_LAYOUT_IN_EDITOR")
   var scrollTabLayoutInEditor by property(true)
   @get:OptionTag("HIDE_TABS_IF_NEED")
-  var hideTabsIfNeed by property(true)
+  var hideTabsIfNeeded by property(true)
   @get:OptionTag("SHOW_CLOSE_BUTTON")
   var showCloseButton by property(true)
   @get:OptionTag("CLOSE_TAB_BUTTON_ON_THE_RIGHT")

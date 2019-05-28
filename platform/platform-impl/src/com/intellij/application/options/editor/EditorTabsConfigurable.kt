@@ -9,7 +9,6 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import javax.swing.*
 
@@ -52,7 +51,7 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
           myScrollTabLayoutInEditorCheckBox = checkBox(message("checkbox.editor.tabs.in.single.row"), uiSettings::scrollTabLayoutInEditor)
             .enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
           row {
-            checkBox(message("checkbox.editor.scroll.if.need"), uiSettings::hideTabsIfNeed)
+            checkBox(message("checkbox.editor.scroll.if.need"), uiSettings::hideTabsIfNeeded)
               .enableIf(myEditorTabPlacement.selectedValueMatches { it != UISettings.TABS_NONE } and
                           myScrollTabLayoutInEditorCheckBox.selected)
           }

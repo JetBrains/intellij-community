@@ -373,7 +373,7 @@ public class JBTabsImpl extends JComponent
       entry.getValue().setInactiveStateImage(null);
     }
     boolean oldHideTabsIfNeeded = mySingleRowLayout instanceof ScrollableSingleRowLayout;
-    boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeed();
+    boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeeded();
     if (oldHideTabsIfNeeded != newHideTabsIfNeeded) {
       updateRowLayout();
     }
