@@ -146,8 +146,17 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
       ApplicationManagerEx.getApplicationEx().exit(false, true);
     }
 
+    showNow(null);
+  }
+
+  public static void showNow(@Nullable Runnable beforeSetVisible) {
+    if (ourInstance != null) {
+      assert beforeSetVisible == null;
+      return;
+    }
+
     IdeFrame frame = null;
-    for (WelcomeFrameProvider provider : EP.getExtensionList()) {
+    for (WelcomeFrameProvider provider : EP.getIterable()) {
       frame = provider.createFrame();
       if (frame != null) {
         break;
@@ -157,6 +166,11 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     if (frame == null) {
       frame = new WelcomeFrame();
     }
+
+    if (beforeSetVisible != null) {
+      beforeSetVisible.run();
+    }
+
     ((JFrame)frame).setVisible(true);
     IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
     ourInstance = frame;

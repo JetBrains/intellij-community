@@ -388,19 +388,16 @@ public class IdeaApplication {
 
       LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
 
+      Splash splash = mySplash;
+      mySplash = null;
+      Runnable beforeSetVisible = splash == null ? null : () -> splash.dispose();
+
       if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
-        WelcomeFrame.showNow();
+        WelcomeFrame.showNow(beforeSetVisible);
         lifecyclePublisher.welcomeScreenDisplayed();
       }
       else {
-        windowManager.showFrame();
-      }
-
-      if (mySplash != null) {
-        app.invokeLater(() -> {
-          mySplash.dispose();
-          mySplash = null; // Allow GC collect the splash window
-        }, ModalityState.any());
+        windowManager.showFrame(beforeSetVisible);
       }
 
       activity.end();

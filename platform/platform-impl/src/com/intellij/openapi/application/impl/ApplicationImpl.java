@@ -419,7 +419,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       ProgressIndicator indicator = splash == null ? null : new EmptyProgressIndicator() {
         @Override
         public void setFraction(double fraction) {
-          splash.showProgress("", (float)fraction);
+          splash.showProgress(fraction);
         }
       };
       init(plugins, indicator, () -> {

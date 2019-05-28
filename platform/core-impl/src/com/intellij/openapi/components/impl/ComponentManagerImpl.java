@@ -65,7 +65,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private int myComponentConfigCount;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private int myInstantiatedComponentCount = -1;
+  private int myInstantiatedComponentCount = 0;
   private boolean myComponentsCreated;
 
   private final List<BaseComponent> myBaseComponents = new SmartList<>();
