@@ -237,6 +237,14 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_origin_stamp_in_skeleton_header_is_updated_on_copying(self):
         self.check_generator_output('mod', mod_path='mod.py')
 
+    def test_pyexpat_skeletons_layout(self):
+        self.run_generator('pyexpat')
+        self.assertFalse(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat.py')))
+        self.assertTrue(os.path.isdir(os.path.join(self.temp_skeletons_dir, 'pyexpat')))
+        self.assertTrue(open(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py')).read())
+        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
+        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
+
     def check_generator_output(self, mod_name, mod_path=None, mod_root=None,
                                custom_required_gen=False, standalone_mode=False, **kwargs):
         if custom_required_gen:

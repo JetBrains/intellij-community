@@ -557,7 +557,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
             # restore all of them
             path = name.split(".")
             redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
-            if imported_module_names and redo_imports:
+            if redo_imports:
                 for m in sys.modules.keys():
                     if m.startswith("pycharm_generator_utils"): continue
                     action("looking at possible submodule %r", m)
