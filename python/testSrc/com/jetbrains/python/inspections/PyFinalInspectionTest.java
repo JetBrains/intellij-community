@@ -288,6 +288,25 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-34945
+  public void testSameNameClassAndInstanceLevelFinals() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText(
+        "from typing_extensions import Final\n" +
+        "\n" +
+        "class A:\n" +
+        "    a: Final[int] = 1\n" +
+        "    b: Final[str] = \"1\"\n" +
+        "    <warning descr=\"Either instance attribute or class attribute could be type hinted as 'Final'\">c</warning>: Final[int]\n" +
+        "\n" +
+        "    def __init__(self):\n" +
+        "        <warning descr=\"Already declared name could not be redefined as 'Final'\">self.a</warning>: Final[int] = 2\n" +
+        "        self.b = \"2\"\n" +
+        "        <warning descr=\"Either instance attribute or class attribute could be type hinted as 'Final'\">self.c</warning>: Final[int] = 2")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
