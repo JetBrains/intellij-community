@@ -24,6 +24,9 @@ subprojects {
   apply plugin: 'maven-publish'
 
   project.buildDir = 'out'
+  compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+  }
 
   sourceSets {
     main.java.srcDir "$tools/$project.name/src/main/java"
