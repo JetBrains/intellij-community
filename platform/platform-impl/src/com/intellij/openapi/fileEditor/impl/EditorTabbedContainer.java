@@ -728,15 +728,20 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     private IdeEventQueue.EventDispatcher createFocusDispatcher() {
       return e -> {
         if (e instanceof FocusEvent) {
-          SwingUtilities.invokeLater(() -> {
-            updateActive();
-          });
+          updateActive();
         }
         return false;
       };
     }
 
     private void updateActive() {
+      checkActive();
+      SwingUtilities.invokeLater(() -> {
+        checkActive();
+      });
+    }
+
+    private void checkActive() {
       boolean newActive = UIUtil.isFocusAncestor(this);
 
       if(newActive != active) {
