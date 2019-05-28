@@ -183,7 +183,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
 
     ClassLoader loader = extension.getClass().getClassLoader();
-    String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginId().getIdString() : null;
+    String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : "com.intellij";
     long duration = ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, extension.getClass(), null, pluginId);
     if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
       Application app = ApplicationManager.getApplication();
@@ -404,7 +404,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       long startTime = StartUpMeasurer.getCurrentTime();
 
       ClassLoader loader = runnable.getClass().getClassLoader();
-      String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginId().getIdString() : null;
+      String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginId().getIdString() : "com.intellij";
 
       runActivity(runnable);
 

@@ -318,7 +318,7 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   public String getPluginIdString() {
-    return myPluginId != null ? myPluginId.getIdString() : "<unknown>";
+    return myPluginId != null ? myPluginId.getIdString() : "com.intellij";
   }
 
   @Override

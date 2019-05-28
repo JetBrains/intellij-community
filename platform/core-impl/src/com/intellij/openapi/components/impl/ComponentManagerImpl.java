@@ -350,9 +350,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (myMessageBus instanceof MessageBusImpl) {
       ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((handler, duration) -> {
         ClassLoader loader = handler.getClass().getClassLoader();
-        if (loader instanceof PluginClassLoader) {
-          StartUpMeasurer.addPluginCost(((PluginClassLoader) loader).getPluginIdString(), "MessageBus", duration);
-        }
+        String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : "com.intellij";
+        StartUpMeasurer.addPluginCost(pluginId, "MessageBus", duration);
       });
     }
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
