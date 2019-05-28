@@ -18,6 +18,7 @@ import java.lang.annotation.*;
 
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER}) public @interface NonNull {}
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER}) public @interface Nullable {}
+@Target({ElementType.TYPE_USE}) public @interface MonotonicNonNull {}
 """
 
     myFixture.addClass """
@@ -79,10 +80,12 @@ class MyClass {
     Object nullableField = null;
     @NonNull Object nonNullField = new Object();
     Object method() {}
+    @MonotonicNonNull Object foo = null;
 }"""
     assert NullableNotNullManager.isNotNull(clazz.fields[1])
     assert NullableNotNullManager.isNullable(clazz.fields[0])
     assert !NullableNotNullManager.isNullable(clazz.methods[0]) && !NullableNotNullManager.isNotNull(clazz.methods[0])
+    assert !NullableNotNullManager.isNullable(clazz.fields[2]) && !NullableNotNullManager.isNotNull(clazz.fields[2])
   }
   
   void "test default qualifiers on parent package"() {
