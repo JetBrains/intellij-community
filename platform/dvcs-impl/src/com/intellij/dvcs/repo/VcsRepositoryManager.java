@@ -108,7 +108,6 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   @Nullable
   private Repository getRepositoryForRoot(@Nullable VirtualFile root, boolean updateIfNeeded) {
     if (root == null) return null;
-    Repository result;
 
     REPO_LOCK.readLock().lock();
     try {
@@ -116,7 +115,10 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
         throw new ProcessCanceledException();
       }
       Repository repo = myRepositories.get(root);
-      result = repo != null ? repo : myExternalRepositories.get(root);
+      if (repo != null) return repo;
+
+      Repository externalRepo = myExternalRepositories.get(root);
+      if (externalRepo != null) return externalRepo;
     }
     finally {
       REPO_LOCK.readLock().unlock();
@@ -124,7 +126,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
     // if we didn't find appropriate repository, request update mappings if needed and try again
     // may be this should not be called  from several places (for example: branch widget updating from edt).
-    if (updateIfNeeded && result == null && ArrayUtil.contains(root, myVcsManager.getAllVersionedRoots())) {
+    if (updateIfNeeded && ArrayUtil.contains(root, myVcsManager.getAllVersionedRoots())) {
       checkAndUpdateRepositoriesCollection(root);
 
       REPO_LOCK.readLock().lock();
@@ -136,7 +138,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
       }
     }
     else {
-      return result;
+      return null;
     }
   }
 
@@ -189,12 +191,13 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
       REPO_LOCK.readLock().lock();
       try {
-        if (myRepositories.containsKey(checkedRoot)) return;
         repositories = new HashMap<>(myRepositories);
       }
       finally {
         REPO_LOCK.readLock().unlock();
       }
+
+      if (checkedRoot != null && repositories.containsKey(checkedRoot)) return;
 
       Collection<VirtualFile> invalidRoots = findInvalidRoots(repositories.keySet());
       repositories.keySet().removeAll(invalidRoots);
