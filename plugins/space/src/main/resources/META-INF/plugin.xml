@@ -16,6 +16,7 @@
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>org.jetbrains.kotlin</depends>
 
     <extensions defaultExtensionNs="com.intellij">
 
@@ -30,6 +31,15 @@
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
 
 
+    </extensions>
+
+    <!--pipelines-->
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <scriptDefinitionsProvider
+            id="circletScriptDefinitionsProvider"
+            implementation="circlet.plugins.pipelines.services.CircletScriptDefinitionsProvider"
+            order="first"
+        />
     </extensions>
 
     <application-components>
