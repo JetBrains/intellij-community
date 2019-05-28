@@ -485,7 +485,13 @@ public class PsiTypesUtil {
     return null;
   }
 
-  public static Boolean mentionsTypeParameters(@Nullable PsiType type, final Set<PsiTypeParameter> typeParameters) {
+  public static Boolean mentionsTypeParameters(@Nullable PsiType type, Set<PsiTypeParameter> typeParameters) {
+    return mentionsTypeParametersOrUnboundedWildcard(type, typeParameters, false);
+  }
+
+  public static Boolean mentionsTypeParametersOrUnboundedWildcard(@Nullable PsiType type,
+                                                                  Set<PsiTypeParameter> typeParameters,
+                                                                  boolean acceptUnboundedWildcard) {
     if (type == null) return false;
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @NotNull
@@ -501,7 +507,7 @@ public class PsiTypesUtil {
         if (bound != null) {
           return bound.accept(this);
         }
-        return false;
+        return acceptUnboundedWildcard;
       }
 
       @NotNull
