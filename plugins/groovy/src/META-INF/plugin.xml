@@ -646,9 +646,6 @@
 
     <antCustomCompiler implementation="org.jetbrains.plugins.groovy.ant.GroovyAntCustomCompilerProvider"/>
 
-    <project.converterProvider implementation="org.jetbrains.plugins.groovy.config.GroovyModuleConverterProvider"/>
-    <project.converterProvider implementation="org.jetbrains.plugins.groovy.config.GroovyRunConfigurationConverterProvider"/>
-
     <fileIconProvider implementation="org.jetbrains.plugins.groovy.GroovyFileIconProvider"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
