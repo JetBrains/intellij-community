@@ -805,7 +805,7 @@ def copy(src, dst, merge=False, pre_copy_hook=None, conflict_handler=None, post_
     post_copy_hook(src, dst)
 
 
-def copy_skeletons(src_dir, dst_dir):
+def copy_skeletons(src_dir, dst_dir, new_origin=None):
     def overwrite(src, dst):
         delete(dst)
         copy(src, dst)
@@ -820,13 +820,35 @@ def copy_skeletons(src_dir, dst_dir):
         elif not ext:
             delete(dst + '.py')
 
+    def override_origin_stamp(src, dst):
+        _, ext = os.path.splitext(dst)
+        if ext == '.py' and new_origin:
+            with fopen(dst, 'r') as f:
+                lines = f.readlines()
+                for i, line in enumerate(lines):
+                    if not line.startswith('#'):
+                        return
+
+                    m = SKELETON_HEADER_ORIGIN_LINE.match(line)
+                    if m:
+                        break
+                else:
+                    return
+            with fopen(dst, 'w') as f:
+                lines[i] = '# from ' + new_origin + '\n'
+                f.writelines(lines)
+
+    def post_copy_hook(src, dst):
+        override_origin_stamp(src, dst)
+        mod_pkg_cleanup(src, dst)
+
     def ignore_failed_version_stamps(src, dst):
         return not os.path.basename(src).startswith(FAILED_VERSION_STAMP_PREFIX)
 
     copy(src_dir, dst_dir, merge=True,
          pre_copy_hook=ignore_failed_version_stamps,
          conflict_handler=overwrite,
-         post_copy_hook=mod_pkg_cleanup)
+         post_copy_hook=post_copy_hook)
 
 
 def delete(path, content=False):
@@ -868,6 +890,16 @@ def sha256_digest(binary_or_file):
                 break
             acc.update(block)
         return acc.hexdigest()
+
+
+def get_relative_path_by_qname(abs_path, qname):
+    abs_path_components = os.path.split(abs_path)
+    qname_components_count = len(qname.split('.'))
+    if os.path.splitext(abs_path_components[-1])[0] == '__init__':
+        rel_path_components_count = qname_components_count + 1
+    else:
+        rel_path_components_count = qname_components_count
+    return os.path.join(*abs_path_components[-rel_path_components_count:])
 
 def is_text_file(path):
     """

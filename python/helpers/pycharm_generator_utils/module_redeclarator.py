@@ -1,4 +1,5 @@
 from pycharm_generator_utils.util_methods import *
+from pycharm_generator_utils.util_methods import get_relative_path_by_qname
 
 is_pregenerated = os.getenv("IS_PREGENERATED_SKELETONS", None)
 
@@ -802,7 +803,7 @@ class ModuleRedeclarator(object):
                 origin = origin_type = OriginType.BUILTIN
 
         if self.test_mode and origin_type == OriginType.FILE:
-            origin = self._get_relative_path(origin, self.qname)
+            origin = get_relative_path_by_qname(origin, self.qname)
 
 
         out(0, "# from %s" % origin)  # line 3
@@ -1127,11 +1128,4 @@ class ModuleRedeclarator(object):
                 out(0, 'import ', mod_name, ' as ', self.hidden_imports[mod_name])
             out(0, "") # empty line after group
 
-    def _get_relative_path(self, path, qname):
-        abs_path_components = os.path.split(path)
-        qname_components_count = len(qname.split('.'))
-        if os.path.splitext(abs_path_components[-1])[0] == '__init__':
-            rel_path_components_count = qname_components_count + 1
-        else:
-            rel_path_components_count = qname_components_count
-        return os.path.join(*abs_path_components[-rel_path_components_count:])
+
