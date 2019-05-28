@@ -400,19 +400,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void load(@Nullable final String configPath) {
-    load(configPath, null, null);
+    load(configPath, null, PluginManagerCore.getLoadedPlugins(null));
   }
 
-  public void load(@Nullable final String configPath, @Nullable Splash splash, @Nullable List<? extends IdeaPluginDescriptor> plugins) {
+  public void load(@Nullable String configPath, @Nullable Splash splash, @NotNull List<? extends IdeaPluginDescriptor> plugins) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      StartupProgress startupProgress = splash == null ? null : (message, progress) -> splash.showProgress("", progress);
-
-      // before totalMeasureToken to ensure that plugin loading is not part of this
-      if (plugins == null) {
-        plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
-      }
-
       if (!isHeadlessEnvironment()) {
         // wanted for UI, but should not affect start-up time,
         // since MigLayout is not important for start-up UI, it is ok execute it in a pooled thread
