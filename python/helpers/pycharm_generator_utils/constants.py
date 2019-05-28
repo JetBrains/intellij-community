@@ -806,6 +806,7 @@ CLASS_ATTR_BLACKLIST = [
 ]
 
 SKELETON_HEADER_VERSION_LINE = re.compile(r'# by generator (?P<version>\d+\.\d+)')
+SKELETON_HEADER_ORIGIN_LINE = re.compile(r'# from (?P<path>.*)')
 REQUIRED_GEN_VERSION_LINE = re.compile(r'(?P<name>\S+)\s+(?P<version>\d+\.\d+)')
 # "mod_path" and "mod_mtime" markers are used in tests
 BLACKLIST_VERSION_LINE = re.compile(r'(?P<path>{mod_path}|[^=]+) = (?P<version>\d+\.\d+) (?P<mtime>{mod_mtime}|\d+)')

@@ -21,11 +21,11 @@ class FileSystemUtilTest(GeneratorTestCase):
         with self.comparing_dirs():
             mkdir(os.path.join(self.temp_dir, rel_name))
 
-    def check_copy_skeletons(self):
+    def check_copy_skeletons(self, origin=None):
         with self.comparing_dirs('dst'):
             src_dir = os.path.join(self.test_data_dir, 'src')
             dst_dir = self.temp_dir
-            copy_skeletons(src_dir, dst_dir)
+            copy_skeletons(src_dir, dst_dir, origin)
 
     def test_mkdir_with_existing_dir(self):
         self.check_mkdir('existing')
@@ -58,6 +58,9 @@ class FileSystemUtilTest(GeneratorTestCase):
 
     def test_copy_skeletons_failed_version_stamps_ignored(self):
         self.check_copy_skeletons()
+
+    def test_copy_skeleton_origin_stamp_updated(self):
+        self.check_copy_skeletons(origin='new/binary/foo/bar/baz.so')
 
 
 class MiscellaneousUtilTest(TestCase):

@@ -66,7 +66,7 @@ def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_di
         r.flush()
         delete_failed_version_stamp(cache_dir, module_name)
         # Incrementally copy whatever we managed to successfully generate so far
-        copy_skeletons(cache_dir, sdk_dir)
+        copy_skeletons(cache_dir, sdk_dir, get_module_origin(module_file_name, module_name))
     else:
         report("Failed to find imported module in sys.modules " + module_name)
 
@@ -579,7 +579,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         else:
             # Copy entire skeletons directory if nothing needs to be updated
             note('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
-            copy_skeletons(mod_cache_dir, sdk_skeletons_dir)
+            copy_skeletons(mod_cache_dir, sdk_skeletons_dir, get_module_origin(mod_file_name, name))
     except:
         exctype, value = sys.exc_info()[:2]
         msg = "Failed to process %r while %s: %s"
@@ -592,6 +592,15 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
             raise
         return False
     return True
+
+
+def get_module_origin(mod_path, mod_qname):
+    if not mod_path:
+        return None
+
+    if is_test_mode():
+        return get_relative_path_by_qname(mod_path, mod_qname)
+    return mod_path
 
 
 def create_failed_version_stamp(base_dir, mod_qname):
