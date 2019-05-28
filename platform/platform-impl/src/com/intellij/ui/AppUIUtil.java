@@ -414,8 +414,8 @@ public class AppUIUtil {
           eapPanel.add(label, BorderLayout.WEST);
           JEditorPane html = SwingHelper.createHtmlLabel(
             "EAP builds report usage statistics by default per "+
-            (isPrivacyPolicy? "this Privacy Policy." : "the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>.") +
-            "\nNo personal or sensitive data are sent. You may disable this in the settings.", null, null
+            (isPrivacyPolicy? "this Privacy Policy." : "the&nbsp;<a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>.") +
+            "<br/>No personal or sensitive data are sent. You may disable this in the settings.", null, null
           );
           eapPanel.add(html, BorderLayout.CENTER);
           bottomPanel.add(eapPanel, BorderLayout.NORTH);
