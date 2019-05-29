@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.actions;
 
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.notification.Notification;
@@ -40,6 +41,7 @@ public class RecordStateStatisticsEventLogAction extends AnAction {
           return;
         }
 
+        FeatureUsageLogger.INSTANCE.rollOver();
         myStatesLogger.logApplicationStates(whitelist, true);
         myStatesLogger.logProjectStates(project, whitelist, true);
 
