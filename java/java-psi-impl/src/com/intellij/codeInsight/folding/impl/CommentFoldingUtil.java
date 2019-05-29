@@ -13,6 +13,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -263,12 +264,15 @@ public final class CommentFoldingUtil {
     return "";
   }
 
+  @NotNull
+  @Contract("_, _ -> new")
   private static TextRange getLineRange(@NotNull Document document, int nLine) {
     int startOffset = document.getLineStartOffset(nLine);
     int endOffset = document.getLineEndOffset(nLine);
     return new TextRange(startOffset, endOffset);
   }
 
+  @NotNull
   private static String getCommentLine(@NotNull Document document,
                                        @NotNull TextRange lineRange,
                                        @NotNull String prefix,
