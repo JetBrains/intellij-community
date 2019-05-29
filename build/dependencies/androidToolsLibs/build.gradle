@@ -85,7 +85,7 @@ subprojects {
 
       pkg {
         repo = 'intellij-third-party-dependencies'
-        name = "android-tools-base"
+        name = "android-tools-base-$project.name"
         userOrg = 'jetbrains'
 
         version {
