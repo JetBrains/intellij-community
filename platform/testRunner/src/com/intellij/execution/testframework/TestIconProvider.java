@@ -22,14 +22,9 @@ public class TestIconProvider extends IconProvider {
       try {
         if (framework.isIgnoredMethod(element)) {
           final Icon ignoredTestIcon = AllIcons.RunConfigurations.IgnoredTest;
-          if (Registry.is("ide.completion.show.visibility.icon")) {
-            final LayeredIcon icon = new LayeredIcon(ignoredTestIcon, PlatformIcons.PUBLIC_ICON);
-            icon.setIcon(PlatformIcons.PUBLIC_ICON, 1, ignoredTestIcon.getIconWidth(), 0);
-            return icon;
-          }
-          else {
-            return ignoredTestIcon;
-          }
+          final LayeredIcon icon = new LayeredIcon(ignoredTestIcon, PlatformIcons.PUBLIC_ICON);
+          icon.setIcon(PlatformIcons.PUBLIC_ICON, 1, ignoredTestIcon.getIconWidth(), 0);
+          return icon;
         }
       }
       catch (AbstractMethodError ignored) {}

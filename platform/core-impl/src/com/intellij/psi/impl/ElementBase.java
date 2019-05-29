@@ -158,7 +158,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   @NotNull
   public static RowIcon buildRowIcon(Icon baseIcon, Icon visibilityIcon) {
-    return Registry.is("ide.completion.show.visibility.icon") ? new RowIcon(baseIcon, visibilityIcon) : new RowIcon(baseIcon);
+    return new RowIcon(baseIcon, visibilityIcon);
   }
 
   public static Icon iconWithVisibilityIfNeeded(@Iconable.IconFlags int flags, Icon baseIcon, Icon visibility) {
