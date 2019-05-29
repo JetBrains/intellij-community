@@ -331,26 +331,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     }
   }
 
-  /**
-   * Should be called only once: when Settings Repository plugin runs first time
-   *
-   * @return collection of non-migrated or not deleted files to show a error somewhere outside
-   */
   @NotNull
-  public Collection<String> checkAndMigrateOldPatchResourcesToNewSchemeStorage() {
-    Collection<String> nonMigratedPaths = new ArrayList<>();
-    for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
-      File newPatchDir = new File(getShelfResourcesDirectory(), list.getName());
-      // it should be enough for migration to check if resource directory exists. If any bugs appeared add isAncestor checks for each path
-      if (!newPatchDir.exists() && newPatchDir.mkdirs()) {
-        nonMigratedPaths.addAll(migrateResourcesTo(list, newPatchDir, true));
-      }
-    }
-    return nonMigratedPaths;
-  }
-
-  @NotNull
-  private static Collection<String> migrateResourcesTo(@NotNull ShelvedChangeList list,
+  static Collection<String> migrateResourcesTo(@NotNull ShelvedChangeList list,
                                                        @NotNull File targetDirectory,
                                                        boolean deleteOld) {
     Collection<String> nonMigratedPaths = new ArrayList<>();
