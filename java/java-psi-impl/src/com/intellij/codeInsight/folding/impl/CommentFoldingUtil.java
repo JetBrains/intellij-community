@@ -256,8 +256,7 @@ public final class CommentFoldingUtil {
 
     lineRange = getLineRange(document, nSecondCommentLine);
     if (lineRange.getEndOffset() > commentRange.getEndOffset()) return "";
-    String suffix =
-      line = getCommentLine(document, lineRange, linePrefix, commentSuffix);
+    line = getCommentLine(document, lineRange, linePrefix, commentSuffix);
 
     if (line.chars().anyMatch(c -> !StringUtil.isWhiteSpace((char)c))) return line;
 
