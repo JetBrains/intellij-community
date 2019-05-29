@@ -231,46 +231,42 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
   protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
     Project project = vcsContext.getProject();
 
-    if (project != null) {
-      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-      final boolean underVcs = vcsManager.hasActiveVcss();
-      if (! underVcs) {
-        presentation.setVisible(false);
-        return;
-      }
+    if (project == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
 
-      String actionName = getCompleteActionName(vcsContext);
-      if (myActionInfo.showOptions(project) || OptionsDialog.shiftIsPressed(vcsContext.getModifiers())) {
-        actionName += "...";
-      }
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    final boolean underVcs = vcsManager.hasActiveVcss();
+    if (!underVcs) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
 
-      presentation.setText(actionName);
+    String actionName = getCompleteActionName(vcsContext);
+    if (myActionInfo.showOptions(project) || OptionsDialog.shiftIsPressed(vcsContext.getModifiers())) {
+      actionName += "...";
+    }
+    presentation.setText(actionName);
 
-      presentation.setEnabledAndVisible(true);
+    if (supportingVcsesAreEmpty(vcsManager, myActionInfo)) {
+      presentation.setVisible(myAlwaysVisible);
+      presentation.setEnabled(false);
+      return;
+    }
 
-      if (supportingVcsesAreEmpty(vcsManager, myActionInfo)) {
+    if (filterRootsBeforeAction()) {
+      FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext, myActionInfo), vcsContext);
+      if (roots.length == 0) {
         presentation.setVisible(myAlwaysVisible);
         presentation.setEnabled(false);
         return;
       }
-
-      if (filterRootsBeforeAction()) {
-        FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext, myActionInfo), vcsContext);
-        if (roots.length == 0) {
-          presentation.setVisible(myAlwaysVisible);
-          presentation.setEnabled(false);
-          return;
-        }
-      }
-
-      if (presentation.isVisible() && presentation.isEnabled() &&
-          vcsManager.isBackgroundVcsOperationRunning()) {
-        presentation.setEnabled(false);
-      }
-    } else {
-      presentation.setEnabledAndVisible(false);
     }
- }
+
+    presentation.setVisible(true);
+    presentation.setEnabled(!vcsManager.isBackgroundVcsOperationRunning());
+  }
 
   private static boolean supportingVcsesAreEmpty(final ProjectLevelVcsManager vcsManager, final ActionInfo actionInfo) {
     final AbstractVcs[] allActiveVcss = vcsManager.getAllActiveVcss();
