@@ -875,8 +875,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final FindUsagesManager usagesManager = ((FindManagerImpl)FindManager.getInstance(getProject())).getFindUsagesManager();
     final FindUsagesHandler handler = usagesManager.getFindUsagesHandler(targetElement, false);
     assertNotNull("Cannot find handler for: " + targetElement, handler);
-    final UsageViewImpl usageView = (UsageViewImpl)usagesManager.doFindUsages(new PsiElement[]{targetElement},
-                                                                              PsiElement.EMPTY_ARRAY,
+    final UsageViewImpl usageView = (UsageViewImpl)usagesManager.doFindUsages(handler.getPrimaryElements(),
+                                                                              handler.getSecondaryElements(),
                                                                               handler,
                                                                               handler.getFindUsagesOptions(),
                                                                               false);
