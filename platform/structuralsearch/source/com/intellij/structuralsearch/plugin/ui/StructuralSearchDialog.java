@@ -175,10 +175,10 @@ public class StructuralSearchDialog extends DialogWrapper {
     myUseLastConfiguration = useLastConfiguration;
   }
 
-  private EditorTextField createEditor(String text) {
+  private EditorTextField createEditor() {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
-    final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, text, profile);
+    final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, "", profile);
 
     final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
       @Override
@@ -335,7 +335,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     myReplaceEditorPanel = new OnePixelSplitter(false, 1.0f);
     mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     mySearchEditorPanel.getDivider().setOpaque(false);
-    mySearchCriteriaEdit = createEditor("");
+    mySearchCriteriaEdit = createEditor();
     mySearchEditorPanel.setFirstComponent(mySearchCriteriaEdit);
     mySearchEditorPanel.add(BorderLayout.CENTER, mySearchCriteriaEdit);
 
@@ -400,7 +400,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     myShortenFQN = new JCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"));
     myReformat = new JCheckBox(SSRBundle.message("reformat.checkbox"));
     myUseStaticImport = new JCheckBox(SSRBundle.message("use.static.import.checkbox"));
-    myReplaceCriteriaEdit = createEditor("");
+    myReplaceCriteriaEdit = createEditor();
     myReplaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
 
     final JPanel replacePanel = new JPanel(null);
