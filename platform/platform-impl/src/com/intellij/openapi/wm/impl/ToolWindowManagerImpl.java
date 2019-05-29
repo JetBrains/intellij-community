@@ -838,8 +838,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         myActiveStack.remove(each, true);
       }
 
-      while (!mySideStack.isEmpty(info.getAnchor())) {
-        mySideStack.pop(info.getAnchor());
+      if (isStackEnabled()) {
+        while (!mySideStack.isEmpty(info.getAnchor())) {
+          mySideStack.pop(info.getAnchor());
+        }
       }
 
       for (WindowInfoImpl eachInfo : myLayout.getInfos()) {
@@ -848,28 +850,30 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         }
       }
     }
-    else if (isStackEnabled()) {
+    else {
       // first of all we have to find tool window that was located at the same side and was hidden
 
-      WindowInfoImpl info2 = null;
-      while (!mySideStack.isEmpty(info.getAnchor())) {
-        final WindowInfoImpl storedInfo = mySideStack.pop(info.getAnchor());
-        if (storedInfo.isSplit() != info.isSplit()) {
-          continue;
-        }
+      if (isStackEnabled()) {
+        WindowInfoImpl info2 = null;
+        while (!mySideStack.isEmpty(info.getAnchor())) {
+          final WindowInfoImpl storedInfo = mySideStack.pop(info.getAnchor());
+          if (storedInfo.isSplit() != info.isSplit()) {
+            continue;
+          }
 
-        final WindowInfoImpl currentInfo = getRegisteredInfoOrLogError(Objects.requireNonNull(storedInfo.getId()));
-        // SideStack contains copies of real WindowInfos. It means that
-        // these stored infos can be invalid. The following loop removes invalid WindowInfos.
-        if (storedInfo.getAnchor() == currentInfo.getAnchor() &&
-            storedInfo.getType() == currentInfo.getType() &&
-            storedInfo.isAutoHide() == currentInfo.isAutoHide()) {
-          info2 = storedInfo;
-          break;
+          final WindowInfoImpl currentInfo = getRegisteredInfoOrLogError(Objects.requireNonNull(storedInfo.getId()));
+          // SideStack contains copies of real WindowInfos. It means that
+          // these stored infos can be invalid. The following loop removes invalid WindowInfos.
+          if (storedInfo.getAnchor() == currentInfo.getAnchor() &&
+              storedInfo.getType() == currentInfo.getType() &&
+              storedInfo.isAutoHide() == currentInfo.isAutoHide()) {
+            info2 = storedInfo;
+            break;
+          }
         }
-      }
-      if (info2 != null) {
-        showToolWindowImpl(Objects.requireNonNull(info2.getId()), false, commandList);
+        if (info2 != null) {
+          showToolWindowImpl(Objects.requireNonNull(info2.getId()), false, commandList);
+        }
       }
 
       // If we hide currently active tool window then we should activate the previous
@@ -944,16 +948,19 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
           }
           appendApplyWindowInfoCmd(info, commandsList);
           // store WindowInfo into the SideStack
-          if (info.isDocked() && !info.isAutoHide()) {
-            mySideStack.push(info);
+          if (isStackEnabled()) {
+            if (info.isDocked() && !info.isAutoHide()) {
+              mySideStack.push(info);
+            }
           }
         }
       }
       appendAddDecoratorCmd(decorator, toBeShownInfo, dirtyMode, commandsList);
 
       // Remove tool window from the SideStack.
-
-      mySideStack.remove(id);
+      if (isStackEnabled()) {
+        mySideStack.remove(id);
+      }
     }
 
     if (!toBeShownInfo.isShowStripeButton()) {
@@ -1130,7 +1137,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     // Save recent appearance of tool window
     myLayout.unregister(id);
     myActiveStack.remove(id, true);
-    mySideStack.remove(id);
+    if (isStackEnabled()) {
+      mySideStack.remove(id);
+    }
     appendRemoveButtonCmd(id, info, commandsList);
     appendApplyWindowInfoCmd(info, commandsList);
 
@@ -1714,7 +1723,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   @Override
   public void clearSideStack() {
-    mySideStack.clear();
+    if (isStackEnabled()) {
+      mySideStack.clear();
+    }
   }
 
   @Nullable
