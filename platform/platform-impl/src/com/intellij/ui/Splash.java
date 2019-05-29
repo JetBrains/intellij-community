@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -24,10 +23,8 @@ import java.util.List;
 /**
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
  * the tag attributes in ApplicationInfo.xsd file.
- *
- * @author Konstantin Bulenkov
  */
-public class Splash extends JDialog implements StartupProgress {
+public final class Splash extends JDialog implements StartupProgress {
   private static final float JBUI_INIT_SCALE = JBUI.scale(1f);
 
   private final ApplicationInfoEx myInfo;
@@ -61,7 +58,7 @@ public class Splash extends JDialog implements StartupProgress {
 
     myIcon = IconLoader.getIconSnapshot(IconLoader.getIcon(info.getSplashImageUrl(), Splash.class));
     Dimension size = new Dimension(myIcon.getIconWidth(), myIcon.getIconHeight());
-    if (Registry.is("suppress.focus.stealing") && Registry.is("suppress.focus.stealing.auto.request.focus")) {
+    if (Boolean.getBoolean("suppress.focus.stealing") && Boolean.getBoolean("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(false);
     }
     setSize(size);
