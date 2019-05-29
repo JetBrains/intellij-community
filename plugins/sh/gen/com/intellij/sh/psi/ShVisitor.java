@@ -158,6 +158,10 @@ public class ShVisitor extends PsiElementVisitor {
     visitCommand(o);
   }
 
+  public void visitFunctionName(@NotNull ShFunctionName o) {
+    visitCompositeElement(o);
+  }
+
   public void visitGenericCommandDirective(@NotNull ShGenericCommandDirective o) {
     visitSimpleCommand(o);
   }

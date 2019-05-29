@@ -85,7 +85,7 @@ public class ShStructureViewFactory implements PsiStructureViewFactory {
     }
 
     private static String getFunctionName(ShFunctionDefinition myElement) {
-      PsiElement word = myElement.getWord();
+      PsiElement word = myElement.getFunctionName();
       return word == null ? ShBundle.message("sh.unnamed.element.presentable.name") : word.getText();
     }
 

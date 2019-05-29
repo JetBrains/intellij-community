@@ -11,6 +11,9 @@ public interface ShFunctionDefinition extends ShCommand {
   ShBlock getBlock();
 
   @Nullable
+  ShFunctionName getFunctionName();
+
+  @Nullable
   PsiElement getLeftParen();
 
   @Nullable
@@ -18,8 +21,5 @@ public interface ShFunctionDefinition extends ShCommand {
 
   @Nullable
   PsiElement getFunction();
-
-  @Nullable
-  PsiElement getWord();
 
 }
