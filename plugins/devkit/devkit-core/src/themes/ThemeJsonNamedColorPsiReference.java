@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.references;
+package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.json.psi.*;
 import com.intellij.model.SymbolResolveResult;
@@ -17,10 +17,10 @@ import java.util.Collections;
 /**
  * @author Konstantin Bulenkov
  */
-public class ThemeJsonNamedColorPsiReference extends JsonSchemaBaseReference<JsonLiteral> {
+class ThemeJsonNamedColorPsiReference extends JsonSchemaBaseReference<JsonLiteral> {
   private final String myName;
 
-  public ThemeJsonNamedColorPsiReference(JsonLiteral element) {
+  ThemeJsonNamedColorPsiReference(JsonLiteral element) {
     super(element, element.getTextLength() >= 2 ? new TextRange(1, element.getTextLength() - 1) : TextRange.EMPTY_RANGE);
     myName = StringUtil.unquoteString(element.getText());
   }
@@ -37,7 +37,7 @@ public class ThemeJsonNamedColorPsiReference extends JsonSchemaBaseReference<Jso
           if (child instanceof JsonProperty && ((JsonProperty)child).getName().equals("colors")) {
             JsonValue colors = ((JsonProperty)child).getValue();
             if (colors != null) {
-              for (PsiElement namedColor: colors.getChildren()) {
+              for (PsiElement namedColor : colors.getChildren()) {
                 if (namedColor instanceof JsonProperty && ((JsonProperty)namedColor).getName().equals(myName)) {
                   return ((JsonProperty)namedColor).getNameElement();
                 }

@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.references;
+package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.json.psi.JsonLiteral;
 import com.intellij.json.psi.JsonProperty;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class ThemeJsonPsiReferenceProvider extends PsiReferenceProvider {
+class ThemeJsonNamedColorPsiReferenceProvider extends PsiReferenceProvider {
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
