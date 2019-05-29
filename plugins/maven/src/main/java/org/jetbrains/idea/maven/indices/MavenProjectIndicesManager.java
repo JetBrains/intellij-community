@@ -124,7 +124,9 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         }
 
         List<MavenIndex> newIndices = new ArrayList<>(offlineIndices);
-        newIndices.add(localIndex);
+        if (localIndex != null) {
+          newIndices.add(localIndex);
+        }
         synchronized (this) {
           offlineIndexes = !remoteRepositoriesIdsAndUrls.isEmpty();
           myProjectIndices = newIndices;
