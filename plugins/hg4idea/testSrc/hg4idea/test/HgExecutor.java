@@ -19,11 +19,13 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.vcs.ExecutableHelper;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -66,8 +68,9 @@ public class HgExecutor {
   }
 
   public static String hg(@NotNull String command, boolean ignoreNonZeroExitCode) {
-    List<String> split = splitCommandInParameters(command);
-    split.add(0, HG_EXECUTABLE);
+    List<String> split = new ArrayList<>();
+    ContainerUtil.addAll(split, HG_EXECUTABLE, "--config", "ui.timeout=10");
+    split.addAll(splitCommandInParameters(command));
     debug("hg " + command);
     HgCommandResult result;
     try {
