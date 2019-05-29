@@ -23,6 +23,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
+    <highlightingPassFactory implementation="org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory"/>
 
     <runLineMarkerContributor language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
@@ -314,12 +315,6 @@
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
     </extensionPoint>
   </extensionPoints>
-
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory</implementation-class>
-    </component>
-  </project-components>
 
   <actions>
     <group id="PluginDeployActions">
