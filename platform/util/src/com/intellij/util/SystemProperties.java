@@ -73,6 +73,18 @@ public class SystemProperties {
     return defaultValue;
   }
 
+  public static float getFloatProperty(@NotNull String key, float defaultValue) {
+    String value = System.getProperty(key);
+    if (value != null) {
+      try {
+        return Float.parseFloat(value);
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+    return defaultValue;
+  }
+
   /**
    * Returns the value of given property as a boolean, or {@code defaultValue} if the property is not specified or malformed.
    */

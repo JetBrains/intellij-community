@@ -12,7 +12,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUIScale.DerivedScaleType;
 import com.intellij.util.ui.JBUIScale.Scale;
@@ -122,7 +121,9 @@ public class JBUI {
 
     @Override
     protected void onInitialized(@Nullable Float scale) {
-      if (isNotNull()) setUserScaleFactor(ObjectUtils.notNull(scale));
+      if (isNotNull()) {
+        setUserScaleFactor(scale);
+      }
     }
   };
 

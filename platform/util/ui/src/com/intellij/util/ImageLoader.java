@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,9 +41,12 @@ import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 
 public class ImageLoader implements Serializable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
+  @NotNull
+  private static Logger getLogger() {
+    return Logger.getInstance("#com.intellij.util.ImageLoader");
+  }
 
-  public static final long CACHED_IMAGE_MAX_SIZE = (long)(Registry.doubleValue("ide.cached.image.max.size") * 1024 * 1024);
+  public static final long CACHED_IMAGE_MAX_SIZE = (long)(SystemProperties.getFloatProperty("ide.cached.image.max.size", 1.5f) * 1024 * 1024);
   private static final ConcurrentMap<String, Pair<Image, Dimension2D>> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   public static void clearCache() {
@@ -106,7 +108,7 @@ public class ImageLoader implements Serializable {
       // Either {inputStream} or {path} should be defined
       if (stream == null) {
         if (StringUtil.isEmpty(path)) {
-          LOG.warn("empty image path", new Throwable());
+          getLogger().warn("empty image path", new Throwable());
           return null;
         }
 
@@ -201,7 +203,7 @@ public class ImageLoader implements Serializable {
         return image;
       }
       catch (Exception ex) {
-        LOG.error(ex);
+        getLogger().error(ex);
       }
       return null;
     }
@@ -274,8 +276,11 @@ public class ImageLoader implements Serializable {
       for (ImageDesc desc : this) {
         try {
           Image image = desc.load(useCache);
-          if (image == null) continue;
-          LOG.debug("Loaded image: " + desc);
+          if (image == null) {
+            continue;
+          }
+
+          getLogger().debug("Loaded image: " + desc);
           return converters.convert(image, desc);
         }
         catch (IOException ignore) {
@@ -391,7 +396,7 @@ public class ImageLoader implements Serializable {
       mediatracker.waitForID(1, 5000);
     }
     catch (InterruptedException ex) {
-      LOG.info(ex);
+      getLogger().info(ex);
     }
     return !mediatracker.isErrorID(1);
   }
@@ -530,7 +535,7 @@ public class ImageLoader implements Serializable {
       return ImageConverterChain.create().withFilter(filter).withHiDPI(ctx).convert(image, desc);
     }
     catch (IOException ex) {
-      LOG.error(ex);
+      getLogger().error(ex);
     }
     return null;
   }
@@ -544,7 +549,7 @@ public class ImageLoader implements Serializable {
     final int h = icon.getHeight(null);
 
     if (w <= 0 || h <= 0) {
-      LOG.error("negative image size: w=" + w + ", h=" + h + ", path=" + f.getPath());
+      getLogger().error("negative image size: w=" + w + ", h=" + h + ", path=" + f.getPath());
       return null;
     }
 
