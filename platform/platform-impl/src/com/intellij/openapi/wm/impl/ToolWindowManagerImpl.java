@@ -374,7 +374,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   private void restartWaitingForSecondPressAlarm() {
     myWaiterForSecondPress.cancelAllRequests();
-    myWaiterForSecondPress.addRequest(mySecondPressRunnable, Registry.intValue("actionSystem.keyGestureDblClickTime"));
+    myWaiterForSecondPress.addRequest(mySecondPressRunnable, SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650));
   }
 
   private boolean hasOpenEditorFiles() {
