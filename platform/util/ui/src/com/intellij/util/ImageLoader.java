@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
@@ -132,7 +133,7 @@ public class ImageLoader implements Serializable {
           }
 
           url = new URL(path);
-          if (isFromFile) {
+          if (isFromFile && !SystemInfoRt.isWindows) {
             byte[] bytes = Files.readAllBytes(Paths.get(url.getPath()));
             //noinspection IOResourceOpenedButNotSafelyClosed
             stream = new BufferExposingByteArrayInputStream(bytes);
