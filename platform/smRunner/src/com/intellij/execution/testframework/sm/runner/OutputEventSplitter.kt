@@ -35,11 +35,11 @@ import java.util.concurrent.atomic.AtomicReference
 abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean = false) {
 
   private val currentCyclicBufferSize = ConsoleBuffer.getCycleBufferSize()
-  private val prevRefs: Map<Key<*>, AtomicReference<Output>> =
-    listOf(ProcessOutputTypes.STDOUT, ProcessOutputTypes.STDERR, ProcessOutputTypes.SYSTEM)
+  private val prevRefs: Map<ProcessOutputType, AtomicReference<Output>> =
+    listOf(ProcessOutputType.STDOUT, ProcessOutputType.STDERR, ProcessOutputType.SYSTEM)
       .map { it to AtomicReference<Output>() }.toMap()
 
-  private val Key<*>.prevRef get() = prevRefs[if (this is ProcessOutputType) baseOutputType else this]!!
+  private val ProcessOutputType.prevRef get() = prevRefs[baseOutputType.baseOutputType]
 
 
   /**
@@ -51,8 +51,14 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
    * Make sure you do not process same type from different threads.
    */
   fun process(text: String, outputType: Key<*>) {
+    val prevRef = (outputType as? ProcessOutputType)?.prevRef
+    if (prevRef == null) {
+      flushInternal(text, outputType)
+      return
+    }
+
     var mergedText = text
-    outputType.prevRef.getAndSet(null)?.let {
+    prevRef.getAndSet(null)?.let {
       if (it.outputType == outputType) {
         mergedText = it.text + text
       }
@@ -61,7 +67,7 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
       }
     }
     processInternal(mergedText, outputType)?.let {
-      outputType.prevRef.set(Output(it, outputType))
+      prevRef.set(Output(it, outputType))
     }
   }
 
@@ -72,9 +78,9 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
    * */
   abstract fun onTextAvailable(text: String, outputType: Key<*>)
 
-  private fun processInternal(text: String, outputType: Key<*>): String? {
+  private fun processInternal(text: String, outputType: ProcessOutputType): String? {
     var from = 0
-    val processServiceMessages = outputType is ProcessOutputType && outputType.isStdout
+    val processServiceMessages = outputType.isStdout
     // new line char and teamcity message start are two reasons to flush previous text
     var newLineInd = text.indexOf(NEW_LINE)
     var teamcityMessageStartInd = if (processServiceMessages) text.indexOf(SERVICE_MESSAGE_START) else -1
@@ -126,7 +132,7 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
     return 0
   }
 
-  private data class Output(val text: String, val outputType: Key<*>)
+  private data class Output(val text: String, val outputType: ProcessOutputType)
 
   /**
    * Flush remainder. Call as last step.
