@@ -174,14 +174,11 @@ class RefreshSessionImpl extends RefreshSession {
   }
 
   void fireEvents() {
-    if (!myHaveEventsToFire || ApplicationManager.getApplication().isDisposed()) {
-      mySemaphore.up();
-      return;
-    }
-
     try {
-      if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + myEvents);
-      WriteAction.run(this::fireEventsInWriteAction);
+      if (myHaveEventsToFire && !ApplicationManager.getApplication().isDisposed()) {
+        if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + myEvents);
+        WriteAction.run(this::fireEventsInWriteAction);
+      }
     }
     finally {
       mySemaphore.up();
