@@ -1,5 +1,6 @@
 package circlet.tools
 
+import circlet.plugins.pipelines.ui.*
 import circlet.utils.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.wm.*
@@ -7,9 +8,11 @@ import com.intellij.openapi.wm.ex.*
 import com.intellij.ui.components.*
 import com.intellij.ui.content.*
 
-class CircletToolWindowFactory : ToolWindowFactory, DumbAware {
+class CircletToolWindowFactory : ToolWindowFactory, DumbAware, LifetimedComponent by SimpleLifetimedComponent() {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val panel = Panel(title = null)
+        panel.add(CircletScriptsView(lifetime, project).createView())
+
 
         val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false)
 
