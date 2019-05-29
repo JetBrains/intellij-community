@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -121,7 +121,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     if (files == null) return;
 
     for (File file : files) {
-      if (FileUtil.isJarOrZip(file)) {
+      if (FileUtilRt.isJarOrZip(file)) {
         URL url = file.toURI().toURL();
         if (!selfRootUrl.equals(url)) {
           classPath.add(url);

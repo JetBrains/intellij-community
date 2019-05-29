@@ -1444,20 +1444,6 @@ public class FileUtil extends FileUtilRt {
     return list;
   }
 
-  public static boolean isJarOrZip(@NotNull File file) {
-    return isJarOrZip(file, true);
-  }
-
-  public static boolean isJarOrZip(@NotNull File file, boolean isCheckIsDirectory) {
-    if (isCheckIsDirectory && file.isDirectory()) {
-      return false;
-    }
-
-    // do not use getName to avoid extra String creation (File.getName() calls substring)
-    final String path = file.getPath();
-    return StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip");
-  }
-
   public static boolean visitFiles(@NotNull File root, @NotNull Processor<? super File> processor) {
     if (!processor.process(root)) {
       return false;
@@ -1473,25 +1459,6 @@ public class FileUtil extends FileUtilRt {
     }
 
     return true;
-  }
-
-  /**
-   * Like {@link Properties#load(Reader)}, but preserves the order of key/value pairs.
-   */
-  @NotNull
-  public static Map<String, String> loadProperties(@NotNull Reader reader) throws IOException {
-    final Map<String, String> map = new LinkedHashMap<>();
-
-    new Properties() {
-      @Override
-      public synchronized Object put(Object key, Object value) {
-        map.put(String.valueOf(key), String.valueOf(value));
-        //noinspection UseOfPropertiesAsHashtable
-        return super.put(key, value);
-      }
-    }.load(reader);
-
-    return map;
   }
 
   public static boolean isRootPath(@NotNull String path) {

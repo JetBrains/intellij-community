@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
@@ -95,7 +96,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
             try {
               Reader fis = new BufferedReader(new FileReader(systemPropertiesFilePath));
               try {
-                Map<String, String> properties = FileUtil.loadProperties(fis);
+                Map<String, String> properties = PropertiesUtil.loadProperties(fis);
                 properties.forEach((pName, pValue) -> javaParameters.getVMParametersList().addProperty(pName, pValue));
               }
               finally {

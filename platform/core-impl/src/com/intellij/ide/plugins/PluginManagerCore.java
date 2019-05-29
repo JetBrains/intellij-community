@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationExc
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serialization.SerializationException;
@@ -829,7 +830,7 @@ public class PluginManagerCore {
               descriptor = descriptor1;
             }
           }
-          else if (FileUtil.isJarOrZip(f, false)) {
+          else if (FileUtilRt.isJarOrZip(f, false)) {
             if (files.length == 1) {
               pluginJarFiles = Collections.singletonList(f);
             }

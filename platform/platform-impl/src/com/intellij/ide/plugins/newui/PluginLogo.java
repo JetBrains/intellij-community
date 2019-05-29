@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Url;
@@ -229,7 +230,7 @@ public class PluginLogo {
                                          @NotNull LazyPluginLogoIcon lazyIcon,
                                          @NotNull File path,
                                          boolean put) {
-    if (!FileUtil.isJarOrZip(path) || !path.exists()) {
+    if (!FileUtilRt.isJarOrZip(path) || !path.exists()) {
       return false;
     }
     try (ZipFile zipFile = new ZipFile(path)) {
