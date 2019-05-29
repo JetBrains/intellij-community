@@ -34,8 +34,7 @@ public interface ApplicationStarter {
    *
    * @param args program arguments (including the selector)
    */
-  default void premain(String[] args) {
-  }
+  default void premain(String[] args) { }
 
   /**
    * <p>Called when application has been initialized. Invoked in event dispatch thread.</p>
