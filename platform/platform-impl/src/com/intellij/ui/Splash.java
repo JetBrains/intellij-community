@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
@@ -23,7 +22,7 @@ import java.util.List;
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
  * the tag attributes in ApplicationInfo.xsd file.
  */
-public final class Splash extends JDialog {
+public final class Splash extends Window {
   private static final float JBUI_INIT_SCALE = JBUI.scale(1f);
 
   private final ApplicationInfoEx myInfo;
@@ -34,12 +33,12 @@ public final class Splash extends JDialog {
   private int myProgressLastPosition = 0;
   private Icon myProgressTail;
   private final List<ProgressSlide> myProgressSlideImages = new ArrayList<>();
-  private final Icon myIcon;
+  private final ImageIcon myIcon;
 
   private final NotNullLazyValue<Font> myFont = createFont();
 
   public Splash(@NotNull ApplicationInfoEx info) {
-    super((Frame)null, false);
+    super(null);
 
     myInfo = info;
     if (info instanceof ApplicationInfoImpl) {
@@ -49,13 +48,10 @@ public final class Splash extends JDialog {
       myProgressY = appInfo.getProgressY();
       myProgressTail = appInfo.getProgressTailIcon();
     }
-    setUndecorated(true);
-    if (!SystemInfo.isLinux) {
-      setResizable(false);
-    }
+
     setFocusableWindowState(false);
 
-    myIcon = IconLoader.getIconSnapshot(IconLoader.getIcon(info.getSplashImageUrl(), Splash.class));
+    myIcon = (ImageIcon)IconLoader.getIconSnapshot(IconLoader.getIcon(info.getSplashImageUrl(), Splash.class));
     Dimension size = new Dimension(myIcon.getIconWidth(), myIcon.getIconHeight());
     if (Boolean.getBoolean("suppress.focus.stealing") && Boolean.getBoolean("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(false);
@@ -66,6 +62,7 @@ public final class Splash extends JDialog {
     initImages();
 
     setVisible(true);
+    paint(getGraphics());
     toFront();
   }
 
@@ -125,14 +122,6 @@ public final class Splash extends JDialog {
       myProgress = progress;
       paintProgress(getGraphics());
     }
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
-
-    DialogWrapper.cleanupRootPane(rootPane);
-    rootPane = null;
   }
 
   private void paintProgress(@NotNull Graphics g) {
