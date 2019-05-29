@@ -183,7 +183,7 @@ public class SearchDialog extends DialogWrapper {
 
   private boolean isCompiled() {
     try {
-      return PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false) != null;
+      return PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false, false) != null;
     } catch (MalformedPatternException e) {
       return false;
     }
