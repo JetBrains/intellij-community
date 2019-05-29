@@ -2,8 +2,12 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
@@ -12,9 +16,11 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformLiteFixture;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
@@ -28,13 +34,14 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.Assert.*;
+import static com.intellij.testFramework.UsefulTestCase.*;
 
 public class VfsUtilTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
@@ -93,7 +100,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     VirtualFile child = vDir.findChild(" ");
     assertNull(child);
 
-    UsefulTestCase.assertEmpty(vDir.getChildren());
+    assertEmpty(vDir.getChildren());
   }
 
   @Test
@@ -326,5 +333,59 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       assertSame(old, ProjectManager.getInstance());
       WriteAction.runAndWait(() -> Disposer.dispose(test));
     }
+  }
+
+  @Test(timeout = 20_000)
+  public void olderRefreshWithLessSpecificTransactionDoesNotBlockNewerRefresh() {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      File tempDir = myTempDir.newFolder();
+
+      File dir1 = new File(tempDir, "dir1");
+      assertTrue(dir1.mkdirs());
+
+      File dir2 = new File(tempDir, "dir2");
+      assertTrue(dir2.mkdirs());
+
+      VirtualFile vDir = VfsUtil.findFileByIoFile(tempDir, true);
+      assertSize(2, vDir.getChildren());
+      VirtualFile vDir1 = vDir.getChildren()[0];
+      VirtualFile vDir2 = vDir.getChildren()[1];
+      assertEquals(dir1.getName(), vDir1.getName());
+
+      assertEmpty(vDir1.getChildren());
+      assertEmpty(vDir2.getChildren());
+
+      assertTrue(new File(dir1, "a.txt").createNewFile());
+      assertTrue(new File(dir2, "a.txt").createNewFile());
+
+      List<String> log = new ArrayList<>();
+
+      Semaphore semaphore = new Semaphore(1);
+      RefreshSession nonModalSession = RefreshQueue.getInstance().createSession(true, true, () -> {
+        log.add("non-modal finished");
+        semaphore.up();
+      });
+      nonModalSession.addFile(vDir1);
+      nonModalSession.launch();
+
+      TransactionGuard.submitTransaction(getTestRootDisposable(), () -> ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          assertFalse(ApplicationManager.getApplication().isDispatchThread());
+
+          vDir2.refresh(false, true, () -> log.add("modal finished"));
+          assertSize(1, vDir2.getChildren());
+        }
+      }));
+
+      int i = 0;
+      while (!semaphore.waitFor(1) & i < 10_000) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+
+      assertSize(1, vDir1.getChildren());
+      assertSize(1, vDir2.getChildren());
+      assertOrderedEquals(log, "modal finished", "non-modal finished");
+    });
   }
 }

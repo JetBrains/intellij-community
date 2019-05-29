@@ -42,6 +42,8 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
@@ -50,6 +52,9 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.RefreshQueueImpl");
 
   private final Executor myQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", PooledThreadExecutor.INSTANCE, 1, this);
+  private final ExecutorService myEventProcessingQueue =
+    AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", PooledThreadExecutor.INSTANCE, 1, this);
+
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(VfsBundle.message("file.synchronize.progress"));
   private final TLongObjectHashMap<RefreshSession> mySessions = new TLongObjectHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
@@ -84,26 +89,27 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
         doScan(session);
       }
       finally {
-        List<? extends VFileEvent> events = session.getEvents();
-        while (true) {
-          boolean success = ProgressIndicatorUtils.runWithWriteActionPriority(
-            () -> processAndFireEvents(session, transaction, events),
-            new SensitiveProgressWrapper(myRefreshIndicator));
-          if (success) {
-            myRefreshIndicator.stop();
-            break;
-          }
+        myRefreshIndicator.stop();
+        TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, () -> myEventProcessingQueue.submit(() -> {
+          List<? extends VFileEvent> events = session.getEvents();
+          while (true) {
+            AtomicBoolean success = new AtomicBoolean();
+            ProgressIndicatorUtils.runWithWriteActionPriority(() -> success.set(processAndFireEvents(session, transaction, events)), new SensitiveProgressWrapper(myRefreshIndicator));
+            if (success.get()) {
+              break;
+            }
 
-          ProgressIndicatorUtils.yieldToPendingWriteActions();
-        }
+            ProgressIndicatorUtils.yieldToPendingWriteActions();
+          }
+        }));
       }
     });
     myEventCounter.eventHappened(session);
   }
 
-  private static void processAndFireEvents(@NotNull RefreshSessionImpl session,
-                                           @Nullable TransactionId transaction,
-                                           @NotNull List<? extends VFileEvent> events) {
+  private static boolean processAndFireEvents(@NotNull RefreshSessionImpl session,
+                                              @Nullable TransactionId transaction,
+                                              @NotNull List<? extends VFileEvent> events) {
     List<? extends VFileEvent> validEvents = ContainerUtil.filter(events, e -> {
       VirtualFile file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
       return file == null || file.isValid();
@@ -124,6 +130,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
         throw new ProcessCanceledException();
       }
     }
+    return true;
   }
 
   private void doScan(@NotNull RefreshSessionImpl session) {
