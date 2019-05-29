@@ -18,8 +18,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileStatusEnum;
@@ -31,7 +31,6 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -45,10 +44,10 @@ public class HgUpdateTest extends HgCollaborativeTest {
   private File projectRepo;
   private File remoteRepo;
 
-  @BeforeMethod
+  @Before
   @Override
-  protected void setUp(Method testMethod) throws Exception {
-    super.setUp(testMethod);
+  public void setUp() throws Exception {
+    super.setUp();
     projectRepoVirtualFile = myRepo.getDir();
     projectRepo = new File(myRepo.getDir().getPath());
     remoteRepo = new File(myParentRepo.getDir().getPath());

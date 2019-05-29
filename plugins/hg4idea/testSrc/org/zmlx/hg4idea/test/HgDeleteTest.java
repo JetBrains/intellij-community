@@ -15,8 +15,8 @@ package org.zmlx.hg4idea.test;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.junit.Test;
 import org.testng.Assert;
-import org.testng.annotations.Test;
 
 import java.io.File;
 

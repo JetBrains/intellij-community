@@ -5,7 +5,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.vcsUtil.VcsUtil;
-import org.testng.annotations.Test;
+import org.junit.Test;
 import org.zmlx.hg4idea.HgVcs;
 
 import java.io.File;
