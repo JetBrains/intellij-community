@@ -35,7 +35,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.java.debugger.memory.agent",
     "intellij.xml.dom.impl",
     "intellij.java.execution.impl",
-    "intellij.platform.externalSystem.impl",
     "intellij.java.ui",
     "intellij.java.structureView",
     "intellij.java.manifest",
