@@ -154,6 +154,7 @@ public class SwitchUtils {
   }
 
   public static PsiExpression getSwitchSelectorExpression(PsiExpression expression) {
+    if (expression == null) return null;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
     final PsiExpression selectorExpression = getPossibleSwitchSelectorExpression(expression, languageLevel);
     return canBeSwitchSelectorExpression(selectorExpression, languageLevel) ? selectorExpression : null;
