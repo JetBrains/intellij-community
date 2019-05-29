@@ -44,13 +44,26 @@ public class HgUpdateTest extends HgCollaborativeTest {
   private File projectRepo;
   private File remoteRepo;
 
+  @Override
+  protected HgTestRepository initRepositories() throws Exception {
+    myParentRepo = HgTestRepository.create(this);
+    remoteRepo = new File(myParentRepo.getDirFixture().getTempDirPath());
+
+    File aFile = fillFile(remoteRepo, new String[]{"com", "a.txt"}, "file contents");
+    verify(runHg(remoteRepo, "add", aFile.getPath()));
+    verify(runHg(remoteRepo, "status"), HgTestOutputParser.added("com", "a.txt"));
+    verify(runHg(remoteRepo, "commit", "-m", "initial contents"));
+
+    myRepo = myParentRepo.cloneRepository();
+    projectRepo = new File(myRepo.getDirFixture().getTempDirPath());
+    return myRepo;
+  }
+
   @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();
     projectRepoVirtualFile = myRepo.getDir();
-    projectRepo = new File(myRepo.getDir().getPath());
-    remoteRepo = new File(myParentRepo.getDir().getPath());
   }
 
   @Test
