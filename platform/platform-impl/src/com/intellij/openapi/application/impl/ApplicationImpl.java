@@ -149,14 +149,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       Disposer.register(this, Disposer.newDisposable(), "ui");
     }
 
-    if (isUnitTestMode && IdeaApplication.getInstance() == null) {
+    if (isUnitTestMode && isCommandLine) {
       String[] args = {"inspect", "", "", ""};
       Main.setFlags(args); // set both isHeadless and isCommandLine to true
       System.setProperty(IdeaApplication.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
       assert Main.isHeadless();
       assert Main.isCommandLine();
       //noinspection ResultOfObjectAllocationIgnored
-      new IdeaApplication(args);
+      IdeaApplication.createAppStarter(IdeaApplication.processProgramArguments(args), null);
     }
 
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
@@ -803,7 +803,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
         if (Boolean.getBoolean("idea.test.guimode")) {
-          IdeaApplication.getInstance().shutdown();
+          IdeaApplication.shutdown();
         }
         return;
       }

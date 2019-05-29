@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ImageLoader;
@@ -20,6 +19,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
@@ -37,7 +37,7 @@ public final class Splash extends Window {
   private double myProgress;
   private int myProgressLastPosition = 0;
   private Icon myProgressTail;
-  private final List<ProgressSlide> myProgressSlideImages = new ArrayList<>();
+  private final List<ProgressSlideAndImage> myProgressSlideImages = new ArrayList<>();
   private final Image myImage;
 
   private final NotNullLazyValue<Font> myFont = createFont();
@@ -56,10 +56,7 @@ public final class Splash extends Window {
 
     setFocusableWindowState(false);
 
-    URL iconUrl = getClass().getResource(info.getSplashImageUrl());
-    myImage = ImageLoader.loadFromUrl(iconUrl, true, false, false, null, JBUIScale.ScaleContext.create());
-    assert myImage != null;
-
+    myImage = loadImage(info.getSplashImageUrl());
     myWidth = myImage.getWidth(null);
     myHeight = myImage.getHeight(null);
     Dimension size = new Dimension(myWidth, myHeight);
@@ -74,6 +71,20 @@ public final class Splash extends Window {
     setVisible(true);
     paint(getGraphics());
     toFront();
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+  }
+
+  @NotNull
+  private static Image loadImage(@NotNull String url) {
+    URL imageUrl = Splash.class.getResource(url);
+    if (imageUrl == null) {
+      throw new IllegalStateException("Cannot find image: " + url);
+    }
+    return Objects.requireNonNull(ImageLoader.loadFromUrl(imageUrl, Splash.class, true, false, false, null, JBUIScale.ScaleContext.create()));
   }
 
   @NotNull
@@ -97,7 +108,7 @@ public final class Splash extends Window {
 
   @Override
   public void paint(Graphics g) {
-    UIUtil.drawImage(g, myImage, 0, 0, this);
+    UIUtil.drawImage(g, myImage, 0, 0, null);
     paintProgress(g);
   }
 
@@ -108,13 +119,9 @@ public final class Splash extends Window {
     }
 
     for (ProgressSlide progressSlide : progressSlides) {
-      String url = progressSlide.getUrl();
-      Icon icon = IconLoader.getIcon(url);
-      progressSlide.setImageIcon(icon);
-      myProgressSlideImages.add(progressSlide);
+      myProgressSlideImages.add(new ProgressSlideAndImage(progressSlide, loadImage(progressSlide.getUrl())));
     }
-
-    myProgressSlideImages.sort(Comparator.comparing(ProgressSlide::getProgressRation));
+    myProgressSlideImages.sort(Comparator.comparing(t -> t.slide.getProgressRation()));
   }
 
   private void setLocationInTheCenterOfScreen() {
@@ -161,10 +168,10 @@ public final class Splash extends Window {
     myProgressLastPosition = progressWidth;
   }
 
-  private void paintSlides(Graphics g) {
-    for (ProgressSlide progressSlide : myProgressSlideImages) {
-      if (progressSlide.getProgressRation() <= myProgress) {
-        progressSlide.getLoadedImage().paintIcon(this, g, 0, 0);
+  private void paintSlides(@NotNull Graphics g) {
+    for (ProgressSlideAndImage progressSlide : myProgressSlideImages) {
+      if (progressSlide.slide.getProgressRation() <= myProgress) {
+        UIUtil.drawImage(g, progressSlide.image, 0, 0, null);
       }
     }
   }
@@ -221,5 +228,15 @@ public final class Splash extends Window {
 
   private static int uiScale(int i) {
     return (int)(i * JBUI_INIT_SCALE);
+  }
+}
+
+final class ProgressSlideAndImage {
+  public final ProgressSlide slide;
+  public final Image image;
+
+  ProgressSlideAndImage(@NotNull ProgressSlide slide, @NotNull Image image) {
+    this.slide = slide;
+    this.image = image;
   }
 }

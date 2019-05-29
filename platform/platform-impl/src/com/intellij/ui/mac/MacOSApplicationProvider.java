@@ -75,7 +75,7 @@ public class MacOSApplicationProvider {
         if (list.isEmpty()) return;
         submit("OpenFile", () -> {
           if (ProjectUtil.tryOpenFileList(project, list, "MacMenu")) {
-            IdeaApplication.getInstance().disableProjectLoad();
+            IdeaApplication.disableProjectLoad();
           }
         });
       });

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.Splash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,12 +84,16 @@ public final class SplashManager {
 
   @Nullable
   public static Runnable getHideTask() {
-    Splash splash = SPLASH_WINDOW;
-    if (splash == null) {
+    if (SPLASH_WINDOW == null) {
       return null;
     }
 
+    Ref<Splash> splash = new Ref<>(SPLASH_WINDOW);
     SPLASH_WINDOW = null;
-    return () -> splash.dispose();
+    return () -> {
+      splash.get().setVisible(false);
+      splash.get().dispose();
+      splash.set(null);
+    };
   }
 }
