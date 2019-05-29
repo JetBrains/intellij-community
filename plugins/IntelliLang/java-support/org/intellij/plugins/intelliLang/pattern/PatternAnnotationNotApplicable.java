@@ -30,28 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public class PatternAnnotationNotApplicable extends LocalInspectionTool {
-  @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return PatternValidator.PATTERN_VALIDATION;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Pattern Annotation not applicable";
-  }
 
   @Override
   @NotNull
