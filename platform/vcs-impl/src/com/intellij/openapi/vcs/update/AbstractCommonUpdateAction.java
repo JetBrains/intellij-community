@@ -250,8 +250,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     presentation.setText(actionName);
 
     if (supportingVcsesAreEmpty(vcsManager, myActionInfo)) {
-      presentation.setVisible(myAlwaysVisible);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
