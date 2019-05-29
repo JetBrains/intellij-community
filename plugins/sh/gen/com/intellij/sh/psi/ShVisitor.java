@@ -159,7 +159,7 @@ public class ShVisitor extends PsiElementVisitor {
   }
 
   public void visitFunctionName(@NotNull ShFunctionName o) {
-    visitCompositeElement(o);
+    visitFunctionNamedElement(o);
   }
 
   public void visitGenericCommandDirective(@NotNull ShGenericCommandDirective o) {
@@ -324,6 +324,10 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitWhileCommand(@NotNull ShWhileCommand o) {
     visitCommand(o);
+  }
+
+  public void visitFunctionNamedElement(@NotNull ShFunctionNamedElement o) {
+    visitCompositeElement(o);
   }
 
   public void visitLazyBlock(@NotNull ShLazyBlock o) {

@@ -9,8 +9,10 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
+import com.intellij.openapi.util.Iconable.IconFlags;
+import javax.swing.Icon;
 
-public class ShFunctionNameImpl extends ShCompositeElementImpl implements ShFunctionName {
+public class ShFunctionNameImpl extends ShFunctionNamedElementImpl implements ShFunctionName {
 
   public ShFunctionNameImpl(ASTNode node) {
     super(node);
@@ -29,6 +31,12 @@ public class ShFunctionNameImpl extends ShCompositeElementImpl implements ShFunc
   @NotNull
   public PsiElement getWord() {
     return findNotNullChildByType(WORD);
+  }
+
+  @Override
+  @NotNull
+  public Icon getIcon(@IconFlags int flags) {
+    return ShPsiImplUtil.getIcon(this, flags);
   }
 
 }

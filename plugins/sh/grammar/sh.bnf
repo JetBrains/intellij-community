@@ -218,8 +218,11 @@ private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '
 function_definition ::= &(function | word '(') function_definition_inner {extends=command}
 private function_definition_inner ::=           function_name argument_list  newlines block
                                      | function function_name argument_list? newlines block {pin(".*")="function|argument_list"}
-
-function_name ::=  word
+function_name ::=  word {
+  methods=[getIcon]
+  implements="com.intellij.sh.psi.ShFunctionNamedElement"
+  mixin="com.intellij.sh.psi.impl.ShFunctionNamedElementImpl"
+}
 
 private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}
 private argument_list_recover ::= !('\n'| '{')

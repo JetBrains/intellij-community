@@ -49,6 +49,7 @@ public class ShRenameAllOccurrencesIntention extends BaseIntentionAction impleme
   @Nullable
   @Override
   public ShortcutSet getShortcut() {
+    //return CustomShortcutSet.fromString("ctrl shift F6"); //TODO:: Replace to use this shortcut
     return CommonShortcuts.getRename();
   }
 }
