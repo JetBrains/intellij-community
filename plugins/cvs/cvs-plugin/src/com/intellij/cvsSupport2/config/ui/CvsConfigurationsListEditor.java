@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.config.ui;
 
 import com.intellij.CvsBundle;
@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputException;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.DumbAwareActionButton;
@@ -135,7 +135,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
         }
       };
     duplicateButton.setShortcut(new CustomShortcutSet(
-      KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)));
+      KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfoRt.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)));
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList).setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton anActionButton) {

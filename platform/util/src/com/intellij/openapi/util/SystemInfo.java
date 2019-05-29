@@ -68,18 +68,18 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
-    return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
+    return StringUtil.compareVersionNumbers(SystemInfoRt.OS_VERSION, version) >= 0;
   }
 
   /* version numbers from http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832.aspx */
-  public static final boolean isWin2kOrNewer = isWindows && isOsVersionAtLeast("5.0");
-  public static final boolean isWinXpOrNewer = isWindows && isOsVersionAtLeast("5.1");
-  public static final boolean isWinVistaOrNewer = isWindows && isOsVersionAtLeast("6.0");
-  public static final boolean isWin7OrNewer = isWindows && isOsVersionAtLeast("6.1");
-  public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
-  public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
+  public static final boolean isWin2kOrNewer = SystemInfoRt.isWindows && isOsVersionAtLeast("5.0");
+  public static final boolean isWinXpOrNewer = SystemInfoRt.isWindows && isOsVersionAtLeast("5.1");
+  public static final boolean isWinVistaOrNewer = SystemInfoRt.isWindows && isOsVersionAtLeast("6.0");
+  public static final boolean isWin7OrNewer = SystemInfoRt.isWindows && isOsVersionAtLeast("6.1");
+  public static final boolean isWin8OrNewer = SystemInfoRt.isWindows && isOsVersionAtLeast("6.2");
+  public static final boolean isWin10OrNewer = SystemInfoRt.isWindows && isOsVersionAtLeast("10.0");
 
-  public static final boolean isXWindow = isUnix && !isMac;
+  public static final boolean isXWindow = SystemInfoRt.isUnix && !SystemInfoRt.isMac;
   public static final boolean isWayland = isXWindow && !StringUtil.isEmpty(System.getenv("WAYLAND_DISPLAY"));
   /* http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669 */
   public static final boolean isGNOME = isXWindow &&
@@ -88,14 +88,14 @@ public class SystemInfo extends SystemInfoRt {
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
   public static final boolean isKDE = isXWindow && !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
-  public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
+  public static final boolean isMacSystemMenu = SystemInfoRt.isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
-  public static final boolean areSymLinksSupported = isUnix || isWinVistaOrNewer;
+  public static final boolean areSymLinksSupported = SystemInfoRt.isUnix || isWinVistaOrNewer;
 
   public static final boolean is32Bit = SystemInfoRt.is32Bit;
   public static final boolean is64Bit = SystemInfoRt.is64Bit;
-  public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
+  public static final boolean isMacIntel64 = SystemInfoRt.isMac && "x86_64".equals(OS_ARCH);
 
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new PathExecLazyValue("xdg-open");
   public static boolean hasXdgOpen() {
@@ -107,21 +107,21 @@ public class SystemInfo extends SystemInfoRt {
     return isXWindow && ourHasXdgMime.getValue();
   }
 
-  public static final boolean isMacOSTiger = isMac && isOsVersionAtLeast("10.4");
-  public static final boolean isMacOSLeopard = isMac && isOsVersionAtLeast("10.5");
-  public static final boolean isMacOSSnowLeopard = isMac && isOsVersionAtLeast("10.6");
-  public static final boolean isMacOSLion = isMac && isOsVersionAtLeast("10.7");
-  public static final boolean isMacOSMountainLion = isMac && isOsVersionAtLeast("10.8");
-  public static final boolean isMacOSMavericks = isMac && isOsVersionAtLeast("10.9");
-  public static final boolean isMacOSYosemite = isMac && isOsVersionAtLeast("10.10");
-  public static final boolean isMacOSElCapitan = isMac && isOsVersionAtLeast("10.11");
-  public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
-  public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
-  public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
+  public static final boolean isMacOSTiger = SystemInfoRt.isMac && isOsVersionAtLeast("10.4");
+  public static final boolean isMacOSLeopard = SystemInfoRt.isMac && isOsVersionAtLeast("10.5");
+  public static final boolean isMacOSSnowLeopard = SystemInfoRt.isMac && isOsVersionAtLeast("10.6");
+  public static final boolean isMacOSLion = SystemInfoRt.isMac && isOsVersionAtLeast("10.7");
+  public static final boolean isMacOSMountainLion = SystemInfoRt.isMac && isOsVersionAtLeast("10.8");
+  public static final boolean isMacOSMavericks = SystemInfoRt.isMac && isOsVersionAtLeast("10.9");
+  public static final boolean isMacOSYosemite = SystemInfoRt.isMac && isOsVersionAtLeast("10.10");
+  public static final boolean isMacOSElCapitan = SystemInfoRt.isMac && isOsVersionAtLeast("10.11");
+  public static final boolean isMacOSSierra = SystemInfoRt.isMac && isOsVersionAtLeast("10.12");
+  public static final boolean isMacOSHighSierra = SystemInfoRt.isMac && isOsVersionAtLeast("10.13");
+  public static final boolean isMacOSMojave = SystemInfoRt.isMac && isOsVersionAtLeast("10.14");
 
   @NotNull
   public static String getMacOSMajorVersion() {
-    return getMacOSMajorVersion(OS_VERSION);
+    return getMacOSMajorVersion(SystemInfoRt.OS_VERSION);
   }
 
   public static String getMacOSMajorVersion(String version) {
@@ -131,17 +131,17 @@ public class SystemInfo extends SystemInfoRt {
 
   @NotNull
   public static String getMacOSVersionCode() {
-    return getMacOSVersionCode(OS_VERSION);
+    return getMacOSVersionCode(SystemInfoRt.OS_VERSION);
   }
 
   @NotNull
   public static String getMacOSMajorVersionCode() {
-    return getMacOSMajorVersionCode(OS_VERSION);
+    return getMacOSMajorVersionCode(SystemInfoRt.OS_VERSION);
   }
 
   @NotNull
   public static String getMacOSMinorVersionCode() {
-    return getMacOSMinorVersionCode(OS_VERSION);
+    return getMacOSMinorVersionCode(SystemInfoRt.OS_VERSION);
   }
 
   @NotNull
@@ -207,7 +207,8 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
-  @Deprecated public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
+  @Deprecated public static final boolean isWindowsXP = SystemInfoRt.isWindows && (SystemInfoRt.OS_VERSION.equals("5.1") || SystemInfoRt.OS_VERSION
+    .equals("5.2"));
 
   /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
   @Deprecated public static final boolean isAMD64 = "amd64".equals(OS_ARCH);

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -346,7 +347,7 @@ class LocalFileSystemRefreshWorker {
       boolean isSpecial = attrs.isOther();
       boolean isLink = attrs.isSymbolicLink();
 
-      if (isSpecial && isDirectory && SystemInfo.isWindows) {
+      if (isSpecial && isDirectory && SystemInfoRt.isWindows) {
         // Windows junction is special directory, handle it as symlink
         isSpecial = false;
         isLink = true;
@@ -530,7 +531,7 @@ class LocalFileSystemRefreshWorker {
     long lastModified = a.lastModifiedTime().toMillis();
     boolean writable = isWritable(path, a, a.isDirectory());
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       boolean hidden = path.getParent() != null && ((DosFileAttributes)a).isHidden();
       return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, hidden, a.size(), lastModified, writable);
     }

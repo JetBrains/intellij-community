@@ -4,7 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -160,7 +160,7 @@ public class JBUI {
     public static float sysScale(@Nullable GraphicsConfiguration gc) {
     if (UIUtil.isJreHiDPIEnabled() && gc != null) {
       if (gc.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
-        if (SystemInfo.isMac && UIUtil.isJreHiDPI_earlierVersion()) {
+        if (SystemInfoRt.isMac && UIUtil.isJreHiDPI_earlierVersion()) {
           return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
         }
         return (float)gc.getDefaultTransform().getScaleX();
@@ -293,7 +293,7 @@ public class JBUI {
     }
 
     // Ignore the correction when UIUtil.DEF_SYSTEM_FONT_SIZE is overridden, see UIUtil.initSystemFontData.
-    if (SystemInfo.isLinux && scale == 1.25f && UIUtil.DEF_SYSTEM_FONT_SIZE == 12) {
+    if (SystemInfoRt.isLinux && scale == 1.25f && UIUtil.DEF_SYSTEM_FONT_SIZE == 12) {
       //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
     }
@@ -511,7 +511,7 @@ public class JBUI {
 
     @NotNull
     public static JBFont toolbarFont() {
-      return SystemInfo.isMac ? smallFont() : label();
+      return SystemInfoRt.isMac ? smallFont() : label();
     }
 
     @NotNull

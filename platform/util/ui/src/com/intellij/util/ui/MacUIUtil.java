@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -25,7 +26,7 @@ public class MacUIUtil {
   private MacUIUtil() {}
 
   public static void hideCursor() {
-    if (SystemInfo.isMac && Registry.is("ide.mac.hide.cursor.when.typing")) {
+    if (SystemInfoRt.isMac && Registry.is("ide.mac.hide.cursor.when.typing")) {
       Foundation.invoke("NSCursor", "setHiddenUntilMouseMoves:", true);
     }
   }
@@ -115,7 +116,7 @@ public class MacUIUtil {
   }
 
   public static void drawComboboxFocusRing(@NotNull final JComboBox combobox, @NotNull final Graphics g) {
-    if (SystemInfo.isMac && combobox.isEnabled() && combobox.isEditable() && UIUtil.isUnderAquaLookAndFeel()) {
+    if (SystemInfoRt.isMac && combobox.isEnabled() && combobox.isEditable() && UIUtil.isUnderAquaLookAndFeel()) {
       final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       if (focusOwner != null) {
         final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, focusOwner);

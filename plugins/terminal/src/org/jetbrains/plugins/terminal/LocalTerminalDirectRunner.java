@@ -5,12 +5,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessWaitFor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -131,20 +134,20 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
 
   private Map<String, String> getTerminalEnvironment() {
-    Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
-                                                                   : ContainerUtil.canonicalStrategy());
+    Map<String, String> envs = new THashMap<>(SystemInfoRt.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
+                                                                     : ContainerUtil.canonicalStrategy());
 
     EnvironmentVariablesData envData = TerminalOptionsProvider.getInstance().getEnvData();
     if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
     }
 
-    if (!SystemInfo.isWindows) {
+    if (!SystemInfoRt.isWindows) {
       envs.put("TERM", "xterm-256color");
     }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
     }
 
@@ -242,7 +245,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @NotNull
   public static String[] getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
-    if (SystemInfo.isUnix) {
+    if (SystemInfoRt.isUnix) {
       List<String> command = Lists.newArrayList(shellPath.split(" "));
 
       String shellCommand = command.size() > 0 ? command.get(0) : null;
@@ -252,7 +255,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         command.remove(0);
 
         if (!loginOrInteractive(command)) {
-          if (hasLoginArgument(shellName) && SystemInfo.isMac) {
+          if (hasLoginArgument(shellName) && SystemInfoRt.isMac) {
             command.add(LOGIN_CLI_OPTION);
           }
           command.add("-i");
@@ -263,7 +266,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         String rcFilePath = findRCFile(shellName);
 
         if (rcFilePath != null && shellIntegration) {
-          if (shellName.equals("bash") || (SystemInfo.isMac && shellName.equals("sh"))) {
+          if (shellName.equals("bash") || (SystemInfoRt.isMac && shellName.equals("sh"))) {
             addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
             // remove --login to enable --rcfile sourcing
             boolean loginShell = command.removeAll(LOGIN_CLI_OPTIONS);

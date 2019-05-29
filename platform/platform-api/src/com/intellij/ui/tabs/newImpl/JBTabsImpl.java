@@ -32,7 +32,6 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import com.jetbrains.rd.util.lifetime.Lifetime;
-import com.jetbrains.rd.util.reactive.PropertyCombinatorsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,6 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.rd.RdIdeaKt.childAtMouse;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.jetbrains.rdclient.util.idea.DisposableExKt.createLifetime;
 
@@ -266,7 +264,7 @@ public class JBTabsImpl extends JComponent
       int units = event.getUnitsToScroll();
 
       // Workaround for 'shaking' scrolling with touchpad when some events have units with opposite (wrong) sign
-      if (SystemInfo.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
+      if (SystemInfoRt.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
 
       if (units == 0) return;
       if (mySingleRowLayout.myLastSingRowLayout != null) {

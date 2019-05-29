@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -331,7 +332,7 @@ public class AboutPopup {
       UISettings.setupAntialiasing(g);
 
       Font labelFont = JBUI.Fonts.label();
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         labelFont = JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 14);
       }
 
@@ -361,7 +362,7 @@ public class AboutPopup {
 
       if (appInfo instanceof ApplicationInfoImpl) {
         g2.setColor(((ApplicationInfoImpl)appInfo).getCopyrightForeground());
-        if (SystemInfo.isMac) {
+        if (SystemInfoRt.isMac) {
           g2.setFont(JBUI.Fonts.miniFont());
         }
         else {
@@ -448,7 +449,7 @@ public class AboutPopup {
         this.h = h;
         this.g2 = g2;
 
-        if (SystemInfo.isWindows) {
+        if (SystemInfoRt.isWindows) {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         }
       }

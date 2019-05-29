@@ -4,7 +4,7 @@ package com.intellij.util.net;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
@@ -130,8 +130,8 @@ public class NetUtils {
     String localHostString = "localhost";
     try {
       final InetAddress localHost = InetAddress.getByName(localHostString);
-      if ((localHost.getAddress().length != 4 && SystemInfo.isWindows) ||
-          (localHost.getAddress().length == 4 && SystemInfo.isMac)) {
+      if ((localHost.getAddress().length != 4 && SystemInfoRt.isWindows) ||
+          (localHost.getAddress().length == 4 && SystemInfoRt.isMac)) {
         localHostString = "127.0.0.1";
       }
     }

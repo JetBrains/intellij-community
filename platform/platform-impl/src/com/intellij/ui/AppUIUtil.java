@@ -87,7 +87,7 @@ public class AppUIUtil {
       String svgIconUrl = appInfo.getApplicationSvgIconUrl();
       ScaleContext ctx = ScaleContext.create(window);
 
-      if (SystemInfo.isUnix) {
+      if (SystemInfoRt.isUnix) {
         @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
         ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 128, fallback));
       }
@@ -95,7 +95,7 @@ public class AppUIUtil {
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
       ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 32, fallback));
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx));
       }
 
@@ -189,7 +189,7 @@ public class AppUIUtil {
   }
 
   public static void updateFrameClass(@NotNull Toolkit toolkit) {
-    if (SystemInfo.isWindows || SystemInfo.isMac) {
+    if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
       return;
     }
 

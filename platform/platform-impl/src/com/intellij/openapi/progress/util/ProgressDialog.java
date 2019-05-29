@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
@@ -108,10 +108,10 @@ class ProgressDialog implements Disposable {
   }
 
   private void initDialog(@Nullable String cancelText) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
-    myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : JBUI.scale(450), -1));
+    myInnerPanel.setPreferredSize(new Dimension(SystemInfoRt.isMac ? 350 : JBUI.scale(450), -1));
 
     myCancelButton.addActionListener(__ -> doCancelAction());
 

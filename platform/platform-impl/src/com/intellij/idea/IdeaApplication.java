@@ -314,7 +314,7 @@ public final class IdeaApplication {
     @Override
     public void main(String[] args) {
       Activity activity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION);
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         MacOSApplicationProvider.initApplication();
       }
 

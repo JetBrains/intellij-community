@@ -7,6 +7,7 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
@@ -45,7 +46,7 @@ public class UnixProcessManager {
   static {
     CLib lib = null;
     try {
-      if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
+      if (SystemInfoRt.isUnix && JnaLoader.isLoaded()) {
         lib = Native.load("c", CLib.class);
       }
     }
@@ -67,7 +68,7 @@ public class UnixProcessManager {
       return assertNotNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
     }
     catch (Throwable t) {
-      throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
+      throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfoRt.OS_NAME, t);
     }
   }
 
@@ -102,7 +103,7 @@ public class UnixProcessManager {
 
   private static void checkCLib() {
     if (C_LIB == null) {
-      throw new IllegalStateException("Couldn't load c library, OS: " + SystemInfo.OS_NAME + ", isUnix: " + SystemInfo.isUnix);
+      throw new IllegalStateException("Couldn't load c library, OS: " + SystemInfoRt.OS_NAME + ", isUnix: " + SystemInfoRt.isUnix);
     }
   }
 
@@ -245,10 +246,10 @@ public class UnixProcessManager {
     if (!new File(psCommand).isFile()) {
       psCommand = "ps";
     }
-    if (SystemInfo.isLinux) {
+    if (SystemInfoRt.isLinux) {
       return new String[]{psCommand, "-e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
     }
-    else if (SystemInfo.isMac || SystemInfo.isFreeBSD) {
+    else if (SystemInfoRt.isMac || SystemInfoRt.isFreeBSD) {
       final String command = isShortenCommand ? "comm" : "command";
       return new String[]{psCommand, "-ax", "-o", commandLineOnly ? command : "ppid,pid," + command};
     }
@@ -259,7 +260,7 @@ public class UnixProcessManager {
 
   @NotNull
   public static MachineType getProcessMachineType(int pid) {
-    if (!SystemInfo.isLinux) {
+    if (!SystemInfoRt.isLinux) {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported");
     }
     try {

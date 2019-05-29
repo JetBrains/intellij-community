@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -116,7 +116,7 @@ public class LocationNameFieldsBinding {
       StringBuilder sb = null;
       for (int i = 0; i < str.length(); i++) {
         char c = str.charAt(i);
-        boolean replace = c == '\\' || c == '/' || SystemInfo.isWindows && (c == '|' || c == ':');
+        boolean replace = c == '\\' || c == '/' || SystemInfoRt.isWindows && (c == '|' || c == ':');
         if (replace) {
           if (sb == null) {
             sb = new StringBuilder(str.length());

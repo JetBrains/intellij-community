@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.Lists;
@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -75,13 +75,13 @@ public abstract class PythonSdkFlavor {
   public static List<PythonSdkFlavor> getApplicableFlavors(boolean addPlatformIndependent) {
     List<PythonSdkFlavor> result = new ArrayList<>();
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       result.add(ServiceManager.getService(WinPythonSdkFlavor.class));
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       result.add(MacPythonSdkFlavor.INSTANCE);
     }
-    else if (SystemInfo.isUnix) {
+    else if (SystemInfoRt.isUnix) {
       result.add(UnixPythonSdkFlavor.INSTANCE);
     }
 

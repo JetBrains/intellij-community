@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -8,7 +8,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -63,7 +63,7 @@ public final class FloatingDecorator extends JDialog {
     final JComponent cp=(JComponent)getContentPane();
     cp.setLayout(new BorderLayout());
 
-    if(SystemInfo.isWindows){
+    if(SystemInfoRt.isWindows){
       setUndecorated(true);
       cp.add(new BorderItem(ANCHOR_TOP),BorderLayout.NORTH);
       cp.add(new BorderItem(ANCHOR_LEFT),BorderLayout.WEST);

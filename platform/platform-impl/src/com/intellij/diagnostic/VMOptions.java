@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
@@ -176,8 +177,8 @@ public class VMOptions {
   @NotNull
   public static String getCustomVMOptionsFileName() {
     String fileName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
-    if (SystemInfo.is64Bit && !SystemInfo.isMac) fileName += "64";
-    if (SystemInfo.isWindows) fileName += ".exe";
+    if (SystemInfo.is64Bit && !SystemInfoRt.isMac) fileName += "64";
+    if (SystemInfoRt.isWindows) fileName += ".exe";
     fileName += ".vmoptions";
     return fileName;
   }

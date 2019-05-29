@@ -45,7 +45,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -352,7 +352,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     GeneralCommandLine cmd =
       PythonCommandLineState.createPythonCommandLine(myProject, runParams, false,
-                                                     PtyCommandLine.isEnabled() && !SystemInfo.isWindows);
+                                                     PtyCommandLine.isEnabled() && !SystemInfoRt.isWindows);
     cmd.withWorkDirectory(myWorkingDir);
 
     ParamsGroup exeGroup = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);

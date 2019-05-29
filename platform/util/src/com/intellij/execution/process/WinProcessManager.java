@@ -4,6 +4,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.MachineType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
@@ -40,11 +41,11 @@ public class WinProcessManager {
         return Kernel32.INSTANCE.GetProcessId(new WinNT.HANDLE(Pointer.createConstant(handle)));
       }
       catch (Throwable t) {
-        throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
+        throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfoRt.OS_NAME, t);
       }
     }
 
-    throw new IllegalStateException("Unable to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME);
+    throw new IllegalStateException("Unable to get PID from instance of " + process.getClass() + ", OS: " + SystemInfoRt.OS_NAME);
   }
 
   public static int getCurrentProcessId() {

@@ -3,6 +3,7 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.MachineType;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -11,7 +12,7 @@ import static org.junit.Assume.assumeTrue;
 public class UnixProcessManagerTest {
   @Test
   public void testGetLinuxProcessMachineType() {
-    assumeTrue("Linux-only test", SystemInfo.isLinux);
+    assumeTrue("Linux-only test", SystemInfoRt.isLinux);
 
     final int currentPid = UnixProcessManager.getCurrentProcessId();
     final MachineType machineType = UnixProcessManager.getProcessMachineType(currentPid);

@@ -869,7 +869,7 @@ public class AbstractPopup implements JBPopup {
     myRequestorComponent = owner;
 
     boolean forcedDialog = myMayBeParent
-      || SystemInfo.isMac && !(myOwner instanceof IdeFrame) && myOwner != null && myOwner.isShowing();
+      || SystemInfoRt.isMac && !(myOwner instanceof IdeFrame) && myOwner != null && myOwner.isShowing();
 
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
@@ -1177,7 +1177,7 @@ public class AbstractPopup implements JBPopup {
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(false);
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
     }
   }

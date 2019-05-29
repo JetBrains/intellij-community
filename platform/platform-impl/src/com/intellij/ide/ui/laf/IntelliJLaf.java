@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -35,11 +35,11 @@ public class IntelliJLaf extends DarculaLaf {
   @Override
   @Nullable
   protected String getSystemPrefix() {
-    if (SystemInfo.isLinux) {
+    if (SystemInfoRt.isLinux) {
       return super.getSystemPrefix();
-    } else if (SystemInfo.isWindows) {
+    } else if (SystemInfoRt.isWindows) {
       return UIUtil.isUnderWin10LookAndFeel() ? null : getPrefix() + "_windows";
-    } else if (SystemInfo.isMac) {
+    } else if (SystemInfoRt.isMac) {
       return UIUtil.isUnderDefaultMacTheme() ? getPrefix() + "_mac" : null;
     } else {
       return null;

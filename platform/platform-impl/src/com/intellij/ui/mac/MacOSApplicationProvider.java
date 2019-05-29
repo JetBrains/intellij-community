@@ -16,7 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
@@ -40,7 +40,7 @@ public class MacOSApplicationProvider {
   private MacOSApplicationProvider() { }
 
   public static void initApplication() {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       try {
         Worker.initMacApplication();
       }
