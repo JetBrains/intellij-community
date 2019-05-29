@@ -139,33 +139,58 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Nullable
   static AnAction convertStub(@NotNull ActionStub stub) {
+    AnAction anAction = instantiate(stub.getClassName(), stub.getLoader(), stub.getPluginId(), AnAction.class);
+    if (anAction == null) return null;
+
+    stub.initAction(anAction);
+    updateIconFromStub(stub, anAction);
+    return anAction;
+  }
+
+  @Nullable
+  private static <T> T instantiate(String stubClassName, ClassLoader classLoader, PluginId pluginId, Class<T> expectedClass) {
     Object obj;
-    String className = stub.getClassName();
     try {
-      Class<?> aClass = Class.forName(className, true, stub.getLoader());
-      obj = ReflectionUtil.newInstance(aClass);
+      Class<?> aClass = Class.forName(stubClassName, true, classLoader);
+      if (expectedClass == ActionGroup.class) {
+        obj = new CachingConstructorInjectionComponentAdapter(stubClassName, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
+      }
+      else {
+        obj = ReflectionUtil.newInstance(aClass);
+      }
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
-      LOG.error(new PluginException(e, stub.getPluginId()));
+      LOG.error(new PluginException(e, pluginId));
       return null;
     }
 
-    if (!(obj instanceof AnAction)) {
-      LOG.error(new PluginException("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj, stub.getPluginId()));
+    if (!expectedClass.isInstance(obj)) {
+      LOG.error(new PluginException("class with name '" +
+                                    stubClassName + "' must be an instance of '" + expectedClass.getName() + "'; got " + obj, pluginId));
       return null;
     }
+    //noinspection unchecked
+    return (T) obj;
+  }
 
-    AnAction anAction = (AnAction)obj;
-    stub.initAction(anAction);
+  private static void updateIconFromStub(@NotNull ActionStubBase stub, AnAction anAction) {
     String iconPath = stub.getIconPath();
     if (iconPath != null) {
       Class<? extends AnAction> actionClass = anAction.getClass();
       setIconFromClass(actionClass, actionClass.getClassLoader(), iconPath, anAction.getTemplatePresentation(), stub.getPluginId());
     }
-    return anAction;
+  }
+
+  @Nullable
+  static ActionGroup convertGroupStub(@NotNull ActionGroupStub stub) {
+    ActionGroup group = instantiate(stub.getActionClass(), stub.getClassLoader(), stub.getPluginId(), ActionGroup.class);
+    if (group == null) return null;
+    stub.initGroup(group);
+    updateIconFromStub(stub, group);
+    return group;
   }
 
   private static void processAbbreviationNode(@NotNull Element e, @NotNull String id) {
@@ -463,11 +488,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     AnAction action;
     synchronized (myLock) {
       action = myId2Action.get(id);
-      if (canReturnStub || !(action instanceof ActionStub)) {
+      if (canReturnStub || !(action instanceof ActionStubBase)) {
         return action;
       }
     }
-    AnAction converted = convertStub((ActionStub)action);
+    AnAction converted = action instanceof ActionStub ? convertStub((ActionStub)action) : convertGroupStub((ActionGroupStub) action);
     if (converted == null) {
       unregisterAction(id);
       return null;
@@ -475,15 +500,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     synchronized (myLock) {
       action = myId2Action.get(id);
-      if (action instanceof ActionStub) {
-        action = replaceStub((ActionStub)action, converted);
+      if (action instanceof ActionStubBase) {
+        action = replaceStub((ActionStubBase)action, converted);
       }
       return action;
     }
   }
 
   @NotNull
-  private AnAction replaceStub(@NotNull ActionStub stub, AnAction anAction) {
+  private AnAction replaceStub(@NotNull ActionStubBase stub, AnAction anAction) {
     LOG.assertTrue(myAction2Id.containsKey(stub));
     myAction2Id.remove(stub);
 
@@ -495,13 +520,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     myAction2Id.put(anAction, stub.getId());
 
-    return addToMap(stub.getId(), anAction, stub.getPluginId(), stub.getProjectType());
+    return addToMap(stub.getId(), anAction, stub.getPluginId(), stub instanceof ActionStub ? ((ActionStub) stub).getProjectType() : null);
   }
 
   @Override
   public String getId(@NotNull AnAction action) {
-    if (action instanceof ActionStub) {
-      return ((ActionStub) action).getId();
+    if (action instanceof ActionStubBase) {
+      return ((ActionStubBase) action).getId();
     }
     synchronized (myLock) {
       return myAction2Id.get(action);
@@ -643,13 +668,20 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
                   : DefaultActionGroup.class.getName();
     }
     try {
+      String id = element.getAttributeValue(ID_ATTR_NAME);
+      if (id != null && id.isEmpty()) {
+        reportActionError(pluginId, "ID of the group cannot be an empty string");
+        return null;
+      }
+
       ActionGroup group;
       boolean customClass = false;
       if (DefaultActionGroup.class.getName().equals(className)) {
         group = new DefaultActionGroup();
       } else if (DefaultCompactActionGroup.class.getName().equals(className)) {
         group = new DefaultCompactActionGroup();
-      } else {
+      }
+      else if (id == null) {
         Class aClass = Class.forName(className, true, loader);
         Object obj = new CachingConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
 
@@ -667,12 +699,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         customClass = true;
         group = (ActionGroup)obj;
       }
-      // read ID and register loaded group
-      String id = element.getAttributeValue(ID_ATTR_NAME);
-      if (id != null && id.isEmpty()) {
-        reportActionError(pluginId, "ID of the group cannot be an empty string");
-        return null;
+      else {
+        group = new ActionGroupStub(id, className, loader, pluginId);
+        customClass = true;
       }
+      // read ID and register loaded group
       if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManager.getApplication().isInternal()) {
         myNotRegisteredInternalActionIds.add(id);
         return null;
@@ -700,7 +731,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
 
       // icon
-      setIcon(element.getAttributeValue(ICON_ATTR_NAME), className, loader, presentation, pluginId);
+      String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
+      if (group instanceof ActionGroupStub) {
+        ((ActionGroupStub) group).setIconPath(iconPath);
+      }
+      else {
+        setIcon(iconPath, className, loader, presentation, pluginId);
+      }
+
       // popup
       String popup = element.getAttributeValue(POPUP_ATTR_NAME);
       if (popup != null) {
