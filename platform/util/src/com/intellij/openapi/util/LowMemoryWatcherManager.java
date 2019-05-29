@@ -22,7 +22,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.management.ListenerNotFoundException;
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
@@ -43,6 +42,7 @@ public class LowMemoryWatcherManager implements Disposable {
   @NotNull private final ExecutorService myExecutorService;
 
   private Future<?> mySubmitted; // guarded by ourJanitor
+  private final Future<?> myMemoryPoolMXBeansFuture; // guarded by ourJanitor
   private final AtomicBoolean myProcessing = new AtomicBoolean();
   private final Consumer<Boolean> myJanitor = new Consumer<Boolean>() {
     @Override
@@ -59,7 +59,7 @@ public class LowMemoryWatcherManager implements Disposable {
   public LowMemoryWatcherManager(@NotNull Executor executorService) {
     myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", executorService);
 
-    myExecutorService.submit(() -> {
+    myMemoryPoolMXBeansFuture = myExecutorService.submit(() -> {
       try {
         for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
           if (bean.getType() == MemoryType.HEAP && bean.isCollectionUsageThresholdSupported() && bean.isUsageThresholdSupported()) {
@@ -78,7 +78,6 @@ public class LowMemoryWatcherManager implements Disposable {
         LOG.info("Errors initializing LowMemoryWatcher: ", e);
       }
     });
-
   }
 
   private final NotificationListener myLowMemoryListener = new NotificationListener() {
@@ -127,9 +126,10 @@ public class LowMemoryWatcherManager implements Disposable {
   @Override
   public void dispose() {
     try {
+      myMemoryPoolMXBeansFuture.get();
       ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).removeNotificationListener(myLowMemoryListener);
     }
-    catch (ListenerNotFoundException e) {
+    catch (Exception e) {
       LOG.error(e);
     }
     synchronized (myJanitor) {
