@@ -317,7 +317,7 @@ public class ImageLoader implements Serializable {
       return new ImageConverterChain();
     }
 
-    ImageConverterChain withFilter(final ImageFilter[] filters) {
+    ImageConverterChain withFilter(@Nullable ImageFilter[] filters) {
       if (filters == null) return this;
       ImageConverterChain chain = this;
       for (ImageFilter filter : filters) {
@@ -403,7 +403,7 @@ public class ImageLoader implements Serializable {
    * Then wraps the image with {@link JBHiDPIScaledImage} if necessary.
    */
   @Nullable
-  public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, boolean useCache, boolean dark, ImageFilter[] filters, final ScaleContext ctx) {
+  public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, boolean useCache, boolean dark, @Nullable ImageFilter[] filters, final ScaleContext ctx) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually.
 

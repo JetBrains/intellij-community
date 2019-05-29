@@ -51,7 +51,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppIcon;
-import com.intellij.ui.Splash;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -410,7 +409,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     super.registerComponents(plugins);
   }
 
-  public void load(@Nullable String configPath, @Nullable Splash splash) {
+  public void load(@Nullable String configPath, @Nullable ProgressIndicator indicator) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       if (!isHeadlessEnvironment()) {
@@ -422,13 +421,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE);
         });
       }
-
-      ProgressIndicator indicator = splash == null ? null : new EmptyProgressIndicator() {
-        @Override
-        public void setFraction(double fraction) {
-          splash.showProgress(fraction);
-        }
-      };
 
       init(indicator, () -> {
         String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);

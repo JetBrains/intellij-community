@@ -11,10 +11,8 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -29,7 +27,6 @@ import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.CustomProtocolHandler;
-import com.intellij.ui.Splash;
 import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -67,6 +64,10 @@ public class IdeaApplication {
     CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture = new CompletableFuture<>();
     EventQueue.invokeLater(() -> {
       IdeaApplication app = new IdeaApplication(args, pluginDescriptorsFuture);
+
+      if (!Main.isHeadless()) {
+        SplashManager.showLicenseeInfoOnSplash(LOG);
+      }
 
       CompletableFuture<Void> registerComponentsFuture = pluginDescriptorsFuture
         .thenAccept(pluginDescriptors -> {
@@ -114,7 +115,6 @@ public class IdeaApplication {
     myArgs = processProgramArguments(args);
     boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
-    boolean isShowSplash = !Boolean.getBoolean(StartupUtil.NO_SPLASH);
     boolean headless = Main.isHeadless();
 
     {
@@ -141,10 +141,6 @@ public class IdeaApplication {
       }
     }
     else {
-      if (isShowSplash && myStarter instanceof IdeStarter) {
-        ((IdeStarter)myStarter).showSplash();
-      }
-
       Activity activity = StartUpMeasurer.start("create app");
       new ApplicationImpl(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION);
       activity.end();
@@ -172,10 +168,10 @@ public class IdeaApplication {
           continue;
         }
       }
-      if (StartupUtil.NO_SPLASH.equals(arg)) {
-        System.setProperty(StartupUtil.NO_SPLASH, "true");
+      if (SplashManager.NO_SPLASH.equals(arg)) {
         continue;
       }
+
       arguments.add(arg);
     }
     return ArrayUtil.toStringArray(arguments);
@@ -262,8 +258,6 @@ public class IdeaApplication {
   }
 
   private void run(@NotNull CompletableFuture<Void> registerComponentsFuture) {
-    Splash splash = myStarter instanceof IdeStarter ? ((IdeStarter)myStarter).mySplash : null;
-
     try {
       Activity activity = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT);
       registerComponentsFuture.get();
@@ -273,7 +267,7 @@ public class IdeaApplication {
       throw new CompletionException(e);
     }
 
-    ((ApplicationImpl)ApplicationManager.getApplication()).load(null, splash);
+    ((ApplicationImpl)ApplicationManager.getApplication()).load(null, SplashManager.getProgressIndicator());
     myLoaded = true;
 
     ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> myStarter.main(myArgs));
@@ -282,8 +276,6 @@ public class IdeaApplication {
   }
 
   public static class IdeStarter implements ApplicationStarter {
-    private Splash mySplash;
-
     @Override
     public boolean isHeadless() {
       return false;
@@ -292,30 +284,6 @@ public class IdeaApplication {
     @Override
     public String getCommandName() {
       return null;
-    }
-
-    private void showSplash() {
-      final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-      final SplashScreen splashScreen = getSplashScreen();
-      if (splashScreen == null) {
-        mySplash = new Splash(appInfo);
-      }
-      else if (appInfo.showLicenseeInfo()) {
-        if (Splash.showLicenseeInfo(splashScreen.createGraphics(), 0, 0, splashScreen.getSize().height, appInfo, Splash.createFont())) {
-          splashScreen.update();
-        }
-      }
-    }
-
-    @Nullable
-    private static SplashScreen getSplashScreen() {
-      try {
-        return SplashScreen.getSplashScreen();
-      }
-      catch (Throwable t) {
-        LOG.warn(t);
-        return null;
-      }
     }
 
     @Override
@@ -391,9 +359,7 @@ public class IdeaApplication {
 
       LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
 
-      Splash splash = mySplash;
-      mySplash = null;
-      Runnable beforeSetVisible = splash == null ? null : () -> splash.dispose();
+      Runnable beforeSetVisible = SplashManager.getHideTask();
 
       if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
         WelcomeFrame.showNow(beforeSetVisible);

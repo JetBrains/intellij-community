@@ -6,6 +6,7 @@ import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
+import com.intellij.idea.SplashManager;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -75,9 +76,14 @@ public class ConfigImportHelper {
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
+
+    SplashManager.setVisible(false);
     dialog.setVisible(true);
 
     Pair<Path, Path> result = dialog.getSelectedFile();
+    dialog.dispose();
+    SplashManager.setVisible(true);
+
     if (result != null) {
       doImport(result.first, newConfigDir, result.second, log);
       if (settings != null) {

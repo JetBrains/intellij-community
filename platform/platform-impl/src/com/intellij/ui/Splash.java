@@ -7,13 +7,16 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -26,6 +29,8 @@ public final class Splash extends Window {
   private static final float JBUI_INIT_SCALE = JBUI.scale(1f);
 
   private final ApplicationInfoEx myInfo;
+  private final int myWidth;
+  private final int myHeight;
   private int myProgressHeight;
   private Color myProgressColor;
   private int myProgressY;
@@ -33,7 +38,7 @@ public final class Splash extends Window {
   private int myProgressLastPosition = 0;
   private Icon myProgressTail;
   private final List<ProgressSlide> myProgressSlideImages = new ArrayList<>();
-  private final ImageIcon myIcon;
+  private final Image myImage;
 
   private final NotNullLazyValue<Font> myFont = createFont();
 
@@ -51,8 +56,13 @@ public final class Splash extends Window {
 
     setFocusableWindowState(false);
 
-    myIcon = (ImageIcon)IconLoader.getIconSnapshot(IconLoader.getIcon(info.getSplashImageUrl(), Splash.class));
-    Dimension size = new Dimension(myIcon.getIconWidth(), myIcon.getIconHeight());
+    URL iconUrl = getClass().getResource(info.getSplashImageUrl());
+    myImage = ImageLoader.loadFromUrl(iconUrl, true, false, false, null, JBUIScale.ScaleContext.create());
+    assert myImage != null;
+
+    myWidth = myImage.getWidth(null);
+    myHeight = myImage.getHeight(null);
+    Dimension size = new Dimension(myWidth, myHeight);
     if (Boolean.getBoolean("suppress.focus.stealing") && Boolean.getBoolean("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(false);
     }
@@ -87,8 +97,7 @@ public final class Splash extends Window {
 
   @Override
   public void paint(Graphics g) {
-    myIcon.paintIcon(this, g, 0, 0);
-    showLicenseeInfo(g, 0, 0, myIcon.getIconHeight(), myInfo, myFont);
+    UIUtil.drawImage(g, myImage, 0, 0, this);
     paintProgress(g);
   }
 
@@ -135,14 +144,14 @@ public final class Splash extends Window {
       return;
     }
 
-    final int progressWidth = (int)(myIcon.getIconWidth() * myProgress);
+    final int progressWidth = (int)(myWidth * myProgress);
     int currentWidth = progressWidth - myProgressLastPosition;
     if (currentWidth == 0) {
       return;
     }
 
     g.setColor(color);
-    int y = hasSlides ? myIcon.getIconHeight() - getProgressHeight() : getProgressY();
+    int y = hasSlides ? myHeight - getProgressHeight() : getProgressY();
     g.fillRect(myProgressLastPosition, y, currentWidth, getProgressHeight());
     if (myProgressTail != null) {
       float onePixel = JBUI_INIT_SCALE;
@@ -168,7 +177,11 @@ public final class Splash extends Window {
     return uiScale(myProgressY);
   }
 
-  public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, @NotNull ApplicationInfoEx info, @NotNull NotNullLazyValue<? extends Font> font) {
+  public void paintLicenseeInfo() {
+    showLicenseeInfo(getGraphics(), 0, 0, myHeight, myInfo, myFont);
+  }
+
+  public static boolean showLicenseeInfo(@NotNull Graphics g, int x, int y, final int height, @NotNull ApplicationInfoEx info, @NotNull NotNullLazyValue<? extends Font> font) {
     if (!info.showLicenseeInfo()) {
       return false;
     }

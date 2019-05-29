@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -63,7 +62,6 @@ import static java.nio.file.attribute.PosixFilePermission.*;
  * @author yole
  */
 public class StartupUtil {
-  public static final String NO_SPLASH = "nosplash";
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
 
@@ -136,6 +134,8 @@ public class StartupUtil {
         UIUtil.initDefaultLaF();
 
         if (!Main.isHeadless()) {
+          SplashManager.show(args);
+
           Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init Batik cursors");
           SVGLoader.prepareBatikInAwt();
           activity.end();
@@ -179,31 +179,34 @@ public class StartupUtil {
     }
 
     if (isParallelExecution) {
-      executorService.submit(() -> loadSystemLibraries(log));  /* no need to wait */
+      // no need to wait
+      executorService.submit(() -> loadSystemLibraries(log));
 
       Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
-      for (Future<?> future : futures) future.get();
+      for (Future<?> future : futures) {
+        future.get();
+      }
       activity.end();
       futures.clear();
     }
 
-    if (newConfigFolder) {
-      appStarter.beforeImportConfigs();
-      Path newConfigDir = Paths.get(PathManager.getConfigPath());
-      EventQueue.invokeAndWait(() -> {
-        PluginManager.installExceptionHandler();
-        ConfigImportHelper.importConfigsTo(newConfigDir, log);
-      });
-      appStarter.importFinished(newConfigDir);
-    }
-
     if (!Main.isHeadless()) {
-      AppUIUtil.showUserAgreementAndConsentsIfNeeded(log);
-    }
+      if (newConfigFolder) {
+        appStarter.beforeImportConfigs();
+        Path newConfigDir = Paths.get(PathManager.getConfigPath());
+        EventQueue.invokeAndWait(() -> {
+          PluginManager.installExceptionHandler();
+          ConfigImportHelper.importConfigsTo(newConfigDir, log);
+        });
+        appStarter.importFinished(newConfigDir);
+      }
 
-    if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
-      // exception handler is already set by ConfigImportHelper
-      EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
+      AppUIUtil.showUserAgreementAndConsentsIfNeeded(log);
+
+      if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
+        // exception handler is already set by ConfigImportHelper
+        EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
+      }
     }
 
     appStarter.start();
@@ -575,24 +578,27 @@ public class StartupUtil {
   }
 
   private static void runStartupWizard(@NotNull AppStarter appStarter) {
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-
-    String stepsProviderName = appInfo.getCustomizeIDEWizardStepsProvider();
-    if (stepsProviderName != null) {
-      CustomizeIDEWizardStepsProvider provider;
-      try {
-        Class<?> providerClass = Class.forName(stepsProviderName);
-        provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
-      }
-      catch (Throwable e) {
-        Main.showMessage("Configuration Wizard Failed", e);
-        return;
-      }
-
-      appStarter.beforeStartupWizard();
-      new CustomizeIDEWizardDialog(provider, appStarter).show();
-      PluginManagerCore.invalidatePlugins();
-      appStarter.startupWizardFinished();
+    String stepsProviderName = ApplicationInfoImpl.getShadowInstance().getCustomizeIDEWizardStepsProvider();
+    if (stepsProviderName == null) {
+      return;
     }
+
+    CustomizeIDEWizardStepsProvider provider;
+    try {
+      Class<?> providerClass = Class.forName(stepsProviderName);
+      provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
+    }
+    catch (Throwable e) {
+      Main.showMessage("Configuration Wizard Failed", e);
+      return;
+    }
+
+    appStarter.beforeStartupWizard();
+    CustomizeIDEWizardDialog dialog = new CustomizeIDEWizardDialog(provider, appStarter);
+    SplashManager.setVisible(false);
+    dialog.show();
+    SplashManager.setVisible(true);
+    PluginManagerCore.invalidatePlugins();
+    appStarter.startupWizardFinished();
   }
 }

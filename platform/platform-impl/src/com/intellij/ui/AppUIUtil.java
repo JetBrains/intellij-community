@@ -12,6 +12,7 @@ import com.intellij.ide.gdpr.ConsentSettingsUi;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.Main;
+import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -315,7 +316,11 @@ public class AppUIUtil {
       if (!agreement.isAccepted()) {
         try {
           // todo: does not seem to request focus when shown
-          SwingUtilities.invokeAndWait(() -> showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()));
+          EventQueue.invokeAndWait(() -> {
+            SplashManager.setVisible(false);
+            showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy());
+            SplashManager.setVisible(true);
+          });
           EndUserAgreement.setAccepted(agreement);
         }
         catch (Exception e) {
