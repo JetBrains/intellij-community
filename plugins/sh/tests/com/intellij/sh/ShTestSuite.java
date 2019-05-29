@@ -2,6 +2,7 @@
 package com.intellij.sh;
 
 import com.intellij.sh.actions.ShBaseGenerateActionsTest;
+import com.intellij.sh.codeInsight.ShFunctionResolverTest;
 import com.intellij.sh.completion.ShCompletionTest;
 import com.intellij.sh.completion.ShFileCompletionTest;
 import com.intellij.sh.completion.ShKeywordCompletionTest;
@@ -77,6 +78,7 @@ public class ShTestSuite {
       suite.addTestSuite(ShRenameTest.class);
       suite.addTestSuite(ShTypingTest.class);
       suite.addTestSuite(ShLineIndentProviderTest.class);
+      suite.addTestSuite(ShFunctionResolverTest.class);
       return suite;
     }
   }
