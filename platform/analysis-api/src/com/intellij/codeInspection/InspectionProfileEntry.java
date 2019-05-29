@@ -80,6 +80,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return false;
   }
 
+  @NonNls
   @NotNull
   protected String getSuppressId() {
     return getShortName();
@@ -186,9 +187,18 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   interface DefaultNameProvider {
-    @Nullable String getDefaultShortName();
-    @Nullable String getDefaultDisplayName();
-    @Nullable String getDefaultGroupDisplayName();
+
+    @NonNls
+    @Nullable
+    String getDefaultShortName();
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @Nullable
+    String getDefaultDisplayName();
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @Nullable
+    String getDefaultGroupDisplayName();
   }
 
   protected volatile DefaultNameProvider myNameProvider;
@@ -198,7 +208,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#groupKey
    * @see InspectionEP#groupBundle
    */
-  @Nls
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public String getGroupDisplayName() {
     if (myNameProvider != null) {
@@ -214,6 +224,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * @see InspectionEP#groupPath
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public String[] getGroupPath() {
     String groupDisplayName = getGroupDisplayName();
@@ -228,6 +239,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#key
    * @see InspectionEP#bundle
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public String getDisplayName() {
     if (myNameProvider != null) {
@@ -416,6 +428,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * @return short name of tool whose results will be used
    */
+  @NonNls
   @Nullable
   public String getMainToolId() {
     return null;
