@@ -452,10 +452,10 @@ public class FileTypesTest extends PlatformTestCase {
     assertEquals(1, reassigned.size());
   }
 
-  public void testRenamedPropertiesToUnknownAndBack() throws Exception {
-    FileType propFileType = myFileTypeManager.getFileTypeByFileName("xx.properties");
-    assertEquals("Properties", propFileType.getName());
-    File file = createTempFile("xx.properties", "xx=yy");
+  public void testRenamedXmlToUnknownAndBack() throws Exception {
+    FileType propFileType = myFileTypeManager.getFileTypeByFileName("xx.xml");
+    assertEquals("XML", propFileType.getName());
+    File file = createTempFile("xx.xml", "<foo></foo>");
     VirtualFile vFile = getVirtualFile(file);
     assertEquals(propFileType, myFileTypeManager.getFileTypeByFile(vFile));
 
@@ -463,7 +463,7 @@ public class FileTypesTest extends PlatformTestCase {
     UIUtil.dispatchAllInvocationEvents();
     assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFile(vFile));
 
-    rename(vFile, "xx.properties");
+    rename(vFile, "xx.xml");
     myFileTypeManager.drainReDetectQueue();
     for (int i=0; i<100;i++) {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
