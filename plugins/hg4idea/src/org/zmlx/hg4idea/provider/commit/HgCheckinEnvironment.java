@@ -69,10 +69,14 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     myProject = vcs.getProject();
   }
 
-  @NotNull
+  @Nullable
   @Override
   public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
     reset();
+
+    Collection<HgRepository> repos = HgActionUtil.collectRepositoriesFromFiles(getRepositoryManager(myProject), commitPanel.getRoots());
+    if (!ContainerUtil.exists(repos, HgRepository::hasSubrepos)) return null;
+
     return new HgCommitAdditionalComponent(commitPanel);
   }
 
@@ -312,8 +316,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
         "Commit all subrepos for selected repositories.<br>" +
         " <code>hg ci <i><b>files</b></i> -S <i><b>subrepos</b></i></code>"));
       myCommitSubrepos.setMnemonic('s');
-      Collection<HgRepository> repos = HgActionUtil.collectRepositoriesFromFiles(getRepositoryManager(myProject), myCommitPanel.getRoots());
-      myCommitSubrepos.setVisible(ContainerUtil.exists(repos, HgRepository::hasSubrepos));
       myCommitSubrepos.addActionListener(e -> updateAmendState(!myCommitSubrepos.isSelected()));
 
       GridBag gb = new GridBag().
