@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -485,22 +486,42 @@ public class PsiTypesUtil {
     return null;
   }
 
-  public static Boolean mentionsTypeParameters(@Nullable PsiType type, Set<PsiTypeParameter> typeParameters) {
+  /**
+   * Checks if {@code type} mentions type parameters from the passed {@code Set} 
+   * Implicit type arguments of types based on inner classes of generic outer classes are explicitly checked
+   */
+  public static boolean mentionsTypeParameters(@Nullable PsiType type, Set<PsiTypeParameter> typeParameters) {
     return mentionsTypeParametersOrUnboundedWildcard(type, typeParameters, false);
   }
 
-  public static Boolean mentionsTypeParametersOrUnboundedWildcard(@Nullable PsiType type,
-                                                                  Set<PsiTypeParameter> typeParameters,
-                                                                  boolean acceptUnboundedWildcard) {
+  /**
+   * Checks if {@code resolveResult} depicts unchecked method call
+   */
+  public static boolean isUncheckedCall(JavaResolveResult resolveResult) {
+    final PsiElement element = resolveResult.getElement();
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+      if (PsiUtil.isRawSubstitutor(method, substitutor)) {
+        Set<PsiTypeParameter> typeParameters = new HashSet<>(substitutor.getSubstitutionMap().keySet());
+        Arrays.stream(method.getTypeParameters()).forEach(typeParameters::remove);
+        return Arrays.stream(method.getParameterList().getParameters())
+          .anyMatch(parameter -> mentionsTypeParametersOrUnboundedWildcard(parameter.getType(), typeParameters, true));
+      }
+    }
+    return false;
+  }
+  
+  private static boolean mentionsTypeParametersOrUnboundedWildcard(@Nullable PsiType type,
+                                                                   Set<PsiTypeParameter> typeParameters,
+                                                                   boolean acceptUnboundedWildcard) {
     if (type == null) return false;
     return type.accept(new PsiTypeVisitor<Boolean>() {
-      @NotNull
       @Override
       public Boolean visitType(PsiType type) {
         return false;
       }
 
-      @Nullable
       @Override
       public Boolean visitWildcardType(PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
@@ -510,7 +531,6 @@ public class PsiTypesUtil {
         return acceptUnboundedWildcard;
       }
 
-      @NotNull
       @Override
       public Boolean visitClassType(PsiClassType classType) {
         PsiClassType.ClassResolveResult result = classType.resolveGenerics();
@@ -525,7 +545,24 @@ public class PsiTypesUtil {
         return psiClass instanceof PsiTypeParameter && typeParameters.contains(psiClass);
       }
 
-      @Nullable
+      @Override
+      public Boolean visitIntersectionType(PsiIntersectionType intersectionType) {
+        for (PsiType conjunct : intersectionType.getConjuncts()) {
+          if (conjunct.accept(this)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      public Boolean visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
+        return false;
+      }
+
+      @Override
+      public Boolean visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
+        return false;
+      }
+
       @Override
       public Boolean visitArrayType(PsiArrayType arrayType) {
         return arrayType.getComponentType().accept(this);

@@ -911,28 +911,14 @@ public class LambdaUtil {
             //and the type of the call would be erased => red code may appear
             !lambda.hasFormalParameterTypes()) {
           PsiExpression expressionFromBody = extractSingleExpressionFromBody(body);
-          if (expressionFromBody instanceof PsiMethodCallExpression && isUncheckedCall((PsiMethodCallExpression)expressionFromBody)) {
+          if (expressionFromBody instanceof PsiMethodCallExpression &&
+              PsiTypesUtil.isUncheckedCall(((PsiMethodCallExpression)expressionFromBody).resolveMethodGenerics())) {
             return false;
           }
         }
       }
     }
     return true;
-  }
-
-  private static boolean isUncheckedCall(PsiMethodCallExpression callExpression) {
-    JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
-    if (resolveResult instanceof MethodCandidateInfo) {
-      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-      PsiElement element = resolveResult.getElement();
-      if (element instanceof PsiMethod && PsiUtil.isRawSubstitutor(((PsiMethod)element), substitutor)) {
-        PsiMethod method = (PsiMethod)element;
-        Set<PsiTypeParameter> typeParameters = substitutor.getSubstitutionMap().keySet();
-        return Arrays.stream(method.getParameterList().getParameters())
-          .anyMatch(parameter -> PsiTypesUtil.mentionsTypeParametersOrUnboundedWildcard(parameter.getType(), typeParameters, true));
-      }
-    }
-    return false;
   }
 
   /**
