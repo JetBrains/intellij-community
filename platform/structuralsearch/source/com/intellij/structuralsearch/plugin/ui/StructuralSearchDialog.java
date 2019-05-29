@@ -733,10 +733,8 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  /**
-   * Needs read action.
-   */
   private void highlightMatches(MatchOptions matchOptions) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (myDoingOkAction) {
       highlightMatches(Collections.emptyList(), "");
     }
