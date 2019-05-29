@@ -230,7 +230,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private static Component getComponentToRequestFocus(ToolWindow toolWindow) {
     Container container = toolWindow.getComponent();
     if (container == null || !container.isShowing()) {
-      LOG.debug(toolWindow.getTitle(), " tool window - parent container is hidden: ", container);
+      LOG.warn(toolWindow.getTitle() + " tool window - parent container is hidden");
       return null;
     }
     FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
@@ -240,7 +240,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     }
     Component component = policy.getDefaultComponent(container);
     if (component == null || !component.isShowing()) {
-      LOG.debug(toolWindow.getTitle(), " tool window - default component is hidden: ", container);
+      LOG.debug(toolWindow.getTitle() + " tool window - default component is hidden");
       return null;
     }
     return component;
