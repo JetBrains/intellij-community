@@ -678,7 +678,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  private class EditorTabs extends SameHeightTabs {
+  private class EditorTabs extends SingleHeightTabs {
     private EditorTabs(Project project) {
       super(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), EditorTabbedContainer.this);
       IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);

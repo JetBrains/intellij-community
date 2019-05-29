@@ -255,18 +255,6 @@ public class TabLabel extends JPanel implements Accessible {
     super.paint(g);
   }
 
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
-
-    if (myActionPanel != null && !myActionPanel.isVisible()) {
-      final Dimension actionPanelSize = myActionPanel.getPreferredSize();
-      size.width += actionPanelSize.width;
-    }
-
-    return size;
-  }
-
   private void handlePopup(final MouseEvent e) {
     if (e.getClickCount() != 1 || !e.isPopupTrigger()) return;
 

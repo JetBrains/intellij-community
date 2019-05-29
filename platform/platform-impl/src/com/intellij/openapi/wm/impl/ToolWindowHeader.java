@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import kotlin.Unit;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +64,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
       add(myWestPanel, "grow");
       myWestPanel.add(toolWindow.getContentUI().getTabComponent(), "growy");
+
+      TabsHeightController.registerActive(this, this);
     }
     else {
       setLayout(new BorderLayout());
@@ -240,8 +243,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   public void dispose() {
     removeAll();
     myToolWindow = null;
-
-    TabsHeightController.unregister(this);
   }
 
   void setTabActions(@NotNull AnAction[] actions) {
@@ -350,22 +351,23 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   protected abstract void hideToolWindow();
 
   @Override
-  public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
-    if (JBTabsFactory.getUseNewTabs()) {
-      TabsHeightController.registerHeight(this, size.height);
-      return new Dimension(size.width, TabsHeightController.getToolWindowHeight());
-    }
-    return size;
+  public void addNotify() {
+    super.addNotify();
+    TabsHeightController.registerAdjective(this, height -> {
+      updateHeight(height);
+      return Unit.INSTANCE;
+    }, this);
   }
 
-  @Override
-  public Dimension getMinimumSize() {
+  private void updateHeight(int value) {
     Dimension size = super.getMinimumSize();
-    if (JBTabsFactory.getUseNewTabs()) {
-      return new Dimension(size.width, getPreferredSize().height);
+    Insets insets = getInsets();
+    value = value - insets.top - insets.bottom;
+
+    if(size.height != value) {
+      Dimension newSize = new Dimension(size.width, value);
+      setMinimumSize(newSize);
     }
-    return size;
   }
 
   private class ShowOptionsAction extends DumbAwareAction {
