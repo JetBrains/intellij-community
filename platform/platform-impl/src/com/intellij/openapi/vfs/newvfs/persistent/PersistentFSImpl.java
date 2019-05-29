@@ -70,6 +70,8 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
     LowMemoryWatcher.register(this::clearIdCache, this);
     myPublisher = bus.syncPublisher(VirtualFileManager.VFS_CHANGES);
 
+    AsyncEventSupport.startListening();
+
     FSRecords.connect();
   }
 

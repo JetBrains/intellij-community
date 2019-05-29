@@ -15,15 +15,24 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VfsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import gnu.trove.TLongObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
@@ -53,7 +63,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
       if (app.isDispatchThread()) {
         ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
         doScan(session);
-        session.fireEvents();
+        session.fireEvents(session.getEvents(), null);
       }
       else {
         if (((ApplicationEx)app).holdsReadLock()) {
@@ -74,11 +84,46 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
         doScan(session);
       }
       finally {
-        myRefreshIndicator.stop();
-        TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, session::fireEvents);
+        List<? extends VFileEvent> events = session.getEvents();
+        while (true) {
+          boolean success = ProgressIndicatorUtils.runWithWriteActionPriority(
+            () -> processAndFireEvents(session, transaction, events),
+            new SensitiveProgressWrapper(myRefreshIndicator));
+          if (success) {
+            myRefreshIndicator.stop();
+            break;
+          }
+
+          ProgressIndicatorUtils.yieldToPendingWriteActions();
+        }
       }
     });
     myEventCounter.eventHappened(session);
+  }
+
+  private static void processAndFireEvents(@NotNull RefreshSessionImpl session,
+                                           @Nullable TransactionId transaction,
+                                           @NotNull List<? extends VFileEvent> events) {
+    List<? extends VFileEvent> validEvents = ContainerUtil.filter(events, e -> {
+      VirtualFile file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
+      return file == null || file.isValid();
+    });
+
+    List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.runAsyncListeners(validEvents);
+
+    Semaphore semaphore = new Semaphore(1);
+    TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, () -> {
+      semaphore.up();
+      session.fireEvents(validEvents, appliers);
+    });
+
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    while (!semaphore.waitFor(10)) {
+      if (indicator != null && indicator.isCanceled()) {
+        indicator.checkCanceled();
+        throw new ProcessCanceledException();
+      }
+    }
   }
 
   private void doScan(@NotNull RefreshSessionImpl session) {
