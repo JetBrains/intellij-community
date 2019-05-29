@@ -32,6 +32,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
@@ -203,20 +204,46 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
           }
         }
       } else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
-        String activeToolWindowId = toolWindowManagerEx.getActiveToolWindowId();
-        if (activeToolWindowId != null) {
-          JComponent activeToolWindowComponent = toolWindowManagerEx.getToolWindow(activeToolWindowId).getComponent();
-          if (activeToolWindowComponent != null) {
-            String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId(component -> component != activeToolWindowComponent);
-            ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
-            if (toolWindow != null) {
-              return toolWindow.getComponent().getFocusTraversalPolicy().getDefaultComponent(toolWindow.getComponent());
+
+        String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
+        ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
+        if (toolWindow != null) {
+          Content content = toolWindow.getContentManager().getContent(0);
+          if (content != null) {
+            JComponent component = content.getPreferredFocusableComponent();
+            if (component != null) {
+              LOG.warn("The content (" +
+                       content.getDisplayName() +
+                       ") does not have a default focused component." +
+                       "This may cause focus issues");
             }
+            return component == null ? getComponentToRequestFocus(toolWindow)  : component;
+
           }
         }
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static Component getComponentToRequestFocus(ToolWindow toolWindow) {
+    Container container = toolWindow.getComponent();
+    if (container == null || !container.isShowing()) {
+      LOG.debug(toolWindow.getTitle(), " tool window - parent container is hidden: ", container);
+      return null;
+    }
+    FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
+    if (policy == null) {
+      LOG.warn(toolWindow.getTitle() + " tool window does not provide focus traversal policy");
+      return null;
+    }
+    Component component = policy.getDefaultComponent(container);
+    if (component == null || !component.isShowing()) {
+      LOG.debug(toolWindow.getTitle(), " tool window - default component is hidden: ", container);
+      return null;
+    }
+    return component;
   }
 
   @Override
