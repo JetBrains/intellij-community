@@ -432,12 +432,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       init(indicator, () -> {
         String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
-        ApplicationLoadListener.EP_NAME.forEachExtension(listener -> listener.beforeApplicationLoaded(this, effectiveConfigPath));
+        ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeApplicationLoaded(this, effectiveConfigPath));
 
         // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
         ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
 
-        ApplicationLoadListener.EP_NAME.forEachExtension(listener -> listener.beforeComponentsCreated());
+        ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeComponentsCreated());
       });
 
       ourThreadExecutorsService.submit(() -> createLocatorFile());

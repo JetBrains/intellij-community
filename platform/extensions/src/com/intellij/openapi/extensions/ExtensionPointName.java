@@ -38,8 +38,8 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
     return getPoint(null).getExtensionList();
   }
 
-  public void forEachExtension(Consumer<T> consumer) {
-    getPoint(null).forEachExtension(consumer);
+  public void forEachExtensionSafe(Consumer<T> consumer) {
+    getPoint(null).forEachExtensionSafe(consumer);
   }
 
   @NotNull
