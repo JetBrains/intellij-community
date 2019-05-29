@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.impl.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
@@ -698,18 +699,18 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
   // E.g. "change(a/b/c/x.txt)" and "delete(a/b/c)" are conflicting because "a/b/c/x.txt" is under the "a/b/c" directory from the other event.
   //
   // returns index after the last grouped event.
-  private static int groupByPath(@NotNull List<? extends VFileEvent> inEvents,
+  private static int groupByPath(@NotNull List<? extends VFileEvent> events,
                                  int startIndex,
-                                 @NotNull Set<? super String> files,
-                                 @NotNull Set<? super String> middleDirs) {
+                                 @NotNull MostlySingularMultiMap<String, VFileEvent> filesInvolved,
+                                 @NotNull Set<? super String> middleDirsInvolved) {
     // store all paths from all events (including all parents)
     // check the each new event's path against this set and if it's there, this event is conflicting
 
     int i;
-    for (i = startIndex; i < inEvents.size(); i++) {
-      VFileEvent event = inEvents.get(i);
+    for (i = startIndex; i < events.size(); i++) {
+      VFileEvent event = events.get(i);
       String path = event.getPath();
-      if (checkIfConflictingEvent(path, files, middleDirs)) {
+      if (checkIfConflictingPaths(event, path, filesInvolved, middleDirsInvolved)) {
         break;
       }
       // some synthetic events really are composite events, e.g. VFileMoveEvent = VFileDeleteEvent+VFileCreateEvent,
@@ -729,7 +730,7 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
         String newName = vme.getFile().getName();
         path2 = vme.getNewParent().getPath() + "/" + newName;
       }
-      if (path2 != null && !FileUtil.PATH_HASHING_STRATEGY.equals(path2, path) && checkIfConflictingEvent(path2, files, middleDirs)) {
+      if (path2 != null && !FileUtil.PATH_HASHING_STRATEGY.equals(path2, path) && checkIfConflictingPaths(event, path2, filesInvolved, middleDirsInvolved)) {
         break;
       }
     }
@@ -737,19 +738,26 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
     return i;
   }
 
-  private static boolean checkIfConflictingEvent(@NotNull String path,
-                                                 @NotNull Set<? super String> files,
+  private static boolean checkIfConflictingPaths(@NotNull VFileEvent event,
+                                                 @NotNull String path,
+                                                 @NotNull MostlySingularMultiMap<String, VFileEvent> files,
                                                  @NotNull Set<? super String> middleDirs) {
-    if (!files.add(path) || middleDirs.contains(path)) {
+    Iterable<VFileEvent> stored = files.get(path);
+    if (!canReconcileEvents(event, stored)) {
       // conflicting event found for (non-strict) descendant, stop
       return true;
     }
+    else if (middleDirs.contains(path)) {
+      // conflicting event found for (non-strict) descendant, stop
+      return true;
+    }
+    files.add(path, event);
     int li = path.length();
     while (true) {
       int liPrev = path.lastIndexOf('/', li-1);
       if (liPrev == -1) break;
       String parentDir = path.substring(0, liPrev);
-      if (files.contains(parentDir)) {
+      if (files.containsKey(parentDir)) {
         // conflicting event found for ancestor, stop
         return true;
       }
@@ -760,6 +768,21 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
     return false;
   }
 
+  // true if {@code event} and events in {@code stored} can be applied in one batch. E.g. "content change" and {"writable property change", "content change"}
+  private static boolean canReconcileEvents(@NotNull VFileEvent event, @NotNull Iterable<? extends VFileEvent> stored) {
+    return ContainerUtil.and(stored, e->canReconcile(event, e));
+  }
+
+  private static boolean canReconcile(@NotNull VFileEvent event1, @NotNull VFileEvent event2) {
+    return isContentChangeLikeHarmlessEvent(event1) && isContentChangeLikeHarmlessEvent(event2);
+  }
+
+  private static boolean isContentChangeLikeHarmlessEvent(@NotNull VFileEvent event1) {
+    return event1 instanceof VFileContentChangeEvent ||
+           event1 instanceof VFilePropertyChangeEvent && (((VFilePropertyChangeEvent)event1).getPropertyName().equals(VirtualFile.PROP_WRITABLE)
+                                                          || ((VFilePropertyChangeEvent)event1).getPropertyName().equals(VirtualFile.PROP_ENCODING));
+  }
+
   // finds a group of non-conflicting events, validate them.
   // "outApplyEvents" will contain handlers for applying the grouped events
   // "outValidatedEvents" will contain events for which VFileEvent.isValid() is true
@@ -768,10 +791,10 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
                                int startIndex,
                                @NotNull List<? super Runnable> outApplyEvents,
                                @NotNull List<? super VFileEvent> outValidatedEvents,
-                               @NotNull Set<? super String> files,
-                               @NotNull Set<? super String> middleDirs) {
-    int endIndex = groupByPath(events, startIndex, files, middleDirs);
-    assert endIndex > startIndex : events.get(startIndex) +"; files: "+files+"; middleDirs: "+middleDirs;
+                               @NotNull MostlySingularMultiMap<String, VFileEvent> filesInvolved,
+                               @NotNull Set<? super String> middleDirsInvolved) {
+    int endIndex = groupByPath(events, startIndex, filesInvolved, middleDirsInvolved);
+    assert endIndex > startIndex : events.get(startIndex) +"; files: "+filesInvolved+"; middleDirs: "+middleDirsInvolved;
     // since all events in the group events[startIndex..endIndex) are mutually non-conflicting, we can re-arrange creations/deletions together
     groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
     groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
@@ -888,7 +911,13 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
     int startIndex = 0;
     int cappedInitialSize = Math.min(events.size(), INNER_ARRAYS_THRESHOLD);
     List<Runnable> applyEvents = new ArrayList<>(cappedInitialSize);
-    Set<String> files = new THashSet<>(cappedInitialSize, FileUtil.PATH_HASHING_STRATEGY);
+    MostlySingularMultiMap<String, VFileEvent> files = new MostlySingularMultiMap<String, VFileEvent>(){
+      @NotNull
+      @Override
+      protected Map<String, Object> createMap() {
+        return new THashMap<>(cappedInitialSize, FileUtil.PATH_HASHING_STRATEGY);
+      }
+    };
     Set<String> middleDirs = new THashSet<>(cappedInitialSize, FileUtil.PATH_HASHING_STRATEGY);
     List<VFileEvent> validated = new ArrayList<>(cappedInitialSize);
     while (startIndex != events.size()) {

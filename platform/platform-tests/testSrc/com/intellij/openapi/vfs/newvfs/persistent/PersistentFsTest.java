@@ -38,6 +38,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
@@ -425,6 +426,21 @@ public class PersistentFsTest extends PlatformTestCase {
                 new VFileDeleteEvent(this, testTxt, false),
                 new VFileDeleteEvent(this, testTxt.getParent(), false),
                 new VFileDeleteEvent(this, test2Txt, false));
+  }
+
+  public void testProcessContentChangedLikeReconcilableEventsMustResultInSingleBatch() throws IOException {
+    File temp = createTempDirectory();
+    File file = new File(temp, "a/b/c/test.txt");
+    assertTrue(file.getParentFile().mkdirs());
+    assertTrue(file.createNewFile());
+    VirtualFile testTxt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file));
+
+    checkEvents("Before:[VFileContentChangeEvent->test.txt, VFilePropertyChangeEvent->test.txt, VFilePropertyChangeEvent->test.txt]\n" +
+                "After:[VFileContentChangeEvent->test.txt, VFilePropertyChangeEvent->test.txt, VFilePropertyChangeEvent->test.txt]\n",
+
+                new VFileContentChangeEvent(this, testTxt, 0, 1, false),
+                new VFilePropertyChangeEvent(this, testTxt, VirtualFile.PROP_WRITABLE, false, true, false),
+                new VFilePropertyChangeEvent(this, testTxt, VirtualFile.PROP_ENCODING, StandardCharsets.ISO_8859_1, StandardCharsets.UTF_8, false));
   }
 
   public void testProcessCompositeMoveEvents() throws IOException {
