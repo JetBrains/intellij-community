@@ -16,9 +16,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LowMemoryWatcherManager implements Disposable {
@@ -28,7 +26,7 @@ public class LowMemoryWatcherManager implements Disposable {
   @NotNull private final ExecutorService myExecutorService;
 
   private Future<?> mySubmitted; // guarded by ourJanitor
-  private final Future<?> myMemoryPoolMXBeansFuture; // guarded by ourJanitor
+  private final Future<?> myMemoryPoolMXBeansFuture;
   private final AtomicBoolean myProcessing = new AtomicBoolean();
   private final Consumer<Boolean> myJanitor = new Consumer<Boolean>() {
     @Override
@@ -45,7 +43,7 @@ public class LowMemoryWatcherManager implements Disposable {
   public LowMemoryWatcherManager(@NotNull Executor executorService) {
     myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", executorService);
 
-    myMemoryPoolMXBeansFuture = myExecutorService.submit(() -> {
+    myMemoryPoolMXBeansFuture = Executors.newSingleThreadExecutor().submit(() -> {
       try {
         for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
           if (bean.getType() == MemoryType.HEAP && bean.isCollectionUsageThresholdSupported() && bean.isUsageThresholdSupported()) {
