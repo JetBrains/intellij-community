@@ -16,11 +16,10 @@ import javax.swing.JComponent
 
 class TabsHeightController {
   companion object {
-
     private val heightMap = ViewableMap<JComponent, Int>()
     private val adjectives = ViewableMap<JComponent, (Int) -> Unit>()
 
-    private var ld = LifetimeDefinition();
+    private var ld = LifetimeDefinition()
     private val toolWindowHeightProperty = Property(TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()))
 
     init {
@@ -39,8 +38,8 @@ class TabsHeightController {
     }
 
     @JvmStatic
-    fun registerActive(comp: JComponent, disp: Disposable) {
-      val lifetime = createNestedLifeTime(disp)
+    fun registerActive(comp: JComponent, parentDisposable: Disposable) {
+      val lifetime = createNestedLifeTime(parentDisposable)
 
       lifetime.bracket({
                          comp.sizeProperty().advise(lifetime) {
@@ -54,8 +53,8 @@ class TabsHeightController {
     }
 
     @JvmStatic
-    fun registerAdjective(comp: JComponent, update: (Int) -> Unit, disp: Disposable) {
-      val lifetime = createNestedLifeTime(disp)
+    fun registerAdjective(comp: JComponent, update: (Int) -> Unit, parentDisposable: Disposable) {
+      val lifetime = createNestedLifeTime(parentDisposable)
 
       lifetime.bracket({
                          adjectives[comp] = update
@@ -64,10 +63,10 @@ class TabsHeightController {
                        { adjectives.remove(comp) })
     }
 
-    private fun createNestedLifeTime(disp: Disposable): Lifetime {
+    private fun createNestedLifeTime(parentDisposable: Disposable): Lifetime {
       val ds = Disposer.newDisposable()
       Disposer.register(ld.createNestedDisposable(), ds)
-      Disposer.register(disp, ds)
+      Disposer.register(parentDisposable, ds)
 
       return ds.createLifetime()
     }
