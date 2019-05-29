@@ -19,8 +19,10 @@ public class TestModeValidationRule extends CustomUtilsWhiteListRule {
   @NotNull
   @Override
   protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-    if(!ApplicationManager.getApplication().isInternal()) return REJECTED;
+    return isTestModeEnabled() ? ACCEPTED : REJECTED;
+  }
 
-    return "true".equals(System.getProperty("fus.internal.test.mode")) ? ACCEPTED : REJECTED;
+  public static boolean isTestModeEnabled() {
+    return ApplicationManager.getApplication().isInternal() && "true".equals(System.getProperty("fus.internal.test.mode"));
   }
 }
