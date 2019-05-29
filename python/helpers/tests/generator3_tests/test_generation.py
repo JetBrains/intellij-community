@@ -237,11 +237,21 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_origin_stamp_in_skeleton_header_is_updated_on_copying(self):
         self.check_generator_output('mod', mod_path='mod.py')
 
-    def test_pyexpat_skeletons_layout(self):
+    def test_single_pyexpat_skeletons_layout(self):
         self.run_generator('pyexpat')
         self.assertFalse(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat.py')))
         self.assertTrue(os.path.isdir(os.path.join(self.temp_skeletons_dir, 'pyexpat')))
-        self.assertTrue(open(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py')).read())
+        self.assertNonEmptyFile(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py'))
+        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
+        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
+
+    # TODO figure out why this is not true for some interpreters
+    @unittest.skipUnless('pyexpat' in sys.builtin_module_names, "pyexpat must be a built-in module")
+    def test_pyexpat_layout_in_builtins(self):
+        self.run_generator(builtins=True)
+        self.assertFalse(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat.py')))
+        self.assertTrue(os.path.isdir(os.path.join(self.temp_skeletons_dir, 'pyexpat')))
+        self.assertNonEmptyFile(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py'))
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
 

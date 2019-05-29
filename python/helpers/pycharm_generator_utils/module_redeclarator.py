@@ -149,7 +149,16 @@ class ModuleRedeclarator(object):
                 self.footer_buf.flush(init)
         else:
             last_pkg_dir = build_pkg_structure(self.cache_dir, '.'.join(qname_parts[:-1]))
-            skeleton_path = os.path.join(last_pkg_dir, qname_parts[-1] + '.py')
+            # In some rare cases submodules of a binary might have been generated earlier than the module
+            # for the binary itself. For instance, it happens for "pyexpat" built-in module which
+            # submodules "pyexpat.errors" and "pyexpat.model" are processed together with "_elementtree"
+            # and "pickle" before "pyexpat" and thus empty pyexpat/__init__.py for them should be replaced
+            # with the skeleton for the main module itself later on.
+            existing_pkg_init = os.path.join(last_pkg_dir, qname_parts[-1], '__init__.py')
+            if os.path.exists(existing_pkg_init):
+                skeleton_path = existing_pkg_init
+            else:
+                skeleton_path = os.path.join(last_pkg_dir, qname_parts[-1] + '.py')
             with fopen(skeleton_path, "w") as mod:
                 for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf):
                     buf.flush(mod)
