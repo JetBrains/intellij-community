@@ -105,7 +105,7 @@ public class AnnotationUtil {
     }
     List<PsiAnnotation> result = null;
     for (PsiAnnotation annotation : list.getAnnotations()) {
-      if (annotationNames.contains(annotation.getQualifiedName()) && isApplicableToDeclaration(annotation, list)) {
+      if (ContainerUtil.exists(annotationNames, annotation::hasQualifiedName) && isApplicableToDeclaration(annotation, list)) {
         if (result == null) {
           result = new SmartList<>();
         }
