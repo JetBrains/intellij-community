@@ -12,8 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.commit;
 
-import com.intellij.dvcs.AmendComponent;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -32,6 +32,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.commit.AmendCommitAware;
+import com.intellij.vcs.commit.AmendCommitHandler;
+import com.intellij.vcs.commit.AmendCommitModeListener;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,11 +43,8 @@ import org.zmlx.hg4idea.action.HgActionUtil;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.command.mq.HgQNewCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.provider.HgCurrentBinaryContentRevision;
 import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -53,7 +52,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
 import static org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutorKt.isPushAfterCommit;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
@@ -75,7 +73,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   @Override
   public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
     reset();
-    return new HgCommitAdditionalComponent(myProject, commitPanel);
+    return new HgCommitAdditionalComponent(commitPanel);
   }
 
   private void reset() {
@@ -302,25 +300,21 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   /**
    * Commit options for hg
    */
-  public class HgCommitAdditionalComponent implements RefreshableOnComponent {
+  public class HgCommitAdditionalComponent implements RefreshableOnComponent, AmendCommitModeListener, Disposable {
     @NotNull private final JPanel myPanel;
-    @NotNull private final MyAmendComponent myAmend;
     @NotNull private final JCheckBox myCommitSubrepos;
+    @NotNull private final CheckinProjectPanel myCommitPanel;
 
-    HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      HgVcs vcs = assertNotNull(HgVcs.getInstance(myProject));
-
-      myAmend = new MyAmendComponent(getRepositoryManager(project), panel, "Amend Commit (QRefresh)");
-      myAmend.setAmendModeTogglingEnabled(vcs.getVersion().isAmendSupported());
-
+    HgCommitAdditionalComponent(@NotNull CheckinProjectPanel panel) {
+      myCommitPanel = panel;
       myCommitSubrepos = new JCheckBox("Commit subrepositories", false);
       myCommitSubrepos.setToolTipText(XmlStringUtil.wrapInHtml(
         "Commit all subrepos for selected repositories.<br>" +
         " <code>hg ci <i><b>files</b></i> -S <i><b>subrepos</b></i></code>"));
       myCommitSubrepos.setMnemonic('s');
-      Collection<HgRepository> repos = HgActionUtil.collectRepositoriesFromFiles(getRepositoryManager(myProject), panel.getRoots());
+      Collection<HgRepository> repos = HgActionUtil.collectRepositoriesFromFiles(getRepositoryManager(myProject), myCommitPanel.getRoots());
       myCommitSubrepos.setVisible(ContainerUtil.exists(repos, HgRepository::hasSubrepos));
-      myCommitSubrepos.addActionListener(e -> myAmend.updateAmendState(!myCommitSubrepos.isSelected()));
+      myCommitSubrepos.addActionListener(e -> updateAmendState(!myCommitSubrepos.isSelected()));
 
       GridBag gb = new GridBag().
         setDefaultInsets(JBUI.insets(2)).
@@ -328,13 +322,27 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
         setDefaultWeightX(1).
         setDefaultFill(GridBagConstraints.HORIZONTAL);
       myPanel = new JPanel(new GridBagLayout());
-      myPanel.add(myAmend.getComponent(), gb.nextLine().next());
       myPanel.add(myCommitSubrepos, gb.nextLine().next());
+
+      getAmendHandler().addAmendCommitModeListener(this, this);
+    }
+
+    @NotNull
+    private AmendCommitHandler getAmendHandler() {
+      return myCommitPanel.getCommitWorkflowHandler().getAmendCommitHandler();
+    }
+
+    @Override
+    public void dispose() {
+    }
+
+    @Override
+    public void amendCommitModeToggled() {
+      updateCommitSubreposState();
     }
 
     @Override
     public void refresh() {
-      myAmend.refresh();
       myShouldCommitSubrepos = false;
     }
 
@@ -345,6 +353,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
 
     @Override
     public void restoreState() {
+      updateCommitSubreposState();
       refresh();
     }
 
@@ -354,50 +363,19 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     }
 
     public boolean isAmend() {
-      return myAmend.isAmendMode();
+      return getAmendHandler().isAmendCommitMode();
     }
 
-    private class MyAmendComponent extends AmendComponent {
-      MyAmendComponent(@NotNull HgRepositoryManager repoManager, @NotNull CheckinProjectPanel panel, @NotNull String title) {
-        super(repoManager, panel, title);
-      }
+    private void updateCommitSubreposState() {
+      boolean isAmendMode = isAmend();
 
-      @Override
-      protected void amendModeToggled() {
-        updateCommitSubreposState();
-        super.amendModeToggled();
-      }
+      myCommitSubrepos.setEnabled(!isAmendMode);
+      if (isAmendMode) myCommitSubrepos.setSelected(false);
+    }
 
-      private void updateAmendState(boolean enable) {
-        setAmendModeTogglingEnabled(enable);
-        if (!enable) setAmendMode(false);
-      }
-
-      private void updateCommitSubreposState() {
-        boolean isAmendMode = isAmendMode();
-
-        myCommitSubrepos.setEnabled(!isAmendMode);
-        if (isAmendMode) myCommitSubrepos.setSelected(false);
-      }
-
-      @NotNull
-      @Override
-      protected Set<VirtualFile> getVcsRoots(@NotNull Collection<? extends FilePath> filePaths) {
-        return HgUtil.hgRoots(myProject, filePaths);
-      }
-
-      @Nullable
-      @Override
-      protected String getLastCommitMessage(@NotNull VirtualFile repo) {
-        HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
-        List<String> args = new ArrayList<>();
-        args.add("-r");
-        args.add(".");
-        args.add("--template");
-        args.add("{desc}");
-        HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "log", args);
-        return result == null ? "" : result.getRawOutput();
-      }
+    private void updateAmendState(boolean enable) {
+      getAmendHandler().setAmendCommitModeTogglingEnabled(enable);
+      if (!enable) getAmendHandler().setAmendCommitMode(false);
     }
   }
 }
