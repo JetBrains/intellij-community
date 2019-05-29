@@ -16,26 +16,26 @@ import javax.swing.event.DocumentListener
 class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.Settings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink) =
     object : FactoryInlayHintsCollector(editor) {
-      override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink) {
-        if (file.project.service<DumbService>().isDumb) return
-        val call = element as? PsiMethodCallExpression ?: return
-        if (!isFirstCall(call, editor)) return
+      override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink) : Boolean {
+        if (file.project.service<DumbService>().isDumb) return true
+        val call = element as? PsiMethodCallExpression ?: return true
+        if (!isFirstCall(call, editor)) return true
         val next = call.nextSibling
-        if (!(next is PsiWhiteSpace && next.textContains('\n'))) return
+        if (!(next is PsiWhiteSpace && next.textContains('\n'))) return true
         val chain = collectChain(call)
           .filter {
             val nextSibling = it.nextSibling as? PsiWhiteSpace ?: return@filter false
             nextSibling.textContains('\n')
           }
-        if (chain.isEmpty()) return
+        if (chain.isEmpty()) return true
         val types = chain.mapNotNull { it.type }
-        if (types.size != chain.size) return // some type unknown
+        if (types.size != chain.size) return true // some type unknown
 
         val uniqueTypes = mutableSetOf<PsiType>()
         for (i in (0 until types.size - 1)) { // Except last to avoid builder.build() which has obvious type
           uniqueTypes.add(types[i])
         }
-        if (uniqueTypes.size < settings.uniqueTypeCount) return // to hide hints for builders, where type is obvious
+        if (uniqueTypes.size < settings.uniqueTypeCount) return true // to hide hints for builders, where type is obvious
         val javaFactory = JavaTypeHintsPresentationFactory(factory, 3)
         for ((index, currentCall) in chain.withIndex()) {
           val type = types[index]
@@ -47,6 +47,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
           }
           sink.addInlineElement(currentCall.textRange.endOffset, true, finalPresentation)
         }
+        return true
       }
     }
 
