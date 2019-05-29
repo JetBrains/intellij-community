@@ -377,19 +377,19 @@ public class FileTypesTest extends PlatformTestCase {
     table.removeAssociation(matcher, fileType);
 
     WriteAction.run(() -> myFileTypeManager.setPatternsTable(fileTypes, table));
-    myFileTypeManager.getRemovedMappings().put(matcher, Pair.create(fileType, true));
+    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.getName(), true);
 
     Element state = myFileTypeManager.getState();
 
-    myFileTypeManager.getRemovedMappings().clear();
+    myFileTypeManager.getRemovedMappingTracker().clear();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(state);
     myFileTypeManager.initializeComponent();
 
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
-    Pair<FileType, Boolean> pair = mappings.get(matcher);
-    assertNotNull(pair);
-    assertTrue(pair.second);
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
+    assertEquals(1, mappings.size());
+    assertTrue(mappings.get(0).isApproved());
+    assertEquals(matcher, mappings.get(0).getFileNameMatcher());
   }
 
   public void testRemovedExactNameMapping() {
@@ -403,19 +403,18 @@ public class FileTypesTest extends PlatformTestCase {
     table.removeAssociation(matcher, fileType);
 
     WriteAction.run(() -> myFileTypeManager.setPatternsTable(fileTypes, table));
-    myFileTypeManager.getRemovedMappings().put(matcher, Pair.create(fileType, true));
+    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.getName(), true);
 
     Element state = myFileTypeManager.getState();
 
-    myFileTypeManager.getRemovedMappings().clear();
+    myFileTypeManager.getRemovedMappingTracker().clear();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(state);
     myFileTypeManager.initializeComponent();
 
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
-    Pair<FileType, Boolean> pair = mappings.get(matcher);
-    assertNotNull(pair);
-    assertTrue(pair.second);
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
+    assertTrue(mappings.get(0).isApproved());
+    assertEquals(matcher, mappings.get(0).getFileNameMatcher());
   }
 
   public void testReassignedPredefinedFileType() {
@@ -428,18 +427,18 @@ public class FileTypesTest extends PlatformTestCase {
   public void testReAddedMapping() {
     ArchiveFileType fileType = ArchiveFileType.INSTANCE;
     FileNameMatcher matcher = myFileTypeManager.getAssociations(fileType).get(0);
-    myFileTypeManager.getRemovedMappings().put(matcher, Pair.create(fileType, true));
+    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.getName(), true);
 
     WriteAction.run(() -> myFileTypeManager
       .setPatternsTable(new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes())), myFileTypeManager.getExtensionMap().copy()));
-    assertEquals(0, myFileTypeManager.getRemovedMappings().size());
+    assertEquals(0, myFileTypeManager.getRemovedMappingTracker().getRemovedMappings().size());
   }
 
   public void testPreserveRemovedMappingForUnknownFileType() {
-    myFileTypeManager.getRemovedMappings().put(new ExtensionFileNameMatcher("xxx"), Pair.create(createTestFileType(), true));
+    myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher("xxx"), "Foo Files", true);
     WriteAction.run(() -> myFileTypeManager
       .setPatternsTable(new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes())), myFileTypeManager.getExtensionMap().copy()));
-    assertEquals(1, myFileTypeManager.getRemovedMappings().size());
+    assertEquals(1, myFileTypeManager.getRemovedMappingTracker().getRemovedMappings().size());
   }
 
   public void testGetRemovedMappings() {
@@ -492,9 +491,9 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.loadState(element);
 
     myFileTypeManager.initializeComponent();
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
     assertEquals(1, mappings.size());
-    assertEquals(typeFromPlugin, mappings.values().iterator().next().first);
+    assertEquals(typeFromPlugin.getName(), mappings.get(0).getFileTypeName());
   }
 
   public void testPreserveUninstalledPluginAssociations() {
@@ -562,10 +561,10 @@ public class FileTypesTest extends PlatformTestCase {
 
     myFileTypeManager.loadState(element);
     myFileTypeManager.initializeComponent();
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
     assertEquals(1, mappings.size());
-    assertEquals(ArchiveFileType.INSTANCE, mappings.values().iterator().next().first);
-    mappings.clear();
+    assertEquals(ArchiveFileType.INSTANCE.getName(), mappings.get(0).getFileTypeName());
+    myFileTypeManager.getRemovedMappingTracker().clear();
     assertEquals(ArchiveFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("zip"));
     Element map = myFileTypeManager.getState().getChild("extensionMap");
     if (map != null) {
