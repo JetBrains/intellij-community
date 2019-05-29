@@ -1158,7 +1158,7 @@ public class IdeEventQueue extends EventQueue {
       NonUrgentExecutor.getInstance().execute(() -> myFrequentEventDetector.logMessage(message));
     }
 
-    boolean typeAheadEnabled = Registry.is("action.aware.typeAhead");
+    boolean typeAheadEnabled = SystemProperties.getBooleanProperty("action.aware.typeAhead", true);
     if (isKeyboardEvent(event)) {
       myKeyboardEventsPosted.incrementAndGet();
       if (typeAheadEnabled && delayKeyEvents.get()) {
@@ -1174,7 +1174,7 @@ public class IdeEventQueue extends EventQueue {
       focusEventsList.add(event);
     }
 
-    boolean typeAheadSearchEverywhereEnabled = Registry.is("action.aware.typeAhead.searchEverywhere");
+    boolean typeAheadSearchEverywhereEnabled = SystemProperties.getBooleanProperty("action.aware.typeAhead.searchEverywhere", false);
     if (typeAheadEnabled) {
       if (event.getID() == KeyEvent.KEY_PRESSED) {
         KeyEvent keyEvent = (KeyEvent)event;
