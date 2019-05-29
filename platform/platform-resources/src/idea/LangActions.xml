@@ -1184,15 +1184,15 @@
         <action id="ServiceView.GroupByType" class="com.intellij.execution.services.GroupByTypeAction"
                 text="Type"/>
       </group>
+      <action id="ServiceView.FlattenServices" class="com.intellij.execution.services.FlattenServicesAction"
+              text="Flatten Services" icon="AllIcons.Actions.ListFiles"/>
       <separator/>
       <action id="ServiceView.ShowInNewTab" class="com.intellij.execution.services.ShowInNewTabAction"
               text="Show in New Tab" icon="AllIcons.Actions.OpenNewTab"/>
-      <action id="ServiceView.FlattenServices" class="com.intellij.execution.services.FlattenServicesAction"
-              text="Flatten Services" icon="AllIcons.Actions.ListFiles"/>
+      <action id="ServiceView.SplitToNewTabs" class="com.intellij.execution.services.SplitToNewTabsAction"
+              text="Split to New Tabs" icon="AllIcons.General.Layout"/>
       <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"
               text="Split By Type" icon="AllIcons.Modules.Split"/>
-      <group id="ServiceView.TreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
-             class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
     <group id="ServiceViewNodeToolbar">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup" id="ServiceViewItemToolbarGroup"/>
@@ -1201,8 +1201,10 @@
     <group id="ServiceViewNodePopup">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup" id="ServiceViewItemPopupGroup"/>
       <separator/>
-      <reference id="ServiceView.ShowInNewTab"/>
       <reference id="ServiceView.FlattenServices"/>
+      <separator/>
+      <reference id="ServiceView.ShowInNewTab"/>
+      <reference id="ServiceView.SplitToNewTabs"/>
       <reference id="ServiceView.SplitByType"/>
     </group>
 
