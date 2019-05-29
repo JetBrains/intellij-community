@@ -300,7 +300,7 @@ abstract class SourceOperation extends Operation {
     @Override
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       String bound = myBound.getText();
-      if(!ExpressionUtils.isSafelyRecomputableExpression(context.createExpression(bound))) {
+      if(needBound(context, bound)) {
         bound = context.declare("bound", outVar.getType().getCanonicalText(), bound);
       }
       String loopVar = outVar.getName();
@@ -315,6 +315,18 @@ abstract class SourceOperation extends Operation {
              loopVar + "++) {\n" +
              reassign +
              code + "}\n";
+    }
+
+    private static boolean needBound(StreamToLoopReplacementContext context, String bound) {
+      PsiExpression expression = PsiUtil.skipParenthesizedExprDown(context.createExpression(bound));
+      while (expression instanceof PsiReferenceExpression) {
+        PsiElement ref = ((PsiReferenceExpression)expression).resolve();
+        if (!(ref instanceof PsiVariable) || !((PsiVariable)ref).hasModifierProperty(PsiModifier.FINAL)) {
+          break;
+        }
+        expression = ((PsiReferenceExpression)expression).getQualifierExpression();
+      }
+      return !ExpressionUtils.isSafelyRecomputableExpression(expression);
     }
   }
 
