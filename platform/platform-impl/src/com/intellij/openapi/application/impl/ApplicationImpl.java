@@ -507,7 +507,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void dispose() {
-    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     fireApplicationExiting();
 
     ShutDownTracker.getInstance().ensureStopperThreadsFinished();
@@ -1184,7 +1183,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (!isWriteAccessAllowed()) {
       assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     }
-    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
       ActionPauses.WRITE.started();

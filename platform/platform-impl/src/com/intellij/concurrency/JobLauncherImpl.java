@@ -7,10 +7,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,10 +41,13 @@ public class JobLauncherImpl extends JobLauncher {
     Boolean result = processImmediatelyIfTooFew(things, wrapper, runInReadAction, thingProcessor);
     if (result != null) return result.booleanValue();
 
-    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+    ProgressManager pm = ProgressManager.getInstance();
+    Processor<? super T> processor = ((CoreProgressManager)pm).isPrioritizedThread(Thread.currentThread())
+                                     ? t -> pm.computePrioritized(() -> thingProcessor.process(t))
+                                     : thingProcessor;
 
     List<ApplierCompleter<T>> failedSubTasks = Collections.synchronizedList(new ArrayList<>());
-    ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, failFastOnAcquireReadAction, wrapper, things, thingProcessor, 0, things.size(), failedSubTasks, null);
+    ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, failFastOnAcquireReadAction, wrapper, things, processor, 0, things.size(), failedSubTasks, null);
     try {
       ForkJoinPool.commonPool().execute(applier);
       // call checkCanceled a bit more often than .invoke()
@@ -202,8 +205,6 @@ public class JobLauncherImpl extends JobLauncher {
     // waits for the job to finish execution (when called on a canceled job in the middle of the execution, wait for finish)
     @Override
     public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException {
-      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
-
       while (!isDone()) {
         try {
           myForkJoinTask.get(millis, TimeUnit.MILLISECONDS);
