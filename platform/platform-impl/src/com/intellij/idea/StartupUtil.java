@@ -141,7 +141,7 @@ public class StartupUtil {
           activity.end();
         }
       }
-      catch (IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException | ClassNotFoundException e) {
+      catch (Throwable e) {
         throw new CompletionException(e);
       }
     }, runnable -> {
@@ -161,7 +161,7 @@ public class StartupUtil {
     Logger log = lockDirsAndConfigureLogger(args);
 
     boolean isParallelExecution = SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", true);
-    List<Future<?>> futures = new ArrayList<>();
+    List<Future<?>> futures = new SmartList<>();
     ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
     futures.add(executorService.submit(() -> {
       Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.SETUP_SYSTEM_LIBS);
@@ -523,10 +523,13 @@ public class StartupUtil {
   }
 
   private static void startLogging(@NotNull Logger log) {
+    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
+    AppExecutorUtil.getAppExecutorService().submit(() -> startLoggingAsync(log));
+  }
+
+  private static void startLoggingAsync(@NotNull Logger log) {
     ShutDownTracker.getInstance().registerShutdownTask(() ->
         log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"));
-
-    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
 
     ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
