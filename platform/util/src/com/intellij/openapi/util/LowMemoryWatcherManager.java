@@ -58,23 +58,27 @@ public class LowMemoryWatcherManager implements Disposable {
 
   public LowMemoryWatcherManager(@NotNull Executor executorService) {
     myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", executorService);
-    try {
-      for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-        if (bean.getType() == MemoryType.HEAP && bean.isCollectionUsageThresholdSupported() && bean.isUsageThresholdSupported()) {
-          long max = bean.getUsage().getMax();
-          long threshold = Math.min((long) (max * getOccupiedMemoryThreshold()), max - MEM_THRESHOLD);
-          if (threshold > 0) {
-            bean.setUsageThreshold(threshold);
-            bean.setCollectionUsageThreshold(threshold);
+
+    myExecutorService.submit(() -> {
+      try {
+        for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+          if (bean.getType() == MemoryType.HEAP && bean.isCollectionUsageThresholdSupported() && bean.isUsageThresholdSupported()) {
+            long max = bean.getUsage().getMax();
+            long threshold = Math.min((long)(max * getOccupiedMemoryThreshold()), max - MEM_THRESHOLD);
+            if (threshold > 0) {
+              bean.setUsageThreshold(threshold);
+              bean.setCollectionUsageThreshold(threshold);
+            }
           }
         }
+        ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(myLowMemoryListener, null, null);
       }
-      ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(myLowMemoryListener, null, null);
-    }
-    catch (Throwable e) {
-      // should not happen normally
-      LOG.info("Errors initializing LowMemoryWatcher: ", e);
-    }
+      catch (Throwable e) {
+        // should not happen normally
+        LOG.info("Errors initializing LowMemoryWatcher: ", e);
+      }
+    });
+
   }
 
   private final NotificationListener myLowMemoryListener = new NotificationListener() {
