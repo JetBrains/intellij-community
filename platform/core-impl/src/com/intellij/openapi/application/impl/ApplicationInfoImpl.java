@@ -49,8 +49,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private Color myProgressColor;
-  private Color myCopyrightForeground = JBColor.BLACK;
-  private Color myAboutForeground = JBColor.BLACK;
+  private Color myCopyrightForeground;
+  private Color myAboutForeground;
   private Color myAboutLinkColor;
   private Rectangle myAboutLogoRect;
   private String myProgressTailIconName;
@@ -319,7 +319,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   public Color getCopyrightForeground() {
-    return myCopyrightForeground;
+    return ObjectUtils.notNull(myCopyrightForeground, JBColor.BLACK);
   }
 
   public int getProgressHeight() {
@@ -512,7 +512,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public Color getAboutForeground() {
-    return myAboutForeground;
+    return ObjectUtils.notNull(myAboutForeground, JBColor.BLACK);
   }
 
   @Nullable
