@@ -2,10 +2,9 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IconProvider;
+import com.intellij.ide.FileIconProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaEnabler;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
@@ -16,15 +15,14 @@ import javax.swing.*;
 /**
  * @author Irina.Chernushina on 5/23/2017.
  */
-public class JsonSchemaIconProvider extends IconProvider {
+public class JsonSchemaIconProvider implements FileIconProvider {
   @Nullable
   @Override
-  public Icon getIcon(@NotNull PsiElement element, int flags) {
-    if (element instanceof PsiFile) {
-      VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
-      if (virtualFile != null
-          && JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList().stream().anyMatch(e -> e.canBeSchemaFile(virtualFile))
-          && JsonSchemaService.isSchemaFile((PsiFile)element)) {
+  public Icon getIcon(@NotNull VirtualFile file, int flags, @Nullable Project project) {
+    if (project != null
+        && JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList().stream().anyMatch(e -> e.canBeSchemaFile(file))) {
+      JsonSchemaService service = JsonSchemaService.Impl.get(project);
+      if (service.isSchemaFile(file) && service.isApplicableToFile(file)) {
         return AllIcons.FileTypes.JsonSchema;
       }
     }
