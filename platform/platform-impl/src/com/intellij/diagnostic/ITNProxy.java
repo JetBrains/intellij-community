@@ -4,7 +4,6 @@ package com.intellij.diagnostic;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.error.UpdateAvailableException;
-import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -81,7 +80,6 @@ class ITNProxy {
     template.put("app.version.minor", appInfo.getMinorVersion());
     template.put("app.build.date", format(appInfo.getBuildDate()));
     template.put("app.build.date.release", format(appInfo.getMajorReleaseBuildDate()));
-    template.put("app.compilation.timestamp", IdeaLogger.getOurCompilationTimestamp());
     template.put("app.product.code", build.getProductCode());
     template.put("app.build.number", buildNumberWithAllDetails);
 
