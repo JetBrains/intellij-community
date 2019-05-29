@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.ide.StartupProgress;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -24,7 +23,7 @@ import java.util.List;
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
  * the tag attributes in ApplicationInfo.xsd file.
  */
-public final class Splash extends JDialog implements StartupProgress {
+public final class Splash extends JDialog {
   private static final float JBUI_INIT_SCALE = JBUI.scale(1f);
 
   private final ApplicationInfoEx myInfo;
@@ -120,7 +119,6 @@ public final class Splash extends JDialog implements StartupProgress {
     setLocation(UIUtil.getCenterPoint(bounds, getSize()));
   }
 
-  @Override
   public void showProgress(double progress) {
     if (myProgressColor == null) return;
     if (((progress - myProgress) > 0.01) || (progress > 0.99)) {
@@ -215,7 +213,7 @@ public final class Splash extends JDialog implements StartupProgress {
   }
 
   @NotNull
-  protected static Font createFont(String name) {
+  private static Font createFont(String name) {
     return new Font(name, Font.PLAIN, uiScale(12));
   }
 

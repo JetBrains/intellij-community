@@ -38,7 +38,7 @@
 
       const sourceNames = descriptor.sourceNames
       if (type === "components") {
-        return new ComponentChartManager(chartContainer, sourceNames!!)
+        return new ComponentChartManager(chartContainer, sourceNames!!, descriptor)
       }
       else {
         return new ActivityChartManager(chartContainer, sourceNames == null ? [type] : sourceNames, descriptor)
