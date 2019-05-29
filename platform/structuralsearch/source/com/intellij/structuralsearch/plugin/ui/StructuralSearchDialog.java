@@ -218,7 +218,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     };
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     textField.setFont(scheme.getFont(EditorFontType.PLAIN));
-    textField.setPreferredSize(new Dimension(850, 150));
+    textField.setPreferredSize(new Dimension(550, 150));
     textField.setMinimumSize(new Dimension(200, 50));
     textField.addDocumentListener(new DocumentListener() {
       @Override
@@ -338,7 +338,6 @@ public class StructuralSearchDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
-    myReplaceEditorPanel = new OnePixelSplitter(false, 1.0f);
     mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     mySearchEditorPanel.getDivider().setOpaque(false);
     mySearchCriteriaEdit = createEditor();
@@ -360,6 +359,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     myFilterPanel = new FilterPanel(getProject(), StructuralSearchUtil.getProfileByFileType(myFileType), getDisposable());
     myFilterPanel.setConstraintChangedCallback(() -> initiateValidation());
     myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
+    mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
 
     final JLabel searchTargetLabel = new JLabel(SSRBundle.message("search.target.label"));
     myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
@@ -407,6 +407,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     myReformat = new JCheckBox(SSRBundle.message("reformat.checkbox"));
     myUseStaticImport = new JCheckBox(SSRBundle.message("use.static.import.checkbox"));
     myReplaceCriteriaEdit = createEditor();
+    myReplaceEditorPanel = new OnePixelSplitter(false, 1.0f);
     myReplaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
 
     final JPanel replacePanel = new JPanel(null);
@@ -603,23 +604,14 @@ public class StructuralSearchDialog extends DialogWrapper {
     return mySearchContext.getProject();
   }
 
+  @Nullable
   @Override
-  public void show() {
-    StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(true);
-    if (!myUseLastConfiguration) {
-      setTextFromContext();
-    }
-    super.show();
-
+  public Point getInitialLocation() {
     // handle dimension service manually to store dimensions correctly when switching between search/replace in the same dialog
     final DimensionService dimensionService = DimensionService.getInstance();
-    final Point location = dimensionService.getLocation(SEARCH_DIMENSION_SERVICE_KEY, getProject());
-    if (location != null) {
-      setLocation(location);
-    }
     final Dimension size = dimensionService.getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, getProject());
     if (size != null) {
-      setSize(size.width, size.height);
+      setSize(size.width, myEditConfigOnly ? size.height - myScopePanel.getPreferredSize().height : size.height);
     }
     else {
       pack();
@@ -630,11 +622,20 @@ public class StructuralSearchDialog extends DialogWrapper {
         setSize(otherSize.width, getSize().height);
       }
     }
+    if (myEditConfigOnly) return super.getInitialLocation();
+    final Point location = dimensionService.getLocation(SEARCH_DIMENSION_SERVICE_KEY, getProject());
+    return (location == null) ? super.getInitialLocation() : location;
+  }
 
-    final PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (properties.getBoolean(FILTERS_VISIBLE_STATE, true)) {
-      setFilterPanelVisible(true);
+  @Override
+  public void show() {
+    StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(true);
+    if (!myUseLastConfiguration) {
+      setTextFromContext();
     }
+    final PropertiesComponent properties = PropertiesComponent.getInstance();
+    setFilterPanelVisible(properties.getBoolean(FILTERS_VISIBLE_STATE, true));
+    super.show();
   }
 
   private void startTemplate() {
@@ -1059,10 +1060,14 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private void storeDimensions(String key1, String key2) {
+    if (myEditConfigOnly) return; // don't store dimensions when editing structural search inspection patterns
     // handle own dimension service to store dimensions correctly when switching between search/replace in the same dialog
     final Dimension size = getSize();
     final DimensionService dimensionService = DimensionService.getInstance();
-    dimensionService.setLocation(SEARCH_DIMENSION_SERVICE_KEY, getLocation(), getProject());
+    final Point location = getLocation();
+    if (location.x < 0) location.x = 0;
+    if (location.y < 0) location.y = 0;
+    dimensionService.setLocation(SEARCH_DIMENSION_SERVICE_KEY, location, getProject());
     dimensionService.setSize(key1, size, getProject());
     final Dimension otherSize = dimensionService.getSize(key2);
     if (otherSize != null && otherSize.width != size.width) {
